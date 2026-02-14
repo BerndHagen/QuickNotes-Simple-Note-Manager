@@ -180,7 +180,6 @@ jobs:
   versioned:
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
-    environment: github-pages
     steps:
       - name: Checkout
         uses: actions/checkout@v4
