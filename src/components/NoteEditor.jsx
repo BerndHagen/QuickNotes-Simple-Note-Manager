@@ -325,14 +325,14 @@ export default function NoteEditor() {
 
   return (
     <div className="flex flex-col w-full h-full bg-gradient-to-b from-white via-[#fefefe] to-[#f8f9fb] dark:from-gray-950 dark:via-gray-950 dark:to-gray-900 editor-paper">
-      <div className="flex-shrink-0 px-5 py-4 md:px-6 bg-gradient-to-br from-emerald-100 via-teal-100 to-emerald-50 dark:from-gray-950/80 dark:via-gray-950/80 dark:to-gray-950/80 backdrop-blur-sm border-b border-[#cbd1db] dark:border-gray-800" style={{ boxShadow: '0 1px 3px -1px rgba(0,0,0,0.05), 0 1px 2px -1px rgba(0,0,0,0.03)' }}>
+      <div className="flex-shrink-0 px-5 py-4 md:px-6 bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 dark:from-gray-950/80 dark:via-gray-950/80 dark:to-gray-950/80 backdrop-blur-sm border-b border-emerald-700 dark:border-gray-800" style={{ boxShadow: '0 1px 3px -1px rgba(0,0,0,0.05), 0 1px 2px -1px rgba(0,0,0,0.03)' }}>
         <div className="flex items-center justify-between gap-2 mb-2.5">
           <button
             onClick={() => setMobileEditorOpen(false)}
-            className="flex-shrink-0 p-2 -ml-2 transition-colors rounded-xl md:hidden hover:bg-gray-100 dark:hover:bg-gray-800"
+            className="flex-shrink-0 p-2 -ml-2 transition-colors rounded-xl md:hidden hover:bg-white/10 dark:hover:bg-gray-800"
             title="Back to notes list"
           >
-            <ArrowLeft className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+            <ArrowLeft className="w-5 h-5 text-white/80 dark:text-gray-400" />
           </button>
           <div className="flex-1 min-w-0">
             <input
@@ -348,10 +348,10 @@ export default function NoteEditor() {
                   setIsEditingTitle(false)
                 }
               }}
-              className={`w-full px-2 py-1.5 -mx-2 text-xl font-bold bg-transparent border-none outline-none md:text-2xl cursor-text rounded-xl transition-all text-gray-900 dark:text-white placeholder-gray-300 dark:placeholder-gray-600 tracking-tight ${
+              className={`w-full px-2 py-1.5 -mx-2 text-xl font-bold bg-transparent border-none outline-none md:text-2xl cursor-text rounded-xl transition-all text-white dark:text-white placeholder-white/40 dark:placeholder-gray-600 tracking-tight ${
                 isEditingTitle 
-                  ? 'bg-gray-50 dark:bg-gray-800/50 ring-2 ring-emerald-500/20' 
-                  : 'hover:bg-gray-100 dark:hover:bg-gray-800/30'
+                  ? 'bg-white/10 dark:bg-gray-800/50 ring-2 ring-white/20' 
+                  : 'hover:bg-white/10 dark:hover:bg-gray-800/30'
               }`}
               placeholder="Note title..."
             />
@@ -361,8 +361,8 @@ export default function NoteEditor() {
               onClick={() => setFindReplaceOpen(!findReplaceOpen)}
               className={`p-2 rounded-xl transition-all ${
                 findReplaceOpen
-                  ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
-                  : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                  ? 'bg-white/20 dark:bg-emerald-900/30 text-white dark:text-emerald-400'
+                  : 'hover:bg-white/10 dark:hover:bg-gray-800 text-white/60 hover:text-white dark:text-gray-300'
               }`}
               title="Find & Replace (Ctrl+F)"
             >
@@ -372,8 +372,8 @@ export default function NoteEditor() {
               onClick={() => setReminderModalOpen(true, note.id)}
               className={`hidden md:block p-2 rounded-xl transition-all ${
                 note.reminders?.length > 0
-                  ? 'bg-orange-50 dark:bg-orange-900/20 text-orange-500 dark:text-orange-400'
-                  : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                  ? 'bg-orange-400/20 dark:bg-orange-900/20 text-orange-300 dark:text-orange-400'
+                  : 'hover:bg-white/10 dark:hover:bg-gray-800 text-white/60 hover:text-white dark:text-gray-300'
               }`}
               title="Reminders"
             >
@@ -383,8 +383,8 @@ export default function NoteEditor() {
               onClick={() => togglePin(note.id)}
               className={`hidden md:block p-2 rounded-xl transition-all ${
                 note.pinned
-                  ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
-                  : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                  ? 'bg-white/20 dark:bg-emerald-900/30 text-white dark:text-emerald-400'
+                  : 'hover:bg-white/10 dark:hover:bg-gray-800 text-white/60 hover:text-white dark:text-gray-300'
               }`}
               title={note.pinned ? 'Unpin' : 'Pin'}
             >
@@ -394,8 +394,8 @@ export default function NoteEditor() {
               onClick={() => toggleStar(note.id)}
               className={`p-2 rounded-xl transition-all ${
                 note.starred
-                  ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-500 dark:text-amber-400'
-                  : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                  ? 'bg-amber-400/20 dark:bg-amber-900/20 text-amber-300 dark:text-amber-400'
+                  : 'hover:bg-white/10 dark:hover:bg-gray-800 text-white/60 hover:text-white dark:text-gray-300'
               }`}
               title={note.starred ? 'Remove from favorites' : 'Add to favorites'}
             >
@@ -404,7 +404,7 @@ export default function NoteEditor() {
             <div className="relative" ref={menuRef}>
               <button
                 onClick={() => setShowMenu(!showMenu)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-all text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                className="p-2 hover:bg-white/10 dark:hover:bg-gray-800 rounded-xl transition-all text-white/60 hover:text-white dark:hover:text-gray-300"
               >
                 <MoreVertical className="w-[18px] h-[18px]" />
               </button>
@@ -550,7 +550,7 @@ export default function NoteEditor() {
             </div>
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2.5 text-[13px] text-emerald-600 dark:text-emerald-400 md:gap-4">
+        <div className="flex flex-wrap items-center gap-2.5 text-[13px] text-white/80 dark:text-emerald-400 md:gap-4">
           <span className="flex items-center gap-1.5 flex-shrink-0">
             <Clock className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">{formatDate(note.updatedAt, language)}</span>
@@ -559,7 +559,7 @@ export default function NoteEditor() {
           <div className="relative" ref={folderPickerRef}>
             <button
               onClick={() => setShowFolderPicker(!showFolderPicker)}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all text-gray-500 dark:text-gray-400"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg hover:bg-white/10 dark:hover:bg-gray-800 transition-all text-white/70 dark:text-gray-400"
             >
               <FolderOpen className="w-3.5 h-3.5" />
               <span className="text-[13px] font-medium">{getCurrentFolder()?.name || 'No folder'}</span>
