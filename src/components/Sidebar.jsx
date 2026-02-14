@@ -892,7 +892,7 @@ export default function Sidebar() {
               !selectedFolderId && !selectedTagFilter ? 'font-semibold' : 'font-medium'
             }`}>{t('sidebar.allNotes')}</span>
           </div>
-          <span className={`text-[11px] tabular-nums px-1.5 py-0.5 rounded-md min-w-[24px] text-center font-medium count-badge ${
+          <span className={`text-[11px] tabular-nums px-1.5 py-0.5 rounded-md min-w-[24px] text-center font-medium count-badge border border-gray-300 dark:border-gray-600 ${
             !selectedFolderId && !selectedTagFilter
               ? 'bg-emerald-100/80 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400'
               : 'bg-white/80 dark:bg-gray-800/80 text-gray-400 dark:text-gray-500'
@@ -918,7 +918,7 @@ export default function Sidebar() {
               selectedTagFilter === '__starred__' ? 'font-semibold' : 'font-medium'
             }`}>{t('sidebar.favorites')}</span>
           </div>
-          <span className={`text-[11px] tabular-nums px-1.5 py-0.5 rounded-md min-w-[24px] text-center font-medium count-badge ${
+          <span className={`text-[11px] tabular-nums px-1.5 py-0.5 rounded-md min-w-[24px] text-center font-medium count-badge border border-gray-300 dark:border-gray-600 ${
             selectedTagFilter === '__starred__'
               ? 'bg-emerald-100/80 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400'
               : 'bg-white/80 dark:bg-gray-800/80 text-gray-400 dark:text-gray-500'
@@ -1047,7 +1047,7 @@ export default function Sidebar() {
                       <span className={`text-[13px] truncate ${selectedFolderId === folder.id ? 'font-semibold' : 'font-medium'}`}>{folder.name}</span>
                     )}
                   </div>
-                  <span className={`text-[11px] tabular-nums px-1.5 py-0.5 rounded-md min-w-[24px] text-center font-medium count-badge ${
+                  <span className={`text-[11px] tabular-nums px-1.5 py-0.5 rounded-md min-w-[24px] text-center font-medium count-badge border border-gray-300 dark:border-gray-600 ${
                     selectedFolderId === folder.id
                       ? 'bg-emerald-100/80 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400'
                       : 'bg-white/70 dark:bg-gray-800/80 text-gray-400 dark:text-gray-500'

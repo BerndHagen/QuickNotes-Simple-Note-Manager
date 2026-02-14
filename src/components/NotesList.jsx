@@ -768,7 +768,7 @@ function NoteCard({ note, isSelected, isMultiSelected, onClick, onContextMenu, i
     <div
       onClick={onClick}
       onContextMenu={onContextMenu}
-      className={`note-card px-4 py-3.5 border-b border-gray-100/80 dark:border-gray-800/60 cursor-pointer transition-all relative surface-hover ${
+      className={`note-card px-4 py-3.5 border-b border-[#cbd1db] dark:border-gray-800/60 cursor-pointer transition-all relative surface-hover ${
         isSelected
           ? 'bg-emerald-50/70 dark:bg-emerald-950/30 border-l-[3px] border-l-emerald-500 card-selected'
           : isMultiSelected
