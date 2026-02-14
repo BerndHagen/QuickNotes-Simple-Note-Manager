@@ -26,7 +26,6 @@ import {
   Info,
   ExternalLink,
   Github,
-  Heart,
   FileText,
   Clock
 } from 'lucide-react'
@@ -322,10 +321,10 @@ export default function SettingsModal() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] transition-colors ${
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] transition-colors relative ${
                   activeTab === tab.id
-                    ? 'bg-white dark:bg-gray-800 text-emerald-600 dark:text-emerald-400 shadow-sm font-medium'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-white/80 dark:hover:bg-gray-800/50'
+                    ? 'bg-white dark:bg-gray-800 text-emerald-600 dark:text-emerald-400 shadow-sm font-medium border-l-[3px] border-l-emerald-500 dark:border-l-emerald-400'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-white/80 dark:hover:bg-gray-800/50 border-l-[3px] border-l-transparent'
                 }`}
               >
                 <tab.icon className={`w-4 h-4 ${activeTab === tab.id ? 'text-emerald-500 dark:text-emerald-400' : 'text-gray-400 dark:text-gray-500'}`} />
@@ -1175,7 +1174,7 @@ export default function SettingsModal() {
 
                 <div className="pt-4 border-t border-[#cbd1db] dark:border-gray-700">
                   <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                    <Heart className="w-4 h-4 text-red-500" />
+                    <Github className="w-4 h-4" />
                     <span>{t('settings.aboutOpenSource')}</span>
                   </div>
                   <p className="mt-2 text-xs text-gray-400 dark:text-gray-500">
