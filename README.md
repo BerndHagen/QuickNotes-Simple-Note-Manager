@@ -143,11 +143,9 @@ The build output is written to `dist/`. The `base` path in `vite.config.js` is s
 ```
 QuickNotes-Simple-Note-Manager/
 ├── .env.example                          # Supabase environment variable template
-├── supabase_rls_policies.sql             # Row Level Security policies for Supabase
 ├── .github/
 │   └── workflows/
 │       └── release.yml                   # GitHub Actions: build + create release
-├── DATABASE_SCHEMA.md                    # Database schema documentation
 ├── index.html                            # HTML entry point
 ├── package.json                          # Dependencies and scripts
 ├── postcss.config.js                     # PostCSS configuration (Tailwind)
@@ -317,6 +315,8 @@ backend.channel('name').on('postgres_changes', filter, callback).subscribe()
 | `getPendingShares()` | Fetch pending share invitations |
 | `removeShare()` | Remove a share |
 | `leaveSharedNote()` | Leave a shared note |
+| `getRemoteNoteVersions()` | Fetch remote version history for a note |
+| `deleteUserAccount()` | Delete user account and all associated data via RPC |
 | `isBackendConfigured()` | Check if Supabase credentials are set |
 | `getRedirectUrl()` | Get OAuth redirect URL (handles localhost vs production) |
 
@@ -408,9 +408,10 @@ Manages all UI state: modal visibility, sidebar state, view mode, sync settings,
 | **Sorting** | `currentSort` (e.g. `updated-desc`, `title-asc`, etc.) |
 | **Selection** | `multiSelectMode`, `selectedNoteIds` |
 | **Sync** | `autoSync`, `syncInterval`, `syncOnStartup`, `showSyncNotifications` |
+| **Preferences** | `confirmBeforeDelete`, `spellCheck`, `showNoteStatistics`, `trashRetentionDays` |
 | **Language** | `language` (ISO code: `en`, `de`, `es`, `fr`, `pt`, `zh`, `hi`, `ar`, `ru`) |
 
-**Persisted fields:** `language`, `currentSort`, `notesListWidth`, `viewMode`, `autoSync`, `syncInterval`, `syncOnStartup`, `showSyncNotifications`
+**Persisted fields:** `language`, `currentSort`, `notesListWidth`, `viewMode`, `autoSync`, `syncInterval`, `syncOnStartup`, `showSyncNotifications`, `confirmBeforeDelete`, `spellCheck`, `showNoteStatistics`, `trashRetentionDays`
 
 ## Rich Text Editor
 
@@ -580,7 +581,7 @@ The app is installable as a PWA with:
 
 ## Database Schema
 
-When using a cloud backend, the following database tables are expected. See `DATABASE_SCHEMA.md` for full details.
+When using a cloud backend, the following database tables are expected.
 
 | Table | Purpose |
 |-------|---------|
@@ -606,6 +607,7 @@ All tables should have RLS enabled so users can only access:
 | `accept_share_invitation(share_id)` | Accept share, create `accepted_shares` entry |
 | `decline_share_invitation(share_id)` | Decline share invitation |
 | `leave_shared_note(note_id)` | Remove user from shared note |
+| `delete_user_account()` | Permanently delete user account and all associated data |
 
 ### Triggers
 
