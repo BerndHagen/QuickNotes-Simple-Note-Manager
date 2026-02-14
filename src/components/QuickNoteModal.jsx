@@ -243,7 +243,7 @@ export default function QuickNoteModal() {
             onChange={(e) => setContent(e.target.value)}
             placeholder={t('quickNote.contentPlaceholder')}
             rows={6}
-            className="w-full bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none resize-none text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+            className="w-full bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-300 dark:border-gray-700 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none resize-none text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
           />
           <div className="flex items-center gap-3 flex-wrap">
             <div className="relative">
@@ -383,7 +383,7 @@ export default function QuickNoteModal() {
             })}
           </div>
         </div>
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
           <button
             onClick={handleClose}
             className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
