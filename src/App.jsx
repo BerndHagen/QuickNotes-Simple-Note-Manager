@@ -296,8 +296,8 @@ export default function App() {
           /* List View - Notes List + Editor side by side */
           <div className="flex flex-1 min-w-0 overflow-hidden">
             <div 
-              className={`flex-shrink-0 h-full ${
-                mobileView === 'editor' ? 'hidden md:block' : 'w-full md:w-80'
+              className={`flex-shrink-0 h-full md:w-80 ${
+                mobileView === 'editor' ? 'hidden md:block' : 'w-full'
               }`}
             >
               <NotesList />

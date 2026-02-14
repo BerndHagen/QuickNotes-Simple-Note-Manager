@@ -758,28 +758,31 @@ export const useNotesStore = create(
         const { isSyncing } = get()
         if (isSyncing) return
         
+        set({ isSyncing: true })
+        
         if (!isBackendConfigured()) {
+          set({ isSyncing: false })
           return
         }
         
         const { user } = get()
         if (!user) {
+          set({ isSyncing: false })
           return
         }
 
         try {
           const { data: { session } } = await backend.auth.getSession()
           if (!session) {
-            set({ user: null })
+            set({ user: null, isSyncing: false })
             return
           }
         } catch {
+          set({ isSyncing: false })
           return
         }
 
         const showNotifications = useUIStore.getState().showSyncNotifications
-        
-        set({ isSyncing: true })
         const syncToast = showNotifications ? toast.loading('Synchronizing...') : null
 
         try {
