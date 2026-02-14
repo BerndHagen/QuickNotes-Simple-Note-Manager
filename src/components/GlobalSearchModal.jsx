@@ -276,7 +276,7 @@ export default function GlobalSearchModal() {
             </div>
           )}
           {results.folders.length > 0 && (
-            <div className="p-2 border-t border-gray-100 dark:border-gray-700">
+            <div className="p-2 border-t border-[#cbd1db] dark:border-gray-700">
               <div className="px-3 py-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
                 Folders
               </div>
@@ -303,7 +303,7 @@ export default function GlobalSearchModal() {
             </div>
           )}
           {results.tags.length > 0 && (
-            <div className="p-2 border-t border-gray-100 dark:border-gray-700">
+            <div className="p-2 border-t border-[#cbd1db] dark:border-gray-700">
               <div className="px-3 py-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
                 Tags
               </div>
@@ -344,7 +344,7 @@ export default function GlobalSearchModal() {
           )}
         </div>
         {totalResults > 0 && (
-          <div className="px-4 py-2 border-t border-gray-300 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400 flex items-center justify-between">
+          <div className="px-4 py-2 border-t border-[#cbd1db] dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400 flex items-center justify-between">
             <span>{totalResults} result{totalResults !== 1 ? 's' : ''}</span>
             <span>Ctrl+Shift+F for global search</span>
           </div>

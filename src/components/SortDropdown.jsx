@@ -53,7 +53,7 @@ export default function SortDropdown({ currentSort, onSortChange }) {
 
       {isOpen && (
         <div className="absolute right-0 z-50 w-56 py-1.5 mt-1.5 bg-white border border-[#cbd1db] rounded-2xl shadow-xl shadow-black/5 dark:shadow-black/20 dark:bg-gray-900 dark:border-gray-700 backdrop-blur-xl">
-          <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-700">
+          <div className="px-3 py-2 border-b border-[#cbd1db] dark:border-gray-700">
             <p className="text-xs font-medium text-gray-500 uppercase dark:text-gray-400">
               {t('sort.sortBy')}
             </p>

@@ -92,7 +92,7 @@ export default function HelpModal() {
         <div className="flex-1 overflow-y-auto p-6">
           <div className="space-y-4">
             {sections.map((section) => (
-              <div key={section.id} className="border border-gray-300 dark:border-gray-700 rounded-lg overflow-hidden">
+              <div key={section.id} className="border border-[#cbd1db] dark:border-gray-700 rounded-lg overflow-hidden">
                 <button
                   onClick={() => setExpandedSection(expandedSection === section.id ? null : section.id)}
                   className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -121,7 +121,7 @@ export default function HelpModal() {
               </div>
             ))}
           </div>
-          <div className="mt-6 pt-6 border-t border-gray-300 dark:border-gray-700">
+          <div className="mt-6 pt-6 border-t border-[#cbd1db] dark:border-gray-700">
             <div className="flex flex-wrap gap-4 justify-center text-sm">
               <a
                 href="mailto:support@quicknotes.app"

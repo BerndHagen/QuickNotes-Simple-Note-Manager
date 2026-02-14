@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react'
+import React, { useState } from 'react'
 import {
   X,
   User,
@@ -314,7 +314,7 @@ export default function SettingsModal() {
                         className={`flex-1 flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-colors ${
                           theme === option.id
                             ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/60 text-primary-700 dark:text-primary-100 ring-1 ring-primary-500/10 dark:ring-primary-500/20'
-                            : 'border-gray-300 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                            : 'border-[#cbd1db] dark:border-gray-700 hover:border-[#cbd1db] dark:hover:border-gray-600'
                         }`}
                       >
                         <option.icon className={`w-6 h-6 ${theme === option.id ? 'text-primary-600 dark:text-primary-300' : 'text-gray-600 dark:text-gray-400'}`} />
@@ -336,7 +336,7 @@ export default function SettingsModal() {
                         className={`flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-colors ${
                           language === lang.code
                             ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/70 text-primary-700 dark:text-primary-100 ring-1 ring-primary-500/10 dark:ring-primary-500/20'
-                            : 'border-gray-300 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                            : 'border-[#cbd1db] dark:border-gray-700 hover:border-[#cbd1db] dark:hover:border-gray-600'
                         }`}
                         dir={lang.dir}
                       >
@@ -375,7 +375,7 @@ export default function SettingsModal() {
                         className={`flex-1 flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-colors ${
                           viewMode === option.id
                             ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/60 text-primary-700 dark:text-primary-100 ring-1 ring-primary-500/10 dark:ring-primary-500/20'
-                            : 'border-gray-300 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                            : 'border-[#cbd1db] dark:border-gray-700 hover:border-[#cbd1db] dark:hover:border-gray-600'
                         }`}
                       >
                         <option.icon className={`w-6 h-6 ${viewMode === option.id ? 'text-primary-600 dark:text-primary-300' : 'text-gray-600 dark:text-gray-400'}`} />
@@ -499,7 +499,7 @@ export default function SettingsModal() {
                         </p>
                       </div>
                     </div>
-                    <div className="p-4 border border-gray-300 rounded-lg dark:border-gray-700">
+                    <div className="p-4 border border-[#cbd1db] rounded-lg dark:border-gray-700">
                       <div className="flex items-center gap-2 mb-3">
                         <User className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                         <h4 className="text-sm font-medium text-gray-900 dark:text-white">{t('settings.profilePictureUrl')}</h4>
@@ -509,7 +509,7 @@ export default function SettingsModal() {
                           type="url"
                           defaultValue={user.user_metadata?.avatar_url || ''}
                           placeholder="https://example.com/your-image.jpg"
-                          className="flex-1 px-4 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                          className="flex-1 px-4 py-2 text-sm text-gray-900 bg-white border border-[#cbd1db] rounded-lg dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                           id="avatar-url-input"
                         />
                         <button
@@ -552,7 +552,7 @@ export default function SettingsModal() {
                         {t('settings.profilePictureHint')}
                       </p>
                     </div>
-                    <div className="p-4 border border-gray-300 rounded-lg dark:border-gray-700">
+                    <div className="p-4 border border-[#cbd1db] rounded-lg dark:border-gray-700">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <Mail className="w-4 h-4 text-gray-500 dark:text-gray-400" />
@@ -572,7 +572,7 @@ export default function SettingsModal() {
                               type="email"
                               value={newEmail}
                               onChange={(e) => setNewEmail(e.target.value)}
-                              className="w-full px-4 py-2 text-gray-900 bg-white border border-gray-300 rounded-lg dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                              className="w-full px-4 py-2 text-gray-900 bg-white border border-[#cbd1db] rounded-lg dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                               placeholder={t('settings.newEmailAddress')}
                             />
                           </div>
@@ -588,7 +588,7 @@ export default function SettingsModal() {
                         </form>
                       )}
                     </div>
-                    <div className="p-4 border border-gray-300 rounded-lg dark:border-gray-700">
+                    <div className="p-4 border border-[#cbd1db] rounded-lg dark:border-gray-700">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <Lock className="w-4 h-4 text-gray-500 dark:text-gray-400" />
@@ -608,7 +608,7 @@ export default function SettingsModal() {
                               type="password"
                               value={currentPassword}
                               onChange={(e) => setCurrentPassword(e.target.value)}
-                              className="w-full px-4 py-2 text-gray-900 bg-white border border-gray-300 rounded-lg dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                              className="w-full px-4 py-2 text-gray-900 bg-white border border-[#cbd1db] rounded-lg dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                               placeholder={t('settings.currentPassword')}
                             />
                           </div>
@@ -617,7 +617,7 @@ export default function SettingsModal() {
                               type="password"
                               value={newPassword}
                               onChange={(e) => setNewPassword(e.target.value)}
-                              className="w-full px-4 py-2 text-gray-900 bg-white border border-gray-300 rounded-lg dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                              className="w-full px-4 py-2 text-gray-900 bg-white border border-[#cbd1db] rounded-lg dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                               placeholder={t('settings.newPassword')}
                             />
                           </div>
@@ -626,7 +626,7 @@ export default function SettingsModal() {
                               type="password"
                               value={confirmPassword}
                               onChange={(e) => setConfirmPassword(e.target.value)}
-                              className="w-full px-4 py-2 text-gray-900 bg-white border border-gray-300 rounded-lg dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                              className="w-full px-4 py-2 text-gray-900 bg-white border border-[#cbd1db] rounded-lg dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                               placeholder={t('settings.confirmNewPassword')}
                             />
                           </div>
@@ -672,7 +672,7 @@ export default function SettingsModal() {
                           type="email"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
-                          className="w-full py-2 pl-10 pr-4 text-gray-900 bg-white border border-gray-300 rounded-lg dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                          className="w-full py-2 pl-10 pr-4 text-gray-900 bg-white border border-[#cbd1db] rounded-lg dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                           placeholder="your@email.com"
                         />
                       </div>
@@ -688,7 +688,7 @@ export default function SettingsModal() {
                           type={showPassword ? 'text' : 'password'}
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
-                          className="w-full py-2 pl-10 pr-10 text-gray-900 bg-white border border-gray-300 rounded-lg dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                          className="w-full py-2 pl-10 pr-10 text-gray-900 bg-white border border-[#cbd1db] rounded-lg dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                           placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
                         />
                         <button
@@ -717,7 +717,7 @@ export default function SettingsModal() {
                         type="button"
                         onClick={handleSignUp}
                         disabled={isLoading}
-                        className="flex-1 px-4 py-2 text-gray-700 dark:text-gray-200 transition-colors border border-gray-300 rounded-lg dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
+                        className="flex-1 px-4 py-2 text-gray-700 dark:text-gray-200 transition-colors border border-[#cbd1db] rounded-lg dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
                       >
                         {t('settings.register')}
                       </button>
@@ -789,7 +789,7 @@ export default function SettingsModal() {
                       value={syncInterval}
                       onChange={(e) => setSyncInterval(Number(e.target.value))}
                       disabled={!autoSync}
-                      className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"
+                      className="px-3 py-1.5 text-sm border border-[#cbd1db] dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"
                     >
                       <option value={1}>1 {t('settings.minute') || 'minute'}</option>
                       <option value={5}>5 {t('settings.minutes') || 'minutes'}</option>
@@ -850,7 +850,7 @@ export default function SettingsModal() {
                     {t('settings.statistics')}
                   </h4>
                   <div className="grid grid-cols-3 gap-4">
-                    <div className="p-4 text-center rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700">
+                    <div className="p-4 text-center rounded-lg bg-gray-50 dark:bg-gray-900 border border-[#cbd1db] dark:border-gray-700">
                       <p className="text-2xl font-bold text-gray-900 dark:text-white">
                         {notes.length}
                       </p>
@@ -858,7 +858,7 @@ export default function SettingsModal() {
                         {t('settings.notesCount')}
                       </p>
                     </div>
-                    <div className="p-4 text-center rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700">
+                    <div className="p-4 text-center rounded-lg bg-gray-50 dark:bg-gray-900 border border-[#cbd1db] dark:border-gray-700">
                       <p className="text-2xl font-bold text-gray-900 dark:text-white">
                         {folders.length}
                       </p>
@@ -866,7 +866,7 @@ export default function SettingsModal() {
                         {t('settings.foldersCount')}
                       </p>
                     </div>
-                    <div className="p-4 text-center rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700">
+                    <div className="p-4 text-center rounded-lg bg-gray-50 dark:bg-gray-900 border border-[#cbd1db] dark:border-gray-700">
                       <p className="text-2xl font-bold text-gray-900 dark:text-white">
                         {tags.length}
                       </p>
@@ -889,14 +889,14 @@ export default function SettingsModal() {
                   </p>
                   <button
                     onClick={handleExportData}
-                    className="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-200 transition-colors bg-gray-100 rounded-lg dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600"
+                    className="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-200 transition-colors bg-gray-100 rounded-lg dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 border border-[#cbd1db] dark:border-gray-600"
                   >
                     <Download className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                     {t('settings.exportDataButton')}
                   </button>
                 </div>
 
-                <div className="pt-6 space-y-3 border-t border-gray-300 dark:border-gray-700">
+                <div className="pt-6 space-y-3 border-t border-[#cbd1db] dark:border-gray-700">
                   <h4 className="text-sm font-medium text-red-600 dark:text-red-400">
                     {t('settings.dangerZone')}
                   </h4>
@@ -932,7 +932,7 @@ export default function SettingsModal() {
                   ].map((shortcut, i) => (
                     <div
                       key={i}
-                      className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-800"
+                      className="flex items-center justify-between py-2 border-b border-[#cbd1db] dark:border-gray-800"
                     >
                       <span className="text-sm text-gray-700 dark:text-gray-200">
                         {shortcut.action}

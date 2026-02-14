@@ -65,7 +65,7 @@ export default function TrashView() {
           </button>
         </div>
         {trashedNotes.length > 0 && (
-          <div className="px-4 py-3 border-b border-gray-300 dark:border-gray-700 flex items-center justify-between bg-gray-50 dark:bg-gray-900">
+          <div className="px-4 py-3 border-b border-[#cbd1db] dark:border-gray-700 flex items-center justify-between bg-gray-50 dark:bg-gray-900">
             <button
               onClick={handleRestoreAll}
               className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-lg transition-colors"

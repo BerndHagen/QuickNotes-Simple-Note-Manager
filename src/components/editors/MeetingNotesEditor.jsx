@@ -213,7 +213,7 @@ ${meetingData.notes}
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-gray-900">
-      <div className="flex-shrink-0 p-4 border-b border-gray-200 dark:border-gray-700 bg-[#e5eaf0] dark:bg-gray-800">
+      <div className="flex-shrink-0 p-4 border-b border-[#cbd1db] dark:border-gray-700 bg-[#e5eaf0] dark:bg-gray-800">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
@@ -250,25 +250,25 @@ ${meetingData.notes}
           </div>
         </div>
         <div className="grid grid-cols-4 gap-2">
-          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center border border-gray-200 dark:border-gray-600">
+          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center border border-[#cbd1db] dark:border-gray-600">
             <div className="text-xl font-bold text-gray-900 dark:text-white">{stats.present}/{stats.attendees}</div>
             <div className="text-xs text-gray-500 dark:text-gray-400">Present</div>
           </div>
-          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center border border-gray-200 dark:border-gray-600">
+          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center border border-[#cbd1db] dark:border-gray-600">
             <div className="text-xl font-bold text-gray-900 dark:text-white">{stats.completedAgenda}/{stats.agendaItems}</div>
             <div className="text-xs text-gray-500 dark:text-gray-400">Agenda Done</div>
           </div>
-          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center border border-gray-200 dark:border-gray-600">
+          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center border border-[#cbd1db] dark:border-gray-600">
             <div className="text-xl font-bold text-gray-900 dark:text-white">{stats.actionItems}</div>
             <div className="text-xs text-gray-500 dark:text-gray-400">Actions</div>
           </div>
-          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center border border-gray-200 dark:border-gray-600">
+          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center border border-[#cbd1db] dark:border-gray-600">
             <div className="text-xl font-bold text-gray-900 dark:text-white">{stats.decisions}</div>
             <div className="text-xs text-gray-500 dark:text-gray-400">Decisions</div>
           </div>
         </div>
       </div>
-      <div className="flex-shrink-0 flex gap-1 p-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 overflow-x-auto">
+      <div className="flex-shrink-0 flex gap-1 p-2 border-b border-[#cbd1db] dark:border-gray-700 bg-gray-50 dark:bg-gray-800 overflow-x-auto">
         {sections.map(section => (
           <button
             key={section.id}
@@ -309,7 +309,7 @@ ${meetingData.notes}
                 value={meetingData.title}
                 onChange={(e) => update('title', e.target.value)}
                 placeholder="Enter meeting title..."
-                className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 focus:border-blue-500 outline-none text-gray-900 dark:text-white"
+                className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-[#cbd1db] dark:border-gray-600 focus:border-blue-500 outline-none text-gray-900 dark:text-white"
               />
             </div>
 
@@ -322,7 +322,7 @@ ${meetingData.notes}
                   type="date"
                   value={meetingData.date}
                   onChange={(e) => update('date', e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 focus:border-blue-500 outline-none text-gray-900 dark:text-white"
+                  className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-[#cbd1db] dark:border-gray-600 focus:border-blue-500 outline-none text-gray-900 dark:text-white"
                 />
               </div>
               <div>
@@ -334,7 +334,7 @@ ${meetingData.notes}
                   value={meetingData.location}
                   onChange={(e) => update('location', e.target.value)}
                   placeholder="Room / Zoom link..."
-                  className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 focus:border-blue-500 outline-none text-gray-900 dark:text-white"
+                  className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-[#cbd1db] dark:border-gray-600 focus:border-blue-500 outline-none text-gray-900 dark:text-white"
                 />
               </div>
             </div>
@@ -348,7 +348,7 @@ ${meetingData.notes}
                   type="time"
                   value={meetingData.startTime}
                   onChange={(e) => update('startTime', e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 focus:border-blue-500 outline-none text-gray-900 dark:text-white"
+                  className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-[#cbd1db] dark:border-gray-600 focus:border-blue-500 outline-none text-gray-900 dark:text-white"
                 />
               </div>
               <div>
@@ -359,7 +359,7 @@ ${meetingData.notes}
                   type="time"
                   value={meetingData.endTime}
                   onChange={(e) => update('endTime', e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 focus:border-blue-500 outline-none text-gray-900 dark:text-white"
+                  className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-[#cbd1db] dark:border-gray-600 focus:border-blue-500 outline-none text-gray-900 dark:text-white"
                 />
               </div>
             </div>
@@ -374,7 +374,7 @@ ${meetingData.notes}
                 onChange={(e) => setNewAttendee(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && addAttendee()}
                 placeholder="Add attendee..."
-                className="flex-1 px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 focus:border-blue-500 outline-none text-gray-900 dark:text-white"
+                className="flex-1 px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-[#cbd1db] dark:border-gray-600 focus:border-blue-500 outline-none text-gray-900 dark:text-white"
               />
               <button
                 onClick={addAttendee}
@@ -397,7 +397,7 @@ ${meetingData.notes}
                     className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-colors ${
                       attendee.present
                         ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
-                        : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+                        : 'bg-gray-50 dark:bg-gray-800 border-[#cbd1db] dark:border-gray-700'
                     }`}
                   >
                     <button
@@ -440,7 +440,7 @@ ${meetingData.notes}
         )}
         {activeSection === 'agenda' && (
           <div className="max-w-2xl mx-auto">
-            <div className="mb-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+            <div className="mb-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-700">
               <div className="grid grid-cols-3 gap-3 mb-3">
                 <div className="col-span-2">
                   <input
@@ -448,14 +448,14 @@ ${meetingData.notes}
                     value={newAgendaItem.topic}
                     onChange={(e) => setNewAgendaItem({ ...newAgendaItem, topic: e.target.value })}
                     placeholder="Agenda topic..."
-                    className="w-full px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 outline-none text-sm"
+                    className="w-full px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 outline-none text-sm"
                   />
                 </div>
                 <div>
                   <select
                     value={newAgendaItem.duration}
                     onChange={(e) => setNewAgendaItem({ ...newAgendaItem, duration: parseInt(e.target.value) })}
-                    className="w-full px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 outline-none text-sm"
+                    className="w-full px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 outline-none text-sm"
                   >
                     <option value={5}>5 min</option>
                     <option value={10}>10 min</option>
@@ -473,7 +473,7 @@ ${meetingData.notes}
                   value={newAgendaItem.presenter}
                   onChange={(e) => setNewAgendaItem({ ...newAgendaItem, presenter: e.target.value })}
                   placeholder="Presenter (optional)..."
-                  className="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 outline-none text-sm"
+                  className="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 outline-none text-sm"
                 />
                 <button
                   onClick={addAgendaItem}
@@ -499,7 +499,7 @@ ${meetingData.notes}
                         ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
                         : currentAgendaItem === item.id
                           ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700'
-                          : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+                          : 'bg-white dark:bg-gray-800 border-[#cbd1db] dark:border-gray-700'
                     }`}
                   >
                     <div className="flex items-start gap-3">
@@ -538,7 +538,7 @@ ${meetingData.notes}
                           value={item.notes}
                           onChange={(e) => updateAgendaItem(item.id, { notes: e.target.value })}
                           placeholder="Add notes for this topic..."
-                          className="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 outline-none text-sm resize-none"
+                          className="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 outline-none text-sm resize-none"
                           rows={2}
                         />
                       </div>
@@ -576,13 +576,13 @@ ${meetingData.notes}
               value={meetingData.notes}
               onChange={(e) => update('notes', e.target.value)}
               placeholder="Take meeting notes here..."
-              className="w-full h-[400px] px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 focus:border-blue-500 outline-none text-gray-900 dark:text-white resize-none"
+              className="w-full h-[400px] px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-2 border-[#cbd1db] dark:border-gray-700 focus:border-blue-500 outline-none text-gray-900 dark:text-white resize-none"
             />
           </div>
         )}
         {activeSection === 'actions' && (
           <div className="max-w-2xl mx-auto">
-            <div className="mb-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+            <div className="mb-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-700">
               <div className="grid grid-cols-3 gap-3 mb-3">
                 <div className="col-span-2">
                   <input
@@ -590,7 +590,7 @@ ${meetingData.notes}
                     value={newActionItem.task}
                     onChange={(e) => setNewActionItem({ ...newActionItem, task: e.target.value })}
                     placeholder="Action item..."
-                    className="w-full px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 outline-none text-sm"
+                    className="w-full px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 outline-none text-sm"
                   />
                 </div>
                 <div>
@@ -598,7 +598,7 @@ ${meetingData.notes}
                     type="date"
                     value={newActionItem.dueDate}
                     onChange={(e) => setNewActionItem({ ...newActionItem, dueDate: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 outline-none text-sm"
+                    className="w-full px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 outline-none text-sm"
                   />
                 </div>
               </div>
@@ -606,7 +606,7 @@ ${meetingData.notes}
                 <select
                   value={newActionItem.owner}
                   onChange={(e) => setNewActionItem({ ...newActionItem, owner: e.target.value })}
-                  className="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 outline-none text-sm"
+                  className="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 outline-none text-sm"
                 >
                   <option value="">Assign to...</option>
                   {meetingData.attendees.map(a => (
@@ -635,7 +635,7 @@ ${meetingData.notes}
                     className={`flex items-center gap-3 p-3 rounded-xl border-2 ${
                       item.completed
                         ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
-                        : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+                        : 'bg-white dark:bg-gray-800 border-[#cbd1db] dark:border-gray-700'
                     }`}
                   >
                     <button
@@ -689,7 +689,7 @@ ${meetingData.notes}
                 onChange={(e) => setNewDecision(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && addDecision()}
                 placeholder="Record a decision made..."
-                className="flex-1 px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 focus:border-blue-500 outline-none text-gray-900 dark:text-white"
+                className="flex-1 px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-[#cbd1db] dark:border-gray-600 focus:border-blue-500 outline-none text-gray-900 dark:text-white"
               />
               <button
                 onClick={addDecision}

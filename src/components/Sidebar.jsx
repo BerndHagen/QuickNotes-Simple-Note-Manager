@@ -344,7 +344,7 @@ function FolderContextMenu({ x, y, folder, onClose, onRename, onEdit, onDelete }
         <Palette className="w-4 h-4 text-gray-400" />
         <span className="text-sm">{t('common.edit') || 'Edit'}</span>
       </button>
-      <div className="my-1.5 mx-3 border-t border-gray-100 dark:border-gray-800" />
+      <div className="my-1.5 mx-3 border-t border-[#cbd1db] dark:border-gray-800" />
       <button
         onClick={() => { onDelete(); onClose() }}
         className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-red-50 dark:hover:bg-red-900/10 text-red-500 dark:text-red-400 transition-colors"
@@ -492,7 +492,7 @@ function EditFolderModal({ isOpen, onClose, folder, onUpdate }) {
           </button>
         </div>
         <div className="p-6">
-        <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl mb-6 border border-gray-300 dark:border-gray-700">
+        <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl mb-6 border border-[#cbd1db] dark:border-gray-700">
           <div
             className="w-12 h-12 rounded-xl flex items-center justify-center shadow-md"
             style={{ backgroundColor: color }}
@@ -517,7 +517,7 @@ function EditFolderModal({ isOpen, onClose, folder, onUpdate }) {
               if (e.key === 'Enter') handleSave()
               if (e.key === 'Escape') onClose()
             }}
-            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+            className="w-full px-4 py-3 border border-[#cbd1db] dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
             placeholder={t('folders.folderName') || 'Folder Name'}
           />
         </div>
@@ -525,7 +525,7 @@ function EditFolderModal({ isOpen, onClose, folder, onUpdate }) {
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             {t('folders.chooseIcon') || 'Choose Icon'}
           </label>
-          <div className="flex flex-wrap gap-2 p-3 bg-gray-50 dark:bg-gray-900 rounded-xl max-h-[200px] overflow-y-auto border border-gray-300 dark:border-gray-700">
+          <div className="flex flex-wrap gap-2 p-3 bg-gray-50 dark:bg-gray-900 rounded-xl max-h-[200px] overflow-y-auto border border-[#cbd1db] dark:border-gray-700">
             {iconNames.map((iconName) => {
               const Ic = folderIcons[iconName]
               const isSelected = icon === iconName
@@ -550,7 +550,7 @@ function EditFolderModal({ isOpen, onClose, folder, onUpdate }) {
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             {t('folders.chooseColor') || 'Choose Color'}
           </label>
-          <div className="flex flex-wrap gap-2 p-3 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-300 dark:border-gray-700">
+          <div className="flex flex-wrap gap-2 p-3 bg-gray-50 dark:bg-gray-900 rounded-xl border border-[#cbd1db] dark:border-gray-700">
             {folderColors.map((c) => (
               <button
                 key={c}
@@ -574,7 +574,7 @@ function EditFolderModal({ isOpen, onClose, folder, onUpdate }) {
           </button>
           <button
             onClick={onClose}
-            className="px-6 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-medium transition-colors border border-gray-300 dark:border-gray-600"
+            className="px-6 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-medium transition-colors border border-[#cbd1db] dark:border-gray-600"
           >
             {t('common.cancel') || 'Cancel'}
           </button>
@@ -638,7 +638,7 @@ function NewFolderModal({ isOpen, onClose, onCreate }) {
           </button>
         </div>
         <div className="flex-1 overflow-y-auto p-6">
-          <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl mb-6 border border-gray-300 dark:border-gray-700">
+          <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl mb-6 border border-[#cbd1db] dark:border-gray-700">
             <div
               className="w-14 h-14 rounded-xl flex items-center justify-center shadow-lg"
               style={{ backgroundColor: color }}
@@ -663,7 +663,7 @@ function NewFolderModal({ isOpen, onClose, onCreate }) {
                 if (e.key === 'Enter') handleCreate()
                 if (e.key === 'Escape') onClose()
               }}
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-[#cbd1db] dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               placeholder={t('folders.folderName') || 'Folder Name'}
             />
           </div>
@@ -671,7 +671,7 @@ function NewFolderModal({ isOpen, onClose, onCreate }) {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               {t('folders.chooseIcon') || 'Choose Icon'}
             </label>
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(40px,1fr))] gap-2 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-300 dark:border-gray-700">
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(40px,1fr))] gap-2 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-[#cbd1db] dark:border-gray-700">
               {iconNames.map((iconName) => {
                 const Ic = folderIcons[iconName]
                 const isSelected = icon === iconName
@@ -696,7 +696,7 @@ function NewFolderModal({ isOpen, onClose, onCreate }) {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               {t('folders.chooseColor') || 'Choose Color'}
             </label>
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(36px,1fr))] gap-2 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-300 dark:border-gray-700">
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(36px,1fr))] gap-2 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-[#cbd1db] dark:border-gray-700">
               {folderColors.map((c) => (
                 <button
                   key={c}
@@ -710,7 +710,7 @@ function NewFolderModal({ isOpen, onClose, onCreate }) {
             </div>
           </div>
         </div>
-        <div className="p-6 border-t border-gray-300 dark:border-gray-700 flex gap-3">
+        <div className="p-6 border-t border-[#cbd1db] dark:border-gray-700 flex gap-3">
           <button
             onClick={handleCreate}
             disabled={!name.trim()}
@@ -721,7 +721,7 @@ function NewFolderModal({ isOpen, onClose, onCreate }) {
           </button>
           <button
             onClick={onClose}
-            className="px-6 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-medium transition-colors border border-gray-300 dark:border-gray-600"
+            className="px-6 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-medium transition-colors border border-[#cbd1db] dark:border-gray-600"
           >
             {t('common.cancel') || 'Cancel'}
           </button>
@@ -900,7 +900,7 @@ export default function Sidebar() {
               !selectedFolderId && !selectedTagFilter ? 'font-semibold' : 'font-medium'
             }`}>{t('sidebar.allNotes')}</span>
           </div>
-          <span className={`text-[11px] tabular-nums px-1.5 py-0.5 rounded-md min-w-[24px] text-center font-medium count-badge border border-gray-300 dark:border-gray-600 ${
+          <span className={`text-[11px] tabular-nums px-1.5 py-0.5 rounded-md min-w-[24px] text-center font-medium count-badge border border-[#cbd1db] dark:border-gray-600 ${
             !selectedFolderId && !selectedTagFilter
               ? 'bg-emerald-100/80 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400'
               : 'bg-white/80 dark:bg-gray-800/80 text-gray-400 dark:text-gray-500'
@@ -926,7 +926,7 @@ export default function Sidebar() {
               selectedTagFilter === '__starred__' ? 'font-semibold' : 'font-medium'
             }`}>{t('sidebar.favorites')}</span>
           </div>
-          <span className={`text-[11px] tabular-nums px-1.5 py-0.5 rounded-md min-w-[24px] text-center font-medium count-badge border border-gray-300 dark:border-gray-600 ${
+          <span className={`text-[11px] tabular-nums px-1.5 py-0.5 rounded-md min-w-[24px] text-center font-medium count-badge border border-[#cbd1db] dark:border-gray-600 ${
             selectedTagFilter === '__starred__'
               ? 'bg-emerald-100/80 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400'
               : 'bg-white/80 dark:bg-gray-800/80 text-gray-400 dark:text-gray-500'
@@ -946,7 +946,7 @@ export default function Sidebar() {
             <span className="text-[13px] font-medium">{t('sidebar.trash')}</span>
           </div>
           {getTrashCount() > 0 && (
-            <span className="text-[11px] tabular-nums px-1.5 py-0.5 rounded-md min-w-[24px] text-center font-medium count-badge border border-gray-300 dark:border-gray-600 bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400">
+            <span className="text-[11px] tabular-nums px-1.5 py-0.5 rounded-md min-w-[24px] text-center font-medium count-badge border border-[#cbd1db] dark:border-gray-600 bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400">
               {getTrashCount()}
             </span>
           )}
@@ -960,7 +960,7 @@ export default function Sidebar() {
             <span className="text-[13px] font-medium">{t('sidebar.archive')}</span>
           </div>
           {getArchiveCount() > 0 && (
-            <span className="text-[11px] tabular-nums px-1.5 py-0.5 rounded-md min-w-[24px] text-center font-medium count-badge border border-gray-300 dark:border-gray-600 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400">
+            <span className="text-[11px] tabular-nums px-1.5 py-0.5 rounded-md min-w-[24px] text-center font-medium count-badge border border-[#cbd1db] dark:border-gray-600 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400">
               {getArchiveCount()}
             </span>
           )}
@@ -977,7 +977,7 @@ export default function Sidebar() {
             <span className="text-[13px] font-medium">Shared Notes</span>
           </div>
           {pendingShares?.length > 0 && (
-            <span className="text-[11px] tabular-nums px-1.5 py-0.5 rounded-md min-w-[24px] text-center font-medium count-badge border border-gray-300 dark:border-gray-600 bg-orange-50 dark:bg-orange-900/20 text-orange-500 dark:text-orange-400 animate-pulse">
+            <span className="text-[11px] tabular-nums px-1.5 py-0.5 rounded-md min-w-[24px] text-center font-medium count-badge border border-[#cbd1db] dark:border-gray-600 bg-orange-50 dark:bg-orange-900/20 text-orange-500 dark:text-orange-400 animate-pulse">
               {pendingShares.length}
             </span>
           )}
@@ -1055,7 +1055,7 @@ export default function Sidebar() {
                       <span className={`text-[13px] truncate ${selectedFolderId === folder.id ? 'font-semibold' : 'font-medium'}`}>{folder.name}</span>
                     )}
                   </div>
-                  <span className={`text-[11px] tabular-nums px-1.5 py-0.5 rounded-md min-w-[24px] text-center font-medium count-badge border border-gray-300 dark:border-gray-600 ${
+                  <span className={`text-[11px] tabular-nums px-1.5 py-0.5 rounded-md min-w-[24px] text-center font-medium count-badge border border-[#cbd1db] dark:border-gray-600 ${
                     selectedFolderId === folder.id
                       ? 'bg-emerald-100/80 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400'
                       : 'bg-white/70 dark:bg-gray-800/80 text-gray-400 dark:text-gray-500'

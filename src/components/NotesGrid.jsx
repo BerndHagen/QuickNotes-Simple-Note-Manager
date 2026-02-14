@@ -165,7 +165,7 @@ function NoteContextMenu({ x, y, note, onClose, folders, tags }) {
         <span>{note.starred ? 'Remove from Favorites' : 'Add to Favorites'}</span>
       </button>
       
-      <div className="my-1.5 mx-3 border-t border-gray-100 dark:border-gray-800" />
+      <div className="my-1.5 mx-3 border-t border-[#cbd1db] dark:border-gray-800" />
       
       <button
         onClick={() => handleAction(() => duplicateNote(note.id))}
@@ -226,7 +226,7 @@ function NoteContextMenu({ x, y, note, onClose, folders, tags }) {
         )}
       </div>
       
-      <div className="my-1.5 mx-3 border-t border-gray-100 dark:border-gray-800" />
+      <div className="my-1.5 mx-3 border-t border-[#cbd1db] dark:border-gray-800" />
       
       <button
         onClick={() => handleAction(() => {
@@ -318,7 +318,7 @@ function GridNoteCard({ note, isSelected, onClick, onContextMenu }) {
           )}
         </div>
       )}
-      <div className="flex items-center gap-2 pt-2 text-xs text-emerald-600 border-t border-gray-100 dark:border-gray-700 dark:text-emerald-400">
+      <div className="flex items-center gap-2 pt-2 text-xs text-emerald-600 border-t border-[#cbd1db] dark:border-gray-700 dark:text-emerald-400">
         <Clock className="w-3 h-3" />
         <span>{formatDate(note.updatedAt, language)}</span>
       </div>
@@ -415,7 +415,7 @@ export default function NotesGrid() {
   if (showingEditor && selectedNoteId) {
     return (
       <div className="flex flex-col w-full h-full">
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/90 backdrop-blur-sm">
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-[#cbd1db] dark:border-gray-700 bg-white/80 dark:bg-gray-900/90 backdrop-blur-sm">
           <button
             onClick={handleBackToGrid}
             className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
@@ -458,7 +458,7 @@ export default function NotesGrid() {
             placeholder={t('notes.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full py-2.5 pl-10 pr-4 text-[13px] text-gray-900 placeholder-gray-400 bg-gray-50/80 border border-gray-100 rounded-xl dark:bg-gray-900 dark:border-gray-800/60 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:text-white transition-all"
+            className="w-full py-2.5 pl-10 pr-4 text-[13px] text-gray-900 placeholder-gray-400 bg-gray-50/80 border border-[#cbd1db] rounded-xl dark:bg-gray-900 dark:border-gray-800/60 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:text-white transition-all"
           />
         </div>
       </div>

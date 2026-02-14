@@ -240,7 +240,7 @@ export default function TodoListEditor({ data, onChange, noteTitle }) {
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-gray-900">
-      <div className="flex-shrink-0 p-4 border-b border-gray-200 dark:border-gray-700 bg-[#e5eaf0] dark:bg-gray-800">
+      <div className="flex-shrink-0 p-4 border-b border-[#cbd1db] dark:border-gray-700 bg-[#e5eaf0] dark:bg-gray-800">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
@@ -276,29 +276,29 @@ export default function TodoListEditor({ data, onChange, noteTitle }) {
           </div>
         </div>
         <div className="grid grid-cols-4 gap-2">
-          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center border border-gray-200 dark:border-gray-600">
+          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center border border-[#cbd1db] dark:border-gray-600">
             <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</div>
             <div className="text-xs text-gray-500 dark:text-gray-400">Total</div>
           </div>
-          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center border border-gray-200 dark:border-gray-600">
+          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center border border-[#cbd1db] dark:border-gray-600">
             <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.active}</div>
             <div className="text-xs text-gray-500 dark:text-gray-400">Active</div>
           </div>
-          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center border border-gray-200 dark:border-gray-600">
+          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center border border-[#cbd1db] dark:border-gray-600">
             <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.completed}</div>
             <div className="text-xs text-gray-500 dark:text-gray-400">Done</div>
           </div>
-          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center border border-gray-200 dark:border-gray-600">
+          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center border border-[#cbd1db] dark:border-gray-600">
             <div className="text-2xl font-bold text-red-500 dark:text-red-400">{stats.overdue}</div>
             <div className="text-xs text-gray-500 dark:text-gray-400">Overdue</div>
           </div>
         </div>
       </div>
-      <div className="flex-shrink-0 p-3 border-b border-gray-200 dark:border-gray-700 flex items-center gap-2 bg-gray-50 dark:bg-gray-800">
+      <div className="flex-shrink-0 p-3 border-b border-[#cbd1db] dark:border-gray-700 flex items-center gap-2 bg-gray-50 dark:bg-gray-800">
         <div className="relative" ref={filterRef}>
           <button
             onClick={() => setShowFilterMenu(!showFilterMenu)}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
           >
             <Filter className="w-4 h-4 text-gray-500" />
             <span className="text-sm text-gray-700 dark:text-gray-300">
@@ -330,7 +330,7 @@ export default function TodoListEditor({ data, onChange, noteTitle }) {
         <div className="relative" ref={sortRef}>
           <button
             onClick={() => setShowSortMenu(!showSortMenu)}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
           >
             <SortAsc className="w-4 h-4 text-gray-500" />
             <span className="text-sm text-gray-700 dark:text-gray-300">
@@ -371,7 +371,7 @@ export default function TodoListEditor({ data, onChange, noteTitle }) {
           Clear Done
         </button>
       </div>
-      <div className="flex-shrink-0 p-4 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex-shrink-0 p-4 border-b border-[#cbd1db] dark:border-gray-700">
         <div className="flex gap-2">
           <input
             ref={inputRef}
@@ -380,7 +380,7 @@ export default function TodoListEditor({ data, onChange, noteTitle }) {
             onChange={(e) => setNewTaskText(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && addTask()}
             placeholder="Add a new task..."
-            className="flex-1 px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 focus:border-emerald-500 focus:bg-white dark:focus:bg-gray-700 outline-none text-gray-900 dark:text-white placeholder-gray-500 transition-all"
+            className="flex-1 px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-[#cbd1db] dark:border-gray-600 focus:border-emerald-500 focus:bg-white dark:focus:bg-gray-700 outline-none text-gray-900 dark:text-white placeholder-gray-500 transition-all"
           />
           <button
             onClick={addTask}
@@ -494,8 +494,8 @@ function TaskItem({
       onDrop={onDrop}
       className={`group rounded-xl border-2 transition-all ${
         task.completed 
-          ? 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 opacity-60' 
-          : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-emerald-300 dark:hover:border-emerald-700'
+          ? 'bg-gray-50 dark:bg-gray-800/50 border-[#cbd1db] dark:border-gray-700 opacity-60' 
+          : 'bg-white dark:bg-gray-800 border-[#cbd1db] dark:border-gray-700 hover:border-emerald-300 dark:hover:border-emerald-700'
       }`}
     >
       <div className="flex items-center gap-3 p-3">
@@ -649,7 +649,7 @@ function TaskItem({
         </div>
       </div>
       {isExpanded && (
-        <div className="px-4 pb-4 pt-2 border-t border-gray-100 dark:border-gray-700">
+        <div className="px-4 pb-4 pt-2 border-t border-[#cbd1db] dark:border-gray-700">
           <div className="mb-3">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Subtasks</span>
@@ -696,7 +696,7 @@ function TaskItem({
                   }
                 }}
                 placeholder="Add subtask..."
-                className="flex-1 px-3 py-1.5 text-sm rounded-lg bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:border-emerald-500 outline-none text-gray-900 dark:text-white"
+                className="flex-1 px-3 py-1.5 text-sm rounded-lg bg-gray-100 dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 focus:border-emerald-500 outline-none text-gray-900 dark:text-white"
               />
               <button
                 onClick={() => {
@@ -717,7 +717,7 @@ function TaskItem({
               value={task.notes}
               onChange={(e) => onUpdate({ notes: e.target.value })}
               placeholder="Add notes..."
-              className="w-full px-3 py-2 text-sm rounded-lg bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:border-emerald-500 outline-none text-gray-900 dark:text-white resize-none"
+              className="w-full px-3 py-2 text-sm rounded-lg bg-gray-100 dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 focus:border-emerald-500 outline-none text-gray-900 dark:text-white resize-none"
               rows={3}
             />
           </div>

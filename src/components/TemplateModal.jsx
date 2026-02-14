@@ -186,7 +186,7 @@ export default function TemplateModal() {
               <button
                 key={template.id}
                 onClick={() => handleSelectTemplate(template)}
-                className="p-4 border border-gray-300 dark:border-gray-700 rounded-lg hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all text-left group"
+                className="p-4 border border-[#cbd1db] dark:border-gray-700 rounded-lg hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all text-left group"
               >
                 <div className="flex items-start gap-3">
                   <div className="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg group-hover:bg-primary-100 dark:group-hover:bg-primary-900/50 transition-colors">

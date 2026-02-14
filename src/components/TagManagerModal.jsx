@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react'
+import React, { useState } from 'react'
 import { X, Tag, Trash2, Edit2, Check, Plus, Hash } from 'lucide-react'
 import { useNotesStore, useUIStore } from '../store'
 import { useTranslation } from '../lib/useTranslation'
@@ -98,14 +98,14 @@ export default function TagManagerModal() {
           {!showNewTag && (
             <button
               onClick={() => setShowNewTag(true)}
-              className="w-full mb-4 p-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-emerald-500 dark:hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors flex items-center justify-center gap-2 text-gray-500 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400"
+              className="w-full mb-4 p-3 border-2 border-dashed border-[#cbd1db] dark:border-gray-600 rounded-xl hover:border-emerald-500 dark:hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors flex items-center justify-center gap-2 text-gray-500 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400"
             >
               <Plus className="w-5 h-5" />
               <span>{t('tags.addNew') || 'Add New Tag'}</span>
             </button>
           )}
           {showNewTag && (
-            <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-300 dark:border-gray-700">
+            <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-[#cbd1db] dark:border-gray-700">
               <div className="flex items-center gap-3 mb-3">
                 <div className="relative flex-1">
                   <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -114,7 +114,7 @@ export default function TagManagerModal() {
                     value={newTagName}
                     onChange={(e) => setNewTagName(e.target.value)}
                     placeholder={t('tags.tagName') || 'Tag name'}
-                    className="w-full pl-9 pr-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
+                    className="w-full pl-9 pr-3 py-2 bg-white dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
                     autoFocus
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') handleCreateTag()
@@ -150,7 +150,7 @@ export default function TagManagerModal() {
                     setShowNewTag(false)
                     setNewTagName('')
                   }}
-                  className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium transition-colors border border-gray-300 dark:border-gray-600"
+                  className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium transition-colors border border-[#cbd1db] dark:border-gray-600"
                 >
                   {t('common.cancel') || 'Cancel'}
                 </button>
@@ -168,7 +168,7 @@ export default function TagManagerModal() {
               {tags.map((tag) => (
                 <div
                   key={tag.id}
-                  className="p-3 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-300 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
+                  className="p-3 bg-gray-50 dark:bg-gray-900 rounded-xl border border-[#cbd1db] dark:border-gray-700 hover:border-[#cbd1db] dark:hover:border-gray-600 transition-colors"
                 >
                   {editingTagId === tag.id ? (
                     <div>
@@ -179,7 +179,7 @@ export default function TagManagerModal() {
                             type="text"
                             value={editingName}
                             onChange={(e) => setEditingName(e.target.value)}
-                            className="w-full pl-9 pr-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
+                            className="w-full pl-9 pr-3 py-2 bg-white dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
                             autoFocus
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') handleSaveEdit()
@@ -211,7 +211,7 @@ export default function TagManagerModal() {
                         </button>
                         <button
                           onClick={handleCancelEdit}
-                          className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium transition-colors border border-gray-300 dark:border-gray-600"
+                          className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium transition-colors border border-[#cbd1db] dark:border-gray-600"
                         >
                           {t('common.cancel') || 'Cancel'}
                         </button>
@@ -231,7 +231,7 @@ export default function TagManagerModal() {
                         </button>
                         <button
                           onClick={() => setDeleteConfirmId(null)}
-                          className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium transition-colors border border-gray-300 dark:border-gray-600"
+                          className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium transition-colors border border-[#cbd1db] dark:border-gray-600"
                         >
                           {t('common.cancel') || 'Cancel'}
                         </button>

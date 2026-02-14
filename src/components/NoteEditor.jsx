@@ -317,7 +317,7 @@ export default function NoteEditor() {
       <div className="flex flex-col items-center justify-center flex-1 h-full bg-gradient-to-br from-gray-50/80 via-white to-emerald-50/20 dark:from-gray-950 dark:via-gray-950 dark:to-gray-900 editor-paper">
         <div className="flex flex-col items-center max-w-xs text-center">
           <div className="relative mb-8 empty-state-glow">
-            <div className="flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 shadow-sm border border-gray-100/50 dark:border-gray-700/30">
+            <div className="flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 shadow-sm border border-[#cbd1db]/50 dark:border-gray-700/30">
               <FileText className="w-9 h-9 text-gray-200 dark:text-gray-700" />
             </div>
             <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/25 badge-shine">
@@ -545,7 +545,7 @@ export default function NoteEditor() {
                     <Archive className="w-4 h-4 text-gray-400" />
                     Archive note
                   </button>
-                  <div className="my-1.5 mx-3 border-t border-gray-100 dark:border-gray-800" />
+                  <div className="my-1.5 mx-3 border-t border-[#cbd1db] dark:border-gray-800" />
                   <button
                     onClick={handleDelete}
                     className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-left text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 dark:text-red-400 transition-colors rounded-lg mx-0"
@@ -654,7 +654,7 @@ export default function NoteEditor() {
                         }
                       }}
                       placeholder="New Tag..."
-                      className="flex-1 px-3 py-1.5 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-gray-900 dark:text-white"
+                      className="flex-1 px-3 py-1.5 text-sm bg-gray-50 dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-gray-900 dark:text-white"
                     />
                     <button
                       onClick={() => {

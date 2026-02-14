@@ -102,7 +102,7 @@ export default function NotePreviewPopover({ noteId, children, position = 'right
       {isVisible && (
         <div
           ref={popoverRef}
-          className="fixed z-50 w-80 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+          className="fixed z-50 w-80 bg-white dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-700 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
           style={{ left: coords.x, top: coords.y }}
           onMouseEnter={() => {
             if (timeoutRef.current) {
@@ -111,7 +111,7 @@ export default function NotePreviewPopover({ noteId, children, position = 'right
           }}
           onMouseLeave={handleMouseLeave}
         >
-          <div className="px-4 py-3 bg-gray-50 dark:bg-gray-900 border-b border-gray-300 dark:border-gray-700">
+          <div className="px-4 py-3 bg-gray-50 dark:bg-gray-900 border-b border-[#cbd1db] dark:border-gray-700">
             <div className="flex items-start gap-2">
               <Eye className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
               <div className="min-w-0">
@@ -156,7 +156,7 @@ export default function NotePreviewPopover({ noteId, children, position = 'right
               )}
             </div>
           )}
-          <div className="px-4 py-2 bg-gray-50 dark:bg-gray-900 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+          <div className="px-4 py-2 bg-gray-50 dark:bg-gray-900 border-t border-[#cbd1db] dark:border-gray-700 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
             <span className="flex items-center gap-1">
               <FileText className="w-3 h-3" />
               {(note.content || '').replace(/<[^>]*>/g, '').trim().split(/\s+/).filter(Boolean).length} words

@@ -313,10 +313,10 @@ export default function KeyboardShortcutsModal() {
             </div>
           ))}
         </div>
-        <div className="flex items-center justify-between p-6 border-t border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+        <div className="flex items-center justify-between p-6 border-t border-[#cbd1db] dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
           <button
             onClick={handleReset}
-            className="flex items-center gap-2 px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors border border-gray-300 dark:border-gray-600 rounded-lg"
+            className="flex items-center gap-2 px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors border border-[#cbd1db] dark:border-gray-600 rounded-lg"
           >
             <RotateCcw className="w-4 h-4" />
             Reset All to Default
@@ -324,7 +324,7 @@ export default function KeyboardShortcutsModal() {
           <div className="flex gap-3">
             <button
               onClick={() => setShortcutsModalOpen(false)}
-              className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors border border-gray-300 dark:border-gray-600 rounded-lg"
+              className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors border border-[#cbd1db] dark:border-gray-600 rounded-lg"
             >
               Cancel
             </button>

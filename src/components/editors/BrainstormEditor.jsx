@@ -157,7 +157,7 @@ export default function BrainstormEditor({ data, onChange, noteTitle }) {
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-gray-900">
-      <div className="flex-shrink-0 p-4 border-b border-gray-200 dark:border-gray-700 bg-[#e5eaf0] dark:bg-gray-800">
+      <div className="flex-shrink-0 p-4 border-b border-[#cbd1db] dark:border-gray-700 bg-[#e5eaf0] dark:bg-gray-800">
         <div className="flex items-center justify-between mb-4">
           <div className="flex-1">
             <div className="flex items-center gap-2 text-gray-900 dark:text-white mb-2">
@@ -169,7 +169,7 @@ export default function BrainstormEditor({ data, onChange, noteTitle }) {
               value={brainstormData.topic}
               onChange={(e) => update('topic', e.target.value)}
               placeholder="What are you brainstorming about?"
-              className="w-full max-w-md px-4 py-2 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none border border-gray-300 dark:border-gray-600"
+              className="w-full max-w-md px-4 py-2 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none border border-[#cbd1db] dark:border-gray-600"
             />
           </div>
           <div className="flex gap-6 text-gray-900 dark:text-white">
@@ -196,7 +196,7 @@ export default function BrainstormEditor({ data, onChange, noteTitle }) {
               onChange={(e) => setNewIdea(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && addIdea()}
               placeholder="Type your idea and press Enter..."
-              className="w-full pl-10 pr-4 py-3 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none text-lg border border-gray-300 dark:border-gray-600"
+              className="w-full pl-10 pr-4 py-3 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none text-lg border border-[#cbd1db] dark:border-gray-600"
               autoFocus
             />
           </div>
@@ -217,7 +217,7 @@ export default function BrainstormEditor({ data, onChange, noteTitle }) {
           </button>
         </div>
       </div>
-      <div className="flex-shrink-0 flex items-center justify-between gap-4 p-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+      <div className="flex-shrink-0 flex items-center justify-between gap-4 p-3 border-b border-[#cbd1db] dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
         <div className="flex items-center gap-2 flex-wrap">
           <Tag className="w-4 h-4 text-gray-500" />
           <button
@@ -259,14 +259,14 @@ export default function BrainstormEditor({ data, onChange, noteTitle }) {
           <select
             value={brainstormData.sortBy}
             onChange={(e) => update('sortBy', e.target.value)}
-            className="px-3 py-1 rounded-lg bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 outline-none text-sm"
+            className="px-3 py-1 rounded-lg bg-gray-100 dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 text-gray-700 dark:text-gray-300 outline-none text-sm"
           >
             <option value="newest">Newest First</option>
             <option value="oldest">Oldest First</option>
             <option value="votes">Most Votes</option>
             <option value="starred">Starred First</option>
           </select>
-          <div className="flex border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
+          <div className="flex border border-[#cbd1db] dark:border-gray-600 rounded-lg overflow-hidden">
             <button
               onClick={() => update('viewMode', 'grid')}
               className={`p-2 ${
@@ -310,7 +310,7 @@ export default function BrainstormEditor({ data, onChange, noteTitle }) {
                   className={`relative p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border-2 transition-all cursor-pointer ${
                     isExpanded
                       ? 'border-purple-500 shadow-lg scale-105'
-                      : 'border-transparent hover:border-gray-200 dark:hover:border-gray-700'
+                      : 'border-transparent hover:border-[#cbd1db] dark:hover:border-gray-700'
                   } ${idea.starred ? 'ring-2 ring-yellow-400' : ''}`}
                   onClick={() => setExpandedIdea(isExpanded ? null : idea.id)}
                 >
@@ -397,13 +397,13 @@ export default function BrainstormEditor({ data, onChange, noteTitle }) {
                     </div>
                   </div>
                   {isExpanded && (
-                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700" onClick={(e) => e.stopPropagation()}>
+                    <div className="mt-4 pt-4 border-t border-[#cbd1db] dark:border-gray-700" onClick={(e) => e.stopPropagation()}>
                       <div className="mb-3">
                         <label className="text-xs text-gray-500 mb-1 block">Category</label>
                         <select
                           value={idea.category}
                           onChange={(e) => updateIdea(idea.id, { category: e.target.value })}
-                          className="w-full px-2 py-1 rounded bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white outline-none text-sm"
+                          className="w-full px-2 py-1 rounded bg-white dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 text-gray-900 dark:text-white outline-none text-sm"
                         >
                           {brainstormData.categories.map((cat) => (
                             <option key={cat.id} value={cat.id}>{cat.name}</option>
@@ -416,7 +416,7 @@ export default function BrainstormEditor({ data, onChange, noteTitle }) {
                           value={idea.notes || ''}
                           onChange={(e) => updateIdea(idea.id, { notes: e.target.value })}
                           placeholder="Add notes about this idea..."
-                          className="w-full px-2 py-1 rounded bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white outline-none text-sm resize-none"
+                          className="w-full px-2 py-1 rounded bg-white dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 text-gray-900 dark:text-white outline-none text-sm resize-none"
                           rows={3}
                         />
                       </div>
@@ -531,13 +531,13 @@ export default function BrainstormEditor({ data, onChange, noteTitle }) {
                     </div>
                   </div>
                   {isExpanded && (
-                    <div className="mt-4 ml-14 pt-4 border-t border-gray-200 dark:border-gray-700 grid grid-cols-2 gap-4">
+                    <div className="mt-4 ml-14 pt-4 border-t border-[#cbd1db] dark:border-gray-700 grid grid-cols-2 gap-4">
                       <div>
                         <label className="text-xs text-gray-500 mb-1 block">Category</label>
                         <select
                           value={idea.category}
                           onChange={(e) => updateIdea(idea.id, { category: e.target.value })}
-                          className="w-full px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white outline-none"
+                          className="w-full px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 text-gray-900 dark:text-white outline-none"
                         >
                           {brainstormData.categories.map((cat) => (
                             <option key={cat.id} value={cat.id}>{cat.name}</option>
@@ -550,7 +550,7 @@ export default function BrainstormEditor({ data, onChange, noteTitle }) {
                           value={idea.notes || ''}
                           onChange={(e) => updateIdea(idea.id, { notes: e.target.value })}
                           placeholder="Add notes..."
-                          className="w-full px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white outline-none resize-none"
+                          className="w-full px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 text-gray-900 dark:text-white outline-none resize-none"
                           rows={2}
                         />
                       </div>
@@ -574,7 +574,7 @@ export default function BrainstormEditor({ data, onChange, noteTitle }) {
                   value={newCategoryName}
                   onChange={(e) => setNewCategoryName(e.target.value)}
                   placeholder="Category name"
-                  className="w-full px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 outline-none text-gray-900 dark:text-white"
+                  className="w-full px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white"
                   autoFocus
                 />
               </div>

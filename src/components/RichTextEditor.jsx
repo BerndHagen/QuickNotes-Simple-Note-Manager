@@ -932,7 +932,7 @@ export default function RichTextEditor({ noteId, content, onChange, placeholder,
           
           return !selection.empty
         }}
-        className="bg-white dark:bg-gray-800 shadow-xl rounded-lg border border-gray-300 dark:border-gray-700 flex items-center p-1 gap-0.5"
+        className="bg-white dark:bg-gray-800 shadow-xl rounded-lg border border-[#cbd1db] dark:border-gray-700 flex items-center p-1 gap-0.5"
       >
         <BubbleButton onClick={() => editor.chain().focus().toggleBold().run()} isActive={editor.isActive('bold')}>
           <Bold className="w-4 h-4" />
@@ -960,7 +960,7 @@ export default function RichTextEditor({ noteId, content, onChange, placeholder,
       <FloatingMenu
         editor={editor}
         tippyOptions={{ duration: 100 }}
-        className="bg-white dark:bg-gray-800 shadow-xl rounded-lg border border-gray-300 dark:border-gray-700 flex items-center p-1 gap-0.5"
+        className="bg-white dark:bg-gray-800 shadow-xl rounded-lg border border-[#cbd1db] dark:border-gray-700 flex items-center p-1 gap-0.5"
       >
         <BubbleButton onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}>
           <Heading1 className="w-4 h-4" />
@@ -1124,7 +1124,7 @@ const ContextMenu = React.forwardRef(({ x, y, editor, onClose, editorBounds }, r
     >
       {menuItems.map((item, index) => (
         item.type === 'divider' ? (
-          <div key={index} className="my-1.5 mx-3 border-t border-gray-100 dark:border-gray-800" />
+          <div key={index} className="my-1.5 mx-3 border-t border-[#cbd1db] dark:border-gray-800" />
         ) : (
           <button
             key={index}
@@ -1824,7 +1824,7 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
                     className={`w-7 h-7 rounded-lg border-2 hover:scale-110 transition-all shadow-sm flex items-center justify-center ${
                       isActive 
                         ? 'border-emerald-500 ring-2 ring-emerald-200 dark:ring-emerald-800' 
-                        : 'border-gray-200 dark:border-gray-600 hover:border-emerald-500'
+                        : 'border-[#cbd1db] dark:border-gray-600 hover:border-emerald-500'
                     }`}
                     style={{ backgroundColor: color }}
                     title={color}
@@ -1855,13 +1855,13 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
                   type="color"
                   value={customColor}
                   onChange={(e) => setCustomColor(e.target.value)}
-                  className="w-10 h-8 border border-gray-300 rounded cursor-pointer dark:border-gray-600"
+                  className="w-10 h-8 border border-[#cbd1db] rounded cursor-pointer dark:border-gray-600"
                 />
                 <input
                   type="text"
                   value={customColor}
                   onChange={(e) => setCustomColor(e.target.value)}
-                  className="flex-1 px-2 py-1 text-xs text-gray-900 bg-white border border-gray-300 rounded dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                  className="flex-1 px-2 py-1 text-xs text-gray-900 bg-white border border-[#cbd1db] rounded dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                   placeholder="#000000"
                 />
                 <button
@@ -1900,7 +1900,7 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
                     className={`w-7 h-7 rounded-lg border-2 hover:scale-110 transition-all shadow-sm flex items-center justify-center ${
                       isActive 
                         ? 'border-emerald-500 ring-2 ring-emerald-200 dark:ring-emerald-800' 
-                        : 'border-gray-200 dark:border-gray-600 hover:border-emerald-500'
+                        : 'border-[#cbd1db] dark:border-gray-600 hover:border-emerald-500'
                     }`}
                     style={{ backgroundColor: color }}
                     title={color}
@@ -1931,13 +1931,13 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
                   type="color"
                   value={customHighlight}
                   onChange={(e) => setCustomHighlight(e.target.value)}
-                  className="w-10 h-8 border border-gray-300 rounded cursor-pointer dark:border-gray-600"
+                  className="w-10 h-8 border border-[#cbd1db] rounded cursor-pointer dark:border-gray-600"
                 />
                 <input
                   type="text"
                   value={customHighlight}
                   onChange={(e) => setCustomHighlight(e.target.value)}
-                  className="flex-1 px-2 py-1 text-xs text-gray-900 bg-white border border-gray-300 rounded dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                  className="flex-1 px-2 py-1 text-xs text-gray-900 bg-white border border-[#cbd1db] rounded dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                   placeholder="#fef08a"
                 />
                 <button
@@ -2097,7 +2097,7 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
                         className={`w-5 h-5 rounded-sm border transition-colors ${
                           isHovered 
                             ? 'bg-primary-100 dark:bg-primary-900/50 border-primary-400' 
-                            : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'
+                            : 'border-[#cbd1db] dark:border-gray-600 hover:border-gray-400'
                         }`}
                       />
                     )

@@ -64,7 +64,7 @@ export default function NoteTypesModal() {
             <X className="w-6 h-6" />
           </button>
         </div>
-        <div className="flex items-center gap-2 p-4 border-b border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 overflow-x-auto">
+        <div className="flex items-center gap-2 p-4 border-b border-[#cbd1db] dark:border-gray-700 bg-gray-50 dark:bg-gray-800 overflow-x-auto">
           <button
             onClick={() => setSelectedCategory('all')}
             className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
@@ -104,7 +104,7 @@ export default function NoteTypesModal() {
                   className={`relative p-5 rounded-xl text-left transition-all duration-200 group border-2 ${
                     isHovered
                       ? 'border-indigo-500 shadow-lg scale-[1.02]'
-                      : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                      : 'border-[#cbd1db] dark:border-gray-700 hover:border-[#cbd1db] dark:hover:border-gray-600'
                   }`}
                   style={{
                     background: isHovered
@@ -152,7 +152,7 @@ export default function NoteTypesModal() {
             })}
           </div>
         </div>
-        <div className="p-4 border-t border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+        <div className="p-4 border-t border-[#cbd1db] dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
           <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
             {t('noteTypes.footer1')}
             <br />

@@ -126,7 +126,7 @@ export default function ShoppingListEditor({ data, onChange, noteTitle }) {
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-gray-900">
-      <div className="flex-shrink-0 p-4 border-b border-gray-200 dark:border-gray-700 bg-[#e5eaf0] dark:bg-gray-800">
+      <div className="flex-shrink-0 p-4 border-b border-[#cbd1db] dark:border-gray-700 bg-[#e5eaf0] dark:bg-gray-800">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
@@ -164,7 +164,7 @@ export default function ShoppingListEditor({ data, onChange, noteTitle }) {
           />
         </div>
       </div>
-      <div className="flex-shrink-0 p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+      <div className="flex-shrink-0 p-4 border-b border-[#cbd1db] dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
         <div className="flex gap-2 flex-wrap">
           <input
             type="text"
@@ -172,12 +172,12 @@ export default function ShoppingListEditor({ data, onChange, noteTitle }) {
             onChange={(e) => setNewItemName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && addItem()}
             placeholder="Add item..."
-            className="flex-1 min-w-[200px] px-4 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 outline-none text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
+            className="flex-1 min-w-[200px] px-4 py-2 rounded-lg bg-white dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
           />
           <select
             value={newItemCategory}
             onChange={(e) => setNewItemCategory(e.target.value)}
-            className="px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 outline-none text-gray-900 dark:text-white"
+            className="px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white"
           >
             {shoppingData.categories.map((cat) => (
               <option key={cat.id} value={cat.id}>{cat.icon} {cat.name}</option>
@@ -189,12 +189,12 @@ export default function ShoppingListEditor({ data, onChange, noteTitle }) {
               value={newItemQuantity}
               onChange={(e) => setNewItemQuantity(e.target.value)}
               placeholder="Qty"
-              className="w-16 px-2 py-2 rounded-l-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 outline-none text-gray-900 dark:text-white text-center"
+              className="w-16 px-2 py-2 rounded-l-lg bg-white dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white text-center"
             />
             <select
               value={newItemUnit}
               onChange={(e) => setNewItemUnit(e.target.value)}
-              className="w-20 px-2 py-2 rounded-r-lg bg-white dark:bg-gray-700 border-y border-r border-gray-300 dark:border-gray-600 outline-none text-gray-900 dark:text-white"
+              className="w-20 px-2 py-2 rounded-r-lg bg-white dark:bg-gray-700 border-y border-r border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white"
             >
               {UNITS.map((unit) => (
                 <option key={unit} value={unit}>{unit}</option>
@@ -212,7 +212,7 @@ export default function ShoppingListEditor({ data, onChange, noteTitle }) {
                 onChange={(e) => setNewItemPrice(e.target.value)}
                 placeholder="Price"
                 step="0.01"
-                className="w-20 px-2 py-2 rounded-r-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 outline-none text-gray-900 dark:text-white"
+                className="w-20 px-2 py-2 rounded-r-lg bg-white dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white"
               />
             </div>
           )}
@@ -249,14 +249,14 @@ export default function ShoppingListEditor({ data, onChange, noteTitle }) {
           </div>
         </div>
         {showSettings && (
-          <div className="mt-3 p-4 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600">
+          <div className="mt-3 p-4 rounded-lg bg-white dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600">
             <div className="grid grid-cols-3 gap-4">
               <div>
                 <label className="text-sm text-gray-600 dark:text-gray-400 mb-1 block">Currency</label>
                 <select
                   value={shoppingData.currency}
                   onChange={(e) => update('currency', e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-600 border border-gray-300 dark:border-gray-600 outline-none text-gray-900 dark:text-white"
+                  className="w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-600 border border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white"
                 >
                   <option value="USD">$ USD</option>
                   <option value="EUR">{"\u20AC"} EUR</option>
@@ -271,7 +271,7 @@ export default function ShoppingListEditor({ data, onChange, noteTitle }) {
                   value={shoppingData.budget || ''}
                   onChange={(e) => update('budget', e.target.value ? parseFloat(e.target.value) : null)}
                   placeholder="Optional"
-                  className="w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-600 border border-gray-300 dark:border-gray-600 outline-none text-gray-900 dark:text-white"
+                  className="w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-600 border border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white"
                 />
               </div>
               <div className="flex items-center gap-4">
@@ -280,7 +280,7 @@ export default function ShoppingListEditor({ data, onChange, noteTitle }) {
                     type="checkbox"
                     checked={shoppingData.showPrices}
                     onChange={(e) => update('showPrices', e.target.checked)}
-                    className="w-4 h-4 rounded border-gray-300 text-emerald-500 focus:ring-emerald-500"
+                    className="w-4 h-4 rounded border-[#cbd1db] text-emerald-500 focus:ring-emerald-500"
                   />
                   <span className="text-sm text-gray-700 dark:text-gray-300">Show Prices</span>
                 </label>
@@ -309,7 +309,7 @@ export default function ShoppingListEditor({ data, onChange, noteTitle }) {
               return (
                 <div
                   key={category.id}
-                  className="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700"
+                  className="rounded-xl overflow-hidden border border-[#cbd1db] dark:border-gray-700"
                 >
                   <button
                     onClick={() => toggleCategory(category.id)}
@@ -347,7 +347,7 @@ export default function ShoppingListEditor({ data, onChange, noteTitle }) {
                             className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
                               item.checked
                                 ? 'bg-emerald-500 border-emerald-500 text-white'
-                                : 'border-gray-300 dark:border-gray-600 hover:border-emerald-500'
+                                : 'border-[#cbd1db] dark:border-gray-600 hover:border-emerald-500'
                             }`}
                           >
                             {item.checked && <Check className="w-4 h-4" />}
@@ -360,7 +360,7 @@ export default function ShoppingListEditor({ data, onChange, noteTitle }) {
                                 onChange={(e) => updateItem(item.id, { name: e.target.value })}
                                 onBlur={() => setEditingItem(null)}
                                 onKeyDown={(e) => e.key === 'Enter' && setEditingItem(null)}
-                                className="w-full px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 outline-none text-gray-900 dark:text-white"
+                                className="w-full px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white"
                                 autoFocus
                               />
                             ) : (
@@ -380,14 +380,14 @@ export default function ShoppingListEditor({ data, onChange, noteTitle }) {
                               type="number"
                               value={item.quantity}
                               onChange={(e) => updateItem(item.id, { quantity: parseFloat(e.target.value) || 1 })}
-                              className="w-14 px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-center outline-none text-gray-900 dark:text-white"
+                              className="w-14 px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 text-center outline-none text-gray-900 dark:text-white"
                               min="0.1"
                               step="0.1"
                             />
                             <select
                               value={item.unit}
                               onChange={(e) => updateItem(item.id, { unit: e.target.value })}
-                              className="px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 outline-none text-gray-900 dark:text-white"
+                              className="px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white"
                             >
                               {UNITS.map((unit) => (
                                 <option key={unit} value={unit}>{unit}</option>
@@ -403,7 +403,7 @@ export default function ShoppingListEditor({ data, onChange, noteTitle }) {
                                 onChange={(e) => updateItem(item.id, { price: e.target.value ? parseFloat(e.target.value) : null })}
                                 placeholder="0.00"
                                 step="0.01"
-                                className="w-20 px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 outline-none text-gray-900 dark:text-white text-right"
+                                className="w-20 px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white text-right"
                               />
                             </div>
                           )}
@@ -437,7 +437,7 @@ export default function ShoppingListEditor({ data, onChange, noteTitle }) {
         )}
       </div>
       {shoppingData.items.length > 0 && shoppingData.showPrices && (
-        <div className="flex-shrink-0 p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+        <div className="flex-shrink-0 p-4 border-t border-[#cbd1db] dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
           <div className="flex justify-between items-center">
             <div>
               <span className="text-gray-600 dark:text-gray-400">Total Items:</span>

@@ -300,7 +300,7 @@ function NoteContextMenu({ x, y, note, notes: selectedNotes, onClose, folders, t
         <span>{allStarred ? 'Remove from Favorites' : 'Add to Favorites'}</span>
       </button>
       
-      <div className="my-1.5 mx-3 border-t border-gray-100 dark:border-gray-800" />
+      <div className="my-1.5 mx-3 border-t border-[#cbd1db] dark:border-gray-800" />
       
       <button
         onClick={() => handleAction(handleBulkDuplicate)}
@@ -393,7 +393,7 @@ function NoteContextMenu({ x, y, note, notes: selectedNotes, onClose, folders, t
               </div>
             ) : (
               <>
-                <div className="px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 border-b border-gray-300 dark:border-gray-700">
+                <div className="px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 border-b border-[#cbd1db] dark:border-gray-700">
                   Click to toggle tag
                 </div>
                 {tags.map((tag) => {
@@ -441,7 +441,7 @@ function NoteContextMenu({ x, y, note, notes: selectedNotes, onClose, folders, t
         )}
       </div>
       
-      <div className="my-1.5 mx-3 border-t border-gray-100 dark:border-gray-800" />
+      <div className="my-1.5 mx-3 border-t border-[#cbd1db] dark:border-gray-800" />
       
       <button
         onClick={() => handleAction(handleBulkDelete)}
@@ -647,7 +647,7 @@ export default function NotesList() {
             placeholder={t('notes.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full py-2.5 pl-10 pr-4 text-[13px] text-gray-900 placeholder-gray-400 bg-white dark:bg-gray-800/80 border border-gray-300 dark:border-gray-700 rounded-xl focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/10 dark:text-white transition-all font-medium shadow-sm input-enterprise"
+            className="w-full py-2.5 pl-10 pr-4 text-[13px] text-gray-900 placeholder-gray-400 bg-white dark:bg-gray-800/80 border border-[#cbd1db] dark:border-gray-700 rounded-xl focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/10 dark:text-white transition-all font-medium shadow-sm input-enterprise"
           />
         </div>
       </div>

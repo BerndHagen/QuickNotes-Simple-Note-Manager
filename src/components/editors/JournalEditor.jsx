@@ -150,7 +150,7 @@ export default function JournalEditor({ data, onChange, noteTitle }) {
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-gray-900">
-      <div className="flex-shrink-0 p-4 border-b border-gray-200 dark:border-gray-700 bg-[#e5eaf0] dark:bg-gray-800">
+      <div className="flex-shrink-0 p-4 border-b border-[#cbd1db] dark:border-gray-700 bg-[#e5eaf0] dark:bg-gray-800">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
@@ -219,7 +219,7 @@ export default function JournalEditor({ data, onChange, noteTitle }) {
           )}
         </div>
       </div>
-      <div className="flex-shrink-0 flex gap-1 p-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 overflow-x-auto">
+      <div className="flex-shrink-0 flex gap-1 p-2 border-b border-[#cbd1db] dark:border-gray-700 bg-gray-50 dark:bg-gray-800 overflow-x-auto">
         {sections.map(section => (
           <button
             key={section.id}
@@ -334,7 +334,7 @@ export default function JournalEditor({ data, onChange, noteTitle }) {
                           <Star className="w-4 h-4 text-white fill-white" />
                         </div>
                       ) : (
-                        <div className="w-6 h-6 rounded-full border-2 border-gray-300" />
+                        <div className="w-6 h-6 rounded-full border-2 border-[#cbd1db]" />
                       )}
                     </button>
                     <span className={`flex-1 ${goal.completed ? 'line-through text-gray-400' : 'text-gray-900 dark:text-white'}`}>
@@ -356,7 +356,7 @@ export default function JournalEditor({ data, onChange, noteTitle }) {
                   onChange={(e) => setNewGoal(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && addGoal()}
                   placeholder="Add a goal for today..."
-                  className="flex-1 px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 outline-none text-gray-900 dark:text-white"
+                  className="flex-1 px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white"
                 />
                 <button
                   onClick={addGoal}
@@ -404,7 +404,7 @@ export default function JournalEditor({ data, onChange, noteTitle }) {
                   onChange={(e) => setNewHighlight(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && addHighlight()}
                   placeholder="Add a highlight moment..."
-                  className="flex-1 px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 outline-none text-gray-900 dark:text-white"
+                  className="flex-1 px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white"
                 />
                 <button
                   onClick={addHighlight}
@@ -423,7 +423,7 @@ export default function JournalEditor({ data, onChange, noteTitle }) {
                 value={journalData.challenges}
                 onChange={(e) => update('challenges', e.target.value)}
                 placeholder="What challenges did you face today?"
-                className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 outline-none text-gray-900 dark:text-white resize-none"
+                className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white resize-none"
                 rows={4}
               />
             </div>
@@ -447,7 +447,7 @@ export default function JournalEditor({ data, onChange, noteTitle }) {
                       value={journalData.gratitude[index]}
                       onChange={(e) => updateGratitude(index, e.target.value)}
                       placeholder={`I'm grateful for...`}
-                      className="flex-1 px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 outline-none text-gray-900 dark:text-white"
+                      className="flex-1 px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white"
                     />
                   </div>
                 ))}
@@ -462,7 +462,7 @@ export default function JournalEditor({ data, onChange, noteTitle }) {
                 value={journalData.lessons}
                 onChange={(e) => update('lessons', e.target.value)}
                 placeholder="What did you learn today?"
-                className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 outline-none text-gray-900 dark:text-white resize-none"
+                className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white resize-none"
                 rows={4}
               />
             </div>
@@ -524,7 +524,7 @@ export default function JournalEditor({ data, onChange, noteTitle }) {
                   onChange={(e) => setNewTag(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && addTag()}
                   placeholder="Add a tag..."
-                  className="flex-1 px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 outline-none text-gray-900 dark:text-white"
+                  className="flex-1 px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white"
                 />
                 <button
                   onClick={addTag}
@@ -576,7 +576,7 @@ export default function JournalEditor({ data, onChange, noteTitle }) {
               value={journalData.freeWrite}
               onChange={(e) => update('freeWrite', e.target.value)}
               placeholder="Start writing..."
-              className="w-full h-[500px] px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 focus:border-amber-500 outline-none text-gray-900 dark:text-white resize-none text-lg leading-relaxed"
+              className="w-full h-[500px] px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-2 border-[#cbd1db] dark:border-gray-700 focus:border-amber-500 outline-none text-gray-900 dark:text-white resize-none text-lg leading-relaxed"
               autoFocus
             />
             <div className="flex justify-between items-center mt-2 text-sm text-gray-500">

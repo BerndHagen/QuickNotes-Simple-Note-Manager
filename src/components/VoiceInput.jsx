@@ -129,8 +129,8 @@ export default function VoiceInput({ onTranscript, isActive, onToggle }) {
   }
 
   return (
-    <div className="fixed bottom-8 right-8 z-50 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl shadow-2xl overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-300 dark:border-gray-700">
+    <div className="fixed bottom-8 right-8 z-50 bg-white dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-700 rounded-xl shadow-2xl overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border-b border-[#cbd1db] dark:border-gray-700">
         <div className="flex items-center gap-2">
           <div className={`w-3 h-3 rounded-full ${isListening ? 'bg-red-500 animate-pulse' : 'bg-gray-400'}`} />
           <span className="font-medium text-gray-900 dark:text-white text-sm">

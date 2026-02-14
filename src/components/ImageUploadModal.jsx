@@ -127,7 +127,7 @@ export default function ImageUploadModal({ editor }) {
             <X className="w-5 h-5" />
           </button>
         </div>
-        <div className="flex border-b border-gray-300 dark:border-gray-700">
+        <div className="flex border-b border-[#cbd1db] dark:border-gray-700">
           <button
             onClick={() => setActiveTab('url')}
             className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
@@ -163,7 +163,7 @@ export default function ImageUploadModal({ editor }) {
                   value={imageUrl}
                   onChange={handleUrlChange}
                   placeholder="https://example.com/image.jpg"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-[#cbd1db] dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
               </div>
             </div>
@@ -174,7 +174,7 @@ export default function ImageUploadModal({ editor }) {
               className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
                 dragActive
                   ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                  : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
+                  : 'border-[#cbd1db] dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
               }`}
               onDragEnter={handleDrag}
               onDragLeave={handleDrag}
@@ -221,11 +221,11 @@ export default function ImageUploadModal({ editor }) {
               value={altText}
               onChange={(e) => setAltText(e.target.value)}
               placeholder="Description of the image"
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-[#cbd1db] dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
           {previewUrl && (
-            <div className="border border-gray-300 dark:border-gray-700 rounded-lg p-3">
+            <div className="border border-[#cbd1db] dark:border-gray-700 rounded-lg p-3">
               <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Preview:</p>
               <img
                 src={previewUrl}
@@ -239,10 +239,10 @@ export default function ImageUploadModal({ editor }) {
             </div>
           )}
         </div>
-        <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-300 dark:border-gray-700">
+        <div className="flex justify-end gap-3 px-6 py-4 border-t border-[#cbd1db] dark:border-gray-700">
           <button
             onClick={handleClose}
-            className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors border border-gray-300 dark:border-gray-600"
+            className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors border border-[#cbd1db] dark:border-gray-600"
           >
             Cancel
           </button>

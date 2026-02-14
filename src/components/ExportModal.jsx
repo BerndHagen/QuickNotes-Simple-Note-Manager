@@ -638,7 +638,7 @@ export default function ExportModal() {
             type="checkbox"
             checked={exportAll}
             onChange={(e) => setExportAll(e.target.checked)}
-            className="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+            className="w-4 h-4 rounded border-[#cbd1db] text-emerald-600 focus:ring-emerald-500"
           />
           <div>
             <p className="text-sm font-medium text-gray-900 dark:text-white">{t('exportModal.exportAll')}</p>
@@ -654,7 +654,7 @@ export default function ExportModal() {
               className={`w-full p-3 rounded-lg border-2 transition-all flex items-center gap-3 ${
                 selectedFormat === format.id
                   ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
-                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                  : 'border-[#cbd1db] dark:border-gray-700 hover:border-[#cbd1db] dark:hover:border-gray-600'
               }`}
             >
               <div 

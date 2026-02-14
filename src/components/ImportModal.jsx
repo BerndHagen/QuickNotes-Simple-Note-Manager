@@ -348,7 +348,7 @@ export default function ImportModal() {
               className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${
                 dragActive
                   ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
-                  : 'border-gray-300 dark:border-gray-600 hover:border-emerald-400 hover:bg-gray-100 dark:hover:bg-gray-700/50'
+                  : 'border-[#cbd1db] dark:border-gray-600 hover:border-emerald-400 hover:bg-gray-100 dark:hover:bg-gray-700/50'
               }`}
             >
               <Upload className={`w-12 h-12 mx-auto mb-3 ${

@@ -195,7 +195,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-gray-900">
-      <div className="flex-shrink-0 p-4 border-b border-gray-200 dark:border-gray-700 bg-[#e5eaf0] dark:bg-gray-800">
+      <div className="flex-shrink-0 p-4 border-b border-[#cbd1db] dark:border-gray-700 bg-[#e5eaf0] dark:bg-gray-800">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
@@ -248,7 +248,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
           />
         </div>
       </div>
-      <div className="flex-shrink-0 flex gap-1 p-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+      <div className="flex-shrink-0 flex gap-1 p-2 border-b border-[#cbd1db] dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
         {views.map((view) => (
           <button
             key={view.id}
@@ -267,7 +267,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
       <div className="flex-1 overflow-y-auto">
         {activeView === 'week' && (
           <div className="flex h-full">
-            <div className="w-20 flex-shrink-0 border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+            <div className="w-20 flex-shrink-0 border-r border-[#cbd1db] dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
               {DAYS.map((day, index) => {
                 const dayKey = day.toLowerCase()
                 const dayData = plannerData.days[dayKey]
@@ -375,7 +375,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
                       type="time"
                       value={newEventTime}
                       onChange={(e) => setNewEventTime(e.target.value)}
-                      className="px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 outline-none text-gray-900 dark:text-white"
+                      className="px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white"
                     />
                     <input
                       type="text"
@@ -383,7 +383,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
                       onChange={(e) => setNewEvent(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && addEvent(selectedDay)}
                       placeholder="Add event..."
-                      className="flex-1 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 outline-none text-gray-900 dark:text-white"
+                      className="flex-1 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white"
                     />
                     <button
                       onClick={() => addEvent(selectedDay)}
@@ -451,7 +451,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
                     <select
                       value={newTaskTime}
                       onChange={(e) => setNewTaskTime(e.target.value)}
-                      className="px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 outline-none text-gray-900 dark:text-white"
+                      className="px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white"
                     >
                       {TIME_BLOCKS.map((block) => (
                         <option key={block.id} value={block.id}>{block.label}</option>
@@ -463,7 +463,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
                       onChange={(e) => setNewTask(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && addTask(selectedDay)}
                       placeholder="Add task..."
-                      className="flex-1 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 outline-none text-gray-900 dark:text-white"
+                      className="flex-1 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white"
                     />
                     <button
                       onClick={() => addTask(selectedDay)}
@@ -479,7 +479,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
                     value={plannerData.days[selectedDay]?.note || ''}
                     onChange={(e) => updateDay(selectedDay, 'note', e.target.value)}
                     placeholder="Add notes for this day..."
-                    className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 outline-none text-gray-900 dark:text-white resize-none"
+                    className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-700 outline-none text-gray-900 dark:text-white resize-none"
                     rows={4}
                   />
                 </div>
@@ -503,7 +503,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
                 onChange={(e) => setNewGoal(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && addGoal()}
                 placeholder="Add a weekly goal..."
-                className="flex-1 px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 outline-none text-gray-900 dark:text-white"
+                className="flex-1 px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white"
               />
               <button
                 onClick={addGoal}
@@ -529,7 +529,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
                           ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
                           : goal.priority
                           ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800'
-                          : 'bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
+                          : 'bg-gray-50 dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-700'
                       }`}
                     >
                       <button onClick={() => toggleGoal(goal.id)}>
@@ -561,7 +561,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
               )}
             </div>
             {plannerData.weeklyGoals.length > 0 && (
-              <div className="mt-8 p-6 rounded-xl bg-[#e5eaf0] dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+              <div className="mt-8 p-6 rounded-xl bg-[#e5eaf0] dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-700">
                 <div className="flex justify-between items-center">
                   <div>
                     <p className="text-gray-500 dark:text-gray-400">Weekly Goal Progress</p>
@@ -621,7 +621,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
                   value={plannerData.review.accomplishments}
                   onChange={(e) => updateReview('accomplishments', e.target.value)}
                   placeholder="List your wins and achievements..."
-                  className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 outline-none text-gray-900 dark:text-white resize-none"
+                  className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-700 outline-none text-gray-900 dark:text-white resize-none"
                   rows={4}
                 />
               </div>
@@ -634,7 +634,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
                   value={plannerData.review.challenges}
                   onChange={(e) => updateReview('challenges', e.target.value)}
                   placeholder="What obstacles or difficulties came up?"
-                  className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 outline-none text-gray-900 dark:text-white resize-none"
+                  className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-700 outline-none text-gray-900 dark:text-white resize-none"
                   rows={4}
                 />
               </div>
@@ -647,7 +647,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
                   value={plannerData.review.lessons}
                   onChange={(e) => updateReview('lessons', e.target.value)}
                   placeholder="Key insights and lessons from this week..."
-                  className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 outline-none text-gray-900 dark:text-white resize-none"
+                  className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-700 outline-none text-gray-900 dark:text-white resize-none"
                   rows={4}
                 />
               </div>
@@ -660,7 +660,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
                   value={plannerData.review.nextWeekFocus}
                   onChange={(e) => updateReview('nextWeekFocus', e.target.value)}
                   placeholder="What's the priority for next week?"
-                  className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 outline-none text-gray-900 dark:text-white resize-none"
+                  className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-700 outline-none text-gray-900 dark:text-white resize-none"
                   rows={4}
                 />
               </div>

@@ -217,9 +217,9 @@ export default function DuplicateDetectionModal() {
               {duplicates.map((group, index) => (
                 <div
                   key={group.original.id}
-                  className="border border-gray-300 dark:border-gray-700 rounded-lg overflow-hidden"
+                  className="border border-[#cbd1db] dark:border-gray-700 rounded-lg overflow-hidden"
                 >
-                  <div className="px-4 py-3 bg-gray-50 dark:bg-gray-900 border-b border-gray-300 dark:border-gray-700">
+                  <div className="px-4 py-3 bg-gray-50 dark:bg-gray-900 border-b border-[#cbd1db] dark:border-gray-700">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                         Gruppe {index + 1}
@@ -229,7 +229,7 @@ export default function DuplicateDetectionModal() {
                       </span>
                     </div>
                   </div>
-                  <div className="p-4 border-b border-gray-100 dark:border-gray-700">
+                  <div className="p-4 border-b border-[#cbd1db] dark:border-gray-700">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
@@ -259,7 +259,7 @@ export default function DuplicateDetectionModal() {
                   {group.duplicates.map((dup) => (
                     <div
                       key={dup.note.id}
-                      className="p-4 border-b border-gray-100 dark:border-gray-700 last:border-b-0 bg-gray-50/50 dark:bg-gray-900/30"
+                      className="p-4 border-b border-[#cbd1db] dark:border-gray-700 last:border-b-0 bg-gray-50/50 dark:bg-gray-900/30"
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
@@ -305,10 +305,10 @@ export default function DuplicateDetectionModal() {
             </div>
           )}
         </div>
-        <div className="flex justify-end px-6 py-4 border-t border-gray-300 dark:border-gray-700 shrink-0">
+        <div className="flex justify-end px-6 py-4 border-t border-[#cbd1db] dark:border-gray-700 shrink-0">
           <button
             onClick={() => setDuplicateModalOpen(false)}
-            className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors border border-gray-300 dark:border-gray-600"
+            className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors border border-[#cbd1db] dark:border-gray-600"
           >
             Close
           </button>

@@ -13,7 +13,7 @@ import {
 } from 'lucide-react'
 import { generateId } from './noteTypes'
 const COLUMN_COLORS = {
-  backlog: { bg: 'bg-gray-100 dark:bg-gray-800', border: 'border-gray-300 dark:border-gray-600', text: 'text-gray-600' },
+  backlog: { bg: 'bg-gray-100 dark:bg-gray-800', border: 'border-[#cbd1db] dark:border-gray-600', text: 'text-gray-600' },
   todo: { bg: 'bg-blue-50 dark:bg-blue-900/20', border: 'border-blue-300 dark:border-blue-700', text: 'text-blue-600' },
   inProgress: { bg: 'bg-amber-50 dark:bg-amber-900/20', border: 'border-amber-300 dark:border-amber-700', text: 'text-amber-600' },
   done: { bg: 'bg-green-50 dark:bg-green-900/20', border: 'border-green-300 dark:border-green-700', text: 'text-green-600' },
@@ -168,7 +168,7 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle }) {
 
   return (
     <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900">
-      <div className="flex-shrink-0 p-4 border-b border-gray-200 dark:border-gray-700 bg-[#e5eaf0] dark:bg-gray-800">
+      <div className="flex-shrink-0 p-4 border-b border-[#cbd1db] dark:border-gray-700 bg-[#e5eaf0] dark:bg-gray-800">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
@@ -199,25 +199,25 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle }) {
           </div>
         </div>
         <div className="grid grid-cols-4 gap-2">
-          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center border border-gray-200 dark:border-gray-600">
+          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center border border-[#cbd1db] dark:border-gray-600">
             <div className="text-xl font-bold text-gray-900 dark:text-white">{stats.totalTasks}</div>
             <div className="text-xs text-gray-500 dark:text-gray-400">Total</div>
           </div>
-          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center border border-gray-200 dark:border-gray-600">
+          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center border border-[#cbd1db] dark:border-gray-600">
             <div className="text-xl font-bold text-gray-900 dark:text-white">{stats.inProgressTasks}</div>
             <div className="text-xs text-gray-500 dark:text-gray-400">In Progress</div>
           </div>
-          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center border border-gray-200 dark:border-gray-600">
+          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center border border-[#cbd1db] dark:border-gray-600">
             <div className="text-xl font-bold text-gray-900 dark:text-white">{stats.doneTasks}</div>
             <div className="text-xs text-gray-500 dark:text-gray-400">Done</div>
           </div>
-          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center border border-gray-200 dark:border-gray-600">
+          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center border border-[#cbd1db] dark:border-gray-600">
             <div className="text-xl font-bold text-red-500 dark:text-red-400">{stats.overdueTasks}</div>
             <div className="text-xs text-gray-500 dark:text-gray-400">Overdue</div>
           </div>
         </div>
       </div>
-      <div className="flex-shrink-0 flex gap-1 p-2 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+      <div className="flex-shrink-0 flex gap-1 p-2 border-b border-[#cbd1db] dark:border-gray-700 bg-white dark:bg-gray-800">
         {[
           { id: 'board', label: 'Kanban Board', icon: BarChart3 },
           { id: 'milestones', label: 'Milestones', icon: Milestone },
@@ -279,7 +279,7 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle }) {
                               if (e.key === 'Escape') { setShowAddTask(null); setNewTaskText('') }
                             }}
                             placeholder="Task title..."
-                            className="w-full px-3 py-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-sm outline-none focus:border-purple-500"
+                            className="w-full px-3 py-2 rounded-lg bg-white dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-600 text-sm outline-none focus:border-purple-500"
                             autoFocus
                           />
                           <div className="flex gap-2 mt-2">
@@ -430,7 +430,7 @@ function TaskCard({ task, team, onDragStart, onUpdate, onDelete, onEdit }) {
     <div
       draggable
       onDragStart={onDragStart}
-      className="group p-3 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all cursor-grab active:cursor-grabbing"
+      className="group p-3 rounded-lg bg-white dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-700 hover:shadow-md transition-all cursor-grab active:cursor-grabbing"
     >
       <div className="flex items-start justify-between gap-2 mb-2">
         <h3 className="font-medium text-gray-900 dark:text-white text-sm flex-1">
@@ -487,7 +487,7 @@ function TaskEditModal({ task, team, onSave, onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm modal-backdrop-animate">
       <div className="modal-animate w-full max-w-lg bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-[#cbd1db] dark:border-gray-700">
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between p-4 border-b border-[#cbd1db] dark:border-gray-700">
           <h3 className="font-semibold text-gray-900 dark:text-white">Edit Task</h3>
           <button onClick={onClose} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
             <X className="w-5 h-5 text-gray-500" />
@@ -501,7 +501,7 @@ function TaskEditModal({ task, team, onSave, onClose }) {
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:border-purple-500"
+              className="w-full px-3 py-2 rounded-lg border border-[#cbd1db] dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:border-purple-500"
             />
           </div>
 
@@ -511,7 +511,7 @@ function TaskEditModal({ task, team, onSave, onClose }) {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:border-purple-500 resize-none"
+              className="w-full px-3 py-2 rounded-lg border border-[#cbd1db] dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:border-purple-500 resize-none"
             />
           </div>
 
@@ -521,7 +521,7 @@ function TaskEditModal({ task, team, onSave, onClose }) {
               <select
                 value={priority}
                 onChange={(e) => setPriority(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:border-purple-500"
+                className="w-full px-3 py-2 rounded-lg border border-[#cbd1db] dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:border-purple-500"
               >
                 {Object.entries(PRIORITIES).map(([key, value]) => (
                   <option key={key} value={key}>{value.icon} {value.label}</option>
@@ -535,7 +535,7 @@ function TaskEditModal({ task, team, onSave, onClose }) {
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:border-purple-500"
+                className="w-full px-3 py-2 rounded-lg border border-[#cbd1db] dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:border-purple-500"
               />
             </div>
           </div>
@@ -545,7 +545,7 @@ function TaskEditModal({ task, team, onSave, onClose }) {
             <select
               value={assignee}
               onChange={(e) => setAssignee(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:border-purple-500"
+              className="w-full px-3 py-2 rounded-lg border border-[#cbd1db] dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:border-purple-500"
             >
               <option value="">Unassigned</option>
               {team.map((member) => (
@@ -555,7 +555,7 @@ function TaskEditModal({ task, team, onSave, onClose }) {
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 p-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex justify-end gap-2 p-4 border-t border-[#cbd1db] dark:border-gray-700">
           <button
             onClick={onClose}
             className="px-4 py-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -585,14 +585,14 @@ function MilestoneForm({ onSave, onCancel }) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Milestone name..."
-          className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm outline-none focus:border-purple-500"
+          className="w-full px-3 py-2 rounded-lg border border-[#cbd1db] dark:border-gray-600 bg-white dark:bg-gray-800 text-sm outline-none focus:border-purple-500"
           autoFocus
         />
         <input
           type="date"
           value={dueDate}
           onChange={(e) => setDueDate(e.target.value)}
-          className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm outline-none focus:border-purple-500"
+          className="w-full px-3 py-2 rounded-lg border border-[#cbd1db] dark:border-gray-600 bg-white dark:bg-gray-800 text-sm outline-none focus:border-purple-500"
         />
         <div className="flex gap-2">
           <button
@@ -621,7 +621,7 @@ function MilestoneCard({ milestone, onToggle, onDelete }) {
         ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
         : isOverdue
           ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
-          : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+          : 'bg-white dark:bg-gray-800 border-[#cbd1db] dark:border-gray-700'
     }`}>
       <button onClick={onToggle}>
         {milestone.completed ? (
@@ -661,7 +661,7 @@ function TeamMemberForm({ onSave, onCancel }) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Name..."
-          className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm outline-none focus:border-purple-500"
+          className="w-full px-3 py-2 rounded-lg border border-[#cbd1db] dark:border-gray-600 bg-white dark:bg-gray-800 text-sm outline-none focus:border-purple-500"
           autoFocus
         />
         <input
@@ -669,7 +669,7 @@ function TeamMemberForm({ onSave, onCancel }) {
           value={role}
           onChange={(e) => setRole(e.target.value)}
           placeholder="Role (e.g., Developer, Designer)..."
-          className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm outline-none focus:border-purple-500"
+          className="w-full px-3 py-2 rounded-lg border border-[#cbd1db] dark:border-gray-600 bg-white dark:bg-gray-800 text-sm outline-none focus:border-purple-500"
         />
         <div className="flex gap-2">
           <button
@@ -691,7 +691,7 @@ function TeamMemberForm({ onSave, onCancel }) {
 }
 function TeamMemberCard({ member, tasksAssigned, onDelete }) {
   return (
-    <div className="flex items-center gap-3 p-4 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+    <div className="flex items-center gap-3 p-4 rounded-lg bg-white dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-700">
       <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900 text-purple-600 flex items-center justify-center font-medium">
         {member.avatar}
       </div>

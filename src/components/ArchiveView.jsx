@@ -72,7 +72,7 @@ export default function ArchiveView() {
           </button>
         </div>
 
-        <div className="px-6 py-3 border-b border-gray-300 dark:border-gray-700">
+        <div className="px-6 py-3 border-b border-[#cbd1db] dark:border-gray-700">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
