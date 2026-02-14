@@ -75,6 +75,7 @@ import {
 } from 'lucide-react'
 import { debounce } from '../lib/utils'
 import { useUIStore } from '../store'
+import { useEditorSettings } from './EditorSettingsModal'
 
 const lowlight = createLowlight(common)
 
@@ -626,6 +627,7 @@ export default function RichTextEditor({ noteId, content, onChange, placeholder,
   const typingTimeoutRef = useRef(null)
   const lastCursorPosition = useRef({ from: 0, to: 0 })
   const lastSentContent = useRef('')
+  const editorSettings = useEditorSettings()
 
   const generateContentHash = (html) => {
     if (!html) return ''
@@ -789,6 +791,58 @@ export default function RichTextEditor({ noteId, content, onChange, placeholder,
     const unsub = useUIStore.subscribe(applySpellCheck)
     return () => unsub()
   }, [editor])
+
+  // Apply editor settings from EditorSettingsModal
+  useEffect(() => {
+    if (!editor || editor.isDestroyed) return
+    const el = editor.view.dom
+    if (!el) return
+
+    // Font family
+    el.style.fontFamily = editorSettings.defaultFontFamily || 'Inter, system-ui, sans-serif'
+
+    // Font size
+    el.style.fontSize = editorSettings.defaultFontSize || '16px'
+
+    // Line height
+    el.style.lineHeight = editorSettings.defaultLineHeight || '1.5'
+
+    // Tab size
+    el.style.tabSize = editorSettings.tabSize || 4
+    el.style.MozTabSize = editorSettings.tabSize || 4
+
+    // Word wrap
+    if (editorSettings.wordWrap) {
+      el.style.overflowWrap = 'break-word'
+      el.style.wordBreak = 'normal'
+      el.style.whiteSpace = 'pre-wrap'
+    } else {
+      el.style.overflowWrap = 'normal'
+      el.style.wordBreak = 'normal'
+      el.style.whiteSpace = 'pre'
+    }
+
+    // Show invisibles (whitespace characters)
+    if (editorSettings.showInvisibles) {
+      el.classList.add('show-invisibles')
+    } else {
+      el.classList.remove('show-invisibles')
+    }
+
+    // Highlight current line
+    if (editorSettings.highlightCurrentLine) {
+      el.classList.add('highlight-current-line')
+    } else {
+      el.classList.remove('highlight-current-line')
+    }
+
+    // Spellcheck from editor settings
+    el.setAttribute('spellcheck', editorSettings.spellCheck ? 'true' : 'false')
+
+    // Autocorrect
+    el.setAttribute('autocorrect', editorSettings.autoCorrect ? 'on' : 'off')
+
+  }, [editor, editorSettings])
 
   const debouncedOnChange = useCallback(
     debounce((html) => {
@@ -983,6 +1037,18 @@ export default function RichTextEditor({ noteId, content, onChange, placeholder,
       </FloatingMenu>
 
       <TableBubbleMenu editor={editor} />
+
+      {editorSettings.showRuler && (
+        <div className="editor-ruler" aria-hidden="true">
+          <div className="editor-ruler-inner">
+            {Array.from({ length: 30 }, (_, i) => (
+              <div key={i} className="editor-ruler-mark">
+                <span className="editor-ruler-number">{i + 1}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div 
         ref={editorContainerRef}

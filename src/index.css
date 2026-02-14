@@ -124,6 +124,77 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
   min-height: 200px;
 }
 
+/* Editor Ruler */
+.editor-ruler {
+  height: 24px;
+  background: #f3f4f6;
+  border-bottom: 1px solid #d1d5db;
+  overflow: hidden;
+  flex-shrink: 0;
+  user-select: none;
+}
+.dark .editor-ruler {
+  background: #1f2937;
+  border-bottom-color: #374151;
+}
+.editor-ruler-inner {
+  display: flex;
+  height: 100%;
+  padding-left: 16px;
+}
+.editor-ruler-mark {
+  width: 30px;
+  flex-shrink: 0;
+  position: relative;
+  border-left: 1px solid #9ca3af;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+}
+.dark .editor-ruler-mark {
+  border-left-color: #6b7280;
+}
+.editor-ruler-number {
+  font-size: 9px;
+  color: #6b7280;
+  padding-left: 2px;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+.dark .editor-ruler-number {
+  color: #9ca3af;
+}
+
+/* Show invisible characters */
+.ProseMirror.show-invisibles p::after {
+  content: '¶';
+  color: #d1d5db;
+  font-size: 0.75em;
+}
+.dark .ProseMirror.show-invisibles p::after {
+  color: #4b5563;
+}
+.ProseMirror.show-invisibles br::after {
+  content: '↵';
+  color: #d1d5db;
+  font-size: 0.75em;
+}
+.dark .ProseMirror.show-invisibles br::after {
+  color: #4b5563;
+}
+
+/* Highlight current line */
+.ProseMirror.highlight-current-line .is-active-line,
+.ProseMirror.highlight-current-line p:focus,
+.ProseMirror.highlight-current-line > *:has(.ProseMirror-selectednode) {
+  background-color: rgba(16, 185, 129, 0.05);
+  border-radius: 2px;
+}
+.dark .ProseMirror.highlight-current-line .is-active-line,
+.dark .ProseMirror.highlight-current-line p:focus {
+  background-color: rgba(16, 185, 129, 0.08);
+}
+
 /* Editor placeholder text */
 .ProseMirror p.is-editor-empty:first-child::before {
   color: #9ca3af;
