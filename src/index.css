@@ -124,42 +124,88 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
   min-height: 200px;
 }
 
-/* Editor Ruler */
+/* Editor Ruler — realistic cm/mm ruler */
 .editor-ruler {
-  height: 24px;
-  background: #f3f4f6;
+  height: 28px;
+  background: linear-gradient(to bottom, #fafafa, #f3f4f6);
   border-bottom: 1px solid #d1d5db;
   overflow: hidden;
   flex-shrink: 0;
   user-select: none;
+  position: relative;
 }
 .dark .editor-ruler {
-  background: #1f2937;
+  background: linear-gradient(to bottom, #1f2937, #1a2332);
   border-bottom-color: #374151;
 }
 .editor-ruler-inner {
   display: flex;
   height: 100%;
+  align-items: flex-end;
   padding-left: 16px;
 }
-.editor-ruler-mark {
-  width: 30px;
+.editor-ruler-tick {
   flex-shrink: 0;
   position: relative;
-  border-left: 1px solid #9ca3af;
-  height: 100%;
   display: flex;
-  align-items: flex-end;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
 }
-.dark .editor-ruler-mark {
-  border-left-color: #6b7280;
+/* mm tick — smallest */
+.editor-ruler-tick--mm {
+  width: 3.78px; /* 1mm at 96dpi */
+}
+.editor-ruler-tick--mm::after {
+  content: '';
+  display: block;
+  width: 1px;
+  height: 4px;
+  background: #b0b5bd;
+  margin-bottom: 0;
+}
+.dark .editor-ruler-tick--mm::after {
+  background: #4b5563;
+}
+/* 5mm tick — medium (half-cm) */
+.editor-ruler-tick--half {
+  width: 3.78px;
+}
+.editor-ruler-tick--half::after {
+  content: '';
+  display: block;
+  width: 1px;
+  height: 8px;
+  background: #9ca3af;
+  margin-bottom: 0;
+}
+.dark .editor-ruler-tick--half::after {
+  background: #6b7280;
+}
+/* cm tick — largest, with number */
+.editor-ruler-tick--cm {
+  width: 3.78px;
+}
+.editor-ruler-tick--cm::after {
+  content: '';
+  display: block;
+  width: 1px;
+  height: 14px;
+  background: #6b7280;
+  margin-bottom: 0;
+}
+.dark .editor-ruler-tick--cm::after {
+  background: #9ca3af;
 }
 .editor-ruler-number {
-  font-size: 9px;
+  position: absolute;
+  top: 1px;
+  font-size: 8px;
+  font-weight: 500;
   color: #6b7280;
-  padding-left: 2px;
   line-height: 1;
-  margin-bottom: 2px;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
 }
 .dark .editor-ruler-number {
   color: #9ca3af;

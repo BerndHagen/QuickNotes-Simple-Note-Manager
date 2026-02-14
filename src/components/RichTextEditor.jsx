@@ -613,6 +613,58 @@ const highlightColors = [
   '#fee2e2', '#fecaca', '#fca5a5',
 ]
 
+// Realistic cm/mm ruler component that fills the editor width
+function EditorRuler({ containerRef }) {
+  const [cmCount, setCmCount] = useState(40)
+
+  useEffect(() => {
+    const updateWidth = () => {
+      const el = containerRef?.current
+      if (el) {
+        const widthPx = el.clientWidth - 32 // subtract padding
+        // 1cm ≈ 37.8px at 96dpi
+        const cms = Math.ceil(widthPx / 37.8) + 1
+        setCmCount(cms)
+      }
+    }
+    updateWidth()
+    window.addEventListener('resize', updateWidth)
+    return () => window.removeEventListener('resize', updateWidth)
+  }, [containerRef])
+
+  // Build tick marks: 10 mm per cm
+  const ticks = []
+  for (let cm = 0; cm < cmCount; cm++) {
+    for (let mm = 0; mm < 10; mm++) {
+      const isCm = mm === 0
+      const isHalf = mm === 5
+      if (isCm) {
+        ticks.push(
+          <div key={`${cm}-${mm}`} className="editor-ruler-tick editor-ruler-tick--cm">
+            {cm > 0 && <span className="editor-ruler-number">{cm}</span>}
+          </div>
+        )
+      } else if (isHalf) {
+        ticks.push(
+          <div key={`${cm}-${mm}`} className="editor-ruler-tick editor-ruler-tick--half" />
+        )
+      } else {
+        ticks.push(
+          <div key={`${cm}-${mm}`} className="editor-ruler-tick editor-ruler-tick--mm" />
+        )
+      }
+    }
+  }
+
+  return (
+    <div className="editor-ruler" aria-hidden="true">
+      <div className="editor-ruler-inner">
+        {ticks}
+      </div>
+    </div>
+  )
+}
+
 export default function RichTextEditor({ noteId, content, onChange, placeholder, paperType = 'plain', onPaperTypeChange, onEditorReady, isExternalUpdate = false }) {
   const [showContextMenu, setShowContextMenu] = useState(false)
   const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 })
@@ -1039,15 +1091,7 @@ export default function RichTextEditor({ noteId, content, onChange, placeholder,
       <TableBubbleMenu editor={editor} />
 
       {editorSettings.showRuler && (
-        <div className="editor-ruler" aria-hidden="true">
-          <div className="editor-ruler-inner">
-            {Array.from({ length: 30 }, (_, i) => (
-              <div key={i} className="editor-ruler-mark">
-                <span className="editor-ruler-number">{i + 1}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+        <EditorRuler containerRef={editorContainerRef} />
       )}
 
       <div 
