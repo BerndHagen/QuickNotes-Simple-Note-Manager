@@ -325,7 +325,7 @@ export default function NoteEditor() {
 
   return (
     <div className="flex flex-col w-full h-full bg-gradient-to-b from-white via-[#fefefe] to-[#f8f9fb] dark:from-gray-950 dark:via-gray-950 dark:to-gray-900 editor-paper">
-      <div className="flex-shrink-0 px-5 py-4 md:px-6 bg-gradient-to-r from-emerald-100 via-teal-50 to-emerald-50 dark:from-gray-950/80 dark:via-gray-950/80 dark:to-gray-950/80 backdrop-blur-sm border-b border-[#cbd1db] dark:border-gray-800" style={{ boxShadow: '0 1px 3px -1px rgba(0,0,0,0.05), 0 1px 2px -1px rgba(0,0,0,0.03)' }}>
+      <div className="flex-shrink-0 px-5 py-4 md:px-6 bg-gradient-to-br from-emerald-100 via-teal-100 to-emerald-50 dark:from-gray-950/80 dark:via-gray-950/80 dark:to-gray-950/80 backdrop-blur-sm border-b border-[#cbd1db] dark:border-gray-800" style={{ boxShadow: '0 1px 3px -1px rgba(0,0,0,0.05), 0 1px 2px -1px rgba(0,0,0,0.03)' }}>
         <div className="flex items-center justify-between gap-2 mb-2.5">
           <button
             onClick={() => setMobileEditorOpen(false)}
