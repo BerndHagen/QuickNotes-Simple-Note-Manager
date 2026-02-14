@@ -665,6 +665,57 @@ function EditorRuler({ containerRef }) {
   )
 }
 
+// Vertical cm/mm ruler component on the left side of the editor
+function VerticalEditorRuler({ containerRef }) {
+  const [cmCount, setCmCount] = useState(60)
+
+  useEffect(() => {
+    const updateHeight = () => {
+      const el = containerRef?.current
+      if (el) {
+        const heightPx = el.scrollHeight || el.clientHeight
+        const cms = Math.ceil(heightPx / 37.8) + 1
+        setCmCount(cms)
+      }
+    }
+    updateHeight()
+    const observer = new ResizeObserver(updateHeight)
+    if (containerRef?.current) observer.observe(containerRef.current)
+    return () => observer.disconnect()
+  }, [containerRef])
+
+  const ticks = []
+  for (let cm = 0; cm < cmCount; cm++) {
+    for (let mm = 0; mm < 10; mm++) {
+      const isCm = mm === 0
+      const isHalf = mm === 5
+      if (isCm) {
+        ticks.push(
+          <div key={`${cm}-${mm}`} className="editor-vruler-tick editor-vruler-tick--cm">
+            {cm > 0 && <span className="editor-vruler-number">{cm}</span>}
+          </div>
+        )
+      } else if (isHalf) {
+        ticks.push(
+          <div key={`${cm}-${mm}`} className="editor-vruler-tick editor-vruler-tick--half" />
+        )
+      } else {
+        ticks.push(
+          <div key={`${cm}-${mm}`} className="editor-vruler-tick editor-vruler-tick--mm" />
+        )
+      }
+    }
+  }
+
+  return (
+    <div className="editor-vruler" aria-hidden="true">
+      <div className="editor-vruler-inner">
+        {ticks}
+      </div>
+    </div>
+  )
+}
+
 export default function RichTextEditor({ noteId, content, onChange, placeholder, paperType = 'plain', onPaperTypeChange, onEditorReady, isExternalUpdate = false }) {
   const [showContextMenu, setShowContextMenu] = useState(false)
   const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 })
@@ -1091,21 +1142,29 @@ export default function RichTextEditor({ noteId, content, onChange, placeholder,
       <TableBubbleMenu editor={editor} />
 
       {editorSettings.showRuler && (
-        <EditorRuler containerRef={editorContainerRef} />
+        <div className="flex">
+          <div className="editor-ruler-corner" aria-hidden="true" />
+          <EditorRuler containerRef={editorContainerRef} />
+        </div>
       )}
 
-      <div 
-        ref={editorContainerRef}
-        className={`relative flex-1 overflow-y-auto bg-white ${paperStyle.className || ''}`}
-        style={paperStyle.style}
-        onContextMenu={(e) => {
-          e.preventDefault()
-          const { clientX, clientY } = e
-          setContextMenuPos({ x: clientX, y: clientY })
-          setShowContextMenu(true)
-        }}
-      >
-        <EditorContent editor={editor} />
+      <div className="flex flex-1 overflow-hidden">
+        {editorSettings.showRuler && (
+          <VerticalEditorRuler containerRef={editorContainerRef} />
+        )}
+        <div 
+          ref={editorContainerRef}
+          className={`relative flex-1 overflow-y-auto bg-white ${paperStyle.className || ''}`}
+          style={paperStyle.style}
+          onContextMenu={(e) => {
+            e.preventDefault()
+            const { clientX, clientY } = e
+            setContextMenuPos({ x: clientX, y: clientY })
+            setShowContextMenu(true)
+          }}
+        >
+          <EditorContent editor={editor} />
+        </div>
       </div>
 
       {showContextMenu && createPortal(

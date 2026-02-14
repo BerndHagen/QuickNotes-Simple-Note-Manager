@@ -131,12 +131,27 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
   border-bottom: 1px solid #d1d5db;
   overflow: hidden;
   flex-shrink: 0;
+  flex: 1;
   user-select: none;
   position: relative;
 }
 .dark .editor-ruler {
   background: linear-gradient(to bottom, #1f2937, #1a2332);
   border-bottom-color: #374151;
+}
+/* Corner piece where horizontal and vertical rulers meet */
+.editor-ruler-corner {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #fafafa, #f3f4f6);
+  border-bottom: 1px solid #d1d5db;
+  border-right: 1px solid #d1d5db;
+}
+.dark .editor-ruler-corner {
+  background: linear-gradient(135deg, #1f2937, #1a2332);
+  border-bottom-color: #374151;
+  border-right-color: #374151;
 }
 .editor-ruler-inner {
   display: flex;
@@ -213,6 +228,96 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
   font-variant-numeric: tabular-nums;
 }
 .dark .editor-ruler-number {
+  color: #9ca3af;
+}
+
+/* Vertical Editor Ruler — left-side cm/mm ruler */
+.editor-vruler {
+  width: 36px;
+  background: linear-gradient(to right, #fafafa, #f3f4f6);
+  border-right: 1px solid #d1d5db;
+  overflow: hidden;
+  flex-shrink: 0;
+  user-select: none;
+  position: relative;
+}
+.dark .editor-vruler {
+  background: linear-gradient(to right, #1f2937, #1a2332);
+  border-right-color: #374151;
+}
+.editor-vruler-inner {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  align-items: flex-end;
+  padding-top: 16px;
+}
+.editor-vruler-tick {
+  flex-shrink: 0;
+  position: relative;
+  width: 100%;
+}
+.editor-vruler-tick--mm {
+  height: 3.78px;
+}
+.editor-vruler-tick--mm::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 1px;
+  width: 5px;
+  background: #c9cdd4;
+}
+.dark .editor-vruler-tick--mm::after {
+  background: #4b5563;
+}
+.editor-vruler-tick--half {
+  height: 3.78px;
+}
+.editor-vruler-tick--half::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 1px;
+  width: 10px;
+  background: #9ca3af;
+}
+.dark .editor-vruler-tick--half::after {
+  background: #6b7280;
+}
+.editor-vruler-tick--cm {
+  height: 3.78px;
+}
+.editor-vruler-tick--cm::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 1px;
+  width: 16px;
+  background: #6b7280;
+}
+.dark .editor-vruler-tick--cm::after {
+  background: #9ca3af;
+}
+.editor-vruler-number {
+  position: absolute;
+  left: 3px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 9px;
+  font-weight: 500;
+  color: #6b7280;
+  line-height: 1;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.dark .editor-vruler-number {
   color: #9ca3af;
 }
 
