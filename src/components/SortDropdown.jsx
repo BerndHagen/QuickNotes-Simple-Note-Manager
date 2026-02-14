@@ -41,7 +41,7 @@ export default function SortDropdown({ currentSort, onSortChange }) {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1 p-2 text-sm text-gray-600 transition-colors rounded-lg dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+        className="flex items-center gap-1 p-2 text-sm text-gray-600 transition-colors rounded-lg dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-700"
         title={`${t('sort.sortBy')}: ${t(currentOption.labelKey)}`}
         aria-label={`${t('sort.sortBy')}: ${t(currentOption.labelKey)}`}
         aria-expanded={isOpen}
@@ -65,7 +65,7 @@ export default function SortDropdown({ currentSort, onSortChange }) {
               className={`w-full flex items-center gap-3 px-3 py-2 text-sm transition-colors ${
                 currentSort === option.id
                   ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800'
               }`}
             >
               <option.icon className="w-4 h-4" />

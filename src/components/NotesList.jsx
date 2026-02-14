@@ -287,14 +287,14 @@ function NoteContextMenu({ x, y, note, notes: selectedNotes, onClose, folders, t
       )}
       <button
         onClick={() => handleAction(handleBulkPin)}
-        className="flex items-center w-[calc(100%-12px)] gap-3 mx-1.5 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700/50 dark:text-gray-300 transition-colors rounded-lg"
+        className="flex items-center w-[calc(100%-12px)] gap-3 mx-1.5 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700/50 dark:text-gray-300 transition-colors rounded-lg"
       >
         {allPinned ? <PinOff className="w-4 h-4 text-gray-400" /> : <Pin className="w-4 h-4 text-gray-400" />}
         <span>{allPinned ? 'Unpin' : 'Pin to Top'}</span>
       </button>
       <button
         onClick={() => handleAction(handleBulkStar)}
-        className="flex items-center w-[calc(100%-12px)] gap-3 mx-1.5 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700/50 dark:text-gray-300 transition-colors rounded-lg"
+        className="flex items-center w-[calc(100%-12px)] gap-3 mx-1.5 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700/50 dark:text-gray-300 transition-colors rounded-lg"
       >
         {allStarred ? <StarOff className="w-4 h-4 text-gray-400" /> : <Star className="w-4 h-4 text-gray-400" />}
         <span>{allStarred ? 'Remove from Favorites' : 'Add to Favorites'}</span>
@@ -304,7 +304,7 @@ function NoteContextMenu({ x, y, note, notes: selectedNotes, onClose, folders, t
       
       <button
         onClick={() => handleAction(handleBulkDuplicate)}
-        className="flex items-center w-[calc(100%-12px)] gap-3 mx-1.5 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700/50 dark:text-gray-300 transition-colors rounded-lg"
+        className="flex items-center w-[calc(100%-12px)] gap-3 mx-1.5 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700/50 dark:text-gray-300 transition-colors rounded-lg"
       >
         <Copy className="w-4 h-4 text-gray-400" />
         <span>Duplicate</span>
@@ -318,7 +318,7 @@ function NoteContextMenu({ x, y, note, notes: selectedNotes, onClose, folders, t
         <button
           ref={folderButtonRef}
           onClick={() => setShowFolderMenu(!showFolderMenu)}
-          className={`flex items-center justify-between w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700/50 dark:text-gray-300 transition-colors rounded-lg ${showFolderMenu ? 'bg-gray-100 dark:bg-gray-700/50' : ''}`}
+          className={`flex items-center justify-between w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700/50 dark:text-gray-300 transition-colors rounded-lg ${showFolderMenu ? 'bg-gray-200 dark:bg-gray-700/50' : ''}`}
         >
           <div className="flex items-center gap-3">
             <FolderInput className="w-4 h-4" />
@@ -339,7 +339,7 @@ function NoteContextMenu({ x, y, note, notes: selectedNotes, onClose, folders, t
           >
             <button
               onClick={() => handleAction(() => handleBulkMoveToFolder(null))}
-              className={`w-[calc(100%-12px)] mx-1.5 px-3 py-2.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors rounded-lg ${
+              className={`w-[calc(100%-12px)] mx-1.5 px-3 py-2.5 text-left text-sm hover:bg-gray-200 dark:hover:bg-gray-700/50 transition-colors rounded-lg ${
                 !isBulkMode && !note.folderId ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-300'
               }`}
             >
@@ -349,7 +349,7 @@ function NoteContextMenu({ x, y, note, notes: selectedNotes, onClose, folders, t
               <button
                 key={folder.id}
                 onClick={() => handleAction(() => handleBulkMoveToFolder(folder.id))}
-                className={`w-[calc(100%-12px)] mx-1.5 px-3 py-2.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors rounded-lg ${
+                className={`w-[calc(100%-12px)] mx-1.5 px-3 py-2.5 text-left text-sm hover:bg-gray-200 dark:hover:bg-gray-700/50 transition-colors rounded-lg ${
                   !isBulkMode && note.folderId === folder.id ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-300'
                 }`}
               >
@@ -368,7 +368,7 @@ function NoteContextMenu({ x, y, note, notes: selectedNotes, onClose, folders, t
         <button
           ref={tagButtonRef}
           onClick={() => setShowTagMenu(!showTagMenu)}
-          className={`flex items-center justify-between w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700/50 dark:text-gray-300 transition-colors rounded-lg ${showTagMenu ? 'bg-gray-100 dark:bg-gray-700/50' : ''}`}
+          className={`flex items-center justify-between w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700/50 dark:text-gray-300 transition-colors rounded-lg ${showTagMenu ? 'bg-gray-200 dark:bg-gray-700/50' : ''}`}
         >
           <div className="flex items-center gap-3">
             <Tag className="w-4 h-4" />
@@ -412,7 +412,7 @@ function NoteContextMenu({ x, y, note, notes: selectedNotes, onClose, folders, t
                           handleBulkAddTag(tag.name)
                         }
                       }}
-                      className={`w-[calc(100%-12px)] mx-1.5 px-3 py-2.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700/50 flex items-center gap-2 transition-colors rounded-lg ${
+                      className={`w-[calc(100%-12px)] mx-1.5 px-3 py-2.5 text-left text-sm hover:bg-gray-200 dark:hover:bg-gray-700/50 flex items-center gap-2 transition-colors rounded-lg ${
                         isApplied ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-300'
                       }`}
                     >
