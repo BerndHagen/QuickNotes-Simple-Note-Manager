@@ -850,7 +850,7 @@ export default function SettingsModal() {
                     {t('settings.statistics')}
                   </h4>
                   <div className="grid grid-cols-3 gap-4">
-                    <div className="p-4 text-center rounded-lg bg-gray-50 dark:bg-gray-900">
+                    <div className="p-4 text-center rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700">
                       <p className="text-2xl font-bold text-gray-900 dark:text-white">
                         {notes.length}
                       </p>
@@ -858,7 +858,7 @@ export default function SettingsModal() {
                         {t('settings.notesCount')}
                       </p>
                     </div>
-                    <div className="p-4 text-center rounded-lg bg-gray-50 dark:bg-gray-900">
+                    <div className="p-4 text-center rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700">
                       <p className="text-2xl font-bold text-gray-900 dark:text-white">
                         {folders.length}
                       </p>
@@ -866,7 +866,7 @@ export default function SettingsModal() {
                         {t('settings.foldersCount')}
                       </p>
                     </div>
-                    <div className="p-4 text-center rounded-lg bg-gray-50 dark:bg-gray-900">
+                    <div className="p-4 text-center rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700">
                       <p className="text-2xl font-bold text-gray-900 dark:text-white">
                         {tags.length}
                       </p>

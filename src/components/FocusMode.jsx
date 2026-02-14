@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import {
   Type,
   Clock,
@@ -34,8 +34,8 @@ export default function FocusMode() {
   const [showControls, setShowControls] = useState(true)
   const [sessionTime, setSessionTime] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
-  const [audio, setAudio] = useState(null)
   const [wordCount, setWordCount] = useState(0)
+  const audioRef = useRef(null)
 
   useEffect(() => {
     if (!focusModeOpen) return
@@ -54,45 +54,41 @@ export default function FocusMode() {
     }
   }, [focusModeOpen])
 
-  useEffect(() => {
-    if (audio) {
-      audio.pause()
-      setAudio(null)
+  const playSound = useCallback((soundId) => {
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current = null
     }
 
-    const sound = AMBIENT_SOUNDS.find((s) => s.id === ambientSound)
+    const sound = AMBIENT_SOUNDS.find((s) => s.id === soundId)
     if (sound?.url) {
       const newAudio = new Audio(sound.url)
       newAudio.loop = true
       newAudio.volume = 0.3
-      setAudio(newAudio)
-      
-      if (isPlaying) {
-        newAudio.play().catch(() => {})
-      }
+      audioRef.current = newAudio
+      newAudio.play().catch(() => {})
+      setIsPlaying(true)
+    } else {
+      setIsPlaying(false)
     }
+    setAmbientSound(soundId)
+  }, [])
 
-    return () => {
-      if (audio) {
-        audio.pause()
-      }
+  const toggleSound = useCallback(() => {
+    if (!audioRef.current) return
+    if (isPlaying) {
+      audioRef.current.pause()
+      setIsPlaying(false)
+    } else {
+      audioRef.current.play().catch(() => {})
+      setIsPlaying(true)
     }
-  }, [ambientSound])
-
-  useEffect(() => {
-    if (audio) {
-      if (isPlaying) {
-        audio.play().catch(() => {})
-      } else {
-        audio.pause()
-      }
-    }
-  }, [isPlaying, audio])
+  }, [isPlaying])
 
   useEffect(() => {
-    if (!focusModeOpen && audio) {
-      audio.pause()
-      setAudio(null)
+    if (!focusModeOpen && audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current = null
       setIsPlaying(false)
     }
   }, [focusModeOpen])
@@ -102,8 +98,8 @@ export default function FocusMode() {
       if (e.key === 'Escape') {
         e.preventDefault()
         e.stopPropagation()
-        if (audio) {
-          audio.pause()
+        if (audioRef.current) {
+          audioRef.current.pause()
         }
         setFocusModeOpen(false)
       }
@@ -113,7 +109,7 @@ export default function FocusMode() {
       window.addEventListener('keydown', handleKeyDown, true)
       return () => window.removeEventListener('keydown', handleKeyDown, true)
     }
-  }, [focusModeOpen, setFocusModeOpen, audio])
+  }, [focusModeOpen, setFocusModeOpen])
 
   useEffect(() => {
     if (!focusModeOpen) return
@@ -140,10 +136,6 @@ export default function FocusMode() {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
-  }
-
-  const toggleSound = () => {
-    setIsPlaying(!isPlaying)
   }
 
   const currentTheme = FOCUS_THEMES.find((t) => t.id === theme) || FOCUS_THEMES[0]
@@ -191,10 +183,7 @@ export default function FocusMode() {
             {AMBIENT_SOUNDS.slice(0, 4).map((sound) => (
               <button
                 key={sound.id}
-                onClick={() => {
-                  setAmbientSound(sound.id)
-                  if (sound.id !== 'none') setIsPlaying(true)
-                }}
+                onClick={() => playSound(sound.id)}
                 className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
                   ambientSound === sound.id
                     ? 'bg-white dark:bg-gray-800 shadow'
