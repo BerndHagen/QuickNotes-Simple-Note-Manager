@@ -163,6 +163,7 @@ export default function NoteEditor() {
   const menuDropdownRef = useRef(null)
   const tagPickerRef = useRef(null)
   const folderPickerRef = useRef(null)
+  const folderDropdownRef = useRef(null)
   const titleInputRef = useRef(null)
   const [titleCursorPosition, setTitleCursorPosition] = useState(null)
   
@@ -217,7 +218,8 @@ export default function NoteEditor() {
       if (tagPickerRef.current && !tagPickerRef.current.contains(event.target)) {
         setShowTagPicker(false)
       }
-      if (folderPickerRef.current && !folderPickerRef.current.contains(event.target)) {
+      if (folderPickerRef.current && !folderPickerRef.current.contains(event.target) &&
+          (!folderDropdownRef.current || !folderDropdownRef.current.contains(event.target))) {
         setShowFolderPicker(false)
       }
     }
@@ -575,8 +577,25 @@ export default function NoteEditor() {
               <ChevronDown className="w-3 h-3 opacity-50" />
             </button>
 
-            {showFolderPicker && (
-              <div className="absolute left-0 top-full mt-1.5 bg-white dark:bg-gray-900 border border-[#cbd1db] dark:border-gray-700 rounded-2xl shadow-xl shadow-black/5 dark:shadow-black/20 py-1.5 z-50 min-w-[180px] backdrop-blur-xl">
+            {showFolderPicker && createPortal(
+              <div
+                ref={folderDropdownRef}
+                className="fixed bg-white dark:bg-gray-900 border border-[#cbd1db] dark:border-gray-700 rounded-2xl shadow-xl shadow-black/5 dark:shadow-black/20 py-1.5 z-[9999] min-w-[180px] backdrop-blur-xl overflow-y-auto"
+                style={(() => {
+                  const rect = folderPickerRef.current?.getBoundingClientRect()
+                  if (!rect) return {}
+                  const dropdownHeight = Math.min((folders.length + 1) * 36 + 12, 300)
+                  const spaceBelow = window.innerHeight - rect.bottom - 10
+                  const spaceAbove = rect.top - 10
+                  const showAbove = spaceBelow < dropdownHeight && spaceAbove > spaceBelow
+                  return {
+                    left: Math.max(8, Math.min(rect.left, window.innerWidth - 196)),
+                    ...(showAbove
+                      ? { bottom: window.innerHeight - rect.top + 6, maxHeight: `${Math.min(spaceAbove, 300)}px` }
+                      : { top: rect.bottom + 6, maxHeight: `${Math.min(spaceBelow, 300)}px` }),
+                  }
+                })()}
+              >
                 <button
                   onClick={() => {
                     moveNote(note.id, null)
@@ -606,7 +625,8 @@ export default function NoteEditor() {
                     </button>
                   )
                 })}
-              </div>
+              </div>,
+              document.body
             )}
           </div>
           <div className="flex flex-wrap items-center gap-1.5">
