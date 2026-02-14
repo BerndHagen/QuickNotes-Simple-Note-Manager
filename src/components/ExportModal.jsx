@@ -2,6 +2,249 @@ import React, { useState } from 'react'
 import { X, FileText, FileCode, File, Download, Check } from 'lucide-react'
 import { useNotesStore, useUIStore } from '../store'
 import { useTranslation } from '../lib/useTranslation'
+import { hasSpecializedEditor } from './editors'
+
+const noteDataToHtml = (noteType, noteData, noteTitle) => {
+  if (!noteData) return '<p>No content</p>'
+
+  switch (noteType) {
+    case 'todo': {
+      const tasks = noteData.tasks || []
+      if (tasks.length === 0) return '<p>No tasks</p>'
+      const done = tasks.filter(t => t.completed).length
+      let html = `<p><strong>Progress:</strong> ${done}/${tasks.length} completed</p>`
+      html += '<table style="width:100%;border-collapse:collapse;margin:12px 0"><thead><tr>'
+      html += '<th style="border:1px solid #e5e7eb;padding:8px;text-align:left;background:#f3f4f6">Status</th>'
+      html += '<th style="border:1px solid #e5e7eb;padding:8px;text-align:left;background:#f3f4f6">Task</th>'
+      html += '<th style="border:1px solid #e5e7eb;padding:8px;text-align:left;background:#f3f4f6">Priority</th>'
+      html += '<th style="border:1px solid #e5e7eb;padding:8px;text-align:left;background:#f3f4f6">Due Date</th>'
+      html += '</tr></thead><tbody>'
+      tasks.forEach(task => {
+        const status = task.completed ? '✅' : '⬜'
+        const priority = task.priority === 'high' ? '🔴 High' : task.priority === 'medium' ? '🟡 Medium' : '🟢 Low'
+        const due = task.dueDate || '-'
+        html += `<tr><td style="border:1px solid #e5e7eb;padding:8px">${status}</td>`
+        html += `<td style="border:1px solid #e5e7eb;padding:8px">${task.text || task.title || ''}</td>`
+        html += `<td style="border:1px solid #e5e7eb;padding:8px">${priority}</td>`
+        html += `<td style="border:1px solid #e5e7eb;padding:8px">${due}</td></tr>`
+      })
+      html += '</tbody></table>'
+      return html
+    }
+
+    case 'shopping': {
+      const items = noteData.items || []
+      const budget = noteData.budget
+      const currency = noteData.currency || 'USD'
+      if (items.length === 0) return '<p>No items</p>'
+      const checked = items.filter(i => i.checked).length
+      let html = `<p><strong>${checked}/${items.length} items checked</strong></p>`
+      if (budget) html += `<p><strong>Budget:</strong> ${currency} ${budget}</p>`
+      const categories = {}
+      items.forEach(item => {
+        const cat = item.category || 'other'
+        if (!categories[cat]) categories[cat] = []
+        categories[cat].push(item)
+      })
+      Object.entries(categories).forEach(([cat, catItems]) => {
+        html += `<h3>${cat.charAt(0).toUpperCase() + cat.slice(1)}</h3>`
+        html += '<table style="width:100%;border-collapse:collapse;margin:8px 0"><thead><tr>'
+        html += '<th style="border:1px solid #e5e7eb;padding:6px;background:#f3f4f6">✓</th>'
+        html += '<th style="border:1px solid #e5e7eb;padding:6px;background:#f3f4f6">Item</th>'
+        html += '<th style="border:1px solid #e5e7eb;padding:6px;background:#f3f4f6">Qty</th>'
+        html += '<th style="border:1px solid #e5e7eb;padding:6px;background:#f3f4f6">Price</th>'
+        html += '</tr></thead><tbody>'
+        catItems.forEach(item => {
+          html += `<tr><td style="border:1px solid #e5e7eb;padding:6px">${item.checked ? '✅' : '⬜'}</td>`
+          html += `<td style="border:1px solid #e5e7eb;padding:6px">${item.name || ''}</td>`
+          html += `<td style="border:1px solid #e5e7eb;padding:6px">${item.quantity || 1} ${item.unit || 'pcs'}</td>`
+          html += `<td style="border:1px solid #e5e7eb;padding:6px">${item.price ? `${currency} ${item.price}` : '-'}</td></tr>`
+        })
+        html += '</tbody></table>'
+      })
+      const total = items.reduce((sum, i) => sum + ((i.price || 0) * (i.quantity || 1)), 0)
+      if (total > 0) html += `<p><strong>Total: ${currency} ${total.toFixed(2)}</strong></p>`
+      return html
+    }
+
+    case 'meeting': {
+      let html = ''
+      if (noteData.date) html += `<p><strong>Date:</strong> ${noteData.date}${noteData.time ? ` at ${noteData.time}` : ''}</p>`
+      if (noteData.location) html += `<p><strong>Location:</strong> ${noteData.location}</p>`
+      const attendees = noteData.attendees || []
+      if (attendees.length > 0) {
+        html += `<h3>Attendees (${attendees.length})</h3><ul>`
+        attendees.forEach(a => { html += `<li>${typeof a === 'string' ? a : (a.name || a.email || '')}</li>` })
+        html += '</ul>'
+      }
+      const agenda = noteData.agenda || []
+      if (agenda.length > 0) {
+        html += '<h3>Agenda</h3><ol>'
+        agenda.forEach(item => { html += `<li>${typeof item === 'string' ? item : (item.text || item.title || '')}</li>` })
+        html += '</ol>'
+      }
+      if (noteData.notes) html += `<h3>Notes</h3><div>${noteData.notes}</div>`
+      const actions = noteData.actionItems || []
+      if (actions.length > 0) {
+        html += '<h3>Action Items</h3><ul>'
+        actions.forEach(a => {
+          const text = typeof a === 'string' ? a : (a.text || a.title || '')
+          const assignee = a.assignee ? ` (${a.assignee})` : ''
+          const done = a.completed ? '✅ ' : '⬜ '
+          html += `<li>${done}${text}${assignee}</li>`
+        })
+        html += '</ul>'
+      }
+      const decisions = noteData.decisions || []
+      if (decisions.length > 0) {
+        html += '<h3>Decisions</h3><ul>'
+        decisions.forEach(d => { html += `<li>${typeof d === 'string' ? d : (d.text || '')}</li>` })
+        html += '</ul>'
+      }
+      return html || '<p>No meeting data</p>'
+    }
+
+    case 'journal': {
+      let html = ''
+      if (noteData.date) html += `<p><strong>Date:</strong> ${noteData.date}</p>`
+      if (noteData.mood) html += `<p><strong>Mood:</strong> ${noteData.mood}/5</p>`
+      if (noteData.energy) html += `<p><strong>Energy:</strong> ${noteData.energy}/5</p>`
+      const gratitude = (noteData.gratitude || []).filter(g => g)
+      if (gratitude.length > 0) {
+        html += '<h3>Gratitude</h3><ul>'
+        gratitude.forEach(g => { html += `<li>${g}</li>` })
+        html += '</ul>'
+      }
+      const highlights = noteData.highlights || []
+      if (highlights.length > 0) {
+        html += '<h3>Highlights</h3><ul>'
+        highlights.forEach(h => { html += `<li>${typeof h === 'string' ? h : (h.text || '')}</li>` })
+        html += '</ul>'
+      }
+      if (noteData.challenges) html += `<h3>Challenges</h3><p>${noteData.challenges}</p>`
+      if (noteData.lessons) html += `<h3>Lessons</h3><p>${noteData.lessons}</p>`
+      if (noteData.freeWrite) html += `<h3>Free Write</h3><p>${noteData.freeWrite}</p>`
+      return html || '<p>No journal entry</p>'
+    }
+
+    case 'brainstorm': {
+      let html = ''
+      if (noteData.topic) html += `<p><strong>Topic:</strong> ${noteData.topic}</p>`
+      if (noteData.question) html += `<p><strong>Question:</strong> ${noteData.question}</p>`
+      const ideas = noteData.ideas || []
+      if (ideas.length > 0) {
+        html += `<h3>Ideas (${ideas.length})</h3>`
+        ideas.forEach((idea, i) => {
+          const title = typeof idea === 'string' ? idea : (idea.title || idea.text || `Idea ${i + 1}`)
+          html += `<h4>${i + 1}. ${title}</h4>`
+          if (idea.description) html += `<p>${idea.description}</p>`
+          if (idea.votes) html += `<p><em>Votes: ${idea.votes}</em></p>`
+        })
+      }
+      return html || '<p>No ideas yet</p>'
+    }
+
+    case 'project': {
+      let html = ''
+      const columns = noteData.columns || []
+      columns.forEach(col => {
+        html += `<h3>${col.name} (${(col.tasks || []).length})</h3>`
+        if (col.tasks && col.tasks.length > 0) {
+          html += '<ul>'
+          col.tasks.forEach(task => {
+            const text = typeof task === 'string' ? task : (task.title || task.text || '')
+            const assignee = task.assignee ? ` [${task.assignee}]` : ''
+            html += `<li>${text}${assignee}</li>`
+          })
+          html += '</ul>'
+        } else {
+          html += '<p><em>No tasks</em></p>'
+        }
+      })
+      const milestones = noteData.milestones || []
+      if (milestones.length > 0) {
+        html += '<h3>Milestones</h3><ul>'
+        milestones.forEach(m => {
+          const text = typeof m === 'string' ? m : (m.title || m.text || '')
+          const date = m.date || m.dueDate ? ` (${m.date || m.dueDate})` : ''
+          const done = m.completed ? '✅ ' : '⬜ '
+          html += `<li>${done}${text}${date}</li>`
+        })
+        html += '</ul>'
+      }
+      return html || '<p>No project data</p>'
+    }
+
+    case 'weekly': {
+      let html = ''
+      if (noteData.weekStart) html += `<p><strong>Week starting:</strong> ${noteData.weekStart}</p>`
+      const goals = noteData.goals || []
+      if (goals.length > 0) {
+        html += '<h3>Weekly Goals</h3><ul>'
+        goals.forEach(g => {
+          const text = typeof g === 'string' ? g : (g.text || g.title || '')
+          const done = g.completed ? '✅ ' : '⬜ '
+          html += `<li>${done}${text}</li>`
+        })
+        html += '</ul>'
+      }
+      const days = noteData.days || {}
+      const dayNames = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+      dayNames.forEach(dayName => {
+        const day = days[dayName]
+        if (!day) return
+        const hasTasks = day.tasks && day.tasks.length > 0
+        const hasEvents = day.events && day.events.length > 0
+        if (!hasTasks && !hasEvents) return
+        html += `<h3>${dayName.charAt(0).toUpperCase() + dayName.slice(1)}</h3>`
+        if (hasEvents) {
+          html += '<p><strong>Events:</strong></p><ul>'
+          day.events.forEach(e => {
+            const text = typeof e === 'string' ? e : (e.title || e.text || '')
+            const time = e.time ? `${e.time} - ` : ''
+            html += `<li>${time}${text}</li>`
+          })
+          html += '</ul>'
+        }
+        if (hasTasks) {
+          html += '<p><strong>Tasks:</strong></p><ul>'
+          day.tasks.forEach(t => {
+            const text = typeof t === 'string' ? t : (t.text || t.title || '')
+            const done = t.completed ? '✅ ' : '⬜ '
+            html += `<li>${done}${text}</li>`
+          })
+          html += '</ul>'
+        }
+      })
+      const review = noteData.review
+      if (review) {
+        if (review.highlight) html += `<h3>Weekly Highlight</h3><p>${review.highlight}</p>`
+        if (review.wins && review.wins.length > 0) {
+          html += '<h3>Wins</h3><ul>'
+          review.wins.forEach(w => { html += `<li>${typeof w === 'string' ? w : (w.text || '')}</li>` })
+          html += '</ul>'
+        }
+        if (review.improvements && review.improvements.length > 0) {
+          html += '<h3>Improvements</h3><ul>'
+          review.improvements.forEach(imp => { html += `<li>${typeof imp === 'string' ? imp : (imp.text || '')}</li>` })
+          html += '</ul>'
+        }
+      }
+      return html || '<p>No weekly plan data</p>'
+    }
+
+    default:
+      return '<p>No content</p>'
+  }
+}
+
+const getExportableContent = (noteItem) => {
+  if (!noteItem) return ''
+  if (hasSpecializedEditor(noteItem.noteType)) {
+    return noteDataToHtml(noteItem.noteType, noteItem.noteData, noteItem.title)
+  }
+  return noteItem.content || ''
+}
 const htmlToMarkdown = (html) => {
   if (!html) return ''
   
@@ -294,19 +537,20 @@ export default function ExportModal() {
         if (!noteItem) continue
         
         const safeTitle = noteItem.title.replace(/[^a-z0-9]/gi, '_').substring(0, 50)
+        const exportContent = getExportableContent(noteItem)
         
         switch (selectedFormat) {
           case 'pdf':
-            await generatePDF(noteItem)
+            await generatePDF({ ...noteItem, content: exportContent })
             break
             
           case 'markdown':
-            const markdown = `# ${noteItem.title}\n\n${noteItem.tags?.length ? `Tags: ${noteItem.tags.map(t => `#${t}`).join(' ')}\n\n---\n\n` : ''}${htmlToMarkdown(noteItem.content)}`
+            const markdown = `# ${noteItem.title}\n\n${noteItem.tags?.length ? `Tags: ${noteItem.tags.map(t => `#${t}`).join(' ')}\n\n---\n\n` : ''}${htmlToMarkdown(exportContent)}`
             downloadFile(markdown, `${safeTitle}.md`, 'text/markdown')
             break
             
           case 'txt':
-            const plainText = `${noteItem.title}\n${'='.repeat(noteItem.title.length)}\n\n${noteItem.tags?.length ? `Tags: ${noteItem.tags.join(', ')}\n\n` : ''}${htmlToPlainText(noteItem.content)}`
+            const plainText = `${noteItem.title}\n${'='.repeat(noteItem.title.length)}\n\n${noteItem.tags?.length ? `Tags: ${noteItem.tags.join(', ')}\n\n` : ''}${htmlToPlainText(exportContent)}`
             downloadFile(plainText, `${safeTitle}.txt`, 'text/plain')
             break
             
@@ -324,12 +568,15 @@ export default function ExportModal() {
     pre { background: #f3f4f6; padding: 12px; border-radius: 6px; overflow-x: auto; }
     code { background: #f3f4f6; padding: 2px 6px; border-radius: 4px; }
     blockquote { border-left: 4px solid #10b981; margin: 16px 0; padding: 8px 16px; background: #f9fafb; }
+    table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+    th, td { border: 1px solid #e5e7eb; padding: 8px; text-align: left; }
+    th { background: #f3f4f6; font-weight: 600; }
   </style>
 </head>
 <body>
   <h1>${noteItem.title}</h1>
   ${noteItem.tags?.length ? `<div class="tags">${noteItem.tags.map(t => `<span class="tag">#${t}</span>`).join(' ')}</div>` : ''}
-  <div class="content">${noteItem.content || ''}</div>
+  <div class="content">${exportContent}</div>
 </body>
 </html>`
             downloadFile(html, `${safeTitle}.html`, 'text/html')
@@ -379,7 +626,10 @@ export default function ExportModal() {
           <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
             <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{note.title}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              {note.content ? htmlToPlainText(note.content).substring(0, 60) + '...' : t('exportModal.emptyNote')}
+              {(() => {
+                const content = getExportableContent(note)
+                return content ? htmlToPlainText(content).substring(0, 60) + '...' : t('exportModal.emptyNote')
+              })()}
             </p>
           </div>
         )}
