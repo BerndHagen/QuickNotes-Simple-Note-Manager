@@ -663,7 +663,7 @@ function NewFolderModal({ isOpen, onClose, onCreate }) {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               {t('folders.chooseIcon') || 'Choose Icon'}
             </label>
-            <div className="flex flex-wrap gap-2 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-300 dark:border-gray-700">
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(40px,1fr))] gap-2 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-300 dark:border-gray-700">
               {iconNames.map((iconName) => {
                 const Ic = folderIcons[iconName]
                 const isSelected = icon === iconName
@@ -671,7 +671,7 @@ function NewFolderModal({ isOpen, onClose, onCreate }) {
                   <button
                     key={iconName}
                     onClick={() => setIcon(iconName)}
-                    className={`p-2.5 rounded-lg transition-all ${
+                    className={`p-2.5 rounded-lg transition-all flex items-center justify-center ${
                       isSelected 
                         ? 'bg-emerald-100 dark:bg-emerald-900/30 ring-2 ring-emerald-500' 
                         : 'hover:bg-gray-100 dark:hover:bg-gray-700'
@@ -688,12 +688,12 @@ function NewFolderModal({ isOpen, onClose, onCreate }) {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               {t('folders.chooseColor') || 'Choose Color'}
             </label>
-            <div className="flex flex-wrap gap-2 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-300 dark:border-gray-700">
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(36px,1fr))] gap-2 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-300 dark:border-gray-700">
               {folderColors.map((c) => (
                 <button
                   key={c}
                   onClick={() => setColor(c)}
-                  className={`w-9 h-9 rounded-full hover:scale-110 transition-transform shadow-md ${
+                  className={`w-9 h-9 rounded-full hover:scale-110 transition-transform shadow-md mx-auto ${
                     color === c ? 'ring-2 ring-offset-2 ring-gray-400 dark:ring-gray-500' : ''
                   }`}
                   style={{ backgroundColor: c }}
