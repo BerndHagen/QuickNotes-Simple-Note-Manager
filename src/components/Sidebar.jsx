@@ -938,7 +938,7 @@ export default function Sidebar() {
             <span className="text-[13px] font-medium">{t('sidebar.trash')}</span>
           </div>
           {getTrashCount() > 0 && (
-            <span className="text-[10px] font-semibold bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400 px-1.5 py-0.5 rounded-full border border-gray-300 dark:border-gray-600">
+            <span className="text-[11px] tabular-nums px-1.5 py-0.5 rounded-md min-w-[24px] text-center font-medium count-badge border border-gray-300 dark:border-gray-600 bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400">
               {getTrashCount()}
             </span>
           )}
@@ -952,7 +952,7 @@ export default function Sidebar() {
             <span className="text-[13px] font-medium">{t('sidebar.archive')}</span>
           </div>
           {getArchiveCount() > 0 && (
-            <span className="text-[10px] font-semibold bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded-full border border-gray-300 dark:border-gray-600">
+            <span className="text-[11px] tabular-nums px-1.5 py-0.5 rounded-md min-w-[24px] text-center font-medium count-badge border border-gray-300 dark:border-gray-600 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400">
               {getArchiveCount()}
             </span>
           )}
@@ -969,7 +969,7 @@ export default function Sidebar() {
             <span className="text-[13px] font-medium">Shared Notes</span>
           </div>
           {pendingShares?.length > 0 && (
-            <span className="text-[10px] font-semibold bg-orange-50 dark:bg-orange-900/20 text-orange-500 dark:text-orange-400 px-1.5 py-0.5 rounded-full border border-gray-300 dark:border-gray-600 animate-pulse">
+            <span className="text-[11px] tabular-nums px-1.5 py-0.5 rounded-md min-w-[24px] text-center font-medium count-badge border border-gray-300 dark:border-gray-600 bg-orange-50 dark:bg-orange-900/20 text-orange-500 dark:text-orange-400 animate-pulse">
               {pendingShares.length}
             </span>
           )}

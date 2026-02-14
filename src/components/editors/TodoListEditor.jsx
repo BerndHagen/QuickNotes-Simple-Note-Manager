@@ -276,19 +276,19 @@ export default function TodoListEditor({ data, onChange, noteTitle }) {
           </div>
         </div>
         <div className="grid grid-cols-4 gap-2">
-          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center">
+          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center border border-gray-200 dark:border-gray-600">
             <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</div>
             <div className="text-xs text-gray-500 dark:text-gray-400">Total</div>
           </div>
-          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center">
+          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center border border-gray-200 dark:border-gray-600">
             <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.active}</div>
             <div className="text-xs text-gray-500 dark:text-gray-400">Active</div>
           </div>
-          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center">
+          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center border border-gray-200 dark:border-gray-600">
             <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.completed}</div>
             <div className="text-xs text-gray-500 dark:text-gray-400">Done</div>
           </div>
-          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center">
+          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center border border-gray-200 dark:border-gray-600">
             <div className="text-2xl font-bold text-red-500 dark:text-red-400">{stats.overdue}</div>
             <div className="text-xs text-gray-500 dark:text-gray-400">Overdue</div>
           </div>

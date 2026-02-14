@@ -250,19 +250,19 @@ ${meetingData.notes}
           </div>
         </div>
         <div className="grid grid-cols-4 gap-2">
-          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center">
+          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center border border-gray-200 dark:border-gray-600">
             <div className="text-xl font-bold text-gray-900 dark:text-white">{stats.present}/{stats.attendees}</div>
             <div className="text-xs text-gray-500 dark:text-gray-400">Present</div>
           </div>
-          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center">
+          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center border border-gray-200 dark:border-gray-600">
             <div className="text-xl font-bold text-gray-900 dark:text-white">{stats.completedAgenda}/{stats.agendaItems}</div>
             <div className="text-xs text-gray-500 dark:text-gray-400">Agenda Done</div>
           </div>
-          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center">
+          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center border border-gray-200 dark:border-gray-600">
             <div className="text-xl font-bold text-gray-900 dark:text-white">{stats.actionItems}</div>
             <div className="text-xs text-gray-500 dark:text-gray-400">Actions</div>
           </div>
-          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center">
+          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center border border-gray-200 dark:border-gray-600">
             <div className="text-xl font-bold text-gray-900 dark:text-white">{stats.decisions}</div>
             <div className="text-xs text-gray-500 dark:text-gray-400">Decisions</div>
           </div>
