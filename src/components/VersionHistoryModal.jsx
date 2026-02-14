@@ -161,7 +161,7 @@ export default function VersionHistoryModal() {
                   className={`p-4 cursor-pointer transition-colors ${
                     !selectedVersion
                       ? 'bg-primary-50 dark:bg-primary-900/30'
-                      : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                      : 'hover:bg-gray-100 dark:hover:bg-gray-700/50'
                   }`}
                   onClick={() => setSelectedVersion(null)}
                 >
@@ -182,7 +182,7 @@ export default function VersionHistoryModal() {
                     className={`p-4 cursor-pointer transition-colors ${
                       selectedVersion?.id === version.id
                         ? 'bg-primary-50 dark:bg-primary-900/30'
-                        : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                        : 'hover:bg-gray-100 dark:hover:bg-gray-700/50'
                     }`}
                     onClick={() => setSelectedVersion(version)}
                   >

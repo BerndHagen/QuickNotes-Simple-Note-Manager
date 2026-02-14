@@ -65,7 +65,7 @@ export default function SortDropdown({ currentSort, onSortChange }) {
               className={`w-full flex items-center gap-3 px-3 py-2 text-sm transition-colors ${
                 currentSort === option.id
                   ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
               }`}
             >
               <option.icon className="w-4 h-4" />

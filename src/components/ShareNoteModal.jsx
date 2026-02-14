@@ -131,7 +131,7 @@ export default function ShareNoteModal() {
                   Permission
                 </label>
                 <div className="flex gap-2">
-                  <label className="flex-1 flex items-center gap-2 p-3 border dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                  <label className="flex-1 flex items-center gap-2 p-3 border dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors">
                     <input
                       type="radio"
                       value="view"
@@ -149,7 +149,7 @@ export default function ShareNoteModal() {
                     </div>
                   </label>
                   
-                  <label className="flex-1 flex items-center gap-2 p-3 border dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                  <label className="flex-1 flex items-center gap-2 p-3 border dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors">
                     <input
                       type="radio"
                       value="edit"

@@ -263,7 +263,7 @@ export default function App() {
         {!sidebarOpen && (
           <button
             onClick={toggleSidebar}
-            className={`fixed top-4 left-4 z-40 p-2.5 bg-white dark:bg-gray-900 rounded-xl shadow-sm hover:shadow-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-200 border border-gray-100 dark:border-gray-800/80 active:scale-95 hover:scale-105 ${
+            className={`fixed top-4 left-4 z-40 p-2.5 bg-white dark:bg-gray-900 rounded-xl shadow-sm hover:shadow-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 border border-gray-100 dark:border-gray-800/80 active:scale-95 hover:scale-105 ${
               mobileView === 'editor' ? 'hidden md:block' : 'block'
             }`}
             title="Open sidebar (Ctrl+\\)"
@@ -281,7 +281,7 @@ export default function App() {
         {sidebarOpen && (
           <button
             onClick={toggleSidebar}
-            className="hidden md:block absolute top-1/2 -translate-y-1/2 left-[273px] z-40 p-1 bg-white dark:bg-gray-900 rounded-full shadow-md hover:shadow-lg transition-all duration-200 border border-gray-100 dark:border-gray-800/80 hover:bg-gray-50 dark:hover:bg-gray-800 active:scale-90 hover:scale-110"
+            className="hidden md:block absolute top-1/2 -translate-y-1/2 left-[273px] z-40 p-1 bg-white dark:bg-gray-900 rounded-full shadow-md hover:shadow-lg transition-all duration-200 border border-gray-100 dark:border-gray-800/80 hover:bg-gray-100 dark:hover:bg-gray-800 active:scale-90 hover:scale-110"
             title="Collapse sidebar (Ctrl+\\)"
           >
             <PanelLeftClose className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />

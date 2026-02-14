@@ -284,14 +284,14 @@ function NoteContextMenu({ x, y, note, notes: selectedNotes, onClose, folders, t
       )}
       <button
         onClick={() => handleAction(handleBulkPin)}
-        className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 dark:text-gray-300 transition-colors"
+        className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-300 transition-colors"
       >
         {allPinned ? <PinOff className="w-4 h-4 text-gray-400" /> : <Pin className="w-4 h-4 text-gray-400" />}
         <span>{allPinned ? 'Unpin' : 'Pin to Top'}</span>
       </button>
       <button
         onClick={() => handleAction(handleBulkStar)}
-        className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 dark:text-gray-300 transition-colors"
+        className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-300 transition-colors"
       >
         {allStarred ? <StarOff className="w-4 h-4 text-gray-400" /> : <Star className="w-4 h-4 text-gray-400" />}
         <span>{allStarred ? 'Remove from Favorites' : 'Add to Favorites'}</span>
@@ -301,7 +301,7 @@ function NoteContextMenu({ x, y, note, notes: selectedNotes, onClose, folders, t
       
       <button
         onClick={() => handleAction(handleBulkDuplicate)}
-        className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 dark:text-gray-300 transition-colors"
+        className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-300 transition-colors"
       >
         <Copy className="w-4 h-4 text-gray-400" />
         <span>Duplicate</span>
@@ -315,7 +315,7 @@ function NoteContextMenu({ x, y, note, notes: selectedNotes, onClose, folders, t
         <button
           ref={folderButtonRef}
           onClick={() => setShowFolderMenu(!showFolderMenu)}
-          className={`flex items-center justify-between w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 dark:text-gray-300 transition-colors ${showFolderMenu ? 'bg-gray-50 dark:bg-gray-800' : ''}`}
+          className={`flex items-center justify-between w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-300 transition-colors ${showFolderMenu ? 'bg-gray-100 dark:bg-gray-800' : ''}`}
         >
           <div className="flex items-center gap-3">
             <FolderInput className="w-4 h-4" />
@@ -336,7 +336,7 @@ function NoteContextMenu({ x, y, note, notes: selectedNotes, onClose, folders, t
           >
             <button
               onClick={() => handleAction(() => handleBulkMoveToFolder(null))}
-              className={`w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${
+              className={`w-full px-4 py-2.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
                 !isBulkMode && !note.folderId ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-300'
               }`}
             >
@@ -346,7 +346,7 @@ function NoteContextMenu({ x, y, note, notes: selectedNotes, onClose, folders, t
               <button
                 key={folder.id}
                 onClick={() => handleAction(() => handleBulkMoveToFolder(folder.id))}
-                className={`w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${
+                className={`w-full px-4 py-2.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
                   !isBulkMode && note.folderId === folder.id ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-300'
                 }`}
               >
@@ -365,7 +365,7 @@ function NoteContextMenu({ x, y, note, notes: selectedNotes, onClose, folders, t
         <button
           ref={tagButtonRef}
           onClick={() => setShowTagMenu(!showTagMenu)}
-          className={`flex items-center justify-between w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 dark:text-gray-300 transition-colors ${showTagMenu ? 'bg-gray-50 dark:bg-gray-800' : ''}`}
+          className={`flex items-center justify-between w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-300 transition-colors ${showTagMenu ? 'bg-gray-100 dark:bg-gray-800' : ''}`}
         >
           <div className="flex items-center gap-3">
             <Tag className="w-4 h-4" />
@@ -409,7 +409,7 @@ function NoteContextMenu({ x, y, note, notes: selectedNotes, onClose, folders, t
                           handleBulkAddTag(tag.name)
                         }
                       }}
-                      className={`w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-2 transition-colors ${
+                      className={`w-full px-4 py-2.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 transition-colors ${
                         isApplied ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-300'
                       }`}
                     >
@@ -644,7 +644,7 @@ export default function NotesList() {
             placeholder={t('notes.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full py-2.5 pl-10 pr-4 text-[13px] text-gray-900 placeholder-gray-400 bg-white dark:bg-gray-800/80 border border-gray-200/60 dark:border-gray-700/60 rounded-xl focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/10 dark:text-white transition-all font-medium shadow-sm input-enterprise"
+            className="w-full py-2.5 pl-10 pr-4 text-[13px] text-gray-900 placeholder-gray-400 bg-white dark:bg-gray-800/80 border border-gray-300 dark:border-gray-700 rounded-xl focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/10 dark:text-white transition-all font-medium shadow-sm input-enterprise"
           />
         </div>
       </div>

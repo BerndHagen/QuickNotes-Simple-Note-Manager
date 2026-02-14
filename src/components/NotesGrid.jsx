@@ -150,14 +150,14 @@ function NoteContextMenu({ x, y, note, onClose, folders, tags }) {
     >
       <button
         onClick={() => handleAction(() => togglePin(note.id))}
-        className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 dark:text-gray-300 transition-colors"
+        className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-300 transition-colors"
       >
         {note.pinned ? <PinOff className="w-4 h-4 text-gray-400" /> : <Pin className="w-4 h-4 text-gray-400" />}
         <span>{note.pinned ? 'Unpin' : 'Pin to Top'}</span>
       </button>
       <button
         onClick={() => handleAction(() => toggleStar(note.id))}
-        className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 dark:text-gray-300 transition-colors"
+        className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-300 transition-colors"
       >
         {note.starred ? <StarOff className="w-4 h-4 text-gray-400" /> : <Star className="w-4 h-4 text-gray-400" />}
         <span>{note.starred ? 'Remove from Favorites' : 'Add to Favorites'}</span>
@@ -167,7 +167,7 @@ function NoteContextMenu({ x, y, note, onClose, folders, tags }) {
       
       <button
         onClick={() => handleAction(() => duplicateNote(note.id))}
-        className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 dark:text-gray-300 transition-colors"
+        className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-300 transition-colors"
       >
         <Copy className="w-4 h-4 text-gray-400" />
         <span>Duplicate</span>
@@ -181,7 +181,7 @@ function NoteContextMenu({ x, y, note, onClose, folders, tags }) {
         <button
           ref={folderButtonRef}
           onClick={() => setShowFolderMenu(!showFolderMenu)}
-          className={`flex items-center justify-between w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 dark:text-gray-300 transition-colors ${showFolderMenu ? 'bg-gray-50 dark:bg-gray-800' : ''}`}
+          className={`flex items-center justify-between w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-300 transition-colors ${showFolderMenu ? 'bg-gray-100 dark:bg-gray-800' : ''}`}
         >
           <div className="flex items-center gap-3">
             <FolderInput className="w-4 h-4 text-gray-400" />
@@ -202,7 +202,7 @@ function NoteContextMenu({ x, y, note, onClose, folders, tags }) {
           >
             <button
               onClick={() => handleAction(() => updateNote(note.id, { folderId: null }))}
-              className={`w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${
+              className={`w-full px-4 py-2.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
                 !note.folderId ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-300'
               }`}
             >
@@ -212,7 +212,7 @@ function NoteContextMenu({ x, y, note, onClose, folders, tags }) {
               <button
                 key={folder.id}
                 onClick={() => handleAction(() => updateNote(note.id, { folderId: folder.id }))}
-                className={`w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${
+                className={`w-full px-4 py-2.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
                   note.folderId === folder.id ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-300'
                 }`}
               >

@@ -98,7 +98,7 @@ export default function TrashView() {
                 return (
                   <div
                     key={note.id}
-                    className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                    className="p-4 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">

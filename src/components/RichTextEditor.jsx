@@ -1114,7 +1114,7 @@ const ContextMenu = React.forwardRef(({ x, y, editor, onClose, editorBounds }, r
           <button
             key={index}
             onClick={() => handleAction(item.action)}
-            className={`w-full px-4 py-2.5 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${
+            className={`w-full px-4 py-2.5 flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
               item.danger ? 'text-red-500 dark:text-red-400' : 'text-gray-700 dark:text-gray-300'
             }`}
           >
@@ -1309,7 +1309,7 @@ function ImageToolbarButton() {
           e.stopPropagation()
           setImageUploadOpen(true)
         }}
-        className="p-2 text-gray-600 transition-all duration-150 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/60 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+        className="p-2 text-gray-600 transition-all duration-150 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800/60 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
       >
         <ImageIcon className="w-4 h-4" />
       </button>
@@ -1555,7 +1555,7 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
         className={`toolbar-btn p-1.5 sm:p-2 rounded-lg transition-all duration-150 touch-manipulation ${
           isActive
             ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 shadow-sm'
-            : 'hover:bg-gray-50 dark:hover:bg-gray-800/60 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 active:bg-gray-100 dark:active:bg-gray-700'
+            : 'hover:bg-gray-100 dark:hover:bg-gray-800/60 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 active:bg-gray-100 dark:active:bg-gray-700'
         } ${disabled ? 'opacity-30 cursor-not-allowed' : ''}`}
       >
         {children}
@@ -1592,7 +1592,7 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
             ? 'opacity-30 cursor-not-allowed text-gray-400 dark:text-gray-600'
             : isOpen
               ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 shadow-sm'
-              : 'hover:bg-gray-50 dark:hover:bg-gray-800/60 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+              : 'hover:bg-gray-100 dark:hover:bg-gray-800/60 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
         }`}
       >
         {children}
@@ -1654,7 +1654,7 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
                     editor.chain().focus().setFontFamily(font.value).run()
                     setShowFontPicker(false)
                   }}
-                  className={`w-full px-3 py-1.5 text-[13px] text-left hover:bg-gray-50 dark:hover:bg-gray-800/60 truncate rounded-lg transition-colors ${
+                  className={`w-full px-3 py-1.5 text-[13px] text-left hover:bg-gray-100 dark:hover:bg-gray-800/60 truncate rounded-lg transition-colors ${
                     isActive ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 font-medium' : 'text-gray-700 dark:text-gray-300'
                   }`}
                   style={{ fontFamily: font.value }}
@@ -1684,7 +1684,7 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
                     editor.chain().focus().setFontSize(size.value).run()
                     setShowFontSizePicker(false)
                   }}
-                  className={`w-full px-3 py-1.5 text-left text-[13px] hover:bg-gray-50 dark:hover:bg-gray-800/60 rounded-lg transition-colors ${
+                  className={`w-full px-3 py-1.5 text-left text-[13px] hover:bg-gray-100 dark:hover:bg-gray-800/60 rounded-lg transition-colors ${
                     isActive ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 font-medium' : 'text-gray-700 dark:text-gray-300'
                   }`}
                 >
@@ -1712,7 +1712,7 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
                     editor.chain().focus().setLineHeight(lh.value).run()
                     setShowLineHeightPicker(false)
                   }}
-                  className={`w-full px-3 py-1.5 text-left text-[13px] hover:bg-gray-50 dark:hover:bg-gray-800/60 rounded-lg transition-colors ${
+                  className={`w-full px-3 py-1.5 text-left text-[13px] hover:bg-gray-100 dark:hover:bg-gray-800/60 rounded-lg transition-colors ${
                     isActive ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 font-medium' : 'text-gray-700 dark:text-gray-300'
                   }`}
                 >
@@ -1744,7 +1744,7 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
                     editor.chain().focus().toggleHeading({ level }).run()
                     setShowHeadingsPicker(false)
                   }}
-                  className={`w-full px-3 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-800/60 flex items-center gap-3 rounded-lg transition-colors ${
+                  className={`w-full px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-800/60 flex items-center gap-3 rounded-lg transition-colors ${
                     isActive ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-300'
                   }`}
                 >
@@ -1766,7 +1766,7 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
                 editor.chain().focus().setParagraph().run()
                 setShowHeadingsPicker(false)
               }}
-              className="w-full px-3 py-2 text-left text-[13px] hover:bg-gray-50 dark:hover:bg-gray-800/60 rounded-lg transition-colors text-gray-700 dark:text-gray-300"
+              className="w-full px-3 py-2 text-left text-[13px] hover:bg-gray-100 dark:hover:bg-gray-800/60 rounded-lg transition-colors text-gray-700 dark:text-gray-300"
             >
               Normal text
             </button>
@@ -1829,7 +1829,7 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
                 editor.chain().focus().unsetColor().run()
                 setShowColorPicker(false)
               }}
-              className="w-full mt-3 px-3 py-1.5 text-xs text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800/60 rounded-lg border border-[#cbd1db] dark:border-gray-700 transition-colors"
+              className="w-full mt-3 px-3 py-1.5 text-xs text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800/60 rounded-lg border border-[#cbd1db] dark:border-gray-700 transition-colors"
             >
               Reset Color
             </button>
@@ -1905,7 +1905,7 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
                 editor.chain().focus().unsetHighlight().run()
                 setShowHighlightPicker(false)
               }}
-              className="w-full mt-3 px-3 py-1.5 text-xs text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800/60 rounded-lg border border-[#cbd1db] dark:border-gray-700 transition-colors"
+              className="w-full mt-3 px-3 py-1.5 text-xs text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800/60 rounded-lg border border-[#cbd1db] dark:border-gray-700 transition-colors"
             >
               Remove Highlight
             </button>
@@ -2023,7 +2023,7 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
                     editor.chain().focus().setLetterSpacing(spacing.value).run()
                     setShowLetterSpacing(false)
                   }}
-                  className={`w-full px-3 py-1.5 text-left text-[13px] hover:bg-gray-50 dark:hover:bg-gray-800/60 rounded-lg transition-colors ${
+                  className={`w-full px-3 py-1.5 text-left text-[13px] hover:bg-gray-100 dark:hover:bg-gray-800/60 rounded-lg transition-colors ${
                     isActive ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 font-medium' : 'text-gray-700 dark:text-gray-300'
                   }`}
                 >
@@ -2097,16 +2097,16 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
             {editor.isActive('table') && (
               <>
                 <p className="px-3 mb-1 text-xs font-medium text-gray-500 dark:text-gray-400">{t('editor.table')}</p>
-                <button onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().addColumnBefore().run(); setShowTableMenu(false) }} className="flex items-center w-full gap-2 px-3 py-2 text-[13px] text-left hover:bg-gray-50 dark:hover:bg-gray-800/60 rounded-lg transition-colors text-gray-700 dark:text-gray-300">
+                <button onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().addColumnBefore().run(); setShowTableMenu(false) }} className="flex items-center w-full gap-2 px-3 py-2 text-[13px] text-left hover:bg-gray-100 dark:hover:bg-gray-800/60 rounded-lg transition-colors text-gray-700 dark:text-gray-300">
                   <Columns className="w-4 h-4 text-gray-400" /> {t('editor.addColumnBefore')}
                 </button>
-                <button onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().addColumnAfter().run(); setShowTableMenu(false) }} className="flex items-center w-full gap-2 px-3 py-2 text-[13px] text-left hover:bg-gray-50 dark:hover:bg-gray-800/60 rounded-lg transition-colors text-gray-700 dark:text-gray-300">
+                <button onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().addColumnAfter().run(); setShowTableMenu(false) }} className="flex items-center w-full gap-2 px-3 py-2 text-[13px] text-left hover:bg-gray-100 dark:hover:bg-gray-800/60 rounded-lg transition-colors text-gray-700 dark:text-gray-300">
                   <Columns className="w-4 h-4 text-gray-400" /> {t('editor.addColumnAfter')}
                 </button>
-                <button onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().addRowBefore().run(); setShowTableMenu(false) }} className="flex items-center w-full gap-2 px-3 py-2 text-[13px] text-left hover:bg-gray-50 dark:hover:bg-gray-800/60 rounded-lg transition-colors text-gray-700 dark:text-gray-300">
+                <button onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().addRowBefore().run(); setShowTableMenu(false) }} className="flex items-center w-full gap-2 px-3 py-2 text-[13px] text-left hover:bg-gray-100 dark:hover:bg-gray-800/60 rounded-lg transition-colors text-gray-700 dark:text-gray-300">
                   <Rows className="w-4 h-4 text-gray-400" /> {t('editor.addRowBefore')}
                 </button>
-                <button onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().addRowAfter().run(); setShowTableMenu(false) }} className="flex items-center w-full gap-2 px-3 py-2 text-[13px] text-left hover:bg-gray-50 dark:hover:bg-gray-800/60 rounded-lg transition-colors text-gray-700 dark:text-gray-300">
+                <button onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().addRowAfter().run(); setShowTableMenu(false) }} className="flex items-center w-full gap-2 px-3 py-2 text-[13px] text-left hover:bg-gray-100 dark:hover:bg-gray-800/60 rounded-lg transition-colors text-gray-700 dark:text-gray-300">
                   <Rows className="w-4 h-4 text-gray-400" /> {t('editor.addRowAfter')}
                 </button>
                 <div className="h-px my-1.5 mx-2 bg-gray-100 dark:bg-gray-800/60" />
@@ -2167,7 +2167,7 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
                     e.preventDefault()
                     scrollToHeading(index)
                   }}
-                  className="w-full px-3 py-2 text-left text-[13px] hover:bg-gray-50 dark:hover:bg-gray-800/60 flex items-center gap-2 rounded-lg transition-colors text-gray-700 dark:text-gray-300"
+                  className="w-full px-3 py-2 text-left text-[13px] hover:bg-gray-100 dark:hover:bg-gray-800/60 flex items-center gap-2 rounded-lg transition-colors text-gray-700 dark:text-gray-300"
                   style={{ paddingLeft: `${(heading.level - 1) * 12 + 12}px` }}
                 >
                   <span className={`flex-shrink-0 w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold ${
@@ -2201,7 +2201,7 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
                   onPaperChange(key)
                   setShowPaperPicker(false)
                 }}
-                className={`w-full px-3 py-2 text-left text-[13px] hover:bg-gray-50 dark:hover:bg-gray-800/60 flex items-center gap-3 rounded-lg transition-colors ${
+                className={`w-full px-3 py-2 text-left text-[13px] hover:bg-gray-100 dark:hover:bg-gray-800/60 flex items-center gap-3 rounded-lg transition-colors ${
                   currentPaper === key ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 font-medium' : 'text-gray-700 dark:text-gray-300'
                 }`}
               >

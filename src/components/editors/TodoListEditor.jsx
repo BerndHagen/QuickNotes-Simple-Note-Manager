@@ -298,7 +298,7 @@ export default function TodoListEditor({ data, onChange, noteTitle }) {
         <div className="relative" ref={filterRef}>
           <button
             onClick={() => setShowFilterMenu(!showFilterMenu)}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
           >
             <Filter className="w-4 h-4 text-gray-500" />
             <span className="text-sm text-gray-700 dark:text-gray-300">
@@ -315,7 +315,7 @@ export default function TodoListEditor({ data, onChange, noteTitle }) {
                   <button
                     key={f.id}
                     onClick={() => { setFilter(f.id); setShowFilterMenu(false) }}
-                    className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${
+                    className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
                       filter === f.id ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600' : 'text-gray-700 dark:text-gray-300'
                     }`}
                   >
@@ -330,7 +330,7 @@ export default function TodoListEditor({ data, onChange, noteTitle }) {
         <div className="relative" ref={sortRef}>
           <button
             onClick={() => setShowSortMenu(!showSortMenu)}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
           >
             <SortAsc className="w-4 h-4 text-gray-500" />
             <span className="text-sm text-gray-700 dark:text-gray-300">
@@ -345,7 +345,7 @@ export default function TodoListEditor({ data, onChange, noteTitle }) {
                 <button
                   key={s.id}
                   onClick={() => { setSortBy(s.id); setShowSortMenu(false) }}
-                  className={`w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${
+                  className={`w-full text-left px-4 py-2.5 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
                     sortBy === s.id ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600' : 'text-gray-700 dark:text-gray-300'
                   }`}
                 >
@@ -578,7 +578,7 @@ function TaskItem({
                 <button
                   key={key}
                   onClick={() => { onUpdate({ priority: key }); setShowPriorityMenu(false) }}
-                  className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-800 ${
+                  className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-800 ${
                     task.priority === key ? 'bg-gray-100 dark:bg-gray-800' : ''
                   }`}
                 >
@@ -628,13 +628,13 @@ function TaskItem({
             <div className="absolute right-0 top-full mt-1.5 w-40 bg-white dark:bg-gray-900 rounded-2xl shadow-xl shadow-black/5 dark:shadow-black/20 border border-[#cbd1db] dark:border-gray-700 z-50 overflow-hidden backdrop-blur-xl py-1.5">
               <button
                 onClick={() => { onEdit(); setShowMoreMenu(false) }}
-                className="w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-2 transition-colors"
+                className="w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 transition-colors"
               >
                 <Edit3 className="w-4 h-4 text-gray-400" /> Edit
               </button>
               <button
                 onClick={() => { onDuplicate(); setShowMoreMenu(false) }}
-                className="w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-2 transition-colors"
+                className="w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 transition-colors"
               >
                 <Copy className="w-4 h-4 text-gray-400" /> Duplicate
               </button>

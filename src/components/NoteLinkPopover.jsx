@@ -147,7 +147,7 @@ export default function NoteLinkPopover({ editor, isOpen, onClose, position }) {
                 className={`w-full px-3 py-2 flex items-start gap-3 transition-colors ${
                   index === selectedIndex
                     ? 'bg-emerald-50 dark:bg-emerald-900/30'
-                    : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                    : 'hover:bg-gray-100 dark:hover:bg-gray-700/50'
                 }`}
               >
                 <FileText className={`w-5 h-5 flex-shrink-0 mt-0.5 ${

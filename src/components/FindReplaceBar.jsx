@@ -241,7 +241,7 @@ export default function FindReplaceBar({ editor, isOpen, onClose }) {
             onChange={(e) => setFindText(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={t('findReplace.findInNote')}
-            className="w-full pl-10 pr-20 py-2 bg-gray-100 dark:bg-gray-900 border border-transparent focus:border-emerald-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm"
+            className="w-full pl-10 pr-20 py-2 bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 focus:border-emerald-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm"
           />
           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">
             {matchCount > 0 ? `${currentMatch}/${matchCount}` : t('findReplace.noResults')}
@@ -336,13 +336,13 @@ export default function FindReplaceBar({ editor, isOpen, onClose }) {
                 }
               }}
               placeholder={t('findReplace.replaceWith')}
-              className="w-full pl-10 pr-4 py-2 bg-gray-100 dark:bg-gray-900 border border-transparent focus:border-emerald-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm"
+              className="w-full pl-10 pr-4 py-2 bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 focus:border-emerald-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm"
             />
           </div>
           <button
             onClick={replaceCurrentMatch}
             disabled={matchCount === 0}
-            className="px-3 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+            className="px-3 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 border border-gray-300 dark:border-gray-600"
           >
             {t('findReplace.replace')}
           </button>

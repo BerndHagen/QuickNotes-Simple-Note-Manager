@@ -159,7 +159,7 @@ export default function EditorSettingsModal() {
               <Eye className="w-4 h-4" />
               Display
             </h3>
-            <label className="flex items-center justify-between p-3 transition-colors border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700/50">
+            <label className="flex items-center justify-between p-3 transition-colors border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-700/50">
               <div className="flex items-center gap-3">
                 <Ruler className="w-5 h-5 text-gray-500" />
                 <div>
@@ -174,7 +174,7 @@ export default function EditorSettingsModal() {
                 className="w-5 h-5 rounded text-emerald-600 focus:ring-emerald-500"
               />
             </label>
-            <label className="flex items-center justify-between p-3 transition-colors border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700/50">
+            <label className="flex items-center justify-between p-3 transition-colors border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-700/50">
               <div className="flex items-center gap-3">
                 <AlignLeft className="w-5 h-5 text-gray-500" />
                 <div>
@@ -189,7 +189,7 @@ export default function EditorSettingsModal() {
                 className="w-5 h-5 rounded text-emerald-600 focus:ring-emerald-500"
               />
             </label>
-            <label className="flex items-center justify-between p-3 transition-colors border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700/50">
+            <label className="flex items-center justify-between p-3 transition-colors border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-700/50">
               <div className="flex items-center gap-3">
                 <EyeOff className="w-5 h-5 text-gray-500" />
                 <div>
@@ -210,7 +210,7 @@ export default function EditorSettingsModal() {
               <Spellcheck className="w-4 h-4" />
               Editing
             </h3>
-            <label className="flex items-center justify-between p-3 transition-colors border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700/50">
+            <label className="flex items-center justify-between p-3 transition-colors border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-700/50">
               <div className="flex items-center gap-3">
                 <Spellcheck className="w-5 h-5 text-gray-500" />
                 <div>
