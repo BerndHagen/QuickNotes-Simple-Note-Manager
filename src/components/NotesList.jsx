@@ -48,6 +48,8 @@ function NoteContextMenu({ x, y, note, notes: selectedNotes, onClose, folders, t
   const hoverTimeoutRef = useRef(null)
   const tagHoverTimeoutRef = useRef(null)
   const { toggleStar, togglePin, duplicateNote, deleteNote, updateNote, addTagToNote, removeTagFromNote, createTag } = useNotesStore()
+  const { confirmBeforeDelete } = useUIStore()
+  const { t } = useTranslation()
   const [showFolderMenu, setShowFolderMenu] = useState(false)
   const [showTagMenu, setShowTagMenu] = useState(false)
   const [position, setPosition] = useState({ x, y })
@@ -236,6 +238,7 @@ function NoteContextMenu({ x, y, note, notes: selectedNotes, onClose, folders, t
   }
 
   const handleBulkDelete = () => {
+    if (confirmBeforeDelete && !window.confirm(t('settings.confirmDeleteMessage'))) return
     notesToProcess.forEach(n => deleteNote(n.id))
   }
 

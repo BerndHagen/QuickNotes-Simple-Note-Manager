@@ -104,7 +104,7 @@ const getFolderIcon = (iconName) => {
 }
 
 export default function NoteEditor() {
-  const { language } = useTranslation()
+  const { t, language } = useTranslation()
   const {
     notes,
     folders,
@@ -140,6 +140,8 @@ export default function NoteEditor() {
     setVoiceInputActive,
     setMobileEditorOpen,
     setShareModalOpen,
+    showNoteStatistics,
+    confirmBeforeDelete,
   } = useUIStore()
 
   const note = getSelectedNote()
@@ -260,7 +262,11 @@ export default function NoteEditor() {
   }
 
   const handleDelete = () => {
-    if (note && window.confirm('Are you sure you want to delete this note?')) {
+    if (note) {
+      if (confirmBeforeDelete && !window.confirm(t('settings.confirmDeleteMessage'))) {
+        setShowMenu(false)
+        return
+      }
       deleteNote(note.id)
     }
     setShowMenu(false)
@@ -749,7 +755,7 @@ export default function NoteEditor() {
           />
         )}
       </div>
-      <NoteStatistics note={note} />
+      {showNoteStatistics && <NoteStatistics note={note} />}
       <NoteLinkPopover
         editor={editorRef}
         isOpen={noteLinkPopoverOpen}

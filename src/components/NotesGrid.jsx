@@ -27,6 +27,8 @@ function NoteContextMenu({ x, y, note, onClose, folders, tags }) {
   const submenuRef = useRef(null)
   const hoverTimeoutRef = useRef(null)
   const { toggleStar, togglePin, duplicateNote, deleteNote, updateNote } = useNotesStore()
+  const { confirmBeforeDelete } = useUIStore()
+  const { t } = useTranslation()
   const [showFolderMenu, setShowFolderMenu] = useState(false)
   const [position, setPosition] = useState({ x, y })
   const [submenuPosition, setSubmenuPosition] = useState({ x: 0, y: 0, openLeft: false })
@@ -227,7 +229,10 @@ function NoteContextMenu({ x, y, note, onClose, folders, tags }) {
       <div className="my-1.5 mx-3 border-t border-gray-100 dark:border-gray-800" />
       
       <button
-        onClick={() => handleAction(() => deleteNote(note.id))}
+        onClick={() => handleAction(() => {
+          if (confirmBeforeDelete && !window.confirm(t('settings.confirmDeleteMessage'))) return
+          deleteNote(note.id)
+        })}
         className="flex items-center w-[calc(100%-12px)] gap-3 mx-1.5 px-3 py-2.5 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 dark:text-red-400 transition-colors rounded-lg"
       >
         <Trash2 className="w-4 h-4" />

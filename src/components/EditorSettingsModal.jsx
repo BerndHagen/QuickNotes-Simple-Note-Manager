@@ -210,21 +210,6 @@ export default function EditorSettingsModal() {
               <Spellcheck className="w-4 h-4" />
               Editing
             </h3>
-            <label className="flex items-center justify-between p-3 transition-colors border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-700/50">
-              <div className="flex items-center gap-3">
-                <Spellcheck className="w-5 h-5 text-gray-500" />
-                <div>
-                  <p className="font-medium text-gray-900 dark:text-white">Spell Check</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Highlight spelling errors</p>
-                </div>
-              </div>
-              <input
-                type="checkbox"
-                checked={settings.spellCheck}
-                onChange={(e) => handleSettingChange('spellCheck', e.target.checked)}
-                className="w-5 h-5 rounded text-emerald-600 focus:ring-emerald-500"
-              />
-            </label>
             <div>
               <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
                 Tab Size

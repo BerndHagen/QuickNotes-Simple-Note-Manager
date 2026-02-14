@@ -741,6 +741,7 @@ export default function RichTextEditor({ noteId, content, onChange, placeholder,
     editorProps: {
       attributes: {
         class: 'prose prose-lg dark:prose-invert max-w-none focus:outline-none min-h-[300px] px-4 py-2',
+        spellcheck: useUIStore.getState().spellCheck ? 'true' : 'false',
       },
       handleKeyDown: (view, event) => {
         markUserTyping()
@@ -774,6 +775,20 @@ export default function RichTextEditor({ noteId, content, onChange, placeholder,
       onEditorReady(editor)
     }
   }, [editor, onEditorReady])
+
+  useEffect(() => {
+    const applySpellCheck = () => {
+      if (editor && !editor.isDestroyed) {
+        const el = editor.view.dom
+        if (el) {
+          el.setAttribute('spellcheck', useUIStore.getState().spellCheck ? 'true' : 'false')
+        }
+      }
+    }
+    applySpellCheck()
+    const unsub = useUIStore.subscribe(applySpellCheck)
+    return () => unsub()
+  }, [editor])
 
   const debouncedOnChange = useCallback(
     debounce((html) => {
