@@ -324,8 +324,8 @@ export default function NoteEditor() {
   }
 
   return (
-    <div className="flex flex-col w-full h-full overflow-hidden bg-gradient-to-b from-white via-[#fefefe] to-[#f8f9fb] dark:from-gray-950 dark:via-gray-950 dark:to-gray-900 editor-paper">
-      <div className="flex-shrink-0 px-5 py-4 md:px-6 bg-white/90 dark:bg-gray-950/80 backdrop-blur-sm border-b border-[#cbd1db] dark:border-gray-800" style={{ boxShadow: '0 1px 3px -1px rgba(0,0,0,0.05), 0 1px 2px -1px rgba(0,0,0,0.03)' }}>
+    <div className="flex flex-col w-full h-full bg-gradient-to-b from-white via-[#fefefe] to-[#f8f9fb] dark:from-gray-950 dark:via-gray-950 dark:to-gray-900 editor-paper">
+      <div className="flex-shrink-0 px-5 py-4 md:px-6 bg-gradient-to-r from-emerald-50/90 via-teal-50/80 to-emerald-50/70 dark:from-gray-950/80 dark:via-gray-950/80 dark:to-gray-950/80 backdrop-blur-sm border-b border-[#cbd1db] dark:border-gray-800" style={{ boxShadow: '0 1px 3px -1px rgba(0,0,0,0.05), 0 1px 2px -1px rgba(0,0,0,0.03)' }}>
         <div className="flex items-center justify-between gap-2 mb-2.5">
           <button
             onClick={() => setMobileEditorOpen(false)}
@@ -420,7 +420,7 @@ export default function NoteEditor() {
                 >
                   <button
                     onClick={handleDuplicate}
-                    className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors rounded-lg mx-0"
+                    className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors rounded-lg mx-0"
                   >
                     <Copy className="w-4 h-4 text-gray-400" />
                     Duplicate
@@ -430,7 +430,7 @@ export default function NoteEditor() {
                       setShareModalOpen(true, note.id)
                       setShowMenu(false)
                     }}
-                    className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors rounded-lg mx-0"
+                    className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors rounded-lg mx-0"
                   >
                     <Share2 className="w-4 h-4 text-gray-400" />
                     Share note
@@ -440,7 +440,7 @@ export default function NoteEditor() {
                       setShowFolderPicker(true)
                       setShowMenu(false)
                     }}
-                    className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors rounded-lg mx-0"
+                    className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors rounded-lg mx-0"
                   >
                     <FolderOpen className="w-4 h-4 text-gray-400" />
                     Move to folder
@@ -450,7 +450,7 @@ export default function NoteEditor() {
                       setExportModalOpen(true)
                       setShowMenu(false)
                     }}
-                    className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors rounded-lg mx-0"
+                    className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors rounded-lg mx-0"
                   >
                     <Download className="w-4 h-4 text-gray-400" />
                     Export
@@ -460,7 +460,7 @@ export default function NoteEditor() {
                       setImportModalOpen(true)
                       setShowMenu(false)
                     }}
-                    className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors rounded-lg mx-0"
+                    className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors rounded-lg mx-0"
                   >
                     <Upload className="w-4 h-4 text-gray-400" />
                     Import
@@ -471,7 +471,7 @@ export default function NoteEditor() {
                       setNoteLinkPopoverOpen(true, { x: rect?.left || 100, y: (rect?.bottom || 100) + 10 })
                       setShowMenu(false)
                     }}
-                    className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors rounded-lg mx-0"
+                    className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors rounded-lg mx-0"
                   >
                     <Link2 className="w-4 h-4 text-gray-400" />
                     Insert note link
@@ -481,7 +481,7 @@ export default function NoteEditor() {
                       setReminderModalOpen(true, note.id)
                       setShowMenu(false)
                     }}
-                    className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors rounded-lg mx-0"
+                    className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors rounded-lg mx-0"
                   >
                     <Bell className="w-4 h-4 text-gray-400" />
                     Set reminder
@@ -491,7 +491,7 @@ export default function NoteEditor() {
                       setImageUploadOpen(true)
                       setShowMenu(false)
                     }}
-                    className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors rounded-lg mx-0"
+                    className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors rounded-lg mx-0"
                   >
                     <ImageIcon className="w-4 h-4 text-gray-400" />
                     Insert image
@@ -501,7 +501,7 @@ export default function NoteEditor() {
                       setVersionHistoryOpen(true, note.id)
                       setShowMenu(false)
                     }}
-                    className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors rounded-lg mx-0"
+                    className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors rounded-lg mx-0"
                   >
                     <History className="w-4 h-4 text-gray-400" />
                     Version history
@@ -511,7 +511,7 @@ export default function NoteEditor() {
                       setFocusModeOpen(true)
                       setShowMenu(false)
                     }}
-                    className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors rounded-lg mx-0"
+                    className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors rounded-lg mx-0"
                   >
                     <Focus className="w-4 h-4 text-gray-400" />
                     Focus mode
@@ -521,7 +521,7 @@ export default function NoteEditor() {
                       setVoiceInputActive(true)
                       setShowMenu(false)
                     }}
-                    className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors rounded-lg mx-0"
+                    className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors rounded-lg mx-0"
                   >
                     <Mic className="w-4 h-4 text-gray-400" />
                     Voice input
@@ -531,7 +531,7 @@ export default function NoteEditor() {
                       archiveNote(note.id)
                       setShowMenu(false)
                     }}
-                    className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors rounded-lg mx-0"
+                    className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors rounded-lg mx-0"
                   >
                     <Archive className="w-4 h-4 text-gray-400" />
                     Archive note

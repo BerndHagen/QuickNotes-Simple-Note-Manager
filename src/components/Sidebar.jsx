@@ -324,14 +324,14 @@ function FolderContextMenu({ x, y, folder, onClose, onRename, onEdit, onDelete }
     >
       <button
         onClick={() => { onRename(); onClose() }}
-        className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 transition-colors"
+        className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 transition-colors"
       >
         <Edit2 className="w-4 h-4 text-gray-400" />
         <span className="text-sm">{t('common.rename') || 'Rename'}</span>
       </button>
       <button
         onClick={() => { onEdit(); onClose() }}
-        className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 transition-colors"
+        className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 transition-colors"
       >
         <Palette className="w-4 h-4 text-gray-400" />
         <span className="text-sm">{t('common.edit') || 'Edit'}</span>
@@ -1126,7 +1126,7 @@ export default function Sidebar() {
           </button>
           <button
             onClick={() => setShortcutsModalOpen(true)}
-            className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-white/80 dark:bg-gray-800/60 hover:bg-white dark:hover:bg-gray-700/60 transition-all text-[12px] text-gray-500 dark:text-gray-400 font-semibold active:scale-[0.98] border border-gray-100/50 dark:border-gray-700/50"
+            className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 hover:from-emerald-100 hover:to-teal-100 dark:hover:from-emerald-900/40 dark:hover:to-teal-900/40 transition-all text-[12px] text-emerald-700 dark:text-emerald-400 font-semibold active:scale-[0.98] btn-glow border border-emerald-100/50 dark:border-emerald-800/30"
             title={t('sidebar.shortcuts')}
           >
             <Keyboard className="w-3.5 h-3.5" />

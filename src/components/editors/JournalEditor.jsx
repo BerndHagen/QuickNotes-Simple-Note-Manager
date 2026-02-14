@@ -150,25 +150,25 @@ export default function JournalEditor({ data, onChange, noteTitle }) {
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-gray-900">
-      <div className="flex-shrink-0 p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-amber-500 to-orange-600">
+      <div className="flex-shrink-0 p-4 border-b border-gray-200 dark:border-gray-700 bg-[#e5eaf0] dark:bg-gray-800">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
               <BookOpen className="w-7 h-7" />
               {noteTitle || 'Daily Journal'}
             </h1>
             <div className="flex items-center gap-3 mt-2">
               <button
                 onClick={() => changeDate(-1)}
-                className="p-1 rounded-lg bg-white/20 hover:bg-white/30 text-white"
+                className="p-1 rounded-lg bg-gray-200/50 dark:bg-gray-700 hover:bg-gray-300/50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300"
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
-              <span className="text-white font-medium">{dateDisplay}</span>
+              <span className="text-gray-900 dark:text-white font-medium">{dateDisplay}</span>
               <button
                 onClick={() => changeDate(1)}
                 disabled={isToday}
-                className="p-1 rounded-lg bg-white/20 hover:bg-white/30 text-white disabled:opacity-50"
+                className="p-1 rounded-lg bg-gray-200/50 dark:bg-gray-700 hover:bg-gray-300/50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 disabled:opacity-50"
               >
                 <ChevronRight className="w-5 h-5" />
               </button>
@@ -177,36 +177,36 @@ export default function JournalEditor({ data, onChange, noteTitle }) {
           
           <div className="text-right">
             <div className="flex items-center gap-2 mb-2">
-              <Flame className="w-6 h-6 text-white" />
-              <span className="text-2xl font-bold text-white">{streakDays}</span>
-              <span className="text-amber-100 text-sm">day streak</span>
+              <Flame className="w-6 h-6 text-amber-500" />
+              <span className="text-2xl font-bold text-gray-900 dark:text-white">{streakDays}</span>
+              <span className="text-gray-500 dark:text-gray-400 text-sm">day streak</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-32 h-2 rounded-full bg-white/30 overflow-hidden">
+              <div className="w-32 h-2 rounded-full bg-gray-300 dark:bg-gray-600 overflow-hidden">
                 <div
-                  className="h-full bg-white rounded-full transition-all"
+                  className="h-full bg-amber-500 rounded-full transition-all"
                   style={{ width: `${completionPercent}%` }}
                 />
               </div>
-              <span className="text-white text-sm">{completionPercent}%</span>
+              <span className="text-gray-900 dark:text-white text-sm">{completionPercent}%</span>
             </div>
           </div>
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <span className="text-amber-100 text-sm">Mood:</span>
+            <span className="text-gray-500 dark:text-gray-400 text-sm">Mood:</span>
             <span className="text-2xl">{journalData.mood ? MOODS.find(m => m.id === journalData.mood)?.emoji : '\u2753'}</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-amber-100 text-sm">Energy:</span>
+            <span className="text-gray-500 dark:text-gray-400 text-sm">Energy:</span>
             <div className="flex gap-0.5">
               {[1, 2, 3, 4, 5].map((level) => (
                 <div
                   key={level}
                   className={`w-3 h-5 rounded-sm ${
                     level <= (journalData.energy || 0)
-                      ? 'bg-white'
-                      : 'bg-white/30'
+                      ? 'bg-amber-500'
+                      : 'bg-gray-300 dark:bg-gray-600'
                   }`}
                 />
               ))}
@@ -486,7 +486,7 @@ export default function JournalEditor({ data, onChange, noteTitle }) {
                     </div>
                     <div className="w-full h-3 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full transition-all"
+                        className="h-full bg-amber-500 rounded-full transition-all"
                         style={{
                           width: `${(journalData.goals.filter(g => g.completed).length / journalData.goals.length) * 100}%`
                         }}

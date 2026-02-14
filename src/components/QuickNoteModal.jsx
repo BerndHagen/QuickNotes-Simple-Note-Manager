@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { X, Zap, Tag, FolderOpen, Plus } from 'lucide-react'
 import { useNotesStore, useUIStore } from '../store'
 import { createShortcutHandler } from '../lib/utils'
+import { useTranslation } from '../lib/useTranslation'
 
 function SmartDropdown({ isOpen, onClose, triggerRef, children, minWidth = 160 }) {
   const dropdownRef = useRef(null)
@@ -92,6 +93,7 @@ function SmartDropdown({ isOpen, onClose, triggerRef, children, minWidth = 160 }
 export default function QuickNoteModal() {
   const { quickNoteOpen, setQuickNoteOpen } = useUIStore()
   const { createNote, folders, tags, createTag } = useNotesStore()
+  const { t } = useTranslation()
   
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
@@ -216,8 +218,8 @@ export default function QuickNoteModal() {
           <div className="flex items-center gap-3">
             <Zap className="w-6 h-6" />
             <div>
-              <h2 className="text-lg font-bold">Quick Note</h2>
-              <p className="text-sm text-white/70">Quickly capture a note {"\u2022"} Ctrl+Enter to save</p>
+              <h2 className="text-lg font-bold">{t('quickNote.title')}</h2>
+              <p className="text-sm text-white/70">{t('quickNote.subtitle')} {"\u2022"} {t('quickNote.ctrlEnterToSave')}</p>
             </div>
           </div>
           <button
@@ -233,13 +235,13 @@ export default function QuickNoteModal() {
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Note title..."
+            placeholder={t('quickNote.titlePlaceholder')}
             className="w-full text-xl font-semibold bg-transparent border-none outline-none placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white"
           />
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder="Write your thoughts..."
+            placeholder={t('quickNote.contentPlaceholder')}
             rows={6}
             className="w-full bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none resize-none text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
           />
@@ -256,7 +258,7 @@ export default function QuickNoteModal() {
                 <FolderOpen className="w-4 h-4" />
                 {selectedFolder
                   ? folders.find((f) => f.id === selectedFolder)?.name
-                  : 'Select folder'}
+                  : t('quickNote.selectFolder')}
               </button>
 
               <SmartDropdown
@@ -275,7 +277,7 @@ export default function QuickNoteModal() {
                       !selectedFolder ? 'bg-gray-100 dark:bg-gray-700' : ''
                     }`}
                   >
-                    No folder
+                    {t('quickNote.noFolder')}
                   </button>
                   {folders.map((folder) => (
                     <button
@@ -305,7 +307,7 @@ export default function QuickNoteModal() {
                 className="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
               >
                 <Tag className="w-4 h-4" />
-                Add tags
+                {t('quickNote.addTags')}
               </button>
 
               <SmartDropdown
@@ -323,7 +325,7 @@ export default function QuickNoteModal() {
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') handleCreateTag()
                       }}
-                      placeholder="New tag..."
+                      placeholder={t('quickNote.newTag')}
                       className="flex-1 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-transparent text-gray-900 dark:text-white"
                     />
                     <button
@@ -386,13 +388,13 @@ export default function QuickNoteModal() {
             onClick={handleClose}
             className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
           >
-            Cancel
+            {t('common.cancel')}
           </button>
           <button
             onClick={handleSave}
             className="px-4 py-2 text-sm bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors flex items-center gap-2"
           >
-            Save
+            {t('common.save')}
             <span className="text-xs opacity-75">{"\u2318+\u21B5"}</span>
           </button>
         </div>

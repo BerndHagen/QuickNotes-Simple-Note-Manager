@@ -755,6 +755,9 @@ export const useNotesStore = create(
       setLastSyncTime: (time) => set({ lastSyncTime: time }),
 
       syncWithBackend: async () => {
+        const { isSyncing } = get()
+        if (isSyncing) return
+        
         if (!isBackendConfigured()) {
           return
         }

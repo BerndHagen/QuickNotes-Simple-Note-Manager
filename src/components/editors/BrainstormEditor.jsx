@@ -157,10 +157,10 @@ export default function BrainstormEditor({ data, onChange, noteTitle }) {
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-gray-900">
-      <div className="flex-shrink-0 p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-purple-500 to-indigo-600">
+      <div className="flex-shrink-0 p-4 border-b border-gray-200 dark:border-gray-700 bg-[#e5eaf0] dark:bg-gray-800">
         <div className="flex items-center justify-between mb-4">
           <div className="flex-1">
-            <div className="flex items-center gap-2 text-white mb-2">
+            <div className="flex items-center gap-2 text-gray-900 dark:text-white mb-2">
               <Lightbulb className="w-7 h-7" />
               <h1 className="text-2xl font-bold">{noteTitle || 'Brainstorm Session'}</h1>
             </div>
@@ -169,40 +169,40 @@ export default function BrainstormEditor({ data, onChange, noteTitle }) {
               value={brainstormData.topic}
               onChange={(e) => update('topic', e.target.value)}
               placeholder="What are you brainstorming about?"
-              className="w-full max-w-md px-4 py-2 rounded-lg bg-white/20 text-white placeholder-white/70 outline-none"
+              className="w-full max-w-md px-4 py-2 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none border border-gray-300 dark:border-gray-600"
             />
           </div>
-          <div className="flex gap-6 text-white">
+          <div className="flex gap-6 text-gray-900 dark:text-white">
             <div className="text-center">
               <div className="text-3xl font-bold">{brainstormData.ideas.length}</div>
-              <div className="text-purple-200 text-sm">Ideas</div>
+              <div className="text-gray-500 dark:text-gray-400 text-sm">Ideas</div>
             </div>
             <div className="text-center">
               <div className="text-3xl font-bold">{totalVotes}</div>
-              <div className="text-purple-200 text-sm">Total Votes</div>
+              <div className="text-gray-500 dark:text-gray-400 text-sm">Total Votes</div>
             </div>
             <div className="text-center">
               <div className="text-3xl font-bold">{starredCount}</div>
-              <div className="text-purple-200 text-sm">Starred</div>
+              <div className="text-gray-500 dark:text-gray-400 text-sm">Starred</div>
             </div>
           </div>
         </div>
         <div className="flex gap-2">
           <div className="flex-1 relative">
-            <Sparkles className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-300" />
+            <Sparkles className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
               value={newIdea}
               onChange={(e) => setNewIdea(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && addIdea()}
               placeholder="Type your idea and press Enter..."
-              className="w-full pl-10 pr-4 py-3 rounded-lg bg-white/20 text-white placeholder-white/70 outline-none text-lg"
+              className="w-full pl-10 pr-4 py-3 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none text-lg border border-gray-300 dark:border-gray-600"
               autoFocus
             />
           </div>
           <button
             onClick={addIdea}
-            className="px-6 py-3 rounded-lg bg-white text-purple-600 font-semibold hover:bg-purple-50 transition-colors flex items-center gap-2"
+            className="px-6 py-3 rounded-lg bg-emerald-500 text-white font-semibold hover:bg-emerald-600 transition-colors flex items-center gap-2"
           >
             <Plus className="w-5 h-5" />
             Add Idea
@@ -210,7 +210,7 @@ export default function BrainstormEditor({ data, onChange, noteTitle }) {
           <button
             onClick={pickRandomIdea}
             disabled={filteredIdeas.length === 0}
-            className="px-4 py-3 rounded-lg bg-white/20 text-white hover:bg-white/30 transition-colors disabled:opacity-50"
+            className="px-4 py-3 rounded-lg bg-gray-200/50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300/50 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
             title="Pick random idea"
           >
             <Shuffle className="w-5 h-5" />

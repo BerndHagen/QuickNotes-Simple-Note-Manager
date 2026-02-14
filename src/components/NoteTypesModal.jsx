@@ -2,12 +2,14 @@ import React, { useState } from 'react'
 import { X, Sparkles, ChevronRight } from 'lucide-react'
 import { useUIStore, useNotesStore } from '../store'
 import { NOTE_TYPES, NOTE_TYPE_CONFIG, getDefaultData, CATEGORIES } from './editors'
+import { useTranslation } from '../lib/useTranslation'
 
 export default function NoteTypesModal() {
   const { noteTypesModalOpen, setNoteTypesModalOpen } = useUIStore()
   const { createNote } = useNotesStore()
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [hoveredType, setHoveredType] = useState(null)
+  const { t } = useTranslation()
 
   if (!noteTypesModalOpen) return null
   const noteTypes = Object.entries(NOTE_TYPE_CONFIG).map(([key, config]) => ({
@@ -49,10 +51,10 @@ export default function NoteTypesModal() {
           <div>
             <h2 className="text-2xl font-bold flex items-center gap-3">
               <Sparkles className="w-7 h-7" />
-              Create New Note
+              {t('noteTypes.title')}
             </h2>
             <p className="text-sm text-white/70 mt-1 ml-10">
-              Choose a note type to get started with a specialized editor
+              {t('noteTypes.subtitle')}
             </p>
           </div>
           <button
@@ -71,7 +73,7 @@ export default function NoteTypesModal() {
                 : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
             }`}
           >
-            All Types
+            {t('noteTypes.allTypes')}
           </button>
           {CATEGORIES.filter(cat => cat.id !== 'all').map((cat) => (
             <button
@@ -152,9 +154,9 @@ export default function NoteTypesModal() {
         </div>
         <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
           <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
-            Each note type has a specialized editor with unique tools and features.
+            {t('noteTypes.footer1')}
             <br />
-            You can always convert standard notes to specialized types later.
+            {t('noteTypes.footer2')}
           </p>
         </div>
       </div>

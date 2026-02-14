@@ -168,24 +168,24 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle }) {
 
   return (
     <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900">
-      <div className="flex-shrink-0 p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-violet-500 to-purple-600">
+      <div className="flex-shrink-0 p-4 border-b border-gray-200 dark:border-gray-700 bg-[#e5eaf0] dark:bg-gray-800">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
               <Target className="w-7 h-7" />
               {noteTitle || 'Project Planner'}
             </h1>
-            <p className="text-purple-100 text-sm mt-1">
+            <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
               {stats.totalTasks} tasks {"\u2022"} {stats.progress}% complete
             </p>
           </div>
           <div className="flex items-center gap-2">
             <div className="relative w-14 h-14">
               <svg className="transform -rotate-90 w-14 h-14">
-                <circle cx="28" cy="28" r="24" stroke="rgba(255,255,255,0.3)" strokeWidth="6" fill="none" />
+                <circle cx="28" cy="28" r="24" stroke="rgba(0,0,0,0.1)" strokeWidth="6" fill="none" />
                 <circle
                   cx="28" cy="28" r="24"
-                  stroke="white"
+                  stroke="#10b981"
                   strokeWidth="6"
                   fill="none"
                   strokeDasharray={`${stats.progress * 1.5} 150`}
@@ -193,27 +193,27 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle }) {
                 />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-white font-bold text-xs">{stats.progress}%</span>
+                <span className="text-gray-900 dark:text-white font-bold text-xs">{stats.progress}%</span>
               </div>
             </div>
           </div>
         </div>
         <div className="grid grid-cols-4 gap-2">
-          <div className="bg-white/10 backdrop-blur rounded-lg p-2 text-center">
-            <div className="text-xl font-bold text-white">{stats.totalTasks}</div>
-            <div className="text-xs text-purple-100">Total</div>
+          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center">
+            <div className="text-xl font-bold text-gray-900 dark:text-white">{stats.totalTasks}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">Total</div>
           </div>
-          <div className="bg-white/10 backdrop-blur rounded-lg p-2 text-center">
-            <div className="text-xl font-bold text-white">{stats.inProgressTasks}</div>
-            <div className="text-xs text-purple-100">In Progress</div>
+          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center">
+            <div className="text-xl font-bold text-gray-900 dark:text-white">{stats.inProgressTasks}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">In Progress</div>
           </div>
-          <div className="bg-white/10 backdrop-blur rounded-lg p-2 text-center">
-            <div className="text-xl font-bold text-white">{stats.doneTasks}</div>
-            <div className="text-xs text-purple-100">Done</div>
+          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center">
+            <div className="text-xl font-bold text-gray-900 dark:text-white">{stats.doneTasks}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">Done</div>
           </div>
-          <div className="bg-white/10 backdrop-blur rounded-lg p-2 text-center">
-            <div className="text-xl font-bold text-red-300">{stats.overdueTasks}</div>
-            <div className="text-xs text-purple-100">Overdue</div>
+          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center">
+            <div className="text-xl font-bold text-red-500 dark:text-red-400">{stats.overdueTasks}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">Overdue</div>
           </div>
         </div>
       </div>

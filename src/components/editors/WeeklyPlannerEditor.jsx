@@ -195,55 +195,55 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-gray-900">
-      <div className="flex-shrink-0 p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-500 to-cyan-600">
+      <div className="flex-shrink-0 p-4 border-b border-gray-200 dark:border-gray-700 bg-[#e5eaf0] dark:bg-gray-800">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
               <Calendar className="w-7 h-7" />
               {noteTitle || 'Weekly Planner'}
             </h1>
             <div className="flex items-center gap-3 mt-2">
               <button
                 onClick={() => navigateWeek(-1)}
-                className="p-1 rounded-lg bg-white/20 hover:bg-white/30 text-white"
+                className="p-1 rounded-lg bg-gray-200/50 dark:bg-gray-700 hover:bg-gray-300/50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300"
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
-              <span className="text-white font-medium">{weekLabel}</span>
+              <span className="text-gray-900 dark:text-white font-medium">{weekLabel}</span>
               <button
                 onClick={() => navigateWeek(1)}
-                className="p-1 rounded-lg bg-white/20 hover:bg-white/30 text-white"
+                className="p-1 rounded-lg bg-gray-200/50 dark:bg-gray-700 hover:bg-gray-300/50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300"
               >
                 <ChevronRight className="w-5 h-5" />
               </button>
               {plannerData.weekStart !== getWeekStart() && (
                 <button
                   onClick={goToCurrentWeek}
-                  className="px-3 py-1 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm"
+                  className="px-3 py-1 rounded-lg bg-gray-200/50 dark:bg-gray-700 hover:bg-gray-300/50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm"
                 >
                   Today
                 </button>
               )}
             </div>
           </div>
-          <div className="flex gap-6 text-white">
+          <div className="flex gap-6 text-gray-900 dark:text-white">
             <div className="text-center">
               <div className="text-3xl font-bold">{stats.completedTasks}/{stats.totalTasks}</div>
-              <div className="text-blue-200 text-sm">Tasks Done</div>
+              <div className="text-gray-500 dark:text-gray-400 text-sm">Tasks Done</div>
             </div>
             <div className="text-center">
               <div className="text-3xl font-bold">{stats.completedGoals}/{stats.totalGoals}</div>
-              <div className="text-blue-200 text-sm">Goals Met</div>
+              <div className="text-gray-500 dark:text-gray-400 text-sm">Goals Met</div>
             </div>
             <div className="text-center">
               <div className="text-3xl font-bold">{completionPercent}%</div>
-              <div className="text-blue-200 text-sm">Complete</div>
+              <div className="text-gray-500 dark:text-gray-400 text-sm">Complete</div>
             </div>
           </div>
         </div>
-        <div className="w-full h-2 rounded-full bg-white/30 overflow-hidden">
+        <div className="w-full h-2 rounded-full bg-gray-300 dark:bg-gray-600 overflow-hidden">
           <div
-            className="h-full bg-white rounded-full transition-all"
+            className="h-full bg-blue-500 rounded-full transition-all"
             style={{ width: `${completionPercent}%` }}
           />
         </div>
@@ -561,15 +561,15 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
               )}
             </div>
             {plannerData.weeklyGoals.length > 0 && (
-              <div className="mt-8 p-6 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 text-white">
+              <div className="mt-8 p-6 rounded-xl bg-[#e5eaf0] dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
                 <div className="flex justify-between items-center">
                   <div>
-                    <p className="text-blue-100">Weekly Goal Progress</p>
-                    <p className="text-3xl font-bold mt-1">
+                    <p className="text-gray-500 dark:text-gray-400">Weekly Goal Progress</p>
+                    <p className="text-3xl font-bold mt-1 text-gray-900 dark:text-white">
                       {stats.completedGoals} of {stats.totalGoals} completed
                     </p>
                   </div>
-                  <div className="text-6xl font-bold">
+                  <div className="text-6xl font-bold text-gray-900 dark:text-white">
                     {stats.totalGoals > 0 ? Math.round((stats.completedGoals / stats.totalGoals) * 100) : 0}%
                   </div>
                 </div>

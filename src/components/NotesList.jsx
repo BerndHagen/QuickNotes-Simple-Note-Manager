@@ -284,14 +284,14 @@ function NoteContextMenu({ x, y, note, notes: selectedNotes, onClose, folders, t
       )}
       <button
         onClick={() => handleAction(handleBulkPin)}
-        className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-300 transition-colors"
+        className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-800 dark:text-gray-300 transition-colors"
       >
         {allPinned ? <PinOff className="w-4 h-4 text-gray-400" /> : <Pin className="w-4 h-4 text-gray-400" />}
         <span>{allPinned ? 'Unpin' : 'Pin to Top'}</span>
       </button>
       <button
         onClick={() => handleAction(handleBulkStar)}
-        className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-300 transition-colors"
+        className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-800 dark:text-gray-300 transition-colors"
       >
         {allStarred ? <StarOff className="w-4 h-4 text-gray-400" /> : <Star className="w-4 h-4 text-gray-400" />}
         <span>{allStarred ? 'Remove from Favorites' : 'Add to Favorites'}</span>
@@ -301,7 +301,7 @@ function NoteContextMenu({ x, y, note, notes: selectedNotes, onClose, folders, t
       
       <button
         onClick={() => handleAction(handleBulkDuplicate)}
-        className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-300 transition-colors"
+        className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-800 dark:text-gray-300 transition-colors"
       >
         <Copy className="w-4 h-4 text-gray-400" />
         <span>Duplicate</span>
@@ -315,7 +315,7 @@ function NoteContextMenu({ x, y, note, notes: selectedNotes, onClose, folders, t
         <button
           ref={folderButtonRef}
           onClick={() => setShowFolderMenu(!showFolderMenu)}
-          className={`flex items-center justify-between w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-300 transition-colors ${showFolderMenu ? 'bg-gray-100 dark:bg-gray-800' : ''}`}
+          className={`flex items-center justify-between w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-800 dark:text-gray-300 transition-colors ${showFolderMenu ? 'bg-gray-100 dark:bg-gray-800' : ''}`}
         >
           <div className="flex items-center gap-3">
             <FolderInput className="w-4 h-4" />
@@ -336,7 +336,7 @@ function NoteContextMenu({ x, y, note, notes: selectedNotes, onClose, folders, t
           >
             <button
               onClick={() => handleAction(() => handleBulkMoveToFolder(null))}
-              className={`w-full px-4 py-2.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
+              className={`w-full px-4 py-2.5 text-left text-sm hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors ${
                 !isBulkMode && !note.folderId ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-300'
               }`}
             >
@@ -346,7 +346,7 @@ function NoteContextMenu({ x, y, note, notes: selectedNotes, onClose, folders, t
               <button
                 key={folder.id}
                 onClick={() => handleAction(() => handleBulkMoveToFolder(folder.id))}
-                className={`w-full px-4 py-2.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
+                className={`w-full px-4 py-2.5 text-left text-sm hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors ${
                   !isBulkMode && note.folderId === folder.id ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-300'
                 }`}
               >
@@ -365,7 +365,7 @@ function NoteContextMenu({ x, y, note, notes: selectedNotes, onClose, folders, t
         <button
           ref={tagButtonRef}
           onClick={() => setShowTagMenu(!showTagMenu)}
-          className={`flex items-center justify-between w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-300 transition-colors ${showTagMenu ? 'bg-gray-100 dark:bg-gray-800' : ''}`}
+          className={`flex items-center justify-between w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-800 dark:text-gray-300 transition-colors ${showTagMenu ? 'bg-gray-100 dark:bg-gray-800' : ''}`}
         >
           <div className="flex items-center gap-3">
             <Tag className="w-4 h-4" />
@@ -409,7 +409,7 @@ function NoteContextMenu({ x, y, note, notes: selectedNotes, onClose, folders, t
                           handleBulkAddTag(tag.name)
                         }
                       }}
-                      className={`w-full px-4 py-2.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 transition-colors ${
+                      className={`w-full px-4 py-2.5 text-left text-sm hover:bg-gray-200 dark:hover:bg-gray-800 flex items-center gap-2 transition-colors ${
                         isApplied ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-300'
                       }`}
                     >
@@ -770,7 +770,7 @@ function NoteCard({ note, isSelected, isMultiSelected, onClick, onContextMenu, i
       onContextMenu={onContextMenu}
       className={`note-card px-4 py-3.5 border-b border-[#cbd1db] dark:border-gray-800/60 cursor-pointer transition-all relative surface-hover ${
         isSelected
-          ? 'bg-emerald-50/70 dark:bg-emerald-950/30 border-l-[3px] border-l-emerald-500 card-selected'
+          ? 'bg-emerald-100 dark:bg-emerald-950/50 border-l-[3px] border-l-emerald-500 shadow-sm shadow-emerald-100 dark:shadow-emerald-950/20 card-selected'
           : isMultiSelected
           ? 'bg-blue-50/60 dark:bg-blue-950/30 border-l-[3px] border-l-blue-500'
           : 'dark:bg-gray-900/30 hover:bg-white/80 dark:hover:bg-gray-800/40 border-l-[3px] border-l-transparent'

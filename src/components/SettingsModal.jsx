@@ -45,7 +45,7 @@ export default function SettingsModal() {
   } = useUIStore()
   const { notes, folders, tags, user, setUser, syncWithBackend } = useNotesStore()
   const { theme, setTheme } = useThemeStore()
-  const { t } = useTranslation()
+  const { t, language: currentLang } = useTranslation()
 
   const [activeTab, setActiveTab] = useState('general')
   const [showPassword, setShowPassword] = useState(false)
@@ -60,17 +60,17 @@ export default function SettingsModal() {
   const [showChangePassword, setShowChangePassword] = useState(false)
 
   const tabs = [
-    { id: 'general', label: 'General', icon: Monitor },
-    { id: 'account', label: 'Account', icon: User },
-    { id: 'sync', label: 'Sync', icon: Cloud },
-    { id: 'data', label: 'Data', icon: Database },
-    { id: 'shortcuts', label: 'Shortcuts', icon: Keyboard },
+    { id: 'general', label: t('settings.general'), icon: Monitor },
+    { id: 'account', label: t('settings.account'), icon: User },
+    { id: 'sync', label: t('settings.sync'), icon: Cloud },
+    { id: 'data', label: t('settings.data'), icon: Database },
+    { id: 'shortcuts', label: t('settings.shortcuts'), icon: Keyboard },
   ]
 
   const handleLogin = async (e) => {
     e.preventDefault()
     if (!isBackendConfigured()) {
-      toast.error('Backend is not configured. Please check .env file.')
+      toast.error(t('settings.backendNotConfigured'))
       return
     }
 
@@ -84,7 +84,7 @@ export default function SettingsModal() {
       if (error) throw error
 
       setUser(data.user)
-      toast.success('Successfully logged in!')
+      toast.success(t('settings.toastLoginSuccess'))
       syncWithBackend()
     } catch (error) {
       toast.error(error.message)
@@ -96,7 +96,7 @@ export default function SettingsModal() {
   const handleSignUp = async (e) => {
     e.preventDefault()
     if (!isBackendConfigured()) {
-      toast.error('Backend is not configured. Please check .env file.')
+      toast.error(t('settings.backendNotConfigured'))
       return
     }
 
@@ -112,7 +112,7 @@ export default function SettingsModal() {
 
       if (error) throw error
 
-      toast.success('Registration successful! Please confirm your email.')
+      toast.success(t('settings.toastRegistrationSuccess'))
     } catch (error) {
       toast.error(error.message)
     } finally {
@@ -123,12 +123,12 @@ export default function SettingsModal() {
   const handleChangeEmail = async (e) => {
     e.preventDefault()
     if (!isBackendConfigured()) {
-      toast.error('Backend is not configured. Please check .env file.')
+      toast.error(t('settings.backendNotConfigured'))
       return
     }
 
     if (!newEmail) {
-      toast.error('Please enter a new email address')
+      toast.error(t('settings.toastEnterNewEmail'))
       return
     }
 
@@ -136,7 +136,7 @@ export default function SettingsModal() {
     try {
       const { error } = await backend.auth.updateUser({ email: newEmail })
       if (error) throw error
-      toast.success('Confirmation email sent to your new address!')
+      toast.success(t('settings.toastConfirmationSent'))
       setNewEmail('')
       setShowChangeEmail(false)
     } catch (error) {
@@ -149,22 +149,22 @@ export default function SettingsModal() {
   const handleChangePassword = async (e) => {
     e.preventDefault()
     if (!isBackendConfigured()) {
-      toast.error('Backend is not configured. Please check .env file.')
+      toast.error(t('settings.backendNotConfigured'))
       return
     }
 
     if (!currentPassword) {
-      toast.error('Please enter your current password')
+      toast.error(t('settings.toastEnterCurrentPassword'))
       return
     }
 
     if (newPassword !== confirmPassword) {
-      toast.error('Passwords do not match')
+      toast.error(t('settings.toastPasswordsDoNotMatch'))
       return
     }
 
     if (newPassword.length < 6) {
-      toast.error('Password must be at least 6 characters')
+      toast.error(t('settings.toastPasswordTooShort'))
       return
     }
 
@@ -176,14 +176,14 @@ export default function SettingsModal() {
       })
       
       if (signInError) {
-        toast.error('Current password is incorrect')
+        toast.error(t('settings.toastCurrentPasswordIncorrect'))
         setIsLoading(false)
         return
       }
 
       const { error } = await backend.auth.updateUser({ password: newPassword })
       if (error) throw error
-      toast.success('Password changed successfully!')
+      toast.success(t('settings.toastPasswordChanged'))
       setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')
@@ -203,7 +203,7 @@ export default function SettingsModal() {
 
     await backend.auth.signOut()
     setUser(null)
-    toast.success('Logged out')
+    toast.success(t('settings.toastLoggedOut'))
   }
 
   const handleExportData = () => {
@@ -224,17 +224,17 @@ export default function SettingsModal() {
     a.click()
     URL.revokeObjectURL(url)
 
-    toast.success('Data exported!')
+    toast.success(t('settings.toastDataExported'))
   }
 
   const handleClearData = async () => {
     if (
       window.confirm(
-        'Are you sure you want to delete all local data? This action cannot be undone.'
+        t('settings.toastDeleteAllConfirm')
       )
     ) {
       await clearLocalData()
-      toast.success('Local data deleted')
+      toast.success(t('settings.toastLocalDataDeleted'))
       window.location.reload()
     }
   }
@@ -248,10 +248,10 @@ export default function SettingsModal() {
           <div className="text-white">
             <h2 className="text-xl font-bold flex items-center gap-2">
               <Settings className="w-6 h-6" />
-              Settings
+              {t('settings.title')}
             </h2>
             <p className="text-white/80 text-sm mt-0.5">
-              Customize your workspace
+              {t('settings.customizeWorkspace')}
             </p>
           </div>
           <button
@@ -291,13 +291,13 @@ export default function SettingsModal() {
               <div className="space-y-6">
                 <div>
                   <h4 className="mb-3 text-sm font-medium text-gray-900 dark:text-white">
-                    Appearance
+                    {t('settings.appearance')}
                   </h4>
                   <div className="flex gap-3">
                     {[
-                      { id: 'light', label: 'Light', icon: Sun },
-                      { id: 'dark', label: 'Dark', icon: Moon },
-                      { id: 'system', label: 'System', icon: Monitor },
+                      { id: 'light', label: t('settings.light'), icon: Sun },
+                      { id: 'dark', label: t('settings.dark'), icon: Moon },
+                      { id: 'system', label: t('settings.system'), icon: Monitor },
                     ].map((option) => (
                       <button
                         key={option.id}
@@ -350,15 +350,15 @@ export default function SettingsModal() {
 
                 <div>
                   <h4 className="mb-3 text-sm font-medium text-gray-900 dark:text-white">
-                    View Mode
+                    {t('settings.viewMode')}
                   </h4>
                   <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">
-                    Choose how notes are displayed in the main area
+                    {t('settings.viewModeDesc')}
                   </p>
                   <div className="flex gap-3">
                     {[
-                      { id: 'list', label: 'List', icon: List, description: 'Notes list with editor side-by-side' },
-                      { id: 'grid', label: 'Grid', icon: LayoutGrid, description: 'Grid of note cards, full-width editor' },
+                      { id: 'list', label: t('settings.viewList'), icon: List, description: t('settings.viewListDesc') },
+                      { id: 'grid', label: t('settings.viewGrid'), icon: LayoutGrid, description: t('settings.viewGridDesc') },
                     ].map((option) => (
                       <button
                         key={option.id}
@@ -402,15 +402,15 @@ export default function SettingsModal() {
                           {user.email}
                         </p>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Member since{' '}
-                          {new Date(user.created_at).toLocaleDateString('en-US')}
+                          {t('settings.memberSince')}{' '}
+                          {new Date(user.created_at).toLocaleDateString(currentLang === 'de' ? 'de-DE' : currentLang === 'es' ? 'es-ES' : currentLang === 'fr' ? 'fr-FR' : currentLang === 'pt' ? 'pt-BR' : currentLang === 'zh' ? 'zh-CN' : currentLang === 'ru' ? 'ru-RU' : currentLang === 'ar' ? 'ar-SA' : currentLang === 'hi' ? 'hi-IN' : 'en-US')}
                         </p>
                       </div>
                     </div>
                     <div className="p-4 border border-gray-200 rounded-lg dark:border-gray-700">
                       <div className="flex items-center gap-2 mb-3">
                         <User className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                        <h4 className="text-sm font-medium text-gray-900 dark:text-white">Profile Picture URL</h4>
+                        <h4 className="text-sm font-medium text-gray-900 dark:text-white">{t('settings.profilePictureUrl')}</h4>
                       </div>
                       <div className="flex gap-2">
                         <input
@@ -426,7 +426,7 @@ export default function SettingsModal() {
                             const url = input.value.trim()
                             
                             if (url && !url.startsWith('http')) {
-                              toast.error('Please enter a valid URL starting with http:// or https://')
+                              toast.error(t('settings.toastInvalidUrl'))
                               return
                             }
                             
@@ -443,9 +443,9 @@ export default function SettingsModal() {
                                 setUser(data.user)
                               }
                               
-                              toast.success(url ? 'Profile picture updated!' : 'Profile picture removed!')
+                              toast.success(url ? t('settings.toastProfilePictureUpdated') : t('settings.toastProfilePictureRemoved'))
                             } catch (error) {
-                              toast.error('Failed to update profile picture')
+                              toast.error(t('settings.toastProfilePictureFailed'))
                             } finally {
                               setIsLoading(false)
                             }
@@ -453,24 +453,24 @@ export default function SettingsModal() {
                           disabled={isLoading}
                           className="px-4 py-2 text-sm text-white transition-colors rounded-lg bg-primary-600 hover:bg-primary-700 disabled:opacity-50"
                         >
-                          {isLoading ? 'Saving...' : 'Save'}
+                          {isLoading ? t('settings.saving') : t('common.save')}
                         </button>
                       </div>
                       <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                        Enter a URL to an image (JPG, PNG, GIF). Leave empty to remove.
+                        {t('settings.profilePictureHint')}
                       </p>
                     </div>
                     <div className="p-4 border border-gray-200 rounded-lg dark:border-gray-700">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <Mail className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                          <h4 className="text-sm font-medium text-gray-900 dark:text-white">Change Email</h4>
+                          <h4 className="text-sm font-medium text-gray-900 dark:text-white">{t('settings.changeEmail')}</h4>
                         </div>
                         <button
                           onClick={() => setShowChangeEmail(!showChangeEmail)}
                           className="px-3 py-1.5 text-sm text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg transition-colors"
                         >
-                          {showChangeEmail ? 'Cancel' : 'Change'}
+                          {showChangeEmail ? t('common.cancel') : t('settings.change')}
                         </button>
                       </div>
                       {showChangeEmail && (
@@ -481,7 +481,7 @@ export default function SettingsModal() {
                               value={newEmail}
                               onChange={(e) => setNewEmail(e.target.value)}
                               className="w-full px-4 py-2 text-gray-900 bg-white border border-gray-300 rounded-lg dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                              placeholder="New email address"
+                              placeholder={t('settings.newEmailAddress')}
                             />
                           </div>
                           <div className="flex justify-start">
@@ -490,7 +490,7 @@ export default function SettingsModal() {
                               disabled={isLoading}
                               className="px-4 py-2 text-sm text-white transition-colors rounded-lg bg-primary-600 hover:bg-primary-700 disabled:opacity-50"
                             >
-                              {isLoading ? 'Sending...' : 'Send Confirmation'}
+                              {isLoading ? t('settings.sending') : t('settings.sendConfirmation')}
                             </button>
                           </div>
                         </form>
@@ -500,13 +500,13 @@ export default function SettingsModal() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <Lock className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                          <h4 className="text-sm font-medium text-gray-900 dark:text-white">Change Password</h4>
+                          <h4 className="text-sm font-medium text-gray-900 dark:text-white">{t('settings.changePassword')}</h4>
                         </div>
                         <button
                           onClick={() => setShowChangePassword(!showChangePassword)}
                           className="px-3 py-1.5 text-sm text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg transition-colors"
                         >
-                          {showChangePassword ? 'Cancel' : 'Change'}
+                          {showChangePassword ? t('common.cancel') : t('settings.change')}
                         </button>
                       </div>
                       {showChangePassword && (
@@ -517,7 +517,7 @@ export default function SettingsModal() {
                               value={currentPassword}
                               onChange={(e) => setCurrentPassword(e.target.value)}
                               className="w-full px-4 py-2 text-gray-900 bg-white border border-gray-300 rounded-lg dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                              placeholder="Current password"
+                              placeholder={t('settings.currentPassword')}
                             />
                           </div>
                           <div className="relative">
@@ -526,7 +526,7 @@ export default function SettingsModal() {
                               value={newPassword}
                               onChange={(e) => setNewPassword(e.target.value)}
                               className="w-full px-4 py-2 text-gray-900 bg-white border border-gray-300 rounded-lg dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                              placeholder="New password"
+                              placeholder={t('settings.newPassword')}
                             />
                           </div>
                           <div className="relative">
@@ -535,7 +535,7 @@ export default function SettingsModal() {
                               value={confirmPassword}
                               onChange={(e) => setConfirmPassword(e.target.value)}
                               className="w-full px-4 py-2 text-gray-900 bg-white border border-gray-300 rounded-lg dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                              placeholder="Confirm new password"
+                              placeholder={t('settings.confirmNewPassword')}
                             />
                           </div>
                           <div className="flex justify-start">
@@ -544,7 +544,7 @@ export default function SettingsModal() {
                               disabled={isLoading}
                               className="px-4 py-2 text-sm text-white transition-colors rounded-lg bg-primary-600 hover:bg-primary-700 disabled:opacity-50"
                             >
-                              {isLoading ? 'Updating...' : 'Update Password'}
+                              {isLoading ? t('settings.updating') : t('settings.updatePassword')}
                             </button>
                           </div>
                         </form>
@@ -555,25 +555,24 @@ export default function SettingsModal() {
                       className="flex items-center gap-2 px-4 py-2 text-red-600 transition-colors rounded-lg dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30"
                     >
                       <LogOut className="w-4 h-4" />
-                      Log out
+                      {t('settings.logOut')}
                     </button>
                   </div>
                 ) : (
                   <form onSubmit={handleLogin} className="space-y-4">
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Sign in to sync your notes across devices.
+                      {t('settings.signInDesc')}
                       {!isBackendConfigured() && (
                         <span className="flex items-center gap-2 mt-2 text-yellow-600 dark:text-yellow-400">
                           <AlertTriangle className="flex-shrink-0 w-4 h-4" />
-                          Backend is not configured. Add your
-                          Backend credentials to .env file.
+                          {t('settings.backendNotConfigured')}
                         </span>
                       )}
                     </p>
 
                     <div>
                       <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Email
+                        {t('settings.email')}
                       </label>
                       <div className="relative">
                         <Mail className="absolute w-4 h-4 text-gray-400 -translate-y-1/2 left-3 top-1/2" />
@@ -589,7 +588,7 @@ export default function SettingsModal() {
 
                     <div>
                       <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Password
+                        {t('settings.password')}
                       </label>
                       <div className="relative">
                         <Lock className="absolute w-4 h-4 text-gray-400 -translate-y-1/2 left-3 top-1/2" />
@@ -620,7 +619,7 @@ export default function SettingsModal() {
                         disabled={isLoading}
                         className="flex-1 px-4 py-2 text-white transition-colors rounded-lg bg-primary-600 hover:bg-primary-700 disabled:opacity-50"
                       >
-                        {isLoading ? 'Loading...' : 'Sign in'}
+                        {isLoading ? t('settings.loading') : t('settings.signIn')}
                       </button>
                       <button
                         type="button"
@@ -628,7 +627,7 @@ export default function SettingsModal() {
                         disabled={isLoading}
                         className="flex-1 px-4 py-2 text-gray-700 dark:text-gray-200 transition-colors border border-gray-300 rounded-lg dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
                       >
-                        Register
+                        {t('settings.register')}
                       </button>
                     </div>
                   </form>
@@ -642,12 +641,12 @@ export default function SettingsModal() {
                     <Cloud className="w-5 h-5 text-primary-500" />
                     <div>
                       <p className="font-medium text-gray-900 dark:text-white">
-                        Cloud Sync
+                        {t('settings.cloudSync')}
                       </p>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
                         {user
-                          ? 'Connected to backend'
-                          : 'Not logged in'}
+                          ? t('settings.connectedToBackend')
+                          : t('settings.notLoggedIn')}
                       </p>
                     </div>
                   </div>
@@ -656,7 +655,7 @@ export default function SettingsModal() {
                     disabled={!user}
                     className="px-4 py-2 text-white transition-colors rounded-lg bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Sync now
+                    {t('settings.syncNow')}
                   </button>
                 </div>
                 <div className="space-y-4">
@@ -756,7 +755,7 @@ export default function SettingsModal() {
 
                 <div className="space-y-3">
                   <h4 className="text-sm font-medium text-gray-900 dark:text-white">
-                    Statistics
+                    {t('settings.statistics')}
                   </h4>
                   <div className="grid grid-cols-3 gap-4">
                     <div className="p-4 text-center rounded-lg bg-gray-50 dark:bg-gray-900">
@@ -764,7 +763,7 @@ export default function SettingsModal() {
                         {notes.length}
                       </p>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Notes
+                        {t('settings.notesCount')}
                       </p>
                     </div>
                     <div className="p-4 text-center rounded-lg bg-gray-50 dark:bg-gray-900">
@@ -772,7 +771,7 @@ export default function SettingsModal() {
                         {folders.length}
                       </p>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Folders
+                        {t('settings.foldersCount')}
                       </p>
                     </div>
                     <div className="p-4 text-center rounded-lg bg-gray-50 dark:bg-gray-900">
@@ -780,7 +779,7 @@ export default function SettingsModal() {
                         {tags.length}
                       </p>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Tags
+                        {t('settings.tagsCount')}
                       </p>
                     </div>
                   </div>
@@ -791,33 +790,33 @@ export default function SettingsModal() {
               <div className="space-y-6">
                 <div className="space-y-3">
                   <h4 className="text-sm font-medium text-gray-900 dark:text-white">
-                    Export Data
+                    {t('settings.exportData')}
                   </h4>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Export all your notes, folders, and tags as a JSON file.
+                    {t('settings.exportDataDesc')}
                   </p>
                   <button
                     onClick={handleExportData}
                     className="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-200 transition-colors bg-gray-100 rounded-lg dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"
                   >
                     <Download className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                    Export data
+                    {t('settings.exportDataButton')}
                   </button>
                 </div>
 
                 <div className="pt-6 space-y-3 border-t border-gray-200 dark:border-gray-700">
                   <h4 className="text-sm font-medium text-red-600 dark:text-red-400">
-                    Danger Zone
+                    {t('settings.dangerZone')}
                   </h4>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Delete all local data. This action cannot be undone.
+                    {t('settings.deleteAllDataDesc')}
                   </p>
                   <button
                     onClick={handleClearData}
                     className="flex items-center gap-2 px-4 py-2 text-red-600 transition-colors bg-red-100 rounded-lg dark:bg-red-900/30 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50"
                   >
                     <Trash2 className="w-4 h-4" />
-                    Delete all data
+                    {t('settings.deleteAllData')}
                   </button>
                 </div>
               </div>
@@ -825,19 +824,19 @@ export default function SettingsModal() {
             {activeTab === 'shortcuts' && (
               <div className="space-y-4">
                 <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-                  Use these keyboard shortcuts for faster workflow.
+                  {t('settings.shortcutsDescription')}
                 </p>
                 <div className="space-y-2">
                   {[
-                    { keys: ['Ctrl', 'N'], action: 'Open Quick Note' },
-                    { keys: ['Ctrl', 'S'], action: 'Save note' },
-                    { keys: ['Ctrl', 'F'], action: 'Focus search' },
-                    { keys: ['Ctrl', 'B'], action: 'Bold text' },
-                    { keys: ['Ctrl', 'I'], action: 'Italic text' },
-                    { keys: ['Ctrl', 'K'], action: 'Insert link' },
-                    { keys: ['Ctrl', 'Z'], action: 'Undo' },
-                    { keys: ['Ctrl', 'Shift', 'Z'], action: 'Redo' },
-                    { keys: ['Esc'], action: 'Close modal' },
+                    { keys: ['Ctrl', 'N'], action: t('settings.shortcutOpenQuickNote') },
+                    { keys: ['Ctrl', 'S'], action: t('settings.shortcutSaveNote') },
+                    { keys: ['Ctrl', 'F'], action: t('settings.shortcutFocusSearch') },
+                    { keys: ['Ctrl', 'B'], action: t('settings.shortcutBoldText') },
+                    { keys: ['Ctrl', 'I'], action: t('settings.shortcutItalicText') },
+                    { keys: ['Ctrl', 'K'], action: t('settings.shortcutInsertLink') },
+                    { keys: ['Ctrl', 'Z'], action: t('settings.shortcutUndo') },
+                    { keys: ['Ctrl', 'Shift', 'Z'], action: t('settings.shortcutRedo') },
+                    { keys: ['Esc'], action: t('settings.shortcutCloseModal') },
                   ].map((shortcut, i) => (
                     <div
                       key={i}

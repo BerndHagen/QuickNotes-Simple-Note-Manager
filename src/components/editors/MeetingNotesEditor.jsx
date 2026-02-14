@@ -213,36 +213,36 @@ ${meetingData.notes}
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-gray-900">
-      <div className="flex-shrink-0 p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-500 to-cyan-600">
+      <div className="flex-shrink-0 p-4 border-b border-gray-200 dark:border-gray-700 bg-[#e5eaf0] dark:bg-gray-800">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
               <Users className="w-7 h-7" />
               {noteTitle || 'Meeting Notes'}
             </h1>
-            <p className="text-blue-100 text-sm mt-1">
+            <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
               {meetingData.date} {"\u2022"} {stats.attendees} attendees {"\u2022"} {stats.agendaItems} agenda items
             </p>
           </div>
           <div className="flex items-center gap-3">
             <div className="text-center">
-              <div className="text-3xl font-mono font-bold text-white">
+              <div className="text-3xl font-mono font-bold text-gray-900 dark:text-white">
                 {formatTime(timerSeconds)}
               </div>
-              <div className="text-xs text-blue-100">
+              <div className="text-xs text-gray-500 dark:text-gray-400">
                 {currentAgendaItem ? 'Active Timer' : 'Meeting Timer'}
               </div>
             </div>
             <div className="flex flex-col gap-1">
               <button
                 onClick={() => timerRunning ? setTimerRunning(false) : setTimerRunning(true)}
-                className="p-2 rounded-lg bg-white/20 hover:bg-white/30 text-white"
+                className="p-2 rounded-lg bg-gray-200/50 dark:bg-gray-700 hover:bg-gray-300/50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300"
               >
                 {timerRunning ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
               </button>
               <button
                 onClick={() => { setTimerSeconds(0); setTimerRunning(false); setCurrentAgendaItem(null) }}
-                className="p-2 rounded-lg bg-white/20 hover:bg-white/30 text-white"
+                className="p-2 rounded-lg bg-gray-200/50 dark:bg-gray-700 hover:bg-gray-300/50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300"
               >
                 <RotateCcw className="w-4 h-4" />
               </button>
@@ -250,21 +250,21 @@ ${meetingData.notes}
           </div>
         </div>
         <div className="grid grid-cols-4 gap-2">
-          <div className="bg-white/10 backdrop-blur rounded-lg p-2 text-center">
-            <div className="text-xl font-bold text-white">{stats.present}/{stats.attendees}</div>
-            <div className="text-xs text-blue-100">Present</div>
+          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center">
+            <div className="text-xl font-bold text-gray-900 dark:text-white">{stats.present}/{stats.attendees}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">Present</div>
           </div>
-          <div className="bg-white/10 backdrop-blur rounded-lg p-2 text-center">
-            <div className="text-xl font-bold text-white">{stats.completedAgenda}/{stats.agendaItems}</div>
-            <div className="text-xs text-blue-100">Agenda Done</div>
+          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center">
+            <div className="text-xl font-bold text-gray-900 dark:text-white">{stats.completedAgenda}/{stats.agendaItems}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">Agenda Done</div>
           </div>
-          <div className="bg-white/10 backdrop-blur rounded-lg p-2 text-center">
-            <div className="text-xl font-bold text-white">{stats.actionItems}</div>
-            <div className="text-xs text-blue-100">Actions</div>
+          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center">
+            <div className="text-xl font-bold text-gray-900 dark:text-white">{stats.actionItems}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">Actions</div>
           </div>
-          <div className="bg-white/10 backdrop-blur rounded-lg p-2 text-center">
-            <div className="text-xl font-bold text-white">{stats.decisions}</div>
-            <div className="text-xs text-blue-100">Decisions</div>
+          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center">
+            <div className="text-xl font-bold text-gray-900 dark:text-white">{stats.decisions}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">Decisions</div>
           </div>
         </div>
       </div>

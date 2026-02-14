@@ -8,6 +8,7 @@ import {
   AlertCircle
 } from 'lucide-react'
 import { useNotesStore, useUIStore } from '../store'
+import { useTranslation } from '../lib/useTranslation'
 
 const markdownToHtml = (markdown) => {
   if (!markdown) return ''
@@ -188,6 +189,7 @@ export default function ImportModal() {
   const [importing, setImporting] = useState(false)
   const [results, setResults] = useState([])
   const fileInputRef = useRef(null)
+  const { t } = useTranslation()
 
   if (!importModalOpen) return null
 
@@ -287,8 +289,8 @@ export default function ImportModal() {
           <div className="flex items-center gap-3">
             <Upload className="w-6 h-6" />
             <div>
-              <h2 className="text-lg font-bold">Import Notes</h2>
-              <p className="text-sm text-white/70">Load notes from a file</p>
+              <h2 className="text-lg font-bold">{t('importModal.title')}</h2>
+              <p className="text-sm text-white/70">{t('importModal.subtitle')}</p>
             </div>
           </div>
           <button
@@ -301,7 +303,7 @@ export default function ImportModal() {
         <div className="p-6">
         {results.length > 0 ? (
           <div className="space-y-3">
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Import complete!</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">{t('importModal.importComplete')}</p>
             {results.map((result, index) => (
               <div 
                 key={index}
@@ -323,7 +325,7 @@ export default function ImportModal() {
                     {result.filename}
                   </p>
                   <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
-                    {result.success ? `Imported as "${result.title}"` : result.error}
+                    {result.success ? `${t('importModal.importedAs')} "${result.title}"` : result.error}
                   </p>
                 </div>
               </div>
@@ -332,7 +334,7 @@ export default function ImportModal() {
               onClick={handleClose}
               className="w-full mt-4 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-lg font-medium transition-colors"
             >
-              Done
+              {t('importModal.done')}
             </button>
           </div>
         ) : (
@@ -353,10 +355,10 @@ export default function ImportModal() {
                 dragActive ? 'text-emerald-600' : 'text-gray-400'
               }`} />
               <p className="text-gray-700 dark:text-gray-300 font-medium mb-1">
-                Drop files here or click to browse
+                {t('importModal.dropFiles')}
               </p>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Supports: Markdown (.md), Text (.txt), HTML (.html)
+                {t('importModal.supports')}
               </p>
               <input
                 ref={fileInputRef}
@@ -370,7 +372,7 @@ export default function ImportModal() {
             {files.length > 0 && (
               <div className="mt-4 space-y-2">
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {files.length} file{files.length > 1 ? 's' : ''} selected:
+                  {files.length} {files.length > 1 ? t('importModal.files') : t('importModal.file')} {t('importModal.filesSelected')}
                 </p>
                 <div className="max-h-48 overflow-y-auto space-y-2">
                   {files.map((file, index) => (
@@ -410,12 +412,12 @@ export default function ImportModal() {
               {importing ? (
                 <>
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Importing...
+                  {t('importModal.importing')}
                 </>
               ) : (
                 <>
                   <Upload className="w-5 h-5" />
-                  Import {files.length > 0 ? `${files.length} File${files.length > 1 ? 's' : ''}` : 'Files'}
+                  {t('importModal.importFiles')} {files.length > 0 ? `${files.length} ${files.length > 1 ? t('importModal.files') : t('importModal.file')}` : ''}
                 </>
               )}
             </button>

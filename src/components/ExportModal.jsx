@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { X, FileText, FileCode, File, Download, Check } from 'lucide-react'
 import { useNotesStore, useUIStore } from '../store'
+import { useTranslation } from '../lib/useTranslation'
 const htmlToMarkdown = (html) => {
   if (!html) return ''
   
@@ -268,8 +269,18 @@ export default function ExportModal() {
   const [exportAll, setExportAll] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [exportSuccess, setExportSuccess] = useState(false)
+  const { t } = useTranslation()
 
   const note = getSelectedNote()
+
+  const localizedFormats = exportFormats.map(f => ({
+    ...f,
+    description: f.id === 'pdf' ? t('exportModal.pdfDesc') :
+                 f.id === 'markdown' ? t('exportModal.markdownDesc') :
+                 f.id === 'txt' ? t('exportModal.plainTextDesc') :
+                 f.id === 'html' ? t('exportModal.htmlDesc') : f.description,
+    name: f.id === 'txt' ? t('exportModal.plainText') : f.name,
+  }))
 
   if (!exportModalOpen) return null
 
@@ -352,8 +363,8 @@ export default function ExportModal() {
           <div className="flex items-center gap-3">
             <Download className="w-6 h-6" />
             <div>
-              <h2 className="text-lg font-bold">Export Note</h2>
-              <p className="text-sm text-white/70">Save your notes to a file</p>
+              <h2 className="text-lg font-bold">{t('exportModal.title')}</h2>
+              <p className="text-sm text-white/70">{t('exportModal.subtitle')}</p>
             </div>
           </div>
           <button
@@ -368,7 +379,7 @@ export default function ExportModal() {
           <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
             <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{note.title}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              {note.content ? htmlToPlainText(note.content).substring(0, 60) + '...' : 'Empty note'}
+              {note.content ? htmlToPlainText(note.content).substring(0, 60) + '...' : t('exportModal.emptyNote')}
             </p>
           </div>
         )}
@@ -380,13 +391,13 @@ export default function ExportModal() {
             className="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
           />
           <div>
-            <p className="text-sm font-medium text-gray-900 dark:text-white">Export all notes</p>
-            <p className="text-xs text-gray-500">{notes.filter(n => !n.deleted).length} notes will be exported</p>
+            <p className="text-sm font-medium text-gray-900 dark:text-white">{t('exportModal.exportAll')}</p>
+            <p className="text-xs text-gray-500">{notes.filter(n => !n.deleted).length} {t('exportModal.notesWillBeExported')}</p>
           </div>
         </label>
         <div className="space-y-2 mb-6">
-          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Select format:</p>
-          {exportFormats.map((format) => (
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('exportModal.selectFormat')}</p>
+          {localizedFormats.map((format) => (
             <button
               key={format.id}
               onClick={() => setSelectedFormat(format.id)}
@@ -426,17 +437,17 @@ export default function ExportModal() {
           {exportSuccess ? (
             <>
               <Check className="w-5 h-5" />
-              Exported!
+              {t('exportModal.exported')}
             </>
           ) : isExporting ? (
             <>
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              Exporting...
+              {t('exportModal.exporting')}
             </>
           ) : (
             <>
               <Download className="w-5 h-5" />
-              Export {exportAll ? 'All Notes' : 'Note'}
+              {exportAll ? t('exportModal.exportAllNotes') : t('exportModal.exportNote')}
             </>
           )}
         </button>

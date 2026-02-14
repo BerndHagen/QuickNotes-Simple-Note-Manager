@@ -342,7 +342,7 @@ export default function TranslateModal() {
               <select
                 value={sourceLang}
                 onChange={(e) => setSourceLang(e.target.value)}
-                className="w-full px-3 py-2 text-gray-900 bg-gray-100 border border-gray-200 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 text-gray-900 bg-gray-100 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 {LANGUAGES.map((lang) => (
                   <option key={lang.code} value={lang.code}>
@@ -359,7 +359,7 @@ export default function TranslateModal() {
               <select
                 value={targetLang}
                 onChange={(e) => setTargetLang(e.target.value)}
-                className="w-full px-3 py-2 text-gray-900 bg-gray-100 border border-gray-200 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 text-gray-900 bg-gray-100 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 {LANGUAGES.map((lang) => (
                   <option key={lang.code} value={lang.code}>
@@ -396,7 +396,7 @@ export default function TranslateModal() {
               value={sourceText}
               onChange={(e) => setSourceText(e.target.value)}
               placeholder={t('translate.noTextSelected') || 'Enter or paste text to translate...'}
-              className="w-full h-40 px-4 py-3 text-gray-900 placeholder-gray-500 border border-gray-200 rounded-lg resize-none bg-gray-50 dark:bg-gray-900 dark:border-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full h-40 px-4 py-3 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-lg resize-none bg-gray-50 dark:bg-gray-900 dark:border-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               {sourceText.length} {t('notes.characters') || 'characters'}
@@ -437,7 +437,7 @@ export default function TranslateModal() {
                   value={translatedText}
                   readOnly
                   placeholder={isTranslating ? (t('translate.translating') || 'Translating...') : (translationError ? (t('translate.translationError') || 'Translation failed, opening Google Translate...') : '')}
-                  className="w-full h-40 px-4 py-3 text-gray-900 placeholder-gray-500 border border-gray-200 rounded-lg resize-none bg-green-50 dark:bg-green-900/20 dark:border-green-700 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full h-40 px-4 py-3 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-lg resize-none bg-green-50 dark:bg-green-900/20 dark:border-green-700 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 />
                 {isTranslating && (
                   <div className="absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-gray-800/80 rounded-lg">

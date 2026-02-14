@@ -126,30 +126,30 @@ export default function ShoppingListEditor({ data, onChange, noteTitle }) {
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-gray-900">
-      <div className="flex-shrink-0 p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-emerald-600 to-teal-600">
+      <div className="flex-shrink-0 p-4 border-b border-gray-200 dark:border-gray-700 bg-[#e5eaf0] dark:bg-gray-800">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
               <ShoppingCart className="w-7 h-7" />
               {noteTitle || 'Shopping List'}
             </h1>
-            <p className="text-emerald-100 mt-1">
+            <p className="text-gray-500 dark:text-gray-400 mt-1">
               {checkedCount} of {totalCount} items checked
             </p>
           </div>
           <div className="text-right">
             {shoppingData.showPrices && (
               <div className="space-y-1">
-                <div className="text-2xl font-bold text-white">
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">
                   {currencySymbol}{total.toFixed(2)}
                 </div>
                 {shoppingData.budget && (
-                  <div className={`text-sm ${total > shoppingData.budget ? 'text-red-200' : 'text-emerald-200'}`}>
+                  <div className={`text-sm ${total > shoppingData.budget ? 'text-red-500 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
                     Budget: {currencySymbol}{shoppingData.budget.toFixed(2)}
                     {total > shoppingData.budget && ' (Over!)'}
                   </div>
                 )}
-                <div className="flex gap-4 text-sm text-emerald-100">
+                <div className="flex gap-4 text-sm text-gray-500 dark:text-gray-400">
                   <span>{"\u2713"} {currencySymbol}{checkedTotal.toFixed(2)}</span>
                   <span>{"\u25CB"} {currencySymbol}{uncheckedTotal.toFixed(2)}</span>
                 </div>
@@ -157,9 +157,9 @@ export default function ShoppingListEditor({ data, onChange, noteTitle }) {
             )}
           </div>
         </div>
-        <div className="w-full h-2 rounded-full bg-white/30 overflow-hidden">
+        <div className="w-full h-2 rounded-full bg-gray-300 dark:bg-gray-600 overflow-hidden">
           <div
-            className="h-full bg-white rounded-full transition-all"
+            className="h-full bg-emerald-500 rounded-full transition-all"
             style={{ width: `${totalCount > 0 ? (checkedCount / totalCount) * 100 : 0}%` }}
           />
         </div>
