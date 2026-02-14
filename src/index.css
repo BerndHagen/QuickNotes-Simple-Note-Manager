@@ -1,0 +1,1472 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ========================================
+   ENTERPRISE BASE STYLES
+   ======================================== */
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+
+  * {
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  ::selection {
+    background-color: rgba(16, 185, 129, 0.15);
+    color: inherit;
+  }
+
+  .dark ::selection {
+    background-color: rgba(16, 185, 129, 0.25);
+  }
+}
+
+/* Date input dark mode support */
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"] {
+  color-scheme: light;
+}
+
+.dark input[type="date"],
+.dark input[type="time"],
+.dark input[type="datetime-local"] {
+  color-scheme: dark;
+  color: #e5e7eb;
+  background-color: #374151;
+  border-color: #4b5563;
+}
+
+/* Date input hover and focus states */
+input[type="date"]:not([class*="opacity-0"]):hover,
+input[type="time"]:not([class*="opacity-0"]):hover,
+input[type="datetime-local"]:not([class*="opacity-0"]):hover {
+  background-color: #f3f4f6;
+}
+
+.dark input[type="date"]:not([class*="opacity-0"]):hover,
+.dark input[type="time"]:not([class*="opacity-0"]):hover,
+.dark input[type="datetime-local"]:not([class*="opacity-0"]):hover {
+  background-color: #4b5563;
+}
+
+input[type="date"]:not([class*="opacity-0"]):focus,
+input[type="time"]:not([class*="opacity-0"]):focus,
+input[type="datetime-local"]:not([class*="opacity-0"]):focus {
+  outline: 2px solid #10b981;
+  outline-offset: 2px;
+}
+
+/* ========================================
+   ENTERPRISE SCROLLBAR
+   ======================================== */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 100px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Only show scrollbar on hover for a cleaner look */
+.scroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.scroll-thin:hover {
+  scrollbar-color: rgba(0, 0, 0, 0.08) transparent;
+}
+
+.dark .scroll-thin:hover {
+  scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+}
+
+/* Dark mode dropdown text color fix */
+.dark
+  button.text-left.text-sm:not(.text-red-600):not(.text-emerald-700):not(
+    [class*="text-gray-"]
+  ) {
+  color: #d1d5db;
+}
+
+/* TipTap Editor Styles */
+.ProseMirror {
+  outline: none;
+  min-height: 200px;
+}
+
+/* Editor placeholder text */
+.ProseMirror p.is-editor-empty:first-child::before {
+  color: #9ca3af;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+/* Task List Styles */
+.ProseMirror ul[data-type="taskList"] {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0;
+}
+
+.ProseMirror ul[data-type="taskList"] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.125rem 0;
+}
+
+.ProseMirror ul[data-type="taskList"] li > label {
+  flex: 0 0 auto;
+  margin-top: 0.25rem;
+  user-select: none;
+}
+
+.ProseMirror ul[data-type="taskList"] li > div {
+  flex: 1 1 auto;
+  min-width: 0;
+  word-break: break-word;
+}
+
+/* Prevent unwanted line breaks in task items */
+.ProseMirror ul[data-type="taskList"] li > div > p {
+  margin: 0;
+  min-height: 1.5em;
+}
+
+.ProseMirror ul[data-type="taskList"] li input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+  accent-color: #3b82f6;
+  flex-shrink: 0;
+}
+
+/* Nested task lists */
+.ProseMirror ul[data-type="taskList"] ul[data-type="taskList"] {
+  margin-left: 1.5rem;
+  margin-top: 0.25rem;
+}
+
+/* Drop Cap styling */
+.ProseMirror p[data-drop-cap] {
+  position: relative;
+}
+
+.ProseMirror p[data-drop-cap]::first-letter {
+  float: left;
+  font-size: 3.5em;
+  line-height: 0.8;
+  margin-right: 0.1em;
+  margin-top: 0.1em;
+  font-weight: bold;
+  color: #3b82f6;
+}
+
+/* Code Block Styles */
+.ProseMirror pre {
+  background: #1e293b;
+  border-radius: 0.5rem;
+  color: #e2e8f0;
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+.ProseMirror pre code {
+  background: none;
+  color: inherit;
+  font-size: 0.875rem;
+  padding: 0;
+}
+
+/* Highlight Styles */
+.ProseMirror mark {
+  background-color: #fef08a;
+  border-radius: 0.25rem;
+  padding: 0.125rem 0.25rem;
+}
+
+.dark .ProseMirror mark {
+  background-color: #854d0e;
+  color: #fef08a;
+}
+
+/* Link Styles */
+.ProseMirror a {
+  color: #3b82f6;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.ProseMirror a:hover {
+  color: #2563eb;
+}
+
+/* Blockquote Styles */
+.ProseMirror blockquote {
+  border-left: 4px solid #3b82f6;
+  padding-left: 1rem;
+  margin-left: 0;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.dark .ProseMirror blockquote {
+  border-left-color: #60a5fa;
+  color: #9ca3af;
+}
+
+/* Heading Styles */
+.ProseMirror h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.ProseMirror h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.ProseMirror h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+/* List Styles */
+.ProseMirror ul,
+.ProseMirror ol {
+  padding-left: 1.5rem;
+}
+
+.ProseMirror ul {
+  list-style-type: disc;
+}
+
+.ProseMirror ol {
+  list-style-type: decimal;
+}
+
+/* Horizontal Rule */
+.ProseMirror hr {
+  border: none;
+  border-top: 2px solid #e2e8f0;
+  margin: 1.5rem 0;
+}
+
+.dark .ProseMirror hr {
+  border-top-color: #374151;
+}
+
+/* Sync indicator animation */
+@keyframes pulse-sync {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.sync-indicator {
+  animation: pulse-sync 1.5s ease-in-out infinite;
+}
+
+/* Note card hover effect */
+.note-card {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border-left: 3px solid transparent;
+}
+
+.note-card:hover {
+  background-color: rgba(16, 185, 129, 0.03);
+  border-left-color: rgba(16, 185, 129, 0.3);
+}
+
+.dark .note-card:hover {
+  background-color: rgba(16, 185, 129, 0.04);
+  border-left-color: rgba(16, 185, 129, 0.35);
+}
+
+/* Enterprise surface shimmer on hover */
+.surface-hover {
+  position: relative;
+  overflow: hidden;
+}
+
+.surface-hover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 40%, rgba(16, 185, 129, 0.03) 50%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.surface-hover:hover::after {
+  opacity: 1;
+}
+
+/* Auth page animations */
+@keyframes auth-float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -20px) scale(1.05); }
+  66% { transform: translate(-20px, 15px) scale(0.95); }
+}
+
+@keyframes auth-float-delayed {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(-25px, 20px) scale(1.03); }
+  66% { transform: translate(15px, -25px) scale(0.97); }
+}
+
+@keyframes auth-float-slow {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(20px, -15px) scale(1.02); }
+}
+
+.auth-float {
+  animation: auth-float 20s ease-in-out infinite;
+}
+
+.auth-float-delayed {
+  animation: auth-float-delayed 25s ease-in-out infinite;
+}
+
+.auth-float-slow {
+  animation: auth-float-slow 30s ease-in-out infinite;
+}
+
+@keyframes auth-form-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.auth-form-animate {
+  animation: auth-form-in 0.4s ease-out;
+}
+
+/* Quick note modal backdrop blur */
+.backdrop-blur {
+  backdrop-filter: blur(4px);
+}
+
+/* Keyboard shortcut badge */
+.kbd {
+  @apply inline-flex items-center justify-center px-2 py-1 text-xs font-medium bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded shadow-sm text-gray-700 dark:text-gray-200;
+}
+
+/* Table Styles */
+.ProseMirror table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+  margin: 1rem 0;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+}
+
+.dark .ProseMirror table {
+  border-color: #374151;
+}
+
+.ProseMirror th,
+.ProseMirror td {
+  min-width: 100px;
+  border: 1px solid #e5e7eb;
+  padding: 0.5rem 0.75rem;
+  vertical-align: top;
+  box-sizing: border-box;
+  position: relative;
+  transition: background-color 0.15s ease;
+}
+
+.dark .ProseMirror th,
+.dark .ProseMirror td {
+  border-color: #374151;
+}
+
+.ProseMirror th {
+  background-color: #f3f4f6;
+  font-weight: 600;
+  text-align: left;
+}
+
+.dark .ProseMirror th {
+  background-color: #1f2937;
+}
+
+/* Cell with custom background color */
+.ProseMirror td[data-background-color],
+.ProseMirror th[data-background-color] {
+  /* Background color is set via inline style */
+}
+
+/* Selected cell highlight */
+.ProseMirror .selectedCell:after {
+  z-index: 2;
+  position: absolute;
+  content: "";
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(16, 185, 129, 0.15);
+  pointer-events: none;
+  border: 2px solid rgba(16, 185, 129, 0.5);
+}
+
+/* Hover effect on cells */
+.ProseMirror td:hover,
+.ProseMirror th:hover {
+  background-color: rgba(16, 185, 129, 0.05);
+}
+
+.ProseMirror td[data-background-color]:hover,
+.ProseMirror th[data-background-color]:hover {
+  filter: brightness(0.95);
+}
+
+/* Column resize handle */
+.ProseMirror .column-resize-handle {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: -2px;
+  width: 4px;
+  background-color: #10b981;
+  pointer-events: none;
+}
+
+.ProseMirror.resize-cursor {
+  cursor: ew-resize;
+  cursor: col-resize;
+}
+
+/* Text alignment */
+.ProseMirror [style*="text-align: center"] {
+  text-align: center;
+}
+
+.ProseMirror [style*="text-align: right"] {
+  text-align: right;
+}
+
+.ProseMirror [style*="text-align: justify"] {
+  text-align: justify;
+}
+
+/* Highlight colors */
+.ProseMirror mark[data-color="#fef08a"] {
+  background-color: #fef08a;
+}
+.ProseMirror mark[data-color="#bbf7d0"] {
+  background-color: #bbf7d0;
+}
+.ProseMirror mark[data-color="#bfdbfe"] {
+  background-color: #bfdbfe;
+}
+.ProseMirror mark[data-color="#ddd6fe"] {
+  background-color: #ddd6fe;
+}
+.ProseMirror mark[data-color="#fbcfe8"] {
+  background-color: #fbcfe8;
+}
+.ProseMirror mark[data-color="#fed7aa"] {
+  background-color: #fed7aa;
+}
+.ProseMirror mark[data-color="#fecaca"] {
+  background-color: #fecaca;
+}
+.ProseMirror mark[data-color="#d1fae5"] {
+  background-color: #d1fae5;
+}
+.ProseMirror mark[data-color="#e0e7ff"] {
+  background-color: #e0e7ff;
+}
+.ProseMirror mark[data-color="#fce7f3"] {
+  background-color: #fce7f3;
+}
+
+/* Paper background dark mode adjustments */
+.dark .paper-lined,
+.dark .paper-grid,
+.dark .paper-dotted,
+.dark .paper-grid-small,
+.dark .paper-dotted-dense {
+  /* Apply subtle dark patterns that are visible on dark backgrounds */
+  --pattern-color: rgba(255, 255, 255, 0.08);
+}
+
+.dark .paper-lined {
+  background-image: repeating-linear-gradient(
+    transparent, 
+    transparent 31px, 
+    var(--pattern-color) 31px, 
+    var(--pattern-color) 32px
+  ) !important;
+}
+
+.dark .paper-grid {
+  background-image: 
+    linear-gradient(var(--pattern-color) 1px, transparent 1px), 
+    linear-gradient(90deg, var(--pattern-color) 1px, transparent 1px) !important;
+}
+
+.dark .paper-dotted {
+  background-image: radial-gradient(circle, var(--pattern-color) 1px, transparent 1px) !important;
+}
+
+/* Auto-apply dark background for dark theme when using plain paper */
+.dark .paper-plain,
+.dark [class=""] {
+  background-color: #1f2937;
+}
+
+/* Dark paper backgrounds - ensure text visibility */
+.dark .paper-dark .ProseMirror,
+.dark .paper-dark-lined .ProseMirror,
+.dark .paper-blueprint .ProseMirror {
+  color: #e5e7eb;
+}
+
+.dark .paper-dark .ProseMirror h1,
+.dark .paper-dark .ProseMirror h2,
+.dark .paper-dark .ProseMirror h3,
+.dark .paper-dark-lined .ProseMirror h1,
+.dark .paper-dark-lined .ProseMirror h2,
+.dark .paper-dark-lined .ProseMirror h3,
+.dark .paper-blueprint .ProseMirror h1,
+.dark .paper-blueprint .ProseMirror h2,
+.dark .paper-blueprint .ProseMirror h3 {
+  color: #f3f4f6;
+}
+
+.dark .paper-dark .ProseMirror blockquote,
+.dark .paper-dark-lined .ProseMirror blockquote,
+.dark .paper-blueprint .ProseMirror blockquote {
+  color: #9ca3af;
+  border-left-color: #60a5fa;
+}
+
+.dark .paper-dark .ProseMirror a,
+.dark .paper-dark-lined .ProseMirror a,
+.dark .paper-blueprint .ProseMirror a {
+  color: #6ee7b7;
+}
+
+.dark .paper-dark .ProseMirror a:hover,
+.dark .paper-dark-lined .ProseMirror a:hover,
+.dark .paper-blueprint .ProseMirror a:hover {
+  color: #34d399;
+}
+
+.dark .paper-dark .ProseMirror hr,
+.dark .paper-dark-lined .ProseMirror hr,
+.dark .paper-blueprint .ProseMirror hr {
+  border-top-color: #4b5563;
+}
+
+.dark .paper-dark .ProseMirror p.is-editor-empty:first-child::before,
+.dark .paper-dark-lined .ProseMirror p.is-editor-empty:first-child::before,
+.dark .paper-blueprint .ProseMirror p.is-editor-empty:first-child::before {
+  color: #6b7280;
+}
+
+/* Dark paper backgrounds - table adjustments */
+.dark .paper-dark .ProseMirror table,
+.dark .paper-dark-lined .ProseMirror table,
+.dark .paper-blueprint .ProseMirror table {
+  border-color: #4b5563;
+}
+
+.dark .paper-dark .ProseMirror th,
+.dark .paper-dark .ProseMirror td,
+.dark .paper-dark-lined .ProseMirror th,
+.dark .paper-dark-lined .ProseMirror td,
+.dark .paper-blueprint .ProseMirror th,
+.dark .paper-blueprint .ProseMirror td {
+  border-color: #4b5563;
+}
+
+.dark .paper-dark .ProseMirror th,
+.dark .paper-dark-lined .ProseMirror th,
+.dark .paper-blueprint .ProseMirror th {
+  background-color: #374151;
+}
+
+/* Dark paper backgrounds - code block adjustments */
+.dark .paper-dark .ProseMirror pre,
+.dark .paper-dark-lined .ProseMirror pre,
+.dark .paper-blueprint .ProseMirror pre {
+  background: #111827;
+}
+
+/* Dark paper backgrounds - highlight adjustments */
+.dark .paper-dark .ProseMirror mark,
+.dark .paper-dark-lined .ProseMirror mark,
+.dark .paper-blueprint .ProseMirror mark {
+  background-color: #854d0e;
+  color: #fef08a;
+}
+
+/* Subscript and Superscript */
+.ProseMirror sub {
+  vertical-align: sub;
+  font-size: smaller;
+}
+
+.ProseMirror sup {
+  vertical-align: super;
+  font-size: smaller;
+}
+
+/* Link styles (emerald theme) */
+.ProseMirror a {
+  color: #10b981;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.ProseMirror a:hover {
+  color: #059669;
+}
+
+/* Note Link Styles - Internal links to other notes */
+.ProseMirror a.note-link {
+  color: #3b82f6;
+  text-decoration: none;
+  background: linear-gradient(to right, #dbeafe, #ede9fe);
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  border: 1px solid #bfdbfe;
+  transition: all 0.2s ease;
+}
+
+.ProseMirror a.note-link:hover {
+  background: linear-gradient(to right, #bfdbfe, #ddd6fe);
+  border-color: #93c5fd;
+  color: #2563eb;
+}
+
+.dark .ProseMirror a.note-link {
+  background: linear-gradient(to right, #1e3a5f, #312e81);
+  border-color: #3b82f6;
+  color: #93c5fd;
+}
+
+.dark .ProseMirror a.note-link:hover {
+  background: linear-gradient(to right, #1e40af, #4338ca);
+  border-color: #60a5fa;
+  color: #bfdbfe;
+}
+
+/* Find & Replace highlight */
+.find-highlight {
+  background-color: #fef08a !important;
+  border-radius: 2px;
+}
+
+.find-highlight-current {
+  background-color: #f97316 !important;
+  color: white !important;
+  border-radius: 2px;
+}
+
+/* Reminder badge styles */
+.reminder-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 8px;
+  height: 8px;
+  background-color: #f97316;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Sync indicator animation */
+.sync-indicator {
+  animation: pulse-glow 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    opacity: 1;
+    filter: drop-shadow(0 0 2px currentColor);
+  }
+  50% {
+    opacity: 0.6;
+    filter: drop-shadow(0 0 6px currentColor);
+  }
+}
+
+/* Smooth transitions for interactive elements */
+.btn-hover-lift {
+  @apply transition-all duration-200;
+}
+
+.btn-hover-lift:hover {
+  transform: translateY(-1px);
+  @apply shadow-md;
+}
+
+/* Card hover effect */
+.card-hover {
+  @apply transition-all duration-200;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  @apply shadow-lg;
+}
+
+/* Glassmorphism effect */
+.glass {
+  @apply bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Smooth focus ring */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:ring-offset-0;
+}
+
+/* Enterprise surface variants */
+.surface-primary {
+  @apply bg-white dark:bg-gray-900;
+}
+
+.surface-secondary {
+  @apply bg-gray-50/80 dark:bg-gray-800/50;
+}
+
+.surface-elevated {
+  @apply bg-white dark:bg-gray-900 shadow-sm;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.dark .surface-elevated {
+  border-color: rgba(255, 255, 255, 0.04);
+}
+
+/* Enterprise divider */
+.divider {
+  @apply h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent dark:via-gray-700/50;
+}
+
+/* Premium badge */
+.badge-enterprise {
+  @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium;
+  letter-spacing: 0.02em;
+}
+
+/* Image resizable node view */
+.ProseMirror .node-resizableImage {
+  display: block;
+  max-width: 100%;
+}
+
+/* Improved note card selection */
+.note-card-selected {
+  @apply ring-2 ring-primary-500 ring-offset-2 dark:ring-offset-gray-900;
+}
+
+/* Skeleton loading animation */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.dark .skeleton {
+  background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
+  background-size: 200% 100%;
+}
+
+/* Toast notification enhancements */
+.toast-success {
+  @apply bg-emerald-50 dark:bg-emerald-900/50 border-emerald-200 dark:border-emerald-800;
+}
+
+.toast-error {
+  @apply bg-red-50 dark:bg-red-900/50 border-red-200 dark:border-red-800;
+}
+
+/* Dropdown animation */
+@keyframes dropdown-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.dropdown-animate {
+  animation: dropdown-in 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Modal animation */
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes modal-backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-animate {
+  animation: modal-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-backdrop-animate {
+  animation: modal-backdrop-in 0.25s ease-out;
+}
+
+/* Subtle slide-up for floating elements */
+@keyframes float-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.float-up {
+  animation: float-up 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Slide-in animation for sidebar */
+@keyframes slide-in-left {
+  from {
+    transform: translateX(-100%);
+    opacity: 0.5;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.slide-in-left {
+  animation: slide-in-left 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Focus mode editor - transparent background to inherit theme */
+.focus-mode-editor .bg-white {
+  background-color: transparent !important;
+}
+
+/* Text Box styling */
+.ProseMirror .text-box {
+  position: relative;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.ProseMirror .text-box:hover {
+  border-color: #10b981 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.ProseMirror .text-box:focus-within {
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+.ProseMirror .text-box p {
+  margin: 0;
+}
+
+.ProseMirror .text-box p + p {
+  margin-top: 0.5em;
+}
+
+/* Dark mode text box */
+.dark .ProseMirror .text-box {
+  border-color: #374151 !important;
+  background-color: #1f2937 !important;
+}
+
+.dark .ProseMirror .text-box:hover {
+  border-color: #10b981 !important;
+}
+
+/* ========================================
+   MOBILE RESPONSIVENESS - Enhanced UX
+   ======================================== */
+
+/* Base mobile improvements */
+@media (max-width: 767px) {
+  /* Prevent horizontal overflow */
+  body {
+    overflow-x: hidden;
+  }
+
+  /* Smooth scrolling for touch */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Ensure content wraps properly */
+  .ProseMirror {
+    word-break: break-word;
+    overflow-wrap: break-word;
+    padding: 1rem !important;
+    font-size: 16px; /* Prevents iOS zoom on input focus */
+  }
+
+  /* Better toolbar on mobile - scrollable */
+  .editor-toolbar {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 0.5rem;
+  }
+
+  .editor-toolbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Smaller toolbar buttons on mobile */
+  .ProseMirror-menubar button,
+  .toolbar-btn {
+    padding: 0.5rem;
+    min-width: 2.5rem;
+    min-height: 2.5rem;
+  }
+
+  /* Improve touch targets - minimum 44px for iOS guidelines */
+  .note-card {
+    min-height: 4rem;
+    padding: 1rem;
+  }
+
+  /* Touch-friendly list items */
+  .note-card button,
+  .note-card a {
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Prevent text selection issues during scroll */
+  .notes-list-scroll {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Fix table overflow on mobile */
+  .ProseMirror table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+    max-width: 100%;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Fix code block overflow */
+  .ProseMirror pre {
+    overflow-x: auto;
+    max-width: 100%;
+    font-size: 14px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Improve image responsiveness */
+  .ProseMirror img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Better modal sizes on mobile */
+  .modal-content,
+  [role="dialog"] > div {
+    max-height: 90vh;
+    margin: 1rem;
+    border-radius: 1rem;
+  }
+
+  /* Floating action buttons */
+  .fab-button {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    z-index: 50;
+  }
+
+  /* Mobile-friendly dropdown menus */
+  .dropdown-menu {
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+
+  /* Better sidebar on mobile */
+  .sidebar-mobile {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 280px;
+    z-index: 100;
+  }
+
+  /* Editor full height on mobile */
+  .editor-container {
+    height: calc(100vh - 60px);
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Note title input on mobile */
+  .note-title-input {
+    font-size: 1.5rem;
+    padding: 0.75rem 1rem;
+  }
+
+  /* Bottom toolbar for mobile editors */
+  .mobile-bottom-toolbar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    border-top: 1px solid #e5e7eb;
+    padding: 0.5rem;
+    z-index: 40;
+    display: flex;
+    justify-content: space-around;
+    gap: 0.5rem;
+  }
+
+  .dark .mobile-bottom-toolbar {
+    background: #1f2937;
+    border-top-color: #374151;
+  }
+
+  /* Hide desktop-only elements */
+  .desktop-only {
+    display: none !important;
+  }
+}
+
+/* Tablet specific improvements */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .sidebar-tablet {
+    width: 200px;
+  }
+
+  .note-list-tablet {
+    width: 280px;
+  }
+}
+
+/* Large touch screen improvements */
+@media (hover: none) and (pointer: coarse) {
+  /* Increase all interactive element sizes for touch */
+  button:not(.inline-btn),
+  a:not(.inline-link),
+  [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Better hover alternatives for touch */
+  .hover-highlight:active {
+    background-color: rgba(59, 130, 246, 0.1);
+  }
+
+  /* Remove hover effects that look broken on touch */
+  .note-card:hover {
+    transform: none;
+  }
+}
+
+/* Safe area insets for notched devices */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .mobile-bottom-toolbar {
+    padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
+  }
+}
+
+/* Landscape mode adjustments */
+@media (max-height: 500px) and (orientation: landscape) {
+  .modal-content {
+    max-height: 85vh;
+  }
+
+  .editor-toolbar {
+    padding: 0.25rem;
+  }
+
+  .toolbar-btn {
+    padding: 0.25rem;
+  }
+}
+
+/* Focus visible for keyboard navigation (accessibility) */
+@media (hover: hover) {
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid #10b981;
+    outline-offset: 2px;
+  }
+}
+
+/* ========================================
+   ENTERPRISE PREMIUM POLISH
+   ======================================== */
+
+/* Premium sidebar gradient - distinctly gray to create visual separation */
+.sidebar-premium {
+  background: linear-gradient(180deg, #f0f2f5 0%, #e8ecf1 50%, #e3e8ee 100%);
+}
+
+.dark .sidebar-premium {
+  background: linear-gradient(180deg, rgba(17,24,39,0.95) 0%, rgba(17,24,39,1) 100%);
+}
+
+/* Premium notes list - mid-tone between sidebar and editor */
+.notes-list-premium {
+  background: linear-gradient(180deg, #f4f6f8 0%, #eef1f5 100%);
+}
+
+.dark .notes-list-premium {
+  background: linear-gradient(180deg, rgba(17,24,39,0.6) 0%, rgba(17,24,39,0.8) 100%);
+}
+
+/* Premium toolbar shadow */
+.toolbar-premium {
+  background: linear-gradient(180deg, #fafbfc 0%, #f5f7f9 100%);
+  box-shadow: 0 1px 3px -1px rgba(0,0,0,0.06), 0 1px 0 0 rgba(0,0,0,0.03);
+}
+
+.dark .toolbar-premium {
+  background: linear-gradient(180deg, rgba(3,7,18,1) 0%, rgba(17,24,39,0.9) 100%);
+  box-shadow: 0 1px 3px -1px rgba(0,0,0,0.3), 0 1px 0 0 rgba(255,255,255,0.02);
+}
+
+/* Subtle inner shadow for input fields */
+.input-enterprise {
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.04);
+}
+
+.dark .input-enterprise {
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
+}
+
+/* Premium button glow on hover */
+.btn-glow:hover {
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.15), 0 4px 12px -2px rgba(16, 185, 129, 0.15);
+}
+
+.dark .btn-glow:hover {
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.2), 0 4px 12px -2px rgba(16, 185, 129, 0.1);
+}
+
+/* Sidebar logo badge with premium shadow */
+.logo-badge {
+  box-shadow: 0 2px 8px -2px rgba(16, 185, 129, 0.4), 0 4px 16px -4px rgba(16, 185, 129, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.logo-badge:hover {
+  box-shadow: 0 4px 12px -2px rgba(16, 185, 129, 0.5), 0 6px 20px -4px rgba(16, 185, 129, 0.3);
+  transform: scale(1.05);
+}
+
+/* Sidebar section label with tracking */
+.section-label {
+  letter-spacing: 0.12em;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #9ca3af;
+  transition: color 0.15s ease;
+}
+
+.section-label:hover {
+  color: #6b7280;
+}
+
+.dark .section-label:hover {
+  color: #9ca3af;
+}
+
+/* Enhanced note card with smooth interactions */
+.note-card-enhanced {
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.note-card-enhanced::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 0 4px 4px 0;
+  background: transparent;
+  transition: all 0.2s ease;
+}
+
+.note-card-enhanced:hover::before {
+  background: rgba(16, 185, 129, 0.4);
+}
+
+.note-card-enhanced.is-selected::before {
+  background: #10b981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
+}
+
+/* Quick Note button pulse effect */
+@keyframes subtle-pulse {
+  0%, 100% { box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.15), 0 2px 4px -2px rgba(16, 185, 129, 0.1); }
+  50% { box-shadow: 0 4px 12px -1px rgba(16, 185, 129, 0.25), 0 2px 8px -2px rgba(16, 185, 129, 0.15); }
+}
+
+.quick-note-btn {
+  animation: subtle-pulse 3s ease-in-out infinite;
+}
+
+.quick-note-btn:hover {
+  animation: none;
+}
+
+/* Enhanced folder count badge */
+.count-badge {
+  min-width: 24px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  transition: all 0.2s ease;
+}
+
+/* Smooth sidebar nav hover with subtle translateX */
+.nav-item-slide {
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-item-slide:hover {
+  transform: translateX(2px);
+}
+
+.nav-item-slide:active {
+  transform: translateX(0px);
+}
+
+/* Premium editor area subtle paper feel */
+.editor-paper {
+  background-image: 
+    radial-gradient(ellipse at 50% 0%, rgba(16, 185, 129, 0.02) 0%, transparent 50%);
+}
+
+.dark .editor-paper {
+  background-image: 
+    radial-gradient(ellipse at 50% 0%, rgba(16, 185, 129, 0.03) 0%, transparent 50%);
+}
+
+/* Toolbar button active state ring */
+.toolbar-btn-active {
+  background-color: rgba(16, 185, 129, 0.08);
+  color: #059669;
+  box-shadow: inset 0 0 0 1px rgba(16, 185, 129, 0.15);
+}
+
+.dark .toolbar-btn-active {
+  background-color: rgba(16, 185, 129, 0.12);
+  color: #34d399;
+  box-shadow: inset 0 0 0 1px rgba(16, 185, 129, 0.2);
+}
+
+/* Toast notifications enterprise style */
+[data-sonner-toaster] [data-sonner-toast],
+div[role="status"][class*="go"] {
+  border-radius: 16px !important;
+  font-weight: 500 !important;
+}
+
+/* Enterprise list item active state */
+.list-item-active {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.06) 0%, rgba(20, 184, 166, 0.04) 100%);
+  border-left: 3px solid #10b981;
+}
+
+.dark .list-item-active {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(20, 184, 166, 0.05) 100%);
+}
+
+/* Smooth sidebar section transitions */
+.sidebar-section {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Status indicator styles */
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-online {
+  background-color: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+.status-offline {
+  background-color: #f59e0b;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
+}
+
+/* Premium card elevation on selected state */
+.card-selected {
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.3), 0 2px 8px -2px rgba(16, 185, 129, 0.1);
+}
+
+.dark .card-selected {
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.4), 0 2px 8px -2px rgba(16, 185, 129, 0.15);
+}
+
+/* Sidebar nav item hover */
+.nav-item-hover {
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-item-hover:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+  transform: translateX(1px);
+}
+
+.dark .nav-item-hover:hover {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+/* Enterprise empty state illustration */
+.empty-state-glow {
+  position: relative;
+}
+
+.empty-state-glow::before {
+  content: '';
+  position: absolute;
+  inset: -20px;
+  background: radial-gradient(ellipse at center, rgba(16, 185, 129, 0.06) 0%, transparent 70%);
+  border-radius: 50%;
+  z-index: -1;
+}
+
+/* Premium badge with subtle shine */
+.badge-shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.badge-shine::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.1) 50%, transparent 60%);
+  animation: badge-shine 3s ease-in-out infinite;
+}
+
+@keyframes badge-shine {
+  0%, 100% { transform: translateX(-100%) translateY(-100%); }
+  50% { transform: translateX(100%) translateY(100%); }
+}

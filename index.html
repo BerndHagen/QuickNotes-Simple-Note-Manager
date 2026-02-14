@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/QuickNotes-Simple-Note-Manager/icons/icon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/QuickNotes-Simple-Note-Manager/icons/icon-16x16.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="QuickNotes - A modern note-taking app with rich text editing, cloud sync, and offline support" />
+    <meta name="theme-color" content="#10b981" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="QuickNotes" />
+    <link rel="manifest" href="/QuickNotes-Simple-Note-Manager/manifest.json" />
+    <link rel="apple-touch-icon" sizes="192x192" href="/QuickNotes-Simple-Note-Manager/icons/icon-192x192.png" />
+    <title>QuickNotes</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+    <script>
+      // Register Service Worker
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/QuickNotes-Simple-Note-Manager/sw.js');
+        });
+      }
+    </script>
+  </body>
+</html>

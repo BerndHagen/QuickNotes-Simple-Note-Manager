@@ -1,0 +1,226 @@
+name: Create Release
+
+on:
+  push:
+    branches: ['main']
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.js'
+      - 'tailwind.config.js'
+      - 'postcss.config.js'
+      - 'index.html'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    environment: github-pages
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+      - name: Generate semver tag
+        id: tag
+        run: |
+          # Get latest tag matching vX.Y.Z-quicknotes pattern
+          LATEST_TAG=$(git tag -l 'v*.*.*-quicknotes' --sort=-v:refname | head -n 1)
+          
+          if [ -z "$LATEST_TAG" ]; then
+            # No existing tag, start at v1.0.0
+            NEW_TAG="v1.0.0-quicknotes"
+          else
+            # Extract version numbers
+            VERSION=$(echo "$LATEST_TAG" | sed 's/^v//' | sed 's/-quicknotes$//')
+            MAJOR=$(echo "$VERSION" | cut -d. -f1)
+            MINOR=$(echo "$VERSION" | cut -d. -f2)
+            PATCH=$(echo "$VERSION" | cut -d. -f3)
+            
+            # Increment: patch +1, if patch reaches 10 -> minor +1, patch = 0
+            PATCH=$((PATCH + 1))
+            if [ "$PATCH" -ge 10 ]; then
+              PATCH=0
+              MINOR=$((MINOR + 1))
+              if [ "$MINOR" -ge 10 ]; then
+                MINOR=0
+                MAJOR=$((MAJOR + 1))
+              fi
+            fi
+            
+            NEW_TAG="v${MAJOR}.${MINOR}.${PATCH}-quicknotes"
+          fi
+          
+          echo "tag=$NEW_TAG" >> $GITHUB_OUTPUT
+          echo "Generated tag: $NEW_TAG"
+
+      - name: Create ZIP archive
+        run: |
+          cd dist
+          zip -r ../${{ steps.tag.outputs.tag }}.zip .
+
+      - name: Generate release notes
+        id: notes
+        run: |
+          RELEASE_DATE=$(date -u +"%d-%m-%Y at %I:%M %p UTC")
+          
+          # Get the previous release tag
+          LATEST_TAG=$(git tag -l 'v*.*.*-quicknotes' --sort=-v:refname | head -n 1)
+          
+          # Determine commit range
+          if [ -n "$LATEST_TAG" ]; then
+            RANGE="${LATEST_TAG}..HEAD"
+          else
+            RANGE=""
+          fi
+          
+          # Collect change items from commit subjects AND commit bodies
+          # When a commit body contains bullet points (lines starting with - or *),
+          # each bullet is treated as a separate change item instead of using the subject.
+          ITEMS_FILE=$(mktemp)
+          
+          if [ -n "$RANGE" ]; then
+            HASHES=$(git log "$RANGE" --no-merges --format="%H" 2>/dev/null)
+          else
+            HASHES=$(git log --no-merges -20 --format="%H" 2>/dev/null)
+          fi
+          
+          while read -r HASH; do
+            [ -z "$HASH" ] && continue
+            SUBJECT=$(git log -1 "$HASH" --format="%s")
+            BODY=$(git log -1 "$HASH" --format="%b")
+            
+            # Determine category from conventional commit prefix
+            case "$SUBJECT" in
+              feat:*|feat\(*|add:*|add\(*|new:*|new\(*)
+                CAT="FEAT" ;;
+              fix:*|fix\(*|bug:*|bug\(*|patch:*|patch\(*|hotfix:*|hotfix\(*)
+                CAT="FIX" ;;
+              ci:*|ci\(*|build:*|build\(*|chore:*|chore\(*|refactor:*|refactor\(*|style:*|style\(*|docs:*|docs\(*)
+                CAT="MAINT" ;;
+              *)
+                CAT="OTHER" ;;
+            esac
+            
+            # Extract bullet points from commit body (lines starting with - or *)
+            BULLETS=$(echo "$BODY" | grep -E '^\s*[-*•]\s+' | sed 's/^[[:space:]]*[-*•][[:space:]]*//' || true)
+            
+            if [ -n "$BULLETS" ]; then
+              # Use individual body bullet points as separate change items
+              while IFS= read -r item; do
+                [ -n "$item" ] && echo "${CAT}|${item}" >> "$ITEMS_FILE"
+              done <<< "$BULLETS"
+            else
+              # No body bullets — use the subject line as a single item
+              CLEAN=$(echo "$SUBJECT" | sed -E 's/^(feat|add|new|fix|bug|patch|hotfix|ci|build|chore|refactor|style|docs)(\([^)]*\))?[: ]*//')
+              [ -n "$CLEAN" ] && echo "${CAT}|${CLEAN}" >> "$ITEMS_FILE"
+            fi
+          done <<< "$HASHES"
+          
+          # Categorize items into sections
+          FEATURES=""
+          FIXES=""
+          MAINTENANCE=""
+          OTHER=""
+          
+          if [ -f "$ITEMS_FILE" ]; then
+            while IFS='|' read -r category text; do
+              [ -z "$text" ] && continue
+              # Capitalize first letter
+              text="$(echo "${text:0:1}" | tr '[:lower:]' '[:upper:]')${text:1}"
+              
+              case "$category" in
+                FEAT) FEATURES="${FEATURES}\n• \u2800${text}" ;;
+                FIX) FIXES="${FIXES}\n• \u2800${text}" ;;
+                MAINT) MAINTENANCE="${MAINTENANCE}\n• \u2800${text}" ;;
+                OTHER) OTHER="${OTHER}\n• \u2800${text}" ;;
+              esac
+            done < "$ITEMS_FILE"
+          fi
+          
+          rm -f "$ITEMS_FILE"
+          
+          # Count changes by type for summary
+          FEAT_COUNT=$(echo -e "$FEATURES" | grep -c "•" || true)
+          FIX_COUNT=$(echo -e "$FIXES" | grep -c "•" || true)
+          TOTAL_COUNT=$(echo -e "$FEATURES$FIXES$MAINTENANCE$OTHER" | grep -c "•" || true)
+          
+          # Generate intro summary
+          SUMMARY="Release of QuickNotes with"
+          PARTS=""
+          if [ "$FEAT_COUNT" -gt 0 ]; then
+            PARTS="${PARTS} ${FEAT_COUNT} new feature(s),"
+          fi
+          if [ "$FIX_COUNT" -gt 0 ]; then
+            PARTS="${PARTS} ${FIX_COUNT} bug fix(es),"
+          fi
+          if [ -n "$PARTS" ]; then
+            PARTS=$(echo "$PARTS" | sed 's/,$//')
+            SUMMARY="${SUMMARY}${PARTS}."
+          else
+            SUMMARY="Maintenance release of QuickNotes with internal improvements and updates."
+          fi
+          
+          # Build the release body
+          {
+            echo "body<<EOFMARKER"
+            echo "**Release: ${RELEASE_DATE}**"
+            echo "${SUMMARY}"
+            echo ""
+            
+            if [ -n "$FEATURES" ]; then
+              echo "**New Features & Improvements**"
+              echo -e "$FEATURES"
+              echo ""
+            fi
+            
+            if [ -n "$FIXES" ]; then
+              echo "**Bug Fixes**"
+              echo -e "$FIXES"
+              echo ""
+            fi
+            
+            if [ -n "$MAINTENANCE" ]; then
+              echo "**Maintenance**"
+              echo -e "$MAINTENANCE"
+              echo ""
+            fi
+            
+            if [ -n "$OTHER" ]; then
+              echo "**Other Changes**"
+              echo -e "$OTHER"
+              echo ""
+            fi
+            
+            echo "**Note:** If you encounter any bugs or issues, please don't hesitate to open an [issue](https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/issues). For any questions or to start a discussion, feel free to initiate a [discussion](https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/discussions) on the GitHub repository."
+            echo "EOFMARKER"
+          } >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: ${{ steps.tag.outputs.tag }}
+          body: ${{ steps.notes.outputs.body }}
+          files: ${{ steps.tag.outputs.tag }}.zip
