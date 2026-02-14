@@ -484,7 +484,7 @@ function EditFolderModal({ isOpen, onClose, folder, onUpdate }) {
           </button>
         </div>
         <div className="p-6">
-        <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl mb-6">
+        <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl mb-6 border border-gray-300 dark:border-gray-700">
           <div
             className="w-12 h-12 rounded-xl flex items-center justify-center shadow-md"
             style={{ backgroundColor: color }}
@@ -517,7 +517,7 @@ function EditFolderModal({ isOpen, onClose, folder, onUpdate }) {
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             {t('folders.chooseIcon') || 'Choose Icon'}
           </label>
-          <div className="flex flex-wrap gap-2 p-3 bg-gray-50 dark:bg-gray-900 rounded-xl max-h-[200px] overflow-y-auto">
+          <div className="flex flex-wrap gap-2 p-3 bg-gray-50 dark:bg-gray-900 rounded-xl max-h-[200px] overflow-y-auto border border-gray-300 dark:border-gray-700">
             {iconNames.map((iconName) => {
               const Ic = folderIcons[iconName]
               const isSelected = icon === iconName
@@ -542,7 +542,7 @@ function EditFolderModal({ isOpen, onClose, folder, onUpdate }) {
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             {t('folders.chooseColor') || 'Choose Color'}
           </label>
-          <div className="flex flex-wrap gap-2 p-3 bg-gray-50 dark:bg-gray-900 rounded-xl">
+          <div className="flex flex-wrap gap-2 p-3 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-300 dark:border-gray-700">
             {folderColors.map((c) => (
               <button
                 key={c}
@@ -630,7 +630,7 @@ function NewFolderModal({ isOpen, onClose, onCreate }) {
           </button>
         </div>
         <div className="flex-1 overflow-y-auto p-6">
-          <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl mb-6 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl mb-6 border border-gray-300 dark:border-gray-700">
             <div
               className="w-14 h-14 rounded-xl flex items-center justify-center shadow-lg"
               style={{ backgroundColor: color }}
@@ -655,7 +655,7 @@ function NewFolderModal({ isOpen, onClose, onCreate }) {
                 if (e.key === 'Enter') handleCreate()
                 if (e.key === 'Escape') onClose()
               }}
-              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               placeholder={t('folders.folderName') || 'Folder Name'}
             />
           </div>
@@ -663,7 +663,7 @@ function NewFolderModal({ isOpen, onClose, onCreate }) {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               {t('folders.chooseIcon') || 'Choose Icon'}
             </label>
-            <div className="flex flex-wrap gap-2 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700">
+            <div className="flex flex-wrap gap-2 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-300 dark:border-gray-700">
               {iconNames.map((iconName) => {
                 const Ic = folderIcons[iconName]
                 const isSelected = icon === iconName
@@ -688,7 +688,7 @@ function NewFolderModal({ isOpen, onClose, onCreate }) {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               {t('folders.chooseColor') || 'Choose Color'}
             </label>
-            <div className="flex flex-wrap gap-2 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700">
+            <div className="flex flex-wrap gap-2 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-300 dark:border-gray-700">
               {folderColors.map((c) => (
                 <button
                   key={c}
@@ -702,7 +702,7 @@ function NewFolderModal({ isOpen, onClose, onCreate }) {
             </div>
           </div>
         </div>
-        <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex gap-3">
+        <div className="p-6 border-t border-gray-300 dark:border-gray-700 flex gap-3">
           <button
             onClick={handleCreate}
             disabled={!name.trim()}

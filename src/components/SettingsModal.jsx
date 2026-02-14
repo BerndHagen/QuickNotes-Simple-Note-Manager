@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+﻿import React, { useState } from 'react'
 import {
   X,
   User,
@@ -305,7 +305,7 @@ export default function SettingsModal() {
                         className={`flex-1 flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-colors ${
                           theme === option.id
                             ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/60 text-primary-700 dark:text-primary-100 ring-1 ring-primary-500/10 dark:ring-primary-500/20'
-                            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                            : 'border-gray-300 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                         }`}
                       >
                         <option.icon className={`w-6 h-6 ${theme === option.id ? 'text-primary-600 dark:text-primary-300' : 'text-gray-600 dark:text-gray-400'}`} />
@@ -327,7 +327,7 @@ export default function SettingsModal() {
                         className={`flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-colors ${
                           language === lang.code
                             ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/70 text-primary-700 dark:text-primary-100 ring-1 ring-primary-500/10 dark:ring-primary-500/20'
-                            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                            : 'border-gray-300 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                         }`}
                         dir={lang.dir}
                       >
@@ -366,7 +366,7 @@ export default function SettingsModal() {
                         className={`flex-1 flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-colors ${
                           viewMode === option.id
                             ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/60 text-primary-700 dark:text-primary-100 ring-1 ring-primary-500/10 dark:ring-primary-500/20'
-                            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                            : 'border-gray-300 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                         }`}
                       >
                         <option.icon className={`w-6 h-6 ${viewMode === option.id ? 'text-primary-600 dark:text-primary-300' : 'text-gray-600 dark:text-gray-400'}`} />
@@ -407,7 +407,7 @@ export default function SettingsModal() {
                         </p>
                       </div>
                     </div>
-                    <div className="p-4 border border-gray-200 rounded-lg dark:border-gray-700">
+                    <div className="p-4 border border-gray-300 rounded-lg dark:border-gray-700">
                       <div className="flex items-center gap-2 mb-3">
                         <User className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                         <h4 className="text-sm font-medium text-gray-900 dark:text-white">{t('settings.profilePictureUrl')}</h4>
@@ -460,7 +460,7 @@ export default function SettingsModal() {
                         {t('settings.profilePictureHint')}
                       </p>
                     </div>
-                    <div className="p-4 border border-gray-200 rounded-lg dark:border-gray-700">
+                    <div className="p-4 border border-gray-300 rounded-lg dark:border-gray-700">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <Mail className="w-4 h-4 text-gray-500 dark:text-gray-400" />
@@ -496,7 +496,7 @@ export default function SettingsModal() {
                         </form>
                       )}
                     </div>
-                    <div className="p-4 border border-gray-200 rounded-lg dark:border-gray-700">
+                    <div className="p-4 border border-gray-300 rounded-lg dark:border-gray-700">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <Lock className="w-4 h-4 text-gray-500 dark:text-gray-400" />
@@ -797,14 +797,14 @@ export default function SettingsModal() {
                   </p>
                   <button
                     onClick={handleExportData}
-                    className="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-200 transition-colors bg-gray-100 rounded-lg dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"
+                    className="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-200 transition-colors bg-gray-100 rounded-lg dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600"
                   >
                     <Download className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                     {t('settings.exportDataButton')}
                   </button>
                 </div>
 
-                <div className="pt-6 space-y-3 border-t border-gray-200 dark:border-gray-700">
+                <div className="pt-6 space-y-3 border-t border-gray-300 dark:border-gray-700">
                   <h4 className="text-sm font-medium text-red-600 dark:text-red-400">
                     {t('settings.dangerZone')}
                   </h4>
@@ -813,7 +813,7 @@ export default function SettingsModal() {
                   </p>
                   <button
                     onClick={handleClearData}
-                    className="flex items-center gap-2 px-4 py-2 text-red-600 transition-colors bg-red-100 rounded-lg dark:bg-red-900/30 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50"
+                    className="flex items-center gap-2 px-4 py-2 text-red-600 transition-colors bg-red-100 rounded-lg dark:bg-red-900/30 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 border border-red-300 dark:border-red-800"
                   >
                     <Trash2 className="w-4 h-4" />
                     {t('settings.deleteAllData')}
