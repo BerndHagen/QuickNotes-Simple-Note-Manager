@@ -126,7 +126,7 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
 
 /* Editor Ruler — realistic cm/mm ruler */
 .editor-ruler {
-  height: 28px;
+  height: 32px;
   background: linear-gradient(to bottom, #fafafa, #f3f4f6);
   border-bottom: 1px solid #d1d5db;
   overflow: hidden;
@@ -199,7 +199,7 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
 }
 .editor-ruler-number {
   position: absolute;
-  top: 1px;
+  top: 2px;
   font-size: 8px;
   font-weight: 500;
   color: #6b7280;
