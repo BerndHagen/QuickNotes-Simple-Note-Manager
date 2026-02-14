@@ -140,7 +140,7 @@ export default function VersionHistoryModal() {
           </button>
         </div>
         <div className="flex-1 flex overflow-hidden">
-          <div className="w-1/3 border-r border-gray-200 dark:border-gray-700 overflow-y-auto">
+          <div className="w-1/3 border-r border-gray-300 dark:border-gray-700 overflow-y-auto">
             {isLoading ? (
               <div className="flex items-center justify-center h-full">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
@@ -206,7 +206,7 @@ export default function VersionHistoryModal() {
             )}
           </div>
           <div className="flex-1 flex flex-col overflow-hidden">
-            <div className="p-4 border-b border-gray-200 dark:border-gray-700 shrink-0">
+            <div className="p-4 border-b border-gray-300 dark:border-gray-700 shrink-0">
               <div className="flex items-center justify-between">
                 <h3 className="font-medium text-gray-900 dark:text-white">
                   {selectedVersion ? 'Preview' : 'Current Version'}
@@ -235,14 +235,14 @@ export default function VersionHistoryModal() {
             </div>
           </div>
         </div>
-        <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 dark:border-gray-700 shrink-0">
+        <div className="flex items-center justify-between px-6 py-4 border-t border-gray-300 dark:border-gray-700 shrink-0">
           <p className="text-sm text-gray-500 dark:text-gray-400">
             {versions.length} version{versions.length !== 1 ? 's' : ''} saved
           </p>
           <div className="flex gap-3">
             <button
               onClick={handleClose}
-              className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors border border-gray-300 dark:border-gray-600"
             >
               Close
             </button>

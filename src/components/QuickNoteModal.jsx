@@ -75,7 +75,7 @@ function SmartDropdown({ isOpen, onClose, triggerRef, children, minWidth = 160 }
   return createPortal(
     <div
       ref={dropdownRef}
-      className="fixed bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-[100]"
+      className="fixed bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg shadow-xl z-[100]"
       style={{
         top: position.top,
         left: position.left,

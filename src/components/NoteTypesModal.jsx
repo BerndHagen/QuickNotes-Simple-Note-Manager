@@ -64,7 +64,7 @@ export default function NoteTypesModal() {
             <X className="w-6 h-6" />
           </button>
         </div>
-        <div className="flex items-center gap-2 p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 overflow-x-auto">
+        <div className="flex items-center gap-2 p-4 border-b border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 overflow-x-auto">
           <button
             onClick={() => setSelectedCategory('all')}
             className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
@@ -152,7 +152,7 @@ export default function NoteTypesModal() {
             })}
           </div>
         </div>
-        <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+        <div className="p-4 border-t border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
           <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
             {t('noteTypes.footer1')}
             <br />

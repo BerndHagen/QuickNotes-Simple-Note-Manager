@@ -187,7 +187,7 @@ function ColorPickerDropdown({ isOpen, onClose, onSelect, currentColor, title, a
   return createPortal(
     <div 
       ref={dropdownRef}
-      className="fixed bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 p-3 z-[99999] min-w-[240px]"
+      className="fixed bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-300 dark:border-gray-700 p-3 z-[99999] min-w-[240px]"
       style={{ top: position.top, left: position.left }}
       onMouseDown={(e) => e.stopPropagation()}
     >
@@ -222,7 +222,7 @@ function ColorPickerDropdown({ isOpen, onClose, onSelect, currentColor, title, a
           </button>
         ))}
       </div>
-      <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
+      <div className="mt-3 pt-3 border-t border-gray-300 dark:border-gray-600">
         <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Custom Color</label>
         <div className="flex gap-2">
           <input
@@ -290,7 +290,7 @@ function DropdownMenu({ isOpen, onClose, anchorRef, children }) {
   return createPortal(
     <div 
       ref={menuRef}
-      className="fixed bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 py-1 min-w-[160px] z-[99999]"
+      className="fixed bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-300 dark:border-gray-700 py-1 min-w-[160px] z-[99999]"
       style={{ top: position.top, left: position.left }}
       onMouseDown={(e) => e.stopPropagation()}
     >
@@ -380,7 +380,7 @@ export default function TableBubbleMenu({ editor }) {
       shouldShow={({ editor, state }) => {
         return editor.isActive('table')
       }}
-      className="bg-white dark:bg-gray-800 shadow-xl rounded-xl border border-gray-200 dark:border-gray-700 flex items-center p-1.5 gap-0.5"
+      className="bg-white dark:bg-gray-800 shadow-xl rounded-xl border border-gray-300 dark:border-gray-700 flex items-center p-1.5 gap-0.5"
     >
       <div ref={menuRef} className="flex items-center gap-0.5">
         <div className="relative" ref={columnButtonRef}>

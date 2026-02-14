@@ -180,12 +180,12 @@ export default function ReminderModal() {
         </div>
         <div className="p-6">
         {note && (
-          <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+          <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-300 dark:border-gray-700">
             <p className="text-sm text-gray-500 dark:text-gray-400">{t('reminders.remindersFor')}</p>
             <p className="font-medium text-gray-900 dark:text-white truncate">{note.title}</p>
           </div>
         )}
-        <div className="space-y-3 mb-6 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl">
+        <div className="space-y-3 mb-6 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-300 dark:border-gray-700">
           <div className="flex gap-3">
             <div className="flex-1">
               <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t('reminders.date')}</label>
@@ -196,7 +196,7 @@ export default function ReminderModal() {
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
                   min={new Date().toISOString().split('T')[0]}
-                  className="w-full pl-10 pr-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
+                  className="w-full pl-10 pr-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
                 />
               </div>
             </div>
@@ -208,7 +208,7 @@ export default function ReminderModal() {
                   type="time"
                   value={time}
                   onChange={(e) => setTime(e.target.value)}
-                  className="w-full pl-10 pr-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
+                  className="w-full pl-10 pr-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
                 />
               </div>
             </div>
@@ -219,7 +219,7 @@ export default function ReminderModal() {
             <select
               value={repeat}
               onChange={(e) => setRepeat(e.target.value)}
-              className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
+              className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
             >
               <option value="none">{t('reminders.dontRepeat')}</option>
               <option value="daily">{t('reminders.daily')}</option>

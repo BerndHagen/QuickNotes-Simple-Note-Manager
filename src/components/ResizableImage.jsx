@@ -137,8 +137,8 @@ export default function ResizableImage({ node, updateAttributes, deleteNode, sel
           </>
         )}
         {(showControls || selected) && (
-          <div className="absolute -top-12 left-1/2 -translate-x-1/2 flex items-center gap-1 p-1.5 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 opacity-0 group-hover:opacity-100 transition-opacity z-10 image-menu">
-            <div className="flex items-center gap-0.5 px-1 border-r border-gray-200 dark:border-gray-700">
+          <div className="absolute -top-12 left-1/2 -translate-x-1/2 flex items-center gap-1 p-1.5 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-300 dark:border-gray-700 opacity-0 group-hover:opacity-100 transition-opacity z-10 image-menu">
+            <div className="flex items-center gap-0.5 px-1 border-r border-gray-300 dark:border-gray-700">
               {presetSizes.map((size) => (
                 <button
                   key={size.label}
@@ -154,7 +154,7 @@ export default function ResizableImage({ node, updateAttributes, deleteNode, sel
                 </button>
               ))}
             </div>
-            <div className="flex items-center gap-0.5 px-1 border-r border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-0.5 px-1 border-r border-gray-300 dark:border-gray-700">
               <button
                 onClick={handleFlipH}
                 className={`p-1.5 rounded transition-colors ${
@@ -188,7 +188,7 @@ export default function ResizableImage({ node, updateAttributes, deleteNode, sel
                 <RotateCw className="w-4 h-4" />
               </button>
             </div>
-            <div className="flex items-center gap-0.5 px-1 border-r border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-0.5 px-1 border-r border-gray-300 dark:border-gray-700">
               <button
                 onClick={() => handleAlign('left')}
                 className={`p-1.5 rounded transition-colors ${

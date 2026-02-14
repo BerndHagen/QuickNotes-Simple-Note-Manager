@@ -94,13 +94,13 @@ export default function NoteLinkPopover({ editor, isOpen, onClose, position }) {
   return (
     <div
       ref={popoverRef}
-      className="fixed z-50 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 w-80 overflow-hidden"
+      className="fixed z-50 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-300 dark:border-gray-700 w-80 overflow-hidden"
       style={{
         left: position?.x || 100,
         top: position?.y || 100,
       }}
     >
-      <div className="p-3 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20">
+      <div className="p-3 border-b border-gray-300 dark:border-gray-700 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20">
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
             <Link2 className="w-4 h-4 text-emerald-600" />
@@ -122,7 +122,7 @@ export default function NoteLinkPopover({ editor, isOpen, onClose, position }) {
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={t('noteLink.searchNotes')}
-            className="w-full pl-9 pr-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
+            className="w-full pl-9 pr-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
           />
         </div>
       </div>
@@ -173,7 +173,7 @@ export default function NoteLinkPopover({ editor, isOpen, onClose, position }) {
           </div>
         )}
       </div>
-      <div className="px-3 py-2 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+      <div className="px-3 py-2 bg-gray-50 dark:bg-gray-900 border-t border-gray-300 dark:border-gray-700">
         <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2">
           <span className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-[10px]">{"\u2191\u2193"}</span>
           Navigate

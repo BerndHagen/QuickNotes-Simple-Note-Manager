@@ -344,7 +344,7 @@ export default function GlobalSearchModal() {
           )}
         </div>
         {totalResults > 0 && (
-          <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400 flex items-center justify-between">
+          <div className="px-4 py-2 border-t border-gray-300 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400 flex items-center justify-between">
             <span>{totalResults} result{totalResults !== 1 ? 's' : ''}</span>
             <span>Ctrl+Shift+F for global search</span>
           </div>

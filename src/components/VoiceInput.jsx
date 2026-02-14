@@ -8,6 +8,7 @@ export default function VoiceInput({ onTranscript, isActive, onToggle }) {
   const [transcript, setTranscript] = useState('')
   const [interimTranscript, setInterimTranscript] = useState('')
   const recognitionRef = useRef(null)
+  const hadErrorRef = useRef(false)
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
@@ -24,11 +25,12 @@ export default function VoiceInput({ onTranscript, isActive, onToggle }) {
 
     recognition.onstart = () => {
       setIsListening(true)
+      hadErrorRef.current = false
     }
 
     recognition.onend = () => {
       setIsListening(false)
-      if (isActive) {
+      if (isActive && !hadErrorRef.current) {
         try {
           recognition.start()
         } catch (e) {
@@ -58,12 +60,15 @@ export default function VoiceInput({ onTranscript, isActive, onToggle }) {
     }
 
     recognition.onerror = (event) => {
+      hadErrorRef.current = true
       if (event.error === 'not-allowed') {
         toast.error('Microphone access not allowed. Please check permissions.')
         setIsSupported(false)
       } else if (event.error === 'no-speech') {
+        hadErrorRef.current = false
       } else {
         toast.error(`Speech recognition error: ${event.error}`)
+        onToggle?.(false)
       }
       
       setIsListening(false)
@@ -124,8 +129,8 @@ export default function VoiceInput({ onTranscript, isActive, onToggle }) {
   }
 
   return (
-    <div className="fixed bottom-8 right-8 z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
+    <div className="fixed bottom-8 right-8 z-50 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl shadow-2xl overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-300 dark:border-gray-700">
         <div className="flex items-center gap-2">
           <div className={`w-3 h-3 rounded-full ${isListening ? 'bg-red-500 animate-pulse' : 'bg-gray-400'}`} />
           <span className="font-medium text-gray-900 dark:text-white text-sm">

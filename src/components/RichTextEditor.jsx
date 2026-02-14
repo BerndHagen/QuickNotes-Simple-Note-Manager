@@ -932,7 +932,7 @@ export default function RichTextEditor({ noteId, content, onChange, placeholder,
           
           return !selection.empty
         }}
-        className="bg-white dark:bg-gray-800 shadow-xl rounded-lg border border-gray-200 dark:border-gray-700 flex items-center p-1 gap-0.5"
+        className="bg-white dark:bg-gray-800 shadow-xl rounded-lg border border-gray-300 dark:border-gray-700 flex items-center p-1 gap-0.5"
       >
         <BubbleButton onClick={() => editor.chain().focus().toggleBold().run()} isActive={editor.isActive('bold')}>
           <Bold className="w-4 h-4" />
@@ -960,7 +960,7 @@ export default function RichTextEditor({ noteId, content, onChange, placeholder,
       <FloatingMenu
         editor={editor}
         tippyOptions={{ duration: 100 }}
-        className="bg-white dark:bg-gray-800 shadow-xl rounded-lg border border-gray-200 dark:border-gray-700 flex items-center p-1 gap-0.5"
+        className="bg-white dark:bg-gray-800 shadow-xl rounded-lg border border-gray-300 dark:border-gray-700 flex items-center p-1 gap-0.5"
       >
         <BubbleButton onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}>
           <Heading1 className="w-4 h-4" />
