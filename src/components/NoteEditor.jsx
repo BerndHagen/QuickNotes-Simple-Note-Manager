@@ -160,6 +160,7 @@ export default function NoteEditor() {
   const [showBacklinks, setShowBacklinks] = useState(false)
   const [editorRef, setEditorRef] = useState(null)
   const menuRef = useRef(null)
+  const menuDropdownRef = useRef(null)
   const tagPickerRef = useRef(null)
   const folderPickerRef = useRef(null)
   const titleInputRef = useRef(null)
@@ -209,7 +210,8 @@ export default function NoteEditor() {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
+      if (menuRef.current && !menuRef.current.contains(event.target) && 
+          (!menuDropdownRef.current || !menuDropdownRef.current.contains(event.target))) {
         setShowMenu(false)
       }
       if (tagPickerRef.current && !tagPickerRef.current.contains(event.target)) {
@@ -417,6 +419,7 @@ export default function NoteEditor() {
 
               {showMenu && createPortal(
                 <div 
+                  ref={menuDropdownRef}
                   className="fixed bg-white dark:bg-gray-900 border border-[#cbd1db] dark:border-gray-700 rounded-2xl shadow-xl shadow-black/5 dark:shadow-black/20 py-1.5 z-[9999] min-w-[200px] backdrop-blur-xl float-up overflow-y-auto"
                   style={{
                     top: menuRef.current ? menuRef.current.getBoundingClientRect().bottom + 6 : 0,
