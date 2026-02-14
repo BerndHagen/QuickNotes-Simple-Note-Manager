@@ -23,35 +23,35 @@
 
 ## Key Features
 
-- **Rich Text Editor** — Full WYSIWYG editor powered by TipTap with headings, bold, italic, underline, strikethrough, text alignment, font colors, highlights, and more
-- **Code Blocks** — Syntax highlighting for many programming languages via Lowlight
-- **Tables** — Insert and edit tables with a bubble menu for row/column operations, cell merging, header toggling, and cell background colors
-- **Task Lists** — Interactive checklists with checkbox toggling
-- **Image Support** — Upload and embed resizable images directly in notes with drag handles
-- **Folders & Tags** — Organize notes into folders and assign color-coded tags via the Tag Manager
-- **Favorites & Pins** — Star or pin important notes for quick access
-- **Global Search** — Full-text search across all notes by title, content, and tags
-- **Find & Replace** — In-editor find and replace with regex support
-- **Quick Note** — Capture ideas instantly with a floating modal
-- **Templates** — Pre-built note templates for common use cases (empty note, to-do, meeting notes, project plan, code snippet, journal)
-- **Specialized Note Types** — Dedicated editors for brainstorming, meeting notes, project planning, shopping lists, weekly planners, journals, and to-do lists
-- **Version History** — View and restore previous versions of any note (up to 50 versions per note)
-- **Duplicate Detection** — Automatically find similar or duplicate notes
-- **Focus Mode** — Distraction-free writing experience
-- **Dark / Light / System Theme** — Three theme modes with automatic system preference detection
-- **Drag & Drop Sorting** — Reorder notes via drag and drop using @dnd-kit
-- **Export & Import** — Export notes as JSON, Markdown, or HTML; import from JSON
-- **Reminders** — Set reminders for individual notes
-- **Note Sharing** — Share notes with other users via invite links (requires backend)
-- **Real-Time Collaboration** — Live updates on shared notes via realtime subscriptions (requires backend)
-- **Voice Input** — Dictate notes using the Web Speech API
-- **Translation** — Translate note content between multiple languages
-- **HTML Editor** — Direct HTML editing for advanced formatting
-- **Offline-First** — All data stored locally in IndexedDB via Dexie; works without internet
-- **Cloud Sync** — Optional backend sync with automatic conflict resolution and sync queue
-- **PWA Support** — Installable as a Progressive Web App with service worker caching
-- **Multilingual UI** — Interface available in English, German, Spanish, French, Portuguese, Chinese, Hindi, Arabic, and Russian
-- **Mobile Responsive** — Responsive layout with mobile-specific views, touch-friendly targets, and safe area support
+- **Rich Text Editor:** Full WYSIWYG editor powered by TipTap with headings, bold, italic, underline, strikethrough, text alignment, font colors, highlights, and more
+- **Code Blocks:** Syntax highlighting for many programming languages via Lowlight
+- **Tables:** Insert and edit tables with a bubble menu for row/column operations, cell merging, header toggling, and cell background colors
+- **Task Lists:** Interactive checklists with checkbox toggling
+- **Image Support:** Upload and embed resizable images directly in notes with drag handles
+- **Folders & Tags:** Organize notes into folders and assign color-coded tags via the Tag Manager
+- **Favorites & Pins:** Star or pin important notes for quick access
+- **Global Search:** Full-text search across all notes by title, content, and tags
+- **Find & Replace:** In-editor find and replace with regex support
+- **Quick Note:** Capture ideas instantly with a floating modal
+- **Templates:** Pre-built note templates for common use cases (empty note, to-do, meeting notes, project plan, code snippet, journal)
+- **Specialized Note Types:** Dedicated editors for brainstorming, meeting notes, project planning, shopping lists, weekly planners, journals, and to-do lists
+- **Version History:** View and restore previous versions of any note (up to 50 versions per note)
+- **Duplicate Detection:** Automatically find similar or duplicate notes
+- **Focus Mode:** Distraction-free writing experience
+- **Dark / Light / System Theme:** Three theme modes with automatic system preference detection
+- **Drag & Drop Sorting:** Reorder notes via drag and drop using @dnd-kit
+- **Export & Import:** Export notes as JSON, Markdown, or HTML; import from JSON
+- **Reminders:** Set reminders for individual notes
+- **Note Sharing:** Share notes with other users via invite links (requires backend)
+- **Real-Time Collaboration:** Live updates on shared notes via realtime subscriptions (requires backend)
+- **Voice Input:** Dictate notes using the Web Speech API
+- **Translation:** Translate note content between multiple languages
+- **HTML Editor:** Direct HTML editing for advanced formatting
+- **Offline-First:** All data stored locally in IndexedDB via Dexie; works without internet
+- **Cloud Sync:** Optional backend sync with automatic conflict resolution and sync queue
+- **PWA Support:** Installable as a Progressive Web App with service worker caching
+- **Multilingual UI:** Interface available in English, German, Spanish, French, Portuguese, Chinese, Hindi, Arabic, and Russian
+- **Mobile Responsive:** Responsive layout with mobile-specific views, touch-friendly targets, and safe area support
 
 ## Table of Contents
 
