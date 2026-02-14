@@ -309,7 +309,7 @@ ${meetingData.notes}
                 value={meetingData.title}
                 onChange={(e) => update('title', e.target.value)}
                 placeholder="Enter meeting title..."
-                className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-transparent focus:border-blue-500 outline-none text-gray-900 dark:text-white"
+                className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 focus:border-blue-500 outline-none text-gray-900 dark:text-white"
               />
             </div>
 
@@ -322,7 +322,7 @@ ${meetingData.notes}
                   type="date"
                   value={meetingData.date}
                   onChange={(e) => update('date', e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-transparent focus:border-blue-500 outline-none text-gray-900 dark:text-white"
+                  className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 focus:border-blue-500 outline-none text-gray-900 dark:text-white"
                 />
               </div>
               <div>
@@ -334,7 +334,7 @@ ${meetingData.notes}
                   value={meetingData.location}
                   onChange={(e) => update('location', e.target.value)}
                   placeholder="Room / Zoom link..."
-                  className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-transparent focus:border-blue-500 outline-none text-gray-900 dark:text-white"
+                  className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 focus:border-blue-500 outline-none text-gray-900 dark:text-white"
                 />
               </div>
             </div>
@@ -348,7 +348,7 @@ ${meetingData.notes}
                   type="time"
                   value={meetingData.startTime}
                   onChange={(e) => update('startTime', e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-transparent focus:border-blue-500 outline-none text-gray-900 dark:text-white"
+                  className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 focus:border-blue-500 outline-none text-gray-900 dark:text-white"
                 />
               </div>
               <div>
@@ -359,7 +359,7 @@ ${meetingData.notes}
                   type="time"
                   value={meetingData.endTime}
                   onChange={(e) => update('endTime', e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-transparent focus:border-blue-500 outline-none text-gray-900 dark:text-white"
+                  className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 focus:border-blue-500 outline-none text-gray-900 dark:text-white"
                 />
               </div>
             </div>
@@ -374,7 +374,7 @@ ${meetingData.notes}
                 onChange={(e) => setNewAttendee(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && addAttendee()}
                 placeholder="Add attendee..."
-                className="flex-1 px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-transparent focus:border-blue-500 outline-none text-gray-900 dark:text-white"
+                className="flex-1 px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 focus:border-blue-500 outline-none text-gray-900 dark:text-white"
               />
               <button
                 onClick={addAttendee}
@@ -689,7 +689,7 @@ ${meetingData.notes}
                 onChange={(e) => setNewDecision(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && addDecision()}
                 placeholder="Record a decision made..."
-                className="flex-1 px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-transparent focus:border-blue-500 outline-none text-gray-900 dark:text-white"
+                className="flex-1 px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 focus:border-blue-500 outline-none text-gray-900 dark:text-white"
               />
               <button
                 onClick={addDecision}

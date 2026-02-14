@@ -256,7 +256,7 @@ export default function ShoppingListEditor({ data, onChange, noteTitle }) {
                 <select
                   value={shoppingData.currency}
                   onChange={(e) => update('currency', e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-600 outline-none text-gray-900 dark:text-white"
+                  className="w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-600 border border-gray-300 dark:border-gray-600 outline-none text-gray-900 dark:text-white"
                 >
                   <option value="USD">$ USD</option>
                   <option value="EUR">{"\u20AC"} EUR</option>
@@ -271,7 +271,7 @@ export default function ShoppingListEditor({ data, onChange, noteTitle }) {
                   value={shoppingData.budget || ''}
                   onChange={(e) => update('budget', e.target.value ? parseFloat(e.target.value) : null)}
                   placeholder="Optional"
-                  className="w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-600 outline-none text-gray-900 dark:text-white"
+                  className="w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-600 border border-gray-300 dark:border-gray-600 outline-none text-gray-900 dark:text-white"
                 />
               </div>
               <div className="flex items-center gap-4">
@@ -360,7 +360,7 @@ export default function ShoppingListEditor({ data, onChange, noteTitle }) {
                                 onChange={(e) => updateItem(item.id, { name: e.target.value })}
                                 onBlur={() => setEditingItem(null)}
                                 onKeyDown={(e) => e.key === 'Enter' && setEditingItem(null)}
-                                className="w-full px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 outline-none text-gray-900 dark:text-white"
+                                className="w-full px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 outline-none text-gray-900 dark:text-white"
                                 autoFocus
                               />
                             ) : (
@@ -380,14 +380,14 @@ export default function ShoppingListEditor({ data, onChange, noteTitle }) {
                               type="number"
                               value={item.quantity}
                               onChange={(e) => updateItem(item.id, { quantity: parseFloat(e.target.value) || 1 })}
-                              className="w-14 px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 text-center outline-none text-gray-900 dark:text-white"
+                              className="w-14 px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-center outline-none text-gray-900 dark:text-white"
                               min="0.1"
                               step="0.1"
                             />
                             <select
                               value={item.unit}
                               onChange={(e) => updateItem(item.id, { unit: e.target.value })}
-                              className="px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 outline-none text-gray-900 dark:text-white"
+                              className="px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 outline-none text-gray-900 dark:text-white"
                             >
                               {UNITS.map((unit) => (
                                 <option key={unit} value={unit}>{unit}</option>
@@ -403,7 +403,7 @@ export default function ShoppingListEditor({ data, onChange, noteTitle }) {
                                 onChange={(e) => updateItem(item.id, { price: e.target.value ? parseFloat(e.target.value) : null })}
                                 placeholder="0.00"
                                 step="0.01"
-                                className="w-20 px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 outline-none text-gray-900 dark:text-white text-right"
+                                className="w-20 px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 outline-none text-gray-900 dark:text-white text-right"
                               />
                             </div>
                           )}

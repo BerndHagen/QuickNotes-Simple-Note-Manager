@@ -356,7 +356,7 @@ export default function JournalEditor({ data, onChange, noteTitle }) {
                   onChange={(e) => setNewGoal(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && addGoal()}
                   placeholder="Add a goal for today..."
-                  className="flex-1 px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 outline-none text-gray-900 dark:text-white"
+                  className="flex-1 px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 outline-none text-gray-900 dark:text-white"
                 />
                 <button
                   onClick={addGoal}
@@ -404,7 +404,7 @@ export default function JournalEditor({ data, onChange, noteTitle }) {
                   onChange={(e) => setNewHighlight(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && addHighlight()}
                   placeholder="Add a highlight moment..."
-                  className="flex-1 px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 outline-none text-gray-900 dark:text-white"
+                  className="flex-1 px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 outline-none text-gray-900 dark:text-white"
                 />
                 <button
                   onClick={addHighlight}
@@ -423,7 +423,7 @@ export default function JournalEditor({ data, onChange, noteTitle }) {
                 value={journalData.challenges}
                 onChange={(e) => update('challenges', e.target.value)}
                 placeholder="What challenges did you face today?"
-                className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 outline-none text-gray-900 dark:text-white resize-none"
+                className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 outline-none text-gray-900 dark:text-white resize-none"
                 rows={4}
               />
             </div>
@@ -447,7 +447,7 @@ export default function JournalEditor({ data, onChange, noteTitle }) {
                       value={journalData.gratitude[index]}
                       onChange={(e) => updateGratitude(index, e.target.value)}
                       placeholder={`I'm grateful for...`}
-                      className="flex-1 px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 outline-none text-gray-900 dark:text-white"
+                      className="flex-1 px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 outline-none text-gray-900 dark:text-white"
                     />
                   </div>
                 ))}
@@ -462,7 +462,7 @@ export default function JournalEditor({ data, onChange, noteTitle }) {
                 value={journalData.lessons}
                 onChange={(e) => update('lessons', e.target.value)}
                 placeholder="What did you learn today?"
-                className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 outline-none text-gray-900 dark:text-white resize-none"
+                className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 outline-none text-gray-900 dark:text-white resize-none"
                 rows={4}
               />
             </div>
@@ -524,7 +524,7 @@ export default function JournalEditor({ data, onChange, noteTitle }) {
                   onChange={(e) => setNewTag(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && addTag()}
                   placeholder="Add a tag..."
-                  className="flex-1 px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 outline-none text-gray-900 dark:text-white"
+                  className="flex-1 px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 outline-none text-gray-900 dark:text-white"
                 />
                 <button
                   onClick={addTag}

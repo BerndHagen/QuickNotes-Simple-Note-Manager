@@ -380,7 +380,7 @@ export default function TodoListEditor({ data, onChange, noteTitle }) {
             onChange={(e) => setNewTaskText(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && addTask()}
             placeholder="Add a new task..."
-            className="flex-1 px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-transparent focus:border-emerald-500 focus:bg-white dark:focus:bg-gray-700 outline-none text-gray-900 dark:text-white placeholder-gray-500 transition-all"
+            className="flex-1 px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 focus:border-emerald-500 focus:bg-white dark:focus:bg-gray-700 outline-none text-gray-900 dark:text-white placeholder-gray-500 transition-all"
           />
           <button
             onClick={addTask}
@@ -696,7 +696,7 @@ function TaskItem({
                   }
                 }}
                 placeholder="Add subtask..."
-                className="flex-1 px-3 py-1.5 text-sm rounded-lg bg-gray-100 dark:bg-gray-700 border border-transparent focus:border-emerald-500 outline-none text-gray-900 dark:text-white"
+                className="flex-1 px-3 py-1.5 text-sm rounded-lg bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:border-emerald-500 outline-none text-gray-900 dark:text-white"
               />
               <button
                 onClick={() => {
@@ -717,7 +717,7 @@ function TaskItem({
               value={task.notes}
               onChange={(e) => onUpdate({ notes: e.target.value })}
               placeholder="Add notes..."
-              className="w-full px-3 py-2 text-sm rounded-lg bg-gray-100 dark:bg-gray-700 border border-transparent focus:border-emerald-500 outline-none text-gray-900 dark:text-white resize-none"
+              className="w-full px-3 py-2 text-sm rounded-lg bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:border-emerald-500 outline-none text-gray-900 dark:text-white resize-none"
               rows={3}
             />
           </div>

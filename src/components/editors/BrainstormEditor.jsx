@@ -259,7 +259,7 @@ export default function BrainstormEditor({ data, onChange, noteTitle }) {
           <select
             value={brainstormData.sortBy}
             onChange={(e) => update('sortBy', e.target.value)}
-            className="px-3 py-1 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 outline-none text-sm"
+            className="px-3 py-1 rounded-lg bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 outline-none text-sm"
           >
             <option value="newest">Newest First</option>
             <option value="oldest">Oldest First</option>
@@ -403,7 +403,7 @@ export default function BrainstormEditor({ data, onChange, noteTitle }) {
                         <select
                           value={idea.category}
                           onChange={(e) => updateIdea(idea.id, { category: e.target.value })}
-                          className="w-full px-2 py-1 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none text-sm"
+                          className="w-full px-2 py-1 rounded bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white outline-none text-sm"
                         >
                           {brainstormData.categories.map((cat) => (
                             <option key={cat.id} value={cat.id}>{cat.name}</option>
@@ -416,7 +416,7 @@ export default function BrainstormEditor({ data, onChange, noteTitle }) {
                           value={idea.notes || ''}
                           onChange={(e) => updateIdea(idea.id, { notes: e.target.value })}
                           placeholder="Add notes about this idea..."
-                          className="w-full px-2 py-1 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none text-sm resize-none"
+                          className="w-full px-2 py-1 rounded bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white outline-none text-sm resize-none"
                           rows={3}
                         />
                       </div>
@@ -537,7 +537,7 @@ export default function BrainstormEditor({ data, onChange, noteTitle }) {
                         <select
                           value={idea.category}
                           onChange={(e) => updateIdea(idea.id, { category: e.target.value })}
-                          className="w-full px-3 py-2 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none"
+                          className="w-full px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white outline-none"
                         >
                           {brainstormData.categories.map((cat) => (
                             <option key={cat.id} value={cat.id}>{cat.name}</option>
@@ -550,7 +550,7 @@ export default function BrainstormEditor({ data, onChange, noteTitle }) {
                           value={idea.notes || ''}
                           onChange={(e) => updateIdea(idea.id, { notes: e.target.value })}
                           placeholder="Add notes..."
-                          className="w-full px-3 py-2 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none resize-none"
+                          className="w-full px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white outline-none resize-none"
                           rows={2}
                         />
                       </div>
@@ -574,7 +574,7 @@ export default function BrainstormEditor({ data, onChange, noteTitle }) {
                   value={newCategoryName}
                   onChange={(e) => setNewCategoryName(e.target.value)}
                   placeholder="Category name"
-                  className="w-full px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 outline-none text-gray-900 dark:text-white"
+                  className="w-full px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 outline-none text-gray-900 dark:text-white"
                   autoFocus
                 />
               </div>

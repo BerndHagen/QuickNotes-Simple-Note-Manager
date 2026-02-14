@@ -375,7 +375,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
                       type="time"
                       value={newEventTime}
                       onChange={(e) => setNewEventTime(e.target.value)}
-                      className="px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 outline-none text-gray-900 dark:text-white"
+                      className="px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 outline-none text-gray-900 dark:text-white"
                     />
                     <input
                       type="text"
@@ -383,7 +383,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
                       onChange={(e) => setNewEvent(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && addEvent(selectedDay)}
                       placeholder="Add event..."
-                      className="flex-1 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 outline-none text-gray-900 dark:text-white"
+                      className="flex-1 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 outline-none text-gray-900 dark:text-white"
                     />
                     <button
                       onClick={() => addEvent(selectedDay)}
@@ -451,7 +451,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
                     <select
                       value={newTaskTime}
                       onChange={(e) => setNewTaskTime(e.target.value)}
-                      className="px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 outline-none text-gray-900 dark:text-white"
+                      className="px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 outline-none text-gray-900 dark:text-white"
                     >
                       {TIME_BLOCKS.map((block) => (
                         <option key={block.id} value={block.id}>{block.label}</option>
@@ -463,7 +463,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
                       onChange={(e) => setNewTask(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && addTask(selectedDay)}
                       placeholder="Add task..."
-                      className="flex-1 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 outline-none text-gray-900 dark:text-white"
+                      className="flex-1 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 outline-none text-gray-900 dark:text-white"
                     />
                     <button
                       onClick={() => addTask(selectedDay)}
@@ -503,7 +503,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
                 onChange={(e) => setNewGoal(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && addGoal()}
                 placeholder="Add a weekly goal..."
-                className="flex-1 px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 outline-none text-gray-900 dark:text-white"
+                className="flex-1 px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 outline-none text-gray-900 dark:text-white"
               />
               <button
                 onClick={addGoal}
