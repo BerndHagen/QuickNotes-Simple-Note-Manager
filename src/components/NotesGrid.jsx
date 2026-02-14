@@ -335,7 +335,7 @@ export default function NotesGrid() {
     createNote,
   } = useNotesStore()
 
-  const { currentSort, setCurrentSort } = useUIStore()
+  const { currentSort, setCurrentSort, sidebarOpen } = useUIStore()
   const { t } = useTranslation()
 
   const [showingEditor, setShowingEditor] = useState(false)
@@ -432,7 +432,7 @@ export default function NotesGrid() {
     <div className="flex flex-col w-full h-full bg-white dark:bg-gray-950">
       <div className="z-20 flex-shrink-0 px-6 py-4 border-b border-[#cbd1db] dark:border-gray-700 bg-white dark:bg-gray-950">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="pl-10 text-[15px] font-bold tracking-tight text-gray-900 md:pl-0 dark:text-white">
+          <h2 className={`pl-10 text-[15px] font-bold tracking-tight text-gray-900 ${sidebarOpen ? 'md:pl-0' : ''} dark:text-white`}>
             {getTitle()}
           </h2>
           <div className="flex items-center gap-2">

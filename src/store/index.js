@@ -1496,6 +1496,9 @@ export const useUIStore = create(
       showSyncNotifications: true,
       editorSettingsOpen: false,
       htmlEditorOpen: false,
+      confirmBeforeDelete: true,
+      spellCheck: true,
+      showNoteStatistics: true,
   
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
@@ -1557,6 +1560,9 @@ export const useUIStore = create(
   setSyncInterval: (minutes) => set({ syncInterval: minutes }),
   setSyncOnStartup: (enabled) => set({ syncOnStartup: enabled }),
   setShowSyncNotifications: (enabled) => set({ showSyncNotifications: enabled }),
+  setConfirmBeforeDelete: (enabled) => set({ confirmBeforeDelete: enabled }),
+  setSpellCheck: (enabled) => set({ spellCheck: enabled }),
+  setShowNoteStatistics: (enabled) => set({ showNoteStatistics: enabled }),
 }),
     {
       name: 'quicknotes-ui-settings',
@@ -1569,6 +1575,9 @@ export const useUIStore = create(
         syncInterval: state.syncInterval,
         syncOnStartup: state.syncOnStartup,
         showSyncNotifications: state.showSyncNotifications,
+        confirmBeforeDelete: state.confirmBeforeDelete,
+        spellCheck: state.spellCheck,
+        showNoteStatistics: state.showNoteStatistics,
       }),
     }
   )

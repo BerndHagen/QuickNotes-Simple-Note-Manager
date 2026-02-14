@@ -18,7 +18,10 @@ import {
   AlertTriangle,
   List,
   LayoutGrid,
-  Settings
+  Settings,
+  Shield,
+  SpellCheck,
+  BarChart3
 } from 'lucide-react'
 import { useUIStore, useNotesStore, useThemeStore } from '../store'
 import { backend, isBackendConfigured, getRedirectUrl } from '../lib/backend'
@@ -42,6 +45,12 @@ export default function SettingsModal() {
     setSyncOnStartup,
     showSyncNotifications,
     setShowSyncNotifications,
+    confirmBeforeDelete,
+    setConfirmBeforeDelete,
+    spellCheck,
+    setSpellCheck,
+    showNoteStatistics,
+    setShowNoteStatistics,
   } = useUIStore()
   const { notes, folders, tags, user, setUser, syncWithBackend } = useNotesStore()
   const { theme, setTheme } = useThemeStore()
@@ -374,6 +383,89 @@ export default function SettingsModal() {
                         <span className="text-xs text-center text-gray-500 dark:text-gray-400">{option.description}</span>
                       </button>
                     ))}
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="mb-3 text-sm font-medium text-gray-900 dark:text-white">
+                    {t('settings.editorPreferences')}
+                  </h4>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
+                      <div className="flex items-center gap-3">
+                        <Shield className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                        <div>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">
+                            {t('settings.confirmBeforeDelete')}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {t('settings.confirmBeforeDeleteDesc')}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setConfirmBeforeDelete(!confirmBeforeDelete)}
+                        className={`relative w-11 h-6 rounded-full transition-colors ${
+                          confirmBeforeDelete ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'
+                        }`}
+                      >
+                        <span
+                          className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white dark:bg-gray-200 rounded-full shadow transition-transform ${
+                            confirmBeforeDelete ? 'translate-x-5' : 'translate-x-0'
+                          }`}
+                        />
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
+                      <div className="flex items-center gap-3">
+                        <SpellCheck className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                        <div>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">
+                            {t('settings.spellCheck')}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {t('settings.spellCheckDesc')}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setSpellCheck(!spellCheck)}
+                        className={`relative w-11 h-6 rounded-full transition-colors ${
+                          spellCheck ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'
+                        }`}
+                      >
+                        <span
+                          className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white dark:bg-gray-200 rounded-full shadow transition-transform ${
+                            spellCheck ? 'translate-x-5' : 'translate-x-0'
+                          }`}
+                        />
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
+                      <div className="flex items-center gap-3">
+                        <BarChart3 className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                        <div>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">
+                            {t('settings.showNoteStatistics')}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {t('settings.showNoteStatisticsDesc')}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setShowNoteStatistics(!showNoteStatistics)}
+                        className={`relative w-11 h-6 rounded-full transition-colors ${
+                          showNoteStatistics ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'
+                        }`}
+                      >
+                        <span
+                          className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white dark:bg-gray-200 rounded-full shadow transition-transform ${
+                            showNoteStatistics ? 'translate-x-5' : 'translate-x-0'
+                          }`}
+                        />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

@@ -467,7 +467,7 @@ export default function NotesList() {
     reorderNotes,
   } = useNotesStore()
 
-  const { currentSort, setCurrentSort, setMobileEditorOpen } = useUIStore()
+  const { currentSort, setCurrentSort, setMobileEditorOpen, sidebarOpen } = useUIStore()
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -618,7 +618,7 @@ export default function NotesList() {
     <div className="flex flex-col w-full h-full border-r md:max-w-sm notes-list-premium border-[#cbd1db] dark:border-gray-800">
       <div className="flex-shrink-0 p-4 pb-3">
         <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2.5 pl-10 md:pl-0">
+          <div className={`flex items-center gap-2.5 pl-10 ${sidebarOpen ? 'md:pl-0' : ''}`}>
             <h2 className="text-[15px] font-bold text-gray-900 truncate dark:text-white tracking-tight">
               {getTitle()}
             </h2>

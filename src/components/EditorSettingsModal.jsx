@@ -116,7 +116,7 @@ export default function EditorSettingsModal() {
               <select
                 value={settings.defaultFontFamily}
                 onChange={(e) => handleSettingChange('defaultFontFamily', e.target.value)}
-                className="w-full px-3 py-2 text-gray-900 bg-gray-100 border border-gray-200 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-emerald-500"
+                className="w-full px-3 py-2 text-gray-900 bg-gray-100 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-700 dark:text-white focus:ring-2 focus:ring-emerald-500"
               >
                 {fontOptions.map(font => (
                   <option key={font.value} value={font.value} style={{ fontFamily: font.value }}>
@@ -132,7 +132,7 @@ export default function EditorSettingsModal() {
               <select
                 value={settings.defaultFontSize}
                 onChange={(e) => handleSettingChange('defaultFontSize', e.target.value)}
-                className="w-full px-3 py-2 text-gray-900 bg-gray-100 border border-gray-200 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-emerald-500"
+                className="w-full px-3 py-2 text-gray-900 bg-gray-100 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-700 dark:text-white focus:ring-2 focus:ring-emerald-500"
               >
                 {fontSizeOptions.map(size => (
                   <option key={size.value} value={size.value}>{size.name}</option>
@@ -146,7 +146,7 @@ export default function EditorSettingsModal() {
               <select
                 value={settings.defaultLineHeight}
                 onChange={(e) => handleSettingChange('defaultLineHeight', e.target.value)}
-                className="w-full px-3 py-2 text-gray-900 bg-gray-100 border border-gray-200 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-emerald-500"
+                className="w-full px-3 py-2 text-gray-900 bg-gray-100 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-700 dark:text-white focus:ring-2 focus:ring-emerald-500"
               >
                 {lineHeightOptions.map(lh => (
                   <option key={lh.value} value={lh.value}>{lh.name}</option>
@@ -159,7 +159,7 @@ export default function EditorSettingsModal() {
               <Eye className="w-4 h-4" />
               Display
             </h3>
-            <label className="flex items-center justify-between p-3 transition-colors border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-700/50">
+            <label className="flex items-center justify-between p-3 transition-colors border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-700/50">
               <div className="flex items-center gap-3">
                 <Ruler className="w-5 h-5 text-gray-500" />
                 <div>
@@ -174,7 +174,7 @@ export default function EditorSettingsModal() {
                 className="w-5 h-5 rounded text-emerald-600 focus:ring-emerald-500"
               />
             </label>
-            <label className="flex items-center justify-between p-3 transition-colors border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-700/50">
+            <label className="flex items-center justify-between p-3 transition-colors border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-700/50">
               <div className="flex items-center gap-3">
                 <AlignLeft className="w-5 h-5 text-gray-500" />
                 <div>
@@ -189,7 +189,7 @@ export default function EditorSettingsModal() {
                 className="w-5 h-5 rounded text-emerald-600 focus:ring-emerald-500"
               />
             </label>
-            <label className="flex items-center justify-between p-3 transition-colors border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-700/50">
+            <label className="flex items-center justify-between p-3 transition-colors border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-700/50">
               <div className="flex items-center gap-3">
                 <EyeOff className="w-5 h-5 text-gray-500" />
                 <div>
@@ -210,7 +210,7 @@ export default function EditorSettingsModal() {
               <Spellcheck className="w-4 h-4" />
               Editing
             </h3>
-            <label className="flex items-center justify-between p-3 transition-colors border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-700/50">
+            <label className="flex items-center justify-between p-3 transition-colors border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-700/50">
               <div className="flex items-center gap-3">
                 <Spellcheck className="w-5 h-5 text-gray-500" />
                 <div>
@@ -232,7 +232,7 @@ export default function EditorSettingsModal() {
               <select
                 value={settings.tabSize}
                 onChange={(e) => handleSettingChange('tabSize', parseInt(e.target.value))}
-                className="w-full px-3 py-2 text-gray-900 bg-gray-100 border border-gray-200 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-emerald-500"
+                className="w-full px-3 py-2 text-gray-900 bg-gray-100 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-700 dark:text-white focus:ring-2 focus:ring-emerald-500"
               >
                 {tabSizeOptions.map(tab => (
                   <option key={tab.value} value={tab.value}>{tab.name}</option>
@@ -241,7 +241,7 @@ export default function EditorSettingsModal() {
             </div>
           </div>
         </div>
-        <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+        <div className="flex items-center justify-between px-6 py-4 border-t border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
           <button
             onClick={handleResetDefaults}
             className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 transition-colors rounded-lg dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
