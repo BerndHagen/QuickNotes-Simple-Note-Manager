@@ -15,16 +15,23 @@ import {
   Keyboard,
   Database,
   Download,
+  Upload,
   AlertTriangle,
   List,
   LayoutGrid,
   Settings,
   Shield,
   SpellCheck,
-  BarChart3
+  BarChart3,
+  Info,
+  ExternalLink,
+  Github,
+  Heart,
+  FileText,
+  Clock
 } from 'lucide-react'
 import { useUIStore, useNotesStore, useThemeStore } from '../store'
-import { backend, isBackendConfigured, getRedirectUrl } from '../lib/backend'
+import { backend, isBackendConfigured, getRedirectUrl, deleteUserAccount } from '../lib/backend'
 import { clearLocalData } from '../lib/db'
 import { useTranslation, LANGUAGES } from '../lib/useTranslation'
 import toast from 'react-hot-toast'
@@ -51,6 +58,13 @@ export default function SettingsModal() {
     setSpellCheck,
     showNoteStatistics,
     setShowNoteStatistics,
+    currentSort,
+    setCurrentSort,
+    setImportModalOpen,
+    setPrivacyModalOpen,
+    setTermsModalOpen,
+    trashRetentionDays,
+    setTrashRetentionDays,
   } = useUIStore()
   const { notes, folders, tags, user, setUser, syncWithBackend } = useNotesStore()
   const { theme, setTheme } = useThemeStore()
@@ -67,6 +81,9 @@ export default function SettingsModal() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showChangeEmail, setShowChangeEmail] = useState(false)
   const [showChangePassword, setShowChangePassword] = useState(false)
+  const [showDeleteAccount, setShowDeleteAccount] = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false)
 
   const tabs = [
     { id: 'general', label: t('settings.general'), icon: Monitor },
@@ -74,6 +91,7 @@ export default function SettingsModal() {
     { id: 'sync', label: t('settings.sync'), icon: Cloud },
     { id: 'data', label: t('settings.data'), icon: Database },
     { id: 'shortcuts', label: t('settings.shortcuts'), icon: Keyboard },
+    { id: 'about', label: t('settings.aboutTab'), icon: Info },
   ]
 
   const handleLogin = async (e) => {
@@ -213,6 +231,33 @@ export default function SettingsModal() {
     await backend.auth.signOut()
     setUser(null)
     toast.success(t('settings.toastLoggedOut'))
+  }
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== 'DELETE') {
+      toast.error(t('settings.toastTypeDeleteToConfirm'))
+      return
+    }
+
+    setIsDeletingAccount(true)
+    try {
+      await deleteUserAccount()
+      await clearLocalData()
+      localStorage.removeItem('quicknotes-remember')
+      localStorage.removeItem('quicknotes-storage')
+      localStorage.removeItem('quicknotes-ui-settings')
+      localStorage.removeItem('quicknotes-theme')
+      setUser(null)
+      toast.success(t('settings.toastAccountDeleted'))
+      setSettingsOpen(false)
+      window.location.reload()
+    } catch (error) {
+      toast.error(t('settings.toastAccountDeleteFailed'))
+    } finally {
+      setIsDeletingAccount(false)
+      setDeleteConfirmText('')
+      setShowDeleteAccount(false)
+    }
   }
 
   const handleExportData = () => {
@@ -468,6 +513,53 @@ export default function SettingsModal() {
                     </div>
                   </div>
                 </div>
+
+                <div>
+                  <h4 className="mb-3 text-sm font-medium text-gray-900 dark:text-white">
+                    {t('settings.defaultSortOrder')}
+                  </h4>
+                  <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">
+                    {t('settings.defaultSortOrderDesc')}
+                  </p>
+                  <select
+                    value={currentSort}
+                    onChange={(e) => setCurrentSort(e.target.value)}
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-[#cbd1db] dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  >
+                    <option value="manual">{t('sort.manual')}</option>
+                    <option value="updated-desc">{t('sort.lastModified')}</option>
+                    <option value="updated-asc">{t('sort.oldestModified')}</option>
+                    <option value="created-desc">{t('sort.recentlyCreated')}</option>
+                    <option value="created-asc">{t('sort.oldestFirst')}</option>
+                    <option value="title-asc">{t('sort.titleAZ')}</option>
+                    <option value="title-desc">{t('sort.titleZA')}</option>
+                    <option value="size-desc">{t('sort.sizeDesc')}</option>
+                    <option value="size-asc">{t('sort.sizeAsc')}</option>
+                  </select>
+                </div>
+
+                <div>
+                  <h4 className="mb-3 text-sm font-medium text-gray-900 dark:text-white">
+                    {t('settings.trashRetention')}
+                  </h4>
+                  <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">
+                    {t('settings.trashRetentionDesc')}
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <Clock className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                    <select
+                      value={trashRetentionDays}
+                      onChange={(e) => setTrashRetentionDays(Number(e.target.value))}
+                      className="flex-1 px-3 py-2 text-sm rounded-lg border border-[#cbd1db] dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    >
+                      <option value={7}>7 {t('settings.days')}</option>
+                      <option value={14}>14 {t('settings.days')}</option>
+                      <option value={30}>30 {t('settings.days')}</option>
+                      <option value={60}>60 {t('settings.days')}</option>
+                      <option value={90}>90 {t('settings.days')}</option>
+                    </select>
+                  </div>
+                </div>
               </div>
             )}
             {activeTab === 'account' && (
@@ -649,6 +741,67 @@ export default function SettingsModal() {
                       <LogOut className="w-4 h-4" />
                       {t('settings.logOut')}
                     </button>
+
+                    {/* Delete Account */}
+                    <div className="pt-4 mt-4 space-y-3 border-t border-[#cbd1db] dark:border-gray-700">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <AlertTriangle className="w-4 h-4 text-red-500" />
+                          <h4 className="text-sm font-medium text-red-600 dark:text-red-400">
+                            {t('settings.deleteAccount')}
+                          </h4>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setShowDeleteAccount(!showDeleteAccount)
+                            setDeleteConfirmText('')
+                          }}
+                          className="px-3 py-1.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                        >
+                          {showDeleteAccount ? t('common.cancel') : t('settings.deleteAccountButton')}
+                        </button>
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {t('settings.deleteAccountDesc')}
+                      </p>
+                      {showDeleteAccount && (
+                        <div className="p-4 space-y-4 border-2 border-red-300 rounded-lg dark:border-red-800 bg-red-50 dark:bg-red-900/20">
+                          <div className="flex items-start gap-3">
+                            <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                            <div>
+                              <p className="text-sm font-medium text-red-700 dark:text-red-300">
+                                {t('settings.deleteAccountConfirmTitle')}
+                              </p>
+                              <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                                {t('settings.deleteAccountConfirmMessage')}
+                              </p>
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block mb-2 text-xs font-medium text-red-700 dark:text-red-300">
+                              {t('settings.deleteAccountTypeConfirm')}
+                            </label>
+                            <input
+                              type="text"
+                              value={deleteConfirmText}
+                              onChange={(e) => setDeleteConfirmText(e.target.value)}
+                              className="w-full px-3 py-2 text-sm border-2 border-red-300 rounded-lg dark:border-red-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none"
+                              placeholder="DELETE"
+                              autoComplete="off"
+                              spellCheck={false}
+                            />
+                          </div>
+                          <button
+                            onClick={handleDeleteAccount}
+                            disabled={isDeletingAccount || deleteConfirmText !== 'DELETE'}
+                            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            {isDeletingAccount ? t('settings.deleteAccountDeleting') : t('settings.deleteAccountButton')}
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 ) : (
                   <form onSubmit={handleLogin} className="space-y-4">
@@ -897,6 +1050,22 @@ export default function SettingsModal() {
                 </div>
 
                 <div className="pt-6 space-y-3 border-t border-[#cbd1db] dark:border-gray-700">
+                  <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                    {t('settings.importData')}
+                  </h4>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {t('settings.importDataDesc')}
+                  </p>
+                  <button
+                    onClick={() => { setSettingsOpen(false); setImportModalOpen(true) }}
+                    className="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-200 transition-colors bg-gray-100 rounded-lg dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 border border-[#cbd1db] dark:border-gray-600"
+                  >
+                    <Upload className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                    {t('settings.importDataButton')}
+                  </button>
+                </div>
+
+                <div className="pt-6 space-y-3 border-t border-[#cbd1db] dark:border-gray-700">
                   <h4 className="text-sm font-medium text-red-600 dark:text-red-400">
                     {t('settings.dangerZone')}
                   </h4>
@@ -946,6 +1115,72 @@ export default function SettingsModal() {
                       </div>
                     </div>
                   ))}
+                </div>
+              </div>
+            )}
+            {activeTab === 'about' && (
+              <div className="space-y-6">
+                <div className="flex flex-col items-center gap-3 py-4">
+                  <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-primary-100 dark:bg-primary-900/50">
+                    <FileText className="w-8 h-8 text-primary-600 dark:text-primary-400" />
+                  </div>
+                  <div className="text-center">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">QuickNotes</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{t('settings.version')} 1.1.1</p>
+                  </div>
+                  <p className="text-center text-sm text-gray-500 dark:text-gray-400 max-w-sm">
+                    {t('settings.aboutDescription')}
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <a
+                    href="https://github.com/Berenyiansen/QuickNotes"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+                  >
+                    <Github className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">GitHub</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{t('settings.aboutGithubDesc')}</p>
+                    </div>
+                    <ExternalLink className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                  </a>
+
+                  <button
+                    onClick={() => { setSettingsOpen(false); useUIStore.getState().setPrivacyModalOpen(true) }}
+                    className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer w-full text-left"
+                  >
+                    <Shield className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{t('settings.aboutPrivacy')}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{t('settings.aboutPrivacyDesc')}</p>
+                    </div>
+                    <ExternalLink className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                  </button>
+
+                  <button
+                    onClick={() => { setSettingsOpen(false); useUIStore.getState().setTermsModalOpen(true) }}
+                    className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer w-full text-left"
+                  >
+                    <FileText className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{t('settings.aboutTerms')}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{t('settings.aboutTermsDesc')}</p>
+                    </div>
+                    <ExternalLink className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                  </button>
+                </div>
+
+                <div className="pt-4 border-t border-[#cbd1db] dark:border-gray-700">
+                  <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                    <Heart className="w-4 h-4 text-red-500" />
+                    <span>{t('settings.aboutOpenSource')}</span>
+                  </div>
+                  <p className="mt-2 text-xs text-gray-400 dark:text-gray-500">
+                    {t('settings.aboutLicense')}
+                  </p>
                 </div>
               </div>
             )}

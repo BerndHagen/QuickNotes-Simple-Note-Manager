@@ -319,13 +319,14 @@ export const useNotesStore = create(
        * Auto-delete notes that have been in trash for more than 30 days.
        */
       cleanupExpiredTrash: () => {
-        const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000
+        const retentionDays = useUIStore.getState().trashRetentionDays ?? 30
+        const RETENTION_MS = retentionDays * 24 * 60 * 60 * 1000
         const now = Date.now()
         const { notes, user } = get()
         
         const expired = notes.filter(note => 
           note.deleted && note.deletedAt && 
-          (now - new Date(note.deletedAt).getTime()) > THIRTY_DAYS_MS
+          (now - new Date(note.deletedAt).getTime()) > RETENTION_MS
         )
         
         if (expired.length > 0) {
@@ -342,7 +343,7 @@ export const useNotesStore = create(
           set((state) => ({
             notes: state.notes.filter(note => 
               !(note.deleted && note.deletedAt && 
-                (now - new Date(note.deletedAt).getTime()) > THIRTY_DAYS_MS)
+                (now - new Date(note.deletedAt).getTime()) > RETENTION_MS)
             ),
           }))
         }
@@ -1499,6 +1500,7 @@ export const useUIStore = create(
       confirmBeforeDelete: true,
       spellCheck: true,
       showNoteStatistics: true,
+      trashRetentionDays: 30,
   
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
@@ -1563,6 +1565,7 @@ export const useUIStore = create(
   setConfirmBeforeDelete: (enabled) => set({ confirmBeforeDelete: enabled }),
   setSpellCheck: (enabled) => set({ spellCheck: enabled }),
   setShowNoteStatistics: (enabled) => set({ showNoteStatistics: enabled }),
+  setTrashRetentionDays: (days) => set({ trashRetentionDays: days }),
 }),
     {
       name: 'quicknotes-ui-settings',
@@ -1578,6 +1581,7 @@ export const useUIStore = create(
         confirmBeforeDelete: state.confirmBeforeDelete,
         spellCheck: state.spellCheck,
         showNoteStatistics: state.showNoteStatistics,
+        trashRetentionDays: state.trashRetentionDays,
       }),
     }
   )

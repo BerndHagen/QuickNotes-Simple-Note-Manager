@@ -234,6 +234,24 @@ export const leaveSharedNote = async (noteId) => {
 }
 
 /**
+ * Delete the current user's account and all associated data.
+ * Calls a SECURITY DEFINER stored procedure that cascades deletion
+ * across all tables (notes, folders, tags, versions, shares, cursors)
+ * and removes the auth.users entry.
+ */
+export const deleteUserAccount = async () => {
+  if (!isBackendConfigured()) throw new Error('Backend not configured')
+
+  const { data: { user } } = await backend.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
+
+  const { error } = await backend.rpc('delete_user_account')
+  if (error) throw error
+
+  await backend.auth.signOut()
+}
+
+/**
  * Fetch version history for a note from Supabase.
  * Returns versions sorted by created_at descending (newest first).
  */

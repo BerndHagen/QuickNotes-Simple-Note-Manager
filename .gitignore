@@ -28,6 +28,10 @@ Thumbs.db
 # Debug
 *.map
 
+# Database/SQL files (keep outside repo)
+*.sql
+DATABASE_SCHEMA.md
+
 # Unrelated projects
 Medio/
 Medio-Render-API/
