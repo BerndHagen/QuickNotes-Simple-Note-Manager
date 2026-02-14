@@ -116,7 +116,54 @@ import {
   Apple,
   Wine,
   Recycle,
-  ShoppingCart
+  ShoppingCart,
+  Newspaper,
+  Trophy,
+  PenTool,
+  Megaphone,
+  Layers,
+  Package,
+  Box,
+  Anchor,
+  Tent,
+  Crosshair,
+  Microscope,
+  Printer,
+  Wifi,
+  Link,
+  MapPin,
+  Navigation,
+  Radio,
+  Disc3,
+  Speaker,
+  Clapperboard,
+  Glasses,
+  Watch,
+  Footprints,
+  TreePine,
+  CloudRain,
+  Rainbow,
+  Wand2,
+  Swords,
+  Ghost,
+  Skull,
+  Bone,
+  Library,
+  TestTube2,
+  Atom,
+  Candy,
+  Shirt,
+  PawPrint,
+  Eye,
+  Scan,
+  CircleDot,
+  Hexagon,
+  Triangle,
+  Pentagon,
+  HandMetal,
+  ThumbsUp,
+  Truck,
+  Factory
 } from 'lucide-react'
 import { useNotesStore, useThemeStore, useUIStore } from '../store'
 import { formatSyncTime } from '../lib/utils'
@@ -239,6 +286,54 @@ const folderIcons = {
   Zap: Zap,
   Hash: Hash,
   Recycle: Recycle,
+  
+  Newspaper: Newspaper,
+  Trophy: Trophy,
+  PenTool: PenTool,
+  Megaphone: Megaphone,
+  Layers: Layers,
+  Package: Package,
+  Box: Box,
+  Anchor: Anchor,
+  Tent: Tent,
+  Crosshair: Crosshair,
+  Microscope: Microscope,
+  Printer: Printer,
+  Wifi: Wifi,
+  Link: Link,
+  MapPin: MapPin,
+  Navigation: Navigation,
+  Radio: Radio,
+  Disc3: Disc3,
+  Speaker: Speaker,
+  Clapperboard: Clapperboard,
+  Glasses: Glasses,
+  Watch: Watch,
+  Footprints: Footprints,
+  TreePine: TreePine,
+  CloudRain: CloudRain,
+  Rainbow: Rainbow,
+  Wand2: Wand2,
+  Swords: Swords,
+  Ghost: Ghost,
+  Skull: Skull,
+  Bone: Bone,
+  Library: Library,
+  TestTube2: TestTube2,
+  Atom: Atom,
+  Candy: Candy,
+  Shirt: Shirt,
+  PawPrint: PawPrint,
+  Eye: Eye,
+  Scan: Scan,
+  CircleDot: CircleDot,
+  Hexagon: Hexagon,
+  Triangle: Triangle,
+  Pentagon: Pentagon,
+  HandMetal: HandMetal,
+  ThumbsUp: ThumbsUp,
+  Truck: Truck,
+  Factory: Factory,
 }
 
 const folderColors = [
@@ -327,7 +422,7 @@ function FolderContextMenu({ x, y, folder, onClose, onRename, onEdit, onDelete }
   return (
     <div
       ref={menuRef}
-      className="fixed z-[100] bg-white dark:bg-gray-900 rounded-2xl shadow-xl shadow-black/5 dark:shadow-black/20 border border-[#cbd1db] dark:border-gray-700 py-1.5 min-w-[160px] backdrop-blur-xl"
+      className="fixed z-[9999] bg-white dark:bg-gray-900 rounded-2xl shadow-xl shadow-black/5 dark:shadow-black/20 border border-[#cbd1db] dark:border-gray-700 py-1.5 min-w-[160px] backdrop-blur-xl"
       style={{ left: position.x, top: position.y }}
     >
       <button
@@ -473,7 +568,7 @@ function EditFolderModal({ isOpen, onClose, folder, onUpdate }) {
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-center justify-center p-4 modal-backdrop-animate" onClick={onClose}>
       <div
-        className="modal-animate bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-[#cbd1db] dark:border-gray-700 w-full max-w-md overflow-hidden"
+        className="modal-animate bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-[#cbd1db] dark:border-gray-700 w-full max-w-lg max-h-[85vh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
@@ -491,7 +586,7 @@ function EditFolderModal({ isOpen, onClose, folder, onUpdate }) {
             <X className="w-5 h-5" />
           </button>
         </div>
-        <div className="p-6">
+        <div className="flex-1 overflow-y-auto p-6">
         <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl mb-6 border border-[#cbd1db] dark:border-gray-700">
           <div
             className="w-12 h-12 rounded-xl flex items-center justify-center shadow-md"
@@ -525,7 +620,7 @@ function EditFolderModal({ isOpen, onClose, folder, onUpdate }) {
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             {t('folders.chooseIcon') || 'Choose Icon'}
           </label>
-          <div className="flex flex-wrap gap-2 p-3 bg-gray-50 dark:bg-gray-900 rounded-xl max-h-[200px] overflow-y-auto border border-[#cbd1db] dark:border-gray-700">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(40px,1fr))] gap-2 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl max-h-[200px] overflow-y-auto border border-[#cbd1db] dark:border-gray-700">
             {iconNames.map((iconName) => {
               const Ic = folderIcons[iconName]
               const isSelected = icon === iconName
@@ -533,7 +628,7 @@ function EditFolderModal({ isOpen, onClose, folder, onUpdate }) {
                 <button
                   key={iconName}
                   onClick={() => setIcon(iconName)}
-                  className={`p-2.5 rounded-lg transition-all ${
+                  className={`p-2.5 rounded-lg transition-all flex items-center justify-center ${
                     isSelected 
                       ? 'bg-emerald-100 dark:bg-emerald-900/30 ring-2 ring-emerald-500' 
                       : 'hover:bg-gray-100 dark:hover:bg-gray-700'
@@ -550,12 +645,12 @@ function EditFolderModal({ isOpen, onClose, folder, onUpdate }) {
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             {t('folders.chooseColor') || 'Choose Color'}
           </label>
-          <div className="flex flex-wrap gap-2 p-3 bg-gray-50 dark:bg-gray-900 rounded-xl border border-[#cbd1db] dark:border-gray-700">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(36px,1fr))] gap-2 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-[#cbd1db] dark:border-gray-700">
             {folderColors.map((c) => (
               <button
                 key={c}
                 onClick={() => setColor(c)}
-                className={`w-9 h-9 rounded-full hover:scale-110 transition-transform shadow-md ${
+                className={`w-9 h-9 rounded-full hover:scale-110 transition-transform shadow-md mx-auto ${
                   color === c ? 'ring-2 ring-offset-2 ring-gray-400 dark:ring-gray-500' : ''
                 }`}
                 style={{ backgroundColor: c }}
@@ -563,7 +658,8 @@ function EditFolderModal({ isOpen, onClose, folder, onUpdate }) {
             ))}
           </div>
         </div>
-        <div className="flex gap-3">
+        </div>
+        <div className="p-6 border-t border-[#cbd1db] dark:border-gray-700 flex gap-3">
           <button
             onClick={handleSave}
             disabled={!name.trim()}
@@ -578,7 +674,6 @@ function EditFolderModal({ isOpen, onClose, folder, onUpdate }) {
           >
             {t('common.cancel') || 'Cancel'}
           </button>
-        </div>
         </div>
       </div>
     </div>
@@ -1182,7 +1277,7 @@ export default function Sidebar() {
         />,
         document.body
       )}
-      {folderContextMenu && (
+      {folderContextMenu && createPortal(
         <FolderContextMenu
           x={folderContextMenu.x}
           y={folderContextMenu.y}
@@ -1194,7 +1289,8 @@ export default function Sidebar() {
           }}
           onEdit={() => setEditingFolder(folderContextMenu.folder)}
           onDelete={() => deleteFolder(folderContextMenu.folder.id)}
-        />
+        />,
+        document.body
       )}
       {editingFolder !== null && createPortal(
         <EditFolderModal
