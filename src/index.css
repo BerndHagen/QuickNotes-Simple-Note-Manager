@@ -216,22 +216,47 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
   color: #9ca3af;
 }
 
-/* Show invisible characters */
-.ProseMirror.show-invisibles p::after {
-  content: '¶';
-  color: #d1d5db;
-  font-size: 0.75em;
+/* Show invisible characters — paragraph marks */
+.ProseMirror.show-invisibles > p::after,
+.ProseMirror.show-invisibles > blockquote p::after,
+.ProseMirror.show-invisibles > div p::after,
+.ProseMirror.show-invisibles > li p::after {
+  content: '¶' !important;
+  color: #c9cdd4 !important;
+  font-size: 0.7em;
+  opacity: 0.7;
+  pointer-events: none;
+  margin-left: 1px;
 }
-.dark .ProseMirror.show-invisibles p::after {
-  color: #4b5563;
+.dark .ProseMirror.show-invisibles > p::after,
+.dark .ProseMirror.show-invisibles > blockquote p::after,
+.dark .ProseMirror.show-invisibles > div p::after,
+.dark .ProseMirror.show-invisibles > li p::after {
+  color: #4b5563 !important;
 }
-.ProseMirror.show-invisibles br::after {
-  content: '↵';
-  color: #d1d5db;
-  font-size: 0.75em;
+/* Show invisible characters — spaces as dots */
+.ProseMirror.show-invisibles {
+  word-spacing: 0.15em;
 }
-.dark .ProseMirror.show-invisibles br::after {
-  color: #4b5563;
+.ProseMirror.show-invisibles > p,
+.ProseMirror.show-invisibles > blockquote p,
+.ProseMirror.show-invisibles > div p,
+.ProseMirror.show-invisibles > li p,
+.ProseMirror.show-invisibles > h1,
+.ProseMirror.show-invisibles > h2,
+.ProseMirror.show-invisibles > h3 {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='16'%3E%3Ccircle cx='2' cy='10' r='0.7' fill='%23c9cdd4'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: auto;
+}
+.dark .ProseMirror.show-invisibles > p,
+.dark .ProseMirror.show-invisibles > blockquote p,
+.dark .ProseMirror.show-invisibles > div p,
+.dark .ProseMirror.show-invisibles > li p,
+.dark .ProseMirror.show-invisibles > h1,
+.dark .ProseMirror.show-invisibles > h2,
+.dark .ProseMirror.show-invisibles > h3 {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='16'%3E%3Ccircle cx='2' cy='10' r='0.7' fill='%234b5563'/%3E%3C/svg%3E");
 }
 
 /* Highlight current line */
