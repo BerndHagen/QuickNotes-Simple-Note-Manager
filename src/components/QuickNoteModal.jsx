@@ -236,7 +236,7 @@ export default function QuickNoteModal() {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder={t('quickNote.titlePlaceholder')}
-            className="w-full text-xl font-semibold bg-transparent border-none outline-none placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white"
+            className="w-full text-xl font-semibold bg-gray-50 dark:bg-gray-900 rounded-lg px-4 py-3 border border-gray-300 dark:border-gray-700 outline-none placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
           />
           <textarea
             value={content}
@@ -253,7 +253,7 @@ export default function QuickNoteModal() {
                   setShowFolderDropdown(!showFolderDropdown)
                   setShowTagDropdown(false)
                 }}
-                className="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                className="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors border border-gray-300 dark:border-gray-600"
               >
                 <FolderOpen className="w-4 h-4" />
                 {selectedFolder
@@ -304,7 +304,7 @@ export default function QuickNoteModal() {
                   setShowTagDropdown(!showTagDropdown)
                   setShowFolderDropdown(false)
                 }}
-                className="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                className="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors border border-gray-300 dark:border-gray-600"
               >
                 <Tag className="w-4 h-4" />
                 {t('quickNote.addTags')}
@@ -386,7 +386,7 @@ export default function QuickNoteModal() {
         <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
           <button
             onClick={handleClose}
-            className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors border border-gray-300 dark:border-gray-600"
           >
             {t('common.cancel')}
           </button>
