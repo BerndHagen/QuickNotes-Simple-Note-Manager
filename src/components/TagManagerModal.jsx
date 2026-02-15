@@ -4,10 +4,44 @@ import { useNotesStore, useUIStore } from '../store'
 import { useTranslation } from '../lib/useTranslation'
 
 const TAG_COLORS = [
-  '#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16',
-  '#22c55e', '#10b981', '#14b8a6', '#06b6d4', '#0ea5e9',
-  '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#d946ef',
-  '#ec4899', '#f43f5e', '#78716c', '#64748b', '#71717a',
+  // Reds
+  '#fca5a5', '#f87171', '#ef4444', '#dc2626',
+  // Rose
+  '#fda4af', '#f43f5e', '#e11d48',
+  // Oranges
+  '#fdba74', '#f97316', '#ea580c',
+  // Amber
+  '#fcd34d', '#f59e0b', '#d97706',
+  // Yellow
+  '#fde047', '#eab308',
+  // Lime
+  '#bef264', '#84cc16', '#65a30d',
+  // Green
+  '#86efac', '#22c55e', '#16a34a',
+  // Emerald
+  '#6ee7b7', '#10b981', '#059669',
+  // Teal
+  '#5eead4', '#14b8a6', '#0d9488',
+  // Cyan
+  '#67e8f9', '#06b6d4', '#0891b2',
+  // Sky
+  '#7dd3fc', '#0ea5e9',
+  // Blue
+  '#93c5fd', '#3b82f6', '#2563eb',
+  // Indigo
+  '#a5b4fc', '#6366f1', '#4f46e5',
+  // Violet
+  '#c4b5fd', '#8b5cf6', '#7c3aed',
+  // Purple
+  '#d8b4fe', '#a855f7', '#9333ea',
+  // Fuchsia
+  '#e879f9', '#d946ef',
+  // Pink
+  '#f9a8d4', '#ec4899', '#db2777',
+  // Slate
+  '#94a3b8', '#64748b', '#475569',
+  // Gray
+  '#9ca3af', '#4b5563',
 ]
 
 export default function TagManagerModal() {
