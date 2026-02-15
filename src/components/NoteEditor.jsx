@@ -982,7 +982,8 @@ export default function NoteEditor() {
                 className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-white/10 dark:hover:bg-gray-800 transition-all text-white/70 dark:text-gray-400"
               >
                 <Tag className="w-3.5 h-3.5" />
-                <span className="text-[13px] font-medium">Tag</span>
+                <span className="text-[13px] font-medium">{note.tags && note.tags.length > 0 ? `${note.tags.length} Tag${note.tags.length > 1 ? 's' : ''}` : 'No tags'}</span>
+                <ChevronDown className="w-3 h-3 opacity-50" />
               </button>
 
               {showTagPicker && createPortal(
