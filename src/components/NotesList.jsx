@@ -625,7 +625,7 @@ export default function NotesList() {
             <h2 className="text-[15px] font-bold text-gray-900 truncate dark:text-white tracking-tight">
               {getTitle()}
             </h2>
-            <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md tabular-nums">
+            <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md tabular-nums border border-[#cbd1db] dark:border-gray-600">
               {filteredNotes.length}
             </span>
           </div>

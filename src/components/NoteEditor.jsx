@@ -396,6 +396,7 @@ export default function NoteEditor() {
   const menuRef = useRef(null)
   const menuDropdownRef = useRef(null)
   const tagPickerRef = useRef(null)
+  const tagDropdownRef = useRef(null)
   const folderPickerRef = useRef(null)
   const folderDropdownRef = useRef(null)
   const titleInputRef = useRef(null)
@@ -454,7 +455,8 @@ export default function NoteEditor() {
           (!menuDropdownRef.current || !menuDropdownRef.current.contains(event.target))) {
         setShowMenu(false)
       }
-      if (tagPickerRef.current && !tagPickerRef.current.contains(event.target)) {
+      if (tagPickerRef.current && !tagPickerRef.current.contains(event.target) &&
+          (!tagDropdownRef.current || !tagDropdownRef.current.contains(event.target))) {
         setShowTagPicker(false)
       }
       if (folderPickerRef.current && !folderPickerRef.current.contains(event.target) &&
@@ -904,14 +906,30 @@ export default function NoteEditor() {
             <div className="relative" ref={tagPickerRef}>
               <button
                 onClick={() => setShowTagPicker(!showTagPicker)}
-                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-semibold bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg hover:bg-white/10 dark:hover:bg-gray-800 transition-all text-white/70 dark:text-gray-400"
               >
-                <Plus className="w-3 h-3" />
-                Tag
+                <Tag className="w-3.5 h-3.5" />
+                <span className="text-[13px] font-medium">+ Tag</span>
               </button>
 
-              {showTagPicker && (
-                <div className="absolute left-0 top-full mt-1.5 bg-white dark:bg-gray-900 border border-[#cbd1db] dark:border-gray-700 rounded-2xl shadow-xl shadow-black/5 p-2.5 z-50 min-w-[220px]">
+              {showTagPicker && createPortal(
+                <div
+                  ref={tagDropdownRef}
+                  className="fixed bg-white dark:bg-gray-900 border border-[#cbd1db] dark:border-gray-700 rounded-2xl shadow-xl shadow-black/5 dark:shadow-black/20 p-2.5 z-[9999] min-w-[220px] backdrop-blur-xl"
+                  style={(() => {
+                    const rect = tagPickerRef.current?.getBoundingClientRect()
+                    if (!rect) return {}
+                    const spaceBelow = window.innerHeight - rect.bottom - 10
+                    const spaceAbove = rect.top - 10
+                    const showAbove = spaceBelow < 200 && spaceAbove > spaceBelow
+                    return {
+                      left: Math.max(8, Math.min(rect.left, window.innerWidth - 236)),
+                      ...(showAbove
+                        ? { bottom: window.innerHeight - rect.top + 6, maxHeight: `${Math.min(spaceAbove, 300)}px` }
+                        : { top: rect.bottom + 6, maxHeight: `${Math.min(spaceBelow, 300)}px` }),
+                    }
+                  })()}
+                >
                   <div className="flex items-center gap-2 mb-2.5">
                     <input
                       type="text"
@@ -956,7 +974,8 @@ export default function NoteEditor() {
                         </button>
                       ))}
                   </div>
-                </div>
+                </div>,
+                document.body
               )}
             </div>
           </div>

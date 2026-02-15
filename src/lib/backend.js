@@ -263,7 +263,7 @@ export const getRemoteNoteVersions = async (noteId) => {
     .select('id, note_id, title, content, created_at')
     .eq('note_id', noteId)
     .order('created_at', { ascending: false })
-    .limit(50)
+    .limit(30)
   
   if (error) {
     return []

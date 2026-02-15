@@ -479,7 +479,7 @@ function IconPickerModal({ isOpen, onClose, onSelect, currentIcon }) {
               <button
                 key={name}
                 onClick={() => { onSelect(name); onClose() }}
-                className={`p-3 rounded-xl transition-all relative ${
+                className={`aspect-square rounded-xl transition-all relative flex items-center justify-center ${
                   isSelected 
                     ? 'bg-emerald-100 dark:bg-emerald-900/30' 
                     : 'hover:bg-gray-100 dark:hover:bg-gray-700'
@@ -628,7 +628,7 @@ function EditFolderModal({ isOpen, onClose, folder, onUpdate }) {
                 <button
                   key={iconName}
                   onClick={() => setIcon(iconName)}
-                  className={`p-2.5 rounded-lg transition-all flex items-center justify-center ${
+                  className={`aspect-square rounded-lg transition-all flex items-center justify-center ${
                     isSelected 
                       ? 'bg-emerald-100 dark:bg-emerald-900/30 ring-2 ring-emerald-500' 
                       : 'hover:bg-gray-100 dark:hover:bg-gray-700'
@@ -774,7 +774,7 @@ function NewFolderModal({ isOpen, onClose, onCreate }) {
                   <button
                     key={iconName}
                     onClick={() => setIcon(iconName)}
-                    className={`p-2.5 rounded-lg transition-all flex items-center justify-center ${
+                    className={`aspect-square rounded-lg transition-all flex items-center justify-center ${
                       isSelected 
                         ? 'bg-emerald-100 dark:bg-emerald-900/30 ring-2 ring-emerald-500' 
                         : 'hover:bg-gray-100 dark:hover:bg-gray-700'
