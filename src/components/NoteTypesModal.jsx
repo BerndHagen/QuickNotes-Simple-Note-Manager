@@ -37,9 +37,60 @@ export default function NoteTypesModal() {
         handleClose()
         return
       }
+      
+      const existingContent = convertNote.content || ''
+      const plainText = existingContent.replace(/<[^>]*>/g, '').trim()
+      
+      let newNoteData = null
+      if (typeId !== NOTE_TYPES.STANDARD) {
+        newNoteData = getDefaultData(typeId)
+        
+        if (plainText) {
+          switch (typeId) {
+            case NOTE_TYPES.TODO_LIST: {
+              const lines = plainText.split(/\n+/).filter(l => l.trim())
+              newNoteData.tasks = lines.map((line, i) => ({
+                id: Date.now().toString(36) + i,
+                text: line.trim(),
+                completed: false,
+                priority: 'medium',
+                createdAt: new Date().toISOString(),
+              }))
+              break
+            }
+            case NOTE_TYPES.MEETING:
+              newNoteData.notes = existingContent
+              break
+            case NOTE_TYPES.JOURNAL:
+              newNoteData.freeWrite = existingContent
+              break
+            case NOTE_TYPES.BRAINSTORM:
+              newNoteData.topic = convertNote.title || ''
+              newNoteData.ideas = plainText.split(/\n+/).filter(l => l.trim()).map((line, i) => ({
+                id: Date.now().toString(36) + i,
+                text: line.trim(),
+                votes: 0,
+                category: null,
+              }))
+              break
+            case NOTE_TYPES.PROJECT:
+              newNoteData.columns[1].tasks = plainText.split(/\n+/).filter(l => l.trim()).map((line, i) => ({
+                id: Date.now().toString(36) + i,
+                title: line.trim(),
+                description: '',
+                priority: 'medium',
+                assignee: null,
+              }))
+              break
+            default:
+              break
+          }
+        }
+      }
+      
       updateNote(convertNote.id, {
         noteType: typeId,
-        noteData: typeId === NOTE_TYPES.STANDARD ? null : getDefaultData(typeId),
+        noteData: newNoteData,
       })
       toast.success(`Converted to ${config.name}`)
       handleClose()
