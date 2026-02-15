@@ -13,6 +13,7 @@ import {
   X,
   Plus,
   ChevronDown,
+  Check,
   History,
   FileText,
   Search,
@@ -980,17 +981,8 @@ export default function NoteEditor() {
                 onClick={() => setShowTagPicker(!showTagPicker)}
                 className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-white/10 dark:hover:bg-gray-800 transition-all text-white/70 dark:text-gray-400"
               >
-                {note.tags && note.tags.length > 0 ? (
-                  <>
-                    <Plus className="w-3.5 h-3.5" />
-                    <span className="text-[13px] font-medium">Tag</span>
-                  </>
-                ) : (
-                  <>
-                    <Tag className="w-3.5 h-3.5" />
-                    <span className="text-[13px] font-medium">Tag</span>
-                  </>
-                )}
+                <Tag className="w-3.5 h-3.5" />
+                <span className="text-[13px] font-medium">Tag</span>
               </button>
 
               {showTagPicker && createPortal(
@@ -1019,7 +1011,6 @@ export default function NoteEditor() {
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           handleCreateAndAddTag()
-                          setShowTagPicker(false)
                         }
                       }}
                       placeholder="New Tag..."
@@ -1028,7 +1019,6 @@ export default function NoteEditor() {
                     <button
                       onClick={() => {
                         handleCreateAndAddTag()
-                        setShowTagPicker(false)
                       }}
                       className="p-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-colors shadow-sm"
                     >
@@ -1036,24 +1026,41 @@ export default function NoteEditor() {
                     </button>
                   </div>
                   <div className="max-h-[200px] overflow-y-auto space-y-0.5">
-                    {tags
-                      .filter((t) => !note.tags?.includes(t.name))
-                      .map((tag) => (
+                    {tags.map((tag) => {
+                      const isSelected = note.tags?.includes(tag.name)
+                      return (
                         <button
                           key={tag.id}
                           onClick={() => {
-                            handleAddTag(tag.name)
-                            setShowTagPicker(false)
+                            if (isSelected) {
+                              removeTagFromNote(note.id, tag.name)
+                            } else {
+                              handleAddTag(tag.name)
+                            }
                           }}
-                          className="w-full px-2.5 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl flex items-center gap-2.5 transition-colors"
+                          className={`w-full px-2.5 py-2 text-left text-sm rounded-xl flex items-center gap-2.5 transition-colors ${
+                            isSelected
+                              ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400'
+                              : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
+                          }`}
                         >
                           <span
-                            className="w-3 h-3 rounded-full shadow-sm"
+                            className={`w-4 h-4 rounded flex items-center justify-center border transition-colors ${
+                              isSelected
+                                ? 'bg-emerald-600 border-emerald-600'
+                                : 'border-gray-300 dark:border-gray-600'
+                            }`}
+                          >
+                            {isSelected && <Check className="w-3 h-3 text-white" />}
+                          </span>
+                          <span
+                            className="w-2.5 h-2.5 rounded-full shadow-sm flex-shrink-0"
                             style={{ backgroundColor: tag.color }}
                           />
-                          <span className="font-medium text-gray-700 dark:text-gray-300">#{tag.name}</span>
+                          <span className="font-medium">#{tag.name}</span>
                         </button>
-                      ))}
+                      )
+                    })}
                   </div>
                 </div>,
                 document.body
@@ -1061,28 +1068,14 @@ export default function NoteEditor() {
             </div>
           {note.tags && note.tags.length > 0 && (
             <div className="flex flex-wrap items-center gap-1.5">
-              {note.tags.map((tagName) => {
-                const tag = tags.find((t) => t.name === tagName)
-                return (
-                  <span
-                    key={tagName}
-                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[12px] font-semibold transition-all hover:scale-[1.02] shadow-sm"
-                    style={{
-                      backgroundColor: `${tag?.color || '#6b7280'}25`,
-                      color: tag?.color || '#6b7280',
-                      border: `1px solid ${tag?.color || '#6b7280'}30`,
-                    }}
-                  >
-                    #{tagName}
-                    <button
-                      onClick={() => removeTagFromNote(note.id, tagName)}
-                      className="hover:bg-black/10 dark:hover:bg-white/10 rounded-full p-0.5 transition-colors"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                )
-              })}
+              {note.tags.map((tagName) => (
+                <span
+                  key={tagName}
+                  className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[12px] font-semibold bg-emerald-500/15 text-emerald-300 dark:text-emerald-400 border border-emerald-500/20"
+                >
+                  {tagName}
+                </span>
+              ))}
             </div>
           )}
         </div>
