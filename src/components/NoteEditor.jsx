@@ -975,36 +975,22 @@ export default function NoteEditor() {
               document.body
             )}
           </div>
-          {note.tags && note.tags.length > 0 && <div className="flex flex-wrap items-center gap-1.5">
-            {note.tags.map((tagName) => {
-              const tag = tags.find((t) => t.name === tagName)
-              return (
-                <span
-                  key={tagName}
-                  className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-semibold transition-all hover:scale-[1.02]"
-                  style={{
-                    backgroundColor: `${tag?.color || '#6b7280'}12`,
-                    color: tag?.color || '#6b7280',
-                  }}
-                >
-                  #{tagName}
-                  <button
-                    onClick={() => removeTagFromNote(note.id, tagName)}
-                    className="hover:bg-black/10 dark:hover:bg-white/10 rounded-full p-0.5 ml-0.5 transition-colors"
-                  >
-                    <X className="w-2.5 h-2.5" />
-                  </button>
-                </span>
-              )
-            })}
-          </div>}
           <div className="relative" ref={tagPickerRef}>
               <button
                 onClick={() => setShowTagPicker(!showTagPicker)}
                 className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-white/10 dark:hover:bg-gray-800 transition-all text-white/70 dark:text-gray-400"
               >
-                <Tag className="w-3.5 h-3.5" />
-                <span className="text-[13px] font-medium">Tag</span>
+                {note.tags && note.tags.length > 0 ? (
+                  <>
+                    <Plus className="w-3.5 h-3.5" />
+                    <span className="text-[13px] font-medium">Tag</span>
+                  </>
+                ) : (
+                  <>
+                    <Tag className="w-3.5 h-3.5" />
+                    <span className="text-[13px] font-medium">Tag</span>
+                  </>
+                )}
               </button>
 
               {showTagPicker && createPortal(
@@ -1073,6 +1059,32 @@ export default function NoteEditor() {
                 document.body
               )}
             </div>
+          {note.tags && note.tags.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              {note.tags.map((tagName) => {
+                const tag = tags.find((t) => t.name === tagName)
+                return (
+                  <span
+                    key={tagName}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[12px] font-semibold transition-all hover:scale-[1.02] shadow-sm"
+                    style={{
+                      backgroundColor: `${tag?.color || '#6b7280'}25`,
+                      color: tag?.color || '#6b7280',
+                      border: `1px solid ${tag?.color || '#6b7280'}30`,
+                    }}
+                  >
+                    #{tagName}
+                    <button
+                      onClick={() => removeTagFromNote(note.id, tagName)}
+                      className="hover:bg-black/10 dark:hover:bg-white/10 rounded-full p-0.5 transition-colors"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                )
+              })}
+            </div>
+          )}
         </div>
       </div>
       <FindReplaceBar 
