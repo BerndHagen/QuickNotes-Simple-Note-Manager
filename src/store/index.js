@@ -1501,6 +1501,10 @@ export const useUIStore = create(
       spellCheck: true,
       showNoteStatistics: true,
       trashRetentionDays: 30,
+      notePreviewLines: 2,
+      dateFormat: 'relative',
+      compactMode: false,
+      autoSaveDelay: 300,
   
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
@@ -1566,6 +1570,10 @@ export const useUIStore = create(
   setSpellCheck: (enabled) => set({ spellCheck: enabled }),
   setShowNoteStatistics: (enabled) => set({ showNoteStatistics: enabled }),
   setTrashRetentionDays: (days) => set({ trashRetentionDays: days }),
+  setNotePreviewLines: (lines) => set({ notePreviewLines: lines }),
+  setDateFormat: (format) => set({ dateFormat: format }),
+  setCompactMode: (enabled) => set({ compactMode: enabled }),
+  setAutoSaveDelay: (delay) => set({ autoSaveDelay: delay }),
 }),
     {
       name: 'quicknotes-ui-settings',
@@ -1582,6 +1590,10 @@ export const useUIStore = create(
         spellCheck: state.spellCheck,
         showNoteStatistics: state.showNoteStatistics,
         trashRetentionDays: state.trashRetentionDays,
+        notePreviewLines: state.notePreviewLines,
+        dateFormat: state.dateFormat,
+        compactMode: state.compactMode,
+        autoSaveDelay: state.autoSaveDelay,
       }),
     }
   )
