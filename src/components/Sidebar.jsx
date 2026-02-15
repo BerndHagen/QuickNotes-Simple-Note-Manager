@@ -163,7 +163,45 @@ import {
   HandMetal,
   ThumbsUp,
   Truck,
-  Factory
+  Factory,
+  Smile,
+  AlertCircle,
+  AlertTriangle,
+  Battery,
+  Bluetooth,
+  Calculator,
+  Diamond,
+  Fingerprint,
+  Flag,
+  Gauge,
+  HardDrive,
+  HeartPulse,
+  Infinity,
+  Landmark,
+  Plug,
+  QrCode,
+  Timer,
+  Droplets,
+  PersonStanding,
+  Armchair,
+  CloudSun,
+  FlaskConical,
+  Guitar,
+  Brain,
+  Eraser,
+  Flashlight,
+  Sigma,
+  Satellite,
+  Tornado,
+  Drum,
+  Orbit,
+  Receipt,
+  Banknote,
+  Binary,
+  Ear,
+  Bed,
+  Contact,
+  Tag,
 } from 'lucide-react'
 import { useNotesStore, useThemeStore, useUIStore } from '../store'
 import { formatSyncTime } from '../lib/utils'
@@ -334,6 +372,47 @@ const folderIcons = {
   ThumbsUp: ThumbsUp,
   Truck: Truck,
   Factory: Factory,
+  
+  Moon: Moon,
+  Palette: Palette,
+  Tag: Tag,
+  Smile: Smile,
+  AlertCircle: AlertCircle,
+  AlertTriangle: AlertTriangle,
+  Battery: Battery,
+  Bluetooth: Bluetooth,
+  Calculator: Calculator,
+  Diamond: Diamond,
+  Fingerprint: Fingerprint,
+  Flag: Flag,
+  Gauge: Gauge,
+  HardDrive: HardDrive,
+  HeartPulse: HeartPulse,
+  Infinity: Infinity,
+  Landmark: Landmark,
+  Plug: Plug,
+  QrCode: QrCode,
+  Timer: Timer,
+  Droplets: Droplets,
+  PersonStanding: PersonStanding,
+  Armchair: Armchair,
+  CloudSun: CloudSun,
+  FlaskConical: FlaskConical,
+  Guitar: Guitar,
+  Brain: Brain,
+  Eraser: Eraser,
+  Flashlight: Flashlight,
+  Sigma: Sigma,
+  Satellite: Satellite,
+  Tornado: Tornado,
+  Drum: Drum,
+  Orbit: Orbit,
+  Receipt: Receipt,
+  Banknote: Banknote,
+  Binary: Binary,
+  Ear: Ear,
+  Bed: Bed,
+  Contact: Contact,
 }
 
 const folderColors = [
@@ -735,13 +814,13 @@ function NewFolderModal({ isOpen, onClose, onCreate }) {
         <div className="flex-1 overflow-y-auto p-6">
           <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl mb-6 border border-[#cbd1db] dark:border-gray-700">
             <div
-              className="w-14 h-14 rounded-xl flex items-center justify-center shadow-lg"
+              className="w-12 h-12 rounded-xl flex items-center justify-center shadow-md"
               style={{ backgroundColor: color }}
             >
-              <IconComponent className="w-7 h-7 text-white" />
+              <IconComponent className="w-6 h-6 text-white" />
             </div>
             <div>
-              <p className="text-lg font-semibold text-gray-900 dark:text-white">{name || t('folders.newFolder') || 'New Folder'}</p>
+              <p className="font-medium text-gray-900 dark:text-white">{name || t('folders.newFolder') || 'New Folder'}</p>
               <p className="text-sm text-gray-500 dark:text-gray-400">{t('folders.preview') || 'Preview'}</p>
             </div>
           </div>
@@ -766,7 +845,7 @@ function NewFolderModal({ isOpen, onClose, onCreate }) {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               {t('folders.chooseIcon') || 'Choose Icon'}
             </label>
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(40px,1fr))] gap-2 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-[#cbd1db] dark:border-gray-700">
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(40px,1fr))] gap-2 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl max-h-[200px] overflow-y-auto border border-[#cbd1db] dark:border-gray-700">
               {iconNames.map((iconName) => {
                 const Ic = folderIcons[iconName]
                 const isSelected = icon === iconName

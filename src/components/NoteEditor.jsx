@@ -164,6 +164,45 @@ import {
   ThumbsUp,
   Truck,
   Factory,
+  Moon,
+  Smile,
+  AlertCircle,
+  AlertTriangle,
+  Battery,
+  Bluetooth,
+  Calculator,
+  Diamond,
+  Fingerprint,
+  Flag,
+  Gauge,
+  HardDrive,
+  HeartPulse,
+  Infinity,
+  Landmark,
+  Plug,
+  QrCode,
+  Timer,
+  Droplets,
+  PersonStanding,
+  Armchair,
+  CloudSun,
+  FlaskConical,
+  Guitar,
+  Brain,
+  Eraser,
+  Flashlight,
+  Sigma,
+  Satellite,
+  Tornado,
+  Drum,
+  Orbit,
+  Receipt,
+  Banknote,
+  Binary,
+  Ear,
+  Bed,
+  Contact,
+  Palette,
 } from 'lucide-react'
 import { useNotesStore, useUIStore, useThemeStore } from '../store'
 import RichTextEditor from './RichTextEditor'
@@ -180,7 +219,8 @@ import { saveNoteVersion } from '../lib/db'
 import { useRealtimeCollaboration } from '../lib/useCollaboration'
 import toast from 'react-hot-toast'
 
-import { hasSpecializedEditor, getEditorForNoteType, NOTE_TYPE_CONFIG } from './editors'
+import { hasSpecializedEditor, getEditorForNoteType, NOTE_TYPE_CONFIG, NOTE_TYPES } from './editors'
+import { RefreshCw } from 'lucide-react'
 
 const folderIcons = {
   Folder: Folder,
@@ -330,6 +370,47 @@ const folderIcons = {
   ThumbsUp: ThumbsUp,
   Truck: Truck,
   Factory: Factory,
+  
+  Moon: Moon,
+  Palette: Palette,
+  Tag: Tag,
+  Smile: Smile,
+  AlertCircle: AlertCircle,
+  AlertTriangle: AlertTriangle,
+  Battery: Battery,
+  Bluetooth: Bluetooth,
+  Calculator: Calculator,
+  Diamond: Diamond,
+  Fingerprint: Fingerprint,
+  Flag: Flag,
+  Gauge: Gauge,
+  HardDrive: HardDrive,
+  HeartPulse: HeartPulse,
+  Infinity: Infinity,
+  Landmark: Landmark,
+  Plug: Plug,
+  QrCode: QrCode,
+  Timer: Timer,
+  Droplets: Droplets,
+  PersonStanding: PersonStanding,
+  Armchair: Armchair,
+  CloudSun: CloudSun,
+  FlaskConical: FlaskConical,
+  Guitar: Guitar,
+  Brain: Brain,
+  Eraser: Eraser,
+  Flashlight: Flashlight,
+  Sigma: Sigma,
+  Satellite: Satellite,
+  Tornado: Tornado,
+  Drum: Drum,
+  Orbit: Orbit,
+  Receipt: Receipt,
+  Banknote: Banknote,
+  Binary: Binary,
+  Ear: Ear,
+  Bed: Bed,
+  Contact: Contact,
 }
 
 const getFolderIcon = (iconName) => {
@@ -375,6 +456,8 @@ export default function NoteEditor() {
     setShareModalOpen,
     showNoteStatistics,
     confirmBeforeDelete,
+    setNoteTypesModalOpen,
+    setNoteTypeConvertId,
   } = useUIStore()
 
   const note = getSelectedNote()
@@ -798,6 +881,17 @@ export default function NoteEditor() {
                   >
                     <Archive className="w-4 h-4 text-gray-400" />
                     Archive note
+                  </button>
+                  <button
+                    onClick={() => {
+                      setNoteTypeConvertId(note.id)
+                      setNoteTypesModalOpen(true)
+                      setShowMenu(false)
+                    }}
+                    className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors rounded-lg mx-0"
+                  >
+                    <RefreshCw className="w-4 h-4 text-gray-400" />
+                    Convert note type
                   </button>
                   <div className="my-1.5 mx-3 border-t border-[#cbd1db] dark:border-gray-800" />
                   <button

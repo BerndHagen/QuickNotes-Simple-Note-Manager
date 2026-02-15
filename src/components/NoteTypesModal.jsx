@@ -1,15 +1,24 @@
 import React, { useState } from 'react'
-import { X, Sparkles, ChevronRight } from 'lucide-react'
+import { X, Sparkles, ChevronRight, RefreshCw } from 'lucide-react'
 import { useUIStore, useNotesStore } from '../store'
 import { NOTE_TYPES, NOTE_TYPE_CONFIG, getDefaultData, CATEGORIES } from './editors'
 import { useTranslation } from '../lib/useTranslation'
+import toast from 'react-hot-toast'
 
 export default function NoteTypesModal() {
-  const { noteTypesModalOpen, setNoteTypesModalOpen } = useUIStore()
-  const { createNote } = useNotesStore()
+  const { noteTypesModalOpen, setNoteTypesModalOpen, noteTypeConvertId, setNoteTypeConvertId } = useUIStore()
+  const { createNote, updateNote, notes } = useNotesStore()
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [hoveredType, setHoveredType] = useState(null)
   const { t } = useTranslation()
+
+  const isConvertMode = !!noteTypeConvertId
+  const convertNote = isConvertMode ? notes.find(n => n.id === noteTypeConvertId) : null
+
+  const handleClose = () => {
+    setNoteTypesModalOpen(false)
+    setNoteTypeConvertId(null)
+  }
 
   if (!noteTypesModalOpen) return null
   const noteTypes = Object.entries(NOTE_TYPE_CONFIG).map(([key, config]) => ({
@@ -22,6 +31,21 @@ export default function NoteTypesModal() {
   const handleSelectType = (typeId) => {
     const config = NOTE_TYPE_CONFIG[typeId]
     
+    if (isConvertMode && convertNote) {
+      if (convertNote.noteType === typeId) {
+        toast('Note is already this type', { icon: 'ℹ️' })
+        handleClose()
+        return
+      }
+      updateNote(convertNote.id, {
+        noteType: typeId,
+        noteData: typeId === NOTE_TYPES.STANDARD ? null : getDefaultData(typeId),
+      })
+      toast.success(`Converted to ${config.name}`)
+      handleClose()
+      return
+    }
+
     if (typeId === NOTE_TYPES.STANDARD) {
       createNote({
         title: 'New Note',
@@ -38,7 +62,7 @@ export default function NoteTypesModal() {
       })
     }
     
-    setNoteTypesModalOpen(false)
+    handleClose()
   }
 
   return (
@@ -50,15 +74,15 @@ export default function NoteTypesModal() {
         <div className="flex items-center justify-between p-6 bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
           <div>
             <h2 className="text-2xl font-bold flex items-center gap-3">
-              <Sparkles className="w-7 h-7" />
-              {t('noteTypes.title')}
+              {isConvertMode ? <RefreshCw className="w-7 h-7" /> : <Sparkles className="w-7 h-7" />}
+              {isConvertMode ? (t('noteTypes.convertTitle') || 'Convert Note Type') : t('noteTypes.title')}
             </h2>
             <p className="text-sm text-white/70 mt-1 ml-10">
-              {t('noteTypes.subtitle')}
+              {isConvertMode ? (t('noteTypes.convertSubtitle') || 'Choose a new type for this note') : t('noteTypes.subtitle')}
             </p>
           </div>
           <button
-            onClick={() => setNoteTypesModalOpen(false)}
+            onClick={handleClose}
             className="p-2 rounded-full hover:bg-white/20 transition-colors"
           >
             <X className="w-6 h-6" />
@@ -101,10 +125,12 @@ export default function NoteTypesModal() {
                   onClick={() => handleSelectType(type.id)}
                   onMouseEnter={() => setHoveredType(type.id)}
                   onMouseLeave={() => setHoveredType(null)}
-                  className={`relative p-5 rounded-xl text-left transition-all duration-200 group border-2 ${
-                    isHovered
-                      ? 'border-indigo-500 shadow-lg scale-[1.02]'
-                      : 'border-[#cbd1db] dark:border-gray-700 hover:border-[#cbd1db] dark:hover:border-gray-600'
+                  className={`relative p-5 rounded-xl text-left transition-all duration-200 group border-2 flex flex-col h-full ${
+                    isConvertMode && convertNote?.noteType === type.id
+                      ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 opacity-60'
+                      : isHovered
+                        ? 'border-indigo-500 shadow-lg scale-[1.02]'
+                        : 'border-[#cbd1db] dark:border-gray-700 hover:border-[#cbd1db] dark:hover:border-gray-600'
                   }`}
                   style={{
                     background: isHovered
@@ -123,12 +149,15 @@ export default function NoteTypesModal() {
                   </div>
                   <h3 className="font-semibold text-gray-900 dark:text-white mb-1 flex items-center gap-2">
                     {type.name}
-                    <ChevronRight className={`w-4 h-4 transition-transform ${isHovered ? 'translate-x-1' : ''}`} style={{ color: type.color }} />
+                    {isConvertMode && convertNote?.noteType === type.id 
+                      ? <span className="text-xs text-emerald-600 dark:text-emerald-400 font-normal">(current)</span>
+                      : <ChevronRight className={`w-4 h-4 transition-transform ${isHovered ? 'translate-x-1' : ''}`} style={{ color: type.color }} />
+                    }
                   </h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
                     {type.description}
                   </p>
-                  <div className="flex flex-wrap gap-1 mt-3">
+                  <div className="flex flex-wrap gap-1 mt-auto pt-3">
                     {type.features.map((feature, i) => (
                       <span
                         key={i}
@@ -154,9 +183,10 @@ export default function NoteTypesModal() {
         </div>
         <div className="p-4 border-t border-[#cbd1db] dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
           <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
-            {t('noteTypes.footer1')}
-            <br />
-            {t('noteTypes.footer2')}
+            {isConvertMode 
+              ? (t('noteTypes.convertWarning') || 'Converting will change the editor type. Your existing content will be preserved where possible.')
+              : (<>{t('noteTypes.footer1')}<br />{t('noteTypes.footer2')}</>)
+            }
           </p>
         </div>
       </div>
