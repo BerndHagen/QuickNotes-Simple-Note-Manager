@@ -95,10 +95,19 @@ export default function NoteLinkPopover({ editor, isOpen, onClose, position }) {
     <div
       ref={popoverRef}
       className="fixed z-50 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-[#cbd1db] dark:border-gray-700 w-80 overflow-hidden"
-      style={{
-        left: position?.x || 100,
-        top: position?.y || 100,
-      }}
+      style={(() => {
+        const popoverWidth = 320
+        const popoverHeight = 400
+        const padding = 12
+        const rawX = position?.x || 100
+        const rawY = position?.y || 100
+        const clampedX = Math.min(Math.max(rawX, padding), window.innerWidth - popoverWidth - padding)
+        const spaceBelow = window.innerHeight - rawY - padding
+        const clampedY = spaceBelow < popoverHeight 
+          ? Math.max(rawY - popoverHeight, padding)
+          : rawY
+        return { left: clampedX, top: clampedY }
+      })()}
     >
       <div className="p-3 border-b border-[#cbd1db] dark:border-gray-700 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20">
         <div className="flex items-center justify-between mb-2">
