@@ -46,7 +46,7 @@ export const removeSyncItem = async (id) => {
 export const saveNoteVersion = async (noteId, content, title, noteData = null) => {
   const versions = await db.noteVersions.where('noteId').equals(noteId).toArray()
   
-  if (versions.length >= 50) {
+  if (versions.length >= 30) {
     const oldestVersion = versions.reduce((oldest, v) => 
       new Date(v.createdAt) < new Date(oldest.createdAt) ? v : oldest
     )

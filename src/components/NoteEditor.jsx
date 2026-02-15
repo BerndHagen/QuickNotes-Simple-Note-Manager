@@ -33,7 +33,6 @@ import {
   Heart,
   Music,
   Camera,
-  Clipboard,
   Globe,
   Code,
   Gamepad2,
@@ -1117,7 +1116,6 @@ export default function NoteEditor() {
 }
 
 const SpecializedEditorContextMenu = React.forwardRef(({ x, y, onClose, onVersionHistory, onVoiceInput, onExport, onDuplicate, onReminder, noteType }, ref) => {
-  const { t } = useTranslation()
   const [position, setPosition] = useState({ x, y })
   const menuRef = useRef(null)
 
@@ -1145,27 +1143,6 @@ const SpecializedEditorContextMenu = React.forwardRef(({ x, y, onClose, onVersio
   }, [x, y])
 
   const menuItems = [
-    { icon: <Copy className="w-4 h-4" />, label: t('common.copy') || 'Copy', shortcut: 'Ctrl+C', action: () => { document.execCommand('copy'); onClose() } },
-    { icon: <Scissors className="w-4 h-4" />, label: t('common.cut') || 'Cut', shortcut: 'Ctrl+X', action: () => { document.execCommand('cut'); onClose() } },
-    { icon: <Clipboard className="w-4 h-4" />, label: t('common.paste') || 'Paste', shortcut: 'Ctrl+V', action: async () => {
-      try {
-        const text = await navigator.clipboard.readText()
-        const activeEl = document.activeElement
-        if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) {
-          const start = activeEl.selectionStart ?? activeEl.value.length
-          const end = activeEl.selectionEnd ?? activeEl.value.length
-          const val = activeEl.value
-          activeEl.value = val.slice(0, start) + text + val.slice(end)
-          activeEl.selectionStart = activeEl.selectionEnd = start + text.length
-          const inputEvent = new Event('input', { bubbles: true })
-          activeEl.dispatchEvent(inputEvent)
-        }
-      } catch (err) {
-        document.execCommand('paste')
-      }
-      onClose()
-    }},
-    { type: 'divider' },
     { icon: <Mic className="w-4 h-4" />, label: 'Voice input', action: onVoiceInput },
     { icon: <History className="w-4 h-4" />, label: 'Version history', action: onVersionHistory },
     { type: 'divider' },
@@ -1200,9 +1177,6 @@ const SpecializedEditorContextMenu = React.forwardRef(({ x, y, onClose, onVersio
               <span className="text-gray-400">{item.icon}</span>
               <span className="text-sm">{item.label}</span>
             </div>
-            {item.shortcut && (
-              <span className="text-xs text-gray-400">{item.shortcut}</span>
-            )}
           </button>
         )
       ))}
