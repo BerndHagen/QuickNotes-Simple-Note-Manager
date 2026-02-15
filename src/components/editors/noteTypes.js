@@ -30,7 +30,7 @@ export const NOTE_TYPE_CONFIG = {
     color: '#6366f1',
     gradient: 'from-indigo-500 to-purple-600',
     category: 'Basics',
-    features: ['Rich text', 'Formatting', 'Images'],
+    features: ['Rich text', 'Formatting', 'Images', 'Templates'],
   },
   [NOTE_TYPES.TODO_LIST]: {
     id: 'todo',

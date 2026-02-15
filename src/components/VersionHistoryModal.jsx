@@ -58,9 +58,21 @@ export default function VersionHistoryModal() {
     if (!selectedVersion) return
 
     if (window.confirm('Do you want to restore this version? The current version will be overwritten.')) {
-      updateNote(versionHistoryNoteId, {
-        content: selectedVersion.content,
-      })
+      const updates = {}
+      if (selectedVersion.noteData) {
+        try {
+          updates.noteData = typeof selectedVersion.noteData === 'string' 
+            ? JSON.parse(selectedVersion.noteData) 
+            : selectedVersion.noteData
+        } catch (e) {
+          toast.error('Failed to parse version data')
+          return
+        }
+      }
+      if (selectedVersion.content) {
+        updates.content = selectedVersion.content
+      }
+      updateNote(versionHistoryNoteId, updates)
       toast.success('Version restored')
       handleClose()
     }
@@ -101,14 +113,42 @@ export default function VersionHistoryModal() {
     })
   }
 
-  const getContentPreview = (content) => {
+  const getContentPreview = (content, noteData) => {
+    if (noteData) {
+      try {
+        const data = typeof noteData === 'string' ? JSON.parse(noteData) : noteData
+        const summary = []
+        if (data.tasks) summary.push(`${data.tasks.length} tasks`)
+        if (data.ideas) summary.push(`${data.ideas.length} ideas`)
+        if (data.columns) {
+          const totalTasks = data.columns.reduce((sum, col) => sum + (col.tasks?.length || 0), 0)
+          summary.push(`${totalTasks} tasks across ${data.columns.length} columns`)
+        }
+        if (data.attendees) summary.push(`${data.attendees.length} attendees`)
+        if (data.items) summary.push(`${data.items.length} items`)
+        if (data.weeklyGoals) summary.push(`${data.weeklyGoals.length} goals`)
+        if (data.mood) summary.push(`Mood: ${data.mood}`)
+        if (summary.length > 0) return summary.join(' · ')
+        return JSON.stringify(data).slice(0, 150) + '...'
+      } catch {
+        return 'Structured data'
+      }
+    }
     const div = document.createElement('div')
     div.innerHTML = content
     const text = div.textContent || div.innerText || ''
     return text.slice(0, 150) + (text.length > 150 ? '...' : '')
   }
 
-  const getWordCount = (content) => {
+  const getWordCount = (content, noteData) => {
+    if (noteData) {
+      try {
+        const str = typeof noteData === 'string' ? noteData : JSON.stringify(noteData)
+        return Math.round(str.length / 5)
+      } catch {
+        return 0
+      }
+    }
     const div = document.createElement('div')
     div.innerHTML = content
     const text = div.textContent || div.innerText || ''
@@ -198,7 +238,7 @@ export default function VersionHistoryModal() {
                     </div>
                     <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500 mt-1">
                       <FileText className="w-3 h-3" />
-                      {getWordCount(version.content)} words
+                      {version.noteData ? getContentPreview(null, version.noteData) : `${getWordCount(version.content)} words`}
                     </div>
                   </div>
                 ))}
@@ -211,27 +251,53 @@ export default function VersionHistoryModal() {
                 <h3 className="font-medium text-gray-900 dark:text-white">
                   {selectedVersion ? 'Preview' : 'Current Version'}
                 </h3>
-                <button
-                  onClick={() => setShowPreview(!showPreview)}
-                  className="text-sm text-primary-600 dark:text-primary-400 hover:underline"
-                >
-                  {showPreview ? 'Show HTML' : 'Show Preview'}
-                </button>
+                {!(selectedVersion?.noteData || (!selectedVersion && note?.noteData)) && (
+                  <button
+                    onClick={() => setShowPreview(!showPreview)}
+                    className="text-sm text-primary-600 dark:text-primary-400 hover:underline"
+                  >
+                    {showPreview ? 'Show HTML' : 'Show Preview'}
+                  </button>
+                )}
               </div>
             </div>
             <div className="flex-1 overflow-y-auto p-4">
-              {showPreview ? (
-                <div
-                  className="prose dark:prose-invert max-w-none"
-                  dangerouslySetInnerHTML={{
-                    __html: selectedVersion?.content || note?.content || '',
-                  }}
-                />
-              ) : (
-                <pre className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap font-mono bg-gray-50 dark:bg-gray-900 p-4 rounded-lg overflow-auto">
-                  {selectedVersion?.content || note?.content || 'No content'}
-                </pre>
-              )}
+              {(() => {
+                const version = selectedVersion
+                const hasNoteData = version?.noteData || (!version && note?.noteData)
+                
+                if (hasNoteData) {
+                  const rawData = version?.noteData || note?.noteData
+                  let data
+                  try {
+                    data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData
+                  } catch {
+                    data = rawData
+                  }
+                  return (
+                    <pre className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap font-mono bg-gray-50 dark:bg-gray-900 p-4 rounded-lg overflow-auto">
+                      {JSON.stringify(data, null, 2)}
+                    </pre>
+                  )
+                }
+                
+                if (showPreview) {
+                  return (
+                    <div
+                      className="prose dark:prose-invert max-w-none"
+                      dangerouslySetInnerHTML={{
+                        __html: version?.content || note?.content || '',
+                      }}
+                    />
+                  )
+                }
+                
+                return (
+                  <pre className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap font-mono bg-gray-50 dark:bg-gray-900 p-4 rounded-lg overflow-auto">
+                    {version?.content || note?.content || 'No content'}
+                  </pre>
+                )
+              })()}
             </div>
           </div>
         </div>

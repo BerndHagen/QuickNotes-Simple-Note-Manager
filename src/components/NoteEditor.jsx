@@ -33,6 +33,7 @@ import {
   Heart,
   Music,
   Camera,
+  Clipboard,
   Globe,
   Code,
   Gamepad2,
@@ -180,7 +181,7 @@ import { saveNoteVersion } from '../lib/db'
 import { useRealtimeCollaboration } from '../lib/useCollaboration'
 import toast from 'react-hot-toast'
 
-import { hasSpecializedEditor, getEditorForNoteType } from './editors'
+import { hasSpecializedEditor, getEditorForNoteType, NOTE_TYPE_CONFIG } from './editors'
 
 const folderIcons = {
   Folder: Folder,
@@ -392,12 +393,15 @@ export default function NoteEditor() {
   const [newTagName, setNewTagName] = useState('')
   const [showBacklinks, setShowBacklinks] = useState(false)
   const [editorRef, setEditorRef] = useState(null)
+  const [specializedContextMenu, setSpecializedContextMenu] = useState(null)
   const menuRef = useRef(null)
   const menuDropdownRef = useRef(null)
   const tagPickerRef = useRef(null)
   const folderPickerRef = useRef(null)
   const folderDropdownRef = useRef(null)
   const titleInputRef = useRef(null)
+  const specializedContextMenuRef = useRef(null)
+  const lastNoteDataRef = useRef(null)
   const [titleCursorPosition, setTitleCursorPosition] = useState(null)
   
   const { theme } = useThemeStore()
@@ -423,6 +427,9 @@ export default function NoteEditor() {
   useEffect(() => {
     if (note) {
       setTitle(note.title)
+      if (hasSpecializedEditor(note.noteType) && note.noteData) {
+        lastNoteDataRef.current = note.noteData
+      }
     }
   }, [note?.id])
 
@@ -454,6 +461,9 @@ export default function NoteEditor() {
       if (folderPickerRef.current && !folderPickerRef.current.contains(event.target) &&
           (!folderDropdownRef.current || !folderDropdownRef.current.contains(event.target))) {
         setShowFolderPicker(false)
+      }
+      if (specializedContextMenuRef.current && !specializedContextMenuRef.current.contains(event.target)) {
+        setSpecializedContextMenu(null)
       }
     }
 
@@ -600,17 +610,19 @@ export default function NoteEditor() {
             />
           </div>
           <div className="flex items-center flex-shrink-0 gap-0.5 md:gap-0.5">
-            <button
-              onClick={() => setFindReplaceOpen(!findReplaceOpen)}
-              className={`p-2 rounded-xl transition-all ${
-                findReplaceOpen
-                  ? 'bg-white/20 dark:bg-emerald-900/30 text-white dark:text-emerald-400'
-                  : 'hover:bg-white/10 dark:hover:bg-gray-800 text-white/60 hover:text-white dark:text-gray-300'
-              }`}
-              title="Find & Replace (Ctrl+F)"
-            >
-              <Search className="w-[18px] h-[18px]" />
-            </button>
+            {!hasSpecializedEditor(note.noteType) && (
+              <button
+                onClick={() => setFindReplaceOpen(!findReplaceOpen)}
+                className={`p-2 rounded-xl transition-all ${
+                  findReplaceOpen
+                    ? 'bg-white/20 dark:bg-emerald-900/30 text-white dark:text-emerald-400'
+                    : 'hover:bg-white/10 dark:hover:bg-gray-800 text-white/60 hover:text-white dark:text-gray-300'
+                }`}
+                title="Find & Replace (Ctrl+F)"
+              >
+                <Search className="w-[18px] h-[18px]" />
+              </button>
+            )}
             <button
               onClick={() => setReminderModalOpen(true, note.id)}
               className={`hidden md:block p-2 rounded-xl transition-all ${
@@ -709,17 +721,19 @@ export default function NoteEditor() {
                     <Upload className="w-4 h-4 text-gray-400" />
                     Import
                   </button>
-                  <button
-                    onClick={() => {
-                      const rect = menuRef.current?.getBoundingClientRect()
-                      setNoteLinkPopoverOpen(true, { x: rect?.left || 100, y: (rect?.bottom || 100) + 10 })
-                      setShowMenu(false)
-                    }}
-                    className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors rounded-lg mx-0"
-                  >
-                    <Link2 className="w-4 h-4 text-gray-400" />
-                    Insert note link
-                  </button>
+                  {!hasSpecializedEditor(note.noteType) && (
+                    <button
+                      onClick={() => {
+                        const rect = menuRef.current?.getBoundingClientRect()
+                        setNoteLinkPopoverOpen(true, { x: rect?.left || 100, y: (rect?.bottom || 100) + 10 })
+                        setShowMenu(false)
+                      }}
+                      className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors rounded-lg mx-0"
+                    >
+                      <Link2 className="w-4 h-4 text-gray-400" />
+                      Insert note link
+                    </button>
+                  )}
                   <button
                     onClick={() => {
                       setReminderModalOpen(true, note.id)
@@ -730,16 +744,18 @@ export default function NoteEditor() {
                     <Bell className="w-4 h-4 text-gray-400" />
                     Set reminder
                   </button>
-                  <button
-                    onClick={() => {
-                      setImageUploadOpen(true)
-                      setShowMenu(false)
-                    }}
-                    className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors rounded-lg mx-0"
-                  >
-                    <ImageIcon className="w-4 h-4 text-gray-400" />
-                    Insert image
-                  </button>
+                  {!hasSpecializedEditor(note.noteType) && (
+                    <button
+                      onClick={() => {
+                        setImageUploadOpen(true)
+                        setShowMenu(false)
+                      }}
+                      className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors rounded-lg mx-0"
+                    >
+                      <ImageIcon className="w-4 h-4 text-gray-400" />
+                      Insert image
+                    </button>
+                  )}
                   <button
                     onClick={() => {
                       setVersionHistoryOpen(true, note.id)
@@ -750,16 +766,18 @@ export default function NoteEditor() {
                     <History className="w-4 h-4 text-gray-400" />
                     Version history
                   </button>
-                  <button
-                    onClick={() => {
-                      setFocusModeOpen(true)
-                      setShowMenu(false)
-                    }}
-                    className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors rounded-lg mx-0"
-                  >
-                    <Focus className="w-4 h-4 text-gray-400" />
-                    Focus mode
-                  </button>
+                  {!hasSpecializedEditor(note.noteType) && (
+                    <button
+                      onClick={() => {
+                        setFocusModeOpen(true)
+                        setShowMenu(false)
+                      }}
+                      className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors rounded-lg mx-0"
+                    >
+                      <Focus className="w-4 h-4 text-gray-400" />
+                      Focus mode
+                    </button>
+                  )}
                   <button
                     onClick={() => {
                       setVoiceInputActive(true)
@@ -988,14 +1006,31 @@ export default function NoteEditor() {
             const SpecializedEditor = getEditorForNoteType(note.noteType)
             const isReadOnly = note.isShared && note.sharePermission === 'view'
             return (
-              <SpecializedEditor
-                data={note.noteData}
-                onChange={isReadOnly ? () => {} : (newData) => {
-                  updateNote(note.id, { noteData: newData })
+              <div 
+                className="h-full"
+                onContextMenu={(e) => {
+                  e.preventDefault()
+                  setSpecializedContextMenu({ x: e.clientX, y: e.clientY })
                 }}
-                noteTitle={note.title}
-                readOnly={isReadOnly}
-              />
+              >
+                <SpecializedEditor
+                  data={note.noteData}
+                  onChange={isReadOnly ? () => {} : (newData) => {
+                    const oldData = lastNoteDataRef.current
+                    if (oldData) {
+                      const oldStr = JSON.stringify(oldData)
+                      const newStr = JSON.stringify(newData)
+                      if (Math.abs(newStr.length - oldStr.length) > 100) {
+                        saveNoteVersion(note.id, '', note.title, oldData)
+                      }
+                    }
+                    lastNoteDataRef.current = newData
+                    updateNote(note.id, { noteData: newData })
+                  }}
+                  noteTitle={note.title}
+                  readOnly={isReadOnly}
+                />
+              </div>
             )
           })()
         ) : (
@@ -1012,26 +1047,165 @@ export default function NoteEditor() {
         )}
       </div>
       {showNoteStatistics && <NoteStatistics note={note} />}
-      <NoteLinkPopover
-        editor={editorRef}
-        isOpen={noteLinkPopoverOpen}
-        onClose={() => setNoteLinkPopoverOpen(false)}
-        position={noteLinkPosition}
-      />
+      {!hasSpecializedEditor(note.noteType) && (
+        <NoteLinkPopover
+          editor={editorRef}
+          isOpen={noteLinkPopoverOpen}
+          onClose={() => setNoteLinkPopoverOpen(false)}
+          position={noteLinkPosition}
+        />
+      )}
       {voiceInputActive && (
         <VoiceInput
           isActive={voiceInputActive}
           onTranscript={(text) => {
-            if (editorRef) {
+            if (editorRef && !hasSpecializedEditor(note.noteType)) {
               editorRef.commands.insertContent(text + ' ')
+            } else {
+              const activeEl = document.activeElement
+              if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) {
+                const start = activeEl.selectionStart ?? activeEl.value.length
+                const end = activeEl.selectionEnd ?? activeEl.value.length
+                const val = activeEl.value
+                activeEl.value = val.slice(0, start) + text + ' ' + val.slice(end)
+                activeEl.selectionStart = activeEl.selectionEnd = start + text.length + 1
+                const inputEvent = new Event('input', { bubbles: true })
+                activeEl.dispatchEvent(inputEvent)
+              } else {
+                toast('Click on a text field first, then speak', { icon: '🎤' })
+              }
             }
           }}
           onToggle={(active) => setVoiceInputActive(active)}
         />
       )}
-      <ImageUploadModal editor={editorRef} />
-      <LinkInsertModal editor={editorRef} />
-      <HTMLEditorModal editor={editorRef} />
+      {!hasSpecializedEditor(note.noteType) && <ImageUploadModal editor={editorRef} />}
+      {!hasSpecializedEditor(note.noteType) && <LinkInsertModal editor={editorRef} />}
+      {!hasSpecializedEditor(note.noteType) && <HTMLEditorModal editor={editorRef} />}
+      {specializedContextMenu && hasSpecializedEditor(note.noteType) && createPortal(
+        <SpecializedEditorContextMenu
+          ref={specializedContextMenuRef}
+          x={specializedContextMenu.x}
+          y={specializedContextMenu.y}
+          onClose={() => setSpecializedContextMenu(null)}
+          onVersionHistory={() => {
+            setVersionHistoryOpen(true, note.id)
+            setSpecializedContextMenu(null)
+          }}
+          onVoiceInput={() => {
+            setVoiceInputActive(true)
+            setSpecializedContextMenu(null)
+          }}
+          onExport={() => {
+            setExportModalOpen(true)
+            setSpecializedContextMenu(null)
+          }}
+          onDuplicate={() => {
+            handleDuplicate()
+            setSpecializedContextMenu(null)
+          }}
+          onReminder={() => {
+            setReminderModalOpen(true, note.id)
+            setSpecializedContextMenu(null)
+          }}
+          noteType={note.noteType}
+        />,
+        document.body
+      )}
     </div>
   )
 }
+
+const SpecializedEditorContextMenu = React.forwardRef(({ x, y, onClose, onVersionHistory, onVoiceInput, onExport, onDuplicate, onReminder, noteType }, ref) => {
+  const { t } = useTranslation()
+  const [position, setPosition] = useState({ x, y })
+  const menuRef = useRef(null)
+
+  const config = NOTE_TYPE_CONFIG[noteType]
+  const typeName = config?.name || 'Note'
+
+  useEffect(() => {
+    if (menuRef.current) {
+      const menuRect = menuRef.current.getBoundingClientRect()
+      const padding = 8
+      let adjustedX = x
+      let adjustedY = y
+
+      if (adjustedX + menuRect.width > window.innerWidth - padding) {
+        adjustedX = window.innerWidth - menuRect.width - padding
+      }
+      if (adjustedY + menuRect.height > window.innerHeight - padding) {
+        adjustedY = window.innerHeight - menuRect.height - padding
+      }
+      if (adjustedX < padding) adjustedX = padding
+      if (adjustedY < padding) adjustedY = padding
+
+      setPosition({ x: adjustedX, y: adjustedY })
+    }
+  }, [x, y])
+
+  const menuItems = [
+    { icon: <Copy className="w-4 h-4" />, label: t('common.copy') || 'Copy', shortcut: 'Ctrl+C', action: () => { document.execCommand('copy'); onClose() } },
+    { icon: <Scissors className="w-4 h-4" />, label: t('common.cut') || 'Cut', shortcut: 'Ctrl+X', action: () => { document.execCommand('cut'); onClose() } },
+    { icon: <Clipboard className="w-4 h-4" />, label: t('common.paste') || 'Paste', shortcut: 'Ctrl+V', action: async () => {
+      try {
+        const text = await navigator.clipboard.readText()
+        const activeEl = document.activeElement
+        if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) {
+          const start = activeEl.selectionStart ?? activeEl.value.length
+          const end = activeEl.selectionEnd ?? activeEl.value.length
+          const val = activeEl.value
+          activeEl.value = val.slice(0, start) + text + val.slice(end)
+          activeEl.selectionStart = activeEl.selectionEnd = start + text.length
+          const inputEvent = new Event('input', { bubbles: true })
+          activeEl.dispatchEvent(inputEvent)
+        }
+      } catch (err) {
+        document.execCommand('paste')
+      }
+      onClose()
+    }},
+    { type: 'divider' },
+    { icon: <Mic className="w-4 h-4" />, label: 'Voice input', action: onVoiceInput },
+    { icon: <History className="w-4 h-4" />, label: 'Version history', action: onVersionHistory },
+    { type: 'divider' },
+    { icon: <Copy className="w-4 h-4" />, label: 'Duplicate note', action: onDuplicate },
+    { icon: <Download className="w-4 h-4" />, label: 'Export', action: onExport },
+    { icon: <Bell className="w-4 h-4" />, label: 'Set reminder', action: onReminder },
+  ]
+
+  return (
+    <div
+      ref={(node) => {
+        menuRef.current = node
+        if (typeof ref === 'function') ref(node)
+        else if (ref) ref.current = node
+      }}
+      className="fixed z-[9999] bg-white dark:bg-gray-900 rounded-2xl shadow-xl shadow-black/5 dark:shadow-black/20 border border-[#cbd1db] dark:border-gray-700 py-1.5 min-w-[200px] max-h-[400px] overflow-y-auto backdrop-blur-xl float-up"
+      style={{ left: position.x, top: position.y }}
+    >
+      <div className="px-4 py-2 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+        {typeName}
+      </div>
+      {menuItems.map((item, index) => (
+        item.type === 'divider' ? (
+          <div key={index} className="my-1.5 mx-3 border-t border-[#cbd1db] dark:border-gray-800" />
+        ) : (
+          <button
+            key={index}
+            onClick={() => item.action()}
+            className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-700 dark:text-gray-300"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-gray-400">{item.icon}</span>
+              <span className="text-sm">{item.label}</span>
+            </div>
+            {item.shortcut && (
+              <span className="text-xs text-gray-400">{item.shortcut}</span>
+            )}
+          </button>
+        )
+      ))}
+    </div>
+  )
+})
