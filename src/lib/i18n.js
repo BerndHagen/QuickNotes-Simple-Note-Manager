@@ -674,7 +674,7 @@ export const translations = {
       subtitle: 'Choose a note type to get started with a specialized editor',
       allTypes: 'All Types',
       footer1: 'Each note type has a specialized editor with unique tools and features.',
-      footer2: 'You can always convert standard notes to specialized types later.',
+      footer2: 'Select a type above to create a new note with the right editor for your needs.',
     },
     quickNote: {
       title: 'Quick Note',
@@ -1371,7 +1371,7 @@ export const translations = {
       subtitle: 'Wähle einen Notiztyp, um mit einem spezialisierten Editor zu beginnen',
       allTypes: 'Alle Typen',
       footer1: 'Jeder Notiztyp hat einen spezialisierten Editor mit eigenen Werkzeugen und Funktionen.',
-      footer2: 'Du kannst Standard-Notizen jederzeit in spezialisierte Typen konvertieren.',
+      footer2: 'Wähle oben einen Typ aus, um eine neue Notiz mit dem passenden Editor zu erstellen.',
     },
     quickNote: {
       title: 'Schnellnotiz',

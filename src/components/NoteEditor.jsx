@@ -221,7 +221,6 @@ import { useRealtimeCollaboration } from '../lib/useCollaboration'
 import toast from 'react-hot-toast'
 
 import { hasSpecializedEditor, getEditorForNoteType, NOTE_TYPE_CONFIG, NOTE_TYPES } from './editors'
-import { RefreshCw } from 'lucide-react'
 
 const folderIcons = {
   Folder: Folder,
@@ -458,7 +457,6 @@ export default function NoteEditor() {
     showNoteStatistics,
     confirmBeforeDelete,
     setNoteTypesModalOpen,
-    setNoteTypeConvertId,
   } = useUIStore()
 
   const note = getSelectedNote()
@@ -882,17 +880,6 @@ export default function NoteEditor() {
                   >
                     <Archive className="w-4 h-4 text-gray-400" />
                     Archive note
-                  </button>
-                  <button
-                    onClick={() => {
-                      setNoteTypeConvertId(note.id)
-                      setNoteTypesModalOpen(true)
-                      setShowMenu(false)
-                    }}
-                    className="flex items-center w-full gap-3 px-4 py-2.5 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors rounded-lg mx-0"
-                  >
-                    <RefreshCw className="w-4 h-4 text-gray-400" />
-                    Convert note type
                   </button>
                   <div className="my-1.5 mx-3 border-t border-[#cbd1db] dark:border-gray-800" />
                   <button

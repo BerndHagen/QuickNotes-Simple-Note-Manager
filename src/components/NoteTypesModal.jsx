@@ -1,23 +1,17 @@
 import React, { useState } from 'react'
-import { X, Sparkles, ChevronRight, RefreshCw } from 'lucide-react'
+import { X, Sparkles, ChevronRight } from 'lucide-react'
 import { useUIStore, useNotesStore } from '../store'
 import { NOTE_TYPES, NOTE_TYPE_CONFIG, getDefaultData, CATEGORIES } from './editors'
 import { useTranslation } from '../lib/useTranslation'
-import toast from 'react-hot-toast'
-
 export default function NoteTypesModal() {
-  const { noteTypesModalOpen, setNoteTypesModalOpen, noteTypeConvertId, setNoteTypeConvertId } = useUIStore()
-  const { createNote, updateNote, notes } = useNotesStore()
+  const { noteTypesModalOpen, setNoteTypesModalOpen } = useUIStore()
+  const { createNote } = useNotesStore()
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [hoveredType, setHoveredType] = useState(null)
   const { t } = useTranslation()
 
-  const isConvertMode = !!noteTypeConvertId
-  const convertNote = isConvertMode ? notes.find(n => n.id === noteTypeConvertId) : null
-
   const handleClose = () => {
     setNoteTypesModalOpen(false)
-    setNoteTypeConvertId(null)
   }
 
   if (!noteTypesModalOpen) return null
@@ -30,72 +24,6 @@ export default function NoteTypesModal() {
     : noteTypes.filter(t => t.category === selectedCategory)
   const handleSelectType = (typeId) => {
     const config = NOTE_TYPE_CONFIG[typeId]
-    
-    if (isConvertMode && convertNote) {
-      if (convertNote.noteType === typeId) {
-        toast('Note is already this type', { icon: 'ℹ️' })
-        handleClose()
-        return
-      }
-      
-      const existingContent = convertNote.content || ''
-      const plainText = existingContent.replace(/<[^>]*>/g, '').trim()
-      
-      let newNoteData = null
-      if (typeId !== NOTE_TYPES.STANDARD) {
-        newNoteData = getDefaultData(typeId)
-        
-        if (plainText) {
-          switch (typeId) {
-            case NOTE_TYPES.TODO_LIST: {
-              const lines = plainText.split(/\n+/).filter(l => l.trim())
-              newNoteData.tasks = lines.map((line, i) => ({
-                id: Date.now().toString(36) + i,
-                text: line.trim(),
-                completed: false,
-                priority: 'medium',
-                createdAt: new Date().toISOString(),
-              }))
-              break
-            }
-            case NOTE_TYPES.MEETING:
-              newNoteData.notes = existingContent
-              break
-            case NOTE_TYPES.JOURNAL:
-              newNoteData.freeWrite = existingContent
-              break
-            case NOTE_TYPES.BRAINSTORM:
-              newNoteData.topic = convertNote.title || ''
-              newNoteData.ideas = plainText.split(/\n+/).filter(l => l.trim()).map((line, i) => ({
-                id: Date.now().toString(36) + i,
-                text: line.trim(),
-                votes: 0,
-                category: null,
-              }))
-              break
-            case NOTE_TYPES.PROJECT:
-              newNoteData.columns[1].tasks = plainText.split(/\n+/).filter(l => l.trim()).map((line, i) => ({
-                id: Date.now().toString(36) + i,
-                title: line.trim(),
-                description: '',
-                priority: 'medium',
-                assignee: null,
-              }))
-              break
-            default:
-              break
-          }
-        }
-      }
-      
-      updateNote(convertNote.id, {
-        noteType: typeId,
-        noteData: newNoteData,
-      })
-      toast.success(`Converted to ${config.name}`)
-      handleClose()
-      return
-    }
 
     if (typeId === NOTE_TYPES.STANDARD) {
       createNote({
@@ -125,11 +53,11 @@ export default function NoteTypesModal() {
         <div className="flex items-center justify-between p-6 bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
           <div>
             <h2 className="text-2xl font-bold flex items-center gap-3">
-              {isConvertMode ? <RefreshCw className="w-7 h-7" /> : <Sparkles className="w-7 h-7" />}
-              {isConvertMode ? (t('noteTypes.convertTitle') || 'Convert Note Type') : t('noteTypes.title')}
+              <Sparkles className="w-7 h-7" />
+              {t('noteTypes.title')}
             </h2>
             <p className="text-sm text-white/70 mt-1 ml-10">
-              {isConvertMode ? (t('noteTypes.convertSubtitle') || 'Choose a new type for this note') : t('noteTypes.subtitle')}
+              {t('noteTypes.subtitle')}
             </p>
           </div>
           <button
@@ -177,11 +105,9 @@ export default function NoteTypesModal() {
                   onMouseEnter={() => setHoveredType(type.id)}
                   onMouseLeave={() => setHoveredType(null)}
                   className={`relative p-5 rounded-xl text-left transition-all duration-200 group border-2 flex flex-col h-full ${
-                    isConvertMode && convertNote?.noteType === type.id
-                      ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 opacity-60'
-                      : isHovered
-                        ? 'border-indigo-500 shadow-lg scale-[1.02]'
-                        : 'border-[#cbd1db] dark:border-gray-700 hover:border-[#cbd1db] dark:hover:border-gray-600'
+                    isHovered
+                      ? 'border-indigo-500 shadow-lg scale-[1.02]'
+                      : 'border-[#cbd1db] dark:border-gray-700 hover:border-[#cbd1db] dark:hover:border-gray-600'
                   }`}
                   style={{
                     background: isHovered
@@ -200,10 +126,7 @@ export default function NoteTypesModal() {
                   </div>
                   <h3 className="font-semibold text-gray-900 dark:text-white mb-1 flex items-center gap-2">
                     {type.name}
-                    {isConvertMode && convertNote?.noteType === type.id 
-                      ? <span className="text-xs text-emerald-600 dark:text-emerald-400 font-normal">(current)</span>
-                      : <ChevronRight className={`w-4 h-4 transition-transform ${isHovered ? 'translate-x-1' : ''}`} style={{ color: type.color }} />
-                    }
+                    <ChevronRight className={`w-4 h-4 transition-transform ${isHovered ? 'translate-x-1' : ''}`} style={{ color: type.color }} />
                   </h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
                     {type.description}
@@ -234,10 +157,7 @@ export default function NoteTypesModal() {
         </div>
         <div className="p-4 border-t border-[#cbd1db] dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
           <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
-            {isConvertMode 
-              ? (t('noteTypes.convertWarning') || 'Converting will change the editor type. Your existing content will be preserved where possible.')
-              : (<>{t('noteTypes.footer1')}<br />{t('noteTypes.footer2')}</>)
-            }
+            {t('noteTypes.footer1')}<br />{t('noteTypes.footer2')}
           </p>
         </div>
       </div>
