@@ -44,13 +44,13 @@ export const removeSyncItem = async (id) => {
 }
 
 export const saveNoteVersion = async (noteId, content, title, noteData = null) => {
+  const MAX_VERSIONS = 50
   const versions = await db.noteVersions.where('noteId').equals(noteId).toArray()
   
-  if (versions.length >= 30) {
-    const oldestVersion = versions.reduce((oldest, v) => 
-      new Date(v.createdAt) < new Date(oldest.createdAt) ? v : oldest
-    )
-    await db.noteVersions.delete(oldestVersion.id)
+  if (versions.length >= MAX_VERSIONS) {
+    const sorted = versions.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+    const toDelete = sorted.slice(0, versions.length - MAX_VERSIONS + 1)
+    await Promise.all(toDelete.map(v => db.noteVersions.delete(v.id)))
   }
   
   const versionEntry = {
