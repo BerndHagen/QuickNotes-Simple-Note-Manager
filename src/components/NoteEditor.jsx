@@ -813,8 +813,8 @@ export default function NoteEditor() {
             </div>
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2.5 text-[13px] text-white/80 dark:text-emerald-400 md:gap-4">
-          <span className="flex items-center gap-1.5 flex-shrink-0">
+        <div className="flex flex-wrap items-center gap-1 text-[13px] text-white/80 dark:text-emerald-400">
+          <span className="flex items-center gap-1.5 px-2 py-1 flex-shrink-0">
             <Clock className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">{formatDate(note.updatedAt, language)}</span>
             <span className="sm:hidden">{new Date(note.updatedAt).toLocaleDateString()}</span>
@@ -822,7 +822,7 @@ export default function NoteEditor() {
           <div className="relative" ref={folderPickerRef}>
             <button
               onClick={() => setShowFolderPicker(!showFolderPicker)}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg hover:bg-white/10 dark:hover:bg-gray-800 transition-all text-white/70 dark:text-gray-400"
+              className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-white/10 dark:hover:bg-gray-800 transition-all text-white/70 dark:text-gray-400"
             >
               <FolderOpen className="w-3.5 h-3.5" />
               <span className="text-[13px] font-medium">{getCurrentFolder()?.name || 'No folder'}</span>
@@ -881,8 +881,8 @@ export default function NoteEditor() {
               document.body
             )}
           </div>
-          <div className="flex flex-wrap items-center gap-1.5">
-            {note.tags?.map((tagName) => {
+          {note.tags && note.tags.length > 0 && <div className="flex flex-wrap items-center gap-1.5">
+            {note.tags.map((tagName) => {
               const tag = tags.find((t) => t.name === tagName)
               return (
                 <span
@@ -903,11 +903,11 @@ export default function NoteEditor() {
                 </span>
               )
             })}
-          </div>
+          </div>}
           <div className="relative" ref={tagPickerRef}>
               <button
                 onClick={() => setShowTagPicker(!showTagPicker)}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg hover:bg-white/10 dark:hover:bg-gray-800 transition-all text-white/70 dark:text-gray-400"
+                className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-white/10 dark:hover:bg-gray-800 transition-all text-white/70 dark:text-gray-400"
               >
                 <Tag className="w-3.5 h-3.5" />
                 <span className="text-[13px] font-medium">Tag</span>
