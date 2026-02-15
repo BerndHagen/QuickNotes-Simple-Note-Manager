@@ -68,11 +68,19 @@ export const saveNoteVersion = async (noteId, content, title, noteData = null) =
 }
 
 export const getNoteVersions = async (noteId) => {
-  return await db.noteVersions
+  const versions = await db.noteVersions
     .where('noteId')
     .equals(noteId)
     .reverse()
     .sortBy('createdAt')
+  
+  if (versions.length > 50) {
+    const toDelete = versions.slice(50)
+    await Promise.all(toDelete.map(v => db.noteVersions.delete(v.id)))
+    return versions.slice(0, 50)
+  }
+  
+  return versions
 }
 
 export const clearLocalData = async () => {

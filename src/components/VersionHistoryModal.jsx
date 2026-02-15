@@ -45,6 +45,7 @@ export default function VersionHistoryModal() {
       
       const allVersions = Array.from(versionMap.values())
         .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .slice(0, 50)
       
       setVersions(allVersions)
     } catch (error) {
