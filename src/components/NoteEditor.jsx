@@ -903,13 +903,14 @@ export default function NoteEditor() {
                 </span>
               )
             })}
-            <div className="relative" ref={tagPickerRef}>
+          </div>
+          <div className="relative" ref={tagPickerRef}>
               <button
                 onClick={() => setShowTagPicker(!showTagPicker)}
                 className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg hover:bg-white/10 dark:hover:bg-gray-800 transition-all text-white/70 dark:text-gray-400"
               >
                 <Tag className="w-3.5 h-3.5" />
-                <span className="text-[13px] font-medium">+ Tag</span>
+                <span className="text-[13px] font-medium">Tag</span>
               </button>
 
               {showTagPicker && createPortal(
@@ -978,7 +979,6 @@ export default function NoteEditor() {
                 document.body
               )}
             </div>
-          </div>
         </div>
       </div>
       <FindReplaceBar 
