@@ -751,9 +751,9 @@ Found a bug or have a feature request? [Open an issue](https://github.com/BerndH
 
 ## License
 
-This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the **GNU General Public License v3.0 (GPL-3.0)**. See the [LICENSE](LICENSE) file for details.
 
-You are free to use, modify, and distribute this software for personal and commercial purposes.
+You are free to use, modify, and distribute this software, provided that any derivative works are also licensed under the GPL-3.0 and made available as open source.
 
 ## Screenshots
 
