@@ -153,7 +153,7 @@ export default function HelpModal() {
               </button>
             </div>
             <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-4">
-              QuickNotes v1.0.0
+              QuickNotes v1.1.3
             </p>
           </div>
         </div>
