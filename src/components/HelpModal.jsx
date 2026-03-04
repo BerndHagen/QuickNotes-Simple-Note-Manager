@@ -124,10 +124,20 @@ export default function HelpModal() {
           <div className="mt-6 pt-6 border-t border-[#cbd1db] dark:border-gray-700">
             <div className="flex flex-wrap gap-4 justify-center text-sm">
               <a
-                href="mailto:support@quicknotes.app"
+                href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/issues"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex items-center gap-1 text-primary-600 dark:text-primary-400 hover:underline"
               >
-                Contact Support <ExternalLink className="w-3 h-3" />
+                Report an Issue <ExternalLink className="w-3 h-3" />
+              </a>
+              <a
+                href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/discussions"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-primary-600 dark:text-primary-400 hover:underline"
+              >
+                Discussions <ExternalLink className="w-3 h-3" />
               </a>
               <button
                 onClick={() => { setHelpModalOpen(false); useUIStore.getState().setPrivacyModalOpen(true) }}
@@ -143,7 +153,7 @@ export default function HelpModal() {
               </button>
             </div>
             <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-4">
-              QuickNotes v1.0.0 {"\u2022"} Made with {"\u2764\uFE0F"}
+              QuickNotes v1.0.0
             </p>
           </div>
         </div>

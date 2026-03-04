@@ -616,7 +616,7 @@ export const translations = {
       yourRights: 'Your Privacy Rights',
       yourRightsText: 'You have full control over your data at all times. You can export all your notes and data in various formats from the Export feature in the sidebar. You can delete individual notes, folders, or your entire account and all associated data from Settings. If you have questions about your data or wish to exercise any privacy rights, please contact us. We are committed to responding to data requests in a timely manner in accordance with applicable privacy regulations.',
       contact: 'Contact Us',
-      contactText: 'If you have any questions, concerns, or requests regarding this Privacy Policy or our data practices, please reach out to us at support@quicknotes.app. We take privacy seriously and will address your inquiries promptly.',
+      contactText: 'If you have any questions, concerns, or requests regarding this Privacy Policy or our data practices, please reach out to us via the Issues or Discussions section on our GitHub repository. We take privacy seriously and will address your inquiries promptly.',
     },
     terms: {
       title: 'Terms of Service',
@@ -636,7 +636,7 @@ export const translations = {
       premium: 'Premium Features',
       premiumText: 'QuickNotes may offer premium features or subscription plans in the future. Any paid features will be clearly identified, and separate terms governing purchases, billing, and refunds will apply. Free features will remain available, though specific offerings may change over time. We will provide advance notice of any significant changes to our service offerings.',
       contact: 'Contact Information',
-      contactText: 'If you have any questions about these Terms of Service, need clarification on any provisions, or have concerns about the application, please contact us at support@quicknotes.app. We value your feedback and are committed to addressing your inquiries in a timely and professional manner.',
+      contactText: 'If you have any questions about these Terms of Service, need clarification on any provisions, or have concerns about the application, please contact us via the Issues or Discussions section on our GitHub repository. We value your feedback and are committed to addressing your inquiries in a timely and professional manner.',
     },
     exportModal: {
       title: 'Export Note',
