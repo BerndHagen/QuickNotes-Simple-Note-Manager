@@ -1,0 +1,380 @@
+/* ============================================================
+   QuickNotes design tokens
+   ------------------------------------------------------------
+   Single source of truth for colour, type, spacing, radii,
+   elevation, control sizing and motion. Every surface in the
+   app should consume these instead of hard-coding values.
+
+   Tailwind maps most of these to utilities in tailwind.config.js
+   (bg-surface, text-muted, border-subtle, rounded-control, ...).
+   ============================================================ */
+
+:root {
+  color-scheme: light;
+
+  /* --- Brand ------------------------------------------------ */
+  --qn-brand-50: #ecfdf5;
+  --qn-brand-100: #d1fae5;
+  --qn-brand-200: #a7f3d0;
+  --qn-brand-300: #6ee7b7;
+  --qn-brand-400: #34d399;
+  --qn-brand-500: #10b981;
+  --qn-brand-600: #059669;
+  --qn-brand-700: #047857;
+  --qn-brand-800: #065f46;
+  --qn-brand-900: #064e3b;
+  --qn-brand-950: #032b21;
+
+  /* --- Surfaces --------------------------------------------- */
+  /* app  : the outermost canvas                                */
+  /* panel: sidebar / note list columns                         */
+  /* base : editor + dialog bodies                              */
+  /* raised: cards, menus, popovers                             */
+  /* sunken: inset wells, code blocks, form groups              */
+  --qn-surface-app: #ffffff;
+  --qn-surface-panel: #f7f8fa;
+  --qn-surface-base: #ffffff;
+  --qn-surface-raised: #ffffff;
+  --qn-surface-sunken: #f3f4f6;
+  --qn-surface-hover: rgba(15, 23, 42, 0.04);
+  --qn-surface-active: rgba(15, 23, 42, 0.07);
+  --qn-overlay: rgba(15, 23, 42, 0.45);
+
+  /* --- Navigation rail --------------------------------------
+     The sidebar is a dark surface in both themes: it anchors the
+     window and lets the note list and editor read as the "paper".
+     These tokens are therefore theme-independent. */
+  /* Green-tinted rather than neutral charcoal, so the rail reads as the
+     same family as the editor banner instead of clashing with it. */
+  --qn-nav-bg: #0c211a;
+  --qn-nav-bg-raised: #122e23;
+  --qn-nav-border: #1c3a2d;
+  --qn-nav-text: #eaf2ee;
+  --qn-nav-text-muted: #a2b5ac;
+  --qn-nav-text-subtle: #82968d;
+  --qn-nav-hover: rgba(255, 255, 255, 0.06);
+  --qn-nav-active-bg: rgba(255, 255, 255, 0.09);
+  --qn-nav-active-text: #ffffff;
+
+  /* --- Borders ---------------------------------------------- */
+  --qn-border-subtle: #e8eaee;
+  --qn-border: #dcdfe5;
+  --qn-border-strong: #c3c8d1;
+
+  /* --- Text ------------------------------------------------- */
+  /* Contrast ratios are measured against --qn-surface-panel (#f7f8fa),
+     the lightest background any of these sit on:
+       text         #111827  16.1:1
+       text-muted   #5b6472   6.4:1
+       text-subtle  #6b7280   4.6:1  (AA for body text, not decorative)
+     Nothing lighter than #6b7280 is used for text anywhere. */
+  --qn-text: #111827;
+  --qn-text-muted: #5b6472;
+  --qn-text-subtle: #6b7280;
+  --qn-text-inverted: #ffffff;
+  --qn-text-on-brand: #ffffff;
+
+  /* --- Accent (interactive brand) --------------------------- */
+  /* brand-700 rather than brand-600: white-on-brand-600 measures
+     3.76:1, which fails AA for the button labels that sit on it. */
+  --qn-accent: var(--qn-brand-700);
+  --qn-accent-hover: var(--qn-brand-800);
+  --qn-accent-active: var(--qn-brand-900);
+  --qn-accent-text: var(--qn-brand-700);
+  --qn-accent-soft: var(--qn-brand-50);
+  --qn-accent-soft-hover: var(--qn-brand-100);
+  --qn-accent-border: var(--qn-brand-200);
+
+  /* Editor banner — deep muted green with a soft contour texture.
+     Kept dark and low-saturation to match the reference; a brighter
+     emerald reads as a different product. */
+  --qn-banner: #0d4a36;
+  --qn-banner-from: #11563f;
+  --qn-banner-via: #0d4835;
+  --qn-banner-to: #093528;
+  --qn-banner-accent: #14624a;
+  --qn-banner-text: #ffffff;
+  --qn-banner-text-muted: rgba(255, 255, 255, 0.72);
+  --qn-banner-border: rgba(255, 255, 255, 0.14);
+  --qn-banner-hover: rgba(255, 255, 255, 0.12);
+
+  /* --- Status ----------------------------------------------- */
+  --qn-danger: #dc2626;
+  --qn-danger-text: #b91c1c;
+  --qn-danger-soft: #fef2f2;
+  --qn-danger-border: #fecaca;
+
+  --qn-warning: #d97706;
+  --qn-warning-text: #b45309;
+  --qn-warning-soft: #fffbeb;
+  --qn-warning-border: #fde68a;
+
+  --qn-success: #059669;
+  --qn-success-text: #047857;
+  --qn-success-soft: #ecfdf5;
+  --qn-success-border: #a7f3d0;
+
+  --qn-info: #2563eb;
+  --qn-info-text: #1d4ed8;
+  --qn-info-soft: #eff6ff;
+  --qn-info-border: #bfdbfe;
+
+  /* --- Radii ------------------------------------------------ */
+  --qn-radius-xs: 4px;
+  --qn-radius-sm: 6px;
+  --qn-radius-md: 8px;
+  --qn-radius-lg: 12px;
+  --qn-radius-xl: 16px;
+  --qn-radius-2xl: 20px;
+  --qn-radius-full: 9999px;
+  /* semantic */
+  --qn-radius-control: var(--qn-radius-md);
+  --qn-radius-card: var(--qn-radius-lg);
+  --qn-radius-dialog: var(--qn-radius-xl);
+
+  /* --- Elevation -------------------------------------------- */
+  --qn-shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --qn-shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.07), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --qn-shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.04);
+  --qn-shadow-lg: 0 12px 28px rgba(15, 23, 42, 0.12), 0 2px 6px rgba(15, 23, 42, 0.05);
+  --qn-shadow-dialog: 0 24px 56px rgba(15, 23, 42, 0.18), 0 4px 12px rgba(15, 23, 42, 0.08);
+
+  /* --- Control sizing --------------------------------------- */
+  --qn-control-xs: 26px;
+  --qn-control-sm: 30px;
+  --qn-control-md: 36px;
+  --qn-control-lg: 44px;
+  /* Minimum comfortable touch target (WCAG 2.5.8 / iOS HIG) */
+  --qn-touch-target: 44px;
+
+  /* --- Icon sizing ------------------------------------------ */
+  --qn-icon-xs: 12px;
+  --qn-icon-sm: 14px;
+  --qn-icon-md: 16px;
+  --qn-icon-lg: 18px;
+  --qn-icon-xl: 20px;
+
+  /* --- Layout ----------------------------------------------- */
+  --qn-sidebar-width: 264px;
+  --qn-list-width: 336px;
+  --qn-list-width-wide: 380px;
+  /* Caps line length in the editor so text stays readable on
+     1920px displays instead of stretching edge to edge. */
+  --qn-measure: 76ch;
+  --qn-measure-wide: 88ch;
+
+  /* --- Motion ----------------------------------------------- */
+  --qn-ease: cubic-bezier(0.2, 0, 0.13, 1);
+  --qn-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --qn-duration-instant: 80ms;
+  --qn-duration-fast: 140ms;
+  --qn-duration-base: 200ms;
+  --qn-duration-slow: 320ms;
+
+  /* --- Focus ------------------------------------------------ */
+  --qn-focus-ring: var(--qn-brand-500);
+  --qn-focus-ring-width: 2px;
+  --qn-focus-ring-offset: 2px;
+
+  /* --- Z-index scale ---------------------------------------- */
+  --qn-z-sticky: 20;
+  --qn-z-drawer: 60;
+  --qn-z-dropdown: 400;
+  --qn-z-dialog: 500;
+  --qn-z-popover: 600;
+  --qn-z-toast: 700;
+}
+
+.dark {
+  color-scheme: dark;
+
+  --qn-surface-app: #0b0f14;
+  --qn-surface-panel: #10151c;
+  --qn-surface-base: #0e131a;
+  --qn-surface-raised: #161c25;
+  --qn-surface-sunken: #0a0e13;
+  --qn-surface-hover: rgba(255, 255, 255, 0.05);
+  --qn-surface-active: rgba(255, 255, 255, 0.09);
+  --qn-overlay: rgba(2, 6, 12, 0.65);
+
+  --qn-border-subtle: #1e2630;
+  --qn-border: #29313d;
+  --qn-border-strong: #3a4553;
+
+  --qn-text: #e8ebef;
+  --qn-text-muted: #98a2b3;
+  --qn-text-subtle: #6b7684;
+  --qn-text-inverted: #0b0f14;
+
+  --qn-accent: var(--qn-brand-500);
+  --qn-accent-hover: var(--qn-brand-400);
+  --qn-accent-active: var(--qn-brand-300);
+  --qn-accent-text: var(--qn-brand-400);
+  --qn-accent-soft: rgba(16, 185, 129, 0.12);
+  --qn-accent-soft-hover: rgba(16, 185, 129, 0.2);
+  --qn-accent-border: rgba(16, 185, 129, 0.3);
+
+  --qn-banner: #0d2b20;
+  --qn-banner-accent: #113b2b;
+  --qn-banner-text: #eef4f1;
+  --qn-banner-text-muted: rgba(238, 244, 241, 0.6);
+  --qn-banner-border: rgba(255, 255, 255, 0.08);
+  --qn-banner-hover: rgba(255, 255, 255, 0.08);
+
+  --qn-danger: #ef4444;
+  --qn-danger-text: #fca5a5;
+  --qn-danger-soft: rgba(239, 68, 68, 0.12);
+  --qn-danger-border: rgba(239, 68, 68, 0.28);
+
+  --qn-warning: #f59e0b;
+  --qn-warning-text: #fcd34d;
+  --qn-warning-soft: rgba(245, 158, 11, 0.12);
+  --qn-warning-border: rgba(245, 158, 11, 0.28);
+
+  --qn-success: #10b981;
+  --qn-success-text: #6ee7b7;
+  --qn-success-soft: rgba(16, 185, 129, 0.12);
+  --qn-success-border: rgba(16, 185, 129, 0.28);
+
+  --qn-info: #3b82f6;
+  --qn-info-text: #93c5fd;
+  --qn-info-soft: rgba(59, 130, 246, 0.12);
+  --qn-info-border: rgba(59, 130, 246, 0.28);
+
+  --qn-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --qn-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.45);
+  --qn-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --qn-shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.55);
+  --qn-shadow-dialog: 0 24px 56px rgba(0, 0, 0, 0.65);
+
+  --qn-focus-ring: var(--qn-brand-400);
+}
+
+/* ============================================================
+   Global primitives built directly on the tokens
+   ============================================================ */
+
+/* One consistent, always-visible keyboard focus treatment.
+   Previously this lived inside `@media (hover: hover)`, which
+   removed focus rings entirely on touch and hybrid devices. */
+:where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
+  outline: var(--qn-focus-ring-width) solid var(--qn-focus-ring);
+  outline-offset: var(--qn-focus-ring-offset);
+  border-radius: var(--qn-radius-sm);
+}
+
+/* Elements that paint their own ring opt out of the offset. */
+.qn-focus-inset:focus-visible {
+  outline-offset: -1px;
+}
+
+/* Editor banner surface.
+   A diagonal emerald gradient with faint contour arcs sweeping in from
+   the right — the texture keeps a large flat block of colour from
+   looking dead without adding visual noise behind the title. */
+.qn-banner-surface {
+  position: relative;
+  isolation: isolate;
+  background: linear-gradient(
+    118deg,
+    var(--qn-banner-from) 0%,
+    var(--qn-banner-via) 52%,
+    var(--qn-banner-to) 100%
+  );
+}
+
+.qn-banner-surface::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image:
+    radial-gradient(
+      120% 180% at 92% 12%,
+      transparent 38%,
+      rgba(255, 255, 255, 0.07) 38.6%,
+      transparent 39.4%
+    ),
+    radial-gradient(
+      120% 180% at 92% 12%,
+      transparent 48%,
+      rgba(255, 255, 255, 0.055) 48.6%,
+      transparent 49.4%
+    ),
+    radial-gradient(
+      120% 180% at 92% 12%,
+      transparent 58%,
+      rgba(255, 255, 255, 0.045) 58.6%,
+      transparent 59.4%
+    ),
+    radial-gradient(
+      120% 180% at 92% 12%,
+      transparent 68%,
+      rgba(255, 255, 255, 0.035) 68.6%,
+      transparent 69.4%
+    ),
+    radial-gradient(140% 120% at 100% 0%, rgba(255, 255, 255, 0.1), transparent 60%);
+}
+
+.dark .qn-banner-surface::after {
+  opacity: 0.35;
+}
+
+.qn-skip-link {
+  position: absolute;
+  left: 8px;
+  top: -100px;
+  z-index: var(--qn-z-toast);
+  padding: 10px 16px;
+  border-radius: var(--qn-radius-control);
+  background: var(--qn-accent);
+  color: var(--qn-text-on-brand);
+  font-size: 13px;
+  font-weight: 600;
+  transition: top var(--qn-duration-fast) var(--qn-ease);
+}
+
+.qn-skip-link:focus {
+  top: 8px;
+}
+
+/* Screen-reader-only text that becomes visible when focused. */
+.qn-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* ============================================================
+   Reduced motion
+   Honour the OS setting everywhere rather than per-component.
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================
+   Forced-colors / high-contrast
+   ============================================================ */
+@media (forced-colors: active) {
+  .qn-card,
+  .qn-dialog,
+  .qn-menu {
+    border: 1px solid CanvasText;
+  }
+}

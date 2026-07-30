@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import {
   FileText,
   Mail,
@@ -151,10 +151,11 @@ export default function AuthScreen() {
       <div className="p-6 bg-white border border-[#cbd1db] rounded-2xl shadow-sm">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block mb-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Email Address</label>
+            <label htmlFor="qn-auth-email" className="block mb-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Email Address</label>
             <div className="relative group">
-              <Mail className="absolute w-4.5 h-4.5 text-gray-400 transition-colors -translate-y-1/2 left-3.5 top-1/2 group-focus-within:text-emerald-500" />
+              <Mail className="absolute w-4.5 h-4.5 text-gray-500 transition-colors -translate-y-1/2 left-3.5 top-1/2 group-focus-within:text-emerald-500" />
               <input
+                id="qn-auth-email"
                 type="email"
                 value={formData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
@@ -172,10 +173,11 @@ export default function AuthScreen() {
             )}
           </div>
           <div>
-            <label className="block mb-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Password</label>
+            <label htmlFor="qn-auth-password" className="block mb-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Password</label>
             <div className="relative group">
-              <Lock className="absolute w-4.5 h-4.5 text-gray-400 transition-colors -translate-y-1/2 left-3.5 top-1/2 group-focus-within:text-emerald-500" />
+              <Lock className="absolute w-4.5 h-4.5 text-gray-500 transition-colors -translate-y-1/2 left-3.5 top-1/2 group-focus-within:text-emerald-500" />
               <input
+                id="qn-auth-password"
                 type={showPassword ? 'text' : 'password'}
                 value={formData.password}
                 onChange={(e) => handleInputChange('password', e.target.value)}
@@ -187,7 +189,9 @@ export default function AuthScreen() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute p-1.5 text-gray-400 -translate-y-1/2 rounded-lg right-3 top-1/2 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                aria-pressed={showPassword}
+                className="absolute p-1.5 text-gray-500 -translate-y-1/2 rounded-lg right-3 top-1/2 hover:text-gray-700 hover:bg-gray-100 transition-colors"
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -207,7 +211,7 @@ export default function AuthScreen() {
             <button
               type="button"
               onClick={() => setMode('forgot')}
-              className="text-sm font-medium text-emerald-600 hover:text-emerald-700 transition-colors"
+              className="text-sm font-medium text-emerald-700 hover:text-emerald-800 transition-colors"
             >
               Forgot password?
             </button>
@@ -235,7 +239,7 @@ export default function AuthScreen() {
           <div className="w-full border-t border-[#cbd1db]" />
         </div>
         <div className="relative flex justify-center text-xs">
-          <span className="px-3 text-gray-400 bg-white font-medium uppercase tracking-wider">New to QuickNotes?</span>
+          <span className="px-3 text-gray-500 bg-white font-medium uppercase tracking-wider">New to QuickNotes?</span>
         </div>
       </div>
 
@@ -264,10 +268,11 @@ export default function AuthScreen() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block mb-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">First name</label>
+              <label htmlFor="qn-auth-first-name" className="block mb-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">First name</label>
               <div className="relative group">
-                <User className="absolute w-4.5 h-4.5 text-gray-400 transition-colors -translate-y-1/2 left-3.5 top-1/2 group-focus-within:text-emerald-500" />
+                <User className="absolute w-4.5 h-4.5 text-gray-500 transition-colors -translate-y-1/2 left-3.5 top-1/2 group-focus-within:text-emerald-500" />
                 <input
+                id="qn-auth-first-name"
                   type="text"
                   value={formData.firstName}
                   onChange={(e) => handleInputChange('firstName', e.target.value)}
@@ -280,8 +285,9 @@ export default function AuthScreen() {
               {errors.firstName && <p className="mt-1 text-sm text-red-600">{errors.firstName}</p>}
             </div>
             <div>
-              <label className="block mb-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Last name</label>
+              <label htmlFor="qn-auth-last-name" className="block mb-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Last name</label>
               <input
+                id="qn-auth-last-name"
                 type="text"
                 value={formData.lastName}
                 onChange={(e) => handleInputChange('lastName', e.target.value)}
@@ -294,10 +300,11 @@ export default function AuthScreen() {
             </div>
           </div>
           <div>
-            <label className="block mb-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Email Address</label>
+            <label htmlFor="qn-auth-email-2" className="block mb-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Email Address</label>
             <div className="relative group">
-              <Mail className="absolute w-4.5 h-4.5 text-gray-400 transition-colors -translate-y-1/2 left-3.5 top-1/2 group-focus-within:text-emerald-500" />
+              <Mail className="absolute w-4.5 h-4.5 text-gray-500 transition-colors -translate-y-1/2 left-3.5 top-1/2 group-focus-within:text-emerald-500" />
               <input
+                id="qn-auth-email-2"
                 type="email"
                 value={formData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
@@ -310,10 +317,11 @@ export default function AuthScreen() {
             {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
           </div>
           <div>
-            <label className="block mb-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Password</label>
+            <label htmlFor="qn-auth-password-2" className="block mb-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Password</label>
             <div className="relative group">
-              <Lock className="absolute w-4.5 h-4.5 text-gray-400 transition-colors -translate-y-1/2 left-3.5 top-1/2 group-focus-within:text-emerald-500" />
+              <Lock className="absolute w-4.5 h-4.5 text-gray-500 transition-colors -translate-y-1/2 left-3.5 top-1/2 group-focus-within:text-emerald-500" />
               <input
+                id="qn-auth-password-2"
                 type={showPassword ? 'text' : 'password'}
                 value={formData.password}
                 onChange={(e) => handleInputChange('password', e.target.value)}
@@ -325,7 +333,9 @@ export default function AuthScreen() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute p-1.5 text-gray-400 -translate-y-1/2 rounded-lg right-3 top-1/2 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                aria-pressed={showPassword}
+                className="absolute p-1.5 text-gray-500 -translate-y-1/2 rounded-lg right-3 top-1/2 hover:text-gray-700 hover:bg-gray-100 transition-colors"
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -350,7 +360,7 @@ export default function AuthScreen() {
                     />
                   ))}
                 </div>
-                <p className="mt-1 text-xs text-gray-400">
+                <p className="mt-1 text-xs text-gray-500">
                   {formData.password.length < 4 ? 'Too short' : formData.password.length < 7 ? 'Weak' : formData.password.length < 10 ? 'Good' : 'Strong'}
                 </p>
               </div>
@@ -358,10 +368,11 @@ export default function AuthScreen() {
             {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
           </div>
           <div>
-            <label className="block mb-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Confirm Password</label>
+            <label htmlFor="qn-auth-confirm-password" className="block mb-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Confirm Password</label>
             <div className="relative group">
-              <Lock className="absolute w-4.5 h-4.5 text-gray-400 transition-colors -translate-y-1/2 left-3.5 top-1/2 group-focus-within:text-emerald-500" />
+              <Lock className="absolute w-4.5 h-4.5 text-gray-500 transition-colors -translate-y-1/2 left-3.5 top-1/2 group-focus-within:text-emerald-500" />
               <input
+                id="qn-auth-confirm-password"
                 type="password"
                 value={formData.confirmPassword}
                 onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
@@ -384,9 +395,9 @@ export default function AuthScreen() {
             />
             <span className="text-sm text-gray-500 leading-tight">
               I agree to the{' '}
-              <button type="button" onClick={() => useUIStore.getState().setTermsModalOpen(true)} className="text-emerald-600 hover:text-emerald-700 font-medium">Terms of Service</button>{' '}
+              <button type="button" onClick={() => useUIStore.getState().setTermsModalOpen(true)} className="text-emerald-700 hover:text-emerald-800 font-medium">Terms of Service</button>{' '}
               and{' '}
-              <button type="button" onClick={() => useUIStore.getState().setPrivacyModalOpen(true)} className="text-emerald-600 hover:text-emerald-700 font-medium">Privacy Policy</button>
+              <button type="button" onClick={() => useUIStore.getState().setPrivacyModalOpen(true)} className="text-emerald-700 hover:text-emerald-800 font-medium">Privacy Policy</button>
             </span>
           </label>
           {errors.agreeToTerms && <p className="text-sm text-red-600">{errors.agreeToTerms}</p>}
@@ -409,7 +420,7 @@ export default function AuthScreen() {
       
       <p className="text-sm text-center text-gray-500 mt-6">
         Already have an account?{' '}
-        <button onClick={() => setMode('login')} className="font-medium text-emerald-600 hover:text-emerald-700 transition-colors">
+        <button onClick={() => setMode('login')} className="font-medium text-emerald-700 hover:text-emerald-800 transition-colors">
           Sign in
         </button>
       </p>
@@ -438,7 +449,7 @@ export default function AuthScreen() {
         </div>
       </div>
       <div className="space-y-4 text-center">
-        <p className="text-sm text-gray-400">Didn't receive the email? Check your spam folder.</p>
+        <p className="text-sm text-gray-500">Didn't receive the email? Check your spam folder.</p>
         <button
           onClick={() => {
             setMode('login')
@@ -468,10 +479,11 @@ export default function AuthScreen() {
       <div className="p-6 bg-white border border-[#cbd1db] rounded-2xl shadow-sm">
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block mb-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Email Address</label>
+            <label htmlFor="qn-auth-email-3" className="block mb-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Email Address</label>
             <div className="relative group">
-              <Mail className="absolute w-4.5 h-4.5 text-gray-400 transition-colors -translate-y-1/2 left-3.5 top-1/2 group-focus-within:text-emerald-500" />
+              <Mail className="absolute w-4.5 h-4.5 text-gray-500 transition-colors -translate-y-1/2 left-3.5 top-1/2 group-focus-within:text-emerald-500" />
               <input
+                id="qn-auth-email-3"
                 type="email"
                 value={formData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
@@ -506,7 +518,7 @@ export default function AuthScreen() {
       </div>
       
       <p className="text-sm text-center text-gray-500 mt-6">
-        <button onClick={() => setMode('login')} className="font-medium text-emerald-600 hover:text-emerald-700 transition-colors">
+        <button onClick={() => setMode('login')} className="font-medium text-emerald-700 hover:text-emerald-800 transition-colors">
           {"\u2190"} Back to sign in
         </button>
       </p>
@@ -612,20 +624,20 @@ export default function AuthScreen() {
         <div className="px-6 py-6">
           <div className="max-w-[420px] mx-auto">
             <div className="flex items-center justify-center gap-6 mb-3">
-              <div className="flex items-center gap-1.5 text-xs text-gray-400">
+              <div className="flex items-center gap-1.5 text-xs text-gray-500">
                 <Shield className="w-3.5 h-3.5" />
                 <span>Secure</span>
               </div>
-              <div className="flex items-center gap-1.5 text-xs text-gray-400">
+              <div className="flex items-center gap-1.5 text-xs text-gray-500">
                 <Lock className="w-3.5 h-3.5" />
                 <span>Self-Hosted</span>
               </div>
-              <div className="flex items-center gap-1.5 text-xs text-gray-400">
+              <div className="flex items-center gap-1.5 text-xs text-gray-500">
                 <CheckCircle className="w-3.5 h-3.5" />
                 <span>Open Source</span>
               </div>
             </div>
-            <div className="flex justify-center gap-6 text-xs text-gray-400">
+            <div className="flex justify-center gap-6 text-xs text-gray-500">
               <button onClick={() => useUIStore.getState().setHelpModalOpen(true)} className="hover:text-gray-600 transition-colors">Help</button>
               <button onClick={() => useUIStore.getState().setPrivacyModalOpen(true)} className="hover:text-gray-600 transition-colors">Privacy</button>
               <button onClick={() => useUIStore.getState().setTermsModalOpen(true)} className="hover:text-gray-600 transition-colors">Terms</button>

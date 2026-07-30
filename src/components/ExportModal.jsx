@@ -1,8 +1,10 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { X, FileText, FileCode, File, Download, Check } from 'lucide-react'
 import { useNotesStore, useUIStore } from '../store'
 import { useTranslation } from '../lib/useTranslation'
 import { hasSpecializedEditor } from './editors'
+import toast from 'react-hot-toast'
+import LegacyDialog from './ui/LegacyDialog'
 
 const noteDataToHtml = (noteType, noteData, noteTitle) => {
   if (!noteData) return '<p>No content</p>'
@@ -544,17 +546,19 @@ export default function ExportModal() {
             await generatePDF({ ...noteItem, content: exportContent })
             break
             
-          case 'markdown':
-            const markdown = `# ${noteItem.title}\n\n${noteItem.tags?.length ? `Tags: ${noteItem.tags.map(t => `#${t}`).join(' ')}\n\n---\n\n` : ''}${htmlToMarkdown(exportContent)}`
+          case 'markdown': {
+            const markdown =`# ${noteItem.title}\n\n${noteItem.tags?.length ? `Tags: ${noteItem.tags.map(t => `#${t}`).join(' ')}\n\n---\n\n` : ''}${htmlToMarkdown(exportContent)}`
             downloadFile(markdown, `${safeTitle}.md`, 'text/markdown')
             break
-            
-          case 'txt':
-            const plainText = `${noteItem.title}\n${'='.repeat(noteItem.title.length)}\n\n${noteItem.tags?.length ? `Tags: ${noteItem.tags.join(', ')}\n\n` : ''}${htmlToPlainText(exportContent)}`
+          }
+
+          case 'txt': {
+            const plainText =`${noteItem.title}\n${'='.repeat(noteItem.title.length)}\n\n${noteItem.tags?.length ? `Tags: ${noteItem.tags.join(', ')}\n\n` : ''}${htmlToPlainText(exportContent)}`
             downloadFile(plainText, `${safeTitle}.txt`, 'text/plain')
             break
-            
-          case 'html':
+          }
+
+          case 'html': {
             const html = `<!DOCTYPE html>
 <html>
 <head>
@@ -581,6 +585,7 @@ export default function ExportModal() {
 </html>`
             downloadFile(html, `${safeTitle}.html`, 'text/html')
             break
+          }
         }
         if (exportAll && notesToExport.length > 1) {
           await new Promise(resolve => setTimeout(resolve, 300))
@@ -595,13 +600,14 @@ export default function ExportModal() {
         }
       }, 1500)
     } catch (error) {
+      toast.error(`Export failed: ${error?.message || 'Unknown error'}`)
     } finally {
       setIsExporting(false)
     }
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center modal-backdrop-animate" onClick={() => setExportModalOpen(false)}>
+    <LegacyDialog label="Export notes" onClose={() => setExportModalOpen(false)} align="center">
       <div 
         className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-[#cbd1db] dark:border-gray-700 max-w-md w-full mx-4 modal-animate overflow-hidden"
         onClick={(e) => e.stopPropagation()}
@@ -703,6 +709,6 @@ export default function ExportModal() {
         </button>
         </div>
       </div>
-    </div>
+    </LegacyDialog>
   )
 }

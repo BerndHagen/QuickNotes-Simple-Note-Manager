@@ -3,7 +3,7 @@ import { useNotesStore } from '../store'
 import { backend, isBackendConfigured, subscribeToSharedNoteContent } from '../lib/backend'
 
 export const useRealtimeCollaboration = (noteId) => {
-  const { updateNote } = useNotesStore()
+  const applyExternalUpdate = useNotesStore((s) => s.applyExternalUpdate)
   const channelRef = useRef(null)
   const lastUpdateRef = useRef(null)
   const isLocalUpdateRef = useRef(false)
@@ -23,11 +23,11 @@ export const useRealtimeCollaboration = (noteId) => {
 
         isLocalUpdateRef.current = false
 
-        updateNote(noteId, {
+        // Server-authored change: applied without dirtying the note.
+        applyExternalUpdate(noteId, {
           title: updatedNote.title,
           content: updatedNote.content,
           updatedAt: updatedNote.updated_at,
-          _isExternalUpdate: true
         })
       }
     })
@@ -41,7 +41,7 @@ export const useRealtimeCollaboration = (noteId) => {
       lastUpdateRef.current = null
       isLocalUpdateRef.current = false
     }
-  }, [noteId])
+  }, [noteId, applyExternalUpdate])
 
   const markLocalUpdate = () => {
     isLocalUpdateRef.current = true

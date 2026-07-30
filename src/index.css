@@ -1,3 +1,5 @@
+@import './styles/tokens.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -1008,46 +1010,6 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
   }
 }
 
-/* Smooth transitions for interactive elements */
-.btn-hover-lift {
-  @apply transition-all duration-200;
-}
-
-.btn-hover-lift:hover {
-  transform: translateY(-1px);
-  @apply shadow-md;
-}
-
-/* Card hover effect */
-.card-hover {
-  @apply transition-all duration-200;
-}
-
-.card-hover:hover {
-  transform: translateY(-2px);
-  @apply shadow-lg;
-}
-
-/* Glassmorphism effect */
-.glass {
-  @apply bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-/* Smooth focus ring */
-.focus-ring {
-  @apply focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:ring-offset-0;
-}
-
-/* Enterprise surface variants */
-.surface-primary {
-  @apply bg-white dark:bg-gray-900;
-}
-
-.surface-secondary {
-  @apply bg-gray-50/80 dark:bg-gray-800/50;
-}
-
 .surface-elevated {
   @apply bg-white dark:bg-gray-900 shadow-sm;
   border: 1px solid rgba(0, 0, 0, 0.04);
@@ -1062,21 +1024,10 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
   @apply h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent dark:via-gray-700/50;
 }
 
-/* Premium badge */
-.badge-enterprise {
-  @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium;
-  letter-spacing: 0.02em;
-}
-
 /* Image resizable node view */
 .ProseMirror .node-resizableImage {
   display: block;
   max-width: 100%;
-}
-
-/* Improved note card selection */
-.note-card-selected {
-  @apply ring-2 ring-primary-500 ring-offset-2 dark:ring-offset-gray-900;
 }
 
 /* Skeleton loading animation */
@@ -1087,17 +1038,6 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
   100% {
     background-position: 200% 0;
   }
-}
-
-.skeleton {
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-}
-
-.dark .skeleton {
-  background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
-  background-size: 200% 100%;
 }
 
 /* Toast notification enhancements */
@@ -1178,283 +1118,99 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
   }
 }
 
-.slide-in-left {
-  animation: slide-in-left 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
 /* Focus mode editor - transparent background to inherit theme */
 .focus-mode-editor .bg-white {
   background-color: transparent !important;
 }
 
-/* Text Box styling */
-.ProseMirror .text-box {
-  position: relative;
-  transition: box-shadow 0.2s ease, border-color 0.2s ease;
-}
 
-.ProseMirror .text-box:hover {
-  border-color: #10b981 !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
 
-.ProseMirror .text-box:focus-within {
-  border-color: #10b981 !important;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
-}
 
-.ProseMirror .text-box p {
-  margin: 0;
-}
 
-.ProseMirror .text-box p + p {
-  margin-top: 0.5em;
-}
 
-/* Dark mode text box */
-.dark .ProseMirror .text-box {
-  border-color: #374151 !important;
-  background-color: #1f2937 !important;
-}
 
-.dark .ProseMirror .text-box:hover {
-  border-color: #10b981 !important;
-}
 
 /* ========================================
    MOBILE RESPONSIVENESS - Enhanced UX
    ======================================== */
 
 /* Base mobile improvements */
-@media (max-width: 767px) {
-  /* Prevent horizontal overflow */
-  body {
-    overflow-x: hidden;
-  }
+/* ============================================================
+   Responsive behaviour
+   ------------------------------------------------------------
+   Only rules that target elements this app actually renders.
+   The previous block styled ~15 class names (.fab-button,
+   .mobile-bottom-toolbar, .sidebar-tablet, .modal-content, ...)
+   that exist nowhere in the source.
+   ============================================================ */
 
-  /* Smooth scrolling for touch */
+/* Nothing may push the page sideways, at any width. */
+html,
+body {
+  overflow-x: hidden;
+  overscroll-behavior-y: none;
+}
+
+@media (max-width: 767px) {
   * {
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* Ensure content wraps properly */
+  /* 16px minimum stops iOS Safari zooming the viewport on focus. */
+  input,
+  textarea,
+  select {
+    font-size: max(16px, 1em);
+  }
+
   .ProseMirror {
     word-break: break-word;
-    overflow-wrap: break-word;
+    overflow-wrap: anywhere;
     padding: 1rem !important;
-    font-size: 16px; /* Prevents iOS zoom on input focus */
-  }
-
-  /* Better toolbar on mobile - scrollable */
-  .editor-toolbar {
-    overflow-x: auto;
-    overflow-y: hidden;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    padding: 0.5rem;
-  }
-
-  .editor-toolbar::-webkit-scrollbar {
-    display: none;
-  }
-
-  /* Smaller toolbar buttons on mobile */
-  .ProseMirror-menubar button,
-  .toolbar-btn {
-    padding: 0.5rem;
-    min-width: 2.5rem;
-    min-height: 2.5rem;
-  }
-
-  /* Improve touch targets - minimum 44px for iOS guidelines */
-  .note-card {
-    min-height: 4rem;
-    padding: 1rem;
-  }
-
-  /* Touch-friendly list items */
-  .note-card button,
-  .note-card a {
-    min-width: 44px;
-    min-height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  /* Prevent text selection issues during scroll */
-  .notes-list-scroll {
-    -webkit-overflow-scrolling: touch;
-  }
-
-  /* Fix table overflow on mobile */
-  .ProseMirror table {
-    display: block;
-    overflow-x: auto;
-    white-space: nowrap;
-    max-width: 100%;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  /* Fix code block overflow */
-  .ProseMirror pre {
-    overflow-x: auto;
-    max-width: 100%;
-    font-size: 14px;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  /* Improve image responsiveness */
-  .ProseMirror img {
-    max-width: 100%;
-    height: auto;
-  }
-
-  /* Better modal sizes on mobile */
-  .modal-content,
-  [role="dialog"] > div {
-    max-height: 90vh;
-    margin: 1rem;
-    border-radius: 1rem;
-  }
-
-  /* Floating action buttons */
-  .fab-button {
-    position: fixed;
-    bottom: 1.5rem;
-    right: 1.5rem;
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    z-index: 50;
-  }
-
-  /* Mobile-friendly dropdown menus */
-  .dropdown-menu {
-    max-height: 60vh;
-    overflow-y: auto;
-  }
-
-  /* Better sidebar on mobile */
-  .sidebar-mobile {
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100%;
-    width: 280px;
-    z-index: 100;
-  }
-
-  /* Editor full height on mobile */
-  .editor-container {
-    height: calc(100vh - 60px);
-    display: flex;
-    flex-direction: column;
-  }
-
-  /* Note title input on mobile */
-  .note-title-input {
-    font-size: 1.5rem;
-    padding: 0.75rem 1rem;
-  }
-
-  /* Bottom toolbar for mobile editors */
-  .mobile-bottom-toolbar {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: white;
-    border-top: 1px solid #e5e7eb;
-    padding: 0.5rem;
-    z-index: 40;
-    display: flex;
-    justify-content: space-around;
-    gap: 0.5rem;
-  }
-
-  .dark .mobile-bottom-toolbar {
-    background: #1f2937;
-    border-top-color: #374151;
-  }
-
-  /* Hide desktop-only elements */
-  .desktop-only {
-    display: none !important;
+    font-size: 16px;
   }
 }
 
-/* Tablet specific improvements */
-@media (min-width: 768px) and (max-width: 1023px) {
-  .sidebar-tablet {
-    width: 200px;
-  }
-
-  .note-list-tablet {
-    width: 280px;
-  }
+/* Long-form content must never widen its container. */
+.ProseMirror table,
+.ProseMirror pre {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
-/* Large touch screen improvements */
+.ProseMirror img {
+  max-width: 100%;
+  height: auto;
+}
+
+.ProseMirror a,
+.ProseMirror p,
+.ProseMirror li,
+.ProseMirror h1,
+.ProseMirror h2,
+.ProseMirror h3 {
+  overflow-wrap: anywhere;
+}
+
+/* Touch pointers get comfortable hit areas without inflating every
+   button on desktop. `.qn-inline-target` opts small inline affordances
+   (star toggles inside cards) out of the 44px floor. */
 @media (hover: none) and (pointer: coarse) {
-  /* Increase all interactive element sizes for touch */
-  button:not(.inline-btn),
-  a:not(.inline-link),
-  [role="button"] {
-    min-height: 44px;
-    min-width: 44px;
+  button:not(.qn-inline-target),
+  [role='button']:not(.qn-inline-target),
+  [role='menuitem'] {
+    min-height: var(--qn-touch-target);
   }
 
-  /* Better hover alternatives for touch */
-  .hover-highlight:active {
-    background-color: rgba(59, 130, 246, 0.1);
-  }
-
-  /* Remove hover effects that look broken on touch */
   .note-card:hover {
     transform: none;
   }
 }
 
-/* Safe area insets for notched devices */
-@supports (padding-top: env(safe-area-inset-top)) {
-  .safe-top {
-    padding-top: env(safe-area-inset-top);
-  }
-
-  .safe-bottom {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-
-  .mobile-bottom-toolbar {
-    padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
-  }
-}
-
-/* Landscape mode adjustments */
-@media (max-height: 500px) and (orientation: landscape) {
-  .modal-content {
-    max-height: 85vh;
-  }
-
-  .editor-toolbar {
-    padding: 0.25rem;
-  }
-
-  .toolbar-btn {
-    padding: 0.25rem;
-  }
-}
-
-/* Focus visible for keyboard navigation (accessibility) */
-@media (hover: hover) {
-  button:focus-visible,
-  a:focus-visible,
-  input:focus-visible,
-  textarea:focus-visible {
-    outline: 2px solid #10b981;
-    outline-offset: 2px;
+@supports (padding: env(safe-area-inset-bottom)) {
+  .qn-safe-bottom {
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
   }
 }
 
@@ -1538,33 +1294,6 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
   color: #9ca3af;
 }
 
-/* Enhanced note card with smooth interactions */
-.note-card-enhanced {
-  position: relative;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.note-card-enhanced::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 8px;
-  bottom: 8px;
-  width: 3px;
-  border-radius: 0 4px 4px 0;
-  background: transparent;
-  transition: all 0.2s ease;
-}
-
-.note-card-enhanced:hover::before {
-  background: rgba(16, 185, 129, 0.4);
-}
-
-.note-card-enhanced.is-selected::before {
-  background: #10b981;
-  box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
-}
-
 /* Quick Note button pulse effect */
 @keyframes subtle-pulse {
   0%, 100% { box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.15), 0 2px 4px -2px rgba(16, 185, 129, 0.1); }
@@ -1611,39 +1340,11 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
     radial-gradient(ellipse at 50% 0%, rgba(16, 185, 129, 0.03) 0%, transparent 50%);
 }
 
-/* Toolbar button active state ring */
-.toolbar-btn-active {
-  background-color: rgba(16, 185, 129, 0.08);
-  color: #059669;
-  box-shadow: inset 0 0 0 1px rgba(16, 185, 129, 0.15);
-}
-
-.dark .toolbar-btn-active {
-  background-color: rgba(16, 185, 129, 0.12);
-  color: #34d399;
-  box-shadow: inset 0 0 0 1px rgba(16, 185, 129, 0.2);
-}
-
 /* Toast notifications enterprise style */
 [data-sonner-toaster] [data-sonner-toast],
 div[role="status"][class*="go"] {
   border-radius: 16px !important;
   font-weight: 500 !important;
-}
-
-/* Enterprise list item active state */
-.list-item-active {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.06) 0%, rgba(20, 184, 166, 0.04) 100%);
-  border-left: 3px solid #10b981;
-}
-
-.dark .list-item-active {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(20, 184, 166, 0.05) 100%);
-}
-
-/* Smooth sidebar section transitions */
-.sidebar-section {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Status indicator styles */
@@ -1671,20 +1372,6 @@ div[role="status"][class*="go"] {
 
 .dark .card-selected {
   box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.4), 0 2px 8px -2px rgba(16, 185, 129, 0.15);
-}
-
-/* Sidebar nav item hover */
-.nav-item-hover {
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.nav-item-hover:hover {
-  background-color: rgba(0, 0, 0, 0.02);
-  transform: translateX(1px);
-}
-
-.dark .nav-item-hover:hover {
-  background-color: rgba(255, 255, 255, 0.02);
 }
 
 /* Enterprise empty state illustration */
@@ -1721,4 +1408,78 @@ div[role="status"][class*="go"] {
 @keyframes badge-shine {
   0%, 100% { transform: translateX(-100%) translateY(-100%); }
   50% { transform: translateX(100%) translateY(100%); }
+}
+
+/* ============================================================
+   Word-style text box
+   ------------------------------------------------------------
+   Geometry lives on the node (see TextBoxExtension); this only
+   describes the chrome. The container that positions absolute boxes
+   must establish a positioning context, otherwise a free-positioned
+   box would resolve against the viewport.
+   ============================================================ */
+.ProseMirror {
+  position: relative;
+}
+
+.qn-text-box {
+  position: relative;
+  box-sizing: border-box;
+  min-width: 120px;
+  min-height: 60px;
+  padding: 12px 14px;
+  border-radius: var(--qn-radius-card);
+  border: 1px solid var(--qn-border-strong);
+  background: var(--qn-surface-sunken);
+  transition: border-color var(--qn-duration-fast) var(--qn-ease),
+    box-shadow var(--qn-duration-fast) var(--qn-ease);
+}
+
+.qn-text-box[data-border='none'] {
+  border-color: transparent;
+}
+
+.qn-text-box[data-bg='none'] {
+  background: transparent;
+}
+
+.qn-text-box:hover {
+  border-color: var(--qn-accent-border);
+}
+
+.qn-text-box--selected {
+  border-color: var(--qn-accent);
+  box-shadow: 0 0 0 3px var(--qn-accent-soft);
+}
+
+.qn-text-box--dragging {
+  cursor: grabbing;
+  user-select: none;
+}
+
+/* A free-positioned box is lifted out of the flow, so surrounding text
+   runs underneath it exactly as it does in a word processor. */
+.qn-text-box[data-wrap='absolute'] {
+  position: absolute;
+}
+
+.qn-text-box__content > p:last-child {
+  margin-bottom: 0;
+}
+
+.qn-text-box__content > p:first-child {
+  margin-top: 0;
+}
+
+/* Boxes must not overflow a narrow editor. */
+@media (max-width: 767px) {
+  .qn-text-box {
+    max-width: 100%;
+  }
+
+  .qn-text-box[data-wrap='left'],
+  .qn-text-box[data-wrap='right'] {
+    float: none;
+    margin: 8px 0;
+  }
 }

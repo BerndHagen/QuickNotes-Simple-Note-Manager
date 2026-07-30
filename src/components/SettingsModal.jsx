@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
+import { Avatar, Field, SegmentedControl, Toggle } from './ui'
 import {
   X,
   User,
@@ -34,6 +35,7 @@ import { backend, isBackendConfigured, getRedirectUrl, deleteUserAccount } from 
 import { clearLocalData } from '../lib/db'
 import { useTranslation, LANGUAGES } from '../lib/useTranslation'
 import toast from 'react-hot-toast'
+import LegacyDialog from './ui/LegacyDialog'
 
 export default function SettingsModal() {
   const { 
@@ -64,6 +66,14 @@ export default function SettingsModal() {
     setTermsModalOpen,
     trashRetentionDays,
     setTrashRetentionDays,
+    notePreviewLines,
+    setNotePreviewLines,
+    dateFormat,
+    setDateFormat,
+    compactMode,
+    setCompactMode,
+    autoSaveDelay,
+    setAutoSaveDelay,
   } = useUIStore()
   const { notes, folders, tags, user, setUser, syncWithBackend } = useNotesStore()
   const { theme, setTheme } = useThemeStore()
@@ -295,7 +305,7 @@ export default function SettingsModal() {
   if (!settingsOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm modal-backdrop-animate">
+    <LegacyDialog label="Settings" onClose={() => setSettingsOpen(false)} align="center">
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-[#cbd1db] dark:border-gray-700 w-full max-w-3xl mx-4 h-[80vh] overflow-hidden flex flex-col modal-animate">
         <div className="flex items-center justify-between px-6 py-5 bg-gradient-to-r from-emerald-600 to-teal-600">
           <div className="text-white">
@@ -513,6 +523,75 @@ export default function SettingsModal() {
                   </div>
                 </div>
 
+                {/* Note list display.
+                    These four settings already existed in the store,
+                    with translations in nine languages — but they had
+                    no UI and nothing read them. They are now surfaced
+                    and consumed by NoteCard and RichTextEditor. */}
+                <div>
+                  <h4 className="mb-3 text-sm font-medium text-gray-900 dark:text-white">
+                    {t('settings.noteListDisplay', 'Note list display')}
+                  </h4>
+                  <div className="space-y-4 rounded-card border border-subtle bg-surface-sunken p-4">
+                    <Field
+                      label={t('settings.notePreviewLines')}
+                      hint={t('settings.notePreviewLinesDesc')}
+                    >
+                      {({ id, ...a11y }) => (
+                        <SegmentedControl
+                          {...a11y}
+                          label={t('settings.notePreviewLines')}
+                          value={String(notePreviewLines)}
+                          onChange={(value) => setNotePreviewLines(Number(value))}
+                          options={[
+                            { value: '0', label: t('settings.previewNone', 'None') },
+                            { value: '1', label: '1' },
+                            { value: '2', label: '2' },
+                            { value: '3', label: '3' },
+                          ]}
+                        />
+                      )}
+                    </Field>
+
+                    <Field label={t('settings.dateFormat')} hint={t('settings.dateFormatDesc')}>
+                      {() => (
+                        <SegmentedControl
+                          label={t('settings.dateFormat')}
+                          value={dateFormat}
+                          onChange={setDateFormat}
+                          options={[
+                            { value: 'relative', label: t('settings.dateFormatRelative') },
+                            { value: 'absolute', label: t('settings.dateFormatAbsolute') },
+                          ]}
+                        />
+                      )}
+                    </Field>
+
+                    <Toggle
+                      checked={compactMode}
+                      onChange={setCompactMode}
+                      label={t('settings.compactMode')}
+                      description={t('settings.compactModeDesc')}
+                    />
+
+                    <Field label={t('settings.autoSaveDelay')} hint={t('settings.autoSaveDelayDesc')}>
+                      {() => (
+                        <SegmentedControl
+                          label={t('settings.autoSaveDelay')}
+                          value={String(autoSaveDelay)}
+                          onChange={(value) => setAutoSaveDelay(Number(value))}
+                          options={[
+                            { value: '150', label: '0.15s' },
+                            { value: '300', label: '0.3s' },
+                            { value: '800', label: '0.8s' },
+                            { value: '1500', label: '1.5s' },
+                          ]}
+                        />
+                      )}
+                    </Field>
+                  </div>
+                </div>
+
                 <div>
                   <h4 className="mb-3 text-sm font-medium text-gray-900 dark:text-white">
                     {t('settings.defaultSortOrder')}
@@ -566,20 +645,7 @@ export default function SettingsModal() {
                 {user ? (
                   <div className="space-y-6">
                     <div className="flex items-center gap-4 p-4 rounded-lg bg-gray-50 dark:bg-gray-900">
-                      <div className="flex items-center justify-center w-16 h-16 overflow-hidden rounded-full bg-primary-100 dark:bg-primary-900">
-                        {user.user_metadata?.avatar_url ? (
-                          <img 
-                            src={user.user_metadata.avatar_url} 
-                            alt="Profile" 
-                            className="object-cover w-full h-full"
-                            onError={(e) => {
-                              e.target.style.display = 'none'
-                              e.target.nextSibling.style.display = 'block'
-                            }}
-                          />
-                        ) : null}
-                        <User className={`w-8 h-8 text-primary-600 dark:text-primary-400 ${user.user_metadata?.avatar_url ? 'hidden' : ''}`} />
-                      </div>
+                      <Avatar user={user} size="xl" />
                       <div className="flex-1">
                         <p className="font-medium text-gray-900 dark:text-white">
                           {user.email}
@@ -904,15 +970,15 @@ export default function SettingsModal() {
                 </div>
                 <div className="space-y-4">
                   <h4 className="text-sm font-medium text-gray-900 dark:text-white">
-                    {t('settings.syncSettings') || 'Sync Settings'}
+                    {t('settings.syncSettings', 'Sync Settings')}
                   </h4>
                   <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        {t('settings.autoSync') || 'Auto Sync'}
+                        {t('settings.autoSync', 'Auto Sync')}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {t('settings.autoSyncDesc') || 'Automatically sync changes in the background'}
+                        {t('settings.autoSyncDesc', 'Automatically sync changes in the background')}
                       </p>
                     </div>
                     <button
@@ -931,10 +997,10 @@ export default function SettingsModal() {
                   <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        {t('settings.syncInterval') || 'Sync Interval'}
+                        {t('settings.syncInterval', 'Sync Interval')}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {t('settings.syncIntervalDesc') || 'How often to sync automatically'}
+                        {t('settings.syncIntervalDesc', 'How often to sync automatically')}
                       </p>
                     </div>
                     <select
@@ -943,21 +1009,21 @@ export default function SettingsModal() {
                       disabled={!autoSync}
                       className="px-3 py-1.5 text-sm border border-[#cbd1db] dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"
                     >
-                      <option value={1}>1 {t('settings.minute') || 'minute'}</option>
-                      <option value={5}>5 {t('settings.minutes') || 'minutes'}</option>
-                      <option value={10}>10 {t('settings.minutes') || 'minutes'}</option>
-                      <option value={15}>15 {t('settings.minutes') || 'minutes'}</option>
-                      <option value={30}>30 {t('settings.minutes') || 'minutes'}</option>
-                      <option value={60}>1 {t('settings.hour') || 'hour'}</option>
+                      <option value={1}>1 {t('settings.minute', 'minute')}</option>
+                      <option value={5}>5 {t('settings.minutes', 'minutes')}</option>
+                      <option value={10}>10 {t('settings.minutes', 'minutes')}</option>
+                      <option value={15}>15 {t('settings.minutes', 'minutes')}</option>
+                      <option value={30}>30 {t('settings.minutes', 'minutes')}</option>
+                      <option value={60}>1 {t('settings.hour', 'hour')}</option>
                     </select>
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        {t('settings.syncOnStartup') || 'Sync on Startup'}
+                        {t('settings.syncOnStartup', 'Sync on Startup')}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {t('settings.syncOnStartupDesc') || 'Sync when app starts'}
+                        {t('settings.syncOnStartupDesc', 'Sync when app starts')}
                       </p>
                     </div>
                     <button
@@ -976,10 +1042,10 @@ export default function SettingsModal() {
                   <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        {t('settings.syncNotifications') || 'Sync Notifications'}
+                        {t('settings.syncNotifications', 'Sync Notifications')}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {t('settings.syncNotificationsDesc') || 'Show notifications after sync'}
+                        {t('settings.syncNotificationsDesc', 'Show notifications after sync')}
                       </p>
                     </div>
                     <button
@@ -1187,6 +1253,6 @@ export default function SettingsModal() {
         </div>
         </div>
       </div>
-    </div>
+    </LegacyDialog>
   )
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Mic, MicOff, AlertCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 

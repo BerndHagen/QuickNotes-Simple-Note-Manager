@@ -1,8 +1,9 @@
-import React, { useMemo } from 'react'
+import { useMemo } from 'react'
 import { Trash2, RotateCcw, X, Clock, AlertTriangle } from 'lucide-react'
 import { useNotesStore, useUIStore } from '../store'
 import { formatDate, htmlToPlainText, truncateText } from '../lib/utils'
 import { useTranslation } from '../lib/useTranslation'
+import LegacyDialog from './ui/LegacyDialog'
 
 export default function TrashView() {
   const { t, language } = useTranslation()
@@ -42,7 +43,7 @@ export default function TrashView() {
   if (!showTrash) return null
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center modal-backdrop-animate" onClick={() => setShowTrash(false)}>
+    <LegacyDialog label="Trash" onClose={() => setShowTrash(false)} align="center">
       <div 
         className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-[#cbd1db] dark:border-gray-700 w-full max-w-2xl mx-4 max-h-[85vh] overflow-hidden flex flex-col modal-animate"
         onClick={(e) => e.stopPropagation()}
@@ -145,6 +146,6 @@ export default function TrashView() {
           )}
         </div>
       </div>
-    </div>
+    </LegacyDialog>
   )
 }

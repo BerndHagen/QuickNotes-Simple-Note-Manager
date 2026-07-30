@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { X, AlertTriangle, Copy, FileText, Trash2, ExternalLink } from 'lucide-react'
 import { useNotesStore, useUIStore } from '../store'
 import toast from 'react-hot-toast'
+import LegacyDialog from './ui/LegacyDialog'
 
 export default function DuplicateDetectionModal() {
   const { duplicateModalOpen, setDuplicateModalOpen } = useUIStore()
@@ -170,7 +171,7 @@ export default function DuplicateDetectionModal() {
   if (!duplicateModalOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm modal-backdrop-animate">
+    <LegacyDialog label="Find duplicates" onClose={() => setDuplicateModalOpen(false)} align="center">
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-[#cbd1db] dark:border-gray-700 w-full max-w-3xl mx-4 max-h-[85vh] overflow-hidden flex flex-col modal-animate">
         <div className="flex items-center justify-between p-5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white shrink-0">
           <div className="flex items-center gap-3">
@@ -314,6 +315,6 @@ export default function DuplicateDetectionModal() {
           </button>
         </div>
       </div>
-    </div>
+    </LegacyDialog>
   )
 }

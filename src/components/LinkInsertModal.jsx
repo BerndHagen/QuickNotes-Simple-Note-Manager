@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { X, Link as LinkIcon, ExternalLink, Unlink } from 'lucide-react'
 import { useUIStore } from '../store'
+import LegacyDialog from './ui/LegacyDialog'
 
 export default function LinkInsertModal({ editor }) {
   const { linkModalOpen, setLinkModalOpen } = useUIStore()
@@ -76,7 +77,7 @@ export default function LinkInsertModal({ editor }) {
   if (!linkModalOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm modal-backdrop-animate">
+    <LegacyDialog label="Insert link" onClose={() => setLinkModalOpen(false)} align="center">
       <div className="modal-animate bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-[#cbd1db] dark:border-gray-700 w-full max-w-md mx-4 overflow-hidden">
         <div className="flex items-center justify-between p-5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
           <div className="flex items-center gap-3">
@@ -174,6 +175,6 @@ export default function LinkInsertModal({ editor }) {
           </div>
         </div>
       </div>
-    </div>
+    </LegacyDialog>
   )
 }

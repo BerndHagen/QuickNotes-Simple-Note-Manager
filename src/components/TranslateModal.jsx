@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import {
   X,
   Languages,
@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { useUIStore } from '../store'
 import { useTranslation } from '../lib/useTranslation'
+import LegacyDialog from './ui/LegacyDialog'
 
 const LANGUAGES = [
   { code: 'en', name: 'English' },
@@ -305,7 +306,7 @@ export default function TranslateModal() {
 
   if (!translateModalOpen) return null
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm modal-backdrop-animate">
+    <LegacyDialog label="Translate" onClose={() => setTranslateModalOpen(false)} align="center">
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-[#cbd1db] dark:border-gray-700 w-full max-w-lg mx-4 max-h-[85vh] overflow-hidden flex flex-col modal-animate">
         <div className="flex items-center justify-between p-5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
           <div className="flex items-center gap-3">
@@ -330,14 +331,14 @@ export default function TranslateModal() {
                 Free Translation Service
               </p>
               <p className="mt-1 text-sm text-blue-600 dark:text-blue-300">
-                {t('translate.freeServiceInfo') || 'Free and reliable translations powered by MyMemory API with multiple fallbacks.'}
+                {t('translate.freeServiceInfo', 'Free and reliable translations powered by MyMemory API with multiple fallbacks.')}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex-1">
               <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                <Globe className="inline w-4 h-4 mr-1" /> {t('translate.from') || 'From'}
+                <Globe className="inline w-4 h-4 mr-1" /> {t('translate.from', 'From')}
               </label>
               <select
                 value={sourceLang}
@@ -354,7 +355,7 @@ export default function TranslateModal() {
             
             <div className="flex-1">
               <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                <Globe className="inline w-4 h-4 mr-1" /> {t('translate.to') || 'To'}
+                <Globe className="inline w-4 h-4 mr-1" /> {t('translate.to', 'To')}
               </label>
               <select
                 value={targetLang}
@@ -372,7 +373,7 @@ export default function TranslateModal() {
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                {t('translate.originalText') || 'Original Text'}
+                {t('translate.originalText', 'Original Text')}
               </label>
               <button
                 onClick={handleCopyText}
@@ -382,12 +383,12 @@ export default function TranslateModal() {
                 {copied ? (
                   <>
                     <Check className="w-4 h-4" />
-                    {t('translate.copied') || 'Copied!'}
+                    {t('translate.copied', 'Copied!')}
                   </>
                 ) : (
                   <>
                     <Copy className="w-4 h-4" />
-                    {t('translate.copyToClipboard') || 'Copy'}
+                    {t('translate.copyToClipboard', 'Copy')}
                   </>
                 )}
               </button>
@@ -395,18 +396,18 @@ export default function TranslateModal() {
             <textarea
               value={sourceText}
               onChange={(e) => setSourceText(e.target.value)}
-              placeholder={t('translate.noTextSelected') || 'Enter or paste text to translate...'}
+              placeholder={t('translate.noTextSelected', 'Enter or paste text to translate...')}
               className="w-full h-40 px-4 py-3 text-gray-900 placeholder-gray-500 border border-[#cbd1db] rounded-lg resize-none bg-gray-50 dark:bg-gray-900 dark:border-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              {sourceText.length} {t('notes.characters') || 'characters'}
+              {sourceText.length} {t('notes.characters', 'characters')}
             </p>
           </div>
           {(translatedText || isTranslating || translationError) && (
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {t('translate.translatedText') || 'Translated Text'}
+                  {t('translate.translatedText', 'Translated Text')}
                 </label>
                 {translatedText && (
                   <button
@@ -421,12 +422,12 @@ export default function TranslateModal() {
                     {copied ? (
                       <>
                         <Check className="w-4 h-4" />
-                        {t('translate.copied') || 'Copied!'}
+                        {t('translate.copied', 'Copied!')}
                       </>
                     ) : (
                       <>
                         <Copy className="w-4 h-4" />
-                        {t('translate.copyToClipboard') || 'Copy'}
+                        {t('translate.copyToClipboard', 'Copy')}
                       </>
                     )}
                   </button>
@@ -436,21 +437,21 @@ export default function TranslateModal() {
                 <textarea
                   value={translatedText}
                   readOnly
-                  placeholder={isTranslating ? (t('translate.translating') || 'Translating...') : (translationError ? (t('translate.translationError') || 'Translation failed, opening Google Translate...') : '')}
+                  placeholder={isTranslating ? (t('translate.translating', 'Translating...')) : (translationError ? (t('translate.translationError', 'Translation failed, opening Google Translate...')) : '')}
                   className="w-full h-40 px-4 py-3 text-gray-900 placeholder-gray-500 border border-[#cbd1db] rounded-lg resize-none bg-green-50 dark:bg-green-900/20 dark:border-green-700 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 />
                 {isTranslating && (
                   <div className="absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-gray-800/80 rounded-lg">
                     <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-500"></div>
-                      {t('translate.translating') || 'Translating...'}
+                      {t('translate.translating', 'Translating...')}
                     </div>
                   </div>
                 )}
               </div>
               {translatedText && (
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  {translatedText.length} {t('notes.characters') || 'characters'}
+                  {translatedText.length} {t('notes.characters', 'characters')}
                 </p>
               )}
             </div>
@@ -462,25 +463,25 @@ export default function TranslateModal() {
           >
             <Languages className="w-5 h-5" />
             {isTranslating 
-              ? (t('translate.translating') || 'Translating...') 
+              ? (t('translate.translating', 'Translating...')) 
               : sourceLang === targetLang 
                 ? 'Select different languages'
-                : (t('translate.translate') || 'Translate')
+                : (t('translate.translate', 'Translate'))
             }
           </button>
         </div>
         <div className="flex items-center justify-between px-6 py-4 border-t border-[#cbd1db] dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            {t('translate.poweredBy') || 'Powered by MyMemory, Lingva & LibreTranslate'}
+            {t('translate.poweredBy', 'Powered by MyMemory, Lingva & LibreTranslate')}
           </p>
           <button
             onClick={handleClose}
             className="px-4 py-2 text-gray-700 transition-colors rounded-lg dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 border border-[#cbd1db] dark:border-gray-600"
           >
-            {t('common.close') || 'Close'}
+            {t('common.close', 'Close')}
           </button>
         </div>
       </div>
-    </div>
+    </LegacyDialog>
   )
 }

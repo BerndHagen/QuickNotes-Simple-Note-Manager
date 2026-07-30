@@ -1,7 +1,8 @@
-import React, { useState, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import { X, Upload, Link, Image as ImageIcon, FileImage, Loader2 } from 'lucide-react'
 import { useUIStore } from '../store'
 import toast from 'react-hot-toast'
+import LegacyDialog from './ui/LegacyDialog'
 
 export default function ImageUploadModal({ editor }) {
   const { imageUploadOpen, setImageUploadOpen } = useUIStore()
@@ -110,7 +111,7 @@ export default function ImageUploadModal({ editor }) {
   if (!imageUploadOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm modal-backdrop-animate">
+    <LegacyDialog label="Insert image" onClose={() => setImageUploadOpen(false)} align="center">
       <div className="modal-animate bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-[#cbd1db] dark:border-gray-700 w-full max-w-lg mx-4 overflow-hidden">
         <div className="flex items-center justify-between p-5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
           <div className="flex items-center gap-3">
@@ -255,6 +256,6 @@ export default function ImageUploadModal({ editor }) {
           </button>
         </div>
       </div>
-    </div>
+    </LegacyDialog>
   )
 }

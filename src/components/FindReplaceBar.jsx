@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { X, Search, Replace, ChevronDown, ChevronUp, CaseSensitive, WholeWord, Regex } from 'lucide-react'
 import { useTranslation } from '../lib/useTranslation'
 

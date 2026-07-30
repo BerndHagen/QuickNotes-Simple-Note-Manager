@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { X, Bell, Calendar, Clock, Trash2, Plus, Check, AlertCircle } from 'lucide-react'
 import { useNotesStore, useUIStore } from '../store'
 import { useTranslation } from '../lib/useTranslation'
+import LegacyDialog from './ui/LegacyDialog'
 
 export default function ReminderModal() {
   const { reminderModalOpen, setReminderModalOpen, reminderNoteId } = useUIStore()
@@ -158,7 +159,7 @@ export default function ReminderModal() {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center modal-backdrop-animate" onClick={() => setReminderModalOpen(false)}>
+    <LegacyDialog label="Reminders" onClose={() => setReminderModalOpen(false)} align="center">
       <div 
         className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-[#cbd1db] dark:border-gray-700 max-w-md w-full mx-4 modal-animate overflow-hidden"
         onClick={(e) => e.stopPropagation()}
@@ -298,6 +299,6 @@ export default function ReminderModal() {
         )}
         </div>
       </div>
-    </div>
+    </LegacyDialog>
   )
 }

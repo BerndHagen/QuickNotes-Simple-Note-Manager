@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link2, X, Search, FileText, ArrowRight } from 'lucide-react'
 import { useNotesStore } from '../store'
 import { useTranslation } from '../lib/useTranslation'

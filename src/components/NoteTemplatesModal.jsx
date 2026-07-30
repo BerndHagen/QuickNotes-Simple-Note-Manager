@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import {
   X,
   FileText,
@@ -18,6 +18,7 @@ import {
   Utensils
 } from 'lucide-react'
 import { useUIStore, useNotesStore } from '../store'
+import LegacyDialog from './ui/LegacyDialog'
 
 const getDate = () => new Date().toLocaleDateString()
 const getFullDate = () => new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
@@ -1469,7 +1470,7 @@ export default function NoteTemplatesModal() {
   }
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+    <LegacyDialog label="Note templates" onClose={() => setTemplatesModalOpen(false)} align="center">
       <div 
         className="absolute inset-0 bg-black/50 backdrop-blur-sm modal-backdrop-animate"
         onClick={() => setTemplatesModalOpen(false)}
@@ -1537,6 +1538,6 @@ export default function NoteTemplatesModal() {
           </div>
         </div>
       </div>
-    </div>
+    </LegacyDialog>
   )
 }

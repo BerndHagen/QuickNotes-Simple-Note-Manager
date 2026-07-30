@@ -1,348 +1,288 @@
-import React, { useState, useEffect, useCallback } from 'react'
-import { X, Keyboard, Edit3, RotateCcw, Save, AlertCircle } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { AlertCircle, Keyboard, Lock, RotateCcw, Save } from 'lucide-react'
 import { useUIStore } from '../store'
-export const DEFAULT_SHORTCUTS = {
-  newNote: { key: 'n', ctrl: true, description: 'New Note' },
-  save: { key: 's', ctrl: true, description: 'Save Note' },
-  search: { key: 'f', ctrl: true, description: 'Find & Replace' },
-  globalSearch: { key: 'k', ctrl: true, description: 'Global Search' },
-  focusMode: { key: 'f', ctrl: true, shift: true, description: 'Focus Mode' },
-  bold: { key: 'b', ctrl: true, description: 'Bold Text' },
-  italic: { key: 'i', ctrl: true, description: 'Italic Text' },
-  underline: { key: 'u', ctrl: true, description: 'Underline Text' },
-  strikethrough: { key: 'd', ctrl: true, description: 'Strikethrough' },
-  link: { key: 'k', ctrl: true, shift: true, description: 'Insert Link' },
-  undo: { key: 'z', ctrl: true, description: 'Undo' },
-  redo: { key: 'y', ctrl: true, description: 'Redo' },
-  heading1: { key: '1', ctrl: true, alt: true, description: 'Heading 1' },
-  heading2: { key: '2', ctrl: true, alt: true, description: 'Heading 2' },
-  heading3: { key: '3', ctrl: true, alt: true, description: 'Heading 3' },
-  bulletList: { key: '8', ctrl: true, shift: true, description: 'Bullet List' },
-  numberedList: { key: '7', ctrl: true, shift: true, description: 'Numbered List' },
-  taskList: { key: '9', ctrl: true, shift: true, description: 'Task List' },
-  codeBlock: { key: 'e', ctrl: true, alt: true, description: 'Code Block' },
-  quote: { key: 'q', ctrl: true, shift: true, description: 'Quote' },
-  escape: { key: 'Escape', description: 'Close Modal / Exit Focus Mode' },
-  delete: { key: 'Delete', ctrl: true, description: 'Delete Note' },
-  duplicate: { key: 'd', ctrl: true, shift: true, description: 'Duplicate Note' },
-  archive: { key: 'e', ctrl: true, shift: true, description: 'Archive Note' },
-  settings: { key: ',', ctrl: true, description: 'Open Settings' },
-}
-export const loadCustomShortcuts = () => {
-  try {
-    const saved = localStorage.getItem('quicknotes-shortcuts')
-    if (saved) {
-      return { ...DEFAULT_SHORTCUTS, ...JSON.parse(saved) }
-    }
-  } catch (e) {
-  }
-  return DEFAULT_SHORTCUTS
-}
-export const saveCustomShortcuts = (shortcuts) => {
-  try {
-    const customized = {}
-    for (const [action, shortcut] of Object.entries(shortcuts)) {
-      const defaultShortcut = DEFAULT_SHORTCUTS[action]
-      if (defaultShortcut && JSON.stringify(shortcut) !== JSON.stringify(defaultShortcut)) {
-        customized[action] = shortcut
-      }
-    }
-    localStorage.setItem('quicknotes-shortcuts', JSON.stringify(customized))
-  } catch (e) {
-  }
-}
-export const formatShortcut = (shortcut) => {
-  const parts = []
-  if (shortcut.ctrl) parts.push('Ctrl')
-  if (shortcut.alt) parts.push('Alt')
-  if (shortcut.shift) parts.push('Shift')
-  
-  let keyDisplay = shortcut.key
-  if (keyDisplay === ' ') keyDisplay = 'Space'
-  else if (keyDisplay === 'Escape') keyDisplay = 'Esc'
-  else if (keyDisplay === 'Delete') keyDisplay = 'Del'
-  else if (keyDisplay === 'ArrowUp') keyDisplay = '\u2191'
-  else if (keyDisplay === 'ArrowDown') keyDisplay = '\u2193'
-  else if (keyDisplay === 'ArrowLeft') keyDisplay = '\u2190'
-  else if (keyDisplay === 'ArrowRight') keyDisplay = '\u2192'
-  else if (keyDisplay.length === 1) keyDisplay = keyDisplay.toUpperCase()
-  
-  parts.push(keyDisplay)
-  return parts.join(' + ')
-}
-export const matchesShortcut = (event, shortcut) => {
-  if (!shortcut) return false
-  
-  const ctrlMatch = !!shortcut.ctrl === (event.ctrlKey || event.metaKey)
-  const altMatch = !!shortcut.alt === event.altKey
-  const shiftMatch = !!shortcut.shift === event.shiftKey
-  const keyMatch = event.key.toLowerCase() === shortcut.key.toLowerCase()
-  
-  return ctrlMatch && altMatch && shiftMatch && keyMatch
-}
+import { useTranslation } from '../lib/useTranslation'
+import {
+  DEFAULT_SHORTCUTS,
+  formatShortcut,
+  isCustomisable,
+  loadShortcuts,
+  saveShortcuts,
+} from '../lib/shortcuts'
+import { Modal, Button, IconButton } from './ui'
+
+const CATEGORIES = [
+  {
+    id: 'workspace',
+    name: 'Workspace',
+    actions: [
+      'newNote',
+      'globalSearch',
+      'findReplace',
+      'toggleSidebar',
+      'focusMode',
+      'settings',
+      'shortcuts',
+    ],
+  },
+  {
+    id: 'notes',
+    name: 'Note actions',
+    actions: ['templates', 'duplicate', 'archive', 'insertLink', 'export', 'import'],
+  },
+  {
+    id: 'formatting',
+    name: 'Text formatting',
+    actions: ['bold', 'italic', 'underline', 'strikethrough', 'undo', 'redo'],
+  },
+  {
+    id: 'blocks',
+    name: 'Headings, lists & blocks',
+    actions: [
+      'heading1',
+      'heading2',
+      'heading3',
+      'bulletList',
+      'numberedList',
+      'taskList',
+      'quote',
+      'codeBlock',
+    ],
+  },
+]
+
+const sameBinding = (a, b) =>
+  a?.key?.toLowerCase() === b?.key?.toLowerCase() &&
+  !!a?.ctrl === !!b?.ctrl &&
+  !!a?.alt === !!b?.alt &&
+  !!a?.shift === !!b?.shift
 
 export default function KeyboardShortcutsModal() {
   const { shortcutsModalOpen, setShortcutsModalOpen } = useUIStore()
-  const [shortcuts, setShortcuts] = useState(loadCustomShortcuts())
-  const [editingAction, setEditingAction] = useState(null)
-  const [recordingKey, setRecordingKey] = useState(null)
+  const { t } = useTranslation()
+
+  const [shortcuts, setShortcuts] = useState(() => loadShortcuts())
+  const [recording, setRecording] = useState(null)
   const [conflict, setConflict] = useState(null)
-  const [hasChanges, setHasChanges] = useState(false)
+  const [dirty, setDirty] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const firstFieldRef = useRef(null)
 
   useEffect(() => {
-    if (shortcutsModalOpen) {
-      setShortcuts(loadCustomShortcuts())
-      setEditingAction(null)
-      setRecordingKey(null)
-      setConflict(null)
-      setHasChanges(false)
-    }
+    if (!shortcutsModalOpen) return
+    setShortcuts(loadShortcuts())
+    setRecording(null)
+    setConflict(null)
+    setDirty(false)
+    setSaved(false)
   }, [shortcutsModalOpen])
-  useEffect(() => {
-    if (!editingAction) return
 
-    const handleKeyDown = (e) => {
+  useEffect(() => {
+    if (!recording) return
+
+    const onKeyDown = (e) => {
       e.preventDefault()
       e.stopPropagation()
-      if (['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) {
+      if (['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) return
+      if (e.key === 'Escape') {
+        setRecording(null)
         return
       }
 
-      const newShortcut = {
+      const candidate = {
+        ...shortcuts[recording],
         key: e.key,
         ctrl: e.ctrlKey || e.metaKey,
         alt: e.altKey,
         shift: e.shiftKey,
-        description: shortcuts[editingAction].description,
-      }
-      for (const [action, shortcut] of Object.entries(shortcuts)) {
-        if (action !== editingAction && 
-            shortcut.key?.toLowerCase() === newShortcut.key.toLowerCase() &&
-            !!shortcut.ctrl === newShortcut.ctrl &&
-            !!shortcut.alt === newShortcut.alt &&
-            !!shortcut.shift === newShortcut.shift) {
-          setConflict({ action, shortcut })
-          setRecordingKey(newShortcut)
-          return
-        }
       }
 
-      setShortcuts((prev) => ({
-        ...prev,
-        [editingAction]: newShortcut,
-      }))
-      setEditingAction(null)
-      setRecordingKey(null)
-      setConflict(null)
-      setHasChanges(true)
+      const clash = Object.entries(shortcuts).find(
+        ([action, shortcut]) => action !== recording && sameBinding(shortcut, candidate)
+      )
+      if (clash) {
+        setConflict({ action: clash[0], candidate })
+        return
+      }
+
+      setShortcuts((prev) => ({ ...prev, [recording]: candidate }))
+      setRecording(null)
+      setDirty(true)
+      setSaved(false)
     }
 
-    window.addEventListener('keydown', handleKeyDown, true)
-    return () => window.removeEventListener('keydown', handleKeyDown, true)
-  }, [editingAction, shortcuts])
+    window.addEventListener('keydown', onKeyDown, true)
+    return () => window.removeEventListener('keydown', onKeyDown, true)
+  }, [recording, shortcuts])
+
+  const modifiedCount = useMemo(
+    () =>
+      Object.entries(shortcuts).filter(
+        ([action, shortcut]) =>
+          isCustomisable(action) && !sameBinding(shortcut, DEFAULT_SHORTCUTS[action])
+      ).length,
+    [shortcuts]
+  )
 
   const handleSave = () => {
-    saveCustomShortcuts(shortcuts)
-    setHasChanges(false)
+    saveShortcuts(shortcuts)
+    setDirty(false)
+    setSaved(true)
   }
 
-  const handleReset = () => {
-    setShortcuts({ ...DEFAULT_SHORTCUTS })
-    setHasChanges(true)
-  }
-
-  const handleResetSingle = (action) => {
+  const resolveConflict = () => {
+    // Clearing the clashing binding leaves that action unbound rather
+    // than silently giving two actions the same keys.
     setShortcuts((prev) => ({
       ...prev,
-      [action]: { ...DEFAULT_SHORTCUTS[action] },
+      [conflict.action]: {
+        ...prev[conflict.action],
+        key: '',
+        ctrl: false,
+        alt: false,
+        shift: false,
+      },
+      [recording]: conflict.candidate,
     }))
-    setHasChanges(true)
-  }
-
-  const handleConfirmConflict = () => {
-    if (recordingKey && editingAction) {
-      const conflictAction = conflict.action
-      setShortcuts((prev) => ({
-        ...prev,
-        [conflictAction]: { ...prev[conflictAction], key: '', ctrl: false, alt: false, shift: false },
-        [editingAction]: recordingKey,
-      }))
-      setEditingAction(null)
-      setRecordingKey(null)
-      setConflict(null)
-      setHasChanges(true)
-    }
-  }
-
-  const handleCancelConflict = () => {
-    setEditingAction(null)
-    setRecordingKey(null)
     setConflict(null)
+    setRecording(null)
+    setDirty(true)
+    setSaved(false)
   }
-
-  if (!shortcutsModalOpen) return null
-
-  const categories = [
-    {
-      name: 'General',
-      actions: ['newNote', 'save', 'search', 'globalSearch', 'focusMode', 'settings', 'escape'],
-    },
-    {
-      name: 'Text Formatting',
-      actions: ['bold', 'italic', 'underline', 'strikethrough', 'link'],
-    },
-    {
-      name: 'Headings & Blocks',
-      actions: ['heading1', 'heading2', 'heading3', 'quote', 'codeBlock'],
-    },
-    {
-      name: 'Lists',
-      actions: ['bulletList', 'numberedList', 'taskList'],
-    },
-    {
-      name: 'Note Actions',
-      actions: ['delete', 'duplicate', 'archive', 'undo', 'redo'],
-    },
-  ]
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
-      <div 
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm modal-backdrop-animate"
-        onClick={() => setShortcutsModalOpen(false)}
-      />
-      <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-[#cbd1db] dark:border-gray-700 w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col modal-animate">
-        <div className="flex items-center justify-between p-5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
-          <div className="flex items-center gap-3">
-            <Keyboard className="w-6 h-6" />
-            <div>
-              <h2 className="text-lg font-bold">Keyboard Shortcuts</h2>
-              <p className="text-sm text-white/70">Click on a shortcut to customize it</p>
-            </div>
-          </div>
-          <button
-            onClick={() => setShortcutsModalOpen(false)}
-            className="p-2 rounded-full hover:bg-white/20 transition-colors"
+    <Modal
+      open={shortcutsModalOpen}
+      onClose={() => setShortcutsModalOpen(false)}
+      title={t('sidebar.shortcuts', 'Keyboard shortcuts')}
+      description="Workspace shortcuts are customisable. Editor shortcuts come from the editor itself and cannot be rebound."
+      icon={Keyboard}
+      size="xl"
+      initialFocusRef={firstFieldRef}
+      footer={
+        <>
+          <Button
+            variant="ghost"
+            icon={RotateCcw}
+            className="sm:mr-auto"
+            disabled={modifiedCount === 0}
+            onClick={() => {
+              setShortcuts({ ...DEFAULT_SHORTCUTS })
+              setDirty(true)
+              setSaved(false)
+            }}
           >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-        {conflict && (
-          <div className="mx-6 mt-4 p-4 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-xl">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <p className="text-sm text-amber-800 dark:text-amber-200">
-                  This shortcut is already used by <strong>"{conflict.shortcut.description}"</strong>.
-                  Do you want to replace it?
-                </p>
-                <div className="flex gap-2 mt-3">
-                  <button
-                    onClick={handleConfirmConflict}
-                    className="px-3 py-1.5 text-sm bg-amber-600 text-white rounded-lg hover:bg-amber-700"
-                  >
-                    Replace
-                  </button>
-                  <button
-                    onClick={handleCancelConflict}
-                    className="px-3 py-1.5 text-sm bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
+            Reset all
+          </Button>
+          <Button variant="ghost" onClick={() => setShortcutsModalOpen(false)}>
+            {t('common.close', 'Close')}
+          </Button>
+          <Button variant="primary" icon={Save} disabled={!dirty} onClick={handleSave}>
+            {saved ? 'Saved' : 'Save changes'}
+          </Button>
+        </>
+      }
+    >
+      {conflict && (
+        <div
+          role="alert"
+          className="mb-4 flex gap-2.5 rounded-card border border-[var(--qn-warning-border)] bg-warning-soft p-3"
+        >
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-warning-text" aria-hidden="true" />
+          <div className="min-w-0 flex-1">
+            <p className="text-ui-md text-warning-text">
+              <strong>{formatShortcut(conflict.candidate)}</strong> is already used by{' '}
+              <strong>{DEFAULT_SHORTCUTS[conflict.action]?.description}</strong>. Reassigning it
+              leaves that action without a shortcut.
+            </p>
+            <div className="mt-2.5 flex gap-2">
+              <Button size="sm" variant="primary" onClick={resolveConflict}>
+                Reassign
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  setConflict(null)
+                  setRecording(null)
+                }}
+              >
+                {t('common.cancel', 'Cancel')}
+              </Button>
             </div>
           </div>
-        )}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          {categories.map((category) => (
-            <div key={category.name}>
-              <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
-                {category.name}
-              </h3>
-              <div className="space-y-2">
-                {category.actions.map((action) => {
-                  const shortcut = shortcuts[action]
-                  if (!shortcut) return null
+        </div>
+      )}
 
-                  const isEditing = editingAction === action
-                  const isModified = JSON.stringify(shortcut) !== JSON.stringify(DEFAULT_SHORTCUTS[action])
+      <div className="space-y-6">
+        {CATEGORIES.map((category, categoryIndex) => (
+          <section key={category.id}>
+            <h3 className="mb-2 text-ui-xs font-semibold uppercase tracking-wide text-content-muted">
+              {category.name}
+            </h3>
+            <ul className="divide-y divide-[var(--qn-border-subtle)] overflow-hidden rounded-card border border-subtle">
+              {category.actions.map((action, actionIndex) => {
+                const shortcut = shortcuts[action]
+                if (!shortcut) return null
+                const editable = isCustomisable(action)
+                const isRecording = recording === action
+                const modified = editable && !sameBinding(shortcut, DEFAULT_SHORTCUTS[action])
 
-                  return (
-                    <div
-                      key={action}
-                      className={`flex items-center justify-between p-3 rounded-xl transition-colors ${
-                        isEditing 
-                          ? 'bg-emerald-50 dark:bg-emerald-900/30 ring-2 ring-emerald-500' 
-                          : 'bg-gray-50 dark:bg-gray-800/60 hover:bg-gray-100 dark:hover:bg-gray-700'
-                      }`}
-                    >
-                      <span className="text-gray-700 dark:text-gray-300">{shortcut.description}</span>
-                      <div className="flex items-center gap-2">
-                        {isModified && (
-                          <button
-                            onClick={() => handleResetSingle(action)}
-                            className="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                            title="Reset to default"
-                          >
-                            <RotateCcw className="w-4 h-4" />
-                          </button>
-                        )}
+                return (
+                  <li
+                    key={action}
+                    className="flex items-center justify-between gap-3 bg-surface-raised px-3 py-2"
+                  >
+                    <span className="min-w-0 flex-1 truncate text-ui-md text-content">
+                      {shortcut.description}
+                    </span>
+                    <span className="flex shrink-0 items-center gap-1.5">
+                      {modified && (
+                        <IconButton
+                          icon={RotateCcw}
+                          size="sm"
+                          label={`Reset ${shortcut.description} to default`}
+                          onClick={() => {
+                            setShortcuts((prev) => ({
+                              ...prev,
+                              [action]: { ...DEFAULT_SHORTCUTS[action] },
+                            }))
+                            setDirty(true)
+                            setSaved(false)
+                          }}
+                        />
+                      )}
+                      {editable ? (
                         <button
-                          onClick={() => setEditingAction(isEditing ? null : action)}
-                          className={`px-3 py-1.5 rounded-lg font-mono text-sm transition-colors flex items-center gap-2 ${
-                            isEditing
-                              ? 'bg-emerald-500 text-white animate-pulse'
-                              : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-500'
+                          ref={categoryIndex === 0 && actionIndex === 0 ? firstFieldRef : undefined}
+                          type="button"
+                          onClick={() => setRecording(isRecording ? null : action)}
+                          aria-label={`Change shortcut for ${shortcut.description}. Currently ${formatShortcut(shortcut)}`}
+                          className={`min-w-[108px] rounded-control px-2.5 py-1 font-mono text-ui-sm transition-colors duration-fast ${
+                            isRecording
+                              ? 'bg-accent text-accent-on'
+                              : 'bg-surface-sunken text-content hover:bg-surface-hover'
                           }`}
                         >
-                          {isEditing ? (
-                            <>Press keys...</>
-                          ) : (
-                            <>
-                              {formatShortcut(shortcut)}
-                              <Edit3 className="w-3 h-3 opacity-50" />
-                            </>
-                          )}
+                          {isRecording ? 'Press keys…' : formatShortcut(shortcut)}
                         </button>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="flex items-center justify-between p-6 border-t border-[#cbd1db] dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-          <button
-            onClick={handleReset}
-            className="flex items-center gap-2 px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors border border-[#cbd1db] dark:border-gray-600 rounded-lg"
-          >
-            <RotateCcw className="w-4 h-4" />
-            Reset All to Default
-          </button>
-          <div className="flex gap-3">
-            <button
-              onClick={() => setShortcutsModalOpen(false)}
-              className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors border border-[#cbd1db] dark:border-gray-600 rounded-lg"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={!hasChanges}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-colors ${
-                hasChanges
-                  ? 'bg-emerald-500 text-white hover:bg-emerald-600'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
-              }`}
-            >
-              <Save className="w-4 h-4" />
-              Save Changes
-            </button>
-          </div>
-        </div>
+                      ) : (
+                        <span
+                          title="Provided by the editor and not rebindable"
+                          className="inline-flex min-w-[108px] items-center justify-center gap-1.5 rounded-control bg-surface-sunken px-2.5 py-1 font-mono text-ui-sm text-content-muted"
+                        >
+                          <Lock className="h-3 w-3 opacity-60" aria-hidden="true" />
+                          {formatShortcut(shortcut)}
+                        </span>
+                      )}
+                    </span>
+                  </li>
+                )
+              })}
+            </ul>
+          </section>
+        ))}
       </div>
-    </div>
+    </Modal>
   )
 }

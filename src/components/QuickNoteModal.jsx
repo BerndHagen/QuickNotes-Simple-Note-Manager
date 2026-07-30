@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { X, Zap, Tag, FolderOpen, Plus } from 'lucide-react'
 import { useNotesStore, useUIStore } from '../store'
 import { createShortcutHandler } from '../lib/utils'
 import { useTranslation } from '../lib/useTranslation'
+import LegacyDialog from './ui/LegacyDialog'
 
 function SmartDropdown({ isOpen, onClose, triggerRef, children, minWidth = 160 }) {
   const dropdownRef = useRef(null)
@@ -208,7 +209,7 @@ export default function QuickNoteModal() {
   if (!quickNoteOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] bg-black/50 backdrop-blur-sm modal-backdrop-animate">
+    <LegacyDialog label="Quick note" onClose={handleClose} align="top">
       <div
         ref={modalRef}
         className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-[#cbd1db] dark:border-gray-700 w-full max-w-2xl mx-4 overflow-hidden modal-animate"
@@ -399,6 +400,6 @@ export default function QuickNoteModal() {
           </button>
         </div>
       </div>
-    </div>
+    </LegacyDialog>
   )
 }

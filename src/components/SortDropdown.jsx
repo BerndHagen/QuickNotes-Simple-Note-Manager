@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Filter, Calendar, Type, FileText, Clock, ChevronDown, Check, GripVertical } from 'lucide-react'
 import { useTranslation } from '../lib/useTranslation'
 const SORT_OPTION_IDS = [
@@ -104,17 +104,19 @@ export function sortNotes(notes, sortOption) {
       case 'title':
         comparison = a.title.localeCompare(b.title, 'de')
         break
-      case 'content':
+      case 'content': {
         const aLen = (a.content || '').length
         const bLen = (b.content || '').length
         comparison = aLen - bLen
         break
+      }
       case 'createdAt':
-      case 'updatedAt':
+      case 'updatedAt': {
         const aDate = new Date(a[option.field])
         const bDate = new Date(b[option.field])
         comparison = aDate - bDate
         break
+      }
       default:
         comparison = 0
     }

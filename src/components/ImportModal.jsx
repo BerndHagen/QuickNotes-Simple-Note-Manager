@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+import { useState, useRef } from 'react'
 import {
   X,
   Upload,
@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { useNotesStore, useUIStore } from '../store'
 import { useTranslation } from '../lib/useTranslation'
+import LegacyDialog from './ui/LegacyDialog'
 
 const markdownToHtml = (markdown) => {
   if (!markdown) return ''
@@ -51,7 +52,7 @@ const markdownToHtml = (markdown) => {
   html = html.replace(/^- \[x\] (.+)$/gm, '<ul data-type="taskList"><li data-type="taskItem" data-checked="true">$1</li></ul>')
   html = html.replace(/^- \[ \] (.+)$/gm, '<ul data-type="taskList"><li data-type="taskItem" data-checked="false">$1</li></ul>')
   
-  html = html.replace(/^[\-\*] (.+)$/gm, '<li>$1</li>')
+  html = html.replace(/^[-*] (.+)$/gm, '<li>$1</li>')
   
   html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
   
@@ -96,7 +97,7 @@ const parseFile = async (file) => {
       
       switch (extension) {
         case 'md':
-        case 'markdown':
+        case 'markdown': {
           const titleMatch = content.match(/^# (.+)$/m)
           if (titleMatch) {
             title = titleMatch[1]
@@ -115,8 +116,9 @@ const parseFile = async (file) => {
           
           htmlContent = markdownToHtml(cleanContent)
           break
-          
-        case 'txt':
+        }
+
+        case 'txt': {
           const lines = content.split('\n')
           if (lines[0]) {
             title = lines[0].replace(/^[=\-#\s]+/, '').trim()
@@ -135,9 +137,10 @@ const parseFile = async (file) => {
             .map(p => `<p>${p.replace(/\n/g, '<br />')}</p>`)
             .join('')
           break
-          
+        }
+
         case 'html':
-        case 'htm':
+        case 'htm': {
           const htmlTitleMatch = content.match(/<title>([^<]+)<\/title>/i) || 
                                  content.match(/<h1[^>]*>([^<]+)<\/h1>/i)
           if (htmlTitleMatch) {
@@ -149,7 +152,7 @@ const parseFile = async (file) => {
             htmlContent = bodyMatch[1]
           } else {
             htmlContent = content
-              .replace(/<\!DOCTYPE[^>]*>/gi, '')
+              .replace(/<!DOCTYPE[^>]*>/gi, '')
               .replace(/<html[^>]*>/gi, '')
               .replace(/<\/html>/gi, '')
               .replace(/<head>[\s\S]*<\/head>/gi, '')
@@ -162,6 +165,7 @@ const parseFile = async (file) => {
             tags = tagsAttrMatch[1].split(',').map(t => t.trim())
           }
           break
+        }
           
         default:
           reject(new Error(`Unsupported file format: ${extension}`))
@@ -280,7 +284,7 @@ export default function ImportModal() {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center modal-backdrop-animate" onClick={handleClose}>
+    <LegacyDialog label="Import notes" onClose={() => setImportModalOpen(false)} align="center">
       <div 
         className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-[#cbd1db] dark:border-gray-700 max-w-lg w-full mx-4 modal-animate overflow-hidden"
         onClick={(e) => e.stopPropagation()}
@@ -425,6 +429,6 @@ export default function ImportModal() {
         )}
         </div>
       </div>
-    </div>
+    </LegacyDialog>
   )
 }

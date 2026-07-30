@@ -1,9 +1,10 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { Archive, ArchiveRestore, X, Search, Calendar, Clock, Folder } from 'lucide-react'
 import { useNotesStore, useUIStore } from '../store'
 import { formatDate } from '../lib/utils'
 import { useTranslation } from '../lib/useTranslation'
 import toast from 'react-hot-toast'
+import LegacyDialog from './ui/LegacyDialog'
 
 export default function ArchiveView() {
   const { t, language } = useTranslation()
@@ -52,7 +53,7 @@ export default function ArchiveView() {
   if (!archiveViewOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm modal-backdrop-animate">
+    <LegacyDialog label="Archive" onClose={() => setArchiveViewOpen(false)} align="center">
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-[#cbd1db] dark:border-gray-700 w-full max-w-3xl mx-4 max-h-[85vh] overflow-hidden flex flex-col modal-animate">
         <div className="flex items-center justify-between p-5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white shrink-0">
           <div className="flex items-center gap-3">
@@ -155,6 +156,6 @@ export default function ArchiveView() {
           )}
         </div>
       </div>
-    </div>
+    </LegacyDialog>
   )
 }

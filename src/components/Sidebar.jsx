@@ -1,912 +1,105 @@
-import React, { useState, useRef, useEffect } from 'react'
-import { createPortal } from 'react-dom'
+import { useMemo, useRef, useState } from 'react'
 import {
-  Plus,
-  FolderOpen,
-  Star,
-  Settings,
+  Archive,
   ChevronDown,
   ChevronRight,
-  Edit2,
-  Trash2,
-  Moon,
-  Sun,
-  Monitor,
-  Cloud,
-  CloudOff,
-  Zap,
-  FileText,
-  Briefcase,
-  Home,
-  Lightbulb,
-  Folder,
-  Archive,
-  BookOpen,
-  Heart,
-  Music,
-  Camera,
-  Globe,
-  Code,
-  Gamepad2,
-  ShoppingBag,
-  Plane,
-  GraduationCap,
-  Palette,
-  Coffee,
-  Utensils,
-  Car,
-  Bike,
-  Dumbbell,
-  Film,
-  Headphones,
-  Smartphone,
-  Laptop,
-  Tv,
-  Clock,
-  Calendar,
-  Bell,
-  Check,
-  X,
+  HelpCircle,
   Copy,
-  Keyboard,
+  FolderOpen,
   LayoutTemplate,
-  Users,
-  Rocket,
-  Umbrella,
-  Gift,
-  Award,
-  Target,
-  Compass,
-  Map,
-  Building,
-  Building2,
-  Bookmark,
-  Feather,
-  Leaf,
-  Flower2,
-  Trees,
-  Mountain,
-  Waves,
-  Flame,
-  Snowflake,
-  Key,
-  Lock,
-  Shield,
-  Crown,
-  Gem,
-  Coins,
-  Wallet,
-  CreditCard,
-  DollarSign,
-  TrendingUp,
-  BarChart3,
-  PieChart,
-  Activity,
-  Stethoscope,
-  Pill,
-  Baby,
-  Dog,
-  Cat,
-  Bird,
-  Fish,
-  Bug,
-  Paintbrush,
-  Scissors,
-  Wrench,
-  Hammer,
+  LogOut,
+  Monitor,
+  Moon,
   Pencil,
-  Pen,
-  MessageCircle,
-  Mail,
-  Send,
-  Phone,
-  Video,
-  Mic,
-  Image,
-  Hash,
-  Server,
-  Database,
-  Cpu,
-  Ship,
-  Train,
-  PartyPopper,
-  Sparkles,
-  Pizza,
-  Cake,
-  Apple,
-  Wine,
-  Recycle,
-  ShoppingCart,
-  Newspaper,
-  Trophy,
-  PenTool,
-  Megaphone,
-  Layers,
-  Package,
-  Box,
-  Anchor,
-  Tent,
-  Crosshair,
-  Microscope,
-  Printer,
-  Wifi,
-  Link,
-  MapPin,
-  Navigation,
-  Radio,
-  Disc3,
-  Speaker,
-  Clapperboard,
-  Glasses,
-  Watch,
-  Footprints,
-  TreePine,
-  CloudRain,
-  Rainbow,
-  Wand2,
-  Swords,
-  Ghost,
-  Skull,
-  Bone,
-  Library,
-  TestTube2,
-  Atom,
-  Candy,
-  Shirt,
-  PawPrint,
-  Eye,
-  Scan,
-  CircleDot,
-  Hexagon,
-  Triangle,
-  Pentagon,
-  HandMetal,
-  ThumbsUp,
-  Truck,
-  Factory,
-  Smile,
-  AlertCircle,
-  AlertTriangle,
-  Battery,
-  Bluetooth,
-  Calculator,
-  Diamond,
-  Fingerprint,
-  Flag,
-  Gauge,
-  HardDrive,
-  HeartPulse,
-  Infinity,
-  Landmark,
-  Plug,
-  QrCode,
-  Timer,
-  Droplets,
-  PersonStanding,
-  Armchair,
-  CloudSun,
-  FlaskConical,
-  Guitar,
-  Brain,
-  Eraser,
-  Flashlight,
-  Sigma,
-  Satellite,
-  Tornado,
-  Drum,
-  Orbit,
-  Receipt,
-  Banknote,
-  Binary,
-  Ear,
-  Bed,
-  Contact,
-  Tag,
+  Plus,
+  Settings,
+  Star,
+  Sun,
+  Trash2,
+  Users,
+  X,
 } from 'lucide-react'
 import { useNotesStore, useThemeStore, useUIStore } from '../store'
-import { formatSyncTime } from '../lib/utils'
 import { useTranslation } from '../lib/useTranslation'
+import { getFolderIcon } from '../lib/folderIcons'
+import { Avatar, Menu, MenuItem, MenuSeparator } from './ui'
+import { FolderDialog, ConfirmDialog } from './FolderDialogs'
 
-const folderIcons = {
-  Folder: Folder,
-  FolderOpen: FolderOpen,
-  Archive: Archive,
-  FileText: FileText,
-  Bookmark: Bookmark,
-  
-  Briefcase: Briefcase,
-  Building: Building,
-  Building2: Building2,
-  Target: Target,
-  TrendingUp: TrendingUp,
-  BarChart3: BarChart3,
-  PieChart: PieChart,
-  
-  Home: Home,
-  Heart: Heart,
-  Star: Star,
-  Crown: Crown,
-  Gem: Gem,
-  Gift: Gift,
-  Award: Award,
-  
-  Lightbulb: Lightbulb,
-  Rocket: Rocket,
-  GraduationCap: GraduationCap,
-  BookOpen: BookOpen,
-  Feather: Feather,
-  Pen: Pen,
-  Pencil: Pencil,
-  
-  Code: Code,
-  Laptop: Laptop,
-  Smartphone: Smartphone,
-  Tv: Tv,
-  Gamepad2: Gamepad2,
-  Server: Server,
-  Database: Database,
-  Cpu: Cpu,
-  
-  Music: Music,
-  Headphones: Headphones,
-  Film: Film,
-  Camera: Camera,
-  Image: Image,
-  Video: Video,
-  Mic: Mic,
-  
-  MessageCircle: MessageCircle,
-  Mail: Mail,
-  Phone: Phone,
-  Send: Send,
-  Users: Users,
-  
-  Globe: Globe,
-  Plane: Plane,
-  Map: Map,
-  Compass: Compass,
-  Car: Car,
-  Bike: Bike,
-  Ship: Ship,
-  Train: Train,
-  
-  Coffee: Coffee,
-  Utensils: Utensils,
-  Pizza: Pizza,
-  Cake: Cake,
-  Wine: Wine,
-  Apple: Apple,
-  
-  Dumbbell: Dumbbell,
-  Activity: Activity,
-  Stethoscope: Stethoscope,
-  Pill: Pill,
-  
-  Leaf: Leaf,
-  Flower2: Flower2,
-  Trees: Trees,
-  Mountain: Mountain,
-  Waves: Waves,
-  Umbrella: Umbrella,
-  Sun: Sun,
-  Snowflake: Snowflake,
-  
-  ShoppingBag: ShoppingBag,
-  ShoppingCart: ShoppingCart,
-  Wallet: Wallet,
-  CreditCard: CreditCard,
-  DollarSign: DollarSign,
-  Coins: Coins,
-  
-  Calendar: Calendar,
-  Clock: Clock,
-  Bell: Bell,
-  
-  Key: Key,
-  Lock: Lock,
-  Shield: Shield,
-  
-  Dog: Dog,
-  Cat: Cat,
-  Bird: Bird,
-  Fish: Fish,
-  Bug: Bug,
-  Baby: Baby,
-  
-  Wrench: Wrench,
-  Hammer: Hammer,
-  Scissors: Scissors,
-  Paintbrush: Paintbrush,
-  
-  Sparkles: Sparkles,
-  PartyPopper: PartyPopper,
-  Flame: Flame,
-  Zap: Zap,
-  Hash: Hash,
-  Recycle: Recycle,
-  
-  Newspaper: Newspaper,
-  Trophy: Trophy,
-  PenTool: PenTool,
-  Megaphone: Megaphone,
-  Layers: Layers,
-  Package: Package,
-  Box: Box,
-  Anchor: Anchor,
-  Tent: Tent,
-  Crosshair: Crosshair,
-  Microscope: Microscope,
-  Printer: Printer,
-  Wifi: Wifi,
-  Link: Link,
-  MapPin: MapPin,
-  Navigation: Navigation,
-  Radio: Radio,
-  Disc3: Disc3,
-  Speaker: Speaker,
-  Clapperboard: Clapperboard,
-  Glasses: Glasses,
-  Watch: Watch,
-  Footprints: Footprints,
-  TreePine: TreePine,
-  CloudRain: CloudRain,
-  Rainbow: Rainbow,
-  Wand2: Wand2,
-  Swords: Swords,
-  Ghost: Ghost,
-  Skull: Skull,
-  Bone: Bone,
-  Library: Library,
-  TestTube2: TestTube2,
-  Atom: Atom,
-  Candy: Candy,
-  Shirt: Shirt,
-  PawPrint: PawPrint,
-  Eye: Eye,
-  Scan: Scan,
-  CircleDot: CircleDot,
-  Hexagon: Hexagon,
-  Triangle: Triangle,
-  Pentagon: Pentagon,
-  HandMetal: HandMetal,
-  ThumbsUp: ThumbsUp,
-  Truck: Truck,
-  Factory: Factory,
-  
-  Moon: Moon,
-  Palette: Palette,
-  Tag: Tag,
-  Smile: Smile,
-  AlertCircle: AlertCircle,
-  AlertTriangle: AlertTriangle,
-  Battery: Battery,
-  Bluetooth: Bluetooth,
-  Calculator: Calculator,
-  Diamond: Diamond,
-  Fingerprint: Fingerprint,
-  Flag: Flag,
-  Gauge: Gauge,
-  HardDrive: HardDrive,
-  HeartPulse: HeartPulse,
-  Infinity: Infinity,
-  Landmark: Landmark,
-  Plug: Plug,
-  QrCode: QrCode,
-  Timer: Timer,
-  Droplets: Droplets,
-  PersonStanding: PersonStanding,
-  Armchair: Armchair,
-  CloudSun: CloudSun,
-  FlaskConical: FlaskConical,
-  Guitar: Guitar,
-  Brain: Brain,
-  Eraser: Eraser,
-  Flashlight: Flashlight,
-  Sigma: Sigma,
-  Satellite: Satellite,
-  Tornado: Tornado,
-  Drum: Drum,
-  Orbit: Orbit,
-  Receipt: Receipt,
-  Banknote: Banknote,
-  Binary: Binary,
-  Ear: Ear,
-  Bed: Bed,
-  Contact: Contact,
-}
-
-const folderColors = [
-  // Reds
-  '#fca5a5', '#f87171', '#ef4444', '#dc2626',
-  // Rose
-  '#fda4af', '#f43f5e', '#e11d48',
-  // Oranges
-  '#fdba74', '#f97316', '#ea580c',
-  // Amber
-  '#fcd34d', '#f59e0b', '#d97706',
-  // Yellow
-  '#fde047', '#eab308',
-  // Lime
-  '#bef264', '#84cc16', '#65a30d',
-  // Green
-  '#86efac', '#22c55e', '#16a34a',
-  // Emerald
-  '#6ee7b7', '#10b981', '#059669',
-  // Teal
-  '#5eead4', '#14b8a6', '#0d9488',
-  // Cyan
-  '#67e8f9', '#06b6d4', '#0891b2',
-  // Sky
-  '#7dd3fc', '#0ea5e9',
-  // Blue
-  '#93c5fd', '#3b82f6', '#2563eb',
-  // Indigo
-  '#a5b4fc', '#6366f1', '#4f46e5',
-  // Violet
-  '#c4b5fd', '#8b5cf6', '#7c3aed',
-  // Purple
-  '#d8b4fe', '#a855f7', '#9333ea',
-  // Fuchsia
-  '#e879f9', '#d946ef',
-  // Pink
-  '#f9a8d4', '#ec4899', '#db2777',
-  // Slate
-  '#94a3b8', '#64748b', '#475569',
-  // Gray
-  '#9ca3af', '#4b5563',
-]
-
-const getFolderIcon = (iconName) => {
-  return folderIcons[iconName] || Folder
-}
-
-function FolderContextMenu({ x, y, folder, onClose, onRename, onEdit, onDelete }) {
-  const menuRef = useRef(null)
-  const [position, setPosition] = useState({ x, y })
-  const { t } = useTranslation()
-
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
-        onClose()
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [onClose])
-
-  useEffect(() => {
-    if (menuRef.current) {
-      const rect = menuRef.current.getBoundingClientRect()
-      const padding = 10
-      
-      let adjustedX = x
-      let adjustedY = y
-
-      if (x + rect.width > window.innerWidth - padding) {
-        adjustedX = window.innerWidth - rect.width - padding
-      }
-      if (adjustedX < padding) adjustedX = padding
-
-      const bottomPadding = 60
-      if (y + rect.height > window.innerHeight - bottomPadding) {
-        adjustedY = window.innerHeight - rect.height - bottomPadding
-      }
-      if (adjustedY < padding) adjustedY = padding
-
-      setPosition({ x: adjustedX, y: adjustedY })
-    }
-  }, [x, y])
-
+/**
+ * Navigation row.
+ *
+ * A real `<button>`, so the rail is reachable by Tab and operable with
+ * Enter/Space — the previous implementation used click-only `<div>`s.
+ */
+function NavItem({ icon: Icon, label, count, selected, onClick, iconColor, trailing }) {
   return (
-    <div
-      ref={menuRef}
-      className="fixed z-[9999] bg-white dark:bg-gray-900 rounded-2xl shadow-xl shadow-black/5 dark:shadow-black/20 border border-[#cbd1db] dark:border-gray-700 py-1.5 min-w-[160px] backdrop-blur-xl"
-      style={{ left: position.x, top: position.y }}
+    <div className="group relative flex items-center">
+      <button
+        type="button"
+        onClick={onClick}
+        aria-current={selected ? 'page' : undefined}
+        className={`flex w-full items-center gap-3 rounded-control px-2.5 py-[7px] text-left transition-colors duration-fast ${
+          selected
+            ? 'bg-nav-active text-nav-active-text'
+            : 'text-nav-muted hover:bg-nav-hover hover:text-nav-text'
+        }`}
+      >
+        <Icon
+          className="h-[17px] w-[17px] shrink-0"
+          style={iconColor ? { color: iconColor } : undefined}
+          aria-hidden="true"
+        />
+        <span className={`min-w-0 flex-1 truncate text-ui-lg ${selected ? 'font-semibold' : 'font-medium'}`}>
+          {label}
+        </span>
+        {count > 0 && (
+          <span className="shrink-0 rounded-md bg-white/10 px-1.5 py-0.5 text-ui-xs font-semibold tabular-nums text-nav-muted">
+            {count > 999 ? '999+' : count}
+          </span>
+        )}
+      </button>
+      {trailing}
+    </div>
+  )
+}
+
+function SectionHeader({ label, expanded, onToggle, action }) {
+  return (
+    <div className="flex items-center justify-between gap-1 pl-1.5 pr-1">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={expanded}
+        className="flex min-w-0 flex-1 items-center gap-1.5 rounded-control py-1 pr-1 text-ui-xs font-semibold uppercase tracking-[0.08em] text-nav-subtle transition-colors duration-fast hover:text-nav-muted"
+      >
+        <ChevronDown
+          className={`h-3 w-3 shrink-0 transition-transform duration-fast ${expanded ? '' : '-rotate-90'}`}
+          aria-hidden="true"
+        />
+        <span className="truncate">{label}</span>
+      </button>
+      {action}
+    </div>
+  )
+}
+
+/** Icon control tuned for the dark rail. */
+function NavIconButton({ icon: Icon, label, onClick, className = '' }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      title={label}
+      className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-control text-nav-subtle transition-colors duration-fast hover:bg-nav-hover hover:text-nav-text ${className}`}
     >
-      <button
-        onClick={() => { onRename(); onClose() }}
-        className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 transition-colors"
-      >
-        <Edit2 className="w-4 h-4 text-gray-400" />
-        <span className="text-sm">{t('common.rename') || 'Rename'}</span>
-      </button>
-      <button
-        onClick={() => { onEdit(); onClose() }}
-        className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 transition-colors"
-      >
-        <Palette className="w-4 h-4 text-gray-400" />
-        <span className="text-sm">{t('common.edit') || 'Edit'}</span>
-      </button>
-      <div className="my-1.5 mx-3 border-t border-[#cbd1db] dark:border-gray-800" />
-      <button
-        onClick={() => { onDelete(); onClose() }}
-        className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-red-50 dark:hover:bg-red-900/10 text-red-500 dark:text-red-400 transition-colors"
-      >
-        <Trash2 className="w-4 h-4" />
-        <span className="text-sm">{t('common.delete') || 'Delete'}</span>
-      </button>
-    </div>
+      <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+    </button>
   )
 }
 
-function IconPickerModal({ isOpen, onClose, onSelect, currentIcon }) {
-  if (!isOpen) return null
-
-  const iconNames = Object.keys(folderIcons)
-
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-center justify-center p-4 modal-backdrop-animate" onClick={onClose}>
-      <div
-        className="modal-animate bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-[#cbd1db] dark:border-gray-700 p-4 max-w-sm w-full max-h-[85vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Choose Icon</h3>
-          <button
-            onClick={onClose}
-            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
-          >
-            <X className="w-5 h-5 text-gray-500" />
-          </button>
-        </div>
-        <div className="grid grid-cols-5 sm:grid-cols-6 gap-2">
-          {iconNames.map((name) => {
-            const IconComponent = folderIcons[name]
-            const isSelected = currentIcon === name
-            return (
-              <button
-                key={name}
-                onClick={() => { onSelect(name); onClose() }}
-                className={`aspect-square rounded-xl transition-all relative flex items-center justify-center ${
-                  isSelected 
-                    ? 'bg-emerald-100 dark:bg-emerald-900/30' 
-                    : 'hover:bg-gray-100 dark:hover:bg-gray-700'
-                }`}
-                title={name}
-              >
-                {isSelected && (
-                  <div className="absolute inset-0 rounded-xl border-2 border-emerald-500 pointer-events-none" />
-                )}
-                <IconComponent className={`w-5 h-5 ${isSelected ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-300'}`} />
-              </button>
-            )
-          })}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function ColorPickerModal({ isOpen, onClose, onSelect, currentColor }) {
-  if (!isOpen) return null
-
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-center justify-center modal-backdrop-animate" onClick={onClose}>
-      <div
-        className="modal-animate bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-[#cbd1db] dark:border-gray-700 max-w-sm w-full mx-4 overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
-          <h3 className="text-base font-bold">Choose Color</h3>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-full hover:bg-white/20 transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-        <div className="p-4">
-        <div className="flex flex-wrap gap-2">
-          {folderColors.map((color) => (
-            <button
-              key={color}
-              onClick={() => { onSelect(color); onClose() }}
-              className={`w-9 h-9 rounded-full hover:scale-110 transition-transform shadow-md ${
-                currentColor === color ? 'ring-2 ring-offset-2 ring-gray-400 dark:ring-gray-600' : ''
-              }`}
-              style={{ backgroundColor: color }}
-              title={color}
-            />
-          ))}
-        </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function EditFolderModal({ isOpen, onClose, folder, onUpdate }) {
-  const [name, setName] = useState('')
-  const [icon, setIcon] = useState('Folder')
-  const [color, setColor] = useState('#10b981')
-  const inputRef = useRef(null)
+export default function Sidebar({ onNavigate }) {
   const { t } = useTranslation()
-
-  useEffect(() => {
-    if (isOpen && folder) {
-      setName(folder.name || '')
-      setIcon(folder.icon || 'Folder')
-      setColor(folder.color || '#10b981')
-      setTimeout(() => inputRef.current?.focus(), 100)
-    }
-  }, [isOpen, folder])
-
-  if (!isOpen || !folder) return null
-
-  const IconComponent = getFolderIcon(icon)
-  const iconNames = Object.keys(folderIcons)
-
-  const handleSave = () => {
-    if (name.trim()) {
-      onUpdate(folder.id, { name: name.trim(), icon, color })
-      onClose()
-    }
-  }
-
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-center justify-center p-4 modal-backdrop-animate" onClick={onClose}>
-      <div
-        className="modal-animate bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-[#cbd1db] dark:border-gray-700 w-full max-w-lg max-h-[85vh] overflow-hidden flex flex-col"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between p-5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
-          <div className="flex items-center gap-3">
-            <Folder className="w-6 h-6" />
-            <div>
-              <h3 className="text-lg font-bold">{t('folders.editFolder') || 'Edit Folder'}</h3>
-              <p className="text-sm text-white/70">Customize folder appearance</p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-full hover:bg-white/20 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-        <div className="flex-1 overflow-y-auto p-6">
-        <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl mb-6 border border-[#cbd1db] dark:border-gray-700">
-          <div
-            className="w-12 h-12 rounded-xl flex items-center justify-center shadow-md"
-            style={{ backgroundColor: color }}
-          >
-            <IconComponent className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <p className="font-medium text-gray-900 dark:text-white">{name || 'Folder Name'}</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{t('folders.preview') || 'Preview'}</p>
-          </div>
-        </div>
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            {t('folders.folderName') || 'Folder Name'}
-          </label>
-          <input
-            ref={inputRef}
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleSave()
-              if (e.key === 'Escape') onClose()
-            }}
-            className="w-full px-4 py-3 border border-[#cbd1db] dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-            placeholder={t('folders.folderName') || 'Folder Name'}
-          />
-        </div>
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            {t('folders.chooseIcon') || 'Choose Icon'}
-          </label>
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(40px,1fr))] gap-2 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl max-h-[200px] overflow-y-auto border border-[#cbd1db] dark:border-gray-700">
-            {iconNames.map((iconName) => {
-              const Ic = folderIcons[iconName]
-              const isSelected = icon === iconName
-              return (
-                <button
-                  key={iconName}
-                  onClick={() => setIcon(iconName)}
-                  className={`aspect-square rounded-lg transition-all flex items-center justify-center ${
-                    isSelected 
-                      ? 'bg-emerald-100 dark:bg-emerald-900/30 ring-2 ring-emerald-500' 
-                      : 'hover:bg-gray-100 dark:hover:bg-gray-700'
-                  }`}
-                  title={iconName}
-                >
-                  <Ic className={`w-5 h-5 ${isSelected ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-600 dark:text-gray-400'}`} />
-                </button>
-              )
-            })}
-          </div>
-        </div>
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            {t('folders.chooseColor') || 'Choose Color'}
-          </label>
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(36px,1fr))] gap-2 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-[#cbd1db] dark:border-gray-700">
-            {folderColors.map((c) => (
-              <button
-                key={c}
-                onClick={() => setColor(c)}
-                className={`w-9 h-9 rounded-full hover:scale-110 transition-transform shadow-md mx-auto ${
-                  color === c ? 'ring-2 ring-offset-2 ring-gray-400 dark:ring-gray-500' : ''
-                }`}
-                style={{ backgroundColor: c }}
-              />
-            ))}
-          </div>
-        </div>
-        </div>
-        <div className="p-6 border-t border-[#cbd1db] dark:border-gray-700 flex gap-3">
-          <button
-            onClick={handleSave}
-            disabled={!name.trim()}
-            className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 text-white rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
-          >
-            <Check className="w-5 h-5" />
-            {t('common.save') || 'Save'}
-          </button>
-          <button
-            onClick={onClose}
-            className="px-6 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-medium transition-colors border border-[#cbd1db] dark:border-gray-600"
-          >
-            {t('common.cancel') || 'Cancel'}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function NewFolderModal({ isOpen, onClose, onCreate }) {
-  const [name, setName] = useState('New Folder')
-  const [icon, setIcon] = useState('Folder')
-  const [color, setColor] = useState('#10b981')
-  const inputRef = useRef(null)
-  const { t } = useTranslation()
-
-  useEffect(() => {
-    if (isOpen) {
-      setName(t('folders.newFolder') || 'New Folder')
-      setIcon('Folder')
-      setColor('#10b981')
-      setTimeout(() => inputRef.current?.select(), 100)
-    }
-  }, [isOpen, t])
-
-  if (!isOpen) return null
-
-  const handleCreate = () => {
-    if (name.trim()) {
-      onCreate({ name: name.trim(), icon, color })
-      onClose()
-    }
-  }
-
-  const IconComponent = folderIcons[icon] || Folder
-  const iconNames = Object.keys(folderIcons)
-
-  return (
-    <div 
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 modal-backdrop-animate"
-      onClick={onClose}
-    >
-      <div 
-        className="modal-animate bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-[#cbd1db] dark:border-gray-700 w-full max-w-lg max-h-[85vh] overflow-hidden flex flex-col"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between p-5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
-          <div className="flex items-center gap-3">
-            <Folder className="w-6 h-6" />
-            <div>
-              <h2 className="text-lg font-bold">{t('folders.createFolder') || 'Create New Folder'}</h2>
-              <p className="text-sm text-white/70">Organize your notes into folders</p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-full hover:bg-white/20 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl mb-6 border border-[#cbd1db] dark:border-gray-700">
-            <div
-              className="w-12 h-12 rounded-xl flex items-center justify-center shadow-md"
-              style={{ backgroundColor: color }}
-            >
-              <IconComponent className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <p className="font-medium text-gray-900 dark:text-white">{name || t('folders.newFolder') || 'New Folder'}</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{t('folders.preview') || 'Preview'}</p>
-            </div>
-          </div>
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {t('folders.folderName') || 'Folder Name'}
-            </label>
-            <input
-              ref={inputRef}
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleCreate()
-                if (e.key === 'Escape') onClose()
-              }}
-              className="w-full px-4 py-3 border border-[#cbd1db] dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-              placeholder={t('folders.folderName') || 'Folder Name'}
-            />
-          </div>
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {t('folders.chooseIcon') || 'Choose Icon'}
-            </label>
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(40px,1fr))] gap-2 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl max-h-[200px] overflow-y-auto border border-[#cbd1db] dark:border-gray-700">
-              {iconNames.map((iconName) => {
-                const Ic = folderIcons[iconName]
-                const isSelected = icon === iconName
-                return (
-                  <button
-                    key={iconName}
-                    onClick={() => setIcon(iconName)}
-                    className={`aspect-square rounded-lg transition-all flex items-center justify-center ${
-                      isSelected 
-                        ? 'bg-emerald-100 dark:bg-emerald-900/30 ring-2 ring-emerald-500' 
-                        : 'hover:bg-gray-100 dark:hover:bg-gray-700'
-                    }`}
-                    title={iconName}
-                  >
-                    <Ic className={`w-5 h-5 ${isSelected ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-600 dark:text-gray-400'}`} />
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {t('folders.chooseColor') || 'Choose Color'}
-            </label>
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(36px,1fr))] gap-2 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-[#cbd1db] dark:border-gray-700">
-              {folderColors.map((c) => (
-                <button
-                  key={c}
-                  onClick={() => setColor(c)}
-                  className={`w-9 h-9 rounded-full hover:scale-110 transition-transform shadow-md mx-auto ${
-                    color === c ? 'ring-2 ring-offset-2 ring-gray-400 dark:ring-gray-500' : ''
-                  }`}
-                  style={{ backgroundColor: c }}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-        <div className="p-6 border-t border-[#cbd1db] dark:border-gray-700 flex gap-3">
-          <button
-            onClick={handleCreate}
-            disabled={!name.trim()}
-            className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 text-white rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
-          >
-            <Check className="w-5 h-5" />
-            {t('common.create') || 'Create'}
-          </button>
-          <button
-            onClick={onClose}
-            className="px-6 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-medium transition-colors border border-[#cbd1db] dark:border-gray-600"
-          >
-            {t('common.cancel') || 'Cancel'}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-export default function Sidebar() {
-  const { t, language } = useTranslation()
   const {
     folders,
     tags,
@@ -918,468 +111,433 @@ export default function Sidebar() {
     deleteFolder,
     setSelectedFolder,
     setSelectedTagFilter,
-    isOnline,
-    isSyncing,
-    lastSyncTime,
-    syncWithBackend,
     user,
     pendingShares,
+    logout,
   } = useNotesStore()
 
   const { theme, setTheme } = useThemeStore()
-  const { sidebarOpen, setSidebarOpen, setQuickNoteOpen, setSettingsOpen, setShowTrash, setDuplicateModalOpen, setArchiveViewOpen, setShortcutsModalOpen, setTemplatesModalOpen, setNoteTypesModalOpen, setTagManagerOpen, setMobileView } = useUIStore()
+  const {
+    setSidebarOpen,
+    setQuickNoteOpen,
+    setSettingsOpen,
+    setShowTrash,
+    setDuplicateModalOpen,
+    setArchiveViewOpen,
+    setTemplatesModalOpen,
+    setTagManagerOpen,
+    setSharedNotesViewOpen,
+    setHelpModalOpen,
+  } = useUIStore()
 
-  const closeSidebarOnMobile = () => {
-    if (window.innerWidth < 768) {
-      setSidebarOpen(false)
-      setMobileView('notes')
+  const [sections, setSections] = useState({ folders: true, tags: true })
+  const [folderDialog, setFolderDialog] = useState(null)
+  const [folderMenu, setFolderMenu] = useState(null)
+  const [confirmDelete, setConfirmDelete] = useState(null)
+  const accountRef = useRef(null)
+  const [accountOpen, setAccountOpen] = useState(false)
+
+  /**
+   * One pass over `notes` for every count the rail shows.
+   * Previously each row ran its own `.filter()` on every render, so a
+   * workspace with N folders and M tags cost N+M+4 full array scans.
+   */
+  const counts = useMemo(() => {
+    const byFolder = new Map()
+    const byTag = new Map()
+    let all = 0
+    let favorites = 0
+    let trash = 0
+    let archive = 0
+
+    for (const note of notes) {
+      if (note.deleted) {
+        trash += 1
+        continue
+      }
+      if (note.folderId) byFolder.set(note.folderId, (byFolder.get(note.folderId) || 0) + 1)
+      for (const tag of note.tags || []) byTag.set(tag, (byTag.get(tag) || 0) + 1)
+      if (note.archived) {
+        archive += 1
+        continue
+      }
+      all += 1
+      if (note.starred) favorites += 1
     }
-  }
+    return { byFolder, byTag, all, favorites, trash, archive }
+  }, [notes])
 
-  const [expandedSections, setExpandedSections] = useState({
-    folders: true,
-    tags: true,
-  })
-  const [editingFolderId, setEditingFolderId] = useState(null)
-  const [editingFolderName, setEditingFolderName] = useState('')
-  
-  const [showNewFolderModal, setShowNewFolderModal] = useState(false)
-  const [folderContextMenu, setFolderContextMenu] = useState(null)
-  const [editingFolder, setEditingFolder] = useState(null)
-
-  const toggleSection = (section) => {
-    setExpandedSections((prev) => ({
-      ...prev,
-      [section]: !prev[section],
-    }))
-  }
-
-  const handleCreateFolder = (folderData) => {
-    const newFolder = createFolder(folderData)
-    return newFolder
-  }
-
-  const handleFolderContextMenu = (e, folder) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setFolderContextMenu({ x: e.clientX, y: e.clientY, folder })
-  }
-
-  const handleSaveFolderName = (id) => {
-    if (editingFolderName.trim()) {
-      updateFolder(id, { name: editingFolderName.trim() })
-    }
-    setEditingFolderId(null)
-    setEditingFolderName('')
-  }
-
-  const getNotesCountForFolder = (folderId) => {
-    return notes.filter((n) => n.folderId === folderId && !n.deleted).length
-  }
-
-  const getNotesCountForTag = (tagName) => {
-    return notes.filter((n) => n.tags?.includes(tagName) && !n.deleted).length
-  }
-
-  const getFavoritesCount = () => {
-    return notes.filter((n) => n.starred && !n.deleted && !n.archived).length
-  }
-
-  const getTrashCount = () => {
-    return notes.filter((n) => n.deleted).length
-  }
-
-  const getArchiveCount = () => {
-    return notes.filter((n) => n.archived && !n.deleted).length
-  }
-
-  const getActiveNotesCount = () => {
-    return notes.filter((n) => !n.deleted && !n.archived).length
+  const go = (fn) => () => {
+    fn()
+    onNavigate?.()
   }
 
   const cycleTheme = () => {
-    const themes = ['light', 'dark', 'system']
-    const currentIndex = themes.indexOf(theme)
-    const nextIndex = (currentIndex + 1) % themes.length
-    setTheme(themes[nextIndex])
+    const order = ['light', 'dark', 'system']
+    setTheme(order[(order.indexOf(theme) + 1) % order.length])
   }
 
-  const getThemeIcon = () => {
-    switch (theme) {
-      case 'light':
-        return <Sun className="w-4 h-4" />
-      case 'dark':
-        return <Moon className="w-4 h-4" />
-      default:
-        return <Monitor className="w-4 h-4" />
-    }
-  }
+  const ThemeIcon = theme === 'light' ? Sun : theme === 'dark' ? Moon : Monitor
+  const themeLabel =
+    theme === 'light'
+      ? t('settings.themeLight')
+      : theme === 'dark'
+        ? t('settings.themeDark')
+        : t('settings.themeSystem')
 
-  if (!sidebarOpen) return null
+  const displayName = user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'Account'
+  const isAllNotes = !selectedFolderId && !selectedTagFilter
 
   return (
-    <div className="w-full sidebar-premium flex flex-col h-full">
-      <div className="p-5 pb-4">
-        <div className="flex items-center justify-between mb-5">
-          <h1 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-3 tracking-tight">
-            <div className="w-9 h-9 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center logo-badge">
-              <FileText className="w-4.5 h-4.5 text-white" />
-            </div>
-            <div className="flex flex-col">
-              <span className="leading-tight">QuickNotes</span>
-              <span className="text-[10px] font-medium text-gray-400 dark:text-gray-500 leading-tight tracking-wide">Note Manager</span>
-            </div>
-          </h1>
-          <div className="flex items-center gap-0.5">
-            <button
-              onClick={() => setSettingsOpen(true)}
-              className="p-2 hover:bg-white/90 dark:hover:bg-gray-800 rounded-xl transition-all text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:rotate-45 duration-300"
-            >
-              <Settings className="w-[18px] h-[18px]" />
-            </button>
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="md:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-all text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-            >
-              <X className="w-[18px] h-[18px]" />
-            </button>
-          </div>
+    <nav aria-label="Workspace" className="flex h-full w-full flex-col bg-nav text-nav-text">
+      {/* ---- Brand ------------------------------------------------- */}
+      <div className="flex shrink-0 items-center gap-2.5 px-4 pb-4 pt-4">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-gradient-to-br from-primary-500 to-primary-700 text-white shadow-sm">
+          <svg
+            viewBox="0 0 24 24"
+            className="h-[18px] w-[18px]"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+            <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+          </svg>
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-title-xs font-bold leading-tight text-nav-text">QuickNotes</p>
+          <p className="truncate text-ui-sm leading-tight text-nav-subtle">
+            {t('sidebar.noteManager', 'Note Manager')}
+          </p>
         </div>
+        <NavIconButton
+          icon={X}
+          label={t('common.close', 'Close navigation')}
+          onClick={() => setSidebarOpen(false)}
+          className="lg:hidden"
+        />
+      </div>
+
+      {/* ---- Quick note -------------------------------------------- */}
+      <div className="shrink-0 px-4 pb-4">
         <button
-          onClick={() => setQuickNoteOpen(true)}
-          className="w-full quick-note-btn bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl py-2.5 px-4 flex items-center justify-center gap-2.5 transition-all font-medium hover:shadow-lg hover:shadow-emerald-500/20 active:scale-[0.98]"
+          type="button"
+          onClick={go(() => setQuickNoteOpen(true))}
+          className="flex h-10 w-full items-center gap-2 rounded-[10px] bg-gradient-to-r from-primary-600 to-primary-700 px-3.5 text-ui-lg font-semibold text-white shadow-sm transition-[filter] duration-fast hover:brightness-110"
         >
-          <Zap className="w-4 h-4" />
-          {t('sidebar.quickNote')}
-          <span className="text-[11px] opacity-60 ml-1 font-normal">{"\u2318"}+N</span>
+          <Plus className="h-4 w-4 shrink-0" aria-hidden="true" />
+          <span className="flex-1 text-left">{t('sidebar.quickNote')}</span>
+          <kbd className="shrink-0 text-ui-xs font-medium text-white/70">Ctrl N</kbd>
         </button>
       </div>
-      <div className="mx-5 mb-2 h-px bg-[#cbd1db] dark:bg-gray-800/80" />
-      <div className="flex-1 overflow-y-auto py-1 space-y-0.5">
-        <div
-          onClick={() => {
-            setSelectedFolder(null)
-            setSelectedTagFilter(null)
-            closeSidebarOnMobile()
-          }}
-          className={`px-3.5 py-2 mx-3 rounded-xl cursor-pointer flex items-center justify-between transition-all group nav-item-slide ${
-            !selectedFolderId && !selectedTagFilter
-              ? 'bg-white dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 shadow-sm shadow-black/5'
-              : 'hover:bg-white/90 dark:hover:bg-gray-800/50 text-gray-600 dark:text-gray-400'
-          }`}
-        >
-          <div className="flex items-center gap-3">
-            <FolderOpen className="w-[18px] h-[18px]" />
-            <span className={`text-[13px] ${
-              !selectedFolderId && !selectedTagFilter ? 'font-semibold' : 'font-medium'
-            }`}>{t('sidebar.allNotes')}</span>
-          </div>
-          <span className={`text-[11px] tabular-nums px-1.5 py-0.5 rounded-md min-w-[24px] text-center font-medium count-badge border border-[#cbd1db] dark:border-gray-600 ${
-            !selectedFolderId && !selectedTagFilter
-              ? 'bg-emerald-100/80 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400'
-              : 'bg-white/80 dark:bg-gray-800/80 text-gray-400 dark:text-gray-500'
-          }`}>
-            {getActiveNotesCount()}
-          </span>
-        </div>
-        <div
-          onClick={() => {
-            setSelectedFolder(null)
-            setSelectedTagFilter('__starred__')
-            closeSidebarOnMobile()
-          }}
-          className={`px-3.5 py-2 mx-3 rounded-xl cursor-pointer flex items-center justify-between transition-all group nav-item-slide ${
-            selectedTagFilter === '__starred__'
-              ? 'bg-white dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 shadow-sm shadow-black/5'
-              : 'hover:bg-white/90 dark:hover:bg-gray-800/50 text-gray-600 dark:text-gray-400'
-          }`}
-        >
-          <div className="flex items-center gap-3">
-            <Star className={`w-[18px] h-[18px] ${selectedTagFilter === '__starred__' ? 'fill-amber-400 text-amber-400' : ''}`} />
-            <span className={`text-[13px] ${
-              selectedTagFilter === '__starred__' ? 'font-semibold' : 'font-medium'
-            }`}>{t('sidebar.favorites')}</span>
-          </div>
-          <span className={`text-[11px] tabular-nums px-1.5 py-0.5 rounded-md min-w-[24px] text-center font-medium count-badge border border-[#cbd1db] dark:border-gray-600 ${
-            selectedTagFilter === '__starred__'
-              ? 'bg-emerald-100/80 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400'
-              : 'bg-white/80 dark:bg-gray-800/80 text-gray-400 dark:text-gray-500'
-          }`}>
-            {getFavoritesCount()}
-          </span>
-        </div>
 
-        <div className="h-px mx-5 my-2.5 bg-[#cbd1db] dark:bg-gray-800/60" />
+      {/* ---- Scrollable navigation --------------------------------- */}
+      <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-3 pb-4">
+        <ul className="space-y-0.5">
+          <li>
+            <NavItem
+              icon={FolderOpen}
+              label={t('sidebar.allNotes')}
+              count={counts.all}
+              selected={isAllNotes}
+              onClick={go(() => {
+                setSelectedFolder(null)
+                setSelectedTagFilter(null)
+              })}
+            />
+          </li>
+          <li>
+            <NavItem
+              icon={Star}
+              label={t('sidebar.favorites')}
+              count={counts.favorites}
+              selected={selectedTagFilter === '__starred__'}
+              onClick={go(() => setSelectedTagFilter('__starred__'))}
+            />
+          </li>
+          <li>
+            <NavItem
+              icon={Users}
+              label={t('sidebar.sharedNotes', 'Shared with me')}
+              count={pendingShares?.length || 0}
+              onClick={go(() => setSharedNotesViewOpen(true))}
+            />
+          </li>
+          <li>
+            <NavItem
+              icon={Trash2}
+              label={t('sidebar.trash')}
+              count={counts.trash}
+              onClick={go(() => setShowTrash(true))}
+            />
+          </li>
+          <li>
+            <NavItem
+              icon={Archive}
+              label={t('sidebar.archive')}
+              count={counts.archive}
+              onClick={go(() => setArchiveViewOpen(true))}
+            />
+          </li>
+          <li>
+            <NavItem
+              icon={LayoutTemplate}
+              label={t('sidebar.templates', 'Templates')}
+              onClick={go(() => setTemplatesModalOpen(true))}
+            />
+          </li>
+          <li>
+            <NavItem
+              icon={Copy}
+              label={t('sidebar.findDuplicates')}
+              onClick={go(() => setDuplicateModalOpen(true))}
+            />
+          </li>
+        </ul>
 
-        <div
-          onClick={() => setShowTrash(true)}
-          className="px-3.5 py-2 mx-3 rounded-xl cursor-pointer flex items-center justify-between transition-all hover:bg-white/90 dark:hover:bg-gray-800/50 text-gray-500 dark:text-gray-400 nav-item-slide"
-        >
-          <div className="flex items-center gap-3">
-            <Trash2 className="w-[18px] h-[18px]" />
-            <span className="text-[13px] font-medium">{t('sidebar.trash')}</span>
-          </div>
-          {getTrashCount() > 0 && (
-            <span className="text-[11px] tabular-nums px-1.5 py-0.5 rounded-md min-w-[24px] text-center font-medium count-badge border border-[#cbd1db] dark:border-gray-600 bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400">
-              {getTrashCount()}
-            </span>
-          )}
-        </div>
-        <div
-          onClick={() => setArchiveViewOpen(true)}
-          className="px-3.5 py-2 mx-3 rounded-xl cursor-pointer flex items-center justify-between transition-all hover:bg-white/90 dark:hover:bg-gray-800/50 text-gray-500 dark:text-gray-400 nav-item-slide"
-        >
-          <div className="flex items-center gap-3">
-            <Archive className="w-[18px] h-[18px]" />
-            <span className="text-[13px] font-medium">{t('sidebar.archive')}</span>
-          </div>
-          {getArchiveCount() > 0 && (
-            <span className="text-[11px] tabular-nums px-1.5 py-0.5 rounded-md min-w-[24px] text-center font-medium count-badge border border-[#cbd1db] dark:border-gray-600 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400">
-              {getArchiveCount()}
-            </span>
-          )}
-        </div>
-        <div
-          onClick={() => {
-            const { setSharedNotesViewOpen } = useUIStore.getState()
-            setSharedNotesViewOpen(true)
-          }}
-          className="px-3.5 py-2 mx-3 rounded-xl cursor-pointer flex items-center justify-between transition-all hover:bg-white/90 dark:hover:bg-gray-800/50 text-gray-500 dark:text-gray-400 nav-item-slide"
-        >
-          <div className="flex items-center gap-3">
-            <Users className="w-[18px] h-[18px]" />
-            <span className="text-[13px] font-medium">Shared Notes</span>
-          </div>
-          {pendingShares?.length > 0 && (
-            <span className="text-[11px] tabular-nums px-1.5 py-0.5 rounded-md min-w-[24px] text-center font-medium count-badge border border-[#cbd1db] dark:border-gray-600 bg-orange-50 dark:bg-orange-900/20 text-orange-500 dark:text-orange-400 animate-pulse">
-              {pendingShares.length}
-            </span>
-          )}
-        </div>
-        <div
-          onClick={() => setDuplicateModalOpen(true)}
-          className="px-3.5 py-2 mx-3 rounded-xl cursor-pointer flex items-center justify-between transition-all hover:bg-white/90 dark:hover:bg-gray-800/50 text-gray-500 dark:text-gray-400 nav-item-slide"
-        >
-          <div className="flex items-center gap-3">
-            <Copy className="w-[18px] h-[18px]" />
-            <span className="text-[13px] font-medium">{t('sidebar.findDuplicates')}</span>
-          </div>
-        </div>
-        <div className="mt-4">
-          <div
-            onClick={() => toggleSection('folders')}
-            className="px-5 py-1.5 flex items-center justify-between cursor-pointer text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-[0.12em]"
-          >
-            <div className="flex items-center gap-1.5">
-              {expandedSections.folders ? (
-                <ChevronDown className="w-3 h-3" />
-              ) : (
-                <ChevronRight className="w-3 h-3" />
+        {/* ---- Folders --------------------------------------------- */}
+        <section aria-label={t('sidebar.folders')}>
+          <SectionHeader
+            label={t('sidebar.folders')}
+            expanded={sections.folders}
+            onToggle={() => setSections((s) => ({ ...s, folders: !s.folders }))}
+            action={
+              <NavIconButton
+                icon={Plus}
+                label={t('folders.createFolder', 'New folder')}
+                onClick={() => setFolderDialog({})}
+              />
+            }
+          />
+          {sections.folders && (
+            <ul className="mt-1 space-y-0.5">
+              {folders.length === 0 && (
+                <li className="px-2.5 py-1.5 text-ui-md text-nav-subtle">
+                  {t('folders.empty', 'No folders yet')}
+                </li>
               )}
-              {t('sidebar.folders')}
-            </div>
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                setShowNewFolderModal(true)
-              }}
-              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
-              style={{ opacity: 1 }}
-            >
-              <Plus className="w-3 h-3" />
-            </button>
-          </div>
-
-          {expandedSections.folders && (
-            <div className="space-y-0.5 mt-1">
-              {folders.map((folder) => (
-                <div
-                  key={folder.id}
-                  onClick={() => {
-                    setSelectedFolder(folder.id)
-                    closeSidebarOnMobile()
-                  }}
-                  onContextMenu={(e) => handleFolderContextMenu(e, folder)}
-                  className={`group px-3.5 py-2 mx-3 rounded-xl cursor-pointer flex items-center justify-between transition-all nav-item-slide ${
-                    selectedFolderId === folder.id
-                      ? 'bg-white dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 shadow-sm shadow-black/5'
-                      : 'hover:bg-white/90 dark:hover:bg-gray-800/50 text-gray-600 dark:text-gray-400'
-                  }`}
-                >
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    {(() => {
-                      const IconComponent = getFolderIcon(folder.icon)
-                      return <IconComponent className="w-[18px] h-[18px] flex-shrink-0" style={{ color: folder.color }} />
-                    })()}
-                    {editingFolderId === folder.id ? (
-                      <input
-                        type="text"
-                        value={editingFolderName}
-                        onChange={(e) => setEditingFolderName(e.target.value)}
-                        onBlur={() => handleSaveFolderName(folder.id)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') handleSaveFolderName(folder.id)
-                          if (e.key === 'Escape') setEditingFolderId(null)
-                        }}
-                        autoFocus
-                        className="flex-1 bg-transparent border-none outline-none text-[13px]"
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                    ) : (
-                      <span className={`text-[13px] truncate ${selectedFolderId === folder.id ? 'font-semibold' : 'font-medium'}`}>{folder.name}</span>
-                    )}
-                  </div>
-                  <span className={`text-[11px] tabular-nums px-1.5 py-0.5 rounded-md min-w-[24px] text-center font-medium count-badge border border-[#cbd1db] dark:border-gray-600 ${
-                    selectedFolderId === folder.id
-                      ? 'bg-emerald-100/80 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400'
-                      : 'bg-white/70 dark:bg-gray-800/80 text-gray-400 dark:text-gray-500'
-                  }`}>
-                    {getNotesCountForFolder(folder.id)}
-                  </span>
-                </div>
-              ))}
-            </div>
+              {folders.map((folder) => {
+                const Icon = getFolderIcon(folder.icon)
+                return (
+                  <li
+                    key={folder.id}
+                    onContextMenu={(e) => {
+                      e.preventDefault()
+                      setFolderMenu({ folder, point: { x: e.clientX, y: e.clientY } })
+                    }}
+                  >
+                    <NavItem
+                      icon={Icon}
+                      iconColor={folder.color}
+                      label={folder.name}
+                      count={counts.byFolder.get(folder.id) || 0}
+                      selected={selectedFolderId === folder.id}
+                      onClick={go(() => setSelectedFolder(folder.id))}
+                      trailing={
+                        <NavIconButton
+                          icon={Pencil}
+                          label={`${t('common.edit', 'Edit')} ${folder.name}`}
+                          onClick={() => setFolderDialog({ folder })}
+                          className="absolute right-1.5 bg-nav opacity-0 focus-visible:opacity-100 group-hover:opacity-100"
+                        />
+                      }
+                    />
+                  </li>
+                )
+              })}
+            </ul>
           )}
-        </div>
-        <div className="mt-4">
-          <div
-            onClick={() => toggleSection('tags')}
-            className="px-5 py-1.5 flex items-center justify-between cursor-pointer text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-[0.12em]"
-          >
-            <div className="flex items-center gap-1.5">
-              {expandedSections.tags ? (
-                <ChevronDown className="w-3 h-3" />
-              ) : (
-                <ChevronRight className="w-3 h-3" />
+        </section>
+
+        {/* ---- Tags ------------------------------------------------- */}
+        <section aria-label={t('sidebar.tags')}>
+          <SectionHeader
+            label={t('sidebar.tags')}
+            expanded={sections.tags}
+            onToggle={() => setSections((s) => ({ ...s, tags: !s.tags }))}
+            action={
+              <NavIconButton
+                icon={Settings}
+                label={t('tags.manage', 'Manage tags')}
+                onClick={() => setTagManagerOpen(true)}
+              />
+            }
+          />
+          {sections.tags && (
+            <div className="mt-1.5 flex flex-wrap gap-1.5 px-1.5">
+              {tags.length === 0 && (
+                <p className="text-ui-md text-nav-subtle">{t('tags.empty', 'No tags yet')}</p>
               )}
-              {t('sidebar.tags')}
-            </div>
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                setTagManagerOpen(true)
-              }}
-              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-              title={t('tags.manage') || 'Manage Tags'}
-            >
-              <Settings className="w-3 h-3" />
-            </button>
-          </div>
-
-          {expandedSections.tags && (
-            <div className="px-5 pt-1.5 flex flex-wrap gap-1.5">
-              {tags.map((tag) => (
-                <button
-                  key={tag.id}
-                  onClick={() => {
-                    setSelectedTagFilter(tag.name)
-                    closeSidebarOnMobile()
-                  }}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] ${
-                    selectedTagFilter === tag.name
-                      ? 'ring-2 ring-emerald-500 ring-offset-1 dark:ring-offset-gray-950 shadow-sm bg-white/90 dark:bg-transparent'
-                      : 'hover:shadow-sm bg-white/40 dark:bg-transparent'
-                  }`}
-                  style={{
-                    backgroundColor: selectedTagFilter === tag.name ? undefined : `${tag.color}12`,
-                    color: tag.color,
-                  }}
-                >
-                  #{tag.name}
-                  <span className="ml-1 opacity-50 font-medium">
-                    {getNotesCountForTag(tag.name)}
-                  </span>
-                </button>
-              ))}
+              {tags.map((tag) => {
+                const active = selectedTagFilter === tag.name
+                return (
+                  <button
+                    key={tag.id}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={go(() => setSelectedTagFilter(tag.name))}
+                    className={`inline-flex max-w-full items-center gap-1.5 rounded-md px-2 py-1 text-ui-xs font-semibold transition-colors duration-fast ${
+                      active ? 'ring-1 ring-white/40' : ''
+                    }`}
+                    style={{
+                      backgroundColor: `color-mix(in srgb, ${tag.color} 20%, transparent)`,
+                      color: `color-mix(in srgb, ${tag.color} 72%, white)`,
+                    }}
+                  >
+                    <span className="truncate">#{tag.name}</span>
+                    <span className="shrink-0 tabular-nums opacity-70">
+                      {counts.byTag.get(tag.name) || 0}
+                    </span>
+                  </button>
+                )
+              })}
             </div>
           )}
-        </div>
+        </section>
       </div>
-      <div className="p-3 space-y-1.5">
-        <div className="divider mb-2.5" />
-        <div className="hidden md:flex gap-1.5">
-          <button
-            onClick={() => setNoteTypesModalOpen(true)}
-            className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 hover:from-emerald-100 hover:to-teal-100 dark:hover:from-emerald-900/40 dark:hover:to-teal-900/40 transition-all text-[12px] text-emerald-700 dark:text-emerald-400 font-semibold active:scale-[0.98] btn-glow border border-emerald-100/50 dark:border-emerald-800/30"
-            title="Note Types"
-          >
-            <LayoutTemplate className="w-3.5 h-3.5" />
-            Note Types
-          </button>
-          <button
-            onClick={() => setShortcutsModalOpen(true)}
-            className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 hover:from-emerald-100 hover:to-teal-100 dark:hover:from-emerald-900/40 dark:hover:to-teal-900/40 transition-all text-[12px] text-emerald-700 dark:text-emerald-400 font-semibold active:scale-[0.98] btn-glow border border-emerald-100/50 dark:border-emerald-800/30"
-            title={t('sidebar.shortcuts')}
-          >
-            <Keyboard className="w-3.5 h-3.5" />
-            {t('sidebar.shortcuts')}
-          </button>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <button
-            onClick={cycleTheme}
-            className="flex-1 flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-white/90 dark:hover:bg-gray-800/50 transition-all text-[12px] text-gray-500 dark:text-gray-400 font-medium"
-          >
-            {getThemeIcon()}
-            <span>
-              {theme === 'light' && t('settings.themeLight')}
-              {theme === 'dark' && t('settings.themeDark')}
-              {theme === 'system' && t('settings.themeSystem')}
-            </span>
-          </button>
-          <div className="flex items-center gap-2 px-3 py-2 text-[12px] text-gray-400 dark:text-gray-500">
-            {isOnline ? (
-              <span className="status-dot status-online flex-shrink-0" />
-            ) : (
-              <span className="status-dot status-offline flex-shrink-0" />
-            )}
-            {isOnline && !isSyncing ? (
-              <button
-                onClick={syncWithBackend}
-                className="text-[11px] text-emerald-600 dark:text-emerald-400 hover:underline font-medium whitespace-nowrap"
-              >
-                {t('sidebar.sync')}
-              </button>
-            ) : (
-              <span className="text-[11px] whitespace-nowrap">
-                {isSyncing ? t('sidebar.syncing') : t('sidebar.offline')}
-              </span>
-            )}
-          </div>
-        </div>
+
+      {/* ---- Footer ------------------------------------------------ */}
+      <div className="qn-safe-bottom shrink-0 px-3 pb-3">
+        {/* The reference shows an "Upgrade to Pro" card here. QuickNotes
+            is GPL-3.0 and ships no paid tier, so that block is a mockup
+            artifact and is deliberately not implemented. */}
+        <ul className="space-y-0.5 border-t border-nav-border pt-2">
+          <li>
+            <NavItem
+              icon={Settings}
+              label={t('sidebar.settings', 'Settings')}
+              onClick={() => setSettingsOpen(true)}
+            />
+          </li>
+          <li>
+            <NavItem
+              icon={HelpCircle}
+              label={t('sidebar.help', 'Help & Support')}
+              onClick={() => setHelpModalOpen(true)}
+              trailing={
+                <ChevronRight
+                  className="pointer-events-none absolute right-3 h-3.5 w-3.5 text-nav-subtle"
+                  aria-hidden="true"
+                />
+              }
+            />
+          </li>
+        </ul>
+
+        <button
+          ref={accountRef}
+          type="button"
+          onClick={() => setAccountOpen((v) => !v)}
+          aria-expanded={accountOpen}
+          aria-haspopup="menu"
+          className="mt-2 flex w-full items-center gap-2.5 rounded-control border-t border-nav-border px-2 pb-1 pt-3 text-left transition-colors duration-fast hover:bg-nav-hover"
+        >
+          <Avatar user={user} size="md" />
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-ui-lg font-semibold text-nav-text">{displayName}</span>
+            <span className="block truncate text-ui-sm text-nav-subtle">{user?.email}</span>
+          </span>
+          <ChevronDown className="h-3.5 w-3.5 shrink-0 text-nav-subtle" aria-hidden="true" />
+        </button>
       </div>
-      {showNewFolderModal && createPortal(
-        <NewFolderModal
-          isOpen={showNewFolderModal}
-          onClose={() => setShowNewFolderModal(false)}
-          onCreate={handleCreateFolder}
-        />,
-        document.body
-      )}
-      {folderContextMenu && createPortal(
-        <FolderContextMenu
-          x={folderContextMenu.x}
-          y={folderContextMenu.y}
-          folder={folderContextMenu.folder}
-          onClose={() => setFolderContextMenu(null)}
-          onRename={() => {
-            setEditingFolderId(folderContextMenu.folder.id)
-            setEditingFolderName(folderContextMenu.folder.name)
+
+      <Menu
+        open={accountOpen}
+        onClose={() => setAccountOpen(false)}
+        anchorRef={accountRef}
+        placement="top-start"
+        label="Account"
+        width={220}
+      >
+        <MenuItem
+          icon={Settings}
+          onClick={() => {
+            setAccountOpen(false)
+            setSettingsOpen(true)
           }}
-          onEdit={() => setEditingFolder(folderContextMenu.folder)}
-          onDelete={() => deleteFolder(folderContextMenu.folder.id)}
-        />,
-        document.body
-      )}
-      {editingFolder !== null && createPortal(
-        <EditFolderModal
-          isOpen={editingFolder !== null}
-          onClose={() => setEditingFolder(null)}
-          folder={editingFolder}
-          onUpdate={updateFolder}
-        />,
-        document.body
-      )}
-    </div>
+        >
+          {t('sidebar.settings', 'Settings')}
+        </MenuItem>
+        <MenuItem
+          icon={ThemeIcon}
+          onClick={() => {
+            setAccountOpen(false)
+            cycleTheme()
+          }}
+        >
+          {`${t('settings.theme', 'Theme')}: ${themeLabel}`}
+        </MenuItem>
+        <MenuSeparator />
+        <MenuItem
+          icon={LogOut}
+          tone="danger"
+          onClick={() => {
+            setAccountOpen(false)
+            logout()
+          }}
+        >
+          {t('auth.signOut', 'Sign out')}
+        </MenuItem>
+      </Menu>
+
+      <Menu
+        open={!!folderMenu}
+        onClose={() => setFolderMenu(null)}
+        point={folderMenu?.point}
+        label={folderMenu?.folder?.name}
+        width={190}
+      >
+        <MenuItem
+          icon={Pencil}
+          onClick={() => {
+            setFolderDialog({ folder: folderMenu.folder })
+            setFolderMenu(null)
+          }}
+        >
+          {t('common.edit', 'Edit folder')}
+        </MenuItem>
+        <MenuSeparator />
+        <MenuItem
+          icon={Trash2}
+          tone="danger"
+          onClick={() => {
+            setConfirmDelete(folderMenu.folder)
+            setFolderMenu(null)
+          }}
+        >
+          {t('common.delete', 'Delete folder')}
+        </MenuItem>
+      </Menu>
+
+      <FolderDialog
+        open={!!folderDialog}
+        folder={folderDialog?.folder}
+        existingNames={folders.map((f) => f.name)}
+        onClose={() => setFolderDialog(null)}
+        onSubmit={(data) =>
+          folderDialog?.folder ? updateFolder(folderDialog.folder.id, data) : createFolder(data)
+        }
+      />
+
+      <ConfirmDialog
+        open={!!confirmDelete}
+        onClose={() => setConfirmDelete(null)}
+        onConfirm={() => deleteFolder(confirmDelete.id)}
+        icon={Trash2}
+        title={t('folders.deleteFolder', 'Delete folder?')}
+        description={
+          confirmDelete
+            ? `"${confirmDelete.name}" will be removed. Its ${
+                counts.byFolder.get(confirmDelete.id) || 0
+              } note(s) are kept and moved out of the folder.`
+            : ''
+        }
+        confirmLabel={t('common.delete', 'Delete folder')}
+        cancelLabel={t('common.cancel', 'Cancel')}
+      />
+    </nav>
   )
 }

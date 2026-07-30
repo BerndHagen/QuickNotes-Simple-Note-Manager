@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { generateId, repairMojibake } from '../lib/utils'
+import { filterNotes } from '../lib/filterNotes'
 import { db, saveNoteOffline, addToSyncQueue, getPendingSyncItems, removeSyncItem, clearLocalData, SyncStatus } from '../lib/db'
 import { backend, isBackendConfigured } from '../lib/backend'
 import toast from 'react-hot-toast'
@@ -106,6 +107,8 @@ export const useNotesStore = create(
       sharedNotes: [],
       pendingShares: [],
       isNewUser: false,
+      /** Transient realtime signal — deliberately not persisted. */
+      externalUpdate: { noteId: null, token: 0 },
 
       initializeStarterContent: () => {
         const { welcomeNote, starterFolders, starterTags } = createStarterContent()
@@ -1192,38 +1195,51 @@ export const useNotesStore = create(
         }
       },
 
+      /**
+       * Delegates to the shared filter so the store, the note list and
+       * global search can never disagree about what matches.
+       */
       getFilteredNotes: () => {
         const { notes, selectedFolderId, selectedTagFilter, searchQuery } = get()
-
-        let filtered = notes.filter((note) => !note.deleted && !note.archived)
-
-        if (selectedFolderId) {
-          filtered = filtered.filter((note) => note.folderId === selectedFolderId)
-        }
-
-        if (selectedTagFilter) {
-          filtered = filtered.filter((note) =>
-            note.tags?.includes(selectedTagFilter)
-          )
-        }
-
-        if (searchQuery) {
-          const query = searchQuery.toLowerCase()
-          filtered = filtered.filter(
-            (note) =>
-              note.title.toLowerCase().includes(query) ||
-              note.content.toLowerCase().includes(query) ||
-              note.tags?.some((tag) => tag.toLowerCase().includes(query))
-          )
-        }
+        const filtered = filterNotes(notes, {
+          folderId: selectedFolderId,
+          tagFilter: selectedTagFilter,
+          query: searchQuery,
+        })
 
         return filtered.sort((a, b) => {
-          if (a.pinned && !b.pinned) return -1
-          if (!a.pinned && b.pinned) return 1
-          if (a.starred && !b.starred) return -1
-          if (!a.starred && b.starred) return 1
+          if (a.pinned !== b.pinned) return a.pinned ? -1 : 1
+          if (a.starred !== b.starred) return a.starred ? -1 : 1
           return new Date(b.updatedAt) - new Date(a.updatedAt)
         })
+      },
+
+      /**
+       * Applies a change that originated on the server (realtime
+       * collaboration) without marking the note dirty.
+       *
+       * The previous implementation pushed `_isExternalUpdate: true`
+       * through `updateNote`, which stamped a new `updatedAt`, set
+       * `syncStatus: PENDING` and persisted the private flag to
+       * IndexedDB. The editor then wrote the flag back to `false`,
+       * repeating all of it — so every inbound collaborator keystroke
+       * queued the note for re-upload with a timestamp newer than the
+       * server's, which is how remote edits ended up overwriting each
+       * other. The signal now lives in transient state instead.
+       */
+      applyExternalUpdate: (id, patch) => {
+        set((state) => ({
+          notes: state.notes.map((note) =>
+            note.id === id ? { ...note, ...patch, syncStatus: SyncStatus.SYNCED } : note
+          ),
+          sharedNotes: state.sharedNotes.map((share) =>
+            share.notes?.id === id ? { ...share, notes: { ...share.notes, ...patch } } : share
+          ),
+          externalUpdate: { noteId: id, token: get().externalUpdate.token + 1 },
+        }))
+
+        const note = get().notes.find((n) => n.id === id)
+        if (note) db.notes.put({ ...note })
       },
 
       getSelectedNote: () => {

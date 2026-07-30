@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   Plus,
   Trash2,
@@ -185,9 +185,10 @@ export default function TodoListEditor({ data, onChange, noteTitle }) {
     }
     filtered.sort((a, b) => {
       switch (sortBy) {
-        case 'priority':
+        case 'priority': {
           const priorityOrder = { high: 0, medium: 1, low: 2, none: 3 }
           return priorityOrder[a.priority] - priorityOrder[b.priority]
+        }
         case 'dueDate':
           if (!a.dueDate) return 1
           if (!b.dueDate) return -1

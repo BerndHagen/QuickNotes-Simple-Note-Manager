@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { BubbleMenu } from '@tiptap/react'
 import {
@@ -390,7 +390,7 @@ export default function TableBubbleMenu({ editor }) {
               closeAllDropdowns()
               setShowColumnMenu(!showColumnMenu)
             }}
-            title={t('editor.columns') || 'Columns'}
+            title={t('editor.columns', 'Columns')}
           >
             <Columns className="w-4 h-4" />
           </DropdownButton>
@@ -409,7 +409,7 @@ export default function TableBubbleMenu({ editor }) {
               className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 text-gray-700 dark:text-gray-300"
             >
               <ArrowLeft className="w-4 h-4" />
-              {t('editor.addColumnBefore') || 'Insert Left'}
+              {t('editor.addColumnBefore', 'Insert Left')}
             </button>
             <button
               onMouseDown={(e) => {
@@ -420,7 +420,7 @@ export default function TableBubbleMenu({ editor }) {
               className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 text-gray-700 dark:text-gray-300"
             >
               <ArrowRight className="w-4 h-4" />
-              {t('editor.addColumnAfter') || 'Insert Right'}
+              {t('editor.addColumnAfter', 'Insert Right')}
             </button>
             <div className="h-px bg-gray-200 dark:bg-gray-700 my-1" />
             <button
@@ -432,7 +432,7 @@ export default function TableBubbleMenu({ editor }) {
               className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 text-red-600 dark:text-red-400"
             >
               <X className="w-4 h-4" />
-              {t('editor.deleteColumn') || 'Delete Column'}
+              {t('editor.deleteColumn', 'Delete Column')}
             </button>
           </DropdownMenu>
         </div>
@@ -443,7 +443,7 @@ export default function TableBubbleMenu({ editor }) {
               closeAllDropdowns()
               setShowRowMenu(!showRowMenu)
             }}
-            title={t('editor.rows') || 'Rows'}
+            title={t('editor.rows', 'Rows')}
           >
             <Rows className="w-4 h-4" />
           </DropdownButton>
@@ -462,7 +462,7 @@ export default function TableBubbleMenu({ editor }) {
               className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 text-gray-700 dark:text-gray-300"
             >
               <ArrowUp className="w-4 h-4" />
-              {t('editor.addRowBefore') || 'Insert Above'}
+              {t('editor.addRowBefore', 'Insert Above')}
             </button>
             <button
               onMouseDown={(e) => {
@@ -473,7 +473,7 @@ export default function TableBubbleMenu({ editor }) {
               className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 text-gray-700 dark:text-gray-300"
             >
               <ArrowDown className="w-4 h-4" />
-              {t('editor.addRowAfter') || 'Insert Below'}
+              {t('editor.addRowAfter', 'Insert Below')}
             </button>
             <div className="h-px bg-gray-200 dark:bg-gray-700 my-1" />
             <button
@@ -485,7 +485,7 @@ export default function TableBubbleMenu({ editor }) {
               className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 text-red-600 dark:text-red-400"
             >
               <X className="w-4 h-4" />
-              {t('editor.deleteRow') || 'Delete Row'}
+              {t('editor.deleteRow', 'Delete Row')}
             </button>
           </DropdownMenu>
         </div>
@@ -498,7 +498,7 @@ export default function TableBubbleMenu({ editor }) {
               closeAllDropdowns()
               setShowCellColorPicker(!showCellColorPicker)
             }}
-            title={t('editor.cellColor') || 'Cell Color'}
+            title={t('editor.cellColor', 'Cell Color')}
           >
             <PaintBucket className="w-4 h-4" />
           </DropdownButton>
@@ -508,7 +508,7 @@ export default function TableBubbleMenu({ editor }) {
             onClose={() => setShowCellColorPicker(false)}
             onSelect={setCellBackgroundColor}
             currentColor={getCurrentCellColor()}
-            title={t('editor.cellBackgroundColor') || 'Cell Background Color'}
+            title={t('editor.cellBackgroundColor', 'Cell Background Color')}
             anchorRef={cellColorButtonRef}
           />
         </div>
@@ -519,7 +519,7 @@ export default function TableBubbleMenu({ editor }) {
               closeAllDropdowns()
               setShowRowColorPicker(!showRowColorPicker)
             }}
-            title={t('editor.rowColor') || 'Row Color'}
+            title={t('editor.rowColor', 'Row Color')}
           >
             <Palette className="w-4 h-4" />
           </DropdownButton>
@@ -529,7 +529,7 @@ export default function TableBubbleMenu({ editor }) {
             onClose={() => setShowRowColorPicker(false)}
             onSelect={setRowBackgroundColor}
             currentColor={null}
-            title={t('editor.rowBackgroundColor') || 'Row Background Color'}
+            title={t('editor.rowBackgroundColor', 'Row Background Color')}
             anchorRef={rowColorButtonRef}
           />
         </div>
@@ -538,7 +538,7 @@ export default function TableBubbleMenu({ editor }) {
         <MenuButton
           onClick={() => editor.chain().focus().mergeCells().run()}
           disabled={!editor.can().mergeCells()}
-          title={t('editor.mergeCells') || 'Merge Cells'}
+          title={t('editor.mergeCells', 'Merge Cells')}
         >
           <Merge className="w-4 h-4" />
         </MenuButton>
@@ -546,7 +546,7 @@ export default function TableBubbleMenu({ editor }) {
         <MenuButton
           onClick={() => editor.chain().focus().splitCell().run()}
           disabled={!editor.can().splitCell()}
-          title={t('editor.splitCell') || 'Split Cell'}
+          title={t('editor.splitCell', 'Split Cell')}
         >
           <Split className="w-4 h-4" />
         </MenuButton>
@@ -554,13 +554,13 @@ export default function TableBubbleMenu({ editor }) {
         <MenuDivider />
         <MenuButton
           onClick={() => editor.chain().focus().toggleHeaderRow().run()}
-          title={t('editor.toggleHeaderRow') || 'Toggle Header Row'}
+          title={t('editor.toggleHeaderRow', 'Toggle Header Row')}
         >
           <TableProperties className="w-4 h-4" />
         </MenuButton>
         <MenuButton
           onClick={() => editor.chain().focus().toggleHeaderColumn().run()}
-          title={t('editor.toggleHeaderColumn') || 'Toggle Header Column'}
+          title={t('editor.toggleHeaderColumn', 'Toggle Header Column')}
         >
           <Grid className="w-4 h-4" />
         </MenuButton>
@@ -568,7 +568,7 @@ export default function TableBubbleMenu({ editor }) {
         <MenuDivider />
         <MenuButton
           onClick={() => editor.chain().focus().deleteTable().run()}
-          title={t('editor.deleteTable') || 'Delete Table'}
+          title={t('editor.deleteTable', 'Delete Table')}
         >
           <Trash2 className="w-4 h-4 text-red-500" />
         </MenuButton>

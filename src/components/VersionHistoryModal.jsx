@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { X, History, Clock, RotateCcw, ChevronRight, FileText, AlertCircle } from 'lucide-react'
 import { useNotesStore, useUIStore } from '../store'
 import { getNoteVersions } from '../lib/db'
 import { getRemoteNoteVersions, isBackendConfigured } from '../lib/backend'
 import toast from 'react-hot-toast'
+import LegacyDialog from './ui/LegacyDialog'
 
 export default function VersionHistoryModal() {
   const { versionHistoryOpen, setVersionHistoryOpen, versionHistoryNoteId } = useUIStore()
@@ -159,7 +160,7 @@ export default function VersionHistoryModal() {
   if (!versionHistoryOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm modal-backdrop-animate">
+    <LegacyDialog label="Version history" onClose={() => setVersionHistoryOpen(false)} align="center">
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-[#cbd1db] dark:border-gray-700 w-full max-w-4xl mx-4 max-h-[85vh] overflow-hidden flex flex-col modal-animate">
         <div className="flex items-center justify-between p-5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white shrink-0">
           <div className="flex items-center gap-3">
@@ -325,6 +326,6 @@ export default function VersionHistoryModal() {
           </div>
         </div>
       </div>
-    </div>
+    </LegacyDialog>
   )
 }

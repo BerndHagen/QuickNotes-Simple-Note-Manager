@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useState, useRef } from 'react'
+import React, { useEffect, useCallback, useMemo, useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useEditor, EditorContent, BubbleMenu, FloatingMenu } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
@@ -19,6 +19,7 @@ import Table from '@tiptap/extension-table'
 import TableRow from '@tiptap/extension-table-row'
 import { Extension, Node, mergeAttributes } from '@tiptap/core'
 import ResizableImageExtension from './ResizableImageExtension'
+import TextBoxExtension from './TextBoxExtension'
 import CustomTableCell from './CustomTableCell'
 import CustomTableHeader from './CustomTableHeader'
 import TableBubbleMenu from './TableBubbleMenu'
@@ -315,40 +316,6 @@ const DropCap = Extension.create({
       },
       unsetDropCap: () => ({ commands }) => {
         return commands.updateAttributes('paragraph', { dropCap: false })
-      },
-    }
-  },
-})
-
-const TextBox = Node.create({
-  name: 'textBox',
-  group: 'block',
-  content: 'block+',
-  defining: true,
-  
-  parseHTML() {
-    return [{ tag: 'div[data-type="textBox"]' }]
-  },
-
-  renderHTML({ HTMLAttributes }) {
-    return [
-      'div',
-      mergeAttributes(HTMLAttributes, {
-        'data-type': 'textBox',
-        class: 'text-box',
-        style: 'border: 2px solid #e5e7eb; background-color: #f9fafb; padding: 16px; border-radius: 8px; margin: 8px 0;',
-      }),
-      0,
-    ]
-  },
-
-  addCommands() {
-    return {
-      insertTextBox: () => ({ commands }) => {
-        return commands.insertContent({
-          type: this.name,
-          content: [{ type: 'paragraph' }],
-        })
       },
     }
   },
@@ -819,7 +786,7 @@ export default function RichTextEditor({ noteId, content, onChange, placeholder,
         inline: false,
         allowBase64: true,
       }),
-      TextBox,
+      TextBoxExtension,
     ],
     content: content || '',
     onUpdate: ({ editor }) => {
@@ -942,20 +909,25 @@ export default function RichTextEditor({ noteId, content, onChange, placeholder,
 
   }, [editor, editorSettings])
 
-  const debouncedOnChange = useCallback(
-    debounce((html) => {
-      lastSentContent.current = html
-      onChange?.(html)
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current)
-      }
-      debounceTimerRef.current = setTimeout(() => {
-        if (!isUserTyping.current) {
-          isInternalUpdate.current = false
+  // Honours the user's "Auto-save delay" setting, which previously
+  // existed in the store but was never read — the delay was hard-coded.
+  const autoSaveDelay = useUIStore((s) => s.autoSaveDelay)
+
+  const debouncedOnChange = useMemo(
+    () =>
+      debounce((html) => {
+        lastSentContent.current = html
+        onChange?.(html)
+        if (debounceTimerRef.current) {
+          clearTimeout(debounceTimerRef.current)
         }
-      }, 1000)
-    }, 300),
-    [onChange]
+        debounceTimerRef.current = setTimeout(() => {
+          if (!isUserTyping.current) {
+            isInternalUpdate.current = false
+          }
+        }, 1000)
+      }, autoSaveDelay ?? 300),
+    [onChange, autoSaveDelay]
   )
 
   useEffect(() => {
@@ -1198,9 +1170,9 @@ const ContextMenu = React.forwardRef(({ x, y, editor, onClose, editorBounds }, r
   const menuRef = useRef(null)
 
   const menuItems = [
-    { icon: <Copy className="w-4 h-4" />, label: t('common.copy') || 'Copy', shortcut: 'Ctrl+C', action: () => document.execCommand('copy') },
-    { icon: <Scissors className="w-4 h-4" />, label: t('common.cut') || 'Cut', shortcut: 'Ctrl+X', action: () => document.execCommand('cut') },
-    { icon: <Clipboard className="w-4 h-4" />, label: t('common.paste') || 'Paste', shortcut: 'Ctrl+V', action: () => document.execCommand('paste') },
+    { icon: <Copy className="w-4 h-4" />, label: t('common.copy', 'Copy'), shortcut: 'Ctrl+C', action: () => document.execCommand('copy') },
+    { icon: <Scissors className="w-4 h-4" />, label: t('common.cut', 'Cut'), shortcut: 'Ctrl+X', action: () => document.execCommand('cut') },
+    { icon: <Clipboard className="w-4 h-4" />, label: t('common.paste', 'Paste'), shortcut: 'Ctrl+V', action: () => document.execCommand('paste') },
     { icon: <Clipboard className="w-4 h-4" />, label: 'Paste as Plain Text', shortcut: 'Ctrl+Shift+V', action: async () => {
       try {
         const text = await navigator.clipboard.readText()
@@ -1211,14 +1183,14 @@ const ContextMenu = React.forwardRef(({ x, y, editor, onClose, editorBounds }, r
       }
     }},
     { type: 'divider' },
-    { icon: <Bold className="w-4 h-4" />, label: t('editor.bold') || 'Bold', shortcut: 'Ctrl+B', action: () => editor.chain().focus().toggleBold().run() },
-    { icon: <Italic className="w-4 h-4" />, label: t('editor.italic') || 'Italic', shortcut: 'Ctrl+I', action: () => editor.chain().focus().toggleItalic().run() },
-    { icon: <UnderlineIcon className="w-4 h-4" />, label: t('editor.underline') || 'Underline', shortcut: 'Ctrl+U', action: () => editor.chain().focus().toggleUnderline().run() },
-    { icon: <Highlighter className="w-4 h-4" />, label: t('editor.highlight') || 'Highlight', action: () => editor.chain().focus().toggleHighlight().run() },
+    { icon: <Bold className="w-4 h-4" />, label: t('editor.bold', 'Bold'), shortcut: 'Ctrl+B', action: () => editor.chain().focus().toggleBold().run() },
+    { icon: <Italic className="w-4 h-4" />, label: t('editor.italic', 'Italic'), shortcut: 'Ctrl+I', action: () => editor.chain().focus().toggleItalic().run() },
+    { icon: <UnderlineIcon className="w-4 h-4" />, label: t('editor.underline', 'Underline'), shortcut: 'Ctrl+U', action: () => editor.chain().focus().toggleUnderline().run() },
+    { icon: <Highlighter className="w-4 h-4" />, label: t('editor.highlight', 'Highlight'), action: () => editor.chain().focus().toggleHighlight().run() },
     { type: 'divider' },
-    { icon: <AlignLeft className="w-4 h-4" />, label: t('editor.alignLeft') || 'Align Left', action: () => editor.chain().focus().setTextAlign('left').run() },
-    { icon: <AlignCenter className="w-4 h-4" />, label: t('editor.alignCenter') || 'Center', action: () => editor.chain().focus().setTextAlign('center').run() },
-    { icon: <AlignRight className="w-4 h-4" />, label: t('editor.alignRight') || 'Align Right', action: () => editor.chain().focus().setTextAlign('right').run() },
+    { icon: <AlignLeft className="w-4 h-4" />, label: t('editor.alignLeft', 'Align Left'), action: () => editor.chain().focus().setTextAlign('left').run() },
+    { icon: <AlignCenter className="w-4 h-4" />, label: t('editor.alignCenter', 'Center'), action: () => editor.chain().focus().setTextAlign('center').run() },
+    { icon: <AlignRight className="w-4 h-4" />, label: t('editor.alignRight', 'Align Right'), action: () => editor.chain().focus().setTextAlign('right').run() },
     { type: 'divider' },
     { icon: <Languages className="w-4 h-4" />, label: 'Translate', action: () => {
       const { from, to, empty } = editor.state.selection
@@ -1230,12 +1202,12 @@ const ContextMenu = React.forwardRef(({ x, y, editor, onClose, editorBounds }, r
       }
       useUIStore.getState().openTranslateModal(textToTranslate)
     }},
-    { icon: <LinkIcon className="w-4 h-4" />, label: t('editor.link') || 'Insert Link', shortcut: 'Ctrl+K', action: () => {
+    { icon: <LinkIcon className="w-4 h-4" />, label: t('editor.link', 'Insert Link'), shortcut: 'Ctrl+K', action: () => {
       useUIStore.getState().setLinkModalOpen(true)
     }},
-    { icon: <TableIcon className="w-4 h-4" />, label: t('editor.table') || 'Insert Table', action: () => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run() },
+    { icon: <TableIcon className="w-4 h-4" />, label: t('editor.table', 'Insert Table'), action: () => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run() },
     { type: 'divider' },
-    { icon: <Trash2 className="w-4 h-4" />, label: t('common.delete') || 'Delete Selection', action: () => editor.chain().focus().deleteSelection().run(), danger: true },
+    { icon: <Trash2 className="w-4 h-4" />, label: t('common.delete', 'Delete Selection'), action: () => editor.chain().focus().deleteSelection().run(), danger: true },
   ]
 
   const handleAction = (action) => {
@@ -1731,11 +1703,13 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
           if (!disabled && onClick) onClick()
         }}
         disabled={disabled}
-        className={`toolbar-btn p-1.5 sm:p-2 rounded-lg transition-all duration-150 touch-manipulation ${
+        aria-pressed={isActive || undefined}
+        aria-label={title}
+        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-control transition-colors duration-fast ${
           isActive
-            ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 shadow-sm'
-            : 'hover:bg-gray-100 dark:hover:bg-gray-800/60 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 active:bg-gray-100 dark:active:bg-gray-700'
-        } ${disabled ? 'opacity-30 cursor-not-allowed' : ''}`}
+            ? 'bg-accent-soft text-accent-text'
+            : 'text-content-muted hover:bg-surface-hover hover:text-content'
+        } ${disabled ? 'cursor-not-allowed opacity-40' : ''}`}
       >
         {children}
       </button>
@@ -1751,7 +1725,7 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
   }
 
   const ToolbarDivider = () => (
-    <div className="w-px h-5 mx-0.5 sm:mx-1 bg-gradient-to-b from-transparent via-gray-200 to-transparent dark:via-gray-700/60" />
+    <div className="mx-1 h-5 w-px shrink-0 bg-[var(--qn-border-subtle)]" />
   )
 
   const DropdownButton = ({ children, isOpen, onClick, title, disabled }) => {
@@ -1789,7 +1763,7 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
   }
 
   return (
-    <div ref={toolbarRef} className="editor-toolbar toolbar-premium flex flex-wrap items-center gap-0.5 sm:gap-0.5 px-2 sm:px-4 py-1.5 sm:py-2 border-b border-[#cbd1db] dark:border-gray-800/60 overflow-x-auto">
+    <div ref={toolbarRef} className="editor-toolbar flex flex-nowrap items-center gap-0.5 overflow-x-auto border-b border-subtle bg-surface px-2 py-1.5 sm:px-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       <ToolbarButton onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} title="Undo" shortcut="Ctrl+Z">
         <Undo className="w-4 h-4" />
       </ToolbarButton>
@@ -1904,12 +1878,17 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
       </div>
 
       <div className="relative" ref={headingsRef}>
-        <DropdownButton 
-          isOpen={showHeadingsPicker} 
-          onClick={() => toggleDropdown(setShowHeadingsPicker, showHeadingsPicker)} 
-          title="Headings"
+        <DropdownButton
+          isOpen={showHeadingsPicker}
+          onClick={() => toggleDropdown(setShowHeadingsPicker, showHeadingsPicker)}
+          title="Block style"
         >
-          <Heading1 className="w-4 h-4" />
+          <span className="min-w-[74px] whitespace-nowrap text-left text-ui-md font-medium">
+            {[1, 2, 3, 4, 5, 6].reduce(
+              (label, level) => (editor.isActive('heading', { level }) ? `Heading ${level}` : label),
+              'Normal text'
+            )}
+          </span>
         </DropdownButton>
         <PortalDropdown isOpen={showHeadingsPicker} anchorRef={headingsRef} onClose={() => setShowHeadingsPicker(false)}>
           <div className="py-1.5 w-[180px]">

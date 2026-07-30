@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { X, Code, Copy, Check, Eye, EyeOff, Download, Upload, AlertTriangle } from 'lucide-react'
 import { useUIStore } from '../store'
 import { useTranslation } from '../lib/useTranslation'
+import LegacyDialog from './ui/LegacyDialog'
 
 export default function HTMLEditorModal({ editor }) {
   const { htmlEditorOpen, setHTMLEditorOpen } = useUIStore()
@@ -103,7 +104,7 @@ export default function HTMLEditorModal({ editor }) {
   if (!htmlEditorOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm modal-backdrop-animate">
+    <LegacyDialog label="Edit HTML" onClose={() => setHTMLEditorOpen(false)} align="center">
       <div className="modal-animate bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-[#cbd1db] dark:border-gray-700 w-full max-w-4xl mx-4 h-[85vh] overflow-hidden flex flex-col">
         <div className="flex items-center justify-between p-5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
           <div className="flex items-center gap-3">
@@ -214,6 +215,6 @@ export default function HTMLEditorModal({ editor }) {
           </div>
         </div>
       </div>
-    </div>
+    </LegacyDialog>
   )
 }

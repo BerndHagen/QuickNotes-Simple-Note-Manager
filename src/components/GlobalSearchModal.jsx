@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import {
   Search,
   FileText,
@@ -10,6 +10,7 @@ import {
 import { useNotesStore, useUIStore } from '../store'
 import { debounce } from '../lib/utils'
 import { useTranslation } from '../lib/useTranslation'
+import LegacyDialog from './ui/LegacyDialog'
 
 export default function GlobalSearchModal() {
   const { t } = useTranslation()
@@ -204,10 +205,7 @@ export default function GlobalSearchModal() {
   if (!globalSearchOpen) return null
 
   return (
-    <div
-      className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh] bg-black/50 backdrop-blur-sm modal-backdrop-animate"
-      onClick={() => setGlobalSearchOpen(false)}
-    >
+    <LegacyDialog label="Search all notes" onClose={() => setGlobalSearchOpen(false)} align="top">
       <div
         className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden border border-[#cbd1db] dark:border-gray-700 modal-animate"
         onClick={(e) => e.stopPropagation()}
@@ -350,6 +348,6 @@ export default function GlobalSearchModal() {
           </div>
         )}
       </div>
-    </div>
+    </LegacyDialog>
   )
 }

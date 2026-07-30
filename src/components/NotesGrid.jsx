@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, useRef } from 'react'
+import { useMemo, useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import {
   Plus,
@@ -326,7 +326,7 @@ function GridNoteCard({ note, isSelected, onClick, onContextMenu }) {
   )
 }
 
-export default function NotesGrid() {
+export default function NotesGrid({ sidebarToggle }) {
   const {
     notes,
     folders,

@@ -3,6 +3,7 @@ import { X, Mail, Link2, Copy, Check, Trash2, UserPlus, Users } from 'lucide-rea
 import { useNotesStore } from '../store'
 import { useUIStore } from '../store'
 import toast from 'react-hot-toast'
+import LegacyDialog from './ui/LegacyDialog'
 
 export default function ShareNoteModal() {
   const { shareModalOpen, shareNoteId, setShareModalOpen } = useUIStore()
@@ -82,7 +83,7 @@ export default function ShareNoteModal() {
   if (!shareModalOpen || !note) return null
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 modal-backdrop-animate">
+    <LegacyDialog label="Share note" onClose={() => setShareModalOpen(false)} align="center">
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-[#cbd1db] dark:border-gray-700 max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col modal-animate">
         <div className="flex items-center justify-between p-5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
           <div className="flex items-center gap-3">
@@ -252,6 +253,6 @@ export default function ShareNoteModal() {
           </div>
         </div>
       </div>
-    </div>
+    </LegacyDialog>
   )
 }

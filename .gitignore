@@ -36,3 +36,9 @@ DATABASE_SCHEMA.md
 Medio/
 Medio-Render-API/
 Tabellen/
+
+# Test + tooling output
+test-results/
+playwright-report/
+.scratch/
+coverage/

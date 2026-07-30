@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Sidebar,
   NotesList,
@@ -19,7 +19,7 @@ import {
   FocusMode,
   ArchiveView,
   ShareNoteModal,
-  SharedNotesView
+  SharedNotesView,
 } from './components'
 import AuthScreen from './components/AuthScreen'
 import KeyboardShortcutsModal from './components/KeyboardShortcutsModal'
@@ -32,22 +32,53 @@ import TagManagerModal from './components/TagManagerModal'
 import TranslateModal from './components/TranslateModal'
 import EditorSettingsModal from './components/EditorSettingsModal'
 import { useNotesStore, useUIStore } from './store'
-import { onConnectionChange, createShortcutHandler } from './lib/utils'
+import { onConnectionChange } from './lib/utils'
 import { backend, isBackendConfigured } from './lib/backend'
 import { useShareInvitations } from './lib/useCollaboration'
-import { Menu, PanelLeftClose } from 'lucide-react'
+import { useAppShortcuts } from './lib/shortcuts'
+import { useLayoutMode } from './hooks/useBreakpoint'
+import { PanelLeft, CloudOff } from 'lucide-react'
+import { IconButton, Spinner } from './components/ui'
+
+function AppLoading() {
+  return (
+    <div className="flex min-h-[100dvh] items-center justify-center bg-app">
+      <div className="flex flex-col items-center gap-4">
+        <Spinner size="lg" label="Loading your workspace" />
+        <div className="text-center">
+          <p className="text-ui-lg font-semibold text-content">QuickNotes</p>
+          <p className="mt-1 text-ui-md text-content-muted">Loading your workspace…</p>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export default function App() {
-  const { 
-    setIsOnline, 
-    syncWithBackend, 
-    isOnline, 
-    user, 
-    setUser,
-    setIsAuthChecked 
-  } = useNotesStore()
-  const { sidebarOpen, toggleSidebar, setTemplateModalOpen, setFindReplaceOpen, setExportModalOpen, setImportModalOpen, setGlobalSearchOpen, setFocusModeOpen, focusModeOpen, setShortcutsModalOpen, mobileView, viewMode } = useUIStore()
+  const { setIsOnline, syncWithBackend, isOnline, user, setUser, setIsAuthChecked } = useNotesStore()
+  const {
+    sidebarOpen,
+    setSidebarOpen,
+    toggleSidebar,
+    setTemplateModalOpen,
+    setFindReplaceOpen,
+    setExportModalOpen,
+    setImportModalOpen,
+    setGlobalSearchOpen,
+    setFocusModeOpen,
+    focusModeOpen,
+    setShortcutsModalOpen,
+    setSettingsOpen,
+    setQuickNoteOpen,
+    setLinkModalOpen,
+    mobileView,
+    setMobileView,
+    viewMode,
+  } = useUIStore()
+
   const [isLoading, setIsLoading] = useState(true)
+  const { isCompact, isWide, sidebarIsOverlay } = useLayoutMode()
+  const sidebarToggleRef = useRef(null)
 
   useShareInvitations()
 
@@ -62,14 +93,13 @@ export default function App() {
         setIsLoading(false)
         return
       }
-
       try {
-        const { data: { session } } = await backend.auth.getSession()
-        
-        if (session?.user) {
-          setUser(session.user)
-        }
-      } catch (error) {
+        const {
+          data: { session },
+        } = await backend.auth.getSession()
+        if (session?.user) setUser(session.user)
+      } catch {
+        /* falls through to the sign-in screen */
       } finally {
         setIsAuthChecked(true)
         setIsLoading(false)
@@ -78,167 +108,157 @@ export default function App() {
 
     checkSession()
 
-    const { data: { subscription } } = backend.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'SIGNED_IN' && session?.user) {
-          setUser(session.user)
-          
-          const isNewUser = session.user.created_at && 
-            (new Date().getTime() - new Date(session.user.created_at).getTime()) < 60000
-          
-          if (isNewUser && !localStorage.getItem(`quicknotes-setup-${session.user.id}`)) {
-            const { initializeStarterContent } = useNotesStore.getState()
-            initializeStarterContent()
-            localStorage.setItem(`quicknotes-setup-${session.user.id}`, 'true')
-          }
-        } else if (event === 'SIGNED_OUT') {
-          // Clear all local data to prevent cross-account data leaks
-          const { clearLocalData } = await import('./lib/db')
-          await clearLocalData()
-          localStorage.removeItem('quicknotes-storage')
-          setUser(null)
-          useNotesStore.setState({
-            notes: [],
-            folders: [],
-            tags: [],
-            selectedNoteId: null,
-            selectedFolderId: null,
-            selectedTagFilter: null,
-            searchQuery: '',
-            sharedNotes: [],
-            pendingShares: [],
-            lastSyncTime: null,
-          })
+    const {
+      data: { subscription },
+    } = backend.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        setUser(session.user)
+        const isNewUser =
+          session.user.created_at &&
+          new Date().getTime() - new Date(session.user.created_at).getTime() < 60000
+        if (isNewUser && !localStorage.getItem(`quicknotes-setup-${session.user.id}`)) {
+          useNotesStore.getState().initializeStarterContent()
+          localStorage.setItem(`quicknotes-setup-${session.user.id}`, 'true')
         }
-      }
-    )
-
-    return () => subscription?.unsubscribe()
-  }, [])
-
-  useEffect(() => {
-    const cleanup = onConnectionChange((online) => {
-      setIsOnline(online)
-      if (online && user && !document.hidden) {
-        const lastSync = useNotesStore.getState().lastSyncTime
-        const timeSinceLastSync = lastSync ? Date.now() - new Date(lastSync).getTime() : Infinity
-        if (timeSinceLastSync > 30000) {
-          syncWithBackend()
-        }
+      } else if (event === 'SIGNED_OUT') {
+        // Clear all local data to prevent cross-account data leaks
+        const { clearLocalData } = await import('./lib/db')
+        await clearLocalData()
+        localStorage.removeItem('quicknotes-storage')
+        setUser(null)
+        useNotesStore.setState({
+          notes: [],
+          folders: [],
+          tags: [],
+          selectedNoteId: null,
+          selectedFolderId: null,
+          selectedTagFilter: null,
+          searchQuery: '',
+          sharedNotes: [],
+          pendingShares: [],
+          lastSyncTime: null,
+        })
       }
     })
 
-    return cleanup
-  }, [user])
+    return () => subscription?.unsubscribe()
+  }, [setIsAuthChecked, setUser])
 
   useEffect(() => {
-    if (isOnline && user) {
-      const { loadSharedNotes } = useNotesStore.getState()
-      loadSharedNotes()
-      
-      const { syncOnStartup } = useUIStore.getState()
-      if (syncOnStartup) {
-        syncWithBackend()
+    return onConnectionChange((online) => {
+      setIsOnline(online)
+      if (online && user && !document.hidden) {
+        const lastSync = useNotesStore.getState().lastSyncTime
+        const elapsed = lastSync ? Date.now() - new Date(lastSync).getTime() : Infinity
+        if (elapsed > 30000) syncWithBackend()
       }
-    }
-  }, [user])
+    })
+  }, [user, setIsOnline, syncWithBackend])
+
+  useEffect(() => {
+    if (!isOnline || !user) return
+    useNotesStore.getState().loadSharedNotes()
+    if (useUIStore.getState().syncOnStartup) syncWithBackend()
+  }, [user, isOnline, syncWithBackend])
 
   useEffect(() => {
     if (!user || !isOnline) return
-    
     const { autoSync, syncInterval } = useUIStore.getState()
     if (!autoSync || !syncInterval) return
-    
-    const intervalMs = syncInterval * 60 * 1000 // convert minutes to ms
-    const intervalId = setInterval(() => {
-      const { autoSync: currentAutoSync } = useUIStore.getState()
-      const { isSyncing } = useNotesStore.getState()
-      if (currentAutoSync && !isSyncing && navigator.onLine) {
-        syncWithBackend()
-      }
-    }, intervalMs)
-    
+
+    const intervalId = setInterval(
+      () => {
+        const { autoSync: stillOn } = useUIStore.getState()
+        const { isSyncing } = useNotesStore.getState()
+        if (stillOn && !isSyncing && navigator.onLine) syncWithBackend()
+      },
+      syncInterval * 60 * 1000
+    )
     return () => clearInterval(intervalId)
-  }, [user, isOnline])
+  }, [user, isOnline, syncWithBackend])
 
   useEffect(() => {
-    const handleShareLink = async () => {
-      const urlParams = new URLSearchParams(window.location.search)
-      const shareToken = urlParams.get('share')
-      
-      if (shareToken && user) {
-        const { setSharedNotesViewOpen } = useUIStore.getState()
-        setSharedNotesViewOpen(true)
-        
-        window.history.replaceState({}, document.title, window.location.pathname)
-      }
-    }
-
-    if (user) {
-      handleShareLink()
-    }
+    if (!user) return
+    const shareToken = new URLSearchParams(window.location.search).get('share')
+    if (!shareToken) return
+    useUIStore.getState().setSharedNotesViewOpen(true)
+    window.history.replaceState({}, document.title, window.location.pathname)
   }, [user])
 
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && user && isOnline) {
-        const { autoSync } = useUIStore.getState()
-        if (!autoSync) return
-        
-        const lastSync = useNotesStore.getState().lastSyncTime
-        const timeSinceLastSync = lastSync ? Date.now() - new Date(lastSync).getTime() : Infinity
-        if (timeSinceLastSync > 300000) {
-          syncWithBackend()
-        }
-      }
+      if (document.visibilityState !== 'visible' || !user || !isOnline) return
+      if (!useUIStore.getState().autoSync) return
+      const lastSync = useNotesStore.getState().lastSyncTime
+      const elapsed = lastSync ? Date.now() - new Date(lastSync).getTime() : Infinity
+      if (elapsed > 300000) syncWithBackend()
     }
-
     document.addEventListener('visibilitychange', handleVisibilityChange)
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
-  }, [user, isOnline])
+  }, [user, isOnline, syncWithBackend])
 
+  /**
+   * Shortcut handlers are resolved against the user's saved bindings and
+   * suppressed while typing unless the binding opts in — see
+   * lib/shortcuts.js.
+   */
+  const shortcutHandlers = useMemo(
+    () => ({
+      newNote: () => setQuickNoteOpen(true),
+      globalSearch: () => setGlobalSearchOpen(true),
+      findReplace: () => setFindReplaceOpen(true),
+      toggleSidebar: () => toggleSidebar(),
+      focusMode: () => setFocusModeOpen(true),
+      settings: () => setSettingsOpen(true),
+      shortcuts: () => setShortcutsModalOpen(true),
+      templates: () => setTemplateModalOpen(true),
+      export: () => setExportModalOpen(true),
+      import: () => setImportModalOpen(true),
+      insertLink: () => setLinkModalOpen(true),
+      duplicate: () => {
+        const { selectedNoteId, duplicateNote } = useNotesStore.getState()
+        if (selectedNoteId) duplicateNote(selectedNoteId)
+      },
+      archive: () => {
+        const { selectedNoteId, archiveNote } = useNotesStore.getState()
+        if (selectedNoteId) archiveNote(selectedNoteId)
+      },
+    }),
+    [
+      setQuickNoteOpen,
+      setGlobalSearchOpen,
+      setFindReplaceOpen,
+      toggleSidebar,
+      setFocusModeOpen,
+      setSettingsOpen,
+      setShortcutsModalOpen,
+      setTemplateModalOpen,
+      setExportModalOpen,
+      setImportModalOpen,
+      setLinkModalOpen,
+    ]
+  )
+
+  useAppShortcuts(shortcutHandlers, { enabled: !!user })
+
+  /**
+   * On compact and medium layouts the sidebar overlays the workspace, so
+   * it must start closed — otherwise it covers the note list on load.
+   */
   useEffect(() => {
-    const handler = createShortcutHandler({
-      'ctrl+\\': () => toggleSidebar(),
-      'cmd+\\': () => toggleSidebar(),
-      'ctrl+t': () => setTemplateModalOpen(true),
-      'cmd+t': () => setTemplateModalOpen(true),
-      'ctrl+f': () => setFindReplaceOpen(true),
-      'cmd+f': () => setFindReplaceOpen(true),
-      'ctrl+e': () => setExportModalOpen(true),
-      'cmd+e': () => setExportModalOpen(true),
-      'ctrl+i': () => setImportModalOpen(true),
-      'cmd+i': () => setImportModalOpen(true),
-      'ctrl+k': () => setGlobalSearchOpen(true),
-      'cmd+k': () => setGlobalSearchOpen(true),
-      'ctrl+shift+f': () => setFocusModeOpen(true),
-      'ctrl+shift+k': () => useUIStore.getState().setLinkModalOpen(true),
-      'cmd+shift+f': () => setFocusModeOpen(true),
-      'cmd+shift+k': () => useUIStore.getState().setLinkModalOpen(true),
-      'ctrl+/': () => setShortcutsModalOpen(true),
-      'cmd+/': () => setShortcutsModalOpen(true),
-    })
+    setSidebarOpen(!sidebarIsOverlay)
+  }, [sidebarIsOverlay, setSidebarOpen])
 
-    document.addEventListener('keydown', handler)
-    return () => document.removeEventListener('keydown', handler)
-  }, [])
+  const closeSidebarAfterNavigation = useCallback(() => {
+    if (!sidebarIsOverlay) return
+    setSidebarOpen(false)
+    sidebarToggleRef.current?.focus()
+  }, [sidebarIsOverlay, setSidebarOpen])
+
   if (isLoading) {
     return (
       <ThemeProvider>
-        <div className="min-h-screen bg-white dark:bg-gray-950 flex items-center justify-center">
-          <div className="flex flex-col items-center gap-5">
-            <div className="relative">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center logo-badge badge-shine">
-                <svg className="w-7 h-7 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>
-              </div>
-              <div className="absolute -inset-3 rounded-3xl border-2 border-emerald-500/20 border-t-emerald-500 animate-spin" style={{ animationDuration: '1.2s' }} />
-            </div>
-            <div className="text-center">
-              <p className="text-sm font-bold text-gray-900 dark:text-white tracking-tight">QuickNotes</p>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5 font-medium">Loading your workspace...</p>
-            </div>
-          </div>
-        </div>
+        <AppLoading />
       </ThemeProvider>
     )
   }
@@ -251,68 +271,88 @@ export default function App() {
     )
   }
 
+  const showList = !isCompact || mobileView === 'notes'
+  const showEditor = !isCompact || mobileView === 'editor'
+
+  const sidebarToggle = (
+    <IconButton
+      ref={sidebarToggleRef}
+      icon={PanelLeft}
+      label={sidebarOpen ? 'Hide navigation' : 'Show navigation'}
+      aria-expanded={sidebarOpen}
+      aria-controls="qn-sidebar"
+      onClick={toggleSidebar}
+    />
+  )
+
   return (
     <ThemeProvider>
-        <div className="flex h-screen bg-white dark:bg-gray-950 overflow-hidden">
-        {sidebarOpen && (
-          <div 
-            className="fixed inset-0 bg-black/30 backdrop-blur-sm z-30 md:hidden transition-opacity"
-            onClick={toggleSidebar}
+      <div className="flex h-[100dvh] overflow-hidden bg-app text-content">
+        <a href="#qn-main" className="qn-skip-link">
+          Skip to content
+        </a>
+
+        {sidebarIsOverlay && sidebarOpen && (
+          <div
+            className="fixed inset-0 z-drawer animate-fade-in bg-[var(--qn-overlay)]"
+            onClick={() => setSidebarOpen(false)}
+            aria-hidden="true"
           />
         )}
-        {!sidebarOpen && (
-          <button
-            onClick={toggleSidebar}
-            className={`fixed top-4 left-4 z-40 p-2.5 bg-white dark:bg-gray-900 rounded-xl shadow-sm hover:shadow-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 border border-gray-100 dark:border-gray-800/80 active:scale-95 hover:scale-105 ${
-              mobileView === 'editor' ? 'hidden md:block' : 'block'
-            }`}
-            title="Open sidebar (Ctrl+\\)"
-          >
-            <Menu className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-          </button>
-        )}
+
         <div
-          className={`fixed md:relative z-40 h-full transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] flex-shrink-0 border-r border-[#cbd1db] dark:border-gray-800 ${
-            sidebarOpen ? 'w-[280px] translate-x-0' : 'w-0 -translate-x-full md:translate-x-0'
-          } overflow-hidden`}
+          id="qn-sidebar"
+          /**
+           * A closed drawer is translated off-screen but still rendered,
+           * so without `inert` its buttons stay in the tab order and a
+           * keyboard user tabs into controls they cannot see (measured
+           * at x = -252 while still reporting as visible).
+           * `inert` takes a string here because React 18 passes unknown
+           * attributes through verbatim.
+           */
+          inert={sidebarIsOverlay && !sidebarOpen ? '' : undefined}
+          aria-hidden={sidebarIsOverlay && !sidebarOpen ? 'true' : undefined}
+          className={[
+            'shrink-0 border-r border-subtle transition-transform duration-base ease-qn-out',
+            sidebarIsOverlay
+              ? `fixed inset-y-0 left-0 z-drawer w-[min(84vw,var(--qn-sidebar-width))] shadow-lg ${
+                  sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+                }`
+              : `relative w-sidebar ${sidebarOpen ? '' : 'hidden'}`,
+          ].join(' ')}
         >
-          <Sidebar />
+          <Sidebar onNavigate={closeSidebarAfterNavigation} />
         </div>
-        {sidebarOpen && (
-          <button
-            onClick={toggleSidebar}
-            className="hidden md:block absolute top-1/2 -translate-y-1/2 left-[273px] z-40 p-1 bg-white dark:bg-gray-900 rounded-full shadow-md hover:shadow-lg transition-all duration-200 border border-gray-100 dark:border-gray-800/80 hover:bg-gray-100 dark:hover:bg-gray-800 active:scale-90 hover:scale-110"
-            title="Collapse sidebar (Ctrl+\\)"
-          >
-            <PanelLeftClose className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
-          </button>
-        )}
-        {viewMode === 'grid' ? (
-          /* Grid View - Full width grid of notes */
-          <div className="flex-1 min-w-0 overflow-hidden">
-            <NotesGrid />
-          </div>
-        ) : (
-          /* List View - Notes List + Editor side by side */
-          <div className="flex flex-1 min-w-0 overflow-hidden">
-            <div 
-              className={`flex-shrink-0 h-full md:w-80 ${
-                mobileView === 'editor' ? 'hidden md:block' : 'w-full'
-              }`}
-            >
-              <NotesList />
+
+        <div id="qn-main" className="flex min-w-0 flex-1 flex-col">
+          {viewMode === 'grid' ? (
+            <div className="min-h-0 flex-1 overflow-hidden">
+              <NotesGrid sidebarToggle={sidebarToggle} />
             </div>
-            <div 
-              className={`flex-1 min-w-0 h-full ${
-                mobileView === 'notes' ? 'hidden md:block' : 'block'
-              }`}
-            >
-              <ErrorBoundary>
-                <NoteEditor />
-              </ErrorBoundary>
+          ) : (
+            <div className="flex min-h-0 flex-1">
+              <div
+                className={[
+                  'flex min-h-0 shrink-0 flex-col border-r border-subtle',
+                  isCompact ? 'w-full' : 'w-list 2xl:w-[var(--qn-list-width-wide)]',
+                  showList ? '' : 'hidden',
+                ].join(' ')}
+              >
+                <NotesList
+                  sidebarToggle={isWide && sidebarOpen ? null : sidebarToggle}
+                  onOpenNote={() => isCompact && setMobileView('editor')}
+                />
+              </div>
+
+              <main className={`min-w-0 flex-1 ${showEditor ? 'flex' : 'hidden'}`}>
+                <ErrorBoundary>
+                  <NoteEditor onBack={() => setMobileView('notes')} showBack={isCompact} />
+                </ErrorBoundary>
+              </main>
             </div>
-          </div>
-        )}
+          )}
+        </div>
+
         <QuickNoteModal />
         <SettingsModal />
         <TemplateModal />
@@ -336,10 +376,14 @@ export default function App() {
         <SharedNotesView />
         <EditorSettingsModal />
         {focusModeOpen && <FocusMode />}
+
         {!isOnline && (
-          <div className="fixed bottom-4 left-1/2 -translate-x-1/2 px-5 py-2.5 bg-amber-50 border border-amber-200/80 text-amber-700 rounded-2xl shadow-lg shadow-amber-500/10 flex items-center gap-3 text-[13px] font-semibold z-50 backdrop-blur-sm">
-            <span className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
-            Offline mode — Changes saved locally
+          <div
+            role="status"
+            className="qn-safe-bottom fixed bottom-4 left-1/2 z-toast flex -translate-x-1/2 items-center gap-2 rounded-full border border-[var(--qn-warning-border)] bg-warning-soft px-4 py-2 text-ui-md font-medium text-warning-text shadow-md"
+          >
+            <CloudOff className="h-4 w-4 shrink-0" aria-hidden="true" />
+            Offline — changes are saved on this device
           </div>
         )}
       </div>

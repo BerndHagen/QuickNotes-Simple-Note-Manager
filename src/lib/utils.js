@@ -191,6 +191,70 @@ export const formatSyncTime = (date, lang = 'en') => {
   })
 }
 
+/**
+ * Formats a note timestamp honouring the user's `dateFormat` setting.
+ *
+ * The setting existed in the store (with translations in nine locales)
+ * but nothing ever read it — every list row was hard-coded to relative
+ * time.
+ */
+export const formatNoteDate = (date, lang = 'en', dateFormat = 'relative') => {
+  if (!date) return ''
+  if (dateFormat === 'absolute') {
+    return new Date(date).toLocaleDateString(getLocale(lang), {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    })
+  }
+  return formatDate(date, lang)
+}
+
+const startOfDay = (value) => {
+  const d = new Date(value)
+  d.setHours(0, 0, 0, 0)
+  return d.getTime()
+}
+
+/**
+ * Buckets notes into the sections the list renders: pinned first, then
+ * Today / Yesterday / This week / Earlier by last-modified date.
+ *
+ * Returns `[]` for sort modes where chronological grouping would be
+ * misleading (manual order, alphabetical, size).
+ */
+export const groupNotesByDate = (notes, { sort = 'updated-desc', labels = {} } = {}) => {
+  const chronological = sort === 'updated-desc' || sort === 'created-desc'
+  if (!chronological) return [{ id: 'all', label: null, notes }]
+
+  const today = startOfDay(Date.now())
+  const yesterday = today - 86400000
+  const weekAgo = today - 6 * 86400000
+  const field = sort === 'created-desc' ? 'createdAt' : 'updatedAt'
+
+  const buckets = [
+    { id: 'pinned', label: labels.pinned || 'Pinned', notes: [] },
+    { id: 'today', label: labels.today || 'Today', notes: [] },
+    { id: 'yesterday', label: labels.yesterday || 'Yesterday', notes: [] },
+    { id: 'week', label: labels.week || 'Previous 7 days', notes: [] },
+    { id: 'earlier', label: labels.earlier || 'Earlier', notes: [] },
+  ]
+
+  for (const note of notes) {
+    if (note.pinned) {
+      buckets[0].notes.push(note)
+      continue
+    }
+    const day = startOfDay(note[field] || note.updatedAt)
+    if (day >= today) buckets[1].notes.push(note)
+    else if (day >= yesterday) buckets[2].notes.push(note)
+    else if (day >= weekAgo) buckets[3].notes.push(note)
+    else buckets[4].notes.push(note)
+  }
+
+  return buckets.filter((bucket) => bucket.notes.length > 0)
+}
+
 export const truncateText = (text, maxLength = 100) => {
   if (!text) return ''
   if (text.length <= maxLength) return text

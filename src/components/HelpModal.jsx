@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import {
   X,
   HelpCircle,
@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { useUIStore } from '../store'
 import { useTranslation } from '../lib/useTranslation'
+import LegacyDialog from './ui/LegacyDialog'
 
 export default function HelpModal() {
   const { helpModalOpen, setHelpModalOpen } = useUIStore()
@@ -72,7 +73,7 @@ export default function HelpModal() {
   ]
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm modal-backdrop-animate">
+    <LegacyDialog label="Help" onClose={() => setHelpModalOpen(false)} align="center">
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-[#cbd1db] dark:border-gray-700 w-full max-w-2xl mx-4 max-h-[85vh] overflow-hidden flex flex-col modal-animate">
         <div className="flex items-center justify-between p-5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
           <div className="flex items-center gap-3">
@@ -158,6 +159,6 @@ export default function HelpModal() {
           </div>
         </div>
       </div>
-    </div>
+    </LegacyDialog>
   )
 }
