@@ -207,35 +207,35 @@ export default function GlobalSearchModal() {
   return (
     <LegacyDialog label="Search all notes" onClose={() => setGlobalSearchOpen(false)} align="top">
       <div
-        className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden border border-[#cbd1db] dark:border-gray-700 modal-animate"
+        className="bg-surface-raised rounded-2xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden border border-subtle modal-animate"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="h-1.5 bg-gradient-to-r from-emerald-600 to-teal-600" />
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-[#cbd1db] dark:border-gray-700">
-          <Search className="w-5 h-5 text-gray-400" />
+        <div className="h-1.5 qn-banner-surface" />
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-subtle">
+          <Search className="w-5 h-5 text-content-subtle" />
           <input
             ref={inputRef}
             type="text"
             value={query}
             onChange={handleQueryChange}
             placeholder="Search notes, folders, or tags..."
-            className="flex-1 bg-transparent text-lg outline-none text-gray-900 dark:text-white placeholder-gray-400"
+            className="flex-1 bg-transparent text-lg outline-none text-content placeholder:text-content-subtle"
           />
-          {isSearching && <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />}
+          {isSearching && <Loader2 className="w-5 h-5 text-content-subtle animate-spin" />}
           <kbd className="kbd hidden sm:inline-flex">
             ESC
           </kbd>
         </div>
         <div ref={resultsRef} className="max-h-[60vh] overflow-y-auto">
           {query && totalResults === 0 && !isSearching && (
-            <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+            <div className="p-8 text-center text-content-muted">
               <Search className="w-12 h-12 mx-auto mb-3 opacity-50" />
               <p>No results for "{query}"</p>
             </div>
           )}
           {results.notes.length > 0 && (
             <div className="p-2">
-              <div className="px-3 py-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
+              <div className="px-3 py-1.5 text-xs font-semibold text-content-muted uppercase">
                 Notes
               </div>
               {results.notes.map((note, i) => (
@@ -246,36 +246,36 @@ export default function GlobalSearchModal() {
                     setGlobalSearchOpen(false)
                   }}
                   className={`w-full px-3 py-2 rounded-lg flex items-start gap-3 text-left transition-colors ${
-                    selectedIndex === getResultIndex('note', i)
-                      ? 'bg-primary-100 dark:bg-primary-900/50'
-                      : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+ selectedIndex === getResultIndex('note', i)
+ ? 'bg-primary-100 dark:bg-accent-soft'
+                      : 'hover:bg-surface-hover'
                   }`}
                 >
-                  <FileText className="w-5 h-5 mt-0.5 text-gray-400 shrink-0" />
+                  <FileText className="w-5 h-5 mt-0.5 text-content-subtle shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium text-gray-900 dark:text-white truncate">
+                    <div className="font-medium text-content truncate">
                       {highlightMatch(note.title, query)}
                     </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
+                    <div className="text-sm text-content-muted line-clamp-2">
                       {highlightMatch(note.preview, query)}
                     </div>
                     {note.matchType === 'tag' && (
                       <div className="flex items-center gap-1 mt-1">
-                        <Tag className="w-3 h-3 text-gray-400" />
-                        <span className="text-xs text-gray-400">
+                        <Tag className="w-3 h-3 text-content-subtle" />
+                        <span className="text-xs text-content-subtle">
                           Tags: {note.tags?.join(', ')}
                         </span>
                       </div>
                     )}
                   </div>
-                  <ChevronRight className="w-4 h-4 text-gray-400 shrink-0 mt-1" />
+                  <ChevronRight className="w-4 h-4 text-content-subtle shrink-0 mt-1" />
                 </button>
               ))}
             </div>
           )}
           {results.folders.length > 0 && (
-            <div className="p-2 border-t border-[#cbd1db] dark:border-gray-700">
-              <div className="px-3 py-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
+            <div className="p-2 border-t border-subtle">
+              <div className="px-3 py-1.5 text-xs font-semibold text-content-muted uppercase">
                 Folders
               </div>
               {results.folders.map((folder, i) => (
@@ -286,23 +286,23 @@ export default function GlobalSearchModal() {
                     setGlobalSearchOpen(false)
                   }}
                   className={`w-full px-3 py-2 rounded-lg flex items-center gap-3 text-left transition-colors ${
-                    selectedIndex === getResultIndex('folder', i)
-                      ? 'bg-primary-100 dark:bg-primary-900/50'
-                      : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+ selectedIndex === getResultIndex('folder', i)
+ ? 'bg-primary-100 dark:bg-accent-soft'
+                      : 'hover:bg-surface-hover'
                   }`}
                 >
                   <Folder className="w-5 h-5" style={{ color: folder.color }} />
-                  <span className="font-medium text-gray-900 dark:text-white">
+                  <span className="font-medium text-content">
                     {highlightMatch(folder.name, query)}
                   </span>
-                  <ChevronRight className="w-4 h-4 text-gray-400 ml-auto" />
+                  <ChevronRight className="w-4 h-4 text-content-subtle ml-auto" />
                 </button>
               ))}
             </div>
           )}
           {results.tags.length > 0 && (
-            <div className="p-2 border-t border-[#cbd1db] dark:border-gray-700">
-              <div className="px-3 py-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
+            <div className="p-2 border-t border-subtle">
+              <div className="px-3 py-1.5 text-xs font-semibold text-content-muted uppercase">
                 Tags
               </div>
               {results.tags.map((tag, i) => (
@@ -313,25 +313,25 @@ export default function GlobalSearchModal() {
                     setGlobalSearchOpen(false)
                   }}
                   className={`w-full px-3 py-2 rounded-lg flex items-center gap-3 text-left transition-colors ${
-                    selectedIndex === getResultIndex('tag', i)
-                      ? 'bg-primary-100 dark:bg-primary-900/50'
-                      : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+ selectedIndex === getResultIndex('tag', i)
+ ? 'bg-primary-100 dark:bg-accent-soft'
+                      : 'hover:bg-surface-hover'
                   }`}
                 >
                   <span
                     className="w-4 h-4 rounded-full"
                     style={{ backgroundColor: tag.color }}
                   />
-                  <span className="font-medium text-gray-900 dark:text-white">
+                  <span className="font-medium text-content">
                     #{highlightMatch(tag.name, query)}
                   </span>
-                  <ChevronRight className="w-4 h-4 text-gray-400 ml-auto" />
+                  <ChevronRight className="w-4 h-4 text-content-subtle ml-auto" />
                 </button>
               ))}
             </div>
           )}
           {!query && (
-            <div className="p-6 text-center text-gray-500 dark:text-gray-400">
+            <div className="p-6 text-center text-content-muted">
               <p className="text-sm">Start typing to search</p>
               <div className="flex justify-center gap-4 mt-4 text-xs">
                 <span><kbd className="kbd px-1.5 py-0.5">{"\u2191\u2193"}</kbd> Navigate</span>
@@ -342,7 +342,7 @@ export default function GlobalSearchModal() {
           )}
         </div>
         {totalResults > 0 && (
-          <div className="px-4 py-2 border-t border-[#cbd1db] dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400 flex items-center justify-between">
+          <div className="px-4 py-2 border-t border-subtle text-xs text-content-muted flex items-center justify-between">
             <span>{totalResults} result{totalResults !== 1 ? 's' : ''}</span>
             <span>Ctrl+Shift+F for global search</span>
           </div>

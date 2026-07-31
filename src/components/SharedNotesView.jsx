@@ -72,8 +72,8 @@ export default function SharedNotesView() {
 
   return (
     <LegacyDialog label="Shared notes" onClose={() => setSharedNotesViewOpen(false)} align="center">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-[#cbd1db] dark:border-gray-700 max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col modal-animate">
-        <div className="flex items-center justify-between p-5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
+      <div className="bg-surface-raised rounded-2xl shadow-2xl border border-subtle max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col modal-animate">
+        <div className="flex items-center justify-between p-5 qn-banner-surface text-white">
           <div className="flex items-center gap-3">
             <Users className="w-6 h-6" />
             <div>
@@ -100,14 +100,14 @@ export default function SharedNotesView() {
             </button>
           </div>
         </div>
-        <div className="border-b border-[#cbd1db] dark:border-gray-700 px-6">
+        <div className="border-b border-subtle px-6">
           <div className="flex gap-4">
             <button
               onClick={() => setActiveTab('accepted')}
               className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === 'accepted'
-                  ? 'border-purple-600 text-purple-600 dark:text-purple-400'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+ activeTab === 'accepted'
+ ? 'border-purple-600 text-purple-600 dark:text-purple-400'
+                  : 'border-transparent text-content-muted hover:text-content dark:text-content-subtle dark:hover:text-content-subtle'
               }`}
             >
               Accepted ({sharedNotes.length})
@@ -116,9 +116,9 @@ export default function SharedNotesView() {
             <button
               onClick={() => setActiveTab('pending')}
               className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors relative ${
-                activeTab === 'pending'
-                  ? 'border-orange-600 text-orange-600 dark:text-orange-400'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+ activeTab === 'pending'
+ ? 'border-orange-600 text-orange-600 dark:text-orange-400'
+                  : 'border-transparent text-content-muted hover:text-content dark:text-content-subtle dark:hover:text-content-subtle'
               }`}
             >
               Pending ({pendingShares.length})
@@ -133,11 +133,11 @@ export default function SharedNotesView() {
             <div className="space-y-3">
               {sharedNotes.length === 0 ? (
                 <div className="text-center py-12">
-                  <Users className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                  <p className="text-gray-500 dark:text-gray-400 mb-2">
+                  <Users className="w-12 h-12 text-content-subtle dark:text-content-muted mx-auto mb-4" />
+                  <p className="text-content-muted mb-2">
                     No shared notes
                   </p>
-                  <p className="text-sm text-gray-400 dark:text-gray-500">
+                  <p className="text-sm text-content-subtle">
                     When someone shares a note with you, it will appear here
                   </p>
                 </div>
@@ -149,12 +149,12 @@ export default function SharedNotesView() {
                   return (
                     <div
                       key={share.id}
-                      className="p-4 border border-[#cbd1db] dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
+                      className="p-4 border border-subtle rounded-lg hover:bg-surface-hover transition-colors"
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-2">
-                            <h3 className="font-medium text-gray-900 dark:text-white truncate">
+                            <h3 className="font-medium text-content truncate">
                               {note.title}
                             </h3>
                             <span className="px-2 py-0.5 text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded">
@@ -163,7 +163,7 @@ export default function SharedNotesView() {
                           </div>
                           
                           {note.content && (
-                            <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
+                            <p className="text-sm text-content-muted line-clamp-2">
                               {(note.content || '').replace(/<[^>]*>/g, '').substring(0, 150)}
                             </p>
                           )}
@@ -204,11 +204,11 @@ export default function SharedNotesView() {
             <div className="space-y-3">
               {pendingShares.length === 0 ? (
                 <div className="text-center py-12">
-                  <Clock className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                  <p className="text-gray-500 dark:text-gray-400 mb-2">
+                  <Clock className="w-12 h-12 text-content-subtle dark:text-content-muted mx-auto mb-4" />
+                  <p className="text-content-muted mb-2">
                     No pending shares
                   </p>
-                  <p className="text-sm text-gray-400 dark:text-gray-500">
+                  <p className="text-sm text-content-subtle">
                     Share requests will appear here
                   </p>
                 </div>
@@ -228,17 +228,17 @@ export default function SharedNotesView() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-2">
                             <Mail className="w-4 h-4 text-orange-600 dark:text-orange-400" />
-                            <h3 className="font-medium text-gray-900 dark:text-white truncate">
+                            <h3 className="font-medium text-content truncate">
                               New share: {note.title}
                             </h3>
                           </div>
                           
-                          <div className="text-sm text-gray-600 dark:text-gray-300 mb-2">
+                          <div className="text-sm text-content-muted mb-2">
                             <span className="font-medium">{share.shared_by}</span> wants to share this note with you
                           </div>
                           
                           <div className="flex items-center gap-2 text-sm">
-                            <span className="px-2 py-0.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded border border-[#cbd1db] dark:border-gray-600">
+                            <span className="px-2 py-0.5 bg-surface-raised text-content-muted rounded border border-subtle ">
                               {share.permission === 'edit' ? 'Edit Permission' : 'Read Only'}
                             </span>
                           </div>
@@ -275,8 +275,8 @@ export default function SharedNotesView() {
             </div>
           )}
         </div>
-        <div className="p-4 bg-gray-50 dark:bg-gray-900/50 border-t border-[#cbd1db] dark:border-gray-700">
-          <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2">
+        <div className="p-4 bg-surface-sunken border-t border-subtle">
+          <div className="text-xs text-content-muted flex items-center gap-2">
             <Users className="w-4 h-4" />
             <span>
               Shared notes are synchronized in real-time. Changes are immediately visible to all participants.

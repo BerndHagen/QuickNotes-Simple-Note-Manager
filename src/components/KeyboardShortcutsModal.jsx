@@ -259,8 +259,8 @@ export default function KeyboardShortcutsModal() {
                           onClick={() => setRecording(isRecording ? null : action)}
                           aria-label={`Change shortcut for ${shortcut.description}. Currently ${formatShortcut(shortcut)}`}
                           className={`min-w-[108px] rounded-control px-2.5 py-1 font-mono text-ui-sm transition-colors duration-fast ${
-                            isRecording
-                              ? 'bg-accent text-accent-on'
+ isRecording
+ ? 'bg-accent text-accent-on'
                               : 'bg-surface-sunken text-content hover:bg-surface-hover'
                           }`}
                         >

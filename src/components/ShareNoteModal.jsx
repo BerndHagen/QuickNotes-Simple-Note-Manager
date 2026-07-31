@@ -87,8 +87,8 @@ export default function ShareNoteModal() {
 
   return (
     <LegacyDialog label="Share note" onClose={() => setShareModalOpen(false)} align="center">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-[#cbd1db] dark:border-gray-700 max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col modal-animate">
-        <div className="flex items-center justify-between p-5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
+      <div className="bg-surface-raised rounded-2xl shadow-2xl border border-subtle max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col modal-animate">
+        <div className="flex items-center justify-between p-5 qn-banner-surface text-white">
           <div className="flex items-center gap-3">
             <Users className="w-6 h-6" />
             <div>
@@ -105,25 +105,25 @@ export default function ShareNoteModal() {
         </div>
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           <div className="space-y-4">
-            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+            <h3 className="text-sm font-medium text-content-muted flex items-center gap-2">
               <UserPlus className="w-4 h-4" />
               Add Person
             </h3>
             
             <form onSubmit={handleShare} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-content-muted mb-2">
                   Email Address
                 </label>
                 <div className="flex gap-2">
                   <div className="flex-1 relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-content-subtle" />
                     <input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="example@email.com"
-                      className="w-full pl-10 pr-4 py-2 border border-[#cbd1db] dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      className="w-full pl-10 pr-4 py-2 border border-subtle rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-surface-sunken text-content"
                       disabled={isLoading}
                     />
                   </div>
@@ -131,11 +131,11 @@ export default function ShareNoteModal() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-content-muted mb-2">
                   Permission
                 </label>
                 <div className="flex gap-2">
-                  <label className="flex-1 flex items-center gap-2 p-3 border border-[#cbd1db] dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors">
+                  <label className="flex-1 flex items-center gap-2 p-3 border border-subtle rounded-lg cursor-pointer hover:bg-surface-hover transition-colors">
                     <input
                       type="radio"
                       value="view"
@@ -144,16 +144,16 @@ export default function ShareNoteModal() {
                       className="text-blue-600"
                     />
                     <div className="flex-1">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">
+                      <div className="text-sm font-medium text-content">
                         Read Only
                       </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                      <div className="text-xs text-content-muted">
                         Can only view the note
                       </div>
                     </div>
                   </label>
                   
-                  <label className="flex-1 flex items-center gap-2 p-3 border border-[#cbd1db] dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors">
+                  <label className="flex-1 flex items-center gap-2 p-3 border border-subtle rounded-lg cursor-pointer hover:bg-surface-hover transition-colors">
                     <input
                       type="radio"
                       value="edit"
@@ -162,10 +162,10 @@ export default function ShareNoteModal() {
                       className="text-blue-600"
                     />
                     <div className="flex-1">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">
+                      <div className="text-sm font-medium text-content">
                         Can Edit
                       </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                      <div className="text-xs text-content-muted">
                         Can edit the note
                       </div>
                     </div>
@@ -176,7 +176,7 @@ export default function ShareNoteModal() {
               <button
                 type="submit"
                 disabled={isLoading || !email.trim()}
-                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 text-white py-2.5 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-surface-active dark:disabled:bg-surface-active text-white py-2.5 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
               >
                 <UserPlus className="w-4 h-4" />
                 {isLoading ? 'Sharing...' : 'Create Share'}
@@ -185,7 +185,7 @@ export default function ShareNoteModal() {
           </div>
           {shares.length > 0 && (
             <div className="space-y-3">
-              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+              <h3 className="text-sm font-medium text-content-muted flex items-center gap-2">
                 <Users className="w-4 h-4" />
                 Shared with ({shares.length})
               </h3>
@@ -194,17 +194,17 @@ export default function ShareNoteModal() {
                 {shares.map((share) => (
                   <div
                     key={share.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-[#cbd1db] dark:border-gray-600"
+                    className="flex items-center justify-between p-3 bg-surface-sunken dark:bg-surface-sunken rounded-lg border border-subtle "
                   >
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center flex-shrink-0">
                         <Mail className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                        <div className="text-sm font-medium text-content truncate">
                           {share.email}
                         </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                        <div className="text-xs text-content-muted">
                           {share.permission === 'edit' ? 'Can edit' : 'Read only'} {"\u2022"} 
                           {share.status === 'pending' && ' Pending'}
                           {share.status === 'accepted' && ' Accepted'}
@@ -216,13 +216,13 @@ export default function ShareNoteModal() {
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => handleCopyLink(share.share_link)}
-                        className="p-2 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                        className="p-2 hover:bg-surface-sunken dark:hover:bg-surface-active rounded-lg transition-colors"
                         title="Copy link"
                       >
                         {copiedToken === share.share_link ? (
                           <Check className="w-4 h-4 text-green-600 dark:text-green-400" />
                         ) : (
-                          <Copy className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                          <Copy className="w-4 h-4 text-content-muted" />
                         )}
                       </button>
                       

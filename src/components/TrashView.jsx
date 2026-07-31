@@ -43,10 +43,10 @@ export default function TrashView() {
   return (
     <LegacyDialog label="Trash" onClose={() => setShowTrash(false)} align="center">
       <div 
-        className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-[#cbd1db] dark:border-gray-700 w-full max-w-2xl mx-4 max-h-[85vh] overflow-hidden flex flex-col modal-animate"
+        className="bg-surface-raised rounded-2xl shadow-2xl border border-subtle w-full max-w-2xl mx-4 max-h-[85vh] overflow-hidden flex flex-col modal-animate"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white flex items-center justify-between">
+        <div className="p-5 qn-banner-surface text-white flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Trash2 className="w-6 h-6" />
             <div>
@@ -64,7 +64,7 @@ export default function TrashView() {
           </button>
         </div>
         {trashedNotes.length > 0 && (
-          <div className="px-4 py-3 border-b border-[#cbd1db] dark:border-gray-700 flex items-center justify-between bg-gray-50 dark:bg-gray-900">
+          <div className="px-4 py-3 border-b border-subtle flex items-center justify-between bg-surface-sunken">
             <button
               onClick={handleRestoreAll}
               className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-lg transition-colors"
@@ -83,7 +83,7 @@ export default function TrashView() {
         )}
         <div className="flex-1 overflow-y-auto">
           {trashedNotes.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-gray-500 dark:text-gray-400">
+            <div className="flex flex-col items-center justify-center py-16 text-content-muted">
               <Trash2 className="w-16 h-16 mb-4 opacity-20" />
               <p className="text-lg font-medium">{t('trash.empty')}</p>
               <p className="text-sm">{t('trash.emptyDescription')}</p>
@@ -97,24 +97,24 @@ export default function TrashView() {
                 return (
                   <div
                     key={note.id}
-                    className="p-4 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
+                    className="p-4 hover:bg-surface-hover transition-colors"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-gray-900 dark:text-white truncate">
+                        <h3 className="font-semibold text-content truncate">
                           {note.title}
                         </h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+                        <p className="text-sm text-content-muted mt-1 line-clamp-2">
                           {preview || t('notes.noPreview')}
                         </p>
-                        <div className="flex items-center gap-4 mt-2 text-xs text-gray-500 dark:text-gray-400">
+                        <div className="flex items-center gap-4 mt-2 text-xs text-content-muted">
                           <span className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />
                             {t('trash.deleted')} {formatDate(note.deletedAt, language)}
                           </span>
                           <span className={`flex items-center gap-1 ${
-                            daysRemaining <= 7 ? 'text-red-600 dark:text-red-400' : ''
-                          }`}>
+ daysRemaining <= 7 ? 'text-red-600 dark:text-red-400' : ''
+ }`}>
                             <AlertTriangle className="w-3 h-3" />
                             {daysRemaining} {t('trash.daysLeft')}
                           </span>

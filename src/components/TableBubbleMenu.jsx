@@ -73,7 +73,7 @@ function PortalTooltip({ children, title, anchorRef }) {
       {visible && createPortal(
         <div
           ref={tooltipRef}
-          className="fixed px-2.5 py-1.5 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg whitespace-nowrap z-[99999] pointer-events-none shadow-lg"
+          className="fixed px-2.5 py-1.5 bg-surface-sunken dark:bg-surface-sunken text-white text-xs rounded-lg whitespace-nowrap z-[99999] pointer-events-none shadow-lg"
           style={{ 
             top: position.top, 
             left: position.left,
@@ -103,9 +103,9 @@ function MenuButton({ onClick, isActive, disabled, children, title }) {
       }}
       disabled={disabled}
       className={`p-1.5 rounded transition-all duration-150 ${
-        isActive
-          ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300'
-          : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+ isActive
+ ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300'
+          : 'hover:bg-surface-hover text-content-muted hover:text-content dark:hover:text-white'
       } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
     >
       {children}
@@ -132,9 +132,9 @@ function DropdownButton({ children, isOpen, onClick, title }) {
         if (onClick) onClick()
       }}
       className={`p-1.5 rounded transition-all duration-150 flex items-center gap-1 ${
-        isOpen
-          ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300'
-          : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+ isOpen
+ ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300'
+          : 'hover:bg-surface-hover text-content-muted hover:text-content dark:hover:text-white'
       }`}
     >
       {children}
@@ -187,11 +187,11 @@ function ColorPickerDropdown({ isOpen, onClose, onSelect, currentColor, title, a
   return createPortal(
     <div 
       ref={dropdownRef}
-      className="fixed bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-[#cbd1db] dark:border-gray-700 p-3 z-[99999] min-w-[240px]"
+      className="fixed bg-surface-raised rounded-xl shadow-2xl border border-subtle p-3 z-[99999] min-w-[240px]"
       style={{ top: position.top, left: position.left }}
       onMouseDown={(e) => e.stopPropagation()}
     >
-      <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">{title}</p>
+      <p className="text-xs font-medium text-content-muted mb-2">{title}</p>
       <div className="grid grid-cols-8 gap-1.5">
         {cellColors.map((color, index) => (
           <button
@@ -202,9 +202,9 @@ function ColorPickerDropdown({ isOpen, onClose, onSelect, currentColor, title, a
               onClose()
             }}
             className={`w-6 h-6 rounded border-2 hover:scale-110 transition-all flex items-center justify-center ${
-              currentColor === color 
-                ? 'border-emerald-500 ring-2 ring-emerald-200 dark:ring-emerald-800' 
-                : 'border-[#cbd1db] dark:border-gray-600 hover:border-emerald-400'
+ currentColor === color 
+ ? 'border-emerald-500 ring-2 ring-emerald-200 dark:ring-emerald-800' 
+                : 'border-subtle  hover:border-emerald-400'
             }`}
             style={{ 
               backgroundColor: color || 'transparent',
@@ -222,20 +222,20 @@ function ColorPickerDropdown({ isOpen, onClose, onSelect, currentColor, title, a
           </button>
         ))}
       </div>
-      <div className="mt-3 pt-3 border-t border-[#cbd1db] dark:border-gray-600">
-        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Custom Color</label>
+      <div className="mt-3 pt-3 border-t border-subtle ">
+        <label className="block text-xs font-medium text-content-muted mb-2">Custom Color</label>
         <div className="flex gap-2">
           <input
             type="color"
             value={customColor}
             onChange={(e) => setCustomColor(e.target.value)}
-            className="w-8 h-8 rounded cursor-pointer border border-[#cbd1db] dark:border-gray-600"
+            className="w-8 h-8 rounded cursor-pointer border border-subtle "
           />
           <input
             type="text"
             value={customColor}
             onChange={(e) => setCustomColor(e.target.value)}
-            className="flex-1 px-2 py-1 text-xs border border-[#cbd1db] dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            className="flex-1 px-2 py-1 text-xs border border-subtle rounded bg-white dark:bg-surface-sunken text-content"
             placeholder="#ffffff"
           />
           <button
@@ -290,7 +290,7 @@ function DropdownMenu({ isOpen, onClose, anchorRef, children }) {
   return createPortal(
     <div 
       ref={menuRef}
-      className="fixed bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-[#cbd1db] dark:border-gray-700 py-1 min-w-[160px] z-[99999]"
+      className="fixed bg-surface-raised rounded-xl shadow-2xl border border-subtle py-1 min-w-[160px] z-[99999]"
       style={{ top: position.top, left: position.left }}
       onMouseDown={(e) => e.stopPropagation()}
     >
@@ -365,7 +365,7 @@ export default function TableBubbleMenu({ editor }) {
     }
   }
   const MenuDivider = () => (
-    <div className="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-1" />
+    <div className="w-px h-5 bg-surface-active dark:bg-surface-active mx-1" />
   )
 
   return (
@@ -381,7 +381,7 @@ export default function TableBubbleMenu({ editor }) {
       shouldShow={({ editor, state }) => {
         return editor.isActive('table')
       }}
-      className="bg-white dark:bg-gray-800 shadow-xl rounded-xl border border-[#cbd1db] dark:border-gray-700 flex items-center p-1.5 gap-0.5"
+      className="bg-surface-raised shadow-xl rounded-xl border border-subtle flex items-center p-1.5 gap-0.5"
     >
       <div ref={menuRef} className="flex items-center gap-0.5">
         <div className="relative" ref={columnButtonRef}>
@@ -407,7 +407,7 @@ export default function TableBubbleMenu({ editor }) {
                 editor.chain().focus().addColumnBefore().run()
                 setShowColumnMenu(false)
               }}
-              className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 text-gray-700 dark:text-gray-300"
+              className="w-full px-3 py-2 text-left text-sm hover:bg-surface-hover flex items-center gap-2 text-content-muted"
             >
               <ArrowLeft className="w-4 h-4" />
               {t('editor.addColumnBefore', 'Insert Left')}
@@ -418,19 +418,19 @@ export default function TableBubbleMenu({ editor }) {
                 editor.chain().focus().addColumnAfter().run()
                 setShowColumnMenu(false)
               }}
-              className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 text-gray-700 dark:text-gray-300"
+              className="w-full px-3 py-2 text-left text-sm hover:bg-surface-hover flex items-center gap-2 text-content-muted"
             >
               <ArrowRight className="w-4 h-4" />
               {t('editor.addColumnAfter', 'Insert Right')}
             </button>
-            <div className="h-px bg-gray-200 dark:bg-gray-700 my-1" />
+            <div className="h-px bg-surface-sunken dark:bg-surface-sunken my-1" />
             <button
               onMouseDown={(e) => {
                 e.preventDefault()
                 editor.chain().focus().deleteColumn().run()
                 setShowColumnMenu(false)
               }}
-              className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 text-red-600 dark:text-red-400"
+              className="w-full px-3 py-2 text-left text-sm hover:bg-surface-hover flex items-center gap-2 text-red-600 dark:text-red-400"
             >
               <X className="w-4 h-4" />
               {t('editor.deleteColumn', 'Delete Column')}
@@ -460,7 +460,7 @@ export default function TableBubbleMenu({ editor }) {
                 editor.chain().focus().addRowBefore().run()
                 setShowRowMenu(false)
               }}
-              className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 text-gray-700 dark:text-gray-300"
+              className="w-full px-3 py-2 text-left text-sm hover:bg-surface-hover flex items-center gap-2 text-content-muted"
             >
               <ArrowUp className="w-4 h-4" />
               {t('editor.addRowBefore', 'Insert Above')}
@@ -471,19 +471,19 @@ export default function TableBubbleMenu({ editor }) {
                 editor.chain().focus().addRowAfter().run()
                 setShowRowMenu(false)
               }}
-              className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 text-gray-700 dark:text-gray-300"
+              className="w-full px-3 py-2 text-left text-sm hover:bg-surface-hover flex items-center gap-2 text-content-muted"
             >
               <ArrowDown className="w-4 h-4" />
               {t('editor.addRowAfter', 'Insert Below')}
             </button>
-            <div className="h-px bg-gray-200 dark:bg-gray-700 my-1" />
+            <div className="h-px bg-surface-sunken dark:bg-surface-sunken my-1" />
             <button
               onMouseDown={(e) => {
                 e.preventDefault()
                 editor.chain().focus().deleteRow().run()
                 setShowRowMenu(false)
               }}
-              className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 text-red-600 dark:text-red-400"
+              className="w-full px-3 py-2 text-left text-sm hover:bg-surface-hover flex items-center gap-2 text-red-600 dark:text-red-400"
             >
               <X className="w-4 h-4" />
               {t('editor.deleteRow', 'Delete Row')}

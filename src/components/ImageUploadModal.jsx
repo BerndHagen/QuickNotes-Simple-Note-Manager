@@ -112,8 +112,8 @@ export default function ImageUploadModal({ editor }) {
 
   return (
     <LegacyDialog label="Insert image" onClose={() => setImageUploadOpen(false)} align="center">
-      <div className="modal-animate bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-[#cbd1db] dark:border-gray-700 w-full max-w-lg mx-4 overflow-hidden">
-        <div className="flex items-center justify-between p-5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
+      <div className="modal-animate bg-surface-raised rounded-2xl shadow-2xl border border-subtle w-full max-w-lg mx-4 overflow-hidden">
+        <div className="flex items-center justify-between p-5 qn-banner-surface text-white">
           <div className="flex items-center gap-3">
             <ImageIcon className="w-6 h-6" />
             <div>
@@ -128,13 +128,13 @@ export default function ImageUploadModal({ editor }) {
             <X className="w-5 h-5" />
           </button>
         </div>
-        <div className="flex border-b border-[#cbd1db] dark:border-gray-700">
+        <div className="flex border-b border-subtle">
           <button
             onClick={() => setActiveTab('url')}
             className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
-              activeTab === 'url'
-                ? 'text-primary-600 border-b-2 border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+ activeTab === 'url'
+ ? 'text-primary-600 border-b-2 border-primary-500 bg-primary-50 dark:bg-accent-soft'
+                : 'text-content-muted hover:text-content dark:hover:text-content-subtle'
             }`}
           >
             <Link className="w-4 h-4" />
@@ -143,9 +143,9 @@ export default function ImageUploadModal({ editor }) {
           <button
             onClick={() => setActiveTab('upload')}
             className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
-              activeTab === 'upload'
-                ? 'text-primary-600 border-b-2 border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+ activeTab === 'upload'
+ ? 'text-primary-600 border-b-2 border-primary-500 bg-primary-50 dark:bg-accent-soft'
+                : 'text-content-muted hover:text-content dark:hover:text-content-subtle'
             }`}
           >
             <Upload className="w-4 h-4" />
@@ -156,7 +156,7 @@ export default function ImageUploadModal({ editor }) {
           {activeTab === 'url' && (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-content-muted mb-1">
                   Image URL
                 </label>
                 <input
@@ -164,7 +164,7 @@ export default function ImageUploadModal({ editor }) {
                   value={imageUrl}
                   onChange={handleUrlChange}
                   placeholder="https://example.com/image.jpg"
-                  className="w-full px-3 py-2 border border-[#cbd1db] dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-subtle rounded-lg bg-white dark:bg-surface-sunken text-content focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
               </div>
             </div>
@@ -173,9 +173,9 @@ export default function ImageUploadModal({ editor }) {
           {activeTab === 'upload' && (
             <div
               className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                dragActive
-                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                  : 'border-[#cbd1db] dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
+ dragActive
+ ? 'border-primary-500 bg-primary-50 dark:bg-accent-soft'
+                  : 'border-subtle  hover:border-subtle dark:hover:border-subtle'
               }`}
               onDragEnter={handleDrag}
               onDragLeave={handleDrag}
@@ -185,14 +185,14 @@ export default function ImageUploadModal({ editor }) {
               {isLoading ? (
                 <div className="flex flex-col items-center gap-3">
                   <Loader2 className="w-10 h-10 text-primary-500 animate-spin" />
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <p className="text-sm text-content-muted">
                     Processing image...
                   </p>
                 </div>
               ) : (
                 <>
-                  <FileImage className="w-10 h-10 text-gray-400 mx-auto mb-3" />
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                  <FileImage className="w-10 h-10 text-content-subtle mx-auto mb-3" />
+                  <p className="text-sm text-content-muted mb-2">
                     Drag image here or
                   </p>
                   <label className="cursor-pointer">
@@ -206,7 +206,7 @@ export default function ImageUploadModal({ editor }) {
                       className="hidden"
                     />
                   </label>
-                  <p className="text-xs text-gray-400 mt-3">
+                  <p className="text-xs text-content-subtle mt-3">
                     Max. 5MB {"\u2022"} JPG, PNG, GIF, WebP
                   </p>
                 </>
@@ -214,7 +214,7 @@ export default function ImageUploadModal({ editor }) {
             </div>
           )}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-content-muted mb-1">
               Alternative text (optional)
             </label>
             <input
@@ -222,12 +222,12 @@ export default function ImageUploadModal({ editor }) {
               value={altText}
               onChange={(e) => setAltText(e.target.value)}
               placeholder="Description of the image"
-              className="w-full px-3 py-2 border border-[#cbd1db] dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-subtle rounded-lg bg-white dark:bg-surface-sunken text-content focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
           {previewUrl && (
-            <div className="border border-[#cbd1db] dark:border-gray-700 rounded-lg p-3">
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Preview:</p>
+            <div className="border border-subtle rounded-lg p-3">
+              <p className="text-xs text-content-muted mb-2">Preview:</p>
               <img
                 src={previewUrl}
                 alt="Preview"
@@ -240,10 +240,10 @@ export default function ImageUploadModal({ editor }) {
             </div>
           )}
         </div>
-        <div className="flex justify-end gap-3 px-6 py-4 border-t border-[#cbd1db] dark:border-gray-700">
+        <div className="flex justify-end gap-3 px-6 py-4 border-t border-subtle">
           <button
             onClick={handleClose}
-            className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors border border-[#cbd1db] dark:border-gray-600"
+            className="px-4 py-2 text-content-muted hover:bg-surface-sunken dark:hover:bg-surface-sunken rounded-lg transition-colors border border-subtle "
           >
             Cancel
           </button>

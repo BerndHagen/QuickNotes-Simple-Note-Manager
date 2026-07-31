@@ -74,8 +74,8 @@ export default function HelpModal() {
 
   return (
     <LegacyDialog label="Help" onClose={() => setHelpModalOpen(false)} align="center">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-[#cbd1db] dark:border-gray-700 w-full max-w-2xl mx-4 max-h-[85vh] overflow-hidden flex flex-col modal-animate">
-        <div className="flex items-center justify-between p-5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
+      <div className="bg-surface-raised rounded-2xl shadow-2xl border border-subtle w-full max-w-2xl mx-4 max-h-[85vh] overflow-hidden flex flex-col modal-animate">
+        <div className="flex items-center justify-between p-5 qn-banner-surface text-white">
           <div className="flex items-center gap-3">
             <HelpCircle className="w-6 h-6" />
             <div>
@@ -93,19 +93,19 @@ export default function HelpModal() {
         <div className="flex-1 overflow-y-auto p-6">
           <div className="space-y-4">
             {sections.map((section) => (
-              <div key={section.id} className="border border-[#cbd1db] dark:border-gray-700 rounded-lg overflow-hidden">
+              <div key={section.id} className="border border-subtle rounded-lg overflow-hidden">
                 <button
                   onClick={() => setExpandedSection(expandedSection === section.id ? null : section.id)}
-                  className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  className="w-full flex items-center justify-between p-4 bg-surface-sunken hover:bg-surface-hover transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     <section.icon className="w-5 h-5 text-primary-500" />
-                    <span className="font-medium text-gray-900 dark:text-white">{section.title}</span>
+                    <span className="font-medium text-content">{section.title}</span>
                   </div>
                   {expandedSection === section.id ? (
-                    <ChevronDown className="w-5 h-5 text-gray-400" />
+                    <ChevronDown className="w-5 h-5 text-content-subtle" />
                   ) : (
-                    <ChevronRight className="w-5 h-5 text-gray-400" />
+                    <ChevronRight className="w-5 h-5 text-content-subtle" />
                   )}
                 </button>
                 
@@ -113,8 +113,8 @@ export default function HelpModal() {
                   <div className="p-4 space-y-4">
                     {section.content.map((item, index) => (
                       <div key={index}>
-                        <h4 className="font-medium text-gray-900 dark:text-white mb-2">{item.q}</h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">{item.a}</p>
+                        <h4 className="font-medium text-content mb-2">{item.q}</h4>
+                        <p className="text-sm text-content-muted">{item.a}</p>
                       </div>
                     ))}
                   </div>
@@ -122,7 +122,7 @@ export default function HelpModal() {
               </div>
             ))}
           </div>
-          <div className="mt-6 pt-6 border-t border-[#cbd1db] dark:border-gray-700">
+          <div className="mt-6 pt-6 border-t border-subtle">
             <div className="flex flex-wrap gap-4 justify-center text-sm">
               <a
                 href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/issues"
@@ -153,8 +153,8 @@ export default function HelpModal() {
                 {t('help.termsOfService')}
               </button>
             </div>
-            <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-4">
-              QuickNotes v2.0.1
+            <p className="text-center text-xs text-content-subtle mt-4">
+              QuickNotes v2.0.2
             </p>
           </div>
         </div>

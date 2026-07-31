@@ -320,17 +320,17 @@ export default function ImportModal() {
       case 'htm':
         return <FileCode className="w-5 h-5 text-orange-500" />
       default:
-        return <File className="w-5 h-5 text-gray-500" />
+        return <File className="w-5 h-5 text-content-muted" />
     }
   }
 
   return (
     <LegacyDialog label="Import notes" onClose={() => setImportModalOpen(false)} align="center">
       <div 
-        className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-[#cbd1db] dark:border-gray-700 max-w-lg w-full mx-4 modal-animate overflow-hidden"
+        className="bg-surface-raised rounded-2xl shadow-2xl border border-subtle max-w-lg w-full mx-4 modal-animate overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
+        <div className="flex items-center justify-between p-5 qn-banner-surface text-white">
           <div className="flex items-center gap-3">
             <Upload className="w-6 h-6" />
             <div>
@@ -348,13 +348,13 @@ export default function ImportModal() {
         <div className="p-6">
         {results.length > 0 ? (
           <div className="space-y-3">
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">{t('importModal.importComplete')}</p>
+            <p className="text-sm text-content-muted mb-4">{t('importModal.importComplete')}</p>
             {results.map((result, index) => (
               <div 
                 key={index}
                 className={`p-3 rounded-lg flex items-center gap-3 ${
-                  result.success 
-                    ? 'bg-green-50 dark:bg-green-900/20' 
+ result.success 
+ ? 'bg-green-50 dark:bg-green-900/20' 
                     : 'bg-red-50 dark:bg-red-900/20'
                 }`}
               >
@@ -365,11 +365,11 @@ export default function ImportModal() {
                 )}
                 <div className="flex-1 min-w-0">
                   <p className={`text-sm font-medium ${
-                    result.success ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'
-                  }`}>
+ result.success ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'
+ }`}>
                     {result.filename}
                   </p>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
+                  <p className="text-xs text-content-muted truncate">
                     {result.success ? `${t('importModal.importedAs')} "${result.title}"` : result.error}
                   </p>
                 </div>
@@ -377,7 +377,7 @@ export default function ImportModal() {
             ))}
             <button
               onClick={handleClose}
-              className="w-full mt-4 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-lg font-medium transition-colors"
+              className="w-full mt-4 py-3 qn-banner-surface hover:from-emerald-700 hover:to-teal-700 text-white rounded-lg font-medium transition-colors"
             >
               {t('importModal.done')}
             </button>
@@ -406,18 +406,18 @@ export default function ImportModal() {
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
               className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${
-                dragActive
-                  ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
-                  : 'border-[#cbd1db] dark:border-gray-600 hover:border-emerald-400 hover:bg-gray-100 dark:hover:bg-gray-700/50'
+ dragActive
+ ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
+                  : 'border-subtle  hover:border-emerald-400 hover:bg-surface-hover'
               }`}
             >
               <Upload className={`w-12 h-12 mx-auto mb-3 ${
-                dragActive ? 'text-emerald-600' : 'text-gray-400'
-              }`} />
-              <p className="text-gray-700 dark:text-gray-300 font-medium mb-1">
+ dragActive ? 'text-emerald-600' : 'text-content-subtle'
+ }`} />
+              <p className="text-content-muted font-medium mb-1">
                 {t('importModal.dropFiles')}
               </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-content-muted">
                 {t('importModal.supports')}
               </p>
               <input
@@ -431,29 +431,29 @@ export default function ImportModal() {
             </div>
             {files.length > 0 && (
               <div className="mt-4 space-y-2">
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <p className="text-sm font-medium text-content-muted">
                   {files.length} {files.length > 1 ? t('importModal.files') : t('importModal.file')} {t('importModal.filesSelected')}
                 </p>
                 <div className="max-h-48 overflow-y-auto space-y-2">
                   {files.map((file, index) => (
                     <div 
                       key={index}
-                      className="flex items-center gap-3 p-2 bg-gray-50 dark:bg-gray-900 rounded-lg"
+                      className="flex items-center gap-3 p-2 bg-surface-sunken rounded-lg"
                     >
                       {getFileIcon(file.name)}
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                        <p className="text-sm font-medium text-content truncate">
                           {file.name}
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-content-muted">
                           {(file.size / 1024).toFixed(1)} KB
                         </p>
                       </div>
                       <button
                         onClick={() => removeFile(index)}
-                        className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+                        className="p-1 hover:bg-surface-sunken dark:hover:bg-surface-sunken rounded"
                       >
-                        <X className="w-4 h-4 text-gray-500" />
+                        <X className="w-4 h-4 text-content-muted" />
                       </button>
                     </div>
                   ))}
@@ -464,9 +464,9 @@ export default function ImportModal() {
               onClick={handleImport}
               disabled={files.length === 0 || importing}
               className={`w-full mt-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
-                files.length === 0 || importing
-                  ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white'
+ files.length === 0 || importing
+ ? 'bg-surface-active dark:bg-surface-active text-content-muted cursor-not-allowed'
+                  : 'qn-banner-surface hover:from-emerald-700 hover:to-teal-700 text-white'
               }`}
             >
               {importing ? (

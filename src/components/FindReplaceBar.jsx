@@ -230,10 +230,10 @@ export default function FindReplaceBar({ editor, isOpen, onClose }) {
   if (!isOpen) return null
 
   return (
-    <div className="bg-white dark:bg-gray-800 border-b border-[#cbd1db] dark:border-gray-700 px-4 py-2 shadow-sm">
+    <div className="bg-surface-raised border-b border-subtle px-4 py-2 shadow-sm">
       <div className="flex items-center gap-2 flex-wrap">
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-content-subtle" />
           <input
             ref={findInputRef}
             type="text"
@@ -241,9 +241,9 @@ export default function FindReplaceBar({ editor, isOpen, onClose }) {
             onChange={(e) => setFindText(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={t('findReplace.findInNote')}
-            className="w-full pl-10 pr-20 py-2 bg-gray-100 dark:bg-gray-900 border border-[#cbd1db] dark:border-gray-600 focus:border-emerald-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm"
+            className="w-full pl-10 pr-20 py-2 bg-surface-sunken dark:bg-surface-sunken border border-subtle focus:border-emerald-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm"
           />
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-content-muted">
             {matchCount > 0 ? `${currentMatch}/${matchCount}` : t('findReplace.noResults')}
           </span>
         </div>
@@ -251,9 +251,9 @@ export default function FindReplaceBar({ editor, isOpen, onClose }) {
           <button
             onClick={() => setCaseSensitive(!caseSensitive)}
             className={`p-2 rounded-lg transition-colors ${
-              caseSensitive 
-                ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600' 
-                : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500'
+ caseSensitive 
+ ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600' 
+                : 'hover:bg-surface-hover text-content-muted'
             }`}
             title={`${t('findReplace.caseSensitive')} (Alt+C)`}
           >
@@ -262,9 +262,9 @@ export default function FindReplaceBar({ editor, isOpen, onClose }) {
           <button
             onClick={() => setWholeWord(!wholeWord)}
             className={`p-2 rounded-lg transition-colors ${
-              wholeWord 
-                ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600' 
-                : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500'
+ wholeWord 
+ ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600' 
+                : 'hover:bg-surface-hover text-content-muted'
             }`}
             title={`${t('findReplace.wholeWord')} (Alt+W)`}
           >
@@ -273,9 +273,9 @@ export default function FindReplaceBar({ editor, isOpen, onClose }) {
           <button
             onClick={() => setUseRegex(!useRegex)}
             className={`p-2 rounded-lg transition-colors ${
-              useRegex 
-                ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600' 
-                : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500'
+ useRegex 
+ ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600' 
+                : 'hover:bg-surface-hover text-content-muted'
             }`}
             title={`${t('findReplace.useRegex')} (Alt+R)`}
           >
@@ -286,7 +286,7 @@ export default function FindReplaceBar({ editor, isOpen, onClose }) {
           <button
             onClick={goToPrevMatch}
             disabled={matchCount === 0}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50"
+            className="p-2 hover:bg-surface-hover rounded-lg transition-colors disabled:opacity-50"
             title={`${t('findReplace.previousMatch')} (Shift+Enter)`}
           >
             <ChevronUp className="w-4 h-4" />
@@ -294,7 +294,7 @@ export default function FindReplaceBar({ editor, isOpen, onClose }) {
           <button
             onClick={goToNextMatch}
             disabled={matchCount === 0}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50"
+            className="p-2 hover:bg-surface-hover rounded-lg transition-colors disabled:opacity-50"
             title={`${t('findReplace.nextMatch')} (Enter)`}
           >
             <ChevronDown className="w-4 h-4" />
@@ -303,9 +303,9 @@ export default function FindReplaceBar({ editor, isOpen, onClose }) {
         <button
           onClick={() => setShowReplace(!showReplace)}
           className={`p-2 rounded-lg transition-colors ${
-            showReplace 
-              ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600' 
-              : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500'
+ showReplace 
+ ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600' 
+              : 'hover:bg-surface-hover text-content-muted'
           }`}
           title={t('findReplace.toggleReplace')}
         >
@@ -313,7 +313,7 @@ export default function FindReplaceBar({ editor, isOpen, onClose }) {
         </button>
         <button
           onClick={onClose}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+          className="p-2 hover:bg-surface-hover rounded-lg transition-colors"
           title="Close (Esc)"
         >
           <X className="w-4 h-4" />
@@ -322,7 +322,7 @@ export default function FindReplaceBar({ editor, isOpen, onClose }) {
       {showReplace && (
         <div className="flex items-center gap-2 mt-2">
           <div className="relative flex-1 min-w-[200px]">
-            <Replace className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Replace className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-content-subtle" />
             <input
               type="text"
               value={replaceText}
@@ -336,13 +336,13 @@ export default function FindReplaceBar({ editor, isOpen, onClose }) {
                 }
               }}
               placeholder={t('findReplace.replaceWith')}
-              className="w-full pl-10 pr-4 py-2 bg-gray-100 dark:bg-gray-900 border border-[#cbd1db] dark:border-gray-600 focus:border-emerald-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm"
+              className="w-full pl-10 pr-4 py-2 bg-surface-sunken dark:bg-surface-sunken border border-subtle focus:border-emerald-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm"
             />
           </div>
           <button
             onClick={replaceCurrentMatch}
             disabled={matchCount === 0}
-            className="px-3 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 border border-[#cbd1db] dark:border-gray-600"
+            className="px-3 py-2 bg-surface-sunken hover:bg-surface-sunken dark:hover:bg-surface-active rounded-lg text-sm font-medium transition-colors disabled:opacity-50 border border-subtle "
           >
             {t('findReplace.replace')}
           </button>

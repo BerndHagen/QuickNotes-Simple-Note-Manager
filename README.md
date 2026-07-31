@@ -21,7 +21,7 @@
 
 **QuickNotes** is a browser-based note-taking application built with React and TipTap. It works fully offline using IndexedDB and can optionally sync to a cloud backend. Notes support rich text formatting, code blocks with syntax highlighting, tables, images, checklists, and more.
 
-A hosted build is available at **[berndhagen.github.io/QuickNotes-Simple-Note-Manager](https://berndhagen.github.io/QuickNotes-Simple-Note-Manager/)**. You can use it without an account — a local workspace keeps everything in your own browser — or sign up to sync and share notes across devices.
+You can try QuickNotes [**here**](https://berndhagen.github.io/QuickNotes-Simple-Note-Manager/) — no account required. A local workspace keeps everything in your own browser, or you can sign up to sync and share notes across devices.
 
 ## Key Features
 
@@ -903,27 +903,27 @@ If you'd like a preview of QuickNotes before trying it out, the screenshots belo
 
 <table>
   <tr>
-    <th>QuickNotes - Startup</th>
+    <th>QuickNotes - Sign in</th>
     <th>QuickNotes - Editor</th>
   </tr>
   <tr>
-    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/img/img_v1.0.0-quicknotes_startup.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/img/img_v1.0.0-quicknotes_startup.png" alt="QuickNotes Startup" width="450"></a></td>
-    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/img/img_v1.0.0-quicknotes_editor.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/img/img_v1.0.0-quicknotes_editor.png" alt="QuickNotes Editor" width="450"></a></td>
+    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/img/img_v2.0.2-quicknotes_startup.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/img/img_v2.0.2-quicknotes_startup.png" alt="QuickNotes Sign in" width="450"></a></td>
+    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/img/img_v2.0.2-quicknotes_editor.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/img/img_v2.0.2-quicknotes_editor.png" alt="QuickNotes Editor" width="450"></a></td>
   </tr>
   <tr>
-    <th>QuickNotes - Note</th>
-    <th>QuickNotes - Tags</th>
+    <th>QuickNotes - Task Workspace</th>
+    <th>QuickNotes - Meeting Workspace</th>
   </tr>
   <tr>
-    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/img/img_v1.0.0-quicknotes_note.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/img/img_v1.0.0-quicknotes_note.png" alt="QuickNotes Note" width="450"></a></td>
-    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/img/img_v1.0.0-quicknotes_tags.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/img/img_v1.0.0-quicknotes_tags.png" alt="QuickNotes Tags" width="450"></a></td>
+    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/img/img_v2.0.2-quicknotes_tasks.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/img/img_v2.0.2-quicknotes_tasks.png" alt="QuickNotes Task Workspace" width="450"></a></td>
+    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/img/img_v2.0.2-quicknotes_meeting.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/img/img_v2.0.2-quicknotes_meeting.png" alt="QuickNotes Meeting Workspace" width="450"></a></td>
   </tr>
   <tr>
-    <th>QuickNotes - Meeting Notes</th>
-    <th>QuickNotes - To-Do List</th>
+    <th>QuickNotes - Global Search</th>
+    <th>QuickNotes - Dark Mode</th>
   </tr>
   <tr>
-    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/img/img_v1.0.0-quicknotes_meeting.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/img/img_v1.0.0-quicknotes_meeting.png" alt="QuickNotes Meeting Notes" width="450"></a></td>
-    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/img/img_v1.0.0-quicknotes_todo.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/img/img_v1.0.0-quicknotes_todo.png" alt="QuickNotes To-Do List" width="450"></a></td>
+    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/img/img_v2.0.2-quicknotes_search.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/img/img_v2.0.2-quicknotes_search.png" alt="QuickNotes Global Search" width="450"></a></td>
+    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/img/img_v2.0.2-quicknotes_darkmode.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/img/img_v2.0.2-quicknotes_darkmode.png" alt="QuickNotes Dark Mode" width="450"></a></td>
   </tr>
 </table>

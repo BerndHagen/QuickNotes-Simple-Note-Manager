@@ -129,19 +129,19 @@ export default function VoiceInput({ onTranscript, isActive, onToggle }) {
   }
 
   return (
-    <div className="fixed bottom-8 right-8 z-50 bg-white dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-700 rounded-xl shadow-2xl overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border-b border-[#cbd1db] dark:border-gray-700">
+    <div className="fixed bottom-8 right-8 z-50 bg-surface-raised border border-subtle rounded-xl shadow-2xl overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-3 bg-surface-sunken dark:bg-surface-sunken border-b border-subtle">
         <div className="flex items-center gap-2">
           <div className={`w-3 h-3 rounded-full ${isListening ? 'bg-red-500 animate-pulse' : 'bg-gray-400'}`} />
-          <span className="font-medium text-gray-900 dark:text-white text-sm">
+          <span className="font-medium text-content text-sm">
             {isListening ? 'Recording...' : 'Voice Recognition'}
           </span>
         </div>
         <button
           onClick={() => onToggle?.(false)}
-          className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
+          className="p-1 hover:bg-surface-sunken dark:hover:bg-surface-active rounded transition-colors"
         >
-          <MicOff className="w-4 h-4 text-gray-500" />
+          <MicOff className="w-4 h-4 text-content-muted" />
         </button>
       </div>
       <div className="p-4 min-w-[280px]">
@@ -157,19 +157,19 @@ export default function VoiceInput({ onTranscript, isActive, onToggle }) {
               }
             }}
             className={`w-16 h-16 rounded-full flex items-center justify-center transition-all ${
-              isListening
-                ? 'bg-red-500 text-white shadow-lg shadow-red-500/30 scale-110'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+ isListening
+ ? 'bg-red-500 text-white shadow-lg shadow-red-500/30 scale-110'
+                : 'bg-surface-sunken text-content-muted hover:bg-surface-sunken dark:hover:bg-surface-active'
             }`}
           >
             <Mic className="w-8 h-8" />
           </button>
           {interimTranscript && (
-            <p className="text-sm text-gray-500 dark:text-gray-400 text-center italic max-w-[250px]">
+            <p className="text-sm text-content-muted text-center italic max-w-[250px]">
               "{interimTranscript}"
             </p>
           )}
-          <p className="text-xs text-gray-400 text-center">
+          <p className="text-xs text-content-subtle text-center">
             Speak clearly {"\u2022"} ESC to stop
           </p>
         </div>

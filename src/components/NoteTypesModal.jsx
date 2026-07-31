@@ -110,7 +110,7 @@ export default function NoteTypesModal({ onCreated }) {
           aria-label="Note types"
           className="min-h-0 border-b border-subtle bg-surface-sunken lg:border-b-0 lg:border-r"
         >
-          <div className="sticky top-0 z-10 border-b border-subtle bg-surface-sunken/95 p-4 backdrop-blur sm:p-5">
+          <div className="sticky top-0 z-10 border-b border-subtle bg-surface-sunken p-4 backdrop-blur sm:p-5">
             <label htmlFor="qn-type-search" className="qn-sr-only">
               Search note types
             </label>
@@ -300,7 +300,7 @@ export default function NoteTypesModal({ onCreated }) {
                               'mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border',
                               active
                                 ? 'border-accent bg-accent text-accent-on'
-                                : 'border-strong bg-surface-raised',
+                                : 'border-control bg-surface-raised',
                             ].join(' ')}
                           >
                             {active && <span className="h-1.5 w-1.5 rounded-full bg-current" />}

@@ -166,8 +166,8 @@ export default function VersionHistoryModal() {
 
   return (
     <LegacyDialog label="Version history" onClose={() => setVersionHistoryOpen(false)} align="center">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-[#cbd1db] dark:border-gray-700 w-full max-w-4xl mx-4 max-h-[85vh] overflow-hidden flex flex-col modal-animate">
-        <div className="flex items-center justify-between p-5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white shrink-0">
+      <div className="bg-surface-raised rounded-2xl shadow-2xl border border-subtle w-full max-w-4xl mx-4 max-h-[85vh] overflow-hidden flex flex-col modal-animate">
+        <div className="flex items-center justify-between p-5 qn-banner-surface text-white shrink-0">
           <div className="flex items-center gap-3">
             <History className="w-6 h-6" />
             <div>
@@ -187,18 +187,18 @@ export default function VersionHistoryModal() {
           </button>
         </div>
         <div className="flex-1 flex overflow-hidden">
-          <div className="w-1/3 border-r border-[#cbd1db] dark:border-gray-700 overflow-y-auto">
+          <div className="w-1/3 border-r border-subtle overflow-y-auto">
             {isLoading ? (
               <div className="flex items-center justify-center h-full">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
               </div>
             ) : versions.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center p-6">
-                <AlertCircle className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-3" />
-                <p className="text-gray-500 dark:text-gray-400">
+                <AlertCircle className="w-12 h-12 text-content-subtle dark:text-content-muted mb-3" />
+                <p className="text-content-muted">
                   No versions found
                 </p>
-                <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
+                <p className="text-sm text-content-subtle mt-1">
                   Versions are automatically saved when editing.
                 </p>
               </div>
@@ -206,9 +206,9 @@ export default function VersionHistoryModal() {
               <div className="divide-y divide-gray-100 dark:divide-gray-700">
                 <div
                   className={`p-4 cursor-pointer transition-colors ${
-                    !selectedVersion
-                      ? 'bg-primary-50 dark:bg-primary-900/30'
-                      : 'hover:bg-gray-100 dark:hover:bg-gray-700/50'
+ !selectedVersion
+ ? 'bg-primary-50 dark:bg-accent-soft'
+                      : 'hover:bg-surface-hover'
                   }`}
                   onClick={() => setSelectedVersion(null)}
                 >
@@ -216,9 +216,9 @@ export default function VersionHistoryModal() {
                     <span className="text-sm font-medium text-primary-600 dark:text-primary-400">
                       Current Version
                     </span>
-                    <ChevronRight className="w-4 h-4 text-gray-400" />
+                    <ChevronRight className="w-4 h-4 text-content-subtle" />
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                  <div className="flex items-center gap-2 text-xs text-content-muted">
                     <Clock className="w-3 h-3" />
                     {formatDate(note?.updatedAt)}
                   </div>
@@ -227,23 +227,23 @@ export default function VersionHistoryModal() {
                   <div
                     key={version.id}
                     className={`p-4 cursor-pointer transition-colors ${
-                      selectedVersion?.id === version.id
-                        ? 'bg-primary-50 dark:bg-primary-900/30'
-                        : 'hover:bg-gray-100 dark:hover:bg-gray-700/50'
+ selectedVersion?.id === version.id
+ ? 'bg-primary-50 dark:bg-accent-soft'
+                        : 'hover:bg-surface-hover'
                     }`}
                     onClick={() => setSelectedVersion(version)}
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      <span className="text-sm font-medium text-content-muted">
                         Version {versions.length - index}
                       </span>
-                      <ChevronRight className="w-4 h-4 text-gray-400" />
+                      <ChevronRight className="w-4 h-4 text-content-subtle" />
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                    <div className="flex items-center gap-2 text-xs text-content-muted">
                       <Clock className="w-3 h-3" />
                       {formatDate(version.createdAt)}
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500 mt-1">
+                    <div className="flex items-center gap-2 text-xs text-content-subtle mt-1">
                       <FileText className="w-3 h-3" />
                       {version.noteData ? getContentPreview(null, version.noteData) : `${getWordCount(version.content)} words`}
                     </div>
@@ -253,9 +253,9 @@ export default function VersionHistoryModal() {
             )}
           </div>
           <div className="flex-1 flex flex-col overflow-hidden">
-            <div className="p-4 border-b border-[#cbd1db] dark:border-gray-700 shrink-0">
+            <div className="p-4 border-b border-subtle shrink-0">
               <div className="flex items-center justify-between">
-                <h3 className="font-medium text-gray-900 dark:text-white">
+                <h3 className="font-medium text-content">
                   {selectedVersion ? 'Preview' : 'Current Version'}
                 </h3>
                 {!(selectedVersion?.noteData || (!selectedVersion && note?.noteData)) && (
@@ -282,7 +282,7 @@ export default function VersionHistoryModal() {
                     data = rawData
                   }
                   return (
-                    <pre className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap font-mono bg-gray-50 dark:bg-gray-900 p-4 rounded-lg overflow-auto">
+                    <pre className="text-sm text-content-muted whitespace-pre-wrap font-mono bg-surface-sunken p-4 rounded-lg overflow-auto">
                       {JSON.stringify(data, null, 2)}
                     </pre>
                   )
@@ -300,7 +300,7 @@ export default function VersionHistoryModal() {
                 }
                 
                 return (
-                  <pre className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap font-mono bg-gray-50 dark:bg-gray-900 p-4 rounded-lg overflow-auto">
+                  <pre className="text-sm text-content-muted whitespace-pre-wrap font-mono bg-surface-sunken p-4 rounded-lg overflow-auto">
                     {version?.content || note?.content || 'No content'}
                   </pre>
                 )
@@ -308,14 +308,14 @@ export default function VersionHistoryModal() {
             </div>
           </div>
         </div>
-        <div className="flex items-center justify-between px-6 py-4 border-t border-[#cbd1db] dark:border-gray-700 shrink-0">
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+        <div className="flex items-center justify-between px-6 py-4 border-t border-subtle shrink-0">
+          <p className="text-sm text-content-muted">
             {versions.length} version{versions.length !== 1 ? 's' : ''} saved
           </p>
           <div className="flex gap-3">
             <button
               onClick={handleClose}
-              className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors border border-[#cbd1db] dark:border-gray-600"
+              className="px-4 py-2 text-content-muted hover:bg-surface-sunken dark:hover:bg-surface-sunken rounded-lg transition-colors border border-subtle "
             >
               Close
             </button>

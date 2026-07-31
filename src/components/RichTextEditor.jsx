@@ -1080,7 +1080,7 @@ export default function RichTextEditor({
           
           return !selection.empty
         }}
-        className="bg-white dark:bg-gray-800 shadow-xl rounded-lg border border-[#cbd1db] dark:border-gray-700 flex items-center p-1 gap-0.5"
+        className="bg-surface-raised shadow-xl rounded-lg border border-subtle flex items-center p-1 gap-0.5"
       >
         <BubbleButton label="Bold" onClick={() => editor.chain().focus().toggleBold().run()} isActive={editor.isActive('bold')}>
           <Bold className="w-4 h-4" />
@@ -1097,7 +1097,7 @@ export default function RichTextEditor({
         <BubbleButton label="Strikethrough" onClick={() => editor.chain().focus().toggleStrike().run()} isActive={editor.isActive('strike')}>
           <Strikethrough className="w-4 h-4" />
         </BubbleButton>
-        <div className="w-px h-5 mx-1 bg-gray-300 dark:bg-gray-600" />
+        <div className="w-px h-5 mx-1 bg-surface-active dark:bg-surface-active" />
         <BubbleButton label="Insert link" onClick={() => {
             useUIStore.getState().setLinkModalOpen(true)
           }} isActive={editor.isActive('link')}>
@@ -1108,7 +1108,7 @@ export default function RichTextEditor({
       {!readOnly && <FloatingMenu
         editor={editor}
         tippyOptions={{ duration: 100, aria: { expanded: false, content: 'describedby' } }}
-        className="bg-white dark:bg-gray-800 shadow-xl rounded-lg border border-[#cbd1db] dark:border-gray-700 flex items-center p-1 gap-0.5"
+        className="bg-surface-raised shadow-xl rounded-lg border border-subtle flex items-center p-1 gap-0.5"
       >
         <BubbleButton label="Heading 1" onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}>
           <Heading1 className="w-4 h-4" />
@@ -1181,9 +1181,9 @@ function BubbleButton({ onClick, isActive, children, label }) {
       onClick={onClick}
       aria-label={label}
       className={`p-1.5 rounded transition-colors ${
-        isActive
-          ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300'
-          : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
+ isActive
+ ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300'
+          : 'hover:bg-surface-hover text-content-muted'
       }`}
     >
       {children}
@@ -1282,26 +1282,26 @@ const ContextMenu = React.forwardRef(({ x, y, editor, onClose, editorBounds }, r
         if (typeof ref === 'function') ref(node)
         else if (ref) ref.current = node
       }}
-      className="fixed z-[9999] bg-white dark:bg-gray-900 rounded-2xl shadow-xl shadow-black/5 dark:shadow-black/20 border border-[#cbd1db] dark:border-gray-700 py-1.5 min-w-[200px] max-h-[400px] overflow-y-auto backdrop-blur-xl"
+      className="fixed z-[9999] bg-surface-raised rounded-2xl shadow-xl shadow-black/5 dark:shadow-black/20 border border-subtle py-1.5 min-w-[200px] max-h-[400px] overflow-y-auto backdrop-blur-xl"
       style={{ left: position.x, top: position.y }}
     >
       {menuItems.map((item, index) => (
         item.type === 'divider' ? (
-          <div key={index} className="my-1.5 mx-3 border-t border-[#cbd1db] dark:border-gray-800" />
+          <div key={index} className="my-1.5 mx-3 border-t border-subtle dark:border-subtle" />
         ) : (
           <button
             key={index}
             onClick={() => handleAction(item.action)}
-            className={`w-full px-4 py-2.5 flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
-              item.danger ? 'text-red-500 dark:text-red-400' : 'text-gray-700 dark:text-gray-300'
-            }`}
+            className={`w-full px-4 py-2.5 flex items-center justify-between hover:bg-surface-hover transition-colors ${
+ item.danger ? 'text-red-500 dark:text-red-400' : 'text-content-muted'
+ }`}
           >
             <div className="flex items-center gap-3">
-              <span className="text-gray-400">{item.icon}</span>
+              <span className="text-content-subtle">{item.icon}</span>
               <span className="text-sm">{item.label}</span>
             </div>
             {item.shortcut && (
-              <span className="text-xs text-gray-400">{item.shortcut}</span>
+              <span className="text-xs text-content-subtle">{item.shortcut}</span>
             )}
           </button>
         )
@@ -1352,7 +1352,7 @@ function PortalTooltip({ children, title, shortcut, anchorRef }) {
       {visible && createPortal(
         <div
           ref={tooltipRef}
-          className="fixed px-2.5 py-1.5 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg whitespace-nowrap z-[99999] pointer-events-none shadow-lg"
+          className="fixed px-2.5 py-1.5 bg-surface-sunken dark:bg-surface-sunken text-white text-xs rounded-lg whitespace-nowrap z-[99999] pointer-events-none shadow-lg"
           style={{ 
             top: position.top, 
             left: position.left,
@@ -1361,7 +1361,7 @@ function PortalTooltip({ children, title, shortcut, anchorRef }) {
         >
           <span>{title}</span>
           {shortcut && (
-            <span className="ml-2 px-1.5 py-0.5 bg-gray-700 dark:bg-gray-600 rounded text-gray-300 font-mono text-[10px]">
+            <span className="ml-2 px-1.5 py-0.5 bg-surface-sunken dark:bg-surface-active rounded text-content-subtle font-mono text-[10px]">
               {shortcut}
             </span>
           )}
@@ -1460,7 +1460,7 @@ function PortalDropdown({ isOpen, anchorRef, children, onClose, align = 'left' }
   return createPortal(
     <div
       ref={dropdownRef}
-      className="fixed bg-white dark:bg-gray-900 rounded-2xl shadow-xl shadow-black/5 dark:shadow-black/20 border border-[#cbd1db] dark:border-gray-700 z-[99999] backdrop-blur-xl"
+      className="fixed bg-surface-raised rounded-2xl shadow-xl shadow-black/5 dark:shadow-black/20 border border-subtle z-[99999] backdrop-blur-xl"
       style={{ 
         top: position.top, 
         left: align === 'right' ? 'auto' : position.left,
@@ -1489,7 +1489,7 @@ function ImageToolbarButton() {
           e.stopPropagation()
           setImageUploadOpen(true)
         }}
-        className="p-2 text-gray-600 transition-all duration-150 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800/60 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+        className="p-2 text-content-muted transition-all duration-150 rounded-lg hover:bg-surface-hover dark:text-content-subtle hover:text-content dark:hover:text-white"
       >
         <ImageIcon className="w-4 h-4" />
       </button>
@@ -1736,8 +1736,8 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
         aria-pressed={isActive || undefined}
         aria-label={title}
         className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-control transition-colors duration-fast ${
-          isActive
-            ? 'bg-accent-soft text-accent-text'
+ isActive
+ ? 'bg-accent-soft text-accent-text'
             : 'text-content-muted hover:bg-surface-hover hover:text-content'
         } ${disabled ? 'cursor-not-allowed opacity-40' : ''}`}
       >
@@ -1775,11 +1775,11 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
           if (!disabled && onClick) onClick()
         }}
         className={`p-1.5 rounded-lg transition-all duration-150 flex items-center gap-1 ${
-          disabled
-            ? 'opacity-30 cursor-not-allowed text-gray-400 dark:text-gray-600'
+ disabled
+ ? 'opacity-30 cursor-not-allowed text-content-subtle dark:text-content-muted'
             : isOpen
               ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 shadow-sm'
-              : 'hover:bg-gray-100 dark:hover:bg-gray-800/60 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+              : 'hover:bg-surface-hover text-content-muted hover:text-content dark:hover:text-content-subtle'
         }`}
       >
         {children}
@@ -1841,9 +1841,9 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
                     editor.chain().focus().setFontFamily(font.value).run()
                     setShowFontPicker(false)
                   }}
-                  className={`w-full px-3 py-1.5 text-[13px] text-left hover:bg-gray-100 dark:hover:bg-gray-800/60 truncate rounded-lg transition-colors ${
-                    isActive ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 font-medium' : 'text-gray-700 dark:text-gray-300'
-                  }`}
+                  className={`w-full px-3 py-1.5 text-[13px] text-left hover:bg-surface-hover truncate rounded-lg transition-colors ${
+ isActive ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 font-medium' : 'text-content-muted'
+ }`}
                   style={{ fontFamily: font.value }}
                 >
                   {font.name}
@@ -1871,9 +1871,9 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
                     editor.chain().focus().setFontSize(size.value).run()
                     setShowFontSizePicker(false)
                   }}
-                  className={`w-full px-3 py-1.5 text-left text-[13px] hover:bg-gray-100 dark:hover:bg-gray-800/60 rounded-lg transition-colors ${
-                    isActive ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 font-medium' : 'text-gray-700 dark:text-gray-300'
-                  }`}
+                  className={`w-full px-3 py-1.5 text-left text-[13px] hover:bg-surface-hover rounded-lg transition-colors ${
+ isActive ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 font-medium' : 'text-content-muted'
+ }`}
                 >
                   {size.name}px
                 </button>
@@ -1899,9 +1899,9 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
                     editor.chain().focus().setLineHeight(lh.value).run()
                     setShowLineHeightPicker(false)
                   }}
-                  className={`w-full px-3 py-1.5 text-left text-[13px] hover:bg-gray-100 dark:hover:bg-gray-800/60 rounded-lg transition-colors ${
-                    isActive ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 font-medium' : 'text-gray-700 dark:text-gray-300'
-                  }`}
+                  className={`w-full px-3 py-1.5 text-left text-[13px] hover:bg-surface-hover rounded-lg transition-colors ${
+ isActive ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 font-medium' : 'text-content-muted'
+ }`}
                 >
                   {lh.name}
                 </button>
@@ -1936,29 +1936,29 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
                     editor.chain().focus().toggleHeading({ level }).run()
                     setShowHeadingsPicker(false)
                   }}
-                  className={`w-full px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-800/60 flex items-center gap-3 rounded-lg transition-colors ${
-                    isActive ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-300'
-                  }`}
+                  className={`w-full px-3 py-2 text-left hover:bg-surface-hover flex items-center gap-3 rounded-lg transition-colors ${
+ isActive ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'text-content-muted'
+ }`}
                 >
                   <span className={`font-bold ${
-                    level === 1 ? 'text-xl' : 
-                    level === 2 ? 'text-lg' : 
+ level === 1 ? 'text-xl' : 
+ level === 2 ? 'text-lg' : 
                     level === 3 ? 'text-base' : 
                     level === 4 ? 'text-sm' : 
                     level === 5 ? 'text-xs' : 'text-xs'
                   }`}>H{level}</span>
-                  <span className="text-[11px] text-gray-300 dark:text-gray-600 font-medium">Ctrl+Alt+{level}</span>
+                  <span className="text-[11px] text-content-subtle dark:text-content-muted font-medium">Ctrl+Alt+{level}</span>
                 </button>
               )
             })}
-            <div className="h-px my-1.5 mx-2 bg-gray-100 dark:bg-gray-800/60" />
+            <div className="h-px my-1.5 mx-2 bg-surface-sunken" />
             <button
               onMouseDown={(e) => {
                 e.preventDefault()
                 editor.chain().focus().setParagraph().run()
                 setShowHeadingsPicker(false)
               }}
-              className="w-full px-3 py-2 text-left text-[13px] hover:bg-gray-100 dark:hover:bg-gray-800/60 rounded-lg transition-colors text-gray-700 dark:text-gray-300"
+              className="w-full px-3 py-2 text-left text-[13px] hover:bg-surface-hover rounded-lg transition-colors text-content-muted"
             >
               Normal text
             </button>
@@ -1999,9 +1999,9 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
                       setShowColorPicker(false)
                     }}
                     className={`w-7 h-7 rounded-lg border-2 hover:scale-110 transition-all shadow-sm flex items-center justify-center ${
-                      isActive 
-                        ? 'border-emerald-500 ring-2 ring-emerald-200 dark:ring-emerald-800' 
-                        : 'border-[#cbd1db] dark:border-gray-600 hover:border-emerald-500'
+ isActive 
+ ? 'border-emerald-500 ring-2 ring-emerald-200 dark:ring-emerald-800' 
+                        : 'border-subtle  hover:border-emerald-500'
                     }`}
                     style={{ backgroundColor: color }}
                     title={color}
@@ -2021,24 +2021,24 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
                 editor.chain().focus().unsetColor().run()
                 setShowColorPicker(false)
               }}
-              className="w-full mt-3 px-3 py-1.5 text-xs text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800/60 rounded-lg border border-[#cbd1db] dark:border-gray-700 transition-colors"
+              className="w-full mt-3 px-3 py-1.5 text-xs text-content-muted hover:bg-surface-hover rounded-lg border border-subtle transition-colors"
             >
               Reset Color
             </button>
-            <div className="pt-3 mt-3 border-t border-[#cbd1db] dark:border-gray-700">
-              <label className="block mb-2 text-xs font-medium text-gray-600 dark:text-gray-400">Custom Color</label>
+            <div className="pt-3 mt-3 border-t border-subtle">
+              <label className="block mb-2 text-xs font-medium text-content-muted">Custom Color</label>
               <div className="flex gap-2">
                 <input
                   type="color"
                   value={customColor}
                   onChange={(e) => setCustomColor(e.target.value)}
-                  className="w-10 h-8 border border-[#cbd1db] rounded cursor-pointer dark:border-gray-600"
+                  className="w-10 h-8 border border-subtle rounded cursor-pointer "
                 />
                 <input
                   type="text"
                   value={customColor}
                   onChange={(e) => setCustomColor(e.target.value)}
-                  className="flex-1 px-2 py-1 text-xs text-gray-900 bg-white border border-[#cbd1db] rounded dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                  className="flex-1 px-2 py-1 text-xs text-content bg-white border border-subtle rounded dark:bg-surface-sunken dark:text-white"
                   placeholder="#000000"
                 />
                 <button
@@ -2075,15 +2075,15 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
                       setShowHighlightPicker(false)
                     }}
                     className={`w-7 h-7 rounded-lg border-2 hover:scale-110 transition-all shadow-sm flex items-center justify-center ${
-                      isActive 
-                        ? 'border-emerald-500 ring-2 ring-emerald-200 dark:ring-emerald-800' 
-                        : 'border-[#cbd1db] dark:border-gray-600 hover:border-emerald-500'
+ isActive 
+ ? 'border-emerald-500 ring-2 ring-emerald-200 dark:ring-emerald-800' 
+                        : 'border-subtle  hover:border-emerald-500'
                     }`}
                     style={{ backgroundColor: color }}
                     title={color}
                   >
                     {isActive && (
-                      <svg className="w-4 h-4 text-gray-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                      <svg className="w-4 h-4 text-content" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                         <polyline points="20 6 9 17 4 12"></polyline>
                       </svg>
                     )}
@@ -2097,24 +2097,24 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
                 editor.chain().focus().unsetHighlight().run()
                 setShowHighlightPicker(false)
               }}
-              className="w-full mt-3 px-3 py-1.5 text-xs text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800/60 rounded-lg border border-[#cbd1db] dark:border-gray-700 transition-colors"
+              className="w-full mt-3 px-3 py-1.5 text-xs text-content-muted hover:bg-surface-hover rounded-lg border border-subtle transition-colors"
             >
               Remove Highlight
             </button>
-            <div className="pt-3 mt-3 border-t border-[#cbd1db] dark:border-gray-700">
-              <label className="block mb-2 text-xs font-medium text-gray-600 dark:text-gray-400">Custom Highlight</label>
+            <div className="pt-3 mt-3 border-t border-subtle">
+              <label className="block mb-2 text-xs font-medium text-content-muted">Custom Highlight</label>
               <div className="flex gap-2">
                 <input
                   type="color"
                   value={customHighlight}
                   onChange={(e) => setCustomHighlight(e.target.value)}
-                  className="w-10 h-8 border border-[#cbd1db] rounded cursor-pointer dark:border-gray-600"
+                  className="w-10 h-8 border border-subtle rounded cursor-pointer "
                 />
                 <input
                   type="text"
                   value={customHighlight}
                   onChange={(e) => setCustomHighlight(e.target.value)}
-                  className="flex-1 px-2 py-1 text-xs text-gray-900 bg-white border border-[#cbd1db] rounded dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                  className="flex-1 px-2 py-1 text-xs text-content bg-white border border-subtle rounded dark:bg-surface-sunken dark:text-white"
                   placeholder="#fef08a"
                 />
                 <button
@@ -2215,9 +2215,9 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
                     editor.chain().focus().setLetterSpacing(spacing.value).run()
                     setShowLetterSpacing(false)
                   }}
-                  className={`w-full px-3 py-1.5 text-left text-[13px] hover:bg-gray-100 dark:hover:bg-gray-800/60 rounded-lg transition-colors ${
-                    isActive ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 font-medium' : 'text-gray-700 dark:text-gray-300'
-                  }`}
+                  className={`w-full px-3 py-1.5 text-left text-[13px] hover:bg-surface-hover rounded-lg transition-colors ${
+ isActive ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 font-medium' : 'text-content-muted'
+ }`}
                 >
                   {spacing.name}
                 </button>
@@ -2255,7 +2255,7 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
           <div className="py-2 min-w-[220px]">
             {!editor.isActive('table') && (
               <div className="px-3 pb-2">
-                <p className="mb-2 text-xs font-medium text-gray-500 dark:text-gray-400">{t('editor.insertTable')}</p>
+                <p className="mb-2 text-xs font-medium text-content-muted">{t('editor.insertTable')}</p>
                 <div className="grid gap-1" style={{ gridTemplateColumns: 'repeat(8, 1fr)' }}>
                   {Array.from({ length: 8 * 6 }).map((_, i) => {
                     const row = Math.floor(i / 8) + 1
@@ -2272,15 +2272,15 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
                           setHoverCell({ row: 0, col: 0 })
                         }}
                         className={`w-5 h-5 rounded-sm border transition-colors ${
-                          isHovered 
-                            ? 'bg-primary-100 dark:bg-primary-900/50 border-primary-400' 
-                            : 'border-[#cbd1db] dark:border-gray-600 hover:border-gray-400'
+ isHovered 
+ ? 'bg-primary-100 dark:bg-accent-soft border-primary-400' 
+                            : 'border-subtle  hover:border-subtle'
                         }`}
                       />
                     )
                   })}
                 </div>
-                <p className="mt-2 text-xs text-center text-gray-500 dark:text-gray-400">
+                <p className="mt-2 text-xs text-center text-content-muted">
                   {hoverCell.row > 0 ? `${hoverCell.col} × ${hoverCell.row}` : t('editor.tableSize')}
                 </p>
               </div>
@@ -2288,20 +2288,20 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
             
             {editor.isActive('table') && (
               <>
-                <p className="px-3 mb-1 text-xs font-medium text-gray-500 dark:text-gray-400">{t('editor.table')}</p>
-                <button onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().addColumnBefore().run(); setShowTableMenu(false) }} className="flex items-center w-full gap-2 px-3 py-2 text-[13px] text-left hover:bg-gray-100 dark:hover:bg-gray-800/60 rounded-lg transition-colors text-gray-700 dark:text-gray-300">
-                  <Columns className="w-4 h-4 text-gray-400" /> {t('editor.addColumnBefore')}
+                <p className="px-3 mb-1 text-xs font-medium text-content-muted">{t('editor.table')}</p>
+                <button onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().addColumnBefore().run(); setShowTableMenu(false) }} className="flex items-center w-full gap-2 px-3 py-2 text-[13px] text-left hover:bg-surface-hover rounded-lg transition-colors text-content-muted">
+                  <Columns className="w-4 h-4 text-content-subtle" /> {t('editor.addColumnBefore')}
                 </button>
-                <button onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().addColumnAfter().run(); setShowTableMenu(false) }} className="flex items-center w-full gap-2 px-3 py-2 text-[13px] text-left hover:bg-gray-100 dark:hover:bg-gray-800/60 rounded-lg transition-colors text-gray-700 dark:text-gray-300">
-                  <Columns className="w-4 h-4 text-gray-400" /> {t('editor.addColumnAfter')}
+                <button onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().addColumnAfter().run(); setShowTableMenu(false) }} className="flex items-center w-full gap-2 px-3 py-2 text-[13px] text-left hover:bg-surface-hover rounded-lg transition-colors text-content-muted">
+                  <Columns className="w-4 h-4 text-content-subtle" /> {t('editor.addColumnAfter')}
                 </button>
-                <button onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().addRowBefore().run(); setShowTableMenu(false) }} className="flex items-center w-full gap-2 px-3 py-2 text-[13px] text-left hover:bg-gray-100 dark:hover:bg-gray-800/60 rounded-lg transition-colors text-gray-700 dark:text-gray-300">
-                  <Rows className="w-4 h-4 text-gray-400" /> {t('editor.addRowBefore')}
+                <button onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().addRowBefore().run(); setShowTableMenu(false) }} className="flex items-center w-full gap-2 px-3 py-2 text-[13px] text-left hover:bg-surface-hover rounded-lg transition-colors text-content-muted">
+                  <Rows className="w-4 h-4 text-content-subtle" /> {t('editor.addRowBefore')}
                 </button>
-                <button onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().addRowAfter().run(); setShowTableMenu(false) }} className="flex items-center w-full gap-2 px-3 py-2 text-[13px] text-left hover:bg-gray-100 dark:hover:bg-gray-800/60 rounded-lg transition-colors text-gray-700 dark:text-gray-300">
-                  <Rows className="w-4 h-4 text-gray-400" /> {t('editor.addRowAfter')}
+                <button onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().addRowAfter().run(); setShowTableMenu(false) }} className="flex items-center w-full gap-2 px-3 py-2 text-[13px] text-left hover:bg-surface-hover rounded-lg transition-colors text-content-muted">
+                  <Rows className="w-4 h-4 text-content-subtle" /> {t('editor.addRowAfter')}
                 </button>
-                <div className="h-px my-1.5 mx-2 bg-gray-100 dark:bg-gray-800/60" />
+                <div className="h-px my-1.5 mx-2 bg-surface-sunken" />
                 <button onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().deleteColumn().run(); setShowTableMenu(false) }} className="flex items-center w-full gap-2 px-3 py-2 text-[13px] text-left text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors">
                   <X className="w-4 h-4" /> {t('editor.deleteColumn')}
                 </button>
@@ -2344,11 +2344,11 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
         </DropdownButton>
         <PortalDropdown isOpen={showTableOfContents} anchorRef={tocRef} onClose={() => setShowTableOfContents(false)}>
           <div className="py-1.5 min-w-[220px] max-w-[320px] max-h-[400px] overflow-y-auto">
-            <p className="px-3 py-2 text-[10px] font-bold tracking-[0.12em] uppercase text-gray-400 dark:text-gray-500 border-b border-[#cbd1db] dark:border-gray-700">
+            <p className="px-3 py-2 text-[10px] font-bold tracking-[0.12em] uppercase text-content-subtle border-b border-subtle">
               Table of Contents
             </p>
             {headings.length === 0 ? (
-              <p className="px-3 py-3 text-[13px] text-gray-400 dark:text-gray-500 italic">
+              <p className="px-3 py-3 text-[13px] text-content-subtle italic">
                 No headings found
               </p>
             ) : (
@@ -2359,15 +2359,15 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
                     e.preventDefault()
                     scrollToHeading(index)
                   }}
-                  className="w-full px-3 py-2 text-left text-[13px] hover:bg-gray-100 dark:hover:bg-gray-800/60 flex items-center gap-2 rounded-lg transition-colors text-gray-700 dark:text-gray-300"
+                  className="w-full px-3 py-2 text-left text-[13px] hover:bg-surface-hover flex items-center gap-2 rounded-lg transition-colors text-content-muted"
                   style={{ paddingLeft: `${(heading.level - 1) * 12 + 12}px` }}
                 >
                   <span className={`flex-shrink-0 w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold ${
-                    heading.level === 1 
-                      ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' 
+ heading.level === 1 
+ ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' 
                       : heading.level === 2 
                         ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
-                        : 'bg-gray-50 dark:bg-gray-800/60 text-gray-500 dark:text-gray-400'
+                        : 'bg-surface-sunken text-content-muted'
                   }`}>
                     H{heading.level}
                   </span>
@@ -2393,12 +2393,12 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
                   onPaperChange(key)
                   setShowPaperPicker(false)
                 }}
-                className={`w-full px-3 py-2 text-left text-[13px] hover:bg-gray-100 dark:hover:bg-gray-800/60 flex items-center gap-3 rounded-lg transition-colors ${
-                  currentPaper === key ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 font-medium' : 'text-gray-700 dark:text-gray-300'
-                }`}
+                className={`w-full px-3 py-2 text-left text-[13px] hover:bg-surface-hover flex items-center gap-3 rounded-lg transition-colors ${
+ currentPaper === key ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 font-medium' : 'text-content-muted'
+ }`}
               >
                 <div 
-                  className="flex-shrink-0 w-5 h-5 border border-[#cbd1db] dark:border-gray-700 rounded-md"
+                  className="flex-shrink-0 w-5 h-5 border border-subtle rounded-md"
                   style={paper.preview || paper.style}
                 />
                 <span className="truncate">{paper.name}</span>

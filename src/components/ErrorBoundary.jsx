@@ -26,18 +26,18 @@ export default class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex flex-col items-center justify-center h-full p-8 text-center bg-white dark:bg-gray-900">
+        <div className="flex flex-col items-center justify-center h-full p-8 text-center bg-surface-raised">
           <AlertTriangle className="w-12 h-12 mb-4 text-amber-500" />
-          <h2 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">
+          <h2 className="mb-2 text-lg font-semibold text-content">
             Something went wrong
           </h2>
-          <p className="max-w-md mb-6 text-sm text-gray-500 dark:text-gray-400">
+          <p className="max-w-md mb-6 text-sm text-content-muted">
             An unexpected error occurred. You can try again or reload the page.
           </p>
           <div className="flex gap-3">
             <button
               onClick={this.handleReset}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+              className="px-4 py-2 text-sm font-medium text-content bg-surface-sunken rounded-lg hover:bg-surface-sunken dark:bg-surface-raised dark:text-content-subtle dark:hover:bg-surface-sunken"
             >
               Try again
             </button>

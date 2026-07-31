@@ -41,7 +41,7 @@ export default function SortDropdown({ currentSort, onSortChange }) {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1 p-2 text-sm text-gray-600 transition-colors rounded-lg dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-700"
+        className="flex items-center gap-1 p-2 text-sm text-content-muted transition-colors rounded-lg dark:text-content-subtle hover:text-content dark:hover:text-white hover:bg-surface-sunken dark:hover:bg-surface-sunken"
         title={`${t('sort.sortBy')}: ${t(currentOption.labelKey)}`}
         aria-label={`${t('sort.sortBy')}: ${t(currentOption.labelKey)}`}
         aria-expanded={isOpen}
@@ -52,9 +52,9 @@ export default function SortDropdown({ currentSort, onSortChange }) {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 z-50 w-56 py-1.5 mt-1.5 bg-white border border-[#cbd1db] rounded-2xl shadow-xl shadow-black/5 dark:shadow-black/20 dark:bg-gray-900 dark:border-gray-700 backdrop-blur-xl">
-          <div className="px-3 py-2 border-b border-[#cbd1db] dark:border-gray-700">
-            <p className="text-xs font-medium text-gray-500 uppercase dark:text-gray-400">
+        <div className="absolute right-0 z-50 w-56 py-1.5 mt-1.5 bg-white border border-subtle rounded-2xl shadow-xl shadow-black/5 dark:shadow-black/20 dark:bg-surface-sunken backdrop-blur-xl">
+          <div className="px-3 py-2 border-b border-subtle">
+            <p className="text-xs font-medium text-content-muted uppercase dark:text-content-subtle">
               {t('sort.sortBy')}
             </p>
           </div>
@@ -63,9 +63,9 @@ export default function SortDropdown({ currentSort, onSortChange }) {
               key={option.id}
               onClick={() => handleSelect(option)}
               className={`w-full flex items-center gap-3 px-3 py-2 text-sm transition-colors ${
-                currentSort === option.id
-                  ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800'
+ currentSort === option.id
+ ? 'bg-primary-50 dark:bg-accent-soft text-primary-600 dark:text-primary-400'
+                  : 'text-content-muted hover:bg-surface-sunken dark:hover:bg-surface-raised'
               }`}
             >
               <option.icon className="w-4 h-4" />

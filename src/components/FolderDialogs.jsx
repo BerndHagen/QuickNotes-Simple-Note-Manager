@@ -27,8 +27,8 @@ function IconGrid({ value, onChange, labelledBy }) {
             title={name}
             onClick={() => onChange(name)}
             className={`flex aspect-square items-center justify-center rounded-control transition-colors duration-fast ${
-              selected
-                ? 'bg-accent-soft text-accent-text ring-2 ring-[var(--qn-accent)]'
+ selected
+ ? 'bg-accent-soft text-accent-text ring-2 ring-[var(--qn-accent)]'
                 : 'text-content-muted hover:bg-surface-hover hover:text-content'
             }`}
           >
@@ -59,8 +59,8 @@ function ColorGrid({ value, onChange, labelledBy }) {
             title={color}
             onClick={() => onChange(color)}
             className={`mx-auto flex h-6 w-6 items-center justify-center rounded-full transition-transform duration-fast hover:scale-110 ${
-              selected ? 'ring-2 ring-[var(--qn-text)] ring-offset-2 ring-offset-[var(--qn-surface-sunken)]' : ''
-            }`}
+ selected ? 'ring-2 ring-[var(--qn-text)] ring-offset-2 ring-offset-[var(--qn-surface-sunken)]' : ''
+ }`}
             style={{ backgroundColor: color }}
           >
             {selected && <Check className="h-3 w-3 text-white drop-shadow" aria-hidden="true" />}

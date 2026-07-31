@@ -24,8 +24,8 @@ export function CountBadge({ value, tone = 'neutral', className = '' }) {
   return (
     <span
       className={`min-w-[20px] rounded-full px-1.5 py-0.5 text-center text-ui-xs font-medium tabular-nums ${
-        tone === 'accent'
-          ? 'bg-accent-soft text-accent-text'
+ tone === 'accent'
+ ? 'bg-accent-soft text-accent-text'
           : tone === 'danger'
             ? 'bg-danger-soft text-danger-text'
             : tone === 'warning'

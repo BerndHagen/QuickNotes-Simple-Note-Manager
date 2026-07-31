@@ -17,8 +17,11 @@ const AMBIENT_SOUNDS = [
   { id: 'waves', name: 'Waves', url: 'https://cdn.pixabay.com/audio/2022/02/23/audio_fd85f17289.mp3' },
 ]
 
+// Paper themes are a fixed set the reader chooses, independent of the app's
+// light/dark setting, so each one pairs its own background and text colour
+// explicitly rather than going through the theme tokens.
 const FOCUS_THEMES = [
-  { id: 'minimal', name: 'Minimal', bg: 'bg-white dark:bg-gray-900', text: 'text-gray-900 dark:text-gray-100' },
+  { id: 'minimal', name: 'Minimal', bg: 'bg-surface-raised', text: 'text-content' },
   { id: 'sepia', name: 'Sepia', bg: 'bg-amber-50', text: 'text-amber-900' },
   { id: 'night', name: 'Night', bg: 'bg-gray-950', text: 'text-gray-200' },
   { id: 'green', name: 'Nature', bg: 'bg-emerald-50 dark:bg-emerald-950', text: 'text-emerald-900 dark:text-emerald-100' },
@@ -149,8 +152,8 @@ export default function FocusMode() {
     >
       <div
         className={`absolute top-0 left-0 right-0 z-[210] flex items-center justify-between px-6 py-4 transition-all duration-300 ${
-          showControls ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
-        }`}
+ showControls ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+ }`}
       >
         <div className="flex items-center gap-4">
           <div className={`flex items-center gap-2 ${currentTheme.text} opacity-60`}>
@@ -170,9 +173,9 @@ export default function FocusMode() {
                 key={t.id}
                 onClick={() => setTheme(t.id)}
                 className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
-                  theme === t.id
-                    ? 'bg-white dark:bg-gray-800 shadow'
-                    : 'hover:bg-white/50 dark:hover:bg-gray-800/50'
+ theme === t.id
+ ? 'bg-surface-raised shadow'
+                    : 'hover:bg-white/50 dark:hover:bg-surface-raised'
                 } ${currentTheme.text}`}
               >
                 {t.name}
@@ -185,9 +188,9 @@ export default function FocusMode() {
                 key={sound.id}
                 onClick={() => playSound(sound.id)}
                 className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
-                  ambientSound === sound.id
-                    ? 'bg-white dark:bg-gray-800 shadow'
-                    : 'hover:bg-white/50 dark:hover:bg-gray-800/50'
+ ambientSound === sound.id
+ ? 'bg-surface-raised shadow'
+                    : 'hover:bg-white/50 dark:hover:bg-surface-raised'
                 } ${currentTheme.text}`}
               >
                 {sound.name}
@@ -196,7 +199,7 @@ export default function FocusMode() {
             {ambientSound !== 'none' && (
               <button
                 onClick={toggleSound}
-                className={`p-1.5 rounded-md hover:bg-white/50 dark:hover:bg-gray-800/50 ${currentTheme.text}`}
+                className={`p-1.5 rounded-md hover:bg-white/50 dark:hover:bg-surface-raised ${currentTheme.text}`}
               >
                 {isPlaying ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
               </button>
@@ -227,8 +230,8 @@ export default function FocusMode() {
       </div>
       <div
         className={`absolute bottom-4 left-1/2 -translate-x-1/2 text-sm opacity-30 transition-opacity duration-300 ${
-          showControls ? 'opacity-30' : 'opacity-0'
-        } ${currentTheme.text}`}
+ showControls ? 'opacity-30' : 'opacity-0'
+ } ${currentTheme.text}`}
       >
         Press ESC to exit
       </div>

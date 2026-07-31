@@ -672,10 +672,10 @@ export default function ExportModal() {
   return (
     <LegacyDialog label="Export notes" onClose={() => setExportModalOpen(false)} align="center">
       <div 
-        className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-[#cbd1db] dark:border-gray-700 max-w-md w-full mx-4 modal-animate overflow-hidden"
+        className="bg-surface-raised rounded-2xl shadow-2xl border border-subtle max-w-md w-full mx-4 modal-animate overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
+        <div className="flex items-center justify-between p-5 qn-banner-surface text-white">
           <div className="flex items-center gap-3">
             <Download className="w-6 h-6" />
             <div>
@@ -692,9 +692,9 @@ export default function ExportModal() {
         </div>
         <div className="p-6">
         {note && (
-          <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
-            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{note.title}</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+          <div className="mb-4 p-3 bg-surface-sunken rounded-lg">
+            <p className="text-sm font-medium text-content truncate">{note.title}</p>
+            <p className="text-xs text-content-muted">
               {(() => {
                 const content = getExportableContent(note)
                 return content ? htmlToPlainText(content).substring(0, 60) + '...' : t('exportModal.emptyNote')
@@ -702,28 +702,28 @@ export default function ExportModal() {
             </p>
           </div>
         )}
-        <label className="flex items-center gap-3 mb-4 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+        <label className="flex items-center gap-3 mb-4 p-3 bg-surface-sunken rounded-lg cursor-pointer hover:bg-surface-hover transition-colors">
           <input
             type="checkbox"
             checked={exportAll}
             onChange={(e) => setExportAll(e.target.checked)}
-            className="w-4 h-4 rounded border-[#cbd1db] text-emerald-600 focus:ring-emerald-500"
+            className="w-4 h-4 rounded border-subtle text-emerald-600 focus:ring-emerald-500"
           />
           <div>
-            <p className="text-sm font-medium text-gray-900 dark:text-white">{t('exportModal.exportAll')}</p>
-            <p className="text-xs text-gray-500">{notes.filter(n => !n.deleted).length} {t('exportModal.notesWillBeExported')}</p>
+            <p className="text-sm font-medium text-content">{t('exportModal.exportAll')}</p>
+            <p className="text-xs text-content-muted">{notes.filter(n => !n.deleted).length} {t('exportModal.notesWillBeExported')}</p>
           </div>
         </label>
         <div className="space-y-2 mb-6">
-          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('exportModal.selectFormat')}</p>
+          <p className="text-sm font-medium text-content-muted mb-2">{t('exportModal.selectFormat')}</p>
           {localizedFormats.map((format) => (
             <button
               key={format.id}
               onClick={() => setSelectedFormat(format.id)}
               className={`w-full p-3 rounded-lg border-2 transition-all flex items-center gap-3 ${
-                selectedFormat === format.id
-                  ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
-                  : 'border-[#cbd1db] dark:border-gray-700 hover:border-[#cbd1db] dark:hover:border-gray-600'
+ selectedFormat === format.id
+ ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
+                  : 'border-subtle hover:border-subtle dark:hover:border-subtle'
               }`}
             >
               <div 
@@ -733,8 +733,8 @@ export default function ExportModal() {
                 <format.icon className="w-5 h-5" style={{ color: format.color }} />
               </div>
               <div className="text-left flex-1">
-                <p className="font-medium text-gray-900 dark:text-white">{format.name}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{format.description}</p>
+                <p className="font-medium text-content">{format.name}</p>
+                <p className="text-xs text-content-muted">{format.description}</p>
               </div>
               {selectedFormat === format.id && (
                 <Check className="w-5 h-5 text-emerald-600" />
@@ -746,11 +746,11 @@ export default function ExportModal() {
           onClick={handleExport}
           disabled={isExporting || (!note && !exportAll)}
           className={`w-full py-3 rounded-lg font-medium transition-all flex items-center justify-center gap-2 ${
-            exportSuccess
-              ? 'bg-green-600 text-white'
+ exportSuccess
+ ? 'bg-green-600 text-white'
               : isExporting
               ? 'bg-gray-400 text-white cursor-wait'
-              : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white'
+              : 'qn-banner-surface hover:from-emerald-700 hover:to-teal-700 text-white'
           }`}
         >
           {exportSuccess ? (

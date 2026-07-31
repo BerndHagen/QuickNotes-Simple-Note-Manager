@@ -72,8 +72,8 @@ export function SyncStatusPill({ className = '' }) {
       disabled={!canSync}
       title={title}
       className={`flex min-w-0 items-center gap-1.5 rounded-control px-1.5 py-1 text-ui-xs font-medium transition-colors duration-fast disabled:cursor-default ${
-        canSync ? 'hover:bg-surface-hover' : ''
-      } ${config.tone} ${className}`}
+ canSync ? 'hover:bg-surface-hover' : ''
+ } ${config.tone} ${className}`}
     >
       <Icon className={`h-3.5 w-3.5 shrink-0 ${config.spin ? 'animate-spin' : ''}`} aria-hidden="true" />
       <span className="truncate">
@@ -120,8 +120,8 @@ export function SaveStatus({ note, className = '' }) {
   return (
     <span
       className={`inline-flex items-center gap-1.5 text-ui-sm ${
-        pending ? 'text-content-muted' : 'text-success-text'
-      } ${className}`}
+ pending ? 'text-content-muted' : 'text-success-text'
+ } ${className}`}
     >
       {pending ? (
         <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />

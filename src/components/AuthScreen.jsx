@@ -55,16 +55,16 @@ function BrandMark({ compact = false }) {
     <div className="flex items-center gap-3">
       <span
         className={`flex shrink-0 items-center justify-center rounded-[12px] border border-white/15 bg-[linear-gradient(140deg,#0e5341,#05352a)] text-white shadow-lg shadow-emerald-950/20 ${
-          compact ? 'h-10 w-10' : 'h-11 w-11'
-        }`}
+ compact ? 'h-10 w-10' : 'h-11 w-11'
+ }`}
       >
         <NotepadGlyph className={compact ? 'h-[22px] w-[22px]' : 'h-6 w-6'} />
       </span>
       <span>
         <span
           className={`block font-bold tracking-[-0.02em] ${
-            compact ? 'text-title-md text-content' : 'text-[20px] leading-6 text-white'
-          }`}
+ compact ? 'text-title-md text-content' : 'text-[20px] leading-6 text-white'
+ }`}
         >
           QuickNotes
         </span>
@@ -119,8 +119,8 @@ function WorkspacePreview() {
             <div
               key={label}
               className={`mb-0.5 flex h-6 items-center gap-1.5 rounded-[6px] px-1.5 text-[8px] ${
-                index === 0 ? 'bg-white/10 text-white' : 'text-white/55'
-              }`}
+ index === 0 ? 'bg-white/10 text-white' : 'text-white/55'
+ }`}
             >
               {index === 0 ? <FolderOpen className="h-3 w-3" /> : <History className="h-3 w-3" />}
               <span className="flex-1">{label}</span>
@@ -161,8 +161,8 @@ function WorkspacePreview() {
             <div
               key={title}
               className={`mb-2 rounded-[9px] border p-2.5 ${
-                active
-                  ? 'border-emerald-300 bg-emerald-50'
+ active
+ ? 'border-emerald-300 bg-emerald-50'
                   : 'border-slate-200 bg-white'
               }`}
             >
@@ -201,8 +201,8 @@ function WorkspacePreview() {
                 <div key={task} className="flex items-start gap-2 text-[8px] leading-3 text-slate-600">
                   <span
                     className={`mt-px flex h-3 w-3 shrink-0 items-center justify-center rounded-[3px] ${
-                      index < 2 ? 'bg-emerald-500 text-white' : 'border border-slate-300'
-                    }`}
+ index < 2 ? 'bg-emerald-500 text-white' : 'border border-slate-300'
+ }`}
                   >
                     {index < 2 && <Check className="h-2 w-2" />}
                   </span>
@@ -232,7 +232,7 @@ function AuthField({ id, label, icon: Icon, error, trailing, className = '', ...
           id={id}
           aria-invalid={!!error}
           aria-describedby={error ? `${id}-error` : undefined}
-          className="h-11 w-full rounded-[10px] border border-strong bg-surface-raised pl-10 pr-3 text-ui-lg text-content shadow-xs outline-none transition-[border-color,box-shadow] placeholder:text-content-subtle focus:border-accent focus:ring-2 focus:ring-[var(--qn-accent-soft)] aria-[invalid=true]:border-danger"
+          className="h-11 w-full rounded-[10px] border border-control bg-surface-raised pl-10 pr-3 text-ui-lg text-content shadow-xs outline-none transition-[border-color,box-shadow] placeholder:text-content-subtle focus:border-accent focus:ring-2 focus:ring-[var(--qn-accent-soft)] aria-[invalid=true]:border-danger"
           {...inputProps}
         />
         {trailing}
@@ -381,7 +381,7 @@ export default function AuthScreen() {
       <div
         role="tablist"
         aria-label="Account access"
-        className="mb-7 grid grid-cols-2 rounded-[10px] border border-subtle bg-surface-sunken p-1"
+        className="mb-7 grid grid-cols-2 rounded-[10px] border border-control bg-surface-sunken p-1"
       >
         {[
           ['login', 'Sign in'],
@@ -394,8 +394,8 @@ export default function AuthScreen() {
             aria-selected={mode === value}
             onClick={() => changeMode(value)}
             className={`h-9 rounded-[7px] text-ui-md font-semibold transition-colors ${
-              mode === value
-                ? 'bg-surface-raised text-content shadow-xs'
+ mode === value
+ ? 'bg-surface-raised text-content shadow-sm ring-1 ring-[var(--qn-border-control)]'
                 : 'text-content-muted hover:text-content'
             }`}
           >
@@ -422,7 +422,7 @@ export default function AuthScreen() {
         require a subscription or a cloud account.
       </p>
 
-      <div className="my-7 space-y-3 rounded-[14px] border border-subtle bg-surface-sunken/70 p-4">
+      <div className="my-7 space-y-3 rounded-[14px] border border-subtle bg-surface-sunken p-4">
         {[
           ['Private on this device', ShieldCheck],
           ['Available without a connection', WifiOff],
@@ -531,7 +531,7 @@ export default function AuthScreen() {
       <button
         type="button"
         onClick={() => changeMode('local')}
-        className="flex h-11 w-full items-center justify-center gap-2 rounded-[10px] border border-strong bg-surface-raised text-ui-md font-semibold text-content shadow-xs hover:bg-surface-hover"
+        className="flex h-11 w-full items-center justify-center gap-2 rounded-[10px] border border-control bg-surface-raised text-ui-md font-semibold text-content shadow-xs hover:bg-surface-hover"
       >
         <HardDrive className="h-4 w-4 text-accent-text" aria-hidden="true" />
         Use a private local workspace
@@ -623,7 +623,7 @@ export default function AuthScreen() {
             type="checkbox"
             checked={formData.agreeToTerms}
             onChange={(event) => handleInputChange('agreeToTerms', event.target.checked)}
-            className="mt-0.5 h-4 w-4 rounded border-strong text-accent focus:ring-accent"
+            className="mt-0.5 h-4 w-4 rounded border-control text-accent focus:ring-accent"
           />
           <span>
             I agree to the{' '}
@@ -727,16 +727,17 @@ export default function AuthScreen() {
     </div>
   )
 
+  // The page carries the hero material itself, so the composition can be capped
+  // at a comfortable width without leaving bare gutters on a wide display: the
+  // backdrop continues the hero, and the panel reads as a card floating on it.
   return (
-    <div className="qn-auth-page relative min-h-[100dvh] overflow-hidden bg-app text-content">
+    <div className="qn-auth-page qn-auth-hero relative flex min-h-[100dvh] items-center justify-center overflow-hidden text-content">
       <div className="pointer-events-none absolute inset-0 opacity-80" aria-hidden="true">
-        <div className="absolute -left-24 -top-32 h-[420px] w-[420px] rounded-full bg-primary-400/10 blur-3xl" />
-        <div className="absolute -bottom-40 right-[28%] h-[520px] w-[520px] rounded-full bg-primary-500/10 blur-3xl" />
+        <div className="absolute -left-24 -top-32 h-[420px] w-[420px] rounded-full bg-[rgba(52,211,153,0.10)] blur-3xl" />
+        <div className="absolute -bottom-40 right-[28%] h-[520px] w-[520px] rounded-full bg-[rgba(16,185,129,0.10)] blur-3xl" />
       </div>
 
-      {/* Both panels are full-bleed so the split reaches the viewport edges on
-          any display; the content inside each one is what stays bounded. */}
-      <main className="relative z-10 grid h-[100dvh] w-full lg:grid-cols-[minmax(0,1fr)_clamp(430px,34vw,760px)]">
+      <main className="relative z-10 grid h-[100dvh] w-full max-w-[1680px] overflow-hidden lg:grid-cols-[minmax(0,1.06fr)_clamp(430px,32vw,660px)] 2xl:h-[min(100dvh-72px,1000px)] 2xl:rounded-[26px] 2xl:shadow-[0_40px_90px_rgba(2,20,14,0.45)]">
         <section className="qn-auth-hero relative hidden overflow-hidden border-r border-white/10 px-10 py-9 text-white lg:flex lg:flex-col xl:px-16 xl:py-11">
           <div className="relative z-10 mx-auto w-full max-w-[860px]">
             <BrandMark />
@@ -773,7 +774,7 @@ export default function AuthScreen() {
           </div>
         </section>
 
-        <section className="flex min-h-0 flex-col bg-surface/95 backdrop-blur-sm">
+        <section className="flex min-h-0 flex-col bg-surface backdrop-blur-sm">
           <div className="flex items-center justify-between border-b border-subtle px-5 py-4 lg:hidden">
             <BrandMark compact />
             <span className="rounded-full border border-accent-border bg-accent-soft px-2.5 py-1 text-ui-xs font-semibold text-accent-text">

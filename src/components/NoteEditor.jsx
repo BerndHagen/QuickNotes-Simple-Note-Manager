@@ -389,8 +389,8 @@ export default function NoteEditor({ onBack, showBack = false }) {
               readOnly={isReadOnly}
               placeholder={t('editor.untitled', 'Untitled note')}
               className={`w-full truncate rounded-control bg-transparent px-2 py-1 text-title-md font-semibold text-banner-text outline-none transition-colors duration-fast placeholder:text-banner-muted sm:text-title-lg ${
-                isEditingTitle ? 'bg-banner-hover' : 'hover:bg-banner-hover'
-              } ${isReadOnly ? 'cursor-default' : 'cursor-text'}`}
+ isEditingTitle ? 'bg-banner-hover' : 'hover:bg-banner-hover'
+ } ${isReadOnly ? 'cursor-default' : 'cursor-text'}`}
             />
           </div>
 

@@ -114,8 +114,8 @@ export default function ResizableImage({ node, updateAttributes, deleteNode, sel
           alt={alt || ''}
           title={title || ''}
           className={`rounded-lg shadow-md transition-all duration-200 ${
-            selected ? 'ring-2 ring-primary-500 ring-offset-2' : ''
-          } ${isResizing ? 'select-none' : ''}`}
+ selected ? 'ring-2 ring-primary-500 ring-offset-2' : ''
+ } ${isResizing ? 'select-none' : ''}`}
           style={{
             width: width ? `${width}px` : '100%',
             maxWidth: '100%',
@@ -137,16 +137,16 @@ export default function ResizableImage({ node, updateAttributes, deleteNode, sel
           </>
         )}
         {(showControls || selected) && (
-          <div className="absolute -top-12 left-1/2 -translate-x-1/2 flex items-center gap-1 p-1.5 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-[#cbd1db] dark:border-gray-700 opacity-0 group-hover:opacity-100 transition-opacity z-10 image-menu">
-            <div className="flex items-center gap-0.5 px-1 border-r border-[#cbd1db] dark:border-gray-700">
+          <div className="absolute -top-12 left-1/2 -translate-x-1/2 flex items-center gap-1 p-1.5 bg-surface-raised rounded-lg shadow-xl border border-subtle opacity-0 group-hover:opacity-100 transition-opacity z-10 image-menu">
+            <div className="flex items-center gap-0.5 px-1 border-r border-subtle">
               {presetSizes.map((size) => (
                 <button
                   key={size.label}
                   onClick={() => handleSetWidth(size.width)}
                   className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
-                    (size.width === null && !width) || width === size.width
-                      ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300'
-                      : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
+ (size.width === null && !width) || width === size.width
+ ? 'bg-primary-100 dark:bg-accent-soft text-primary-700 dark:text-primary-300'
+                      : 'hover:bg-surface-hover text-content-muted'
                   }`}
                   title={`Set width to ${size.label}`}
                 >
@@ -154,12 +154,12 @@ export default function ResizableImage({ node, updateAttributes, deleteNode, sel
                 </button>
               ))}
             </div>
-            <div className="flex items-center gap-0.5 px-1 border-r border-[#cbd1db] dark:border-gray-700">
+            <div className="flex items-center gap-0.5 px-1 border-r border-subtle">
               <button
                 onClick={handleFlipH}
                 className={`p-1.5 rounded transition-colors ${
-                  flipH ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-600' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
-                }`}
+ flipH ? 'bg-primary-100 dark:bg-accent-soft text-primary-600' : 'hover:bg-surface-hover text-content-muted'
+ }`}
                 title="Flip horizontal"
               >
                 <FlipHorizontal className="w-4 h-4" />
@@ -167,33 +167,33 @@ export default function ResizableImage({ node, updateAttributes, deleteNode, sel
               <button
                 onClick={handleFlipV}
                 className={`p-1.5 rounded transition-colors ${
-                  flipV ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-600' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
-                }`}
+ flipV ? 'bg-primary-100 dark:bg-accent-soft text-primary-600' : 'hover:bg-surface-hover text-content-muted'
+ }`}
                 title="Flip vertical"
               >
                 <FlipVertical className="w-4 h-4" />
               </button>
               <button
                 onClick={handleRotateCCW}
-                className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 transition-colors"
+                className="p-1.5 rounded hover:bg-surface-hover text-content-muted transition-colors"
                 title="Rotate left"
               >
                 <RotateCcw className="w-4 h-4" />
               </button>
               <button
                 onClick={handleRotateCW}
-                className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 transition-colors"
+                className="p-1.5 rounded hover:bg-surface-hover text-content-muted transition-colors"
                 title="Rotate right"
               >
                 <RotateCw className="w-4 h-4" />
               </button>
             </div>
-            <div className="flex items-center gap-0.5 px-1 border-r border-[#cbd1db] dark:border-gray-700">
+            <div className="flex items-center gap-0.5 px-1 border-r border-subtle">
               <button
                 onClick={() => handleAlign('left')}
                 className={`p-1.5 rounded transition-colors ${
-                  align === 'left' ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-600' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
-                }`}
+ align === 'left' ? 'bg-primary-100 dark:bg-accent-soft text-primary-600' : 'hover:bg-surface-hover text-content-muted'
+ }`}
                 title="Align left"
               >
                 <AlignLeft className="w-4 h-4" />
@@ -201,8 +201,8 @@ export default function ResizableImage({ node, updateAttributes, deleteNode, sel
               <button
                 onClick={() => handleAlign('center')}
                 className={`p-1.5 rounded transition-colors ${
-                  align === 'center' || !align ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-600' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
-                }`}
+ align === 'center' || !align ? 'bg-primary-100 dark:bg-accent-soft text-primary-600' : 'hover:bg-surface-hover text-content-muted'
+ }`}
                 title="Align center"
               >
                 <AlignCenter className="w-4 h-4" />
@@ -210,8 +210,8 @@ export default function ResizableImage({ node, updateAttributes, deleteNode, sel
               <button
                 onClick={() => handleAlign('right')}
                 className={`p-1.5 rounded transition-colors ${
-                  align === 'right' ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-600' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
-                }`}
+ align === 'right' ? 'bg-primary-100 dark:bg-accent-soft text-primary-600' : 'hover:bg-surface-hover text-content-muted'
+ }`}
                 title="Align right"
               >
                 <AlignRight className="w-4 h-4" />
@@ -220,14 +220,14 @@ export default function ResizableImage({ node, updateAttributes, deleteNode, sel
             <div className="flex items-center gap-0.5 px-1">
               <button
                 onClick={handleDownload}
-                className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 transition-colors"
+                className="p-1.5 rounded hover:bg-surface-hover text-content-muted transition-colors"
                 title="Download image"
               >
                 <Download className="w-4 h-4" />
               </button>
               <button
                 onClick={handleCopyUrl}
-                className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 transition-colors"
+                className="p-1.5 rounded hover:bg-surface-hover text-content-muted transition-colors"
                 title="Copy image URL"
               >
                 <Copy className="w-4 h-4" />
@@ -254,7 +254,7 @@ export default function ResizableImage({ node, updateAttributes, deleteNode, sel
               placeholder="Add caption..."
               value={alt || ''}
               onChange={(e) => updateAttributes({ alt: e.target.value })}
-              className="text-sm text-gray-500 dark:text-gray-400 bg-transparent border-b border-dashed border-[#cbd1db] dark:border-gray-600 focus:border-primary-500 focus:outline-none text-center px-2 py-1"
+              className="text-sm text-content-muted bg-transparent border-b border-dashed border-subtle focus:border-primary-500 focus:outline-none text-center px-2 py-1"
             />
           </div>
         )}

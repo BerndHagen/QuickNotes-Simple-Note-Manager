@@ -204,8 +204,8 @@ export default function TextBoxView({ node, updateAttributes, deleteNode, select
       onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
       className={`flex h-6 w-6 items-center justify-center rounded transition-colors duration-fast ${
-        tone === 'danger'
-          ? 'text-danger-text hover:bg-danger-soft'
+ tone === 'danger'
+ ? 'text-danger-text hover:bg-danger-soft'
           : active
             ? 'bg-accent-soft text-accent-text'
             : 'text-content-muted hover:bg-surface-hover hover:text-content'
@@ -228,16 +228,16 @@ export default function TextBoxView({ node, updateAttributes, deleteNode, select
       data-height={liveHeight ? Math.round(liveHeight) : undefined}
       data-text-align={textAlign}
       className={`qn-text-box group/textbox relative ${active ? 'qn-text-box--selected' : ''} ${
-        drag ? 'qn-text-box--dragging' : ''
-      }`}
+ drag ? 'qn-text-box--dragging' : ''
+ }`}
       style={wrapperStyle}
     >
       {editable && active && (
         <div
           contentEditable={false}
           className={`absolute left-0 z-30 flex items-center gap-0.5 rounded-control border border-subtle bg-surface-raised p-1 shadow-md ${
-            controlsBelow ? 'top-full mt-2' : '-top-9'
-          }`}
+ controlsBelow ? 'top-full mt-2' : '-top-9'
+ }`}
         >
           {WRAP_MODES.map((mode) => (
             <ToolbarButton
@@ -295,7 +295,7 @@ export default function TextBoxView({ node, updateAttributes, deleteNode, select
           onPointerDown={onResizePointerDown}
           title="Drag to resize"
           aria-hidden="true"
-          className="absolute -bottom-1 -right-1 z-20 h-3.5 w-3.5 cursor-nwse-resize rounded-sm border border-strong bg-surface-raised opacity-0 transition-opacity duration-fast group-hover/textbox:opacity-100 [.qn-text-box--selected_&]:opacity-100"
+          className="absolute -bottom-1 -right-1 z-20 h-3.5 w-3.5 cursor-nwse-resize rounded-sm border border-control bg-surface-raised opacity-0 transition-opacity duration-fast group-hover/textbox:opacity-100 [.qn-text-box--selected_&]:opacity-100"
         />
       )}
     </NodeViewWrapper>

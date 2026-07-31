@@ -39,8 +39,8 @@ function NavItem({ icon: Icon, label, count, selected, onClick, iconColor, trail
         onClick={onClick}
         aria-current={selected ? 'page' : undefined}
         className={`flex w-full items-center gap-3 rounded-control px-2.5 py-[7px] text-left transition-colors duration-fast ${
-          selected
-            ? 'bg-nav-active text-nav-active-text'
+ selected
+ ? 'bg-nav-active text-nav-active-text'
             : 'text-nav-muted hover:bg-nav-hover hover:text-nav-text'
         }`}
       >
@@ -220,7 +220,7 @@ export default function Sidebar({ onNavigate }) {
         <button
           type="button"
           onClick={go(() => setQuickNoteOpen(true))}
-          className="flex h-10 w-full items-center gap-2 rounded-[10px] bg-gradient-to-r from-primary-600 to-primary-700 px-3.5 text-ui-lg font-semibold text-white shadow-sm transition-[filter] duration-fast hover:brightness-110"
+          className="flex h-10 w-full items-center gap-2 rounded-[10px] qn-banner-surface px-3.5 text-ui-lg font-semibold text-white shadow-sm transition-[filter] duration-fast hover:brightness-110"
         >
           <Plus className="h-4 w-4 shrink-0" aria-hidden="true" />
           <span className="flex-1 text-left">{t('sidebar.quickNote')}</span>
@@ -378,8 +378,8 @@ export default function Sidebar({ onNavigate }) {
                     aria-pressed={active}
                     onClick={go(() => setSelectedTagFilter(tag.name))}
                     className={`inline-flex max-w-full items-center gap-1.5 rounded-md px-2 py-1 text-ui-xs font-semibold transition-colors duration-fast ${
-                      active ? 'ring-1 ring-white/40' : ''
-                    }`}
+ active ? 'ring-1 ring-white/40' : ''
+ }`}
                     style={{
                       backgroundColor: `color-mix(in srgb, ${tag.color} 20%, transparent)`,
                       color: `color-mix(in srgb, ${tag.color} 72%, white)`,

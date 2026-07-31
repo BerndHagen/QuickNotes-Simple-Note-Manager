@@ -78,8 +78,8 @@ export default function LinkInsertModal({ editor }) {
 
   return (
     <LegacyDialog label="Insert link" onClose={() => setLinkModalOpen(false)} align="center">
-      <div className="modal-animate bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-[#cbd1db] dark:border-gray-700 w-full max-w-md mx-4 overflow-hidden">
-        <div className="flex items-center justify-between p-5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
+      <div className="modal-animate bg-surface-raised rounded-2xl shadow-2xl border border-subtle w-full max-w-md mx-4 overflow-hidden">
+        <div className="flex items-center justify-between p-5 qn-banner-surface text-white">
           <div className="flex items-center gap-3">
             <LinkIcon className="w-6 h-6" />
             <div>
@@ -96,7 +96,7 @@ export default function LinkInsertModal({ editor }) {
         </div>
         <div className="p-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-content-muted mb-1">
               URL
             </label>
             <div className="relative">
@@ -107,18 +107,18 @@ export default function LinkInsertModal({ editor }) {
                 onChange={(e) => setUrl(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="https://example.com"
-                className="w-full px-3 py-2 pl-10 border border-[#cbd1db] dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full px-3 py-2 pl-10 border border-subtle rounded-lg bg-white dark:bg-surface-sunken text-content focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
-              <ExternalLink className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <ExternalLink className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-content-subtle" />
             </div>
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            <p className="mt-1 text-xs text-content-muted">
               https:// will be added automatically if not specified
             </p>
           </div>
 
           {text && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-content-muted mb-1">
                 Link Text
               </label>
               <input
@@ -127,13 +127,13 @@ export default function LinkInsertModal({ editor }) {
                 onChange={(e) => setText(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Display text"
-                className="w-full px-3 py-2 border border-[#cbd1db] dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-subtle rounded-lg bg-white dark:bg-surface-sunken text-content focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
             </div>
           )}
           {url && (
-            <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Preview:</p>
+            <div className="p-3 bg-surface-sunken dark:bg-surface-sunken rounded-lg">
+              <p className="text-xs text-content-muted mb-1">Preview:</p>
               <a
                 href={url.startsWith('http') ? url : `https://${url}`}
                 target="_blank"
@@ -146,7 +146,7 @@ export default function LinkInsertModal({ editor }) {
             </div>
           )}
         </div>
-        <div className="flex justify-between gap-3 px-6 py-4 border-t border-[#cbd1db] dark:border-gray-700">
+        <div className="flex justify-between gap-3 px-6 py-4 border-t border-subtle">
           <div>
             {isEditing && (
               <button
@@ -161,7 +161,7 @@ export default function LinkInsertModal({ editor }) {
           <div className="flex gap-3">
             <button
               onClick={handleClose}
-              className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors border border-[#cbd1db] dark:border-gray-600"
+              className="px-4 py-2 text-content-muted hover:bg-surface-sunken dark:hover:bg-surface-sunken rounded-lg transition-colors border border-subtle "
             >
               Cancel
             </button>

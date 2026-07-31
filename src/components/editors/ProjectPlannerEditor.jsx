@@ -14,7 +14,7 @@ import { formatDateKey, generateId, parseDateKey } from './noteTypes'
 import FocusedNoteTitle from './FocusedNoteTitle'
 import Modal from '../ui/Modal'
 const COLUMN_COLORS = {
-  backlog: { bg: 'bg-gray-100 dark:bg-gray-800', border: 'border-[#cbd1db] dark:border-gray-600', text: 'text-gray-600' },
+  backlog: { bg: 'bg-surface-sunken', border: 'border-subtle ', text: 'text-content-muted' },
   todo: { bg: 'bg-blue-50 dark:bg-blue-900/20', border: 'border-blue-300 dark:border-blue-700', text: 'text-blue-600' },
   inProgress: { bg: 'bg-amber-50 dark:bg-amber-900/20', border: 'border-amber-300 dark:border-amber-700', text: 'text-amber-800 dark:text-amber-300' },
   done: { bg: 'bg-green-50 dark:bg-green-900/20', border: 'border-green-300 dark:border-green-700', text: 'text-green-600' },
@@ -170,8 +170,8 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitl
   }
 
   return (
-    <div className="qn-type-editor qn-type-project flex flex-col h-full bg-gray-50 dark:bg-gray-900">
-      <div className="qn-type-hero flex-shrink-0 p-4 border-b border-[#cbd1db] dark:border-gray-700 bg-[#e5eaf0] dark:bg-gray-800">
+    <div className="qn-type-editor qn-type-project flex flex-col h-full bg-surface-sunken">
+      <div className="qn-type-hero flex-shrink-0 p-4 border-b border-subtle bg-[#e5eaf0] dark:bg-surface-raised">
         <div className="flex items-center justify-between mb-4">
           <div>
             <FocusedNoteTitle
@@ -182,7 +182,7 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitl
               onChange={onTitleChange}
               readOnly={readOnly}
             />
-            <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
+            <p className="text-content-muted text-sm mt-1">
               {stats.totalTasks} tasks {"\u2022"} {stats.progress}% complete
             </p>
           </div>
@@ -200,31 +200,31 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitl
                 />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-gray-900 dark:text-white font-bold text-xs">{stats.progress}%</span>
+                <span className="text-content font-bold text-xs">{stats.progress}%</span>
               </div>
             </div>
           </div>
         </div>
         <div className="grid grid-cols-4 gap-2">
-          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center border border-[#cbd1db] dark:border-gray-600">
-            <div className="text-xl font-bold text-gray-900 dark:text-white">{stats.totalTasks}</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">Total</div>
+          <div className="bg-white dark:bg-surface-sunken rounded-lg p-2 text-center border border-subtle ">
+            <div className="text-xl font-bold text-content">{stats.totalTasks}</div>
+            <div className="text-xs text-content-muted">Total</div>
           </div>
-          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center border border-[#cbd1db] dark:border-gray-600">
-            <div className="text-xl font-bold text-gray-900 dark:text-white">{stats.inProgressTasks}</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">In Progress</div>
+          <div className="bg-white dark:bg-surface-sunken rounded-lg p-2 text-center border border-subtle ">
+            <div className="text-xl font-bold text-content">{stats.inProgressTasks}</div>
+            <div className="text-xs text-content-muted">In Progress</div>
           </div>
-          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center border border-[#cbd1db] dark:border-gray-600">
-            <div className="text-xl font-bold text-gray-900 dark:text-white">{stats.doneTasks}</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">Done</div>
+          <div className="bg-white dark:bg-surface-sunken rounded-lg p-2 text-center border border-subtle ">
+            <div className="text-xl font-bold text-content">{stats.doneTasks}</div>
+            <div className="text-xs text-content-muted">Done</div>
           </div>
-          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center border border-[#cbd1db] dark:border-gray-600">
+          <div className="bg-white dark:bg-surface-sunken rounded-lg p-2 text-center border border-subtle ">
             <div className="text-xl font-bold text-red-500 dark:text-red-400">{stats.overdueTasks}</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">Overdue</div>
+            <div className="text-xs text-content-muted">Overdue</div>
           </div>
         </div>
       </div>
-      <div className="qn-type-tabs flex-shrink-0 flex gap-1 p-2 border-b border-[#cbd1db] dark:border-gray-700 bg-white dark:bg-gray-800">
+      <div className="qn-type-tabs flex-shrink-0 flex gap-1 p-2 border-b border-subtle bg-surface-raised">
         {[
           { id: 'board', label: 'Kanban Board', icon: BarChart3 },
           { id: 'milestones', label: 'Milestones', icon: Milestone },
@@ -235,9 +235,9 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitl
             onClick={() => setActiveView(view.id)}
             aria-pressed={activeView === view.id}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              activeView === view.id
-                ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600'
-                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+ activeView === view.id
+ ? 'bg-accent-soft text-accent-text'
+                : 'text-content-muted hover:bg-surface-hover'
             }`}
           >
             <view.icon className="w-4 h-4" />
@@ -258,27 +258,27 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitl
                     onDragLeave={handleDragLeave}
                     onDrop={(e) => handleDrop(e, column.id)}
                     className={`w-72 flex flex-col rounded-xl border-2 ${colors.border} ${
-                      dragOverColumn === column.id ? 'ring-2 ring-purple-500' : ''
-                    }`}
+ dragOverColumn === column.id ? 'ring-2 ring-purple-500' : ''
+ }`}
                   >
                     <div className={`flex items-center justify-between p-3 rounded-t-lg ${colors.bg}`}>
                       <div className="flex items-center gap-2">
                         <span className={`font-semibold ${colors.text}`}>{column.name}</span>
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-white dark:bg-surface-sunken text-content-muted">
                           {column.tasks.length}
                         </span>
                       </div>
                       <button
                         onClick={() => setShowAddTask(column.id)}
                         aria-label={`Add task to ${column.name}`}
-                        className="p-1 rounded hover:bg-white/50 dark:hover:bg-gray-700 transition-colors"
+                        className="p-1 rounded hover:bg-white/50 dark:hover:bg-surface-sunken transition-colors"
                       >
-                        <Plus className="w-4 h-4 text-gray-500" />
+                        <Plus className="w-4 h-4 text-content-muted" />
                       </button>
                     </div>
-                    <div className="flex-1 overflow-y-auto p-2 space-y-2 bg-white dark:bg-gray-800/50">
+                    <div className="flex-1 overflow-y-auto p-2 space-y-2 bg-surface-raised">
                       {showAddTask === column.id && (
-                        <div className="p-3 rounded-lg border-2 border-dashed border-purple-300 dark:border-purple-700 bg-purple-50 dark:bg-purple-900/20">
+                        <div className="p-3 rounded-lg border-2 border-dashed border-accent-border bg-accent-soft">
                           <input
                             type="text"
                             value={newTaskText}
@@ -289,19 +289,19 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitl
                             }}
                             placeholder="Task title..."
                             aria-label={`New task title for ${column.name}`}
-                            className="w-full px-3 py-2 rounded-lg bg-white dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-600 text-sm outline-none focus:border-purple-500"
+                            className="w-full px-3 py-2 rounded-lg bg-surface-raised border border-subtle text-sm outline-none focus:border-accent"
                             autoFocus
                           />
                           <div className="flex gap-2 mt-2">
                             <button
                               onClick={() => addTask(column.id)}
-                              className="flex-1 px-3 py-1.5 rounded-lg bg-purple-700 hover:bg-purple-800 text-white text-sm"
+                              className="flex-1 px-3 py-1.5 rounded-lg bg-accent hover:bg-accent-hover text-white text-sm"
                             >
                               Add Task
                             </button>
                             <button
                               onClick={() => { setShowAddTask(null); setNewTaskText('') }}
-                              className="px-3 py-1.5 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-sm"
+                              className="px-3 py-1.5 rounded-lg bg-surface-sunken dark:bg-surface-sunken text-content-muted text-sm"
                             >
                               Cancel
                             </button>
@@ -320,7 +320,7 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitl
                       ))}
 
                       {column.tasks.length === 0 && showAddTask !== column.id && (
-                        <div className="text-center py-8 text-gray-400 text-sm">
+                        <div className="text-center py-8 text-content-subtle text-sm">
                           No tasks
                         </div>
                       )}
@@ -336,10 +336,10 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitl
           <div className="p-4 overflow-y-auto">
             <div className="max-w-2xl mx-auto">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Milestones</h2>
+                <h2 className="text-lg font-semibold text-content">Milestones</h2>
                 <button
                   onClick={() => setShowMilestoneForm(true)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-700 hover:bg-purple-800 text-white text-sm"
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-accent hover:bg-accent-hover text-white text-sm"
                 >
                   <Plus className="w-4 h-4" />
                   Add Milestone
@@ -355,7 +355,7 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitl
 
               <div className="space-y-3">
                 {milestones.length === 0 ? (
-                  <div className="text-center py-12 text-gray-500">
+                  <div className="text-center py-12 text-content-muted">
                     No milestones yet. Add your first milestone to track progress.
                   </div>
                 ) : (
@@ -377,10 +377,10 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitl
           <div className="p-4 overflow-y-auto">
             <div className="max-w-2xl mx-auto">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Team Members</h2>
+                <h2 className="text-lg font-semibold text-content">Team Members</h2>
                 <button
                   onClick={() => setShowTeamForm(true)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-700 hover:bg-purple-800 text-white text-sm"
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-accent hover:bg-accent-hover text-white text-sm"
                 >
                   <Plus className="w-4 h-4" />
                   Add Member
@@ -396,7 +396,7 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitl
 
               <div className="grid grid-cols-2 gap-3">
                 {team.length === 0 ? (
-                  <div className="col-span-2 text-center py-12 text-gray-500">
+                  <div className="col-span-2 text-center py-12 text-content-muted">
                     No team members yet. Add people to assign tasks.
                   </div>
                 ) : (
@@ -440,24 +440,24 @@ function TaskCard({ task, team, onDragStart, onDelete, onEdit }) {
     <div
       draggable
       onDragStart={onDragStart}
-      className="group p-3 rounded-lg bg-white dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-700 hover:shadow-md transition-all cursor-grab active:cursor-grabbing"
+      className="group p-3 rounded-lg bg-surface-raised border border-subtle hover:shadow-md transition-all cursor-grab active:cursor-grabbing"
     >
       <div className="flex items-start justify-between gap-2 mb-2">
-        <h3 className="font-medium text-gray-900 dark:text-white text-sm flex-1">
+        <h3 className="font-medium text-content text-sm flex-1">
           {task.title}
         </h3>
         <div className="flex items-center">
           <button
             onClick={onEdit}
             aria-label={`Edit ${task.title}`}
-            className="p-1.5 rounded text-gray-500 hover:bg-gray-100 hover:text-purple-600 dark:hover:bg-gray-700"
+            className="p-1.5 rounded text-content-muted hover:bg-surface-sunken hover:text-accent-text dark:hover:bg-surface-sunken"
           >
             <Edit3 className="w-3.5 h-3.5" aria-hidden="true" />
           </button>
           <button
             onClick={onDelete}
             aria-label={`Delete ${task.title}`}
-            className="p-1.5 rounded text-gray-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30"
+            className="p-1.5 rounded text-content-muted hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30"
           >
             <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
           </button>
@@ -465,7 +465,7 @@ function TaskCard({ task, team, onDragStart, onDelete, onEdit }) {
       </div>
 
       {task.description && (
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 line-clamp-2">
+        <p className="text-xs text-content-muted mb-2 line-clamp-2">
           {task.description}
         </p>
       )}
@@ -479,16 +479,16 @@ function TaskCard({ task, team, onDragStart, onDelete, onEdit }) {
         
         {task.dueDate && (
           <span className={`text-xs px-1.5 py-0.5 rounded flex items-center gap-1 ${
-            isOverdue ? 'bg-red-100 text-red-600' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
-          }`}>
+ isOverdue ? 'bg-red-100 text-red-600' : 'bg-surface-sunken text-content-muted'
+ }`}>
             <Calendar className="w-3 h-3" />
             {parseDateKey(task.dueDate).toLocaleDateString('en-US')}
           </span>
         )}
 
         {assignee && (
-          <div className="flex items-center gap-1 text-xs text-gray-500">
-            <div className="w-5 h-5 rounded-full bg-purple-100 dark:bg-purple-900 text-purple-600 flex items-center justify-center text-xs font-medium">
+          <div className="flex items-center gap-1 text-xs text-content-muted">
+            <div className="w-5 h-5 rounded-full bg-accent-soft text-accent-text flex items-center justify-center text-xs font-medium">
               {assignee.avatar}
             </div>
           </div>
@@ -517,7 +517,7 @@ function TaskEditModal({ task, team, columns, onSave, onClose }) {
         <>
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="px-4 py-2 rounded-lg text-content-muted hover:bg-surface-hover"
           >
             Cancel
           </button>
@@ -531,7 +531,7 @@ function TaskEditModal({ task, team, columns, onSave, onClose }) {
               columnId,
             })}
             disabled={!title.trim()}
-            className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-50 text-white"
+            className="px-4 py-2 rounded-lg bg-accent hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50 text-white"
           >
             Save changes
           </button>
@@ -539,35 +539,35 @@ function TaskEditModal({ task, team, columns, onSave, onClose }) {
       )}
     >
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
+            <label className="block text-sm font-medium text-content-muted mb-1">Title</label>
             <input
               type="text"
               aria-label="Title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-[#cbd1db] dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:border-purple-500"
+              className="w-full px-3 py-2 rounded-lg border border-subtle bg-white dark:bg-surface-sunken text-content outline-none focus:border-accent"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+            <label className="block text-sm font-medium text-content-muted mb-1">Description</label>
             <textarea
               aria-label="Description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              className="w-full px-3 py-2 rounded-lg border border-[#cbd1db] dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:border-purple-500 resize-none"
+              className="w-full px-3 py-2 rounded-lg border border-subtle bg-white dark:bg-surface-sunken text-content outline-none focus:border-accent resize-none"
             />
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Priority</label>
+              <label className="block text-sm font-medium text-content-muted mb-1">Priority</label>
               <select
                 aria-label="Priority"
                 value={priority}
                 onChange={(e) => setPriority(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-[#cbd1db] dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:border-purple-500"
+                className="w-full px-3 py-2 rounded-lg border border-subtle bg-white dark:bg-surface-sunken text-content outline-none focus:border-accent"
               >
                 {Object.entries(PRIORITIES).map(([key, value]) => (
                   <option key={key} value={key}>{value.icon} {value.label}</option>
@@ -576,25 +576,25 @@ function TaskEditModal({ task, team, columns, onSave, onClose }) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Due Date</label>
+              <label className="block text-sm font-medium text-content-muted mb-1">Due Date</label>
               <input
                 type="date"
                 aria-label="Due date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-[#cbd1db] dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:border-purple-500"
+                className="w-full px-3 py-2 rounded-lg border border-subtle bg-white dark:bg-surface-sunken text-content outline-none focus:border-accent"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
+              <label className="block text-sm font-medium text-content-muted mb-1">Status</label>
               <select
                 aria-label="Status"
                 value={columnId}
                 onChange={(e) => setColumnId(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-[#cbd1db] dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:border-purple-500"
+                className="w-full px-3 py-2 rounded-lg border border-subtle bg-white dark:bg-surface-sunken text-content outline-none focus:border-accent"
               >
                 {columns.map((column) => (
                   <option key={column.id} value={column.id}>{column.name}</option>
@@ -602,12 +602,12 @@ function TaskEditModal({ task, team, columns, onSave, onClose }) {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Assignee</label>
+              <label className="block text-sm font-medium text-content-muted mb-1">Assignee</label>
               <select
                 aria-label="Assignee"
                 value={assignee}
                 onChange={(e) => setAssignee(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-[#cbd1db] dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:border-purple-500"
+                className="w-full px-3 py-2 rounded-lg border border-subtle bg-white dark:bg-surface-sunken text-content outline-none focus:border-accent"
               >
                 <option value="">Unassigned</option>
                 {team.map((member) => (
@@ -624,7 +624,7 @@ function MilestoneForm({ onSave, onCancel }) {
   const [dueDate, setDueDate] = useState('')
 
   return (
-    <div className="p-4 mb-4 rounded-lg border-2 border-dashed border-purple-300 dark:border-purple-700 bg-purple-50 dark:bg-purple-900/20">
+    <div className="p-4 mb-4 rounded-lg border-2 border-dashed border-accent-border bg-accent-soft">
       <div className="space-y-3">
         <input
           type="text"
@@ -632,7 +632,7 @@ function MilestoneForm({ onSave, onCancel }) {
           onChange={(e) => setName(e.target.value)}
           placeholder="Milestone name..."
           aria-label="Milestone name"
-          className="w-full px-3 py-2 rounded-lg border border-[#cbd1db] dark:border-gray-600 bg-white dark:bg-gray-800 text-sm outline-none focus:border-purple-500"
+          className="w-full px-3 py-2 rounded-lg border border-subtle bg-surface-raised text-sm outline-none focus:border-accent"
           autoFocus
         />
         <input
@@ -640,18 +640,18 @@ function MilestoneForm({ onSave, onCancel }) {
           aria-label="Milestone due date"
           value={dueDate}
           onChange={(e) => setDueDate(e.target.value)}
-          className="w-full px-3 py-2 rounded-lg border border-[#cbd1db] dark:border-gray-600 bg-white dark:bg-gray-800 text-sm outline-none focus:border-purple-500"
+          className="w-full px-3 py-2 rounded-lg border border-subtle bg-surface-raised text-sm outline-none focus:border-accent"
         />
         <div className="flex gap-2">
           <button
             onClick={() => name && onSave(name, dueDate || null)}
-            className="flex-1 px-3 py-2 rounded-lg bg-purple-700 hover:bg-purple-800 text-white text-sm"
+            className="flex-1 px-3 py-2 rounded-lg bg-accent hover:bg-accent-hover text-white text-sm"
           >
             Add Milestone
           </button>
           <button
             onClick={onCancel}
-            className="px-3 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-sm"
+            className="px-3 py-2 rounded-lg bg-surface-sunken dark:bg-surface-sunken text-content-muted text-sm"
           >
             Cancel
           </button>
@@ -665,11 +665,11 @@ function MilestoneCard({ milestone, onToggle, onDelete }) {
 
   return (
     <div className={`flex items-center gap-3 p-4 rounded-lg border ${
-      milestone.completed 
-        ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+ milestone.completed 
+ ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
         : isOverdue
           ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
-          : 'bg-white dark:bg-gray-800 border-[#cbd1db] dark:border-gray-700'
+          : 'bg-surface-raised border-subtle'
     }`}>
       <button
         onClick={onToggle}
@@ -678,15 +678,15 @@ function MilestoneCard({ milestone, onToggle, onDelete }) {
         {milestone.completed ? (
           <CheckCircle2 className="w-6 h-6 text-green-500" />
         ) : (
-          <Milestone className={`w-6 h-6 ${isOverdue ? 'text-red-500' : 'text-purple-500'}`} />
+          <Milestone className={`w-6 h-6 ${isOverdue ? 'text-red-500' : 'text-accent-text'}`} />
         )}
       </button>
       <div className="flex-1">
-        <h3 className={`font-medium ${milestone.completed ? 'line-through text-gray-400' : 'text-gray-900 dark:text-white'}`}>
+        <h3 className={`font-medium ${milestone.completed ? 'line-through text-content-subtle' : 'text-content'}`}>
           {milestone.name}
         </h3>
         {milestone.dueDate && (
-          <span className={`text-xs ${isOverdue && !milestone.completed ? 'text-red-500' : 'text-gray-500'}`}>
+          <span className={`text-xs ${isOverdue && !milestone.completed ? 'text-red-500' : 'text-content-muted'}`}>
             Due: {parseDateKey(milestone.dueDate).toLocaleDateString('en-US')}
           </span>
         )}
@@ -694,7 +694,7 @@ function MilestoneCard({ milestone, onToggle, onDelete }) {
       <button
         onClick={onDelete}
         aria-label={`Delete ${milestone.name}`}
-        className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-red-500"
+        className="p-1 rounded hover:bg-surface-hover text-content-subtle hover:text-red-500"
       >
         <Trash2 className="w-4 h-4" />
       </button>
@@ -706,7 +706,7 @@ function TeamMemberForm({ onSave, onCancel }) {
   const [role, setRole] = useState('')
 
   return (
-    <div className="p-4 mb-4 rounded-lg border-2 border-dashed border-purple-300 dark:border-purple-700 bg-purple-50 dark:bg-purple-900/20">
+    <div className="p-4 mb-4 rounded-lg border-2 border-dashed border-accent-border bg-accent-soft">
       <div className="space-y-3">
         <input
           type="text"
@@ -714,7 +714,7 @@ function TeamMemberForm({ onSave, onCancel }) {
           onChange={(e) => setName(e.target.value)}
           placeholder="Name..."
           aria-label="Team member name"
-          className="w-full px-3 py-2 rounded-lg border border-[#cbd1db] dark:border-gray-600 bg-white dark:bg-gray-800 text-sm outline-none focus:border-purple-500"
+          className="w-full px-3 py-2 rounded-lg border border-subtle bg-surface-raised text-sm outline-none focus:border-accent"
           autoFocus
         />
         <input
@@ -723,18 +723,18 @@ function TeamMemberForm({ onSave, onCancel }) {
           onChange={(e) => setRole(e.target.value)}
           placeholder="Role (e.g., Developer, Designer)..."
           aria-label="Team member role"
-          className="w-full px-3 py-2 rounded-lg border border-[#cbd1db] dark:border-gray-600 bg-white dark:bg-gray-800 text-sm outline-none focus:border-purple-500"
+          className="w-full px-3 py-2 rounded-lg border border-subtle bg-surface-raised text-sm outline-none focus:border-accent"
         />
         <div className="flex gap-2">
           <button
             onClick={() => name && onSave(name, role)}
-            className="flex-1 px-3 py-2 rounded-lg bg-purple-700 hover:bg-purple-800 text-white text-sm"
+            className="flex-1 px-3 py-2 rounded-lg bg-accent hover:bg-accent-hover text-white text-sm"
           >
             Add Member
           </button>
           <button
             onClick={onCancel}
-            className="px-3 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-sm"
+            className="px-3 py-2 rounded-lg bg-surface-sunken dark:bg-surface-sunken text-content-muted text-sm"
           >
             Cancel
           </button>
@@ -745,19 +745,19 @@ function TeamMemberForm({ onSave, onCancel }) {
 }
 function TeamMemberCard({ member, tasksAssigned, onDelete }) {
   return (
-    <div className="flex items-center gap-3 p-4 rounded-lg bg-white dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-700">
-      <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900 text-purple-600 flex items-center justify-center font-medium">
+    <div className="flex items-center gap-3 p-4 rounded-lg bg-surface-raised border border-subtle">
+      <div className="w-10 h-10 rounded-full bg-accent-soft text-accent-text flex items-center justify-center font-medium">
         {member.avatar}
       </div>
       <div className="flex-1">
-        <h3 className="font-medium text-gray-900 dark:text-white">{member.name}</h3>
-        <p className="text-xs text-gray-500">{member.role || 'Team Member'}</p>
-        <p className="text-xs text-purple-500">{tasksAssigned} tasks assigned</p>
+        <h3 className="font-medium text-content">{member.name}</h3>
+        <p className="text-xs text-content-muted">{member.role || 'Team Member'}</p>
+        <p className="text-xs text-accent-text">{tasksAssigned} tasks assigned</p>
       </div>
       <button
         onClick={onDelete}
         aria-label={`Remove ${member.name}`}
-        className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-red-500"
+        className="p-1 rounded hover:bg-surface-hover text-content-subtle hover:text-red-500"
       >
         <Trash2 className="w-4 h-4" />
       </button>

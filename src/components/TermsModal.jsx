@@ -11,8 +11,8 @@ export default function TermsModal() {
 
   return (
     <LegacyDialog label="Terms of service" onClose={() => setTermsModalOpen(false)} align="center">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-[#cbd1db] dark:border-gray-700 w-full max-w-2xl mx-4 max-h-[85vh] overflow-hidden flex flex-col modal-animate">
-        <div className="flex items-center justify-between p-5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
+      <div className="bg-surface-raised rounded-2xl shadow-2xl border border-subtle w-full max-w-2xl mx-4 max-h-[85vh] overflow-hidden flex flex-col modal-animate">
+        <div className="flex items-center justify-between p-5 qn-banner-surface text-white">
           <div className="flex items-center gap-3">
             <FileText className="w-6 h-6" />
             <div>
@@ -29,56 +29,56 @@ export default function TermsModal() {
         </div>
         <div className="flex-1 overflow-y-auto p-6">
           <div className="prose dark:prose-invert max-w-none">
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
+            <p className="text-content-muted mb-6">
               {t('terms.lastUpdated')}: December 2024
             </p>
 
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mt-6 mb-3">
+            <h3 className="text-lg font-semibold text-content mt-6 mb-3">
               {t('terms.acceptance')}
             </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
+            <p className="text-content-muted mb-4">
               {t('terms.acceptanceText')}
             </p>
 
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mt-6 mb-3">
+            <h3 className="text-lg font-semibold text-content mt-6 mb-3">
               {t('terms.license')}
             </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
+            <p className="text-content-muted mb-4">
               {t('terms.licenseText')}
             </p>
 
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mt-6 mb-3">
+            <h3 className="text-lg font-semibold text-content mt-6 mb-3">
               {t('terms.userContent')}
             </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
+            <p className="text-content-muted mb-4">
               {t('terms.userContentText')}
             </p>
 
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mt-6 mb-3">
+            <h3 className="text-lg font-semibold text-content mt-6 mb-3">
               {t('terms.disclaimer')}
             </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
+            <p className="text-content-muted mb-4">
               {t('terms.disclaimerText')}
             </p>
 
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mt-6 mb-3">
+            <h3 className="text-lg font-semibold text-content mt-6 mb-3">
               {t('terms.limitation')}
             </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
+            <p className="text-content-muted mb-4">
               {t('terms.limitationText')}
             </p>
 
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mt-6 mb-3">
+            <h3 className="text-lg font-semibold text-content mt-6 mb-3">
               {t('terms.changes')}
             </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
+            <p className="text-content-muted mb-4">
               {t('terms.changesText')}
             </p>
 
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mt-6 mb-3">
+            <h3 className="text-lg font-semibold text-content mt-6 mb-3">
               {t('terms.contact')}
             </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
+            <p className="text-content-muted mb-4">
               {t('terms.contactText')}
             </p>
           </div>

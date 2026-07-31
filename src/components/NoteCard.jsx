@@ -77,8 +77,8 @@ const NoteCard = forwardRef(function NoteCard(
         <div className="flex items-start gap-2">
           <h3
             className={`min-w-0 flex-1 truncate font-semibold text-content ${
-              compactMode ? 'text-ui-md' : 'text-title-xs'
-            }`}
+ compactMode ? 'text-ui-md' : 'text-title-xs'
+ }`}
           >
             {note.title || 'Untitled note'}
           </h3>
@@ -95,8 +95,8 @@ const NoteCard = forwardRef(function NoteCard(
         {notePreviewLines > 0 && (
           <p
             className={`text-ui-md leading-relaxed text-content-muted ${
-              CLAMP[notePreviewLines] || CLAMP[2]
-            }`}
+ CLAMP[notePreviewLines] || CLAMP[2]
+ }`}
           >
             {preview || 'Empty note'}
           </p>
@@ -146,8 +146,8 @@ const NoteCard = forwardRef(function NoteCard(
         }
         aria-pressed={!!note.starred}
         className={`qn-inline-target absolute right-4 top-3.5 flex h-6 w-6 items-center justify-center rounded-control transition-colors duration-fast hover:bg-surface-active ${
-          note.starred ? 'text-warning' : 'text-content-subtle opacity-60 hover:opacity-100'
-        }`}
+ note.starred ? 'text-warning' : 'text-content-subtle opacity-60 hover:opacity-100'
+ }`}
       >
         <Star className={`h-3.5 w-3.5 ${note.starred ? 'fill-current text-warning' : ''}`} aria-hidden="true" />
       </button>

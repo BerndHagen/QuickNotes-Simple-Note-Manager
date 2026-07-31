@@ -216,8 +216,8 @@ export default function TodoListEditor({ data, onChange, noteTitle, onTitleChang
 
   return (
     <>
-      <div className="qn-type-editor qn-type-todo flex flex-col h-full bg-white dark:bg-gray-900">
-      <div className="qn-type-hero flex-shrink-0 p-4 border-b border-[#cbd1db] dark:border-gray-700 bg-[#e5eaf0] dark:bg-gray-800">
+      <div className="qn-type-editor qn-type-todo flex flex-col h-full bg-surface-raised">
+      <div className="qn-type-hero flex-shrink-0 p-4 border-b border-subtle bg-[#e5eaf0] dark:bg-surface-raised">
         <div className="flex items-center justify-between mb-4">
           <div>
             <FocusedNoteTitle
@@ -228,7 +228,7 @@ export default function TodoListEditor({ data, onChange, noteTitle, onTitleChang
               onChange={onTitleChange}
               readOnly={readOnly}
             />
-            <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
+            <p className="text-content-muted text-sm mt-1">
               {stats.active} tasks remaining {"\u2022"} {stats.completed} completed
             </p>
           </div>
@@ -251,47 +251,47 @@ export default function TodoListEditor({ data, onChange, noteTitle, onTitleChang
                 />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-gray-900 dark:text-white font-bold text-sm">{stats.progress}%</span>
+                <span className="text-content font-bold text-sm">{stats.progress}%</span>
               </div>
             </div>
           </div>
         </div>
         <div className="grid grid-cols-4 gap-2">
-          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center border border-[#cbd1db] dark:border-gray-600">
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">Total</div>
+          <div className="bg-white dark:bg-surface-sunken rounded-lg p-2 text-center border border-subtle ">
+            <div className="text-2xl font-bold text-content">{stats.total}</div>
+            <div className="text-xs text-content-muted">Total</div>
           </div>
-          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center border border-[#cbd1db] dark:border-gray-600">
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.active}</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">Active</div>
+          <div className="bg-white dark:bg-surface-sunken rounded-lg p-2 text-center border border-subtle ">
+            <div className="text-2xl font-bold text-content">{stats.active}</div>
+            <div className="text-xs text-content-muted">Active</div>
           </div>
-          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center border border-[#cbd1db] dark:border-gray-600">
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.completed}</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">Done</div>
+          <div className="bg-white dark:bg-surface-sunken rounded-lg p-2 text-center border border-subtle ">
+            <div className="text-2xl font-bold text-content">{stats.completed}</div>
+            <div className="text-xs text-content-muted">Done</div>
           </div>
-          <div className="bg-white dark:bg-gray-700 rounded-lg p-2 text-center border border-[#cbd1db] dark:border-gray-600">
+          <div className="bg-white dark:bg-surface-sunken rounded-lg p-2 text-center border border-subtle ">
             <div className="text-2xl font-bold text-red-500 dark:text-red-400">{stats.overdue}</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">Overdue</div>
+            <div className="text-xs text-content-muted">Overdue</div>
           </div>
         </div>
       </div>
-      <div className="qn-type-tabs flex-shrink-0 p-3 border-b border-[#cbd1db] dark:border-gray-700 flex items-center gap-2 bg-gray-50 dark:bg-gray-800">
+      <div className="qn-type-tabs flex-shrink-0 p-3 border-b border-subtle flex items-center gap-2 bg-surface-sunken">
         <div className="relative" ref={filterRef}>
           <button
             onClick={() => setShowFilterMenu(!showFilterMenu)}
             aria-label="Filter tasks"
             aria-expanded={showFilterMenu}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white dark:bg-surface-sunken border border-subtle hover:bg-surface-sunken dark:hover:bg-surface-active transition-colors"
           >
-            <Filter className="w-4 h-4 text-gray-500" />
-            <span className="text-sm text-gray-700 dark:text-gray-300">
+            <Filter className="w-4 h-4 text-content-muted" />
+            <span className="text-sm text-content-muted">
               {FILTERS.find(f => f.id === filter)?.label}
             </span>
-            <ChevronDown className="w-4 h-4 text-gray-400" />
+            <ChevronDown className="w-4 h-4 text-content-subtle" />
           </button>
           
           {showFilterMenu && (
-            <div className="absolute top-full left-0 mt-1.5 w-48 bg-white dark:bg-gray-900 rounded-2xl shadow-xl shadow-black/5 dark:shadow-black/20 border border-[#cbd1db] dark:border-gray-700 z-50 overflow-hidden backdrop-blur-xl py-1.5">
+            <div className="absolute top-full left-0 mt-1.5 w-48 bg-surface-raised rounded-2xl shadow-xl shadow-black/5 dark:shadow-black/20 border border-subtle z-50 overflow-hidden backdrop-blur-xl py-1.5">
               {FILTERS.map((f) => {
                 const Icon = f.icon
                 return (
@@ -299,9 +299,9 @@ export default function TodoListEditor({ data, onChange, noteTitle, onTitleChang
                     key={f.id}
                     onClick={() => { setFilter(f.id); setShowFilterMenu(false) }}
                     aria-pressed={filter === f.id}
-                    className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
-                      filter === f.id ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600' : 'text-gray-700 dark:text-gray-300'
-                    }`}
+                    className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-surface-hover transition-colors ${
+ filter === f.id ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600' : 'text-content-muted'
+ }`}
                   >
                     <Icon className="w-4 h-4" />
                     {f.label}
@@ -316,25 +316,25 @@ export default function TodoListEditor({ data, onChange, noteTitle, onTitleChang
             onClick={() => setShowSortMenu(!showSortMenu)}
             aria-label="Sort tasks"
             aria-expanded={showSortMenu}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white dark:bg-surface-sunken border border-subtle hover:bg-surface-sunken dark:hover:bg-surface-active transition-colors"
           >
-            <SortAsc className="w-4 h-4 text-gray-500" />
-            <span className="text-sm text-gray-700 dark:text-gray-300">
+            <SortAsc className="w-4 h-4 text-content-muted" />
+            <span className="text-sm text-content-muted">
               {SORT_OPTIONS.find(s => s.id === sortBy)?.label}
             </span>
-            <ChevronDown className="w-4 h-4 text-gray-400" />
+            <ChevronDown className="w-4 h-4 text-content-subtle" />
           </button>
           
           {showSortMenu && (
-            <div className="absolute top-full left-0 mt-1.5 w-40 bg-white dark:bg-gray-900 rounded-2xl shadow-xl shadow-black/5 dark:shadow-black/20 border border-[#cbd1db] dark:border-gray-700 z-50 overflow-hidden backdrop-blur-xl py-1.5">
+            <div className="absolute top-full left-0 mt-1.5 w-40 bg-surface-raised rounded-2xl shadow-xl shadow-black/5 dark:shadow-black/20 border border-subtle z-50 overflow-hidden backdrop-blur-xl py-1.5">
               {SORT_OPTIONS.map((s) => (
                 <button
                   key={s.id}
                   onClick={() => { setSortBy(s.id); setShowSortMenu(false) }}
                   aria-pressed={sortBy === s.id}
-                  className={`w-full text-left px-4 py-2.5 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
-                    sortBy === s.id ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600' : 'text-gray-700 dark:text-gray-300'
-                  }`}
+                  className={`w-full text-left px-4 py-2.5 text-sm hover:bg-surface-hover transition-colors ${
+ sortBy === s.id ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600' : 'text-content-muted'
+ }`}
                 >
                   {s.label}
                 </button>
@@ -349,14 +349,14 @@ export default function TodoListEditor({ data, onChange, noteTitle, onTitleChang
             const completedTasks = tasks.filter(t => t.completed)
             if (completedTasks.length > 0) setClearCompletedOpen(true)
           }}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm"
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-content-muted hover:bg-surface-sunken dark:hover:bg-surface-sunken transition-colors text-sm"
           disabled={!tasks.some(t => t.completed)}
         >
           <CheckCheck className="w-4 h-4" />
           Clear Done
         </button>
       </div>
-      <div className="flex-shrink-0 p-4 border-b border-[#cbd1db] dark:border-gray-700">
+      <div className="flex-shrink-0 p-4 border-b border-subtle">
         <div className="flex gap-2">
           <input
             ref={inputRef}
@@ -366,12 +366,12 @@ export default function TodoListEditor({ data, onChange, noteTitle, onTitleChang
             onChange={(e) => setNewTaskText(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && addTask()}
             placeholder="Add a new task..."
-            className="flex-1 px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-[#cbd1db] dark:border-gray-600 focus:border-emerald-500 focus:bg-white dark:focus:bg-gray-700 outline-none text-gray-900 dark:text-white placeholder-gray-500 transition-all"
+            className="flex-1 px-4 py-3 rounded-xl bg-surface-sunken border-2 border-subtle focus:border-emerald-500 focus:bg-white dark:focus:bg-surface-sunken outline-none text-content placeholder:text-content-subtle transition-all"
           />
           <button
             onClick={addTask}
             disabled={!newTaskText.trim()}
-            className="px-4 py-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white font-medium transition-colors flex items-center gap-2"
+            className="px-4 py-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 disabled:bg-surface-active dark:disabled:bg-surface-sunken text-white font-medium transition-colors flex items-center gap-2"
           >
             <Plus className="w-5 h-5" />
             Add
@@ -381,13 +381,13 @@ export default function TodoListEditor({ data, onChange, noteTitle, onTitleChang
       <div className="flex-1 overflow-y-auto p-4 space-y-2">
         {filteredTasks.length === 0 ? (
           <div className="text-center py-12">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-              <CheckCircle2 className="w-8 h-8 text-gray-400" />
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-surface-sunken flex items-center justify-center">
+              <CheckCircle2 className="w-8 h-8 text-content-subtle" />
             </div>
-            <p className="text-gray-500 dark:text-gray-400 font-medium">
+            <p className="text-content-muted font-medium">
               {filter === 'all' ? 'No tasks yet' : `No ${FILTERS.find(f => f.id === filter)?.label.toLowerCase()}`}
             </p>
-            <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">
+            <p className="text-content-subtle text-sm mt-1">
               {filter === 'all' ? 'Add your first task above' : 'Try a different filter'}
             </p>
           </div>
@@ -481,9 +481,9 @@ function TaskItem({
   return (
     <div
       className={`group rounded-xl border-2 transition-all ${
-        task.completed 
-          ? 'bg-gray-50 dark:bg-gray-800/50 border-[#cbd1db] dark:border-gray-700 opacity-60' 
-          : 'bg-white dark:bg-gray-800 border-[#cbd1db] dark:border-gray-700 hover:border-emerald-300 dark:hover:border-emerald-700'
+ task.completed 
+ ? 'bg-surface-sunken border-subtle opacity-60' 
+          : 'bg-surface-raised border-subtle hover:border-emerald-300 dark:hover:border-emerald-700'
       }`}
     >
       <div className="flex items-center gap-3 p-3">
@@ -495,7 +495,7 @@ function TaskItem({
           {task.completed ? (
             <CheckCircle2 className="w-6 h-6 text-emerald-500" />
           ) : (
-            <Circle className="w-6 h-6 text-gray-300 hover:text-emerald-500" />
+            <Circle className="w-6 h-6 text-content-subtle hover:text-emerald-500" />
           )}
         </button>
         <div className="flex-1 min-w-0">
@@ -511,13 +511,13 @@ function TaskItem({
                 if (e.key === 'Escape') onCancelEdit()
               }}
               onBlur={() => onSaveEdit(editText)}
-              className="w-full px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 border border-emerald-500 outline-none text-gray-900 dark:text-white"
+              className="w-full px-2 py-1 rounded bg-surface-sunken border border-emerald-500 outline-none text-content"
             />
           ) : (
             <div 
               className={`font-medium cursor-pointer ${
-                task.completed ? 'line-through text-gray-400' : 'text-gray-900 dark:text-white'
-              }`}
+ task.completed ? 'line-through text-content-subtle' : 'text-content'
+ }`}
               onDoubleClick={onEdit}
             >
               {task.text}
@@ -526,16 +526,16 @@ function TaskItem({
           <div className="flex items-center gap-2 mt-1 flex-wrap">
             {task.dueDate && (
               <span className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 ${
-                isOverdue 
-                  ? 'bg-red-100 dark:bg-red-900/30 text-red-600' 
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+ isOverdue 
+ ? 'bg-red-100 dark:bg-red-900/30 text-red-600' 
+                  : 'bg-surface-sunken text-content-muted'
               }`}>
                 <Calendar className="w-3 h-3" />
                 {parseDateKey(task.dueDate).toLocaleDateString('en-US')}
               </span>
             )}
             {task.subtasks.length > 0 && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600">
+              <span className="text-xs px-2 py-0.5 rounded-full bg-accent-soft text-accent-text">
                 {task.subtasks.filter(st => st.completed).length}/{task.subtasks.length} subtasks
               </span>
             )}
@@ -546,8 +546,8 @@ function TaskItem({
           aria-label={task.starred ? `Remove star from ${task.text}` : `Star ${task.text}`}
           aria-pressed={task.starred}
           className={`p-1 rounded transition-colors ${
-            task.starred ? 'text-yellow-500' : 'text-gray-300 hover:text-yellow-500'
-          }`}
+ task.starred ? 'text-accent-text' : 'text-content-subtle hover:text-accent-text'
+ }`}
         >
           <Star className={`w-5 h-5 ${task.starred ? 'fill-yellow-500' : ''}`} />
         </button>
@@ -564,15 +564,15 @@ function TaskItem({
           </button>
           
           {showPriorityMenu && (
-            <div className="absolute right-0 top-full mt-1.5 w-32 bg-white dark:bg-gray-900 rounded-2xl shadow-xl shadow-black/5 dark:shadow-black/20 border border-[#cbd1db] dark:border-gray-700 z-50 overflow-hidden backdrop-blur-xl py-1.5">
+            <div className="absolute right-0 top-full mt-1.5 w-32 bg-surface-raised rounded-2xl shadow-xl shadow-black/5 dark:shadow-black/20 border border-subtle z-50 overflow-hidden backdrop-blur-xl py-1.5">
               {Object.entries(PRIORITIES).map(([key, value]) => (
                 <button
                   key={key}
                   onClick={() => { onUpdate({ priority: key }); setShowPriorityMenu(false) }}
                   aria-pressed={task.priority === key}
-                  className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-800 ${
-                    task.priority === key ? 'bg-gray-100 dark:bg-gray-800' : ''
-                  }`}
+                  className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 hover:bg-surface-hover ${
+ task.priority === key ? 'bg-surface-sunken' : ''
+ }`}
                 >
                   <span>{value.icon}</span>
                   <span style={{ color: value.color }}>{value.label}</span>
@@ -595,11 +595,11 @@ function TaskItem({
             tabIndex={-1}
             aria-hidden="true"
             className={`p-1.5 rounded-lg transition-all hover:scale-110 ${
-              task.dueDate 
-                ? isOverdue 
+ task.dueDate 
+ ? isOverdue 
                   ? 'bg-red-100 dark:bg-red-900/30 text-red-500 hover:bg-red-200 dark:hover:bg-red-900/50'
                   : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-900/50'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-600'
+                : 'bg-surface-sunken text-content-muted hover:bg-surface-sunken dark:hover:bg-surface-active'
             }`}
             title={task.dueDate ? `Due: ${parseDateKey(task.dueDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}` : "Set due date"}
           >
@@ -610,7 +610,7 @@ function TaskItem({
           onClick={onExpand}
           aria-label={isExpanded ? `Collapse details for ${task.text}` : `Expand details for ${task.text}`}
           aria-expanded={isExpanded}
-          className="p-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+          className="p-1.5 rounded-lg bg-surface-sunken text-content-muted hover:bg-surface-sunken dark:hover:bg-surface-active transition-colors"
         >
           {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
         </button>
@@ -619,24 +619,24 @@ function TaskItem({
             onClick={() => setShowMoreMenu(!showMoreMenu)}
             aria-label={`More actions for ${task.text}`}
             aria-expanded={showMoreMenu}
-            className="p-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
+            className="p-1.5 rounded-lg bg-surface-sunken text-content-muted hover:bg-surface-sunken dark:hover:bg-surface-active transition-colors opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
           >
             <MoreHorizontal className="w-4 h-4" />
           </button>
           
           {showMoreMenu && (
-            <div className="absolute right-0 top-full mt-1.5 w-40 bg-white dark:bg-gray-900 rounded-2xl shadow-xl shadow-black/5 dark:shadow-black/20 border border-[#cbd1db] dark:border-gray-700 z-50 overflow-hidden backdrop-blur-xl py-1.5">
+            <div className="absolute right-0 top-full mt-1.5 w-40 bg-surface-raised rounded-2xl shadow-xl shadow-black/5 dark:shadow-black/20 border border-subtle z-50 overflow-hidden backdrop-blur-xl py-1.5">
               <button
                 onClick={() => { onEdit(); setShowMoreMenu(false) }}
-                className="w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 transition-colors"
+                className="w-full text-left px-4 py-2.5 text-sm text-content-muted hover:bg-surface-hover flex items-center gap-2 transition-colors"
               >
-                <Edit3 className="w-4 h-4 text-gray-400" /> Edit
+                <Edit3 className="w-4 h-4 text-content-subtle" /> Edit
               </button>
               <button
                 onClick={() => { onDuplicate(); setShowMoreMenu(false) }}
-                className="w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 transition-colors"
+                className="w-full text-left px-4 py-2.5 text-sm text-content-muted hover:bg-surface-hover flex items-center gap-2 transition-colors"
               >
-                <Copy className="w-4 h-4 text-gray-400" /> Duplicate
+                <Copy className="w-4 h-4 text-content-subtle" /> Duplicate
               </button>
               <button
                 onClick={() => { onDelete(); setShowMoreMenu(false) }}
@@ -649,12 +649,12 @@ function TaskItem({
         </div>
       </div>
       {isExpanded && (
-        <div className="px-4 pb-4 pt-2 border-t border-[#cbd1db] dark:border-gray-700">
+        <div className="px-4 pb-4 pt-2 border-t border-subtle">
           <div className="mb-3">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Subtasks</span>
+              <span className="text-sm font-medium text-content-muted">Subtasks</span>
               {subtaskProgress !== null && (
-                <span className="text-xs text-gray-500">({subtaskProgress}%)</span>
+                <span className="text-xs text-content-muted">({subtaskProgress}%)</span>
               )}
             </div>
             
@@ -669,16 +669,16 @@ function TaskItem({
                     {subtask.completed ? (
                       <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                     ) : (
-                      <Circle className="w-4 h-4 text-gray-300 hover:text-emerald-500" />
+                      <Circle className="w-4 h-4 text-content-subtle hover:text-emerald-500" />
                     )}
                   </button>
-                  <span className={`flex-1 text-sm ${subtask.completed ? 'line-through text-gray-400' : 'text-gray-700 dark:text-gray-300'}`}>
+                  <span className={`flex-1 text-sm ${subtask.completed ? 'line-through text-content-subtle' : 'text-content-muted'}`}>
                     {subtask.text}
                   </span>
                   <button
                     onClick={() => onDeleteSubtask(subtask.id)}
                     aria-label={`Delete ${subtask.text}`}
-                    className="p-1 opacity-0 group-hover/subtask:opacity-100 text-gray-400 hover:text-red-500"
+                    className="p-1 opacity-0 group-hover/subtask:opacity-100 text-content-subtle hover:text-red-500"
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -699,7 +699,7 @@ function TaskItem({
                   }
                 }}
                 placeholder="Add subtask..."
-                className="flex-1 px-3 py-1.5 text-sm rounded-lg bg-gray-100 dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 focus:border-emerald-500 outline-none text-gray-900 dark:text-white"
+                className="flex-1 px-3 py-1.5 text-sm rounded-lg bg-surface-sunken border border-subtle focus:border-emerald-500 outline-none text-content"
               />
               <button
                 onClick={() => {
@@ -715,13 +715,13 @@ function TaskItem({
             </div>
           </div>
           <div>
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">Notes</span>
+            <span className="text-sm font-medium text-content-muted block mb-2">Notes</span>
             <textarea
               aria-label={`Notes for ${task.text}`}
               value={task.notes}
               onChange={(e) => onUpdate({ notes: e.target.value })}
               placeholder="Add notes..."
-              className="w-full px-3 py-2 text-sm rounded-lg bg-gray-100 dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 focus:border-emerald-500 outline-none text-gray-900 dark:text-white resize-none"
+              className="w-full px-3 py-2 text-sm rounded-lg bg-surface-sunken border border-subtle focus:border-emerald-500 outline-none text-content resize-none"
               rows={3}
             />
           </div>

@@ -88,8 +88,8 @@ export default function EditorSettingsModal() {
 
   return (
     <LegacyDialog label="Editor settings" onClose={() => setEditorSettingsOpen(false)} align="center">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-[#cbd1db] dark:border-gray-700 w-full max-w-md mx-4 max-h-[85vh] overflow-hidden flex flex-col modal-animate">
-        <div className="flex items-center justify-between p-5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
+      <div className="bg-surface-raised rounded-2xl shadow-2xl border border-subtle w-full max-w-md mx-4 max-h-[85vh] overflow-hidden flex flex-col modal-animate">
+        <div className="flex items-center justify-between p-5 qn-banner-surface text-white">
           <div className="flex items-center gap-3">
             <Settings className="w-6 h-6" />
             <div>
@@ -106,18 +106,18 @@ export default function EditorSettingsModal() {
         </div>
         <div className="flex-1 p-6 space-y-6 overflow-y-auto">
           <div className="space-y-4">
-            <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+            <h3 className="flex items-center gap-2 text-sm font-semibold text-content-muted uppercase tracking-wider">
               <Type className="w-4 h-4" />
               Typography
             </h3>
             <div>
-              <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label className="block mb-2 text-sm font-medium text-content-muted">
                 Default Font Family
               </label>
               <select
                 value={settings.defaultFontFamily}
                 onChange={(e) => handleSettingChange('defaultFontFamily', e.target.value)}
-                className="w-full px-3 py-2 text-gray-900 bg-gray-100 border border-[#cbd1db] rounded-lg dark:bg-gray-700 dark:border-gray-700 dark:text-white focus:ring-2 focus:ring-emerald-500"
+                className="w-full px-3 py-2 text-content bg-surface-sunken border border-subtle rounded-lg dark:bg-surface-sunken dark:text-white focus:ring-2 focus:ring-emerald-500"
               >
                 {fontOptions.map(font => (
                   <option key={font.value} value={font.value} style={{ fontFamily: font.value }}>
@@ -127,13 +127,13 @@ export default function EditorSettingsModal() {
               </select>
             </div>
             <div>
-              <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label className="block mb-2 text-sm font-medium text-content-muted">
                 Default Font Size
               </label>
               <select
                 value={settings.defaultFontSize}
                 onChange={(e) => handleSettingChange('defaultFontSize', e.target.value)}
-                className="w-full px-3 py-2 text-gray-900 bg-gray-100 border border-[#cbd1db] rounded-lg dark:bg-gray-700 dark:border-gray-700 dark:text-white focus:ring-2 focus:ring-emerald-500"
+                className="w-full px-3 py-2 text-content bg-surface-sunken border border-subtle rounded-lg dark:bg-surface-sunken dark:text-white focus:ring-2 focus:ring-emerald-500"
               >
                 {fontSizeOptions.map(size => (
                   <option key={size.value} value={size.value}>{size.name}</option>
@@ -141,13 +141,13 @@ export default function EditorSettingsModal() {
               </select>
             </div>
             <div>
-              <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label className="block mb-2 text-sm font-medium text-content-muted">
                 Line Height
               </label>
               <select
                 value={settings.defaultLineHeight}
                 onChange={(e) => handleSettingChange('defaultLineHeight', e.target.value)}
-                className="w-full px-3 py-2 text-gray-900 bg-gray-100 border border-[#cbd1db] rounded-lg dark:bg-gray-700 dark:border-gray-700 dark:text-white focus:ring-2 focus:ring-emerald-500"
+                className="w-full px-3 py-2 text-content bg-surface-sunken border border-subtle rounded-lg dark:bg-surface-sunken dark:text-white focus:ring-2 focus:ring-emerald-500"
               >
                 {lineHeightOptions.map(lh => (
                   <option key={lh.value} value={lh.value}>{lh.name}</option>
@@ -156,16 +156,16 @@ export default function EditorSettingsModal() {
             </div>
           </div>
           <div className="space-y-4">
-            <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+            <h3 className="flex items-center gap-2 text-sm font-semibold text-content-muted uppercase tracking-wider">
               <Eye className="w-4 h-4" />
               Display
             </h3>
-            <label className="flex items-center justify-between p-3 transition-colors border border-[#cbd1db] rounded-lg cursor-pointer hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-700/50">
+            <label className="flex items-center justify-between p-3 transition-colors border border-subtle rounded-lg cursor-pointer hover:bg-surface-sunken dark:hover:bg-surface-sunken">
               <div className="flex items-center gap-3">
-                <Ruler className="w-5 h-5 text-gray-500" />
+                <Ruler className="w-5 h-5 text-content-muted" />
                 <div>
-                  <p className="font-medium text-gray-900 dark:text-white">Show Ruler</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Display ruler at the top of the editor</p>
+                  <p className="font-medium text-content">Show Ruler</p>
+                  <p className="text-xs text-content-muted">Display ruler at the top of the editor</p>
                 </div>
               </div>
               <input
@@ -175,12 +175,12 @@ export default function EditorSettingsModal() {
                 className="w-5 h-5 rounded text-emerald-600 focus:ring-emerald-500"
               />
             </label>
-            <label className="flex items-center justify-between p-3 transition-colors border border-[#cbd1db] rounded-lg cursor-pointer hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-700/50">
+            <label className="flex items-center justify-between p-3 transition-colors border border-subtle rounded-lg cursor-pointer hover:bg-surface-sunken dark:hover:bg-surface-sunken">
               <div className="flex items-center gap-3">
-                <AlignLeft className="w-5 h-5 text-gray-500" />
+                <AlignLeft className="w-5 h-5 text-content-muted" />
                 <div>
-                  <p className="font-medium text-gray-900 dark:text-white">Word Wrap</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Wrap long lines to fit the editor width</p>
+                  <p className="font-medium text-content">Word Wrap</p>
+                  <p className="text-xs text-content-muted">Wrap long lines to fit the editor width</p>
                 </div>
               </div>
               <input
@@ -190,12 +190,12 @@ export default function EditorSettingsModal() {
                 className="w-5 h-5 rounded text-emerald-600 focus:ring-emerald-500"
               />
             </label>
-            <label className="flex items-center justify-between p-3 transition-colors border border-[#cbd1db] rounded-lg cursor-pointer hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-700/50">
+            <label className="flex items-center justify-between p-3 transition-colors border border-subtle rounded-lg cursor-pointer hover:bg-surface-sunken dark:hover:bg-surface-sunken">
               <div className="flex items-center gap-3">
-                <EyeOff className="w-5 h-5 text-gray-500" />
+                <EyeOff className="w-5 h-5 text-content-muted" />
                 <div>
-                  <p className="font-medium text-gray-900 dark:text-white">Show Invisible Characters</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Display spaces, tabs, and line breaks</p>
+                  <p className="font-medium text-content">Show Invisible Characters</p>
+                  <p className="text-xs text-content-muted">Display spaces, tabs, and line breaks</p>
                 </div>
               </div>
               <input
@@ -207,18 +207,18 @@ export default function EditorSettingsModal() {
             </label>
           </div>
           <div className="space-y-4">
-            <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+            <h3 className="flex items-center gap-2 text-sm font-semibold text-content-muted uppercase tracking-wider">
               <Spellcheck className="w-4 h-4" />
               Editing
             </h3>
             <div>
-              <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label className="block mb-2 text-sm font-medium text-content-muted">
                 Tab Size
               </label>
               <select
                 value={settings.tabSize}
                 onChange={(e) => handleSettingChange('tabSize', parseInt(e.target.value))}
-                className="w-full px-3 py-2 text-gray-900 bg-gray-100 border border-[#cbd1db] rounded-lg dark:bg-gray-700 dark:border-gray-700 dark:text-white focus:ring-2 focus:ring-emerald-500"
+                className="w-full px-3 py-2 text-content bg-surface-sunken border border-subtle rounded-lg dark:bg-surface-sunken dark:text-white focus:ring-2 focus:ring-emerald-500"
               >
                 {tabSizeOptions.map(tab => (
                   <option key={tab.value} value={tab.value}>{tab.name}</option>
@@ -227,10 +227,10 @@ export default function EditorSettingsModal() {
             </div>
           </div>
         </div>
-        <div className="flex items-center justify-between px-6 py-4 border-t border-[#cbd1db] dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+        <div className="flex items-center justify-between px-6 py-4 border-t border-subtle bg-surface-sunken">
           <button
             onClick={handleResetDefaults}
-            className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 transition-colors rounded-lg dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
+            className="flex items-center gap-2 px-4 py-2 text-sm text-content-muted transition-colors rounded-lg dark:text-content-subtle hover:bg-surface-sunken dark:hover:bg-surface-sunken"
           >
             <RotateCcw className="w-4 h-4" />
             Reset to Defaults

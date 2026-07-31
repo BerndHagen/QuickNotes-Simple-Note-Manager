@@ -178,8 +178,8 @@ export default function DuplicateDetectionModal() {
 
   return (
     <LegacyDialog label="Find duplicates" onClose={() => setDuplicateModalOpen(false)} align="center">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-[#cbd1db] dark:border-gray-700 w-full max-w-3xl mx-4 max-h-[85vh] overflow-hidden flex flex-col modal-animate">
-        <div className="flex items-center justify-between p-5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white shrink-0">
+      <div className="bg-surface-raised rounded-2xl shadow-2xl border border-subtle w-full max-w-3xl mx-4 max-h-[85vh] overflow-hidden flex flex-col modal-animate">
+        <div className="flex items-center justify-between p-5 qn-banner-surface text-white shrink-0">
           <div className="flex items-center gap-3">
             <Copy className="w-6 h-6" />
             <div>
@@ -198,17 +198,17 @@ export default function DuplicateDetectionModal() {
           {isAnalyzing ? (
             <div className="flex flex-col items-center justify-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mb-4"></div>
-              <p className="text-gray-500 dark:text-gray-400">Analyzing notes...</p>
+              <p className="text-content-muted">Analyzing notes...</p>
             </div>
           ) : duplicates.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-4">
                 <FileText className="w-8 h-8 text-green-500" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+              <h3 className="text-lg font-medium text-content mb-2">
                 No Duplicates Found
               </h3>
-              <p className="text-gray-500 dark:text-gray-400 max-w-md">
+              <p className="text-content-muted max-w-md">
                 All your notes are unique. No similar notes were detected.
               </p>
             </div>
@@ -224,49 +224,49 @@ export default function DuplicateDetectionModal() {
               {duplicates.map((group, index) => (
                 <div
                   key={group.original.id}
-                  className="border border-[#cbd1db] dark:border-gray-700 rounded-lg overflow-hidden"
+                  className="border border-subtle rounded-lg overflow-hidden"
                 >
-                  <div className="px-4 py-3 bg-gray-50 dark:bg-gray-900 border-b border-[#cbd1db] dark:border-gray-700">
+                  <div className="px-4 py-3 bg-surface-sunken border-b border-subtle">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      <span className="text-sm font-medium text-content-muted">
                         Gruppe {index + 1}
                       </span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                      <span className="text-xs text-content-muted">
                         {group.duplicates.length + 1} similar notes
                       </span>
                     </div>
                   </div>
-                  <div className="p-4 border-b border-[#cbd1db] dark:border-gray-700">
+                  <div className="p-4 border-b border-subtle">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs rounded">
                             Original
                           </span>
-                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                          <span className="text-xs text-content-muted">
                             {formatDate(group.original.createdAt)}
                           </span>
                         </div>
-                        <h4 className="font-medium text-gray-900 dark:text-white truncate">
+                        <h4 className="font-medium text-content truncate">
                           {group.original.title}
                         </h4>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
+                        <p className="text-sm text-content-muted mt-1 line-clamp-2">
                           {getContentPreview(group.original.content)}
                         </p>
                       </div>
                       <button
                         onClick={() => handleOpenNote(group.original.id)}
-                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors shrink-0"
+                        className="p-2 hover:bg-surface-hover rounded-lg transition-colors shrink-0"
                         title="Open"
                       >
-                        <ExternalLink className="w-4 h-4 text-gray-400" />
+                        <ExternalLink className="w-4 h-4 text-content-subtle" />
                       </button>
                     </div>
                   </div>
                   {group.duplicates.map((dup) => (
                     <div
                       key={dup.note.id}
-                      className="p-4 border-b border-[#cbd1db] dark:border-gray-700 last:border-b-0 bg-gray-50/50 dark:bg-gray-900/30"
+                      className="p-4 border-b border-subtle last:border-b-0 bg-surface-sunken dark:bg-surface-sunken"
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
@@ -274,27 +274,27 @@ export default function DuplicateDetectionModal() {
                             <span className="px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 text-xs rounded">
                               {Math.round(dup.similarity * 100)}% similar
                             </span>
-                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                            <span className="text-xs text-content-muted">
                               {dup.reason}
                             </span>
-                            <span className="text-xs text-gray-400 dark:text-gray-500">
+                            <span className="text-xs text-content-subtle">
                               {"\u2022"} {formatDate(dup.note.createdAt)}
                             </span>
                           </div>
-                          <h4 className="font-medium text-gray-900 dark:text-white truncate">
+                          <h4 className="font-medium text-content truncate">
                             {dup.note.title}
                           </h4>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
+                          <p className="text-sm text-content-muted mt-1 line-clamp-2">
                             {getContentPreview(dup.note.content)}
                           </p>
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
                           <button
                             onClick={() => handleOpenNote(dup.note.id)}
-                            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                            className="p-2 hover:bg-surface-hover rounded-lg transition-colors"
                             title="Open"
                           >
-                            <ExternalLink className="w-4 h-4 text-gray-400" />
+                            <ExternalLink className="w-4 h-4 text-content-subtle" />
                           </button>
                           <button
                             onClick={() => handleDeleteDuplicate(dup.note.id)}
@@ -312,10 +312,10 @@ export default function DuplicateDetectionModal() {
             </div>
           )}
         </div>
-        <div className="flex justify-end px-6 py-4 border-t border-[#cbd1db] dark:border-gray-700 shrink-0">
+        <div className="flex justify-end px-6 py-4 border-t border-subtle shrink-0">
           <button
             onClick={() => setDuplicateModalOpen(false)}
-            className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors border border-[#cbd1db] dark:border-gray-600"
+            className="px-4 py-2 text-content-muted hover:bg-surface-sunken dark:hover:bg-surface-sunken rounded-lg transition-colors border border-subtle "
           >
             Close
           </button>

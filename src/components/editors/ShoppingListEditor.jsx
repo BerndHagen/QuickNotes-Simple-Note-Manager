@@ -108,8 +108,8 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
   }[shoppingData.currency] || shoppingData.currency
 
   return (
-    <div className="qn-type-editor qn-type-shopping flex flex-col h-full bg-white dark:bg-gray-900">
-      <div className="qn-type-hero flex-shrink-0 p-4 border-b border-[#cbd1db] dark:border-gray-700 bg-[#e5eaf0] dark:bg-gray-800">
+    <div className="qn-type-editor qn-type-shopping flex flex-col h-full bg-surface-raised">
+      <div className="qn-type-hero flex-shrink-0 p-4 border-b border-subtle bg-[#e5eaf0] dark:bg-surface-raised">
         <div className="flex items-center justify-between mb-4">
           <div>
             <FocusedNoteTitle
@@ -120,14 +120,14 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
               onChange={onTitleChange}
               readOnly={readOnly}
             />
-            <p className="text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-content-muted mt-1">
               {checkedCount} of {totalCount} items checked
             </p>
           </div>
           <div className="text-right">
             {shoppingData.showPrices && (
               <div className="space-y-1">
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                <div className="text-2xl font-bold text-content">
                   {currencySymbol}{total.toFixed(2)}
                 </div>
                 {shoppingData.budget && (
@@ -136,7 +136,7 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
                     {total > shoppingData.budget && ' (Over!)'}
                   </div>
                 )}
-                <div className="flex gap-4 text-sm text-gray-500 dark:text-gray-400">
+                <div className="flex gap-4 text-sm text-content-muted">
                   <span>{"\u2713"} {currencySymbol}{checkedTotal.toFixed(2)}</span>
                   <span>{"\u25CB"} {currencySymbol}{uncheckedTotal.toFixed(2)}</span>
                 </div>
@@ -144,14 +144,14 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
             )}
           </div>
         </div>
-        <div className="w-full h-2 rounded-full bg-gray-300 dark:bg-gray-600 overflow-hidden">
+        <div className="w-full h-2 rounded-full bg-surface-active dark:bg-surface-active overflow-hidden">
           <div
             className="h-full bg-emerald-500 rounded-full transition-all"
             style={{ width: `${totalCount > 0 ? (checkedCount / totalCount) * 100 : 0}%` }}
           />
         </div>
       </div>
-      <div className="qn-type-tabs flex-shrink-0 p-4 border-b border-[#cbd1db] dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+      <div className="qn-type-tabs flex-shrink-0 p-4 border-b border-subtle bg-surface-sunken">
         <div className="flex gap-2 flex-wrap">
           <input
             type="text"
@@ -160,13 +160,13 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
             onChange={(e) => setNewItemName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && addItem()}
             placeholder="Add item..."
-            className="flex-1 min-w-[200px] px-4 py-2 rounded-lg bg-white dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
+            className="flex-1 min-w-[200px] px-4 py-2 rounded-lg bg-white dark:bg-surface-sunken border border-subtle outline-none text-content focus:ring-2 focus:ring-emerald-500"
           />
           <select
             aria-label="Category for new item"
             value={newItemCategory}
             onChange={(e) => setNewItemCategory(e.target.value)}
-            className="px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white"
+            className="px-3 py-2 rounded-lg bg-white dark:bg-surface-sunken border border-subtle outline-none text-content"
           >
             {shoppingData.categories.map((cat) => (
               <option key={cat.id} value={cat.id}>{cat.icon} {cat.name}</option>
@@ -179,13 +179,13 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
               value={newItemQuantity}
               onChange={(e) => setNewItemQuantity(e.target.value)}
               placeholder="Qty"
-              className="w-16 px-2 py-2 rounded-l-lg bg-white dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white text-center"
+              className="w-16 px-2 py-2 rounded-l-lg bg-white dark:bg-surface-sunken border border-subtle outline-none text-content text-center"
             />
             <select
               aria-label="Unit for new item"
               value={newItemUnit}
               onChange={(e) => setNewItemUnit(e.target.value)}
-              className="w-20 px-2 py-2 rounded-r-lg bg-white dark:bg-gray-700 border-y border-r border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white"
+              className="w-20 px-2 py-2 rounded-r-lg bg-white dark:bg-surface-sunken border-y border-r border-subtle outline-none text-content"
             >
               {UNITS.map((unit) => (
                 <option key={unit} value={unit}>{unit}</option>
@@ -194,7 +194,7 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
           </div>
           {shoppingData.showPrices && (
             <div className="flex items-center">
-              <span className="px-2 py-2 bg-gray-200 dark:bg-gray-600 rounded-l-lg text-gray-600 dark:text-gray-400">
+              <span className="px-2 py-2 bg-surface-sunken dark:bg-surface-active rounded-l-lg text-content-muted">
                 {currencySymbol}
               </span>
               <input
@@ -204,7 +204,7 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
                 onChange={(e) => setNewItemPrice(e.target.value)}
                 placeholder="Price"
                 step="0.01"
-                className="w-20 px-2 py-2 rounded-r-lg bg-white dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white"
+                className="w-20 px-2 py-2 rounded-r-lg bg-white dark:bg-surface-sunken border border-subtle outline-none text-content"
               />
             </div>
           )}
@@ -221,7 +221,7 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
           <div className="flex gap-2">
             <button
               onClick={() => setShowSettings(!showSettings)}
-              className="text-sm text-gray-600 dark:text-gray-400 hover:text-emerald-500"
+              className="text-sm text-content-muted hover:text-emerald-500"
             >
               Settings
             </button>
@@ -230,7 +230,7 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
             <button
               onClick={uncheckAll}
               disabled={checkedCount === 0}
-              className="text-sm text-gray-600 dark:text-gray-400 hover:text-emerald-500"
+              className="text-sm text-content-muted hover:text-emerald-500"
             >
               Uncheck All
             </button>
@@ -244,15 +244,15 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
           </div>
         </div>
         {showSettings && (
-          <div className="mt-3 p-4 rounded-lg bg-white dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600">
+          <div className="mt-3 p-4 rounded-lg bg-white dark:bg-surface-sunken border border-subtle ">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <div>
-                <label className="text-sm text-gray-600 dark:text-gray-400 mb-1 block">Currency</label>
+                <label className="text-sm text-content-muted mb-1 block">Currency</label>
                 <select
                   aria-label="Shopping list currency"
                   value={shoppingData.currency}
                   onChange={(e) => update('currency', e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-600 border border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white"
+                  className="w-full px-3 py-2 rounded-lg bg-surface-sunken dark:bg-surface-active border border-subtle outline-none text-content"
                 >
                   <option value="USD">$ USD</option>
                   <option value="EUR">{"\u20AC"} EUR</option>
@@ -261,14 +261,14 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
                 </select>
               </div>
               <div>
-                <label className="text-sm text-gray-600 dark:text-gray-400 mb-1 block">Budget</label>
+                <label className="text-sm text-content-muted mb-1 block">Budget</label>
                 <input
                   type="number"
                   aria-label="Shopping budget"
                   value={shoppingData.budget || ''}
                   onChange={(e) => update('budget', e.target.value ? parseFloat(e.target.value) : null)}
                   placeholder="Optional"
-                  className="w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-600 border border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white"
+                  className="w-full px-3 py-2 rounded-lg bg-surface-sunken dark:bg-surface-active border border-subtle outline-none text-content"
                 />
               </div>
               <div className="flex items-center gap-4">
@@ -277,9 +277,9 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
                     type="checkbox"
                     checked={shoppingData.showPrices}
                     onChange={(e) => update('showPrices', e.target.checked)}
-                    className="w-4 h-4 rounded border-[#cbd1db] text-emerald-500 focus:ring-emerald-500"
+                    className="w-4 h-4 rounded border-subtle text-emerald-500 focus:ring-emerald-500"
                   />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">Show Prices</span>
+                  <span className="text-sm text-content-muted">Show Prices</span>
                 </label>
               </div>
             </div>
@@ -288,7 +288,7 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
       </div>
       <div className="flex-1 overflow-y-auto">
         {shoppingData.items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-gray-400">
+          <div className="flex flex-col items-center justify-center h-full text-content-subtle">
             <ShoppingBag className="w-16 h-16 mb-4 opacity-50" />
             <p className="text-lg">Your shopping list is empty</p>
             <p className="text-sm mt-1">Add items using the form above</p>
@@ -306,27 +306,27 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
               return (
                 <div
                   key={category.id}
-                  className="rounded-xl overflow-hidden border border-[#cbd1db] dark:border-gray-700"
+                  className="rounded-xl overflow-hidden border border-subtle"
                 >
                   <button
                     onClick={() => toggleCategory(category.id)}
                     aria-expanded={isExpanded}
-                    className="w-full flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    className="w-full flex items-center justify-between p-3 bg-surface-sunken hover:bg-surface-hover transition-colors"
                   >
                     <div className="flex items-center gap-3">
                       {isExpanded ? (
-                        <ChevronDown className="w-5 h-5 text-gray-500" />
+                        <ChevronDown className="w-5 h-5 text-content-muted" />
                       ) : (
-                        <ChevronRight className="w-5 h-5 text-gray-500" />
+                        <ChevronRight className="w-5 h-5 text-content-muted" />
                       )}
                       <span className="text-xl">{category.icon}</span>
-                      <span className="font-medium text-gray-900 dark:text-white">{category.name}</span>
-                      <span className="text-sm text-gray-500">
+                      <span className="font-medium text-content">{category.name}</span>
+                      <span className="text-sm text-content-muted">
                         ({checkedInCategory}/{categoryItems.length})
                       </span>
                     </div>
                     {shoppingData.showPrices && (
-                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                      <span className="text-sm font-medium text-content-muted">
                         {currencySymbol}{categoryTotal.toFixed(2)}
                       </span>
                     )}
@@ -337,16 +337,16 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
                         <div
                           key={item.id}
                           className={`flex flex-wrap items-center gap-3 p-3 ${
-                            item.checked ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-white dark:bg-gray-900'
-                          }`}
+ item.checked ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-surface-raised'
+ }`}
                         >
                           <button
                             onClick={() => toggleChecked(item.id)}
                             aria-label={item.checked ? `Mark ${item.name} as not purchased` : `Mark ${item.name} as purchased`}
                             className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
-                              item.checked
-                                ? 'bg-emerald-500 border-emerald-500 text-white'
-                                : 'border-[#cbd1db] dark:border-gray-600 hover:border-emerald-500'
+ item.checked
+ ? 'bg-emerald-500 border-emerald-500 text-white'
+                                : 'border-subtle  hover:border-emerald-500'
                             }`}
                           >
                             {item.checked && <Check className="w-4 h-4" />}
@@ -360,28 +360,28 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
                                 onChange={(e) => updateItem(item.id, { name: e.target.value })}
                                 onBlur={() => setEditingItem(null)}
                                 onKeyDown={(e) => e.key === 'Enter' && setEditingItem(null)}
-                                className="w-full px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white"
+                                className="w-full px-2 py-1 rounded bg-surface-sunken border border-subtle outline-none text-content"
                                 autoFocus
                               />
                             ) : (
                               <span
                                 className={`block truncate ${
-                                  item.checked
-                                    ? 'text-gray-400 line-through'
-                                    : 'text-gray-900 dark:text-white'
+ item.checked
+ ? 'text-content-subtle line-through'
+                                    : 'text-content'
                                 }`}
                               >
                                 {item.name}
                               </span>
                             )}
                           </div>
-                          <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
+                          <div className="flex items-center gap-1 text-sm text-content-muted">
                             <input
                               type="number"
                               aria-label={`Quantity for ${item.name}`}
                               value={item.quantity}
                               onChange={(e) => updateItem(item.id, { quantity: parseFloat(e.target.value) || 1 })}
-                              className="w-14 px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 text-center outline-none text-gray-900 dark:text-white"
+                              className="w-14 px-2 py-1 rounded bg-surface-sunken border border-subtle text-center outline-none text-content"
                               min="0.1"
                               step="0.1"
                             />
@@ -389,7 +389,7 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
                               aria-label={`Unit for ${item.name}`}
                               value={item.unit}
                               onChange={(e) => updateItem(item.id, { unit: e.target.value })}
-                              className="px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white"
+                              className="px-2 py-1 rounded bg-surface-sunken border border-subtle outline-none text-content"
                             >
                               {UNITS.map((unit) => (
                                 <option key={unit} value={unit}>{unit}</option>
@@ -400,7 +400,7 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
                             aria-label={`Category for ${item.name}`}
                             value={item.category}
                             onChange={(e) => updateItem(item.id, { category: e.target.value })}
-                            className="max-w-32 px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 outline-none text-sm text-gray-900 dark:text-white"
+                            className="max-w-32 px-2 py-1 rounded bg-surface-sunken border border-subtle outline-none text-sm text-content"
                           >
                             {shoppingData.categories.map((itemCategory) => (
                               <option key={itemCategory.id} value={itemCategory.id}>{itemCategory.icon} {itemCategory.name}</option>
@@ -408,7 +408,7 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
                           </select>
                           {shoppingData.showPrices && (
                             <div className="flex items-center gap-1">
-                              <span className="text-gray-500">{currencySymbol}</span>
+                              <span className="text-content-muted">{currencySymbol}</span>
                               <input
                                 type="number"
                                 aria-label={`Price for ${item.name}`}
@@ -416,7 +416,7 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
                                 onChange={(e) => updateItem(item.id, { price: e.target.value ? parseFloat(e.target.value) : null })}
                                 placeholder="0.00"
                                 step="0.01"
-                                className="w-20 px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white text-right"
+                                className="w-20 px-2 py-1 rounded bg-surface-sunken border border-subtle outline-none text-content text-right"
                               />
                             </div>
                           )}
@@ -429,14 +429,14 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
                             <button
                               onClick={() => setEditingItem(item.id)}
                               aria-label={`Rename ${item.name}`}
-                              className="p-1 rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                              className="p-1 rounded text-content-subtle hover:text-content-muted dark:hover:text-content-subtle"
                             >
                               <Edit3 className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => deleteItem(item.id)}
                               aria-label={`Delete ${item.name}`}
-                              className="p-1 rounded text-gray-400 hover:text-red-500"
+                              className="p-1 rounded text-content-subtle hover:text-red-500"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -452,14 +452,14 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
         )}
       </div>
       {shoppingData.items.length > 0 && shoppingData.showPrices && (
-        <div className="flex-shrink-0 p-4 border-t border-[#cbd1db] dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+        <div className="flex-shrink-0 p-4 border-t border-subtle bg-surface-sunken">
           <div className="flex justify-between items-center">
             <div>
-              <span className="text-gray-600 dark:text-gray-400">Total Items:</span>
-              <span className="font-bold text-gray-900 dark:text-white ml-2">{totalCount}</span>
+              <span className="text-content-muted">Total Items:</span>
+              <span className="font-bold text-content ml-2">{totalCount}</span>
             </div>
             <div className="text-right">
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-content-muted">
                 {checkedCount > 0 && (
                   <span className="text-emerald-500">Purchased: {currencySymbol}{checkedTotal.toFixed(2)} | </span>
                 )}
@@ -468,7 +468,7 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
               <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
                 {currencySymbol}{total.toFixed(2)}
                 {shoppingData.budget && (
-                  <span className={`text-sm ml-2 ${total > shoppingData.budget ? 'text-red-500' : 'text-gray-500'}`}>
+                  <span className={`text-sm ml-2 ${total > shoppingData.budget ? 'text-red-500' : 'text-content-muted'}`}>
                     / {currencySymbol}{shoppingData.budget.toFixed(2)}
                   </span>
                 )}

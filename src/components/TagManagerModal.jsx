@@ -118,10 +118,10 @@ export default function TagManagerModal() {
   return (
     <LegacyDialog label="Manage tags" onClose={() => setTagManagerOpen(false)} align="center">
       <div 
-        className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-[#cbd1db] dark:border-gray-700 w-full max-w-lg max-h-[85vh] overflow-hidden flex flex-col modal-animate"
+        className="bg-surface-raised rounded-2xl shadow-2xl border border-subtle w-full max-w-lg max-h-[85vh] overflow-hidden flex flex-col modal-animate"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
+        <div className="flex items-center justify-between p-5 qn-banner-surface text-white">
           <div className="flex items-center gap-3">
             <Tag className="w-6 h-6" />
             <div>
@@ -140,24 +140,24 @@ export default function TagManagerModal() {
           {!showNewTag && (
             <button
               onClick={() => setShowNewTag(true)}
-              className="w-full mb-4 p-3 border-2 border-dashed border-[#cbd1db] dark:border-gray-600 rounded-xl hover:border-emerald-500 dark:hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors flex items-center justify-center gap-2 text-gray-500 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400"
+              className="w-full mb-4 p-3 border-2 border-dashed border-subtle rounded-xl hover:border-emerald-500 dark:hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors flex items-center justify-center gap-2 text-content-muted hover:text-emerald-600 dark:hover:text-emerald-400"
             >
               <Plus className="w-5 h-5" />
               <span>{t('tags.addNew', 'Add New Tag')}</span>
             </button>
           )}
           {showNewTag && (
-            <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-[#cbd1db] dark:border-gray-700">
+            <div className="mb-4 p-4 bg-surface-sunken rounded-xl border border-subtle">
               <div className="flex items-center gap-3 mb-3">
                 <div className="relative flex-1">
-                  <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-content-subtle" />
                   <input
                     type="text"
                     maxLength={MAX_TAG_NAME_LENGTH}
                     value={newTagName}
                     onChange={(e) => setNewTagName(e.target.value)}
                     placeholder={t('tags.tagName', 'Tag name')}
-                    className="w-full pl-9 pr-3 py-2 bg-white dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
+                    className="w-full pl-9 pr-3 py-2 bg-surface-raised border border-subtle rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
                     autoFocus
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') handleCreateTag()
@@ -172,8 +172,8 @@ export default function TagManagerModal() {
                     key={color}
                     onClick={() => setNewTagColor(color)}
                     className={`w-6 h-6 rounded-full transition-transform hover:scale-110 ${
-                      newTagColor === color ? 'ring-2 ring-offset-2 ring-gray-400 dark:ring-gray-500' : ''
-                    }`}
+ newTagColor === color ? 'ring-2 ring-offset-2 ring-gray-400 dark:ring-gray-500' : ''
+ }`}
                     style={{ backgroundColor: color }}
                   />
                 ))}
@@ -183,7 +183,7 @@ export default function TagManagerModal() {
                 <button
                   onClick={handleCreateTag}
                   disabled={!newTagName.trim()}
-                  className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-surface-active dark:disabled:bg-surface-active text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
                 >
                   <Check className="w-4 h-4" />
                   {t('common.create', 'Create')}
@@ -193,7 +193,7 @@ export default function TagManagerModal() {
                     setShowNewTag(false)
                     setNewTagName('')
                   }}
-                  className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium transition-colors border border-[#cbd1db] dark:border-gray-600"
+                  className="px-4 py-2 bg-surface-sunken hover:bg-surface-sunken dark:hover:bg-surface-active text-content-muted rounded-lg font-medium transition-colors border border-subtle "
                 >
                   {t('common.cancel', 'Cancel')}
                 </button>
@@ -201,7 +201,7 @@ export default function TagManagerModal() {
             </div>
           )}
           {tags.length === 0 ? (
-            <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+            <div className="text-center py-12 text-content-muted">
               <Tag className="w-12 h-12 mx-auto mb-3 opacity-30" />
               <p>{t('tags.noTags', 'No tags yet')}</p>
               <p className="text-sm mt-1">{t('tags.createFirst', 'Create your first tag to organize notes')}</p>
@@ -211,19 +211,19 @@ export default function TagManagerModal() {
               {tags.map((tag) => (
                 <div
                   key={tag.id}
-                  className="p-3 bg-gray-50 dark:bg-gray-900 rounded-xl border border-[#cbd1db] dark:border-gray-700 hover:border-[#cbd1db] dark:hover:border-gray-600 transition-colors"
+                  className="p-3 bg-surface-sunken rounded-xl border border-subtle hover:border-subtle dark:hover:border-subtle transition-colors"
                 >
                   {editingTagId === tag.id ? (
                     <div>
                       <div className="flex items-center gap-3 mb-3">
                         <div className="relative flex-1">
-                          <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-content-subtle" />
                           <input
                             type="text"
                             maxLength={MAX_TAG_NAME_LENGTH}
                             value={editingName}
                             onChange={(e) => setEditingName(e.target.value)}
-                            className="w-full pl-9 pr-3 py-2 bg-white dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
+                            className="w-full pl-9 pr-3 py-2 bg-surface-raised border border-subtle rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
                             autoFocus
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') handleSaveEdit()
@@ -238,8 +238,8 @@ export default function TagManagerModal() {
                             key={color}
                             onClick={() => setEditingColor(color)}
                             className={`w-6 h-6 rounded-full transition-transform hover:scale-110 ${
-                              editingColor === color ? 'ring-2 ring-offset-2 ring-gray-400 dark:ring-gray-500' : ''
-                            }`}
+ editingColor === color ? 'ring-2 ring-offset-2 ring-gray-400 dark:ring-gray-500' : ''
+ }`}
                             style={{ backgroundColor: color }}
                           />
                         ))}
@@ -255,7 +255,7 @@ export default function TagManagerModal() {
                         </button>
                         <button
                           onClick={handleCancelEdit}
-                          className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium transition-colors border border-[#cbd1db] dark:border-gray-600"
+                          className="px-4 py-2 bg-surface-sunken hover:bg-surface-sunken dark:hover:bg-surface-active text-content-muted rounded-lg font-medium transition-colors border border-subtle "
                         >
                           {t('common.cancel', 'Cancel')}
                         </button>
@@ -263,7 +263,7 @@ export default function TagManagerModal() {
                     </div>
                   ) : deleteConfirmId === tag.id ? (
                     <div>
-                      <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
+                      <p className="text-sm text-content-muted mb-3">
                         {t('tags.deleteConfirm', 'Delete this tag? It will be removed from all notes.')}
                       </p>
                       <div className="flex gap-2">
@@ -275,7 +275,7 @@ export default function TagManagerModal() {
                         </button>
                         <button
                           onClick={() => setDeleteConfirmId(null)}
-                          className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium transition-colors border border-[#cbd1db] dark:border-gray-600"
+                          className="px-4 py-2 bg-surface-sunken hover:bg-surface-sunken dark:hover:bg-surface-active text-content-muted rounded-lg font-medium transition-colors border border-subtle "
                         >
                           {t('common.cancel', 'Cancel')}
                         </button>
@@ -288,10 +288,10 @@ export default function TagManagerModal() {
                           className="w-4 h-4 rounded-full flex-shrink-0"
                           style={{ backgroundColor: tag.color }}
                         />
-                        <span className="font-medium text-gray-900 dark:text-white">
+                        <span className="font-medium text-content">
                           #{tag.name}
                         </span>
-                        <span className="text-sm text-gray-500 dark:text-gray-400">
+                        <span className="text-sm text-content-muted">
                           {getNotesCountForTag(tag.name)} {getNotesCountForTag(tag.name) === 1 
                             ? (t('notes.note', 'note')) 
                             : (t('notes.notes', 'notes'))}
@@ -300,14 +300,14 @@ export default function TagManagerModal() {
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => handleStartEdit(tag)}
-                          className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                          className="p-2 hover:bg-surface-sunken dark:hover:bg-surface-sunken rounded-lg transition-colors text-content-muted hover:text-content dark:hover:text-content-subtle"
                           title={t('common.edit', 'Edit')}
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => setDeleteConfirmId(tag.id)}
-                          className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors text-gray-500 hover:text-red-600"
+                          className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors text-content-muted hover:text-red-600"
                           title={t('common.delete', 'Delete')}
                         >
                           <Trash2 className="w-4 h-4" />

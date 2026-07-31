@@ -106,6 +106,7 @@ export default {
         DEFAULT: 'var(--qn-border)',
         subtle: 'var(--qn-border-subtle)',
         strong: 'var(--qn-border-strong)',
+        control: 'var(--qn-border-control)',
       },
 
       borderRadius: {

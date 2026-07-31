@@ -5,7 +5,7 @@ const VARIANTS = {
   primary:
     'bg-accent text-accent-on hover:bg-accent-hover active:bg-accent-active shadow-xs disabled:bg-[var(--qn-border-strong)] disabled:text-content-subtle disabled:shadow-none',
   secondary:
-    'bg-surface-raised text-content border border-strong hover:bg-surface-hover active:bg-surface-active disabled:text-content-subtle',
+    'bg-surface-raised text-content border border-control hover:bg-surface-hover active:bg-surface-active disabled:text-content-subtle',
   subtle:
     'bg-surface-sunken text-content hover:bg-surface-hover active:bg-surface-active disabled:text-content-subtle',
   ghost:

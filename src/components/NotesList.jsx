@@ -352,7 +352,7 @@ export default function NotesList({ sidebarToggle, onOpenNote }) {
   const listBody = groups.map((group) => (
     <li key={group.id}>
       {group.label && (
-        <h3 className="sticky top-0 z-sticky flex items-center gap-1.5 bg-panel/95 px-4 pb-1 pt-3 text-ui-sm font-semibold text-content-muted backdrop-blur">
+        <h3 className="sticky top-0 z-sticky flex items-center gap-1.5 bg-panel px-4 pb-1 pt-3 text-ui-sm font-semibold text-content-muted backdrop-blur">
           {group.id === 'pinned' && <Pin className="h-3 w-3 shrink-0" aria-hidden="true" />}
           {group.label}
         </h3>
@@ -490,8 +490,8 @@ export default function NotesList({ sidebarToggle, onOpenNote }) {
             aria-label="List view"
             title="List view"
             className={`flex h-6 w-7 items-center justify-center rounded-[6px] transition-colors duration-fast ${
-              viewMode === 'list'
-                ? 'bg-surface-raised text-content shadow-xs'
+ viewMode === 'list'
+ ? 'bg-surface-raised text-content shadow-xs'
                 : 'text-content-subtle hover:text-content'
             }`}
           >
@@ -504,8 +504,8 @@ export default function NotesList({ sidebarToggle, onOpenNote }) {
             aria-label="Grid view"
             title="Grid view"
             className={`flex h-6 w-7 items-center justify-center rounded-[6px] transition-colors duration-fast ${
-              viewMode === 'grid'
-                ? 'bg-surface-raised text-content shadow-xs'
+ viewMode === 'grid'
+ ? 'bg-surface-raised text-content shadow-xs'
                 : 'text-content-subtle hover:text-content'
             }`}
           >

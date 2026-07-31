@@ -95,7 +95,7 @@ export default function NoteLinkPopover({ editor, isOpen, onClose, position }) {
   return (
     <div
       ref={popoverRef}
-      className="fixed z-50 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-[#cbd1db] dark:border-gray-700 w-80 overflow-hidden"
+      className="fixed z-50 bg-surface-raised rounded-xl shadow-2xl border border-subtle w-80 overflow-hidden"
       style={(() => {
         const popoverWidth = 320
         const popoverHeight = 400
@@ -110,21 +110,21 @@ export default function NoteLinkPopover({ editor, isOpen, onClose, position }) {
         return { left: clampedX, top: clampedY }
       })()}
     >
-      <div className="p-3 border-b border-[#cbd1db] dark:border-gray-700 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20">
+      <div className="p-3 border-b border-subtle bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20">
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-content flex items-center gap-2">
             <Link2 className="w-4 h-4 text-emerald-600" />
             {t('noteLink.title')}
           </h3>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
+            className="p-1 hover:bg-surface-sunken dark:hover:bg-surface-sunken rounded transition-colors"
           >
-            <X className="w-4 h-4 text-gray-500" />
+            <X className="w-4 h-4 text-content-muted" />
           </button>
         </div>
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-content-subtle" />
           <input
             ref={inputRef}
             type="text"
@@ -132,20 +132,20 @@ export default function NoteLinkPopover({ editor, isOpen, onClose, position }) {
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={t('noteLink.searchNotes')}
-            className="w-full pl-9 pr-3 py-2 bg-white dark:bg-gray-900 border border-[#cbd1db] dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
+            className="w-full pl-9 pr-3 py-2 bg-surface-raised border border-subtle rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
           />
         </div>
       </div>
       <div className="max-h-64 overflow-y-auto">
         {filteredNotes.length === 0 ? (
-          <div className="p-4 text-center text-gray-500 dark:text-gray-400">
+          <div className="p-4 text-center text-content-muted">
             <FileText className="w-8 h-8 mx-auto mb-2 opacity-30" />
             <p className="text-sm">{t('noteLink.noNotesFound')}</p>
           </div>
         ) : (
           <div className="py-1">
             {searchQuery === '' && (
-              <div className="px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+              <div className="px-3 py-1.5 text-xs font-medium text-content-muted uppercase">
                 {t('noteLink.recentNotes')}
               </div>
             )}
@@ -155,23 +155,23 @@ export default function NoteLinkPopover({ editor, isOpen, onClose, position }) {
                 onClick={() => insertNoteLink(note)}
                 onMouseEnter={() => setSelectedIndex(index)}
                 className={`w-full px-3 py-2 flex items-start gap-3 transition-colors ${
-                  index === selectedIndex
-                    ? 'bg-emerald-50 dark:bg-emerald-900/30'
-                    : 'hover:bg-gray-100 dark:hover:bg-gray-700/50'
+ index === selectedIndex
+ ? 'bg-emerald-50 dark:bg-emerald-900/30'
+                    : 'hover:bg-surface-hover'
                 }`}
               >
                 <FileText className={`w-5 h-5 flex-shrink-0 mt-0.5 ${
-                  index === selectedIndex ? 'text-emerald-600' : 'text-gray-400'
-                }`} />
+ index === selectedIndex ? 'text-emerald-600' : 'text-content-subtle'
+ }`} />
                 <div className="flex-1 text-left min-w-0">
                   <p className={`text-sm font-medium truncate ${
-                    index === selectedIndex 
-                      ? 'text-emerald-900 dark:text-emerald-100' 
-                      : 'text-gray-900 dark:text-white'
+ index === selectedIndex 
+ ? 'text-emerald-900 dark:text-emerald-100' 
+                      : 'text-content'
                   }`}>
                     {note.title}
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                  <p className="text-xs text-content-muted truncate">
                     {getPreview(note.content)}
                   </p>
                 </div>
@@ -183,13 +183,13 @@ export default function NoteLinkPopover({ editor, isOpen, onClose, position }) {
           </div>
         )}
       </div>
-      <div className="px-3 py-2 bg-gray-50 dark:bg-gray-900 border-t border-[#cbd1db] dark:border-gray-700">
-        <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2">
-          <span className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-[10px]">{"\u2191\u2193"}</span>
+      <div className="px-3 py-2 bg-surface-sunken border-t border-subtle">
+        <p className="text-xs text-content-muted flex items-center gap-2">
+          <span className="px-1.5 py-0.5 bg-surface-sunken dark:bg-surface-sunken rounded text-[10px]">{"\u2191\u2193"}</span>
           Navigate
-          <span className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-[10px]">Enter</span>
+          <span className="px-1.5 py-0.5 bg-surface-sunken dark:bg-surface-sunken rounded text-[10px]">Enter</span>
           Select
-          <span className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-[10px]">Esc</span>
+          <span className="px-1.5 py-0.5 bg-surface-sunken dark:bg-surface-sunken rounded text-[10px]">Esc</span>
           Close
         </p>
       </div>

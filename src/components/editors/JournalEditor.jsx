@@ -148,8 +148,8 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
   ]
 
   return (
-    <div className="qn-type-editor qn-type-journal flex flex-col h-full bg-white dark:bg-gray-900">
-      <div className="qn-type-hero flex-shrink-0 p-4 border-b border-[#cbd1db] dark:border-gray-700 bg-[#e5eaf0] dark:bg-gray-800">
+    <div className="qn-type-editor qn-type-journal flex flex-col h-full bg-surface-raised">
+      <div className="qn-type-hero flex-shrink-0 p-4 border-b border-subtle bg-[#e5eaf0] dark:bg-surface-raised">
         <div className="flex items-center justify-between mb-4">
           <div>
             <FocusedNoteTitle
@@ -164,16 +164,16 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
               <button
                 onClick={() => changeDate(-1)}
                 aria-label="Previous journal day"
-                className="p-1 rounded-lg bg-gray-200/50 dark:bg-gray-700 hover:bg-gray-300/50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300"
+                className="p-1 rounded-lg bg-surface-sunken dark:bg-surface-sunken hover:bg-surface-active dark:hover:bg-surface-active text-content-muted"
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
-              <span className="text-gray-900 dark:text-white font-medium">{dateDisplay}</span>
+              <span className="text-content font-medium">{dateDisplay}</span>
               <button
                 onClick={() => changeDate(1)}
                 disabled={isToday}
                 aria-label="Next journal day"
-                className="p-1 rounded-lg bg-gray-200/50 dark:bg-gray-700 hover:bg-gray-300/50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 disabled:opacity-50"
+                className="p-1 rounded-lg bg-surface-sunken dark:bg-surface-sunken hover:bg-surface-active dark:hover:bg-surface-active text-content-muted disabled:opacity-50"
               >
                 <ChevronRight className="w-5 h-5" />
               </button>
@@ -182,13 +182,13 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
           
           <div className="text-right">
             <div className="flex items-baseline justify-end gap-2 mb-2">
-              <span className="text-2xl font-bold text-gray-900 dark:text-white">{completionPercent}%</span>
-              <span className="text-gray-500 dark:text-gray-400 text-sm">entry complete</span>
+              <span className="text-2xl font-bold text-content">{completionPercent}%</span>
+              <span className="text-content-muted text-sm">entry complete</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-32 h-2 rounded-full bg-gray-300 dark:bg-gray-600 overflow-hidden">
+              <div className="w-32 h-2 rounded-full bg-surface-active dark:bg-surface-active overflow-hidden">
                 <div
-                  className="h-full bg-amber-500 rounded-full transition-all"
+                  className="h-full bg-accent rounded-full transition-all"
                   style={{ width: `${completionPercent}%` }}
                 />
               </div>
@@ -197,19 +197,19 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <span className="text-gray-500 dark:text-gray-400 text-sm">Mood:</span>
+            <span className="text-content-muted text-sm">Mood:</span>
             <span className="text-2xl">{journalData.mood ? MOODS.find(m => m.id === journalData.mood)?.emoji : '\u2753'}</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-gray-500 dark:text-gray-400 text-sm">Energy:</span>
+            <span className="text-content-muted text-sm">Energy:</span>
             <div className="flex gap-0.5">
               {[1, 2, 3, 4, 5].map((level) => (
                 <div
                   key={level}
                   className={`w-3 h-5 rounded-sm ${
-                    level <= (journalData.energy || 0)
-                      ? 'bg-amber-500'
-                      : 'bg-gray-300 dark:bg-gray-600'
+ level <= (journalData.energy || 0)
+ ? 'bg-accent'
+                      : 'bg-surface-active dark:bg-surface-active'
                   }`}
                 />
               ))}
@@ -222,16 +222,16 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
           )}
         </div>
       </div>
-      <div className="qn-type-tabs flex-shrink-0 flex gap-1 p-2 border-b border-[#cbd1db] dark:border-gray-700 bg-gray-50 dark:bg-gray-800 overflow-x-auto">
+      <div className="qn-type-tabs flex-shrink-0 flex gap-1 p-2 border-b border-subtle bg-surface-sunken overflow-x-auto">
         {sections.map(section => (
           <button
             key={section.id}
             onClick={() => setActiveSection(section.id)}
             aria-pressed={activeSection === section.id}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-              activeSection === section.id
-                ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300'
-                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+ activeSection === section.id
+ ? 'bg-accent-soft text-accent-text'
+                : 'text-content-muted hover:bg-surface-hover'
             }`}
           >
             <section.icon className="w-4 h-4" />
@@ -243,8 +243,8 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
         {activeSection === 'morning' && (
           <div className="max-w-2xl mx-auto space-y-6">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                <Smile className="w-5 h-5 text-amber-500" />
+              <h3 className="text-lg font-semibold text-content mb-3 flex items-center gap-2">
+                <Smile className="w-5 h-5 text-accent-text" />
                 How are you feeling?
               </h3>
               <div className="flex gap-3 justify-center">
@@ -254,20 +254,20 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
                     onClick={() => update('mood', mood.id)}
                     aria-pressed={journalData.mood === mood.id}
                     className={`flex flex-col items-center gap-2 p-4 rounded-xl transition-all ${
-                      journalData.mood === mood.id
-                        ? 'bg-amber-100 dark:bg-amber-900/30 ring-2 ring-amber-500 scale-110'
-                        : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
+ journalData.mood === mood.id
+ ? 'bg-accent-soft ring-2 ring-amber-500 scale-110'
+                        : 'bg-surface-sunken hover:bg-surface-sunken dark:hover:bg-surface-sunken'
                     }`}
                   >
                     <span className="text-4xl">{mood.emoji}</span>
-                    <span className="text-xs text-gray-600 dark:text-gray-400">{mood.label}</span>
+                    <span className="text-xs text-content-muted">{mood.label}</span>
                   </button>
                 ))}
               </div>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                <Zap className="w-5 h-5 text-amber-500" />
+              <h3 className="text-lg font-semibold text-content mb-3 flex items-center gap-2">
+                <Zap className="w-5 h-5 text-accent-text" />
                 Energy Level
               </h3>
               <div className="flex gap-2 justify-center">
@@ -277,9 +277,9 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
                     onClick={() => update('energy', level.id)}
                     aria-pressed={journalData.energy === level.id}
                     className={`flex flex-col items-center gap-1 p-3 rounded-xl transition-all flex-1 max-w-[100px] ${
-                      journalData.energy === level.id
-                        ? 'bg-amber-100 dark:bg-amber-900/30 ring-2 ring-amber-500'
-                        : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
+ journalData.energy === level.id
+ ? 'bg-accent-soft ring-2 ring-amber-500'
+                        : 'bg-surface-sunken hover:bg-surface-sunken dark:hover:bg-surface-sunken'
                     }`}
                   >
                     <div className="flex gap-0.5">
@@ -287,19 +287,19 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
                         <div
                           key={i}
                           className={`w-2 h-4 rounded-sm ${
-                            i <= level.id ? 'bg-amber-500' : 'bg-gray-300 dark:bg-gray-600'
-                          }`}
+ i <= level.id ? 'bg-accent' : 'bg-surface-active dark:bg-surface-active'
+ }`}
                         />
                       ))}
                     </div>
-                    <span className="text-xs text-gray-600 dark:text-gray-400">{level.label}</span>
+                    <span className="text-xs text-content-muted">{level.label}</span>
                   </button>
                 ))}
               </div>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                <Cloud className="w-5 h-5 text-amber-500" />
+              <h3 className="text-lg font-semibold text-content mb-3 flex items-center gap-2">
+                <Cloud className="w-5 h-5 text-accent-text" />
                 Weather
               </h3>
               <div className="flex gap-2 justify-center flex-wrap">
@@ -309,20 +309,20 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
                     onClick={() => update('weather', w.id)}
                     aria-pressed={journalData.weather === w.id}
                     className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${
-                      journalData.weather === w.id
-                        ? 'bg-amber-100 dark:bg-amber-900/30 ring-2 ring-amber-500'
-                        : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
+ journalData.weather === w.id
+ ? 'bg-accent-soft ring-2 ring-amber-500'
+                        : 'bg-surface-sunken hover:bg-surface-sunken dark:hover:bg-surface-sunken'
                     }`}
                   >
                     <span className="text-2xl">{w.emoji}</span>
-                    <span className="text-sm text-gray-700 dark:text-gray-300">{w.label}</span>
+                    <span className="text-sm text-content-muted">{w.label}</span>
                   </button>
                 ))}
               </div>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                <Target className="w-5 h-5 text-amber-500" />
+              <h3 className="text-lg font-semibold text-content mb-3 flex items-center gap-2">
+                <Target className="w-5 h-5 text-accent-text" />
                 Goals for Today
               </h3>
               <div className="space-y-2 mb-3">
@@ -330,9 +330,9 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
                   <div
                     key={goal.id}
                     className={`flex items-center gap-3 p-3 rounded-xl ${
-                      goal.completed
-                        ? 'bg-green-50 dark:bg-green-900/20'
-                        : 'bg-gray-50 dark:bg-gray-800'
+ goal.completed
+ ? 'bg-green-50 dark:bg-green-900/20'
+                        : 'bg-surface-sunken'
                     }`}
                   >
                     <button
@@ -344,16 +344,16 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
                           <Star className="w-4 h-4 text-white fill-white" />
                         </div>
                       ) : (
-                        <div className="w-6 h-6 rounded-full border-2 border-[#cbd1db]" />
+                        <div className="w-6 h-6 rounded-full border-2 border-subtle" />
                       )}
                     </button>
-                    <span className={`flex-1 ${goal.completed ? 'line-through text-gray-400' : 'text-gray-900 dark:text-white'}`}>
+                    <span className={`flex-1 ${goal.completed ? 'line-through text-content-subtle' : 'text-content'}`}>
                       {goal.text}
                     </span>
                     <button
                       onClick={() => removeGoal(goal.id)}
                       aria-label={`Delete ${goal.text}`}
-                      className="p-1 text-gray-400 hover:text-red-500"
+                      className="p-1 text-content-subtle hover:text-red-500"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -368,12 +368,12 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
                   onChange={(e) => setNewGoal(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && addGoal()}
                   placeholder="Add a goal for today..."
-                  className="flex-1 px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white"
+                  className="flex-1 px-4 py-2 rounded-xl bg-surface-sunken border border-subtle outline-none text-content"
                 />
                 <button
                   onClick={addGoal}
                   aria-label="Add journal goal"
-                  className="px-4 py-2 rounded-xl bg-amber-700 hover:bg-amber-800 text-white"
+                  className="px-4 py-2 rounded-xl bg-accent hover:bg-accent-hover text-white"
                 >
                   <Plus className="w-5 h-5" />
                 </button>
@@ -384,20 +384,20 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
         {activeSection === 'day' && (
           <div className="max-w-2xl mx-auto space-y-6">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                <Star className="w-5 h-5 text-amber-500" />
+              <h3 className="text-lg font-semibold text-content mb-3 flex items-center gap-2">
+                <Star className="w-5 h-5 text-accent-text" />
                 Today's Highlights
               </h3>
               <div className="space-y-2 mb-3">
                 {journalData.highlights.map((highlight) => (
                   <div
                     key={highlight.id}
-                    className="flex items-start gap-3 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800"
+                    className="flex items-start gap-3 p-3 rounded-xl bg-accent-soft border border-amber-200 dark:border-amber-800"
                   >
-                    <Star className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                    <Star className="w-5 h-5 text-accent-text flex-shrink-0 mt-0.5" />
                     <div className="flex-1">
-                      <p className="text-gray-900 dark:text-white">{highlight.text}</p>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-content">{highlight.text}</p>
+                      <p className="text-xs text-content-muted mt-1">
                         {new Date(highlight.timestamp).toLocaleTimeString('en-US')}
                       </p>
                     </div>
@@ -419,20 +419,20 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
                   onChange={(e) => setNewHighlight(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && addHighlight()}
                   placeholder="Add a highlight moment..."
-                  className="flex-1 px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white"
+                  className="flex-1 px-4 py-2 rounded-xl bg-surface-sunken border border-subtle outline-none text-content"
                 />
                 <button
                   onClick={addHighlight}
                   aria-label="Add highlight"
-                  className="px-4 py-2 rounded-xl bg-amber-700 hover:bg-amber-800 text-white"
+                  className="px-4 py-2 rounded-xl bg-accent hover:bg-accent-hover text-white"
                 >
                   <Plus className="w-5 h-5" />
                 </button>
               </div>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                <CloudRain className="w-5 h-5 text-amber-500" />
+              <h3 className="text-lg font-semibold text-content mb-3 flex items-center gap-2">
+                <CloudRain className="w-5 h-5 text-accent-text" />
                 Challenges Faced
               </h3>
               <textarea
@@ -440,7 +440,7 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
                 value={journalData.challenges}
                 onChange={(e) => update('challenges', e.target.value)}
                 placeholder="What challenges did you face today?"
-                className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white resize-none"
+                className="w-full px-4 py-3 rounded-xl bg-surface-sunken border border-subtle outline-none text-content resize-none"
                 rows={4}
               />
             </div>
@@ -449,7 +449,7 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
         {activeSection === 'evening' && (
           <div className="max-w-2xl mx-auto space-y-6">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+              <h3 className="text-lg font-semibold text-content mb-3 flex items-center gap-2">
                 <Heart className="w-5 h-5 text-red-500" />
                 3 Things I'm Grateful For
               </h3>
@@ -465,15 +465,15 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
                       value={journalData.gratitude[index]}
                       onChange={(e) => updateGratitude(index, e.target.value)}
                       placeholder={`I'm grateful for...`}
-                      className="flex-1 px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white"
+                      className="flex-1 px-4 py-3 rounded-xl bg-surface-sunken border border-subtle outline-none text-content"
                     />
                   </div>
                 ))}
               </div>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                <Trophy className="w-5 h-5 text-amber-500" />
+              <h3 className="text-lg font-semibold text-content mb-3 flex items-center gap-2">
+                <Trophy className="w-5 h-5 text-accent-text" />
                 Lessons Learned
               </h3>
               <textarea
@@ -481,31 +481,31 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
                 value={journalData.lessons}
                 onChange={(e) => update('lessons', e.target.value)}
                 placeholder="What did you learn today?"
-                className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white resize-none"
+                className="w-full px-4 py-3 rounded-xl bg-surface-sunken border border-subtle outline-none text-content resize-none"
                 rows={4}
               />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                <Target className="w-5 h-5 text-amber-500" />
+              <h3 className="text-lg font-semibold text-content mb-3 flex items-center gap-2">
+                <Target className="w-5 h-5 text-accent-text" />
                 Goal Review
               </h3>
-              <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800">
+              <div className="p-4 rounded-xl bg-surface-sunken">
                 {journalData.goals.length === 0 ? (
-                  <p className="text-gray-500 text-center">No goals set for today</p>
+                  <p className="text-content-muted text-center">No goals set for today</p>
                 ) : (
                   <>
                     <div className="flex justify-between items-center mb-3">
-                      <span className="text-gray-600 dark:text-gray-400">
+                      <span className="text-content-muted">
                         {journalData.goals.filter(g => g.completed).length} of {journalData.goals.length} completed
                       </span>
-                      <span className="text-lg font-bold text-amber-500">
+                      <span className="text-lg font-bold text-accent-text">
                         {Math.round((journalData.goals.filter(g => g.completed).length / journalData.goals.length) * 100)}%
                       </span>
                     </div>
-                    <div className="w-full h-3 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                    <div className="w-full h-3 rounded-full bg-surface-sunken dark:bg-surface-sunken overflow-hidden">
                       <div
-                        className="h-full bg-amber-500 rounded-full transition-all"
+                        className="h-full bg-accent rounded-full transition-all"
                         style={{
                           width: `${(journalData.goals.filter(g => g.completed).length / journalData.goals.length) * 100}%`
                         }}
@@ -520,14 +520,14 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
         {activeSection === 'reflect' && (
           <div className="max-w-2xl mx-auto space-y-6">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+              <h3 className="text-lg font-semibold text-content mb-3">
                 Tags for this entry
               </h3>
               <div className="flex flex-wrap gap-2 mb-3">
                 {journalData.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="flex items-center gap-1 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 text-sm"
+                    className="flex items-center gap-1 px-3 py-1 rounded-full bg-accent-soft text-accent-text text-sm"
                   >
                     #{tag}
                     <button
@@ -548,18 +548,18 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
                   onChange={(e) => setNewTag(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && addTag()}
                   placeholder="Add a tag..."
-                  className="flex-1 px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white"
+                  className="flex-1 px-4 py-2 rounded-xl bg-surface-sunken border border-subtle outline-none text-content"
                 />
                 <button
                   onClick={addTag}
-                  className="px-4 py-2 rounded-xl bg-amber-700 hover:bg-amber-800 text-white"
+                  className="px-4 py-2 rounded-xl bg-accent hover:bg-accent-hover text-white"
                 >
                   Add
                 </button>
               </div>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+              <h3 className="text-lg font-semibold text-content mb-3">
                 Reflection Prompts
               </h3>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -577,7 +577,7 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
                       setActiveSection('write')
                       update('freeWrite', journalData.freeWrite + (journalData.freeWrite ? '\n\n' : '') + prompt + '\n')
                     }}
-                    className="p-3 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-amber-50 dark:hover:bg-amber-900/20 text-left text-sm text-gray-700 dark:text-gray-300 transition-colors"
+                    className="p-3 rounded-xl bg-surface-sunken hover:bg-accent-soft dark:hover:bg-amber-900/20 text-left text-sm text-content-muted transition-colors"
                   >
                     {prompt}
                   </button>
@@ -589,10 +589,10 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
         {activeSection === 'write' && (
           <div className="max-w-2xl mx-auto">
             <div className="mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+              <h3 className="text-lg font-semibold text-content mb-1">
                 Free Writing
               </h3>
-              <p className="text-gray-500 text-sm">
+              <p className="text-content-muted text-sm">
                 Let your thoughts flow freely. No judgment, no editing.
               </p>
             </div>
@@ -601,10 +601,10 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
               value={journalData.freeWrite}
               onChange={(e) => update('freeWrite', e.target.value)}
               placeholder="Start writing..."
-              className="w-full h-[500px] px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-2 border-[#cbd1db] dark:border-gray-700 focus:border-amber-500 outline-none text-gray-900 dark:text-white resize-none text-lg leading-relaxed"
+              className="w-full h-[500px] px-4 py-3 rounded-xl bg-surface-sunken border-2 border-subtle focus:border-accent outline-none text-content resize-none text-lg leading-relaxed"
               autoFocus
             />
-            <div className="flex justify-between items-center mt-2 text-sm text-gray-500">
+            <div className="flex justify-between items-center mt-2 text-sm text-content-muted">
               <span>{journalData.freeWrite.split(/\s+/).filter(Boolean).length} words</span>
               <span>{journalData.freeWrite.length} characters</span>
             </div>

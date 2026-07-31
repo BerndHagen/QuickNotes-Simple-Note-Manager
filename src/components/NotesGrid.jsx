@@ -148,31 +148,31 @@ function NoteContextMenu({ x, y, note, onClose, onRequestDelete, folders, tags }
   return (
     <div
       ref={menuRef}
-      className="fixed z-[9999] bg-white dark:bg-gray-900 rounded-2xl shadow-xl shadow-black/5 dark:shadow-black/20 border border-[#cbd1db] dark:border-gray-700 py-1.5 min-w-[200px] backdrop-blur-xl overflow-y-auto float-up"
+      className="fixed z-[9999] bg-surface-raised rounded-2xl shadow-xl shadow-black/5 dark:shadow-black/20 border border-subtle py-1.5 min-w-[200px] backdrop-blur-xl overflow-y-auto float-up"
       style={{ left: position.x, top: position.y, maxHeight: maxHeight }}
     >
       <button
         onClick={() => handleAction(() => togglePin(note.id))}
-        className="flex items-center w-[calc(100%-12px)] gap-3 mx-1.5 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700/50 dark:text-gray-300 transition-colors rounded-lg"
+        className="flex items-center w-[calc(100%-12px)] gap-3 mx-1.5 px-3 py-2.5 text-sm text-content hover:bg-surface-sunken dark:hover:bg-surface-sunken dark:text-content-subtle transition-colors rounded-lg"
       >
-        {note.pinned ? <PinOff className="w-4 h-4 text-gray-400" /> : <Pin className="w-4 h-4 text-gray-400" />}
+        {note.pinned ? <PinOff className="w-4 h-4 text-content-subtle" /> : <Pin className="w-4 h-4 text-content-subtle" />}
         <span>{note.pinned ? 'Unpin' : 'Pin to Top'}</span>
       </button>
       <button
         onClick={() => handleAction(() => toggleStar(note.id))}
-        className="flex items-center w-[calc(100%-12px)] gap-3 mx-1.5 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700/50 dark:text-gray-300 transition-colors rounded-lg"
+        className="flex items-center w-[calc(100%-12px)] gap-3 mx-1.5 px-3 py-2.5 text-sm text-content hover:bg-surface-sunken dark:hover:bg-surface-sunken dark:text-content-subtle transition-colors rounded-lg"
       >
-        {note.starred ? <StarOff className="w-4 h-4 text-gray-400" /> : <Star className="w-4 h-4 text-gray-400" />}
+        {note.starred ? <StarOff className="w-4 h-4 text-content-subtle" /> : <Star className="w-4 h-4 text-content-subtle" />}
         <span>{note.starred ? 'Remove from Favorites' : 'Add to Favorites'}</span>
       </button>
       
-      <div className="my-1.5 mx-3 border-t border-[#cbd1db] dark:border-gray-800" />
+      <div className="my-1.5 mx-3 border-t border-subtle dark:border-subtle" />
       
       <button
         onClick={() => handleAction(() => duplicateNote(note.id))}
-        className="flex items-center w-[calc(100%-12px)] gap-3 mx-1.5 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700/50 dark:text-gray-300 transition-colors rounded-lg"
+        className="flex items-center w-[calc(100%-12px)] gap-3 mx-1.5 px-3 py-2.5 text-sm text-content hover:bg-surface-sunken dark:hover:bg-surface-sunken dark:text-content-subtle transition-colors rounded-lg"
       >
-        <Copy className="w-4 h-4 text-gray-400" />
+        <Copy className="w-4 h-4 text-content-subtle" />
         <span>Duplicate</span>
       </button>
 
@@ -184,20 +184,20 @@ function NoteContextMenu({ x, y, note, onClose, onRequestDelete, folders, tags }
         <button
           ref={folderButtonRef}
           onClick={() => setShowFolderMenu(!showFolderMenu)}
-          className={`flex items-center justify-between w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700/50 dark:text-gray-300 transition-colors rounded-lg ${showFolderMenu ? 'bg-gray-200 dark:bg-gray-700/50' : ''}`}
+          className={`flex items-center justify-between w-full px-3 py-2.5 text-sm text-content hover:bg-surface-sunken dark:hover:bg-surface-sunken dark:text-content-subtle transition-colors rounded-lg ${showFolderMenu ? 'bg-surface-sunken dark:bg-surface-sunken' : ''}`}
         >
           <div className="flex items-center gap-3">
-            <FolderInput className="w-4 h-4 text-gray-400" />
+            <FolderInput className="w-4 h-4 text-content-subtle" />
             <span>Move to Folder</span>
           </div>
-          <ChevronRight className={`w-4 h-4 text-gray-400 transition-transform ${submenuPosition.openLeft ? 'rotate-180' : ''}`} />
+          <ChevronRight className={`w-4 h-4 text-content-subtle transition-transform ${submenuPosition.openLeft ? 'rotate-180' : ''}`} />
         </button>
         {showFolderMenu && createPortal(
           <div 
             ref={submenuRef}
             onMouseEnter={handleSubmenuEnter}
             onMouseLeave={handleSubmenuLeave}
-            className="fixed bg-white dark:bg-gray-900 rounded-2xl shadow-xl shadow-black/5 dark:shadow-black/20 border border-[#cbd1db] dark:border-gray-700 py-1.5 min-w-[160px] max-h-[300px] overflow-y-auto z-[10000] backdrop-blur-xl"
+            className="fixed bg-surface-raised rounded-2xl shadow-xl shadow-black/5 dark:shadow-black/20 border border-subtle py-1.5 min-w-[160px] max-h-[300px] overflow-y-auto z-[10000] backdrop-blur-xl"
             style={{
               left: submenuPosition.x,
               top: submenuPosition.y,
@@ -205,9 +205,9 @@ function NoteContextMenu({ x, y, note, onClose, onRequestDelete, folders, tags }
           >
             <button
               onClick={() => handleAction(() => updateNote(note.id, { folderId: null }))}
-              className={`w-[calc(100%-12px)] mx-1.5 px-3 py-2.5 text-left text-sm hover:bg-gray-200 dark:hover:bg-gray-700/50 transition-colors rounded-lg ${
-                !note.folderId ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-300'
-              }`}
+              className={`w-[calc(100%-12px)] mx-1.5 px-3 py-2.5 text-left text-sm hover:bg-surface-sunken dark:hover:bg-surface-sunken transition-colors rounded-lg ${
+ !note.folderId ? 'text-emerald-600 dark:text-emerald-400' : 'text-content-muted'
+ }`}
             >
               No Folder
             </button>
@@ -215,9 +215,9 @@ function NoteContextMenu({ x, y, note, onClose, onRequestDelete, folders, tags }
               <button
                 key={folder.id}
                 onClick={() => handleAction(() => updateNote(note.id, { folderId: folder.id }))}
-                className={`w-[calc(100%-12px)] mx-1.5 px-3 py-2.5 text-left text-sm hover:bg-gray-200 dark:hover:bg-gray-700/50 transition-colors rounded-lg ${
-                  note.folderId === folder.id ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-300'
-                }`}
+                className={`w-[calc(100%-12px)] mx-1.5 px-3 py-2.5 text-left text-sm hover:bg-surface-sunken dark:hover:bg-surface-sunken transition-colors rounded-lg ${
+ note.folderId === folder.id ? 'text-emerald-600 dark:text-emerald-400' : 'text-content-muted'
+ }`}
               >
                 {folder.name}
               </button>
@@ -227,7 +227,7 @@ function NoteContextMenu({ x, y, note, onClose, onRequestDelete, folders, tags }
         )}
       </div>
       
-      <div className="my-1.5 mx-3 border-t border-[#cbd1db] dark:border-gray-800" />
+      <div className="my-1.5 mx-3 border-t border-subtle dark:border-subtle" />
       
       <button
         onClick={() => handleAction(() => {
@@ -264,10 +264,10 @@ function GridNoteCard({ note, isSelected, onClick, onContextMenu }) {
     <div
       onClick={onClick}
       onContextMenu={onContextMenu}
-      className={`group relative flex flex-col p-4 bg-white dark:bg-gray-900 rounded-2xl border cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 ${
-        isSelected
-          ? 'border-emerald-500/60 ring-2 ring-emerald-500/20 shadow-md'
-          : 'border-[#cbd1db] dark:border-gray-700 hover:border-emerald-200 dark:hover:border-emerald-800'
+      className={`group relative flex flex-col p-4 bg-surface-raised rounded-2xl border cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 ${
+ isSelected
+ ? 'border-emerald-500/60 ring-2 ring-emerald-500/20 shadow-md'
+          : 'border-subtle hover:border-emerald-200 dark:hover:border-emerald-800'
       }`}
     >
       {note.pinned && (
@@ -276,7 +276,7 @@ function GridNoteCard({ note, isSelected, onClick, onContextMenu }) {
         </div>
       )}
       <div className="flex items-start justify-between gap-2 mb-2">
-        <h3 className="flex-1 font-semibold text-gray-900 dark:text-white line-clamp-2">
+        <h3 className="flex-1 font-semibold text-content line-clamp-2">
           {note.title}
         </h3>
         <button
@@ -284,18 +284,18 @@ function GridNoteCard({ note, isSelected, onClick, onContextMenu }) {
             e.stopPropagation()
             toggleStar(note.id)
           }}
-          className="p-1 transition-opacity rounded opacity-0 group-hover:opacity-100 hover:bg-gray-100 dark:hover:bg-gray-700"
+          className="p-1 transition-opacity rounded opacity-0 group-hover:opacity-100 hover:bg-surface-hover"
         >
           <Star
             className={`w-4 h-4 ${
-              note.starred
-                ? 'fill-yellow-400 text-yellow-400'
-                : 'text-gray-400'
+ note.starred
+ ? 'fill-yellow-400 text-yellow-400'
+                : 'text-content-subtle'
             }`}
           />
         </button>
       </div>
-      <p className="flex-1 mb-3 text-sm text-gray-600 dark:text-gray-400 line-clamp-4">
+      <p className="flex-1 mb-3 text-sm text-content-muted line-clamp-4">
         {preview || 'No content'}
       </p>
       {note.tags && note.tags.length > 0 && (
@@ -313,13 +313,13 @@ function GridNoteCard({ note, isSelected, onClick, onContextMenu }) {
             </span>
           ))}
           {note.tags.length > 3 && (
-            <span className="px-1.5 py-0.5 rounded text-[10px] font-medium text-gray-500 bg-gray-100 dark:bg-gray-700">
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-medium text-content-muted bg-surface-sunken">
               +{note.tags.length - 3}
             </span>
           )}
         </div>
       )}
-      <div className="flex items-center gap-2 pt-2 text-xs text-emerald-600 border-t border-[#cbd1db] dark:border-gray-700 dark:text-emerald-400">
+      <div className="flex items-center gap-2 pt-2 text-xs text-emerald-600 border-t border-subtle dark:text-emerald-400">
         <Clock className="w-3 h-3" />
         <span>{formatDate(note.updatedAt, language)}</span>
       </div>
@@ -418,16 +418,16 @@ export default function NotesGrid({ sidebarToggle }) {
   if (showingEditor && selectedNoteId) {
     return (
       <div className="flex flex-col w-full h-full">
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-[#cbd1db] dark:border-gray-700 bg-white/80 dark:bg-gray-900/90 backdrop-blur-sm">
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-subtle bg-white/80 dark:bg-surface-sunken backdrop-blur-sm">
           <button
             onClick={handleBackToGrid}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-content-muted hover:text-content dark:hover:text-white hover:bg-surface-hover rounded-lg transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Grid
           </button>
-          <span className="text-sm text-gray-400 dark:text-gray-500">|</span>
-          <span className="text-sm text-gray-500 dark:text-gray-400">{getTitle()}</span>
+          <span className="text-sm text-content-subtle">|</span>
+          <span className="text-sm text-content-muted">{getTitle()}</span>
         </div>
         <div className="flex-1 min-h-0">
           <NoteEditor />
@@ -437,17 +437,17 @@ export default function NotesGrid({ sidebarToggle }) {
   }
 
   return (
-    <div className="flex flex-col w-full h-full bg-white dark:bg-gray-950">
-      <div className="z-20 flex-shrink-0 px-6 py-4 border-b border-[#cbd1db] dark:border-gray-700 bg-white dark:bg-gray-950">
+    <div className="flex flex-col w-full h-full bg-white">
+      <div className="z-20 flex-shrink-0 px-6 py-4 border-b border-subtle bg-white">
         <div className="flex items-center justify-between mb-4">
-          <h2 className={`pl-10 text-[15px] font-bold tracking-tight text-gray-900 ${sidebarOpen ? 'md:pl-0' : ''} dark:text-white`}>
+          <h2 className={`pl-10 text-[15px] font-bold tracking-tight text-content ${sidebarOpen ? 'md:pl-0' : ''} dark:text-white`}>
             {getTitle()}
           </h2>
           <div className="flex items-center gap-2">
             <SortDropdown currentSort={currentSort} onSortChange={setCurrentSort} />
             <button
               onClick={handleCreateNote}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white transition-all rounded-xl shadow-md shadow-emerald-500/15 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:scale-[0.98]"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white transition-all rounded-xl shadow-md shadow-emerald-500/15 qn-banner-surface hover:from-emerald-500 hover:to-teal-500 active:scale-[0.98]"
             >
               <Plus className="w-4 h-4" />
               New Note
@@ -455,29 +455,29 @@ export default function NotesGrid({ sidebarToggle }) {
           </div>
         </div>
         <div className="relative max-w-md">
-          <Search className="absolute w-4 h-4 text-gray-400 -translate-y-1/2 left-3 top-1/2" />
+          <Search className="absolute w-4 h-4 text-content-subtle -translate-y-1/2 left-3 top-1/2" />
           <input
             type="text"
             placeholder={t('notes.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full py-2.5 pl-10 pr-4 text-[13px] text-gray-900 placeholder-gray-400 bg-gray-50/80 border border-[#cbd1db] rounded-xl dark:bg-gray-900 dark:border-gray-800/60 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:text-white transition-all"
+            className="w-full py-2.5 pl-10 pr-4 text-[13px] text-content placeholder:text-content-subtle bg-surface-sunken border border-subtle rounded-xl dark:bg-surface-sunken dark:border-subtle/60 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:text-white transition-all"
           />
         </div>
       </div>
       <div className="flex-1 min-h-0 p-6 overflow-y-auto">
         {filteredNotes.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center">
-            <div className="flex items-center justify-center w-20 h-20 mb-5 rounded-2xl bg-gray-50 dark:bg-gray-900">
-              <FileText className="w-10 h-10 text-gray-300 dark:text-gray-600" />
+            <div className="flex items-center justify-center w-20 h-20 mb-5 rounded-2xl bg-surface-sunken">
+              <FileText className="w-10 h-10 text-content-subtle dark:text-content-muted" />
             </div>
-            <p className="text-base font-semibold text-gray-500 dark:text-gray-400">
+            <p className="text-base font-semibold text-content-muted">
               {searchQuery ? t('notes.noNotesFound') : t('notes.noNotes')}
             </p>
             {!searchQuery && (
               <button
                 onClick={handleCreateNote}
-                className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 transition-all shadow-md shadow-emerald-500/15 active:scale-[0.98]"
+                className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white rounded-xl qn-banner-surface hover:from-emerald-500 hover:to-teal-500 transition-all shadow-md shadow-emerald-500/15 active:scale-[0.98]"
               >
                 {t('notes.createFirst')}
               </button>
@@ -497,7 +497,7 @@ export default function NotesGrid({ sidebarToggle }) {
           </div>
         )}
       </div>
-      <div className="flex-shrink-0 px-6 py-3 text-[11px] text-center text-gray-300 border-t border-[#cbd1db] dark:border-gray-700 dark:text-gray-600 font-semibold">
+      <div className="flex-shrink-0 px-6 py-3 text-[11px] text-center text-content-subtle border-t border-subtle dark:text-content-muted font-semibold">
         {filteredNotes.length} {filteredNotes.length === 1 ? t('notes.note') : t('notes.notes')}
       </div>
       {contextMenu && createPortal(

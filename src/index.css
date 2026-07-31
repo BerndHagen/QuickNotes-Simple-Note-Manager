@@ -1590,13 +1590,18 @@ div[role="status"][class*="go"] {
    paper-like working surface. Each type keeps a restrained accent
    without turning the product into a collection of unrelated themes.
    ============================================================ */
-.qn-type-todo { --qn-type-accent: #168966; }
-.qn-type-project { --qn-type-accent: #6d5bd0; }
-.qn-type-meeting { --qn-type-accent: #3978c5; }
-.qn-type-journal { --qn-type-accent: #b7791f; }
-.qn-type-brainstorm { --qn-type-accent: #c58a12; }
-.qn-type-shopping { --qn-type-accent: #c04476; }
-.qn-type-weekly { --qn-type-accent: #147d86; }
+/* Every workspace hero uses the product's green. The type is already named
+   and iconed in the hero, so tinting each one a different hue only made the
+   app look like several unrelated products. */
+.qn-type-todo,
+.qn-type-project,
+.qn-type-meeting,
+.qn-type-journal,
+.qn-type-brainstorm,
+.qn-type-shopping,
+.qn-type-weekly {
+  --qn-type-accent: #168966;
+}
 
 .qn-type-editor {
   background:
@@ -1637,17 +1642,42 @@ div[role="status"][class*="go"] {
   pointer-events: none;
 }
 
+/* The hero is a dark surface, so the text and tiles inside it are re-tinted
+   here rather than in each of the eight specialized editors. Keyed on the
+   semantic token classes the editors use; the bare palette names are kept as
+   a fallback for any block that has not been converted yet. */
 .qn-type-hero h1,
+.qn-type-hero .text-content,
 .qn-type-hero .text-gray-900,
 .qn-type-hero .text-gray-700 {
   color: #fff !important;
 }
 
+.qn-type-hero .text-content-muted,
+.qn-type-hero .text-content-subtle,
 .qn-type-hero .text-gray-500,
 .qn-type-hero .text-gray-400 {
-  color: rgba(255, 255, 255, 0.7) !important;
+  color: rgba(255, 255, 255, 0.76) !important;
 }
 
+/* Status colours need to lift off a dark green rather than sink into it. */
+.qn-type-hero .text-red-500,
+.qn-type-hero .text-danger-text {
+  color: #fca5a5 !important;
+}
+
+.qn-type-hero .text-amber-500,
+.qn-type-hero .text-warning-text {
+  color: #fcd34d !important;
+}
+
+.qn-type-hero .text-emerald-600,
+.qn-type-hero .text-success-text {
+  color: #6ee7b7 !important;
+}
+
+.qn-type-hero .bg-surface-raised,
+.qn-type-hero .bg-surface-sunken,
 .qn-type-hero .bg-white,
 .qn-type-hero .dark\:bg-gray-700 {
   border-color: rgba(255, 255, 255, 0.18) !important;

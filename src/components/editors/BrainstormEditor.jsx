@@ -154,8 +154,8 @@ export default function BrainstormEditor({ data, onChange, noteTitle, onTitleCha
   const starredCount = brainstormData.ideas.filter(i => i.starred).length
 
   return (
-    <div className="qn-type-editor qn-type-brainstorm flex flex-col h-full bg-white dark:bg-gray-900">
-      <div className="qn-type-hero flex-shrink-0 p-4 border-b border-[#cbd1db] dark:border-gray-700 bg-[#e5eaf0] dark:bg-gray-800">
+    <div className="qn-type-editor qn-type-brainstorm flex flex-col h-full bg-surface-raised">
+      <div className="qn-type-hero flex-shrink-0 p-4 border-b border-subtle bg-[#e5eaf0] dark:bg-surface-raised">
         <div className="flex items-center justify-between mb-4">
           <div className="flex-1">
             <FocusedNoteTitle
@@ -172,27 +172,27 @@ export default function BrainstormEditor({ data, onChange, noteTitle, onTitleCha
               value={brainstormData.topic}
               onChange={(e) => update('topic', e.target.value)}
               placeholder="What are you brainstorming about?"
-              className="w-full max-w-md px-4 py-2 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none border border-[#cbd1db] dark:border-gray-600"
+              className="w-full max-w-md px-4 py-2 rounded-lg bg-white dark:bg-surface-sunken text-content placeholder:text-content-subtle dark:placeholder:text-content-subtle outline-none border border-subtle "
             />
           </div>
-          <div className="flex gap-6 text-gray-900 dark:text-white">
+          <div className="flex gap-6 text-content">
             <div className="text-center">
               <div className="text-3xl font-bold">{brainstormData.ideas.length}</div>
-              <div className="text-gray-500 dark:text-gray-400 text-sm">Ideas</div>
+              <div className="text-content-muted text-sm">Ideas</div>
             </div>
             <div className="text-center">
               <div className="text-3xl font-bold">{totalVotes}</div>
-              <div className="text-gray-500 dark:text-gray-400 text-sm">Total Votes</div>
+              <div className="text-content-muted text-sm">Total Votes</div>
             </div>
             <div className="text-center">
               <div className="text-3xl font-bold">{starredCount}</div>
-              <div className="text-gray-500 dark:text-gray-400 text-sm">Starred</div>
+              <div className="text-content-muted text-sm">Starred</div>
             </div>
           </div>
         </div>
         <div className="flex gap-2">
           <div className="flex-1 relative">
-            <Sparkles className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Sparkles className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-content-subtle" />
             <input
               type="text"
               aria-label="New idea"
@@ -200,7 +200,7 @@ export default function BrainstormEditor({ data, onChange, noteTitle, onTitleCha
               onChange={(e) => setNewIdea(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && addIdea()}
               placeholder="Type your idea and press Enter..."
-              className="w-full pl-10 pr-4 py-3 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none text-lg border border-[#cbd1db] dark:border-gray-600"
+              className="w-full pl-10 pr-4 py-3 rounded-lg bg-white dark:bg-surface-sunken text-content placeholder:text-content-subtle dark:placeholder:text-content-subtle outline-none text-lg border border-subtle "
               autoFocus
             />
           </div>
@@ -215,23 +215,23 @@ export default function BrainstormEditor({ data, onChange, noteTitle, onTitleCha
             onClick={pickRandomIdea}
             disabled={filteredIdeas.length === 0}
             aria-label="Pick a random idea"
-            className="px-4 py-3 rounded-lg bg-gray-200/50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300/50 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+            className="px-4 py-3 rounded-lg bg-surface-sunken dark:bg-surface-sunken text-content-muted hover:bg-surface-active dark:hover:bg-surface-active transition-colors disabled:opacity-50"
             title="Pick random idea"
           >
             <Shuffle className="w-5 h-5" />
           </button>
         </div>
       </div>
-      <div className="qn-type-tabs flex-shrink-0 flex items-center justify-between gap-4 p-3 border-b border-[#cbd1db] dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+      <div className="qn-type-tabs flex-shrink-0 flex items-center justify-between gap-4 p-3 border-b border-subtle bg-surface-sunken">
         <div className="flex items-center gap-2 flex-wrap">
-          <Tag className="w-4 h-4 text-gray-500" />
+          <Tag className="w-4 h-4 text-content-muted" />
           <button
             onClick={() => update('selectedCategory', 'all')}
             aria-pressed={brainstormData.selectedCategory === 'all'}
             className={`px-3 py-1 rounded-full text-sm transition-colors ${
-              brainstormData.selectedCategory === 'all'
-                ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
+ brainstormData.selectedCategory === 'all'
+ ? 'bg-accent-soft text-accent-text'
+                : 'bg-surface-sunken text-content-muted hover:bg-surface-sunken dark:hover:bg-surface-active'
             }`}
           >
             All ({brainstormData.ideas.length})
@@ -244,9 +244,9 @@ export default function BrainstormEditor({ data, onChange, noteTitle, onTitleCha
                 onClick={() => update('selectedCategory', cat.id)}
                 aria-pressed={brainstormData.selectedCategory === cat.id}
                 className={`px-3 py-1 rounded-full text-sm text-content transition-colors flex items-center gap-2 ${
-                  brainstormData.selectedCategory === cat.id
-                    ? 'ring-2 ring-purple-500'
-                    : 'hover:bg-gray-200 dark:hover:bg-gray-600'
+ brainstormData.selectedCategory === cat.id
+ ? 'ring-2 ring-purple-500'
+                    : 'hover:bg-surface-sunken dark:hover:bg-surface-active'
                 }`}
                 style={{ backgroundColor: cat.color + '20' }}
               >
@@ -258,7 +258,7 @@ export default function BrainstormEditor({ data, onChange, noteTitle, onTitleCha
           <button
             onClick={() => setShowAddCategory(true)}
             aria-label="Add idea category"
-            className="p-1 rounded-full text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700"
+            className="p-1 rounded-full text-content-muted hover:bg-surface-sunken dark:hover:bg-surface-sunken"
           >
             <Plus className="w-4 h-4" />
           </button>
@@ -268,22 +268,22 @@ export default function BrainstormEditor({ data, onChange, noteTitle, onTitleCha
             aria-label="Sort ideas"
             value={brainstormData.sortBy}
             onChange={(e) => update('sortBy', e.target.value)}
-            className="px-3 py-1 rounded-lg bg-gray-100 dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 text-gray-700 dark:text-gray-300 outline-none text-sm"
+            className="px-3 py-1 rounded-lg bg-surface-sunken border border-subtle text-content-muted outline-none text-sm"
           >
             <option value="newest">Newest First</option>
             <option value="oldest">Oldest First</option>
             <option value="votes">Most Votes</option>
             <option value="starred">Starred First</option>
           </select>
-          <div className="flex border border-[#cbd1db] dark:border-gray-600 rounded-lg overflow-hidden">
+          <div className="flex border border-subtle rounded-lg overflow-hidden">
             <button
               onClick={() => update('viewMode', 'grid')}
               aria-label="Grid view"
               aria-pressed={brainstormData.viewMode === 'grid'}
               className={`p-2 ${
-                brainstormData.viewMode === 'grid'
-                  ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300'
-                  : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700'
+ brainstormData.viewMode === 'grid'
+ ? 'bg-accent-soft text-accent-text'
+                  : 'text-content-muted hover:bg-surface-hover'
               }`}
             >
               <Grid className="w-4 h-4" />
@@ -293,9 +293,9 @@ export default function BrainstormEditor({ data, onChange, noteTitle, onTitleCha
               aria-label="List view"
               aria-pressed={brainstormData.viewMode === 'list'}
               className={`p-2 ${
-                brainstormData.viewMode === 'list'
-                  ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300'
-                  : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700'
+ brainstormData.viewMode === 'list'
+ ? 'bg-accent-soft text-accent-text'
+                  : 'text-content-muted hover:bg-surface-hover'
               }`}
             >
               <List className="w-4 h-4" />
@@ -305,7 +305,7 @@ export default function BrainstormEditor({ data, onChange, noteTitle, onTitleCha
       </div>
       <div className="flex-1 overflow-y-auto p-4">
         {filteredIdeas.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-gray-400">
+          <div className="flex flex-col items-center justify-center h-full text-content-subtle">
             <Lightbulb className="w-16 h-16 mb-4 opacity-50" />
             <p className="text-lg">No ideas yet. Start brainstorming!</p>
             <p className="text-sm mt-1">Type your first idea above and press Enter</p>
@@ -320,10 +320,10 @@ export default function BrainstormEditor({ data, onChange, noteTitle, onTitleCha
               return (
                 <div
                   key={idea.id}
-                  className={`relative p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border-2 transition-all ${
-                    isExpanded
-                      ? 'border-purple-500 shadow-lg scale-105'
-                      : 'border-transparent hover:border-[#cbd1db] dark:hover:border-gray-700'
+                  className={`relative p-4 rounded-xl bg-surface-sunken border-2 transition-all ${
+ isExpanded
+ ? 'border-accent shadow-lg scale-105'
+                      : 'border-transparent hover:border-subtle dark:hover:border-subtle'
                   } ${idea.starred ? 'ring-2 ring-yellow-400' : ''}`}
                 >
                   <div
@@ -336,8 +336,8 @@ export default function BrainstormEditor({ data, onChange, noteTitle, onTitleCha
                     onClick={(e) => { e.stopPropagation(); toggleStar(idea.id) }}
                     aria-label={idea.starred ? `Unstar ${idea.text}` : `Star ${idea.text}`}
                     className={`absolute top-2 right-2 p-1 rounded ${
-                      idea.starred ? 'text-yellow-500' : 'text-gray-400 hover:text-yellow-500'
-                    }`}
+ idea.starred ? 'text-accent-text' : 'text-content-subtle hover:text-accent-text'
+ }`}
                   >
                     <Star className={`w-5 h-5 ${idea.starred ? 'fill-current' : ''}`} />
                   </button>
@@ -350,7 +350,7 @@ export default function BrainstormEditor({ data, onChange, noteTitle, onTitleCha
                           value={editText}
                           onChange={(e) => setEditText(e.target.value)}
                           onKeyDown={(e) => e.key === 'Enter' && saveEdit()}
-                          className="flex-1 px-2 py-1 rounded bg-white dark:bg-gray-700 outline-none text-gray-900 dark:text-white"
+                          className="flex-1 px-2 py-1 rounded bg-white dark:bg-surface-sunken outline-none text-content"
                           onClick={(e) => e.stopPropagation()}
                           autoFocus
                         />
@@ -364,7 +364,7 @@ export default function BrainstormEditor({ data, onChange, noteTitle, onTitleCha
                         <button
                           onClick={(e) => { e.stopPropagation(); setEditingIdea(null) }}
                           aria-label={`Cancel editing ${idea.text}`}
-                          className="text-gray-500"
+                          className="text-content-muted"
                         >
                           <X className="w-5 h-5" />
                         </button>
@@ -374,7 +374,7 @@ export default function BrainstormEditor({ data, onChange, noteTitle, onTitleCha
                         type="button"
                         onClick={() => setExpandedIdea(isExpanded ? null : idea.id)}
                         aria-expanded={isExpanded}
-                        className="w-full text-left font-medium text-gray-900 hover:text-purple-700 dark:text-white dark:hover:text-purple-300"
+                        className="w-full text-left font-medium text-content hover:text-accent-text dark:text-white dark:hover:text-purple-300"
                       >
                         {idea.text}
                       </button>
@@ -385,19 +385,19 @@ export default function BrainstormEditor({ data, onChange, noteTitle, onTitleCha
                       <button
                         onClick={(e) => { e.stopPropagation(); vote(idea.id, -1) }}
                         aria-label={`Downvote ${idea.text}`}
-                        className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500"
+                        className="p-1 rounded hover:bg-surface-sunken dark:hover:bg-surface-sunken text-content-muted"
                       >
                         <ThumbsDown className="w-4 h-4" />
                       </button>
                       <span className={`font-bold ${
-                        idea.votes > 0 ? 'text-green-700 dark:text-green-300' : idea.votes < 0 ? 'text-red-700 dark:text-red-300' : 'text-gray-500'
-                      }`}>
+ idea.votes > 0 ? 'text-green-700 dark:text-green-300' : idea.votes < 0 ? 'text-red-700 dark:text-red-300' : 'text-content-muted'
+ }`}>
                         {idea.votes}
                       </span>
                       <button
                         onClick={(e) => { e.stopPropagation(); vote(idea.id, 1) }}
                         aria-label={`Upvote ${idea.text}`}
-                        className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500"
+                        className="p-1 rounded hover:bg-surface-sunken dark:hover:bg-surface-sunken text-content-muted"
                       >
                         <ThumbsUp className="w-4 h-4" />
                       </button>
@@ -410,34 +410,34 @@ export default function BrainstormEditor({ data, onChange, noteTitle, onTitleCha
                           setEditText(idea.text)
                         }}
                         aria-label={`Edit ${idea.text}`}
-                        className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500"
+                        className="p-1 rounded hover:bg-surface-sunken dark:hover:bg-surface-sunken text-content-muted"
                       >
                         <Edit3 className="w-4 h-4" />
                       </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); duplicateIdea(idea) }}
                         aria-label={`Duplicate ${idea.text}`}
-                        className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500"
+                        className="p-1 rounded hover:bg-surface-sunken dark:hover:bg-surface-sunken text-content-muted"
                       >
                         <Copy className="w-4 h-4" />
                       </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); deleteIdea(idea.id) }}
                         aria-label={`Delete ${idea.text}`}
-                        className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-red-400 hover:text-red-600"
+                        className="p-1 rounded hover:bg-surface-sunken dark:hover:bg-surface-sunken text-red-400 hover:text-red-600"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
                   {isExpanded && (
-                    <div className="mt-4 pt-4 border-t border-[#cbd1db] dark:border-gray-700" onClick={(e) => e.stopPropagation()}>
+                    <div className="mt-4 pt-4 border-t border-subtle" onClick={(e) => e.stopPropagation()}>
                       <div className="mb-3">
-                        <label className="text-xs text-gray-500 mb-1 block">Category</label>
+                        <label className="text-xs text-content-muted mb-1 block">Category</label>
                         <select
                           value={idea.category}
                           onChange={(e) => updateIdea(idea.id, { category: e.target.value })}
-                          className="w-full px-2 py-1 rounded bg-white dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 text-gray-900 dark:text-white outline-none text-sm"
+                          className="w-full px-2 py-1 rounded bg-white dark:bg-surface-sunken border border-subtle text-content outline-none text-sm"
                         >
                           {brainstormData.categories.map((cat) => (
                             <option key={cat.id} value={cat.id}>{cat.name}</option>
@@ -445,12 +445,12 @@ export default function BrainstormEditor({ data, onChange, noteTitle, onTitleCha
                         </select>
                       </div>
                       <div>
-                        <label className="text-xs text-gray-500 mb-1 block">Notes</label>
+                        <label className="text-xs text-content-muted mb-1 block">Notes</label>
                         <textarea
                           value={idea.notes || ''}
                           onChange={(e) => updateIdea(idea.id, { notes: e.target.value })}
                           placeholder="Add notes about this idea..."
-                          className="w-full px-2 py-1 rounded bg-white dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 text-gray-900 dark:text-white outline-none text-sm resize-none"
+                          className="w-full px-2 py-1 rounded bg-white dark:bg-surface-sunken border border-subtle text-content outline-none text-sm resize-none"
                           rows={3}
                         />
                       </div>
@@ -470,28 +470,28 @@ export default function BrainstormEditor({ data, onChange, noteTitle, onTitleCha
               return (
                 <div
                   key={idea.id}
-                  className={`p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border-2 transition-all ${
-                    isExpanded ? 'border-purple-500' : 'border-transparent'
-                  } ${idea.starred ? 'ring-2 ring-yellow-400' : ''}`}
+                  className={`p-4 rounded-xl bg-surface-sunken border-2 transition-all ${
+ isExpanded ? 'border-accent' : 'border-transparent'
+ } ${idea.starred ? 'ring-2 ring-yellow-400' : ''}`}
                 >
                   <div className="flex items-center gap-4">
                     <div className="flex flex-col items-center gap-1">
                       <button
                         onClick={() => vote(idea.id, 1)}
                         aria-label={`Upvote ${idea.text}`}
-                        className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 hover:text-purple-500"
+                        className="p-1 rounded hover:bg-surface-sunken dark:hover:bg-surface-sunken text-content-muted hover:text-accent-text"
                       >
                         <ThumbsUp className="w-4 h-4" />
                       </button>
                       <span className={`font-bold text-lg ${
-                        idea.votes > 0 ? 'text-green-700 dark:text-green-300' : idea.votes < 0 ? 'text-red-700 dark:text-red-300' : 'text-gray-500'
-                      }`}>
+ idea.votes > 0 ? 'text-green-700 dark:text-green-300' : idea.votes < 0 ? 'text-red-700 dark:text-red-300' : 'text-content-muted'
+ }`}>
                         {idea.votes}
                       </span>
                       <button
                         onClick={() => vote(idea.id, -1)}
                         aria-label={`Downvote ${idea.text}`}
-                        className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 hover:text-purple-500"
+                        className="p-1 rounded hover:bg-surface-sunken dark:hover:bg-surface-sunken text-content-muted hover:text-accent-text"
                       >
                         <ThumbsDown className="w-4 h-4" />
                       </button>
@@ -512,13 +512,13 @@ export default function BrainstormEditor({ data, onChange, noteTitle, onTitleCha
                               value={editText}
                               onChange={(e) => setEditText(e.target.value)}
                               onKeyDown={(e) => e.key === 'Enter' && saveEdit()}
-                              className="flex-1 px-2 py-1 rounded bg-white dark:bg-gray-700 outline-none text-gray-900 dark:text-white"
+                              className="flex-1 px-2 py-1 rounded bg-white dark:bg-surface-sunken outline-none text-content"
                               autoFocus
                             />
                             <button onClick={saveEdit} aria-label={`Save changes to ${idea.text}`} className="text-green-600">
                               <Check className="w-5 h-5" />
                             </button>
-                            <button onClick={() => setEditingIdea(null)} aria-label={`Cancel editing ${idea.text}`} className="text-gray-500">
+                            <button onClick={() => setEditingIdea(null)} aria-label={`Cancel editing ${idea.text}`} className="text-content-muted">
                               <X className="w-5 h-5" />
                             </button>
                           </div>
@@ -526,7 +526,7 @@ export default function BrainstormEditor({ data, onChange, noteTitle, onTitleCha
                           <button
                             type="button"
                             aria-expanded={isExpanded}
-                            className="text-left text-gray-900 hover:text-purple-700 dark:text-white dark:hover:text-purple-300 flex-1"
+                            className="text-left text-content hover:text-accent-text dark:text-white dark:hover:text-purple-300 flex-1"
                             onClick={() => setExpandedIdea(isExpanded ? null : idea.id)}
                           >
                             {idea.text}
@@ -534,7 +534,7 @@ export default function BrainstormEditor({ data, onChange, noteTitle, onTitleCha
                         )}
                       </div>
                       {idea.notes && !isExpanded && (
-                        <p className="text-sm text-gray-500 mt-1 truncate">{idea.notes}</p>
+                        <p className="text-sm text-content-muted mt-1 truncate">{idea.notes}</p>
                       )}
                     </div>
                     <div className="flex items-center gap-1">
@@ -542,8 +542,8 @@ export default function BrainstormEditor({ data, onChange, noteTitle, onTitleCha
                         onClick={() => toggleStar(idea.id)}
                         aria-label={idea.starred ? `Unstar ${idea.text}` : `Star ${idea.text}`}
                         className={`p-2 rounded ${
-                          idea.starred ? 'text-yellow-500' : 'text-gray-400 hover:text-yellow-500'
-                        }`}
+ idea.starred ? 'text-accent-text' : 'text-content-subtle hover:text-accent-text'
+ }`}
                       >
                         <Star className={`w-5 h-5 ${idea.starred ? 'fill-current' : ''}`} />
                       </button>
@@ -553,34 +553,34 @@ export default function BrainstormEditor({ data, onChange, noteTitle, onTitleCha
                           setEditText(idea.text)
                         }}
                         aria-label={`Edit ${idea.text}`}
-                        className="p-2 rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                        className="p-2 rounded text-content-subtle hover:text-content-muted dark:hover:text-content-subtle"
                       >
                         <Edit3 className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => duplicateIdea(idea)}
                         aria-label={`Duplicate ${idea.text}`}
-                        className="p-2 rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                        className="p-2 rounded text-content-subtle hover:text-content-muted dark:hover:text-content-subtle"
                       >
                         <Copy className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => deleteIdea(idea.id)}
                         aria-label={`Delete ${idea.text}`}
-                        className="p-2 rounded text-gray-400 hover:text-red-500"
+                        className="p-2 rounded text-content-subtle hover:text-red-500"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
                   {isExpanded && (
-                    <div className="mt-4 ml-14 pt-4 border-t border-[#cbd1db] dark:border-gray-700 grid grid-cols-2 gap-4">
+                    <div className="mt-4 ml-14 pt-4 border-t border-subtle grid grid-cols-2 gap-4">
                       <div>
-                        <label className="text-xs text-gray-500 mb-1 block">Category</label>
+                        <label className="text-xs text-content-muted mb-1 block">Category</label>
                         <select
                           value={idea.category}
                           onChange={(e) => updateIdea(idea.id, { category: e.target.value })}
-                          className="w-full px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 text-gray-900 dark:text-white outline-none"
+                          className="w-full px-3 py-2 rounded-lg bg-white dark:bg-surface-sunken border border-subtle text-content outline-none"
                         >
                           {brainstormData.categories.map((cat) => (
                             <option key={cat.id} value={cat.id}>{cat.name}</option>
@@ -588,12 +588,12 @@ export default function BrainstormEditor({ data, onChange, noteTitle, onTitleCha
                         </select>
                       </div>
                       <div>
-                        <label className="text-xs text-gray-500 mb-1 block">Notes</label>
+                        <label className="text-xs text-content-muted mb-1 block">Notes</label>
                         <textarea
                           value={idea.notes || ''}
                           onChange={(e) => updateIdea(idea.id, { notes: e.target.value })}
                           placeholder="Add notes..."
-                          className="w-full px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 text-gray-900 dark:text-white outline-none resize-none"
+                          className="w-full px-3 py-2 rounded-lg bg-white dark:bg-surface-sunken border border-subtle text-content outline-none resize-none"
                           rows={2}
                         />
                       </div>
@@ -615,14 +615,14 @@ export default function BrainstormEditor({ data, onChange, noteTitle, onTitleCha
           <>
             <button
               onClick={() => setShowAddCategory(false)}
-              className="px-4 py-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="px-4 py-2 rounded-lg text-content-muted hover:bg-surface-hover"
             >
               Done
             </button>
             <button
               onClick={addCategory}
               disabled={!newCategoryName.trim()}
-              className="px-4 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="px-4 py-2 rounded-lg bg-accent text-white hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
             >
               Add category
             </button>
@@ -631,18 +631,18 @@ export default function BrainstormEditor({ data, onChange, noteTitle, onTitleCha
       >
             <div className="space-y-5">
               <div>
-                <label className="text-sm text-gray-600 dark:text-gray-400 mb-1 block">Name</label>
+                <label className="text-sm text-content-muted mb-1 block">Name</label>
                 <input
                   type="text"
                   value={newCategoryName}
                   onChange={(e) => setNewCategoryName(e.target.value)}
                   placeholder="Category name"
-                  className="w-full px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white"
+                  className="w-full px-4 py-2 rounded-lg bg-surface-sunken border border-subtle outline-none text-content"
                   autoFocus
                 />
               </div>
               <div>
-                <label className="text-sm text-gray-600 dark:text-gray-400 mb-1 block">Color</label>
+                <label className="text-sm text-content-muted mb-1 block">Color</label>
                 <div className="flex gap-2 flex-wrap">
                   {['#6b7280', '#ef4444', '#f97316', '#f59e0b', '#84cc16', '#22c55e', '#10b981', '#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899'].map((color) => (
                     <button
@@ -657,18 +657,18 @@ export default function BrainstormEditor({ data, onChange, noteTitle, onTitleCha
                 </div>
               </div>
               <div>
-                <h4 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Current categories</h4>
+                <h4 className="mb-2 text-sm font-medium text-content-muted">Current categories</h4>
                 <div className="space-y-2">
                   {brainstormData.categories.map((category) => (
-                    <div key={category.id} className="flex items-center gap-3 rounded-lg border border-[#cbd1db] px-3 py-2 dark:border-gray-600">
+                    <div key={category.id} className="flex items-center gap-3 rounded-lg border border-subtle px-3 py-2 ">
                       <span className="h-3 w-3 rounded-full" style={{ backgroundColor: category.color }} aria-hidden="true" />
-                      <span className="flex-1 text-sm text-gray-800 dark:text-gray-200">{category.name}</span>
+                      <span className="flex-1 text-sm text-content dark:text-content-subtle">{category.name}</span>
                       {category.id !== 'uncategorized' && (
                         <button
                           type="button"
                           onClick={() => deleteCategory(category.id)}
                           aria-label={`Delete ${category.name} category`}
-                          className="rounded p-1 text-gray-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30"
+                          className="rounded p-1 text-content-muted hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30"
                         >
                           <Trash2 className="h-4 w-4" aria-hidden="true" />
                         </button>

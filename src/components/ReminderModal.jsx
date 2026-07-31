@@ -178,10 +178,10 @@ export default function ReminderModal() {
   return (
     <LegacyDialog label="Reminders" onClose={() => setReminderModalOpen(false)} align="center">
       <div 
-        className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-[#cbd1db] dark:border-gray-700 max-w-md w-full mx-4 modal-animate overflow-hidden"
+        className="bg-surface-raised rounded-2xl shadow-2xl border border-subtle max-w-md w-full mx-4 modal-animate overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
+        <div className="flex items-center justify-between p-5 qn-banner-surface text-white">
           <div className="flex items-center gap-3">
             <Bell className="w-6 h-6" />
             <div>
@@ -198,46 +198,46 @@ export default function ReminderModal() {
         </div>
         <div className="p-6">
         {note && (
-          <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border border-[#cbd1db] dark:border-gray-700">
-            <p className="text-sm text-gray-500 dark:text-gray-400">{t('reminders.remindersFor')}</p>
-            <p className="font-medium text-gray-900 dark:text-white truncate">{note.title}</p>
+          <div className="mb-4 p-3 bg-surface-sunken rounded-lg border border-subtle">
+            <p className="text-sm text-content-muted">{t('reminders.remindersFor')}</p>
+            <p className="font-medium text-content truncate">{note.title}</p>
           </div>
         )}
-        <div className="space-y-3 mb-6 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-[#cbd1db] dark:border-gray-700">
+        <div className="space-y-3 mb-6 p-4 bg-surface-sunken rounded-xl border border-subtle">
           <div className="flex gap-3">
             <div className="flex-1">
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t('reminders.date')}</label>
+              <label className="block text-xs font-medium text-content-muted mb-1">{t('reminders.date')}</label>
               <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-content-subtle" />
                 <input
                   type="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
                   min={new Date().toISOString().split('T')[0]}
-                  className="w-full pl-10 pr-3 py-2 bg-white dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
+                  className="w-full pl-10 pr-3 py-2 bg-surface-raised border border-subtle rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
                 />
               </div>
             </div>
             <div className="flex-1">
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t('reminders.time')}</label>
+              <label className="block text-xs font-medium text-content-muted mb-1">{t('reminders.time')}</label>
               <div className="relative">
-                <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-content-subtle" />
                 <input
                   type="time"
                   value={time}
                   onChange={(e) => setTime(e.target.value)}
-                  className="w-full pl-10 pr-3 py-2 bg-white dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
+                  className="w-full pl-10 pr-3 py-2 bg-surface-raised border border-subtle rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
                 />
               </div>
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t('reminders.repeat')}</label>
+            <label className="block text-xs font-medium text-content-muted mb-1">{t('reminders.repeat')}</label>
             <select
               value={repeat}
               onChange={(e) => setRepeat(e.target.value)}
-              className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
+              className="w-full px-3 py-2 bg-surface-raised border border-subtle rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
             >
               <option value="none">{t('reminders.dontRepeat')}</option>
               <option value="daily">{t('reminders.daily')}</option>
@@ -248,7 +248,7 @@ export default function ReminderModal() {
 
           <button
             onClick={handleAddReminder}
-            className="w-full py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+            className="w-full py-2 qn-banner-surface hover:from-emerald-700 hover:to-teal-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
           >
             <Plus className="w-4 h-4" />
             {t('reminders.addReminder')}
@@ -261,7 +261,7 @@ export default function ReminderModal() {
         </div>
         <div className="space-y-2 max-h-60 overflow-y-auto">
           {reminders.length === 0 ? (
-            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            <div className="text-center py-8 text-content-muted">
               <Bell className="w-12 h-12 mx-auto mb-2 opacity-30" />
               <p>{t('reminders.noReminders')}</p>
               <p className="text-xs mt-1">{t('reminders.addReminderHint')}</p>

@@ -106,8 +106,8 @@ export default function HTMLEditorModal({ editor }) {
 
   return (
     <LegacyDialog label="Edit HTML" onClose={handleClose} align="center">
-      <div className="modal-animate bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-[#cbd1db] dark:border-gray-700 w-full max-w-4xl mx-4 h-[85vh] overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between p-5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
+      <div className="modal-animate bg-surface-raised rounded-2xl shadow-2xl border border-subtle w-full max-w-4xl mx-4 h-[85vh] overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between p-5 qn-banner-surface text-white">
           <div className="flex items-center gap-3">
             <Code className="w-6 h-6" />
             <h2 className="text-lg font-bold">HTML Editor</h2>
@@ -121,8 +121,8 @@ export default function HTMLEditorModal({ editor }) {
             <button
               onClick={() => setShowPreview(!showPreview)}
               className={`p-2 rounded-full transition-colors ${
-                showPreview 
-                  ? 'bg-white/20 text-white' 
+ showPreview 
+ ? 'bg-white/20 text-white' 
                   : 'hover:bg-white/20 text-white/70'
               }`}
               title={showPreview ? 'Hide Preview' : 'Show Preview'}
@@ -144,27 +144,27 @@ export default function HTMLEditorModal({ editor }) {
           </p>
         </div>
         <div className="flex flex-1 overflow-hidden">
-          <div className={`flex flex-col flex-1 ${showPreview ? 'border-r border-[#cbd1db] dark:border-gray-700' : ''}`}>
-            <div className="flex items-center gap-2 px-4 py-2 border-b border-[#cbd1db] bg-gray-50 dark:bg-gray-900 dark:border-gray-700">
-              <span className="text-xs font-medium text-gray-500 dark:text-gray-400">HTML Source</span>
+          <div className={`flex flex-col flex-1 ${showPreview ? 'border-r border-subtle' : ''}`}>
+            <div className="flex items-center gap-2 px-4 py-2 border-b border-subtle bg-surface-sunken ">
+              <span className="text-xs font-medium text-content-muted">HTML Source</span>
               <div className="flex-1" />
               <button
                 onClick={handleCopy}
-                className="flex items-center gap-1 px-2 py-1 text-xs transition-colors rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                className="flex items-center gap-1 px-2 py-1 text-xs transition-colors rounded hover:bg-surface-sunken dark:hover:bg-surface-sunken"
               >
                 {copied ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
                 {copied ? 'Copied!' : 'Copy'}
               </button>
               <button
                 onClick={handleImport}
-                className="flex items-center gap-1 px-2 py-1 text-xs transition-colors rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                className="flex items-center gap-1 px-2 py-1 text-xs transition-colors rounded hover:bg-surface-sunken dark:hover:bg-surface-sunken"
               >
                 <Upload className="w-3 h-3" />
                 Import
               </button>
               <button
                 onClick={handleExport}
-                className="flex items-center gap-1 px-2 py-1 text-xs transition-colors rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                className="flex items-center gap-1 px-2 py-1 text-xs transition-colors rounded hover:bg-surface-sunken dark:hover:bg-surface-sunken"
               >
                 <Download className="w-3 h-3" />
                 Export
@@ -177,16 +177,16 @@ export default function HTMLEditorModal({ editor }) {
                 setHtmlContent(e.target.value)
                 setHasUnsavedChanges(true)
               }}
-              className="flex-1 w-full p-4 font-mono text-sm text-gray-900 bg-white border-none outline-none resize-none dark:bg-gray-900 dark:text-gray-100"
+              className="flex-1 w-full p-4 font-mono text-sm text-content bg-white border-none outline-none resize-none dark:bg-surface-sunken dark:text-content"
               spellCheck={false}
               placeholder="Enter HTML code here..."
             />
           </div>
           {showPreview && (
             <div className="flex flex-col flex-1">
-              <div className="flex items-center gap-2 px-4 py-2 border-b border-[#cbd1db] bg-gray-50 dark:bg-gray-900 dark:border-gray-700">
-                <Eye className="w-4 h-4 text-gray-400" />
-                <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Preview</span>
+              <div className="flex items-center gap-2 px-4 py-2 border-b border-subtle bg-surface-sunken ">
+                <Eye className="w-4 h-4 text-content-subtle" />
+                <span className="text-xs font-medium text-content-muted">Preview</span>
               </div>
               <div 
                 className="flex-1 p-4 overflow-auto prose prose-sm dark:prose-invert max-w-none"
@@ -195,14 +195,14 @@ export default function HTMLEditorModal({ editor }) {
             </div>
           )}
         </div>
-        <div className="flex items-center justify-between px-6 py-4 border-t border-[#cbd1db] dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+        <div className="flex items-center justify-between px-6 py-4 border-t border-subtle bg-surface-sunken">
+          <p className="text-xs text-content-muted">
             {htmlContent.length} characters
           </p>
           <div className="flex items-center gap-3">
             <button
               onClick={handleClose}
-              className="px-4 py-2 text-gray-700 transition-colors rounded-lg dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 border border-[#cbd1db] dark:border-gray-600"
+              className="px-4 py-2 text-content transition-colors rounded-lg dark:text-content-subtle hover:bg-surface-sunken dark:hover:bg-surface-sunken border border-subtle "
             >
               Cancel
             </button>

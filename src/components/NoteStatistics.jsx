@@ -119,7 +119,7 @@ export default function NoteStatistics({ note }) {
           <button
             type="button"
             onClick={() => setShareModalOpen(true, note.id)}
-            className="hidden h-control-sm items-center gap-1.5 rounded-control border border-strong px-2.5 text-ui-sm font-medium text-content transition-colors duration-fast hover:bg-surface-hover sm:inline-flex"
+            className="hidden h-control-sm items-center gap-1.5 rounded-control border border-control px-2.5 text-ui-sm font-medium text-content transition-colors duration-fast hover:bg-surface-hover sm:inline-flex"
           >
             <Share2 className="h-3.5 w-3.5" aria-hidden="true" />
             {t('editor.share', 'Share')}
@@ -261,14 +261,14 @@ export function NoteStatisticsDetailed({ note }) {
     <div className="space-y-4">
       {statGroups.map((group) => (
         <div key={group.title}>
-          <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+          <h4 className="text-xs font-semibold text-content-muted uppercase tracking-wider mb-2">
             {group.title}
           </h4>
-          <div className="bg-gray-50 dark:bg-gray-900 rounded-lg divide-y divide-gray-200 dark:divide-gray-700">
+          <div className="bg-surface-sunken rounded-lg divide-y divide-gray-200 dark:divide-gray-700">
             {group.items.map((item) => (
               <div key={item.label} className="px-3 py-2 flex items-center justify-between">
-                <span className="text-sm text-gray-600 dark:text-gray-400">{item.label}</span>
-                <span className="text-sm font-medium text-gray-900 dark:text-white">{item.value}</span>
+                <span className="text-sm text-content-muted">{item.label}</span>
+                <span className="text-sm font-medium text-content">{item.value}</span>
               </div>
             ))}
           </div>

@@ -32,8 +32,8 @@ export default function Avatar({ user, size = 'md', className = '' }) {
   return (
     <span
       className={`relative flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-primary-500 to-primary-700 font-semibold text-white ${
-        SIZES[size] || SIZES.md
-      } ${className}`}
+ SIZES[size] || SIZES.md
+ } ${className}`}
     >
       {showImage ? (
         <img

@@ -341,8 +341,8 @@ export default function SettingsModal() {
 
   return (
     <LegacyDialog label="Settings" onClose={() => setSettingsOpen(false)} align="center">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-[#cbd1db] dark:border-gray-700 w-full max-w-3xl mx-4 h-[80vh] overflow-hidden flex flex-col modal-animate">
-        <div className="flex items-center justify-between px-6 py-5 bg-gradient-to-r from-emerald-600 to-teal-600">
+      <div className="bg-surface-raised rounded-2xl shadow-2xl border border-subtle w-full max-w-3xl mx-4 h-[80vh] overflow-hidden flex flex-col modal-animate">
+        <div className="flex items-center justify-between px-6 py-5 qn-banner-surface">
           <div className="text-white">
             <h2 className="text-xl font-bold flex items-center gap-2">
               <Settings className="w-6 h-6" />
@@ -362,27 +362,27 @@ export default function SettingsModal() {
           </button>
         </div>
         <div className="flex flex-1 overflow-hidden">
-        <div className="w-48 p-4 border-r border-[#cbd1db] bg-gray-50 dark:bg-gray-800 dark:border-gray-700">
+        <div className="w-48 p-4 border-r border-subtle bg-surface-sunken ">
           <nav className="space-y-1">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] transition-colors ${
-                  activeTab === tab.id
-                    ? 'bg-white dark:bg-gray-800 text-emerald-700 dark:text-emerald-300 shadow-sm font-medium'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-white/80 dark:hover:bg-gray-800/50'
+ activeTab === tab.id
+ ? 'bg-surface-raised text-emerald-700 dark:text-emerald-300 shadow-sm font-medium'
+                    : 'text-content-muted hover:bg-white/80 dark:hover:bg-surface-raised'
                 }`}
               >
-                <tab.icon className={`w-4 h-4 ${activeTab === tab.id ? 'text-emerald-500 dark:text-emerald-400' : 'text-gray-400 dark:text-gray-500'}`} />
+                <tab.icon className={`w-4 h-4 ${activeTab === tab.id ? 'text-emerald-500 dark:text-emerald-400' : 'text-content-subtle'}`} />
                 {tab.label}
               </button>
             ))}
           </nav>
         </div>
         <div className="flex flex-col flex-1">
-          <div className="flex items-center justify-between px-6 py-3 border-b border-[#cbd1db] dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
-            <h3 className="text-[10px] font-bold text-gray-600 dark:text-gray-300 uppercase tracking-[0.12em]">
+          <div className="flex items-center justify-between px-6 py-3 border-b border-subtle bg-surface-sunken dark:bg-surface-raised">
+            <h3 className="text-[10px] font-bold text-content-muted uppercase tracking-[0.12em]">
               {tabs.find((t) => t.id === activeTab)?.label}
             </h3>
           </div>
@@ -390,7 +390,7 @@ export default function SettingsModal() {
             {activeTab === 'general' && (
               <div className="space-y-6">
                 <div>
-                  <h4 className="mb-3 text-sm font-medium text-gray-900 dark:text-white">
+                  <h4 className="mb-3 text-sm font-medium text-content">
                     {t('settings.appearance')}
                   </h4>
                   <div className="flex gap-3">
@@ -403,20 +403,20 @@ export default function SettingsModal() {
                         key={option.id}
                         onClick={() => setTheme(option.id)}
                         className={`flex-1 flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-colors ${
-                          theme === option.id
-                            ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/60 text-primary-700 dark:text-primary-100 ring-1 ring-primary-500/10 dark:ring-primary-500/20'
-                            : 'border-[#cbd1db] dark:border-gray-700 hover:border-[#cbd1db] dark:hover:border-gray-600'
+ theme === option.id
+ ? 'border-primary-500 bg-primary-50 dark:bg-accent-soft text-primary-700 dark:text-primary-100 ring-1 ring-[rgba(16,185,129,0.10)] dark:ring-[rgba(16,185,129,0.20)]'
+                            : 'border-subtle hover:border-subtle dark:hover:border-subtle'
                         }`}
                       >
-                        <option.icon className={`w-6 h-6 ${theme === option.id ? 'text-primary-600 dark:text-primary-300' : 'text-gray-600 dark:text-gray-400'}`} />
-                        <span className="text-sm text-gray-900 dark:text-white">{option.label}</span>
+                        <option.icon className={`w-6 h-6 ${theme === option.id ? 'text-primary-600 dark:text-primary-300' : 'text-content-muted'}`} />
+                        <span className="text-sm text-content">{option.label}</span>
                       </button>
                     ))}
                   </div>
                 </div>
 
                 <div>
-                  <h4 className="mb-3 text-sm font-medium text-gray-900 dark:text-white">
+                  <h4 className="mb-3 text-sm font-medium text-content">
                     {t('settings.language')}
                   </h4>
                   <div className="grid grid-cols-3 gap-2">
@@ -425,9 +425,9 @@ export default function SettingsModal() {
                         key={lang.code}
                         onClick={() => setLanguage(lang.code)}
                         className={`flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-colors ${
-                          language === lang.code
-                            ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/70 text-primary-700 dark:text-primary-100 ring-1 ring-primary-500/10 dark:ring-primary-500/20'
-                            : 'border-[#cbd1db] dark:border-gray-700 hover:border-[#cbd1db] dark:hover:border-gray-600'
+ language === lang.code
+ ? 'border-primary-500 bg-primary-50 dark:bg-accent-soft text-primary-700 dark:text-primary-100 ring-1 ring-[rgba(16,185,129,0.10)] dark:ring-[rgba(16,185,129,0.20)]'
+                            : 'border-subtle hover:border-subtle dark:hover:border-subtle'
                         }`}
                         dir={lang.dir}
                       >
@@ -441,18 +441,18 @@ export default function SettingsModal() {
                             e.target.nextSibling.style.display = 'block'
                           }}
                         />
-                        <span className="hidden text-lg font-bold text-gray-600 dark:text-gray-400">{lang.countryCode}</span>
-                        <span className="text-xs font-medium text-gray-900 dark:text-gray-200">{lang.nativeName}</span>
+                        <span className="hidden text-lg font-bold text-content-muted">{lang.countryCode}</span>
+                        <span className="text-xs font-medium text-content dark:text-content-subtle">{lang.nativeName}</span>
                       </button>
                     ))}
                   </div>
                 </div>
 
                 <div>
-                  <h4 className="mb-3 text-sm font-medium text-gray-900 dark:text-white">
+                  <h4 className="mb-3 text-sm font-medium text-content">
                     {t('settings.viewMode')}
                   </h4>
-                  <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">
+                  <p className="mb-3 text-xs text-content-muted">
                     {t('settings.viewModeDesc')}
                   </p>
                   <div className="flex gap-3">
@@ -464,32 +464,32 @@ export default function SettingsModal() {
                         key={option.id}
                         onClick={() => setViewMode(option.id)}
                         className={`flex-1 flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-colors ${
-                          viewMode === option.id
-                            ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/60 text-primary-700 dark:text-primary-100 ring-1 ring-primary-500/10 dark:ring-primary-500/20'
-                            : 'border-[#cbd1db] dark:border-gray-700 hover:border-[#cbd1db] dark:hover:border-gray-600'
+ viewMode === option.id
+ ? 'border-primary-500 bg-primary-50 dark:bg-accent-soft text-primary-700 dark:text-primary-100 ring-1 ring-[rgba(16,185,129,0.10)] dark:ring-[rgba(16,185,129,0.20)]'
+                            : 'border-subtle hover:border-subtle dark:hover:border-subtle'
                         }`}
                       >
-                        <option.icon className={`w-6 h-6 ${viewMode === option.id ? 'text-primary-600 dark:text-primary-300' : 'text-gray-600 dark:text-gray-400'}`} />
-                        <span className="text-sm font-medium text-gray-900 dark:text-white">{option.label}</span>
-                        <span className="text-xs text-center text-gray-500 dark:text-gray-400">{option.description}</span>
+                        <option.icon className={`w-6 h-6 ${viewMode === option.id ? 'text-primary-600 dark:text-primary-300' : 'text-content-muted'}`} />
+                        <span className="text-sm font-medium text-content">{option.label}</span>
+                        <span className="text-xs text-center text-content-muted">{option.description}</span>
                       </button>
                     ))}
                   </div>
                 </div>
 
                 <div>
-                  <h4 className="mb-3 text-sm font-medium text-gray-900 dark:text-white">
+                  <h4 className="mb-3 text-sm font-medium text-content">
                     {t('settings.editorPreferences')}
                   </h4>
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-surface-sunken">
                       <div className="flex items-center gap-3">
-                        <Shield className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                        <Shield className="w-4 h-4 text-content-muted" />
                         <div>
-                          <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          <p className="text-sm font-medium text-content">
                             {t('settings.confirmBeforeDelete')}
                           </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                          <p className="text-xs text-content-muted">
                             {t('settings.confirmBeforeDeleteDesc')}
                           </p>
                         </div>
@@ -501,24 +501,24 @@ export default function SettingsModal() {
                         aria-label={t('settings.confirmBeforeDelete')}
                         onClick={() => setConfirmBeforeDelete(!confirmBeforeDelete)}
                         className={`relative w-11 h-6 rounded-full transition-colors ${
-                          confirmBeforeDelete ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'
-                        }`}
+ confirmBeforeDelete ? 'bg-primary-600' : 'bg-surface-active dark:bg-surface-active'
+ }`}
                       >
                         <span
-                          className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white dark:bg-gray-200 rounded-full shadow transition-transform ${
-                            confirmBeforeDelete ? 'translate-x-5' : 'translate-x-0'
-                          }`}
+                          className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white dark:bg-surface-sunken rounded-full shadow transition-transform ${
+ confirmBeforeDelete ? 'translate-x-5' : 'translate-x-0'
+ }`}
                         />
                       </button>
                     </div>
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-surface-sunken">
                       <div className="flex items-center gap-3">
-                        <SpellCheck className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                        <SpellCheck className="w-4 h-4 text-content-muted" />
                         <div>
-                          <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          <p className="text-sm font-medium text-content">
                             {t('settings.spellCheck')}
                           </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                          <p className="text-xs text-content-muted">
                             {t('settings.spellCheckDesc')}
                           </p>
                         </div>
@@ -530,24 +530,24 @@ export default function SettingsModal() {
                         aria-label={t('settings.spellCheck')}
                         onClick={() => setSpellCheck(!spellCheck)}
                         className={`relative w-11 h-6 rounded-full transition-colors ${
-                          spellCheck ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'
-                        }`}
+ spellCheck ? 'bg-primary-600' : 'bg-surface-active dark:bg-surface-active'
+ }`}
                       >
                         <span
-                          className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white dark:bg-gray-200 rounded-full shadow transition-transform ${
-                            spellCheck ? 'translate-x-5' : 'translate-x-0'
-                          }`}
+                          className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white dark:bg-surface-sunken rounded-full shadow transition-transform ${
+ spellCheck ? 'translate-x-5' : 'translate-x-0'
+ }`}
                         />
                       </button>
                     </div>
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-surface-sunken">
                       <div className="flex items-center gap-3">
-                        <BarChart3 className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                        <BarChart3 className="w-4 h-4 text-content-muted" />
                         <div>
-                          <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          <p className="text-sm font-medium text-content">
                             {t('settings.showNoteStatistics')}
                           </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                          <p className="text-xs text-content-muted">
                             {t('settings.showNoteStatisticsDesc')}
                           </p>
                         </div>
@@ -559,13 +559,13 @@ export default function SettingsModal() {
                         aria-label={t('settings.showNoteStatistics')}
                         onClick={() => setShowNoteStatistics(!showNoteStatistics)}
                         className={`relative w-11 h-6 rounded-full transition-colors ${
-                          showNoteStatistics ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'
-                        }`}
+ showNoteStatistics ? 'bg-primary-600' : 'bg-surface-active dark:bg-surface-active'
+ }`}
                       >
                         <span
-                          className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white dark:bg-gray-200 rounded-full shadow transition-transform ${
-                            showNoteStatistics ? 'translate-x-5' : 'translate-x-0'
-                          }`}
+                          className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white dark:bg-surface-sunken rounded-full shadow transition-transform ${
+ showNoteStatistics ? 'translate-x-5' : 'translate-x-0'
+ }`}
                         />
                       </button>
                     </div>
@@ -574,7 +574,7 @@ export default function SettingsModal() {
 
                 {/* Note list display — read by NoteCard and RichTextEditor. */}
                 <div>
-                  <h4 className="mb-3 text-sm font-medium text-gray-900 dark:text-white">
+                  <h4 className="mb-3 text-sm font-medium text-content">
                     {t('settings.noteListDisplay', 'Note list display')}
                   </h4>
                   <div className="space-y-4 rounded-card border border-subtle bg-surface-sunken p-4">
@@ -638,17 +638,17 @@ export default function SettingsModal() {
                 </div>
 
                 <div>
-                  <h4 className="mb-3 text-sm font-medium text-gray-900 dark:text-white">
+                  <h4 className="mb-3 text-sm font-medium text-content">
                     {t('settings.defaultSortOrder')}
                   </h4>
-                  <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">
+                  <p className="mb-3 text-xs text-content-muted">
                     {t('settings.defaultSortOrderDesc')}
                   </p>
                   <select
                     aria-label={t('settings.defaultSortOrder')}
                     value={currentSort}
                     onChange={(e) => setCurrentSort(e.target.value)}
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-[#cbd1db] dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-subtle bg-surface-raised text-content focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   >
                     <option value="manual">{t('sort.manual')}</option>
                     <option value="updated-desc">{t('sort.lastModified')}</option>
@@ -663,19 +663,19 @@ export default function SettingsModal() {
                 </div>
 
                 <div>
-                  <h4 className="mb-3 text-sm font-medium text-gray-900 dark:text-white">
+                  <h4 className="mb-3 text-sm font-medium text-content">
                     {t('settings.trashRetention')}
                   </h4>
-                  <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">
+                  <p className="mb-3 text-xs text-content-muted">
                     {t('settings.trashRetentionDesc')}
                   </p>
                   <div className="flex items-center gap-3">
-                    <Clock className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                    <Clock className="w-4 h-4 text-content-muted" />
                     <select
                       aria-label={t('settings.trashRetention')}
                       value={trashRetentionDays}
                       onChange={(e) => setTrashRetentionDays(Number(e.target.value))}
-                      className="flex-1 px-3 py-2 text-sm rounded-lg border border-[#cbd1db] dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                      className="flex-1 px-3 py-2 text-sm rounded-lg border border-subtle bg-surface-raised text-content focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     >
                       <option value={7}>7 {t('settings.days')}</option>
                       <option value={14}>14 {t('settings.days')}</option>
@@ -692,27 +692,27 @@ export default function SettingsModal() {
                 {user?.isLocal ? (
                   <div className="space-y-5">
                     <div className="flex items-center gap-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900 dark:bg-emerald-950/30">
-                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-emerald-700 shadow-sm dark:bg-gray-800 dark:text-emerald-300">
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-emerald-700 shadow-sm dark:bg-surface-raised dark:text-emerald-300">
                         <HardDrive className="h-5 w-5" aria-hidden="true" />
                       </span>
                       <div>
-                        <p className="font-semibold text-gray-900 dark:text-white">My workspace</p>
+                        <p className="font-semibold text-content">My workspace</p>
                         <p className="mt-0.5 text-sm text-emerald-800 dark:text-emerald-200">
                           Saved privately on this device
                         </p>
                       </div>
                     </div>
 
-                    <div className="rounded-xl border border-[#cbd1db] p-4 dark:border-gray-700">
-                      <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                    <div className="rounded-xl border border-subtle p-4 ">
+                      <h4 className="text-sm font-semibold text-content">
                         Local-first mode
                       </h4>
-                      <p className="mt-2 text-sm leading-6 text-gray-600 dark:text-gray-300">
+                      <p className="mt-2 text-sm leading-6 text-content-muted">
                         This workspace does not use an account or a paid plan. Notes remain in this
                         browser and all editing and organization features are available offline.
                       </p>
                       {!cloudEnabled && (
-                        <p className="mt-3 rounded-lg bg-gray-50 px-3 py-2.5 text-xs leading-5 text-gray-600 dark:bg-gray-900 dark:text-gray-300">
+                        <p className="mt-3 rounded-lg bg-surface-sunken px-3 py-2.5 text-xs leading-5 text-content-muted dark:bg-surface-sunken dark:text-content-subtle">
                           Multi-device sync and collaboration become available when a self-hosted
                           Supabase backend is configured.
                         </p>
@@ -722,7 +722,7 @@ export default function SettingsModal() {
                     <button
                       type="button"
                       onClick={handleLogout}
-                      className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                      className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-content transition-colors hover:bg-surface-sunken dark:text-content-subtle dark:hover:bg-surface-sunken"
                     >
                       <LogOut className="h-4 w-4" aria-hidden="true" />
                       Close workspace
@@ -730,29 +730,29 @@ export default function SettingsModal() {
                   </div>
                 ) : user ? (
                   <div className="space-y-6">
-                    <div className="flex items-center gap-4 p-4 rounded-lg bg-gray-50 dark:bg-gray-900">
+                    <div className="flex items-center gap-4 p-4 rounded-lg bg-surface-sunken">
                       <Avatar user={user} size="xl" />
                       <div className="flex-1">
-                        <p className="font-medium text-gray-900 dark:text-white">
+                        <p className="font-medium text-content">
                           {user.email}
                         </p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                        <p className="text-sm text-content-muted">
                           {t('settings.memberSince')}{' '}
                           {new Date(user.created_at).toLocaleDateString('en-US')}
                         </p>
                       </div>
                     </div>
-                    <div className="p-4 border border-[#cbd1db] rounded-lg dark:border-gray-700">
+                    <div className="p-4 border border-subtle rounded-lg ">
                       <div className="flex items-center gap-2 mb-3">
-                        <User className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                        <h4 className="text-sm font-medium text-gray-900 dark:text-white">{t('settings.profilePictureUrl')}</h4>
+                        <User className="w-4 h-4 text-content-muted" />
+                        <h4 className="text-sm font-medium text-content">{t('settings.profilePictureUrl')}</h4>
                       </div>
                       <div className="flex gap-2">
                         <input
                           type="url"
                           defaultValue={user.user_metadata?.avatar_url || ''}
                           placeholder="https://example.com/your-image.jpg"
-                          className="flex-1 px-4 py-2 text-sm text-gray-900 bg-white border border-[#cbd1db] rounded-lg dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                          className="flex-1 px-4 py-2 text-sm text-content bg-white border border-subtle rounded-lg dark:bg-surface-sunken dark:text-white"
                           id="avatar-url-input"
                         />
                         <button
@@ -791,19 +791,19 @@ export default function SettingsModal() {
                           {isLoading ? t('settings.saving') : t('common.save')}
                         </button>
                       </div>
-                      <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                      <p className="mt-2 text-xs text-content-muted">
                         {t('settings.profilePictureHint')}
                       </p>
                     </div>
-                    <div className="p-4 border border-[#cbd1db] rounded-lg dark:border-gray-700">
+                    <div className="p-4 border border-subtle rounded-lg ">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <Mail className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                          <h4 className="text-sm font-medium text-gray-900 dark:text-white">{t('settings.changeEmail')}</h4>
+                          <Mail className="w-4 h-4 text-content-muted" />
+                          <h4 className="text-sm font-medium text-content">{t('settings.changeEmail')}</h4>
                         </div>
                         <button
                           onClick={() => setShowChangeEmail(!showChangeEmail)}
-                          className="px-3 py-1.5 text-sm text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg transition-colors"
+                          className="px-3 py-1.5 text-sm text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-accent-soft rounded-lg transition-colors"
                         >
                           {showChangeEmail ? t('common.cancel') : t('settings.change')}
                         </button>
@@ -815,7 +815,7 @@ export default function SettingsModal() {
                               type="email"
                               value={newEmail}
                               onChange={(e) => setNewEmail(e.target.value)}
-                              className="w-full px-4 py-2 text-gray-900 bg-white border border-[#cbd1db] rounded-lg dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                              className="w-full px-4 py-2 text-content bg-white border border-subtle rounded-lg dark:bg-surface-sunken dark:text-white"
                               placeholder={t('settings.newEmailAddress')}
                             />
                           </div>
@@ -831,15 +831,15 @@ export default function SettingsModal() {
                         </form>
                       )}
                     </div>
-                    <div className="p-4 border border-[#cbd1db] rounded-lg dark:border-gray-700">
+                    <div className="p-4 border border-subtle rounded-lg ">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <Lock className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                          <h4 className="text-sm font-medium text-gray-900 dark:text-white">{t('settings.changePassword')}</h4>
+                          <Lock className="w-4 h-4 text-content-muted" />
+                          <h4 className="text-sm font-medium text-content">{t('settings.changePassword')}</h4>
                         </div>
                         <button
                           onClick={() => setShowChangePassword(!showChangePassword)}
-                          className="px-3 py-1.5 text-sm text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg transition-colors"
+                          className="px-3 py-1.5 text-sm text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-accent-soft rounded-lg transition-colors"
                         >
                           {showChangePassword ? t('common.cancel') : t('settings.change')}
                         </button>
@@ -851,7 +851,7 @@ export default function SettingsModal() {
                               type="password"
                               value={currentPassword}
                               onChange={(e) => setCurrentPassword(e.target.value)}
-                              className="w-full px-4 py-2 text-gray-900 bg-white border border-[#cbd1db] rounded-lg dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                              className="w-full px-4 py-2 text-content bg-white border border-subtle rounded-lg dark:bg-surface-sunken dark:text-white"
                               placeholder={t('settings.currentPassword')}
                             />
                           </div>
@@ -860,7 +860,7 @@ export default function SettingsModal() {
                               type="password"
                               value={newPassword}
                               onChange={(e) => setNewPassword(e.target.value)}
-                              className="w-full px-4 py-2 text-gray-900 bg-white border border-[#cbd1db] rounded-lg dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                              className="w-full px-4 py-2 text-content bg-white border border-subtle rounded-lg dark:bg-surface-sunken dark:text-white"
                               placeholder={t('settings.newPassword')}
                             />
                           </div>
@@ -869,7 +869,7 @@ export default function SettingsModal() {
                               type="password"
                               value={confirmPassword}
                               onChange={(e) => setConfirmPassword(e.target.value)}
-                              className="w-full px-4 py-2 text-gray-900 bg-white border border-[#cbd1db] rounded-lg dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                              className="w-full px-4 py-2 text-content bg-white border border-subtle rounded-lg dark:bg-surface-sunken dark:text-white"
                               placeholder={t('settings.confirmNewPassword')}
                             />
                           </div>
@@ -894,7 +894,7 @@ export default function SettingsModal() {
                     </button>
 
                     {/* Delete Account */}
-                    <div className="pt-4 mt-4 space-y-3 border-t border-[#cbd1db] dark:border-gray-700">
+                    <div className="pt-4 mt-4 space-y-3 border-t border-subtle">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <AlertTriangle className="w-4 h-4 text-red-500" />
@@ -912,7 +912,7 @@ export default function SettingsModal() {
                           {showDeleteAccount ? t('common.cancel') : t('settings.deleteAccountButton')}
                         </button>
                       </div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                      <p className="text-xs text-content-muted">
                         {t('settings.deleteAccountDesc')}
                       </p>
                       {showDeleteAccount && (
@@ -936,7 +936,7 @@ export default function SettingsModal() {
                               type="text"
                               value={deleteConfirmText}
                               onChange={(e) => setDeleteConfirmText(e.target.value)}
-                              className="w-full px-3 py-2 text-sm border-2 border-red-300 rounded-lg dark:border-red-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none"
+                              className="w-full px-3 py-2 text-sm border-2 border-red-300 rounded-lg dark:border-red-700 bg-surface-raised text-content focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none"
                               placeholder="DELETE"
                               autoComplete="off"
                               spellCheck={false}
@@ -956,7 +956,7 @@ export default function SettingsModal() {
                   </div>
                 ) : (
                   <form onSubmit={handleLogin} className="space-y-4">
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                    <p className="text-sm text-content-muted">
                       {t('settings.signInDesc')}
                       {!isBackendConfigured() && (
                         <span className="flex items-center gap-2 mt-2 text-yellow-600 dark:text-yellow-400">
@@ -967,38 +967,38 @@ export default function SettingsModal() {
                     </p>
 
                     <div>
-                      <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                      <label className="block mb-1 text-sm font-medium text-content-muted">
                         {t('settings.email')}
                       </label>
                       <div className="relative">
-                        <Mail className="absolute w-4 h-4 text-gray-400 -translate-y-1/2 left-3 top-1/2" />
+                        <Mail className="absolute w-4 h-4 text-content-subtle -translate-y-1/2 left-3 top-1/2" />
                         <input
                           type="email"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
-                          className="w-full py-2 pl-10 pr-4 text-gray-900 bg-white border border-[#cbd1db] rounded-lg dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                          className="w-full py-2 pl-10 pr-4 text-content bg-white border border-subtle rounded-lg dark:bg-surface-sunken dark:text-white"
                           placeholder="your@email.com"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                      <label className="block mb-1 text-sm font-medium text-content-muted">
                         {t('settings.password')}
                       </label>
                       <div className="relative">
-                        <Lock className="absolute w-4 h-4 text-gray-400 -translate-y-1/2 left-3 top-1/2" />
+                        <Lock className="absolute w-4 h-4 text-content-subtle -translate-y-1/2 left-3 top-1/2" />
                         <input
                           type={showPassword ? 'text' : 'password'}
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
-                          className="w-full py-2 pl-10 pr-10 text-gray-900 bg-white border border-[#cbd1db] rounded-lg dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                          className="w-full py-2 pl-10 pr-10 text-content bg-white border border-subtle rounded-lg dark:bg-surface-sunken dark:text-white"
                           placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
                         />
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute text-gray-400 -translate-y-1/2 right-3 top-1/2 hover:text-gray-600"
+                          className="absolute text-content-subtle -translate-y-1/2 right-3 top-1/2 hover:text-content-muted"
                         >
                           {showPassword ? (
                             <EyeOff className="w-4 h-4" />
@@ -1021,7 +1021,7 @@ export default function SettingsModal() {
                         type="button"
                         onClick={handleSignUp}
                         disabled={isLoading}
-                        className="flex-1 px-4 py-2 text-gray-700 dark:text-gray-200 transition-colors border border-[#cbd1db] rounded-lg dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
+                        className="flex-1 px-4 py-2 text-content transition-colors border border-subtle rounded-lg hover:bg-surface-hover disabled:opacity-50"
                       >
                         {t('settings.register')}
                       </button>
@@ -1032,14 +1032,14 @@ export default function SettingsModal() {
             )}
             {activeTab === 'sync' && (
               <div className="space-y-6">
-                <div className="flex items-center justify-between p-4 rounded-lg bg-gray-50 dark:bg-gray-900">
+                <div className="flex items-center justify-between p-4 rounded-lg bg-surface-sunken">
                   <div className="flex items-center gap-3">
                     <Cloud className="w-5 h-5 text-primary-500" />
                     <div>
-                      <p className="font-medium text-gray-900 dark:text-white">
+                      <p className="font-medium text-content">
                         {t('settings.cloudSync')}
                       </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                      <p className="text-sm text-content-muted">
                         {user
                           ? t('settings.connectedToBackend')
                           : t('settings.notLoggedIn')}
@@ -1055,15 +1055,15 @@ export default function SettingsModal() {
                   </button>
                 </div>
                 <div className="space-y-4">
-                  <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                  <h4 className="text-sm font-medium text-content">
                     {t('settings.syncSettings', 'Sync Settings')}
                   </h4>
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-surface-sunken">
                     <div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      <p className="text-sm font-medium text-content">
                         {t('settings.autoSync', 'Auto Sync')}
                       </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                      <p className="text-xs text-content-muted">
                         {t('settings.autoSyncDesc', 'Automatically sync changes in the background')}
                       </p>
                     </div>
@@ -1074,22 +1074,22 @@ export default function SettingsModal() {
                       aria-label={t('settings.autoSync', 'Automatic sync')}
                       onClick={() => setAutoSync(!autoSync)}
                       className={`relative w-11 h-6 rounded-full transition-colors ${
-                        autoSync ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'
-                      }`}
+ autoSync ? 'bg-primary-600' : 'bg-surface-active dark:bg-surface-active'
+ }`}
                     >
                       <span
-                        className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white dark:bg-gray-200 rounded-full shadow transition-transform ${
-                          autoSync ? 'translate-x-5' : 'translate-x-0'
-                        }`}
+                        className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white dark:bg-surface-sunken rounded-full shadow transition-transform ${
+ autoSync ? 'translate-x-5' : 'translate-x-0'
+ }`}
                       />
                     </button>
                   </div>
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-surface-sunken">
                     <div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      <p className="text-sm font-medium text-content">
                         {t('settings.syncInterval', 'Sync Interval')}
                       </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                      <p className="text-xs text-content-muted">
                         {t('settings.syncIntervalDesc', 'How often to sync automatically')}
                       </p>
                     </div>
@@ -1098,7 +1098,7 @@ export default function SettingsModal() {
                       value={syncInterval}
                       onChange={(e) => setSyncInterval(Number(e.target.value))}
                       disabled={!autoSync}
-                      className="px-3 py-1.5 text-sm border border-[#cbd1db] dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"
+                      className="px-3 py-1.5 text-sm border border-subtle rounded-lg bg-white dark:bg-surface-sunken text-content disabled:opacity-50"
                     >
                       <option value={1}>1 {t('settings.minute', 'minute')}</option>
                       <option value={5}>5 {t('settings.minutes', 'minutes')}</option>
@@ -1108,12 +1108,12 @@ export default function SettingsModal() {
                       <option value={60}>1 {t('settings.hour', 'hour')}</option>
                     </select>
                   </div>
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-surface-sunken">
                     <div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      <p className="text-sm font-medium text-content">
                         {t('settings.syncOnStartup', 'Sync on Startup')}
                       </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                      <p className="text-xs text-content-muted">
                         {t('settings.syncOnStartupDesc', 'Sync when app starts')}
                       </p>
                     </div>
@@ -1124,22 +1124,22 @@ export default function SettingsModal() {
                       aria-label={t('settings.syncOnStartup', 'Sync on startup')}
                       onClick={() => setSyncOnStartup(!syncOnStartup)}
                       className={`relative w-11 h-6 rounded-full transition-colors ${
-                        syncOnStartup ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'
-                      }`}
+ syncOnStartup ? 'bg-primary-600' : 'bg-surface-active dark:bg-surface-active'
+ }`}
                     >
                       <span
-                        className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white dark:bg-gray-200 rounded-full shadow transition-transform ${
-                          syncOnStartup ? 'translate-x-5' : 'translate-x-0'
-                        }`}
+                        className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white dark:bg-surface-sunken rounded-full shadow transition-transform ${
+ syncOnStartup ? 'translate-x-5' : 'translate-x-0'
+ }`}
                       />
                     </button>
                   </div>
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-surface-sunken">
                     <div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      <p className="text-sm font-medium text-content">
                         {t('settings.syncNotifications', 'Sync Notifications')}
                       </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                      <p className="text-xs text-content-muted">
                         {t('settings.syncNotificationsDesc', 'Show notifications after sync')}
                       </p>
                     </div>
@@ -1150,44 +1150,44 @@ export default function SettingsModal() {
                       aria-label={t('settings.showSyncNotifications', 'Show sync notifications')}
                       onClick={() => setShowSyncNotifications(!showSyncNotifications)}
                       className={`relative w-11 h-6 rounded-full transition-colors ${
-                        showSyncNotifications ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'
-                      }`}
+ showSyncNotifications ? 'bg-primary-600' : 'bg-surface-active dark:bg-surface-active'
+ }`}
                     >
                       <span
-                        className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white dark:bg-gray-200 rounded-full shadow transition-transform ${
-                          showSyncNotifications ? 'translate-x-5' : 'translate-x-0'
-                        }`}
+                        className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white dark:bg-surface-sunken rounded-full shadow transition-transform ${
+ showSyncNotifications ? 'translate-x-5' : 'translate-x-0'
+ }`}
                       />
                     </button>
                   </div>
                 </div>
 
                 <div className="space-y-3">
-                  <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                  <h4 className="text-sm font-medium text-content">
                     {t('settings.statistics')}
                   </h4>
                   <div className="grid grid-cols-3 gap-4">
-                    <div className="p-4 text-center rounded-lg bg-gray-50 dark:bg-gray-900 border border-[#cbd1db] dark:border-gray-700">
-                      <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    <div className="p-4 text-center rounded-lg bg-surface-sunken border border-subtle">
+                      <p className="text-2xl font-bold text-content">
                         {notes.length}
                       </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                      <p className="text-sm text-content-muted">
                         {t('settings.notesCount')}
                       </p>
                     </div>
-                    <div className="p-4 text-center rounded-lg bg-gray-50 dark:bg-gray-900 border border-[#cbd1db] dark:border-gray-700">
-                      <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    <div className="p-4 text-center rounded-lg bg-surface-sunken border border-subtle">
+                      <p className="text-2xl font-bold text-content">
                         {folders.length}
                       </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                      <p className="text-sm text-content-muted">
                         {t('settings.foldersCount')}
                       </p>
                     </div>
-                    <div className="p-4 text-center rounded-lg bg-gray-50 dark:bg-gray-900 border border-[#cbd1db] dark:border-gray-700">
-                      <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    <div className="p-4 text-center rounded-lg bg-surface-sunken border border-subtle">
+                      <p className="text-2xl font-bold text-content">
                         {tags.length}
                       </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                      <p className="text-sm text-content-muted">
                         {t('settings.tagsCount')}
                       </p>
                     </div>
@@ -1198,42 +1198,42 @@ export default function SettingsModal() {
             {activeTab === 'data' && (
               <div className="space-y-6">
                 <div className="space-y-3">
-                  <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                  <h4 className="text-sm font-medium text-content">
                     {t('settings.exportData')}
                   </h4>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <p className="text-sm text-content-muted">
                     {t('settings.exportDataDesc')}
                   </p>
                   <button
                     onClick={handleExportData}
-                    className="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-200 transition-colors bg-gray-100 rounded-lg dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 border border-[#cbd1db] dark:border-gray-600"
+                    className="flex items-center gap-2 px-4 py-2 text-content transition-colors bg-surface-sunken rounded-lg dark:bg-surface-sunken hover:bg-surface-sunken dark:hover:bg-surface-active border border-subtle "
                   >
-                    <Download className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                    <Download className="w-4 h-4 text-content-muted" />
                     {t('settings.exportDataButton')}
                   </button>
                 </div>
 
-                <div className="pt-6 space-y-3 border-t border-[#cbd1db] dark:border-gray-700">
-                  <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                <div className="pt-6 space-y-3 border-t border-subtle">
+                  <h4 className="text-sm font-medium text-content">
                     {t('settings.importData')}
                   </h4>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <p className="text-sm text-content-muted">
                     {t('settings.importDataDesc')}
                   </p>
                   <button
                     onClick={() => { setSettingsOpen(false); setImportModalOpen(true) }}
-                    className="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-200 transition-colors bg-gray-100 rounded-lg dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 border border-[#cbd1db] dark:border-gray-600"
+                    className="flex items-center gap-2 px-4 py-2 text-content transition-colors bg-surface-sunken rounded-lg dark:bg-surface-sunken hover:bg-surface-sunken dark:hover:bg-surface-active border border-subtle "
                   >
-                    <Upload className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                    <Upload className="w-4 h-4 text-content-muted" />
                     {t('settings.importDataButton')}
                   </button>
                 </div>
 
-                <div className="pt-6 space-y-3 border-t border-[#cbd1db] dark:border-gray-700">
+                <div className="pt-6 space-y-3 border-t border-subtle">
                   <h4 className="text-sm font-medium text-red-600 dark:text-red-400">
                     {t('settings.dangerZone')}
                   </h4>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <p className="text-sm text-content-muted">
                     {t('settings.deleteAllDataDesc')}
                   </p>
                   <button
@@ -1248,7 +1248,7 @@ export default function SettingsModal() {
             )}
             {activeTab === 'shortcuts' && (
               <div className="space-y-4">
-                <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+                <p className="mb-4 text-sm text-content-muted">
                   {t('settings.shortcutsDescription')}
                 </p>
                 <div className="space-y-2">
@@ -1265,9 +1265,9 @@ export default function SettingsModal() {
                   ].map((shortcut, i) => (
                     <div
                       key={i}
-                      className="flex items-center justify-between py-2 border-b border-[#cbd1db] dark:border-gray-800"
+                      className="flex items-center justify-between py-2 border-b border-subtle dark:border-subtle"
                     >
-                      <span className="text-sm text-gray-700 dark:text-gray-200">
+                      <span className="text-sm text-content">
                         {shortcut.action}
                       </span>
                       <div className="flex gap-1">
@@ -1285,14 +1285,14 @@ export default function SettingsModal() {
             {activeTab === 'about' && (
               <div className="space-y-6">
                 <div className="flex flex-col items-center gap-3 py-4">
-                  <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-primary-100 dark:bg-primary-900/50">
+                  <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-primary-100 dark:bg-accent-soft">
                     <FileText className="w-8 h-8 text-primary-600 dark:text-primary-400" />
                   </div>
                   <div className="text-center">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">QuickNotes</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{t('settings.version')} 2.0.1</p>
+                    <h3 className="text-lg font-semibold text-content">QuickNotes</h3>
+                    <p className="text-sm text-content-muted">{t('settings.version')} 2.0.2</p>
                   </div>
-                  <p className="text-center text-sm text-gray-500 dark:text-gray-400 max-w-sm">
+                  <p className="text-center text-sm text-content-muted max-w-sm">
                     {t('settings.aboutDescription')}
                   </p>
                 </div>
@@ -1302,47 +1302,47 @@ export default function SettingsModal() {
                     href="https://github.com/Berenyiansen/QuickNotes"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+                    className="flex items-center gap-3 p-3 rounded-lg bg-surface-sunken hover:bg-surface-hover transition-colors cursor-pointer"
                   >
-                    <Github className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                    <Github className="w-5 h-5 text-content-muted" />
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">GitHub</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{t('settings.aboutGithubDesc')}</p>
+                      <p className="text-sm font-medium text-content">GitHub</p>
+                      <p className="text-xs text-content-muted">{t('settings.aboutGithubDesc')}</p>
                     </div>
-                    <ExternalLink className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                    <ExternalLink className="w-4 h-4 text-content-subtle" />
                   </a>
 
                   <button
                     onClick={() => { setSettingsOpen(false); useUIStore.getState().setPrivacyModalOpen(true) }}
-                    className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer w-full text-left"
+                    className="flex items-center gap-3 p-3 rounded-lg bg-surface-sunken hover:bg-surface-hover transition-colors cursor-pointer w-full text-left"
                   >
-                    <Shield className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                    <Shield className="w-5 h-5 text-content-muted" />
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">{t('settings.aboutPrivacy')}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{t('settings.aboutPrivacyDesc')}</p>
+                      <p className="text-sm font-medium text-content">{t('settings.aboutPrivacy')}</p>
+                      <p className="text-xs text-content-muted">{t('settings.aboutPrivacyDesc')}</p>
                     </div>
-                    <ExternalLink className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                    <ExternalLink className="w-4 h-4 text-content-subtle" />
                   </button>
 
                   <button
                     onClick={() => { setSettingsOpen(false); useUIStore.getState().setTermsModalOpen(true) }}
-                    className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer w-full text-left"
+                    className="flex items-center gap-3 p-3 rounded-lg bg-surface-sunken hover:bg-surface-hover transition-colors cursor-pointer w-full text-left"
                   >
-                    <FileText className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                    <FileText className="w-5 h-5 text-content-muted" />
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">{t('settings.aboutTerms')}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{t('settings.aboutTermsDesc')}</p>
+                      <p className="text-sm font-medium text-content">{t('settings.aboutTerms')}</p>
+                      <p className="text-xs text-content-muted">{t('settings.aboutTermsDesc')}</p>
                     </div>
-                    <ExternalLink className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                    <ExternalLink className="w-4 h-4 text-content-subtle" />
                   </button>
                 </div>
 
-                <div className="pt-4 border-t border-[#cbd1db] dark:border-gray-700">
-                  <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                <div className="pt-4 border-t border-subtle">
+                  <div className="flex items-center gap-2 text-sm text-content-muted">
                     <Github className="w-4 h-4" />
                     <span>{t('settings.aboutOpenSource')}</span>
                   </div>
-                  <p className="mt-2 text-xs text-gray-400 dark:text-gray-500">
+                  <p className="mt-2 text-xs text-content-subtle">
                     {t('settings.aboutLicense')}
                   </p>
                 </div>
