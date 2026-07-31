@@ -725,10 +725,13 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
 }
 
 @media (min-width: 1280px) and (min-height: 700px) {
+  /* The desk the workspace frame sits on. Deliberately darker and less
+     saturated than the navigation rail: at the rail's own intensity the two
+     greens read as one surface and the frame stops looking inset. */
   body {
     background:
-      radial-gradient(circle at 8% 10%, rgba(52, 211, 153, 0.18), transparent 26%),
-      linear-gradient(135deg, #073f37, #062f2b 55%, #075647);
+      radial-gradient(circle at 8% 10%, rgba(52, 211, 153, 0.07), transparent 30%),
+      linear-gradient(135deg, #052723, #04201e 55%, #06322c);
   }
 
   .qn-workspace-frame {

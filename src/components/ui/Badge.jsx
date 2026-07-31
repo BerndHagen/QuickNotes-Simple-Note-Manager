@@ -39,41 +39,52 @@ export function CountBadge({ value, tone = 'neutral', className = '' }) {
 }
 
 /**
- * Tag pill.
+ * The one tag chip. Used by the note list, the sidebar rail and the editor
+ * banner, so a tag looks the same wherever it appears.
  *
- * The tag colour is user-chosen and can therefore never be relied on for
- * text contrast: a light label on a light tint of the same hue falls far
- * below WCAG's 4.5:1 requirement. The colour is carried by the dot and the
- * border while the label keeps the standard text colour, so the hue stays
- * an identity cue without being the only cue.
+ * The hue is carried by a tint and a matching border. It is never used for the
+ * label, because the colour is user-chosen and a light label on a light tint of
+ * the same hue falls far below WCAG's 4.5:1 — the label always takes a theme
+ * text colour instead.
+ *
+ * `surface` sits on the light panels, `dark` on the rail and the editor banner,
+ * where the tint has to be stronger to register against a dark green.
  */
-export function TagChip({ name, color = '#6b7280', count, active, as = 'span', ...props }) {
+const TAG_SURFACES = {
+  surface: { tint: 14, border: 40, text: 'text-content', count: 'text-content-subtle' },
+  dark: { tint: 26, border: 55, text: 'text-white', count: 'text-white/60' },
+}
+
+export function TagChip({
+  name,
+  color = '#6b7280',
+  count,
+  active,
+  surface = 'surface',
+  as = 'span',
+  ...props
+}) {
   const Component = as
+  const tone = TAG_SURFACES[surface] || TAG_SURFACES.surface
   return (
     <Component
       {...props}
       className={[
-        'inline-flex max-w-full items-center gap-1.5 rounded-full border px-2 py-0.5 text-ui-xs font-medium text-content transition-colors duration-fast',
-        active
-          ? 'ring-2 ring-[var(--qn-focus-ring)] ring-offset-1 ring-offset-[var(--qn-surface-panel)]'
-          : '',
-        as === 'button' ? 'cursor-pointer hover:bg-surface-hover' : '',
+        'inline-flex max-w-full items-center gap-1.5 rounded-md border px-2 py-0.5 text-ui-xs font-medium transition-colors duration-fast',
+        tone.text,
+        active ? 'ring-2 ring-[var(--qn-focus-ring)] ring-offset-1 ring-offset-[var(--qn-surface-panel)]' : '',
+        as === 'button' ? 'cursor-pointer hover:brightness-110' : '',
         props.className || '',
       ].join(' ')}
       style={{
-        backgroundColor: `color-mix(in srgb, ${color} 10%, transparent)`,
-        borderColor: `color-mix(in srgb, ${color} 35%, transparent)`,
+        backgroundColor: `color-mix(in srgb, ${color} ${tone.tint}%, transparent)`,
+        borderColor: `color-mix(in srgb, ${color} ${tone.border}%, transparent)`,
         ...props.style,
       }}
     >
-      <span
-        aria-hidden="true"
-        className="h-1.5 w-1.5 shrink-0 rounded-full"
-        style={{ backgroundColor: color }}
-      />
-      <span className="truncate">{name}</span>
+      <span className="truncate">#{name}</span>
       {count !== undefined && (
-        <span className="shrink-0 tabular-nums text-content-subtle">{count}</span>
+        <span className={`shrink-0 tabular-nums ${tone.count}`}>{count}</span>
       )}
     </Component>
   )

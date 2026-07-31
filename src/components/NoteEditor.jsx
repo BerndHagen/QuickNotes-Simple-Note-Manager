@@ -42,7 +42,7 @@ import { saveNoteVersion } from '../lib/db'
 import { useRealtimeCollaboration } from '../lib/useCollaboration'
 import { getFolderIcon } from '../lib/folderIcons'
 import { MAX_NOTE_TITLE_LENGTH, MAX_TAG_NAME_LENGTH } from '../lib/dataValidation'
-import { IconButton, Input, Menu, MenuItem, MenuSeparator, EmptyState } from './ui'
+import { IconButton, Input, Menu, MenuItem, MenuSeparator, EmptyState, TagChip } from './ui'
 import { ConfirmDialog } from './FolderDialogs'
 import { SyncStatusPill } from './SyncStatus'
 import { isBackendConfigured } from '../lib/backend'
@@ -449,10 +449,13 @@ export default function NoteEditor({ onBack, showBack = false }) {
           {note.tags?.length > 0 && (
             <ul className="flex min-w-0 flex-wrap items-center gap-1">
               {note.tags.map((tagName) => (
-                <li key={tagName}>
-                  <span className="inline-flex max-w-[16ch] items-center rounded-full border border-banner-border bg-banner-hover px-2 py-0.5 text-ui-xs font-medium text-banner-text">
-                    <span className="truncate">#{tagName}</span>
-                  </span>
+                <li key={tagName} className="min-w-0">
+                  <TagChip
+                    surface="dark"
+                    name={tagName}
+                    color={tags.find((tag) => tag.name === tagName)?.color || '#6b7280'}
+                    className="max-w-[16ch]"
+                  />
                 </li>
               ))}
             </ul>

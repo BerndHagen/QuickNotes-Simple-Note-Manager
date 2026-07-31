@@ -232,7 +232,7 @@ function AuthField({ id, label, icon: Icon, error, trailing, className = '', ...
           id={id}
           aria-invalid={!!error}
           aria-describedby={error ? `${id}-error` : undefined}
-          className="h-11 w-full rounded-[10px] border border-control bg-surface-raised pl-10 pr-3 text-ui-lg text-content shadow-xs outline-none transition-[border-color,box-shadow] placeholder:text-content-subtle focus:border-accent focus:ring-2 focus:ring-[var(--qn-accent-soft)] aria-[invalid=true]:border-danger"
+          className="h-11 w-full rounded-[10px] border border-strong bg-surface-raised pl-10 pr-3 text-ui-lg text-content shadow-xs outline-none transition-[border-color,box-shadow] placeholder:text-content-subtle focus:border-accent focus:ring-2 focus:ring-[var(--qn-accent-soft)] aria-[invalid=true]:border-danger"
           {...inputProps}
         />
         {trailing}
@@ -381,7 +381,7 @@ export default function AuthScreen() {
       <div
         role="tablist"
         aria-label="Account access"
-        className="mb-7 grid grid-cols-2 rounded-[10px] border border-control bg-surface-sunken p-1"
+        className="mb-7 grid grid-cols-2 rounded-[10px] border border-subtle bg-surface-sunken p-1"
       >
         {[
           ['login', 'Sign in'],
@@ -395,7 +395,7 @@ export default function AuthScreen() {
             onClick={() => changeMode(value)}
             className={`h-9 rounded-[7px] text-ui-md font-semibold transition-colors ${
  mode === value
- ? 'bg-surface-raised text-content shadow-sm ring-1 ring-[var(--qn-border-control)]'
+ ? 'bg-surface-raised text-content shadow-xs'
                 : 'text-content-muted hover:text-content'
             }`}
           >
@@ -531,7 +531,7 @@ export default function AuthScreen() {
       <button
         type="button"
         onClick={() => changeMode('local')}
-        className="flex h-11 w-full items-center justify-center gap-2 rounded-[10px] border border-control bg-surface-raised text-ui-md font-semibold text-content shadow-xs hover:bg-surface-hover"
+        className="flex h-11 w-full items-center justify-center gap-2 rounded-[10px] border border-strong bg-surface-raised text-ui-md font-semibold text-content shadow-xs hover:bg-surface-hover"
       >
         <HardDrive className="h-4 w-4 text-accent-text" aria-hidden="true" />
         Use a private local workspace
@@ -623,7 +623,7 @@ export default function AuthScreen() {
             type="checkbox"
             checked={formData.agreeToTerms}
             onChange={(event) => handleInputChange('agreeToTerms', event.target.checked)}
-            className="mt-0.5 h-4 w-4 rounded border-control text-accent focus:ring-accent"
+            className="mt-0.5 h-4 w-4 rounded border-strong text-accent focus:ring-accent"
           />
           <span>
             I agree to the{' '}

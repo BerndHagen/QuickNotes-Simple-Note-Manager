@@ -300,7 +300,7 @@ export default function NoteTypesModal({ onCreated }) {
                               'mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border',
                               active
                                 ? 'border-accent bg-accent text-accent-on'
-                                : 'border-control bg-surface-raised',
+                                : 'border-strong bg-surface-raised',
                             ].join(' ')}
                           >
                             {active && <span className="h-1.5 w-1.5 rounded-full bg-current" />}

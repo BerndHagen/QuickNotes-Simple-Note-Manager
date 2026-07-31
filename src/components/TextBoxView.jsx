@@ -295,7 +295,7 @@ export default function TextBoxView({ node, updateAttributes, deleteNode, select
           onPointerDown={onResizePointerDown}
           title="Drag to resize"
           aria-hidden="true"
-          className="absolute -bottom-1 -right-1 z-20 h-3.5 w-3.5 cursor-nwse-resize rounded-sm border border-control bg-surface-raised opacity-0 transition-opacity duration-fast group-hover/textbox:opacity-100 [.qn-text-box--selected_&]:opacity-100"
+          className="absolute -bottom-1 -right-1 z-20 h-3.5 w-3.5 cursor-nwse-resize rounded-sm border border-strong bg-surface-raised opacity-0 transition-opacity duration-fast group-hover/textbox:opacity-100 [.qn-text-box--selected_&]:opacity-100"
         />
       )}
     </NodeViewWrapper>

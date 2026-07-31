@@ -45,7 +45,7 @@ export function Field({ label, hint, error, required, children, className = '', 
 }
 
 const inputBase =
-  'w-full bg-surface-raised text-content placeholder:text-content-subtle border border-control rounded-control ' +
+  'w-full bg-surface-raised text-content placeholder:text-content-subtle border border-strong rounded-control ' +
   'transition-[border-color,box-shadow] duration-fast ease-qn ' +
   'focus:outline-none focus:border-accent focus:ring-2 focus:ring-[var(--qn-accent-soft)] ' +
   'disabled:cursor-not-allowed disabled:bg-surface-sunken disabled:text-content-subtle ' +
@@ -114,7 +114,7 @@ export function Toggle({ checked, onChange, label, description, disabled, id: pr
         />
         <span
           aria-hidden="true"
-          className="h-5 w-9 rounded-full bg-[var(--qn-border-control)] transition-colors duration-fast peer-checked:bg-accent peer-disabled:opacity-50 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--qn-focus-ring)]"
+          className="h-5 w-9 rounded-full bg-[var(--qn-border-strong)] transition-colors duration-fast peer-checked:bg-accent peer-disabled:opacity-50 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--qn-focus-ring)]"
         />
         <span
           aria-hidden="true"
@@ -131,7 +131,7 @@ export function SegmentedControl({ value, onChange, options, label, size = 'md' 
     <div
       role="radiogroup"
       aria-label={label}
-      className="inline-flex w-full gap-1 rounded-control border border-control bg-surface-sunken p-1"
+      className="inline-flex w-full gap-1 rounded-control border border-subtle bg-surface-sunken p-1"
     >
       {options.map((option) => {
         const selected = option.value === value
@@ -146,7 +146,7 @@ export function SegmentedControl({ value, onChange, options, label, size = 'md' 
               'flex-1 rounded-[calc(var(--qn-radius-control)-2px)] px-2.5 font-medium transition-colors duration-fast',
               size === 'sm' ? 'h-6 text-ui-xs' : 'h-7 text-ui-sm',
               selected
-                ? 'bg-surface-raised text-content shadow-sm ring-1 ring-[var(--qn-border-control)]'
+                ? 'bg-surface-raised text-content shadow-xs'
                 : 'text-content-muted hover:text-content',
             ].join(' ')}
           >

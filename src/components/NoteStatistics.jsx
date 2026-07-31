@@ -119,7 +119,7 @@ export default function NoteStatistics({ note }) {
           <button
             type="button"
             onClick={() => setShareModalOpen(true, note.id)}
-            className="hidden h-control-sm items-center gap-1.5 rounded-control border border-control px-2.5 text-ui-sm font-medium text-content transition-colors duration-fast hover:bg-surface-hover sm:inline-flex"
+            className="hidden h-control-sm items-center gap-1.5 rounded-control border border-strong px-2.5 text-ui-sm font-medium text-content transition-colors duration-fast hover:bg-surface-hover sm:inline-flex"
           >
             <Share2 className="h-3.5 w-3.5" aria-hidden="true" />
             {t('editor.share', 'Share')}

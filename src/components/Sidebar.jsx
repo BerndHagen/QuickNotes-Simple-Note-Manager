@@ -24,7 +24,7 @@ import { useNotesStore, useThemeStore, useUIStore } from '../store'
 import { useTranslation } from '../lib/useTranslation'
 import { getFolderIcon } from '../lib/folderIcons'
 import { isBackendConfigured } from '../lib/backend'
-import { Avatar, Menu, MenuItem, MenuSeparator, NotepadGlyph } from './ui'
+import { Avatar, Menu, MenuItem, MenuSeparator, NotepadGlyph, TagChip } from './ui'
 import { FolderDialog, ConfirmDialog } from './FolderDialogs'
 
 /**
@@ -372,24 +372,18 @@ export default function Sidebar({ onNavigate }) {
               {tags.map((tag) => {
                 const active = selectedTagFilter === tag.name
                 return (
-                  <button
+                  <TagChip
                     key={tag.id}
+                    as="button"
                     type="button"
+                    surface="dark"
                     aria-pressed={active}
                     onClick={go(() => setSelectedTagFilter(tag.name))}
-                    className={`inline-flex max-w-full items-center gap-1.5 rounded-md px-2 py-1 text-ui-xs font-semibold transition-colors duration-fast ${
- active ? 'ring-1 ring-white/40' : ''
- }`}
-                    style={{
-                      backgroundColor: `color-mix(in srgb, ${tag.color} 20%, transparent)`,
-                      color: `color-mix(in srgb, ${tag.color} 72%, white)`,
-                    }}
-                  >
-                    <span className="truncate">#{tag.name}</span>
-                    <span className="shrink-0 tabular-nums opacity-70">
-                      {counts.byTag.get(tag.name) || 0}
-                    </span>
-                  </button>
+                    name={tag.name}
+                    color={tag.color}
+                    count={counts.byTag.get(tag.name) || 0}
+                    className={active ? 'ring-1 ring-white/40' : ''}
+                  />
                 )
               })}
             </div>

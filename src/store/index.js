@@ -8,34 +8,56 @@ import { endLocalSession } from '../lib/localSession'
 import { limitNoteTitle, normalizeTagName, validateFolderName } from '../lib/dataValidation'
 import { buildFolderIdRemap, remapNoteFolder } from '../lib/syncReconciliation'
 import toast from 'react-hot-toast'
-const WELCOME_TITLE = 'Welcome to QuickNotes! \u{1F389}'
+const WELCOME_TITLE = 'Start here: how QuickNotes is put together'
 
 const createStarterContent = () => {
   const welcomeNote = {
     id: generateId(),
     title: WELCOME_TITLE,
-    content: `<h2>Your Personal Notes App</h2>
-<p>Welcome to QuickNotes - a modern note-taking application designed to help you organize your thoughts!</p>
+    content: `<p>This note is yours to edit or delete. It covers the parts of QuickNotes that are not obvious from looking at the screen.</p>
 
-<h3>\u2728 Key Features</h3>
+<h2>Finding your way around</h2>
+<p>Three panes, left to right: the <strong>rail</strong> for navigation, the <strong>list</strong> of notes in the current view, and the <strong>editor</strong>. Below 1024px the rail becomes a drawer and the list and editor take turns, so the same workspace works on a phone.</p>
+<p>Everything saves as you type. The indicator in the sidebar footer tells you where your notes currently live \u2014 on this device only, or synced to your account.</p>
+
+<h2>Folders and tags do different jobs</h2>
 <ul>
-  <li><strong>Rich Text Editor</strong> - Format your notes with bold, italic, lists, and more</li>
-  <li><strong>Folders & Tags</strong> - Organize notes with folders and color-coded tags</li>
-  <li><strong>Cloud Sync</strong> - Access your notes from any device</li>
-  <li><strong>Offline Support</strong> - Works even without internet</li>
-  <li><strong>Dark Mode</strong> - Easy on the eyes</li>
-  <li><strong>Templates</strong> - Quick-start with meeting notes, to-do lists, and more</li>
+  <li><strong>A folder is where a note lives.</strong> One note, one folder. Good for separating contexts that never mix, like Work and Personal.</li>
+  <li><strong>A tag is something a note is about.</strong> A note can carry several. Good for threads that cut across folders, like <em>#important</em> or a project name.</li>
+</ul>
+<p>If you are unsure which to use, start with tags. They are easier to change your mind about later.</p>
+
+<h2>Beyond plain documents</h2>
+<p>Under <strong>Note types</strong> in the rail there are structured workspaces, each with its own fields rather than a blank page: a task list with priorities and due dates, a project board with columns and milestones, a meeting workspace for agenda, decisions and action items, a daily journal, an idea board, a shopping list, and a weekly planner.</p>
+<p>They behave like ordinary notes \u2014 searchable, taggable, exportable \u2014 so it is worth trying one before writing a plan by hand.</p>
+
+<h2>Shortcuts worth remembering</h2>
+<ul>
+  <li><strong>Ctrl+N</strong> \u2014 quick note, from anywhere, without leaving what you are doing</li>
+  <li><strong>Ctrl+K</strong> \u2014 search every note by title, body and tag</li>
+  <li><strong>Ctrl+F</strong> \u2014 find and replace inside the note you are editing</li>
+  <li><strong>Ctrl+T</strong> \u2014 choose a note type</li>
+  <li><strong>Ctrl+Shift+F</strong> \u2014 focus mode, just the text</li>
+  <li><strong>Ctrl+/</strong> \u2014 the full list, where you can rebind any of them</li>
 </ul>
 
-<h3>\u{1F680} Getting Started</h3>
+<h2>A few things that are easy to miss</h2>
+<ul>
+  <li>Deleted notes rest in <strong>Trash</strong> for 30 days before they are removed for good.</li>
+  <li>Every note keeps its last 30 versions. Open <strong>Version history</strong> from the editor menu to read or restore one.</li>
+  <li><strong>Archive</strong> is for notes you have finished with but do not want to lose \u2014 they leave the main list without being deleted.</li>
+  <li>Notes can link to each other. Press <strong>Ctrl+Shift+K</strong> while writing to insert a link, and the target note will show what points at it.</li>
+  <li>Export a single note as Markdown, HTML, plain text, JSON or PDF; import Markdown, text and HTML files back in.</li>
+</ul>
+
+<h2>Your first few minutes</h2>
 <ul data-type="taskList">
-  <li data-type="taskItem" data-checked="false"><label><input type="checkbox"><span></span></label><div><p>Create your first note with the + button</p></div></li>
-  <li data-type="taskItem" data-checked="false"><label><input type="checkbox"><span></span></label><div><p>Organize with folders in the sidebar</p></div></li>
-  <li data-type="taskItem" data-checked="false"><label><input type="checkbox"><span></span></label><div><p>Add tags to categorize your notes</p></div></li>
-  <li data-type="taskItem" data-checked="false"><label><input type="checkbox"><span></span></label><div><p>Try the Quick Note feature (Ctrl+N)</p></div></li>
-</ul>
-
-<p>Happy note-taking! \u{1F4DD}</p>`,
+  <li data-type="taskItem" data-checked="false"><label><input type="checkbox"><span></span></label><div><p>Write one real note \u2014 anything you would otherwise leave in a browser tab</p></div></li>
+  <li data-type="taskItem" data-checked="false"><label><input type="checkbox"><span></span></label><div><p>Rename the starter folders, or delete the ones you will not use</p></div></li>
+  <li data-type="taskItem" data-checked="false"><label><input type="checkbox"><span></span></label><div><p>Create a task list from Note types and add three things you owe someone</p></div></li>
+  <li data-type="taskItem" data-checked="false"><label><input type="checkbox"><span></span></label><div><p>Press Ctrl+K and search for a word you just typed</p></div></li>
+  <li data-type="taskItem" data-checked="false"><label><input type="checkbox"><span></span></label><div><p>Decide whether this note stays or goes</p></div></li>
+</ul>`,
     folderId: null,
     tags: ['welcome', 'getting-started'],
     starred: true,

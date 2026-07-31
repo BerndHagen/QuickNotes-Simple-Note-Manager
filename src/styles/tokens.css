@@ -74,12 +74,6 @@
   --qn-border-subtle: #e8eaee;
   --qn-border: #dcdfe5;
   --qn-border-strong: #c3c8d1;
-  /* Boundary of an interactive control (input, select, segmented track).
-     WCAG 1.4.11 asks for 3:1 against the adjacent surface, which the
-     decorative borders above do not reach: --qn-border-strong measures
-     1.7:1 on white. This one measures 3.4:1 on white and 3.2:1 on the
-     panel, so a field is visible without being drawn as a heavy box. */
-  --qn-border-control: #848c99;
 
   /* --- Text ------------------------------------------------- */
   /* Contrast ratios are measured against --qn-surface-panel (#f7f8fa),
@@ -220,8 +214,6 @@
   --qn-border-subtle: #1e2630;
   --qn-border: #29313d;
   --qn-border-strong: #3a4553;
-  /* 3.7:1 against the raised surface. */
-  --qn-border-control: #6b7684;
 
   --qn-text: #e8ebef;
   --qn-text-muted: #98a2b3;
