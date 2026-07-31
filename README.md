@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/img/img_icon.png" alt="QuickNotes Logo" width="128" />
+  <img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/quicknotes-logo.png" alt="QuickNotes Logo" width="128" />
 </p>
 
 <h1 align="center">QuickNotes - Simple Note Manager</h1>
@@ -907,23 +907,23 @@ If you'd like a preview of QuickNotes before trying it out, the screenshots belo
     <th>QuickNotes - Editor</th>
   </tr>
   <tr>
-    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/img/img_v2.0.2-quicknotes_startup.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/img/img_v2.0.2-quicknotes_startup.png" alt="QuickNotes Sign in" width="450"></a></td>
-    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/img/img_v2.0.2-quicknotes_editor.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/img/img_v2.0.2-quicknotes_editor.png" alt="QuickNotes Editor" width="450"></a></td>
+    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/screenshot-startup.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/screenshot-startup.png" alt="QuickNotes Sign in" width="450"></a></td>
+    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/screenshot-editor.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/screenshot-editor.png" alt="QuickNotes Editor" width="450"></a></td>
   </tr>
   <tr>
     <th>QuickNotes - Task Workspace</th>
     <th>QuickNotes - Meeting Workspace</th>
   </tr>
   <tr>
-    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/img/img_v2.0.2-quicknotes_tasks.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/img/img_v2.0.2-quicknotes_tasks.png" alt="QuickNotes Task Workspace" width="450"></a></td>
-    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/img/img_v2.0.2-quicknotes_meeting.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/img/img_v2.0.2-quicknotes_meeting.png" alt="QuickNotes Meeting Workspace" width="450"></a></td>
+    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/screenshot-tasks.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/screenshot-tasks.png" alt="QuickNotes Task Workspace" width="450"></a></td>
+    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/screenshot-meeting.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/screenshot-meeting.png" alt="QuickNotes Meeting Workspace" width="450"></a></td>
   </tr>
   <tr>
     <th>QuickNotes - Global Search</th>
     <th>QuickNotes - Project Board</th>
   </tr>
   <tr>
-    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/img/img_v2.0.2-quicknotes_search.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/img/img_v2.0.2-quicknotes_search.png" alt="QuickNotes Global Search" width="450"></a></td>
-    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/img/img_v2.0.2-quicknotes_board.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/img/img_v2.0.2-quicknotes_board.png" alt="QuickNotes Project Board" width="450"></a></td>
+    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/screenshot-search.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/screenshot-search.png" alt="QuickNotes Global Search" width="450"></a></td>
+    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/screenshot-board.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/screenshot-board.png" alt="QuickNotes Project Board" width="450"></a></td>
   </tr>
 </table>

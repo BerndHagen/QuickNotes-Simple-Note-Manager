@@ -647,8 +647,7 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
    dot clusters drifting very slowly across it. Everything here is decoration
    behind the card: the panel in the centre is untouched. */
 .qn-auth-page {
-  background:
-    linear-gradient(135deg, #eef1f5, #e7ebf1 55%, #f2f4f7);
+  background: linear-gradient(135deg, #f4f4f5, #eceded 45%, #e7e7e7);
 }
 
 .qn-auth-page::before {
@@ -657,8 +656,8 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
   inset: -15%;
   pointer-events: none;
   background-image:
-    linear-gradient(to right, rgba(15, 23, 42, 0.045) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(15, 23, 42, 0.045) 1px, transparent 1px);
+    linear-gradient(to right, rgba(90, 100, 96, 0.09) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(90, 100, 96, 0.09) 1px, transparent 1px);
   background-size: 104px 104px;
   animation: qn-bg-grid 120s linear infinite;
 }
@@ -677,9 +676,9 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
 .qn-auth-panel {
   position: absolute;
   border-radius: 26px;
-  border: 1px solid rgba(15, 23, 42, 0.05);
-  background: linear-gradient(140deg, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.25));
-  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.04);
+  border: 1px solid #dbdfdd;
+  background: linear-gradient(140deg, #f4f4f5, #eceded 60%, #dadfdd);
+  box-shadow: 0 24px 60px rgba(90, 100, 96, 0.06);
   will-change: transform;
 }
 
@@ -726,7 +725,7 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
 /* Dot clusters, the blueprint detail from the reference. */
 .qn-auth-dots {
   position: absolute;
-  background-image: radial-gradient(circle, rgba(15, 23, 42, 0.16) 1.1px, transparent 1.4px);
+  background-image: radial-gradient(circle, rgba(90, 100, 96, 0.26) 1.1px, transparent 1.4px);
   background-size: 17px 17px;
   opacity: 0.5;
   will-change: transform;
@@ -766,7 +765,7 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
   top: -12%;
   width: 460px;
   height: 460px;
-  background: rgba(52, 211, 153, 0.16);
+  background: rgba(218, 223, 221, 0.85);
   animation: qn-bg-float-a 56s ease-in-out infinite;
 }
 
@@ -775,7 +774,7 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
   bottom: -16%;
   width: 520px;
   height: 520px;
-  background: rgba(16, 185, 129, 0.12);
+  background: rgba(219, 223, 221, 0.8);
   animation: qn-bg-float-b 64s ease-in-out infinite reverse;
 }
 
@@ -930,7 +929,7 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
      same hue family and the frame's edge dissolves into it. The light theme
      keeps a light canvas — the dark one belongs to the dark theme. */
   body {
-    background: linear-gradient(135deg, #eef1f5, #e7ebf1 55%, #f2f4f7);
+    background: linear-gradient(135deg, #f4f4f5, #eceded 45%, #e7e7e7);
   }
 
   .dark body {
