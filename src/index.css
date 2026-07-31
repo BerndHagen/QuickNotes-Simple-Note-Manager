@@ -642,21 +642,36 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
   animation: auth-form-in 0.4s ease-out;
 }
 
-.qn-auth-hero {
+/* Sign-in hero and navigation rail share one material: an emerald-tinted deep
+   green with contour arcs sweeping in from the top-right and a soft orb at the
+   bottom. Defined once so the two surfaces cannot drift apart.
+
+   The only difference is stacking. The hero lifts its own content with `z-10`,
+   while the rail keeps its decoration behind unpositioned children by pushing
+   the pseudo-elements to `z-index: -1` inside an isolated context. */
+.qn-auth-hero,
+.qn-nav-surface {
   isolation: isolate;
   background:
     radial-gradient(70% 70% at 18% 16%, rgba(52, 211, 153, 0.16), transparent 72%),
     linear-gradient(138deg, #0b4a38 0%, #083d31 44%, #062d27 100%);
 }
 
+.qn-nav-surface {
+  overflow: hidden;
+}
+
 .qn-auth-hero::before,
-.qn-auth-hero::after {
+.qn-auth-hero::after,
+.qn-nav-surface::before,
+.qn-nav-surface::after {
   content: '';
   position: absolute;
   pointer-events: none;
 }
 
-.qn-auth-hero::before {
+.qn-auth-hero::before,
+.qn-nav-surface::before {
   inset: 0;
   z-index: 0;
   opacity: 0.32;
@@ -676,7 +691,8 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
     radial-gradient(80% 90% at 10% 100%, rgba(16, 185, 129, 0.18), transparent 68%);
 }
 
-.qn-auth-hero::after {
+.qn-auth-hero::after,
+.qn-nav-surface::after {
   z-index: 0;
   right: -12%;
   bottom: -34%;
@@ -685,6 +701,12 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
   border-radius: 999px;
   background: rgba(16, 185, 129, 0.08);
   filter: blur(70px);
+}
+
+/* Keep the rail's decoration behind its unpositioned children. */
+.qn-nav-surface::before,
+.qn-nav-surface::after {
+  z-index: -1;
 }
 
 .qn-auth-preview {

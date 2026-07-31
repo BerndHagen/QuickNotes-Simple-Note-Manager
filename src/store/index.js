@@ -771,7 +771,10 @@ export const useNotesStore = create(
       setIsAuthChecked: (checked) => set({ isAuthChecked: checked }),
       
       logout: async () => {
-        if (!isBackendConfigured()) {
+        // Leaving a local workspace ends the local session and keeps the notes
+        // on the device. There is no cloud state to tear down, and the cloud
+        // path below would sign out a session this user never had.
+        if (!isBackendConfigured() || get().user?.isLocal) {
           endLocalSession()
           set({
             user: null,
@@ -839,6 +842,13 @@ export const useNotesStore = create(
         
         const { user } = get()
         if (!user) {
+          set({ isSyncing: false })
+          return false
+        }
+
+        // A local workspace has no cloud session by design, and must never be
+        // mistaken for an expired one below.
+        if (user.isLocal) {
           set({ isSyncing: false })
           return false
         }
@@ -1396,8 +1406,8 @@ export const useNotesStore = create(
       loadSharedNotes: async () => {
         if (!isBackendConfigured()) return
         const { user } = get()
-        if (!user) return
-        
+        if (!user || user.isLocal) return
+
         try {
           const { getSharedNotes, getPendingShares } = await import('../lib/backend')
           const [shared, pending] = await Promise.all([

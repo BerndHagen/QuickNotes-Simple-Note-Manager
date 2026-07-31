@@ -6,7 +6,6 @@ import {
   CheckCircle2,
   Eye,
   EyeOff,
-  FileText,
   FolderOpen,
   HardDrive,
   History,
@@ -27,6 +26,7 @@ import {
   validateNewPassword,
 } from '../lib/authValidation'
 import { createLocalUser, startLocalSession } from '../lib/localSession'
+import { NotepadGlyph } from './ui'
 import { useNotesStore, useUIStore } from '../store'
 import HelpModal from './HelpModal'
 import PrivacyModal from './PrivacyModal'
@@ -54,11 +54,11 @@ function BrandMark({ compact = false }) {
   return (
     <div className="flex items-center gap-3">
       <span
-        className={`flex shrink-0 items-center justify-center rounded-[12px] border border-white/15 bg-gradient-to-br from-primary-400 to-primary-700 text-white shadow-lg shadow-emerald-950/20 ${
+        className={`flex shrink-0 items-center justify-center rounded-[12px] border border-white/15 bg-[linear-gradient(140deg,#0e5341,#05352a)] text-white shadow-lg shadow-emerald-950/20 ${
           compact ? 'h-10 w-10' : 'h-11 w-11'
         }`}
       >
-        <FileText className={compact ? 'h-5 w-5' : 'h-[22px] w-[22px]'} aria-hidden="true" />
+        <NotepadGlyph className={compact ? 'h-[22px] w-[22px]' : 'h-6 w-6'} />
       </span>
       <span>
         <span
@@ -99,10 +99,11 @@ function WorkspacePreview() {
       </div>
 
       <div className="flex h-[318px] overflow-hidden rounded-[15px] border border-slate-200 bg-white">
-        <div className="flex w-[132px] shrink-0 flex-col bg-[#0b2d24] px-2.5 py-3 text-white">
+        {/* Mirrors the real rail: same material class, same brand mark. */}
+        <div className="qn-nav-surface flex w-[132px] shrink-0 flex-col px-2.5 py-3 text-white">
           <div className="mb-4 flex items-center gap-2 px-1">
-            <span className="flex h-6 w-6 items-center justify-center rounded-[7px] bg-emerald-500">
-              <FileText className="h-3.5 w-3.5" />
+            <span className="flex h-6 w-6 items-center justify-center rounded-[7px] border border-white/10 bg-[linear-gradient(140deg,#0e5341,#05352a)]">
+              <NotepadGlyph className="h-4 w-4" />
             </span>
             <span className="text-[10px] font-bold">QuickNotes</span>
           </div>
@@ -733,13 +734,15 @@ export default function AuthScreen() {
         <div className="absolute -bottom-40 right-[28%] h-[520px] w-[520px] rounded-full bg-primary-500/10 blur-3xl" />
       </div>
 
-      <main className="relative z-10 mx-auto grid h-[100dvh] max-w-[1680px] lg:grid-cols-[minmax(0,1.08fr)_minmax(430px,0.72fr)]">
+      {/* Both panels are full-bleed so the split reaches the viewport edges on
+          any display; the content inside each one is what stays bounded. */}
+      <main className="relative z-10 grid h-[100dvh] w-full lg:grid-cols-[minmax(0,1fr)_clamp(430px,34vw,760px)]">
         <section className="qn-auth-hero relative hidden overflow-hidden border-r border-white/10 px-10 py-9 text-white lg:flex lg:flex-col xl:px-16 xl:py-11">
-          <div className="relative z-10">
+          <div className="relative z-10 mx-auto w-full max-w-[860px]">
             <BrandMark />
           </div>
 
-          <div className="relative z-10 my-auto max-w-[760px] py-4 xl:py-8">
+          <div className="relative z-10 mx-auto my-auto w-full max-w-[860px] py-4 xl:py-8">
             <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.08] px-3 py-1.5 text-ui-sm font-semibold text-white/80 backdrop-blur">
               <Sparkles className="h-3.5 w-3.5 text-primary-300" aria-hidden="true" />
               Free, open-source, and yours to run
@@ -755,7 +758,7 @@ export default function AuthScreen() {
             <WorkspacePreview />
           </div>
 
-          <div className="relative z-10 hidden grid-cols-3 gap-5 border-t border-white/10 pt-6 xl:grid">
+          <div className="relative z-10 mx-auto hidden w-full max-w-[860px] grid-cols-3 gap-5 border-t border-white/10 pt-6 xl:grid">
             {FEATURE_POINTS.map(({ icon: Icon, title, description }) => (
               <div key={title} className="min-w-0">
                 <div className="mb-2 flex items-center gap-2">

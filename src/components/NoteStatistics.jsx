@@ -71,9 +71,9 @@ export default function NoteStatistics({ note }) {
   if (!stats) return null
   const isSpecialized = note.noteType && note.noteType !== 'standard'
 
-  /* Metrics scroll horizontally inside their own track on narrow
-     screens; the save state stays pinned so it is never scrolled out
-     of reach. */
+  /* Metrics scroll horizontally inside their own track on narrow screens; the
+     save state stays pinned so it is never scrolled out of reach. The track
+     takes focus so it can also be scrolled with the arrow keys. */
   return (
     <footer className="qn-safe-bottom flex shrink-0 items-center gap-3 border-t border-subtle bg-surface px-3 py-2 sm:px-5">
       {isSpecialized ? (
@@ -81,7 +81,11 @@ export default function NoteStatistics({ note }) {
           Structured workspace
         </span>
       ) : (
-        <ul className="flex min-w-0 flex-1 items-center gap-3 overflow-x-auto text-ui-sm text-content-muted [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <ul
+          tabIndex={0}
+          aria-label="Note statistics"
+          className="qn-focus-inset flex min-w-0 flex-1 items-center gap-3 overflow-x-auto text-ui-sm text-content-muted [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
           <li className="flex shrink-0 items-center gap-1.5">
             <Type className="h-3.5 w-3.5 opacity-60" aria-hidden="true" />
             <span className="tabular-nums">{stats.words.toLocaleString('en-US')}</span> words

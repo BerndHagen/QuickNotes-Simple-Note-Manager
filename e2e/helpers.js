@@ -29,31 +29,34 @@ const resetKeyboardStart = (page) =>
     document.body.removeAttribute('tabindex')
   })
 
-/** Opens the available cloud or local workspace and waits for the shell. */
+/**
+ * Opens a workspace and waits for the shell.
+ *
+ * Uses the cloud account when `QN_EMAIL`/`QN_PASSWORD` are supplied, and the
+ * local workspace otherwise — so the suite runs against a Supabase-configured
+ * build without needing an account.
+ */
 export async function signIn(page) {
   await page.goto('./', { waitUntil: 'domcontentloaded' })
 
-  const localWorkspace = page.getByRole('button', {
-    name: /(?:create|continue to my) local workspace/i,
-  })
-  if (await localWorkspace.isVisible().catch(() => false)) {
-    await localWorkspace.click()
+  if (CREDENTIALS.email && CREDENTIALS.password) {
+    await page.getByLabel(/email/i).first().fill(CREDENTIALS.email)
+    await page.locator('input[type="password"]').first().fill(CREDENTIALS.password)
+    await page.locator('button[type="submit"]').first().click()
     await expect(page.locator('#qn-main')).toBeVisible({ timeout: 30_000 })
     await resetKeyboardStart(page)
     return
   }
 
-  if (!CREDENTIALS.email || !CREDENTIALS.password) {
-    throw new Error(
-      'This build is configured for a Supabase backend. Set QN_EMAIL and QN_PASSWORD ' +
-        'to a test account, or run against a build without Supabase credentials to use ' +
-        'the local workspace.'
-    )
-  }
+  // On a cloud-capable build the local workspace is one step behind the
+  // sign-in form; without a backend the entry button is shown directly.
+  const enterLocal = page.getByRole('button', { name: /use a private local workspace/i })
+  if (await enterLocal.isVisible().catch(() => false)) await enterLocal.click()
 
-  await page.getByLabel(/email/i).first().fill(CREDENTIALS.email)
-  await page.locator('input[type="password"]').first().fill(CREDENTIALS.password)
-  await page.locator('button[type="submit"]').first().click()
+  await page
+    .getByRole('button', { name: /(?:create|continue to my) local workspace/i })
+    .click()
+
   await expect(page.locator('#qn-main')).toBeVisible({ timeout: 30_000 })
   await resetKeyboardStart(page)
 }

@@ -112,8 +112,10 @@ export default function App() {
           data: { session },
         } = await backend.auth.getSession()
         if (session?.user) await activateCloudUser(session.user, { adoptUnowned: true })
+        // A local workspace outlives a reload even on a cloud-capable build.
+        else if (hasLocalSession()) setUser(createLocalUser())
       } catch {
-        /* falls through to the sign-in screen */
+        if (hasLocalSession()) setUser(createLocalUser())
       } finally {
         setIsAuthChecked(true)
         setIsLoading(false)

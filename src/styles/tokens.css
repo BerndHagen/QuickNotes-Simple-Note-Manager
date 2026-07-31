@@ -43,15 +43,23 @@
   /* --- Navigation rail --------------------------------------
      The sidebar is a dark surface in both themes: it anchors the
      window and lets the note list and editor read as the "paper".
-     These tokens are therefore theme-independent. */
-  /* Green-tinted rather than neutral charcoal, so the rail reads as the
-     same family as the editor banner instead of clashing with it. */
-  --qn-nav-bg: #0c211a;
-  --qn-nav-bg-raised: #122e23;
-  --qn-nav-border: #1c3a2d;
+     These tokens are therefore theme-independent.
+
+     The rail is painted with `.qn-nav-surface`, the same material as the
+     sign-in hero (see index.css). `--qn-nav-bg` is the flat equivalent of
+     that gradient, used as the fallback beneath it.
+
+     Text tokens are set against the brightest point of that material — the
+     emerald glow behind the brand mark, which samples as rgb(15, 88, 66):
+       text         #eaf2ee  7.4:1
+       text-muted   #c0d0c8  5.2:1
+       text-subtle  #b6c8bf  4.8:1 */
+  --qn-nav-bg: #083d31;
+  --qn-nav-bg-raised: #0e5140;
+  --qn-nav-border: rgba(255, 255, 255, 0.12);
   --qn-nav-text: #eaf2ee;
-  --qn-nav-text-muted: #a2b5ac;
-  --qn-nav-text-subtle: #82968d;
+  --qn-nav-text-muted: #c0d0c8;
+  --qn-nav-text-subtle: #b6c8bf;
   --qn-nav-hover: rgba(255, 255, 255, 0.06);
   --qn-nav-active-bg: rgba(255, 255, 255, 0.09);
   --qn-nav-active-text: #ffffff;

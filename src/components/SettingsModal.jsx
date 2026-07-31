@@ -1290,7 +1290,7 @@ export default function SettingsModal() {
                   </div>
                   <div className="text-center">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">QuickNotes</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{t('settings.version')} 2.0.0</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{t('settings.version')} 2.0.1</p>
                   </div>
                   <p className="text-center text-sm text-gray-500 dark:text-gray-400 max-w-sm">
                     {t('settings.aboutDescription')}

@@ -14,11 +14,15 @@ export function useSyncStatus() {
   const isSyncing = useNotesStore((s) => s.isSyncing)
   const lastSyncTime = useNotesStore((s) => s.lastSyncTime)
   const lastSyncError = useNotesStore((s) => s.lastSyncError)
+  const isLocalWorkspace = useNotesStore((s) => !!s.user?.isLocal)
   const pendingCount = useNotesStore(
     (s) => s.notes.filter((n) => n.syncStatus === 'pending').length
   )
 
-  if (!isBackendConfigured()) return { state: 'local', pendingCount: 0, lastSyncTime }
+  // A local workspace never uploads, so a pending queue is not a backlog.
+  if (!isBackendConfigured() || isLocalWorkspace) {
+    return { state: 'local', pendingCount: 0, lastSyncTime }
+  }
   if (!isOnline) return { state: 'offline', pendingCount, lastSyncTime }
   if (isSyncing) return { state: 'syncing', pendingCount, lastSyncTime }
   if (lastSyncError) return { state: 'error', pendingCount, lastSyncTime, lastSyncError }

@@ -24,7 +24,7 @@ import { useNotesStore, useThemeStore, useUIStore } from '../store'
 import { useTranslation } from '../lib/useTranslation'
 import { getFolderIcon } from '../lib/folderIcons'
 import { isBackendConfigured } from '../lib/backend'
-import { Avatar, Menu, MenuItem, MenuSeparator } from './ui'
+import { Avatar, Menu, MenuItem, MenuSeparator, NotepadGlyph } from './ui'
 import { FolderDialog, ConfirmDialog } from './FolderDialogs'
 
 /**
@@ -192,23 +192,14 @@ export default function Sidebar({ onNavigate }) {
   const cloudEnabled = isBackendConfigured()
 
   return (
-    <nav aria-label="Workspace" className="flex h-full w-full flex-col bg-nav text-nav-text">
+    <nav
+      aria-label="Workspace"
+      className="qn-nav-surface flex h-full w-full flex-col bg-nav text-nav-text"
+    >
       {/* Brand */}
       <div className="flex shrink-0 items-center gap-2.5 px-4 pb-4 pt-4">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-gradient-to-br from-primary-500 to-primary-700 text-white shadow-sm">
-          <svg
-            viewBox="0 0 24 24"
-            className="h-[18px] w-[18px]"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
-            <path d="M14 2v4a2 2 0 0 0 2 2h4" />
-          </svg>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-white/10 bg-[linear-gradient(140deg,#0e5341,#05352a)] text-white shadow-sm">
+          <NotepadGlyph className="h-[21px] w-[21px]" />
         </span>
         <div className="min-w-0 flex-1">
           <p className="truncate text-title-xs font-bold leading-tight text-nav-text">QuickNotes</p>
@@ -342,11 +333,13 @@ export default function Sidebar({ onNavigate }) {
                       selected={selectedFolderId === folder.id}
                       onClick={go(() => setSelectedFolder(folder.id))}
                       trailing={
+                        /* The rail paints a gradient, so this control masks the
+                           label behind it with a blur rather than a flat fill. */
                         <NavIconButton
                           icon={Pencil}
                           label={`${t('common.edit', 'Edit')} ${folder.name}`}
                           onClick={() => setFolderDialog({ folder })}
-                          className="absolute right-1.5 bg-nav opacity-0 focus-visible:opacity-100 group-hover:opacity-100"
+                          className="absolute right-1.5 bg-[rgba(8,61,49,0.92)] opacity-0 backdrop-blur-sm focus-visible:opacity-100 group-hover:opacity-100"
                         />
                       }
                     />
