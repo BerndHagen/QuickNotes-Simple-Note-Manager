@@ -732,9 +732,15 @@ export default function AuthScreen() {
   // instead just produced one large green field with the card lost inside it.
   return (
     <div className="qn-auth-page relative flex min-h-[100dvh] items-center justify-center overflow-hidden text-content">
-      <div className="pointer-events-none absolute inset-0 opacity-80" aria-hidden="true">
-        <div className="absolute -left-24 -top-32 h-[420px] w-[420px] rounded-full bg-[rgba(52,211,153,0.10)] blur-3xl" />
-        <div className="absolute -bottom-40 right-[28%] h-[520px] w-[520px] rounded-full bg-[rgba(16,185,129,0.10)] blur-3xl" />
+      <div className="qn-auth-bg pointer-events-none absolute inset-0" aria-hidden="true">
+        <span className="qn-auth-panel qn-auth-panel--a" />
+        <span className="qn-auth-panel qn-auth-panel--b" />
+        <span className="qn-auth-panel qn-auth-panel--c" />
+        <span className="qn-auth-panel qn-auth-panel--d" />
+        <span className="qn-auth-dots qn-auth-dots--a" />
+        <span className="qn-auth-dots qn-auth-dots--b" />
+        <span className="qn-auth-glow qn-auth-glow--a" />
+        <span className="qn-auth-glow qn-auth-glow--b" />
       </div>
 
       <main className="relative z-10 grid h-[100dvh] w-full max-w-[1680px] overflow-hidden lg:grid-cols-[minmax(0,1.06fr)_clamp(430px,32vw,660px)] 2xl:h-[min(100dvh-72px,1000px)] 2xl:rounded-[26px] 2xl:shadow-[0_40px_90px_rgba(2,20,14,0.45)]">
@@ -759,7 +765,7 @@ export default function AuthScreen() {
             <WorkspacePreview />
           </div>
 
-          <div className="relative z-10 mx-auto hidden w-full max-w-[860px] grid-cols-3 gap-5 border-t border-white/10 pt-6 xl:grid">
+          <div className="qn-auth-features relative z-10 mx-auto hidden w-full max-w-[860px] grid-cols-3 gap-5 border-t border-white/10 pt-6 xl:grid">
             {FEATURE_POINTS.map(({ icon: Icon, title, description }) => (
               <div key={title} className="min-w-0">
                 <div className="mb-2 flex items-center gap-2">

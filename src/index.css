@@ -642,15 +642,173 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
   animation: auth-form-in 0.4s ease-out;
 }
 
-/* The sign-in page uses the same canvas as the workspace, so the hero panel
-   reads as a card resting on it. Light in the light theme — this is a working
-   tool, not a night-mode product — and a deep neutral in the dark theme. */
+/* Sign-in canvas.
+   A light working surface with a faint blueprint grid, a few soft panels and
+   dot clusters drifting very slowly across it. Everything here is decoration
+   behind the card: the panel in the centre is untouched. */
 .qn-auth-page {
-  background: linear-gradient(135deg, #eef1f5, #e7ebf1 55%, #f2f4f7);
+  background:
+    linear-gradient(135deg, #eef1f5, #e7ebf1 55%, #f2f4f7);
+}
+
+.qn-auth-page::before {
+  content: '';
+  position: absolute;
+  inset: -15%;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgba(15, 23, 42, 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(15, 23, 42, 0.045) 1px, transparent 1px);
+  background-size: 104px 104px;
+  animation: qn-bg-grid 120s linear infinite;
 }
 
 .dark .qn-auth-page {
   background: linear-gradient(135deg, #12171c, #0d1116 55%, #151b21);
+}
+
+.dark .qn-auth-page::before {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+}
+
+/* Soft panels: large, low-contrast rounded rectangles that drift and breathe. */
+.qn-auth-panel {
+  position: absolute;
+  border-radius: 26px;
+  border: 1px solid rgba(15, 23, 42, 0.05);
+  background: linear-gradient(140deg, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.25));
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.04);
+  will-change: transform;
+}
+
+.dark .qn-auth-panel {
+  border-color: rgba(255, 255, 255, 0.05);
+  background: linear-gradient(140deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012));
+  box-shadow: none;
+}
+
+.qn-auth-panel--a {
+  left: -6%;
+  top: 8%;
+  width: 26vw;
+  height: 30vh;
+  animation: qn-bg-float-a 34s ease-in-out infinite;
+}
+
+.qn-auth-panel--b {
+  right: -8%;
+  top: -6%;
+  width: 30vw;
+  height: 34vh;
+  border-radius: 34px;
+  animation: qn-bg-float-b 44s ease-in-out infinite;
+}
+
+.qn-auth-panel--c {
+  right: 4%;
+  bottom: -10%;
+  width: 22vw;
+  height: 32vh;
+  animation: qn-bg-float-a 52s ease-in-out infinite reverse;
+}
+
+.qn-auth-panel--d {
+  left: 10%;
+  bottom: -14%;
+  width: 18vw;
+  height: 26vh;
+  border-radius: 20px;
+  animation: qn-bg-float-b 38s ease-in-out infinite reverse;
+}
+
+/* Dot clusters, the blueprint detail from the reference. */
+.qn-auth-dots {
+  position: absolute;
+  background-image: radial-gradient(circle, rgba(15, 23, 42, 0.16) 1.1px, transparent 1.4px);
+  background-size: 17px 17px;
+  opacity: 0.5;
+  will-change: transform;
+}
+
+.dark .qn-auth-dots {
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.14) 1.1px, transparent 1.4px);
+  opacity: 0.35;
+}
+
+.qn-auth-dots--a {
+  left: 3%;
+  bottom: 16%;
+  width: 190px;
+  height: 130px;
+  animation: qn-bg-float-b 40s ease-in-out infinite;
+}
+
+.qn-auth-dots--b {
+  right: 12%;
+  top: 12%;
+  width: 150px;
+  height: 110px;
+  animation: qn-bg-float-a 46s ease-in-out infinite reverse;
+}
+
+/* A whisper of brand colour so the canvas is not purely grey. */
+.qn-auth-glow {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(90px);
+  will-change: transform;
+}
+
+.qn-auth-glow--a {
+  left: -10%;
+  top: -12%;
+  width: 460px;
+  height: 460px;
+  background: rgba(52, 211, 153, 0.16);
+  animation: qn-bg-float-a 56s ease-in-out infinite;
+}
+
+.qn-auth-glow--b {
+  right: -6%;
+  bottom: -16%;
+  width: 520px;
+  height: 520px;
+  background: rgba(16, 185, 129, 0.12);
+  animation: qn-bg-float-b 64s ease-in-out infinite reverse;
+}
+
+.dark .qn-auth-glow--a {
+  background: rgba(52, 211, 153, 0.1);
+}
+
+.dark .qn-auth-glow--b {
+  background: rgba(16, 185, 129, 0.08);
+}
+
+@keyframes qn-bg-grid {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(104px, 104px, 0); }
+}
+
+@keyframes qn-bg-float-a {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(2.2vw, -2.4vh, 0) scale(1.04); }
+}
+
+@keyframes qn-bg-float-b {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(-2.6vw, 2.2vh, 0) scale(1.05); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qn-auth-page::before,
+  .qn-auth-panel,
+  .qn-auth-dots,
+  .qn-auth-glow {
+    animation: none !important;
+  }
 }
 
 /* Sign-in hero and navigation rail share one material: an emerald-tinted deep
@@ -725,13 +883,43 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
   transform-origin: 50% 100%;
 }
 
-@media (max-height: 840px) and (min-width: 1024px) {
+/* The hero column carries a fixed stack — brand, headline, preview, feature
+   strip — that is taller than a laptop window. Rather than clipping it, the
+   preview shrinks as the window gets shorter and the feature strip steps out
+   before anything can be cut off. */
+@media (min-width: 1024px) and (max-height: 1010px) {
   .qn-auth-preview {
-    margin-top: 1rem;
+    margin-top: 1.5rem;
   }
 
   .qn-auth-preview > div:last-child {
-    height: 270px;
+    height: 262px;
+  }
+}
+
+@media (min-width: 1024px) and (max-height: 920px) {
+  .qn-auth-preview {
+    margin-top: 1.15rem;
+  }
+
+  .qn-auth-preview > div:last-child {
+    height: 216px;
+  }
+}
+
+@media (min-width: 1024px) and (max-height: 860px) {
+  .qn-auth-preview > div:last-child {
+    height: 186px;
+  }
+
+  .qn-auth-features {
+    display: none !important;
+  }
+}
+
+@media (min-width: 1024px) and (max-height: 760px) {
+  .qn-auth-preview {
+    display: none;
   }
 }
 
