@@ -642,11 +642,15 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
   animation: auth-form-in 0.4s ease-out;
 }
 
-/* The sign-in page uses the same neutral desk as the workspace frame, so the
-   green hero panel reads as a card on it rather than merging into a full-page
-   wash of the same colour. */
+/* The sign-in page uses the same canvas as the workspace, so the hero panel
+   reads as a card resting on it. Light in the light theme — this is a working
+   tool, not a night-mode product — and a deep neutral in the dark theme. */
 .qn-auth-page {
-  background: linear-gradient(135deg, #1b2022, #14181a 55%, #1e2427);
+  background: linear-gradient(135deg, #eef1f5, #e7ebf1 55%, #f2f4f7);
+}
+
+.dark .qn-auth-page {
+  background: linear-gradient(135deg, #12171c, #0d1116 55%, #151b21);
 }
 
 /* Sign-in hero and navigation rail share one material: an emerald-tinted deep
@@ -732,13 +736,17 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
 }
 
 @media (min-width: 1280px) and (min-height: 700px) {
-  /* The desk the workspace frame sits on.
-     Neutral graphite on purpose, not a darker green. The rail and the editor
-     banner are both saturated green, and a green desk of any lightness sits in
-     the same hue family, so the frame's edge disappears into it. Against a
-     neutral the green reads as the product's colour instead of as the room. */
+  /* The canvas the workspace frame rests on.
+     A quiet neutral rather than a second green: the rail and the editor banner
+     are both saturated green, so a green canvas of any lightness sits in the
+     same hue family and the frame's edge dissolves into it. The light theme
+     keeps a light canvas — the dark one belongs to the dark theme. */
   body {
-    background: linear-gradient(135deg, #1b2022, #14181a 55%, #1e2427);
+    background: linear-gradient(135deg, #eef1f5, #e7ebf1 55%, #f2f4f7);
+  }
+
+  .dark body {
+    background: linear-gradient(135deg, #12171c, #0d1116 55%, #151b21);
   }
 
   .qn-workspace-frame {

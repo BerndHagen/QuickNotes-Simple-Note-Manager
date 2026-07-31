@@ -920,10 +920,10 @@ If you'd like a preview of QuickNotes before trying it out, the screenshots belo
   </tr>
   <tr>
     <th>QuickNotes - Global Search</th>
-    <th>QuickNotes - Dark Mode</th>
+    <th>QuickNotes - Project Board</th>
   </tr>
   <tr>
     <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/img/img_v2.0.2-quicknotes_search.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/img/img_v2.0.2-quicknotes_search.png" alt="QuickNotes Global Search" width="450"></a></td>
-    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/img/img_v2.0.2-quicknotes_darkmode.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/img/img_v2.0.2-quicknotes_darkmode.png" alt="QuickNotes Dark Mode" width="450"></a></td>
+    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/img/img_v2.0.2-quicknotes_board.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/img/img_v2.0.2-quicknotes_board.png" alt="QuickNotes Project Board" width="450"></a></td>
   </tr>
 </table>

@@ -74,22 +74,16 @@ const NoteCard = forwardRef(function NoteCard(
           isDragging ? 'opacity-50' : '',
         ].join(' ')}
       >
+        {/* The pin indicator and the star control share one corner, so the
+            title reserves that width rather than running underneath them. */}
         <div className="flex items-start gap-2">
           <h3
-            className={`min-w-0 flex-1 truncate font-semibold text-content ${
+            className={`min-w-0 flex-1 truncate pr-11 font-semibold text-content ${
  compactMode ? 'text-ui-md' : 'text-title-xs'
  }`}
           >
             {note.title || 'Untitled note'}
           </h3>
-          <span className="flex shrink-0 items-center gap-1 pt-0.5">
-            {note.pinned && (
-              <>
-                <Pin className="h-3 w-3 fill-current text-accent" aria-hidden="true" />
-                <span className="qn-sr-only">Pinned</span>
-              </>
-            )}
-          </span>
         </div>
 
         {notePreviewLines > 0 && (
@@ -133,24 +127,38 @@ const NoteCard = forwardRef(function NoteCard(
         </div>
       </button>
 
-      {/* Star toggle sits outside the card button: nesting interactive
-          elements is invalid HTML and breaks screen-reader navigation. */}
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation()
-          toggleStar(note.id)
-        }}
-        aria-label={
-          note.starred ? `Remove ${note.title} from favourites` : `Add ${note.title} to favourites`
-        }
-        aria-pressed={!!note.starred}
-        className={`qn-inline-target absolute right-4 top-3.5 flex h-6 w-6 items-center justify-center rounded-control transition-colors duration-fast hover:bg-surface-active ${
- note.starred ? 'text-warning' : 'text-content-subtle opacity-60 hover:opacity-100'
- }`}
+      {/* The star sits outside the card button: nesting interactive elements is
+          invalid HTML and breaks screen-reader navigation. The pin rides along
+          so the two never land on the same pixels. */}
+      <div
+        className={`absolute right-3.5 flex items-center gap-1 ${compactMode ? 'top-2' : 'top-3'}`}
       >
-        <Star className={`h-3.5 w-3.5 ${note.starred ? 'fill-current text-warning' : ''}`} aria-hidden="true" />
-      </button>
+        {note.pinned && (
+          <>
+            <Pin className="h-3 w-3 shrink-0 fill-current text-accent" aria-hidden="true" />
+            <span className="qn-sr-only">Pinned</span>
+          </>
+        )}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            toggleStar(note.id)
+          }}
+          aria-label={
+            note.starred ? `Remove ${note.title} from favourites` : `Add ${note.title} to favourites`
+          }
+          aria-pressed={!!note.starred}
+          className={`qn-inline-target flex h-6 w-6 items-center justify-center rounded-control transition-colors duration-fast hover:bg-surface-active ${
+            note.starred ? 'text-warning' : 'text-content-subtle opacity-60 hover:opacity-100'
+          }`}
+        >
+          <Star
+            className={`h-3.5 w-3.5 ${note.starred ? 'fill-current text-warning' : ''}`}
+            aria-hidden="true"
+          />
+        </button>
+      </div>
     </li>
   )
 })
