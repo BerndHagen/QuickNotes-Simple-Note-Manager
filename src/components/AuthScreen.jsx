@@ -727,11 +727,11 @@ export default function AuthScreen() {
     </div>
   )
 
-  // The page carries the hero material itself, so the composition can be capped
-  // at a comfortable width without leaving bare gutters on a wide display: the
-  // backdrop continues the hero, and the panel reads as a card floating on it.
+  // The backdrop is the same neutral desk the workspace uses, so the green hero
+  // reads as a card sitting on it. Continuing the hero across the whole page
+  // instead just produced one large green field with the card lost inside it.
   return (
-    <div className="qn-auth-page qn-auth-hero relative flex min-h-[100dvh] items-center justify-center overflow-hidden text-content">
+    <div className="qn-auth-page relative flex min-h-[100dvh] items-center justify-center overflow-hidden text-content">
       <div className="pointer-events-none absolute inset-0 opacity-80" aria-hidden="true">
         <div className="absolute -left-24 -top-32 h-[420px] w-[420px] rounded-full bg-[rgba(52,211,153,0.10)] blur-3xl" />
         <div className="absolute -bottom-40 right-[28%] h-[520px] w-[520px] rounded-full bg-[rgba(16,185,129,0.10)] blur-3xl" />

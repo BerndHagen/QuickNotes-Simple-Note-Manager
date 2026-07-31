@@ -8,7 +8,7 @@ import { endLocalSession } from '../lib/localSession'
 import { limitNoteTitle, normalizeTagName, validateFolderName } from '../lib/dataValidation'
 import { buildFolderIdRemap, remapNoteFolder } from '../lib/syncReconciliation'
 import toast from 'react-hot-toast'
-const WELCOME_TITLE = 'Start here: how QuickNotes is put together'
+const WELCOME_TITLE = 'Welcome to QuickNotes'
 
 const createStarterContent = () => {
   const welcomeNote = {
