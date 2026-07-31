@@ -1,31 +1,33 @@
 import { useEffect, useState } from 'react'
-import { Check, CloudOff, Loader2, RefreshCw, AlertTriangle } from 'lucide-react'
+import { Check, CloudOff, HardDrive, Loader2, RefreshCw, AlertTriangle } from 'lucide-react'
 import { useNotesStore } from '../store'
 import { useTranslation } from '../lib/useTranslation'
 import { formatSyncTime } from '../lib/utils'
+import { isBackendConfigured } from '../lib/backend'
 
 /**
- * Derives one honest status from the three signals the store exposes.
- *
- * The old UI showed a static "Sync" link whenever the browser was
- * online, regardless of whether anything was actually pending or the
- * last attempt had failed.
+ * Derives a single sync status from the three signals the store exposes:
+ * connectivity, the pending-write count, and the last attempt's outcome.
  */
 export function useSyncStatus() {
   const isOnline = useNotesStore((s) => s.isOnline)
   const isSyncing = useNotesStore((s) => s.isSyncing)
   const lastSyncTime = useNotesStore((s) => s.lastSyncTime)
+  const lastSyncError = useNotesStore((s) => s.lastSyncError)
   const pendingCount = useNotesStore(
     (s) => s.notes.filter((n) => n.syncStatus === 'pending').length
   )
 
+  if (!isBackendConfigured()) return { state: 'local', pendingCount: 0, lastSyncTime }
   if (!isOnline) return { state: 'offline', pendingCount, lastSyncTime }
   if (isSyncing) return { state: 'syncing', pendingCount, lastSyncTime }
+  if (lastSyncError) return { state: 'error', pendingCount, lastSyncTime, lastSyncError }
   if (pendingCount > 0) return { state: 'pending', pendingCount, lastSyncTime }
   return { state: 'synced', pendingCount, lastSyncTime }
 }
 
 const CONFIG = {
+  local: { icon: HardDrive, tone: 'text-success-text', key: 'sync.local', fallback: 'Saved locally' },
   synced: { icon: Check, tone: 'text-success-text', key: 'sync.synced', fallback: 'Synced' },
   syncing: { icon: Loader2, tone: 'text-accent-text', key: 'sync.syncing', fallback: 'Syncing…', spin: true },
   pending: { icon: RefreshCw, tone: 'text-warning-text', key: 'sync.pending', fallback: 'Unsynced changes' },
@@ -41,16 +43,22 @@ const CONFIG = {
  */
 export function SyncStatusPill({ className = '' }) {
   const { t } = useTranslation()
-  const { state, pendingCount, lastSyncTime } = useSyncStatus()
+  const { state, pendingCount, lastSyncTime, lastSyncError } = useSyncStatus()
   const syncWithBackend = useNotesStore((s) => s.syncWithBackend)
   const config = CONFIG[state]
   const Icon = config.icon
-  const label = t(config.key) || config.fallback
-  const canSync = state !== 'offline' && state !== 'syncing'
+  const translatedLabel = t(config.key)
+  const label =
+    !translatedLabel || translatedLabel === config.key ? config.fallback : translatedLabel
+  const canSync = state !== 'local' && state !== 'offline' && state !== 'syncing'
 
   const title =
-    state === 'offline'
+    state === 'local'
+      ? t('sync.localHint', 'Notes are saved privately in this browser')
+      : state === 'offline'
       ? t('sync.offlineHint', 'Changes are saved locally and will sync when you reconnect')
+      : state === 'error'
+      ? `${label}: ${lastSyncError}`
       : `${label} · ${formatSyncTime(lastSyncTime)}`
 
   return (
@@ -95,6 +103,15 @@ export function SaveStatus({ note, className = '' }) {
   }, [pending, note?.updatedAt])
 
   if (!note) return null
+
+  if (!isBackendConfigured()) {
+    return (
+      <span className={`inline-flex items-center gap-1.5 text-ui-sm text-success-text ${className}`}>
+        <HardDrive className="h-3.5 w-3.5" aria-hidden="true" />
+        <span>{t('editor.savedLocally', 'Saved locally')}</span>
+      </span>
+    )
+  }
 
   return (
     <span

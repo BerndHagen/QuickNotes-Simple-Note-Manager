@@ -5,6 +5,8 @@ import { useNotesStore, useUIStore } from '../store'
 import { createShortcutHandler } from '../lib/utils'
 import { useTranslation } from '../lib/useTranslation'
 import LegacyDialog from './ui/LegacyDialog'
+import { escapeHtml } from '../lib/sanitizeHtml'
+import { MAX_NOTE_TITLE_LENGTH, MAX_TAG_NAME_LENGTH } from '../lib/dataValidation'
 
 function SmartDropdown({ isOpen, onClose, triggerRef, children, minWidth = 160 }) {
   const dropdownRef = useRef(null)
@@ -163,7 +165,7 @@ export default function QuickNoteModal() {
 
     createNote({
       title: title.trim() || 'Untitled Note',
-      content: `<p>${content.replace(/\n/g, '</p><p>')}</p>`,
+      content: `<p>${escapeHtml(content).replace(/\n/g, '</p><p>')}</p>`,
       folderId: selectedFolder,
       tags: selectedTags,
     })
@@ -234,6 +236,7 @@ export default function QuickNoteModal() {
           <input
             ref={titleRef}
             type="text"
+            maxLength={MAX_NOTE_TITLE_LENGTH}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder={t('quickNote.titlePlaceholder')}
@@ -321,6 +324,7 @@ export default function QuickNoteModal() {
                   <div className="flex items-center gap-2 mb-2">
                     <input
                       type="text"
+                      maxLength={MAX_TAG_NAME_LENGTH}
                       value={newTagName}
                       onChange={(e) => setNewTagName(e.target.value)}
                       onKeyDown={(e) => {

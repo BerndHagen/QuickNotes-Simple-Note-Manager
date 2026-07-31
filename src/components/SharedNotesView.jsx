@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { X, Users, ExternalLink, LogOut, RefreshCw, Mail, CheckCircle, XCircle, Clock } from 'lucide-react'
 import { useNotesStore } from '../store'
 import { useUIStore } from '../store'
 import LegacyDialog from './ui/LegacyDialog'
+import { ConfirmDialog } from './FolderDialogs'
 
 export default function SharedNotesView() {
   const { sharedNotesViewOpen, setSharedNotesViewOpen } = useUIStore()
@@ -17,48 +18,48 @@ export default function SharedNotesView() {
   } = useNotesStore()
   const [isLoading, setIsLoading] = useState(false)
   const [activeTab, setActiveTab] = useState('accepted')
+  const [confirmation, setConfirmation] = useState(null)
 
-  useEffect(() => {
-    if (sharedNotesViewOpen) {
-      handleRefresh()
-    }
-  }, [sharedNotesViewOpen])
-
-  const handleRefresh = async () => {
+  const handleRefresh = useCallback(async ({ preferPending = false } = {}) => {
     setIsLoading(true)
     try {
       await loadSharedNotes()
+      if (preferPending && useNotesStore.getState().pendingShares.length > 0) {
+        setActiveTab('pending')
+      }
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [loadSharedNotes])
+
+  useEffect(() => {
+    if (sharedNotesViewOpen) void handleRefresh({ preferPending: true })
+  }, [handleRefresh, sharedNotesViewOpen])
 
   const handleAccept = async (shareId) => {
     try {
       await acceptShare(shareId)
       setActiveTab('accepted')
-    } catch (error) {
+    } catch {
       await handleRefresh()
     }
   }
 
   const handleDecline = async (shareId) => {
-    if (!confirm('Do you really want to decline this share?')) return
-    
     try {
       await declineShare(shareId)
       await handleRefresh()
-    } catch (error) {
+    } catch {
+      // The store presents the actionable server error.
     }
   }
 
   const handleLeave = async (noteId) => {
-    if (!confirm('Do you really want to leave this shared note?')) return
-    
     try {
       await leaveSharedNote(noteId)
       await handleRefresh()
-    } catch (error) {
+    } catch {
+      // The store presents the actionable server error.
     }
   }
 
@@ -179,7 +180,13 @@ export default function SharedNotesView() {
                           </button>
                           
                           <button
-                            onClick={() => handleLeave(note.id)}
+                            onClick={() =>
+                              setConfirmation({
+                                kind: 'leave',
+                                id: note.id,
+                                title: note.title,
+                              })
+                            }
                             className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors"
                             title="Leave"
                           >
@@ -247,7 +254,13 @@ export default function SharedNotesView() {
                           </button>
                           
                           <button
-                            onClick={() => handleDecline(share.id)}
+                            onClick={() =>
+                              setConfirmation({
+                                kind: 'decline',
+                                id: share.id,
+                                title: note.title,
+                              })
+                            }
                             className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
                           >
                             <XCircle className="w-4 h-4" />
@@ -270,6 +283,22 @@ export default function SharedNotesView() {
             </span>
           </div>
         </div>
+        <ConfirmDialog
+          open={!!confirmation}
+          onClose={() => setConfirmation(null)}
+          onConfirm={() =>
+            confirmation?.kind === 'leave'
+              ? handleLeave(confirmation.id)
+              : handleDecline(confirmation.id)
+          }
+          title={confirmation?.kind === 'leave' ? 'Leave shared note?' : 'Decline invitation?'}
+          description={
+            confirmation?.kind === 'leave'
+              ? `You will lose access to “${confirmation.title}”.`
+              : `The invitation to “${confirmation?.title || 'this note'}” will be declined.`
+          }
+          confirmLabel={confirmation?.kind === 'leave' ? 'Leave note' : 'Decline'}
+        />
       </div>
     </LegacyDialog>
   )

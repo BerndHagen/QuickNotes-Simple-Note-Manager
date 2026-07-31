@@ -13,10 +13,7 @@ const SIZES = {
 }
 
 /**
- * The single dialog shell used by every modal in the app.
- *
- * Responsibilities that used to be re-implemented (inconsistently, and
- * often not at all) in ~25 separate components:
+ * The dialog shell every modal in the app is built on. It owns:
  *   - focus trap + focus restore + initial focus
  *   - Escape to close, respecting nesting order
  *   - background scroll lock

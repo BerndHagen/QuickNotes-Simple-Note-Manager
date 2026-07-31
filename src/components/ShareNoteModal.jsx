@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useCallback, useState, useEffect } from 'react'
 import { X, Mail, Link2, Copy, Check, Trash2, UserPlus, Users } from 'lucide-react'
 import { useNotesStore } from '../store'
 import { useUIStore } from '../store'
 import toast from 'react-hot-toast'
 import LegacyDialog from './ui/LegacyDialog'
+import { ConfirmDialog } from './FolderDialogs'
+import { backend } from '../lib/backend'
 
 export default function ShareNoteModal() {
   const { shareModalOpen, shareNoteId, setShareModalOpen } = useUIStore()
@@ -13,18 +15,13 @@ export default function ShareNoteModal() {
   const [isLoading, setIsLoading] = useState(false)
   const [shares, setShares] = useState([])
   const [copiedToken, setCopiedToken] = useState(null)
+  const [shareToRemove, setShareToRemove] = useState(null)
 
   const note = notes.find(n => n.id === shareNoteId)
 
-  useEffect(() => {
-    if (shareModalOpen && shareNoteId) {
-      loadShares()
-    }
-  }, [shareModalOpen, shareNoteId])
-
-  const loadShares = async () => {
+  const loadShares = useCallback(async () => {
+    if (!shareNoteId) return
     try {
-      const { backend } = await import('../lib/backend')
       const { data, error } = await backend
         .from('shared_notes')
         .select('*')
@@ -33,8 +30,13 @@ export default function ShareNoteModal() {
       if (error) throw error
       setShares(data || [])
     } catch (error) {
+      toast.error(`Could not load sharing details: ${error.message || 'Unknown error'}`)
     }
-  }
+  }, [shareNoteId])
+
+  useEffect(() => {
+    if (shareModalOpen && shareNoteId) void loadShares()
+  }, [loadShares, shareModalOpen, shareNoteId])
 
   const handleShare = async (e) => {
     e.preventDefault()
@@ -51,7 +53,8 @@ export default function ShareNoteModal() {
       setEmail('')
       await loadShares()
       await loadSharedNotes()
-    } catch (error) {
+    } catch {
+      // The store presents the actionable server error.
     } finally {
       setIsLoading(false)
     }
@@ -64,19 +67,19 @@ export default function ShareNoteModal() {
       setCopiedToken(shareToken)
       toast.success('Link copied!')
       setTimeout(() => setCopiedToken(null), 2000)
-    } catch (error) {
+    } catch {
       toast.error('Failed to copy')
     }
   }
 
-  const handleRemoveShare = async (shareId) => {
-    if (!confirm('Do you really want to remove this share?')) return
-    
+  const handleRemoveShare = async () => {
+    if (!shareToRemove) return
     try {
-      await removeShare(shareId)
+      await removeShare(shareToRemove.id)
       await loadShares()
       await loadSharedNotes()
-    } catch (error) {
+    } catch {
+      // The store presents the actionable server error.
     }
   }
 
@@ -224,7 +227,7 @@ export default function ShareNoteModal() {
                       </button>
                       
                       <button
-                        onClick={() => handleRemoveShare(share.id)}
+                        onClick={() => setShareToRemove(share)}
                         className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors"
                         title="Remove share"
                       >
@@ -252,6 +255,18 @@ export default function ShareNoteModal() {
             </div>
           </div>
         </div>
+        <ConfirmDialog
+          open={!!shareToRemove}
+          onClose={() => setShareToRemove(null)}
+          onConfirm={handleRemoveShare}
+          title="Remove access?"
+          description={
+            shareToRemove
+              ? `${shareToRemove.email} will immediately lose access to this note.`
+              : ''
+          }
+          confirmLabel="Remove access"
+        />
       </div>
     </LegacyDialog>
   )

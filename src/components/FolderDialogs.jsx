@@ -72,11 +72,9 @@ function ColorGrid({ value, onChange, labelledBy }) {
 }
 
 /**
- * Create / edit folder dialog.
+ * Create / edit folder dialog, including the icon and colour pickers.
  *
- * Replaces four near-identical hand-rolled overlays (NewFolderModal,
- * EditFolderModal, IconPickerModal, ColorPickerModal — the latter two
- * were never rendered at all).
+ * Pass a `folder` to edit it, or omit it to create a new one.
  */
 export function FolderDialog({ open, onClose, folder, onSubmit, existingNames = [] }) {
   const { t } = useTranslation()
@@ -219,7 +217,7 @@ export function FolderDialog({ open, onClose, folder, onSubmit, existingNames = 
   )
 }
 
-/** Generic destructive confirmation — replaces bare `window.confirm`. */
+/** Generic destructive-action confirmation dialog. */
 export function ConfirmDialog({
   open,
   onClose,

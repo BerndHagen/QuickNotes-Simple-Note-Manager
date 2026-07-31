@@ -20,8 +20,8 @@ const keyEvent = (key, mods = {}) => ({
 describe('shortcuts', () => {
   beforeEach(() => localStorage.clear())
 
-  // Regression: Ctrl+N was documented in the welcome note, the settings
-  // screen and the shortcuts dialog, but was never registered.
+  // Ctrl+N is documented in the welcome note, the settings screen and the
+  // shortcuts dialog, so it has to be bound.
   it('defines a binding for the quick-note action', () => {
     expect(DEFAULT_SHORTCUTS.newNote).toMatchObject({ key: 'n', ctrl: true, owner: 'app' })
   })
@@ -70,8 +70,8 @@ describe('shortcuts', () => {
     expect(matchesShortcut(keyEvent('a', { ctrl: true }), { key: '' })).toBe(false)
   })
 
-  // Regression: global handlers used to fire while typing, so Ctrl+I in
-  // the editor opened the Import dialog instead of italicising.
+  // Global handlers must stay out of the way while the user is typing, or
+  // they hijack the editor's own keys.
   it('recognises text-entry targets', () => {
     const input = document.createElement('input')
     const textarea = document.createElement('textarea')

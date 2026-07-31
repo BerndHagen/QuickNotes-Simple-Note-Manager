@@ -41,12 +41,19 @@ import { useTranslation } from '../lib/useTranslation'
 import { saveNoteVersion } from '../lib/db'
 import { useRealtimeCollaboration } from '../lib/useCollaboration'
 import { getFolderIcon } from '../lib/folderIcons'
+import { MAX_NOTE_TITLE_LENGTH, MAX_TAG_NAME_LENGTH } from '../lib/dataValidation'
 import { IconButton, Input, Menu, MenuItem, MenuSeparator, EmptyState } from './ui'
 import { ConfirmDialog } from './FolderDialogs'
 import { SyncStatusPill } from './SyncStatus'
+import { isBackendConfigured } from '../lib/backend'
 import toast from 'react-hot-toast'
 
-import { hasSpecializedEditor, getEditorForNoteType, NOTE_TYPE_CONFIG } from './editors'
+import {
+  hasSpecializedEditor,
+  getEditorForNoteType,
+  NOTE_TYPE_CONFIG,
+  normalizeNoteData,
+} from './editors'
 
 export default function NoteEditor({ onBack, showBack = false }) {
   const { t, language } = useTranslation()
@@ -55,6 +62,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
     tags,
     getSelectedNote,
     updateNote,
+    updateNoteDraft,
     deleteNote,
     toggleStar,
     togglePin,
@@ -129,11 +137,17 @@ export default function NoteEditor({ onBack, showBack = false }) {
   const noteTitle = note?.title
   const noteType = note?.noteType
   const noteData = note?.noteData
+  const normalizedNoteData = useMemo(
+    () => hasSpecializedEditor(noteType) ? normalizeNoteData(noteType, noteData) : noteData,
+    [noteType, noteData]
+  )
 
   useEffect(() => {
     if (!noteId) return
     setTitle(noteTitle || '')
-    if (hasSpecializedEditor(noteType) && noteData) lastNoteDataRef.current = noteData
+    if (hasSpecializedEditor(noteType) && normalizedNoteData) {
+      lastNoteDataRef.current = normalizedNoteData
+    }
     // Intentionally keyed on the note id only: re-running on every
     // keystroke would fight the controlled title input.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -169,17 +183,29 @@ export default function NoteEditor({ onBack, showBack = false }) {
     if (noteId) debouncedTitleUpdate(noteId, newTitle)
   }
 
+  useEffect(() => {
+    return () => {
+      // A note switch must not let the next note's keystroke cancel this
+      // note's pending title write.
+      debouncedTitleUpdate.flush()
+    }
+  }, [noteId, debouncedTitleUpdate])
+
   const handleContentChange = async (content) => {
     if (!note) return
     const oldContent = note.content || ''
     if (Math.abs(content.length - oldContent.length) > 100) {
-      saveNoteVersion(note.id, oldContent, note.title)
+      saveNoteVersion(note.id, oldContent, note.title, null, note.noteType)
     }
     try {
       await updateNote(note.id, { content })
     } catch {
       toast.error(t('editor.contentSaveFailed', 'Could not save your changes'))
     }
+  }
+
+  const handleContentDraft = (content) => {
+    if (note?.id) updateNoteDraft(note.id, { content })
   }
 
   const handleDelete = () => {
@@ -217,8 +243,10 @@ export default function NoteEditor({ onBack, showBack = false }) {
   }
 
   const currentFolder = note?.folderId ? folders.find((f) => f.id === note.folderId) : null
+  const isShared = !!note?.isShared
   const isReadOnly = !!note?.isShared && note?.sharePermission === 'view'
   const isSpecialized = hasSpecializedEditor(note?.noteType)
+  const cloudEnabled = isBackendConfigured()
 
   if (!note) {
     return (
@@ -236,9 +264,8 @@ export default function NoteEditor({ onBack, showBack = false }) {
 
   return (
     <div className="editor-paper flex h-full w-full min-w-0 flex-col bg-surface">
-      {/* ---- Window chrome ----------------------------------------
-          Sync state and the note-level actions live on the light strip
-          above the banner, the way the reference lays them out. */}
+      {/* Window chrome: sync state and note-level actions sit on the light
+          strip above the coloured banner. */}
       <div className="flex shrink-0 items-center gap-1 border-b border-subtle bg-surface px-2 py-1.5 sm:px-3">
         {showBack && (
           <IconButton
@@ -256,30 +283,72 @@ export default function NoteEditor({ onBack, showBack = false }) {
             onClick={() => setFindReplaceOpen(!findReplaceOpen)}
           />
         )}
-        <IconButton
-          icon={Bell}
-          label={t('editor.reminders', 'Reminders')}
-          active={note.reminders?.length > 0}
-          onClick={() => setReminderModalOpen(true, note.id)}
-          className="hidden sm:inline-flex"
-        />
-        <IconButton
-          icon={Send}
-          label={t('editor.share', 'Share note')}
-          onClick={() => setShareModalOpen(true, note.id)}
-          className="hidden sm:inline-flex"
-        />
-        <IconButton
-          icon={Star}
-          label={
-            note.starred
-              ? t('editor.unfavourite', 'Remove from favourites')
-              : t('editor.favourite', 'Add to favourites')
-          }
-          active={note.starred}
-          aria-pressed={!!note.starred}
-          onClick={() => toggleStar(note.id)}
-        />
+        {isSpecialized && !isShared && (
+          <>
+            <IconButton
+              ref={folderButtonRef}
+              icon={FolderOpen}
+              label={
+                currentFolder
+                  ? `${t('editor.moveToFolder', 'Move to folder')}: ${currentFolder.name}`
+                  : t('editor.moveToFolder', 'Move to folder')
+              }
+              active={folderPickerOpen}
+              aria-haspopup="menu"
+              aria-expanded={folderPickerOpen}
+              onClick={() => setFolderPickerOpen((value) => !value)}
+              className="hidden sm:inline-flex"
+            />
+            <IconButton
+              ref={tagButtonRef}
+              icon={Tag}
+              label={t('editor.tags', 'Tags')}
+              active={tagPickerOpen || note.tags?.length > 0}
+              aria-haspopup="menu"
+              aria-expanded={tagPickerOpen}
+              onClick={() => setTagPickerOpen((value) => !value)}
+              className="hidden sm:inline-flex"
+            />
+            <IconButton
+              icon={Pin}
+              label={note.pinned ? t('editor.unpin', 'Unpin note') : t('editor.pin', 'Pin note')}
+              active={note.pinned}
+              aria-pressed={!!note.pinned}
+              onClick={() => togglePin(note.id)}
+              className="hidden sm:inline-flex"
+            />
+          </>
+        )}
+        {!isShared && (
+          <IconButton
+            icon={Bell}
+            label={t('editor.reminders', 'Reminders')}
+            active={note.reminders?.length > 0}
+            onClick={() => setReminderModalOpen(true, note.id)}
+            className="hidden sm:inline-flex"
+          />
+        )}
+        {cloudEnabled && !isShared && (
+          <IconButton
+            icon={Send}
+            label={t('editor.share', 'Share note')}
+            onClick={() => setShareModalOpen(true, note.id)}
+            className="hidden sm:inline-flex"
+          />
+        )}
+        {!isShared && (
+          <IconButton
+            icon={Star}
+            label={
+              note.starred
+                ? t('editor.unfavourite', 'Remove from favourites')
+                : t('editor.favourite', 'Add to favourites')
+            }
+            active={note.starred}
+            aria-pressed={!!note.starred}
+            onClick={() => toggleStar(note.id)}
+          />
+        )}
         <IconButton
           ref={menuButtonRef}
           icon={MoreVertical}
@@ -290,8 +359,9 @@ export default function NoteEditor({ onBack, showBack = false }) {
         />
       </div>
 
-      {/* ---- Banner header ---------------------------------------- */}
-      <header className="qn-banner-surface m-2 shrink-0 rounded-card px-4 py-3.5 text-banner-text sm:mx-3 sm:px-5 sm:py-4">
+      {/* Banner header */}
+      {!isSpecialized && (
+        <header className="qn-banner-surface m-2 shrink-0 rounded-card px-4 py-3.5 text-banner-text sm:mx-3 sm:px-5 sm:py-4">
         <div className="mb-2 flex items-start gap-1.5">
 
           <div className="min-w-0 flex-1">
@@ -302,10 +372,14 @@ export default function NoteEditor({ onBack, showBack = false }) {
               id="qn-note-title"
               ref={titleInputRef}
               type="text"
+              maxLength={MAX_NOTE_TITLE_LENGTH}
               value={title}
               onChange={handleTitleChange}
               onFocus={() => setIsEditingTitle(true)}
-              onBlur={() => setIsEditingTitle(false)}
+              onBlur={() => {
+                debouncedTitleUpdate.flush()
+                setIsEditingTitle(false)
+              }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   e.preventDefault()
@@ -320,18 +394,20 @@ export default function NoteEditor({ onBack, showBack = false }) {
             />
           </div>
 
-          <IconButton
-            icon={Pin}
-            label={note.pinned ? t('editor.unpin', 'Unpin note') : t('editor.pin', 'Pin note')}
-            tone="onBanner"
-            active={note.pinned}
-            aria-pressed={!!note.pinned}
-            onClick={() => togglePin(note.id)}
-            className="mt-1 hidden md:inline-flex"
-          />
+          {!isShared && (
+            <IconButton
+              icon={Pin}
+              label={note.pinned ? t('editor.unpin', 'Unpin note') : t('editor.pin', 'Pin note')}
+              tone="onBanner"
+              active={note.pinned}
+              aria-pressed={!!note.pinned}
+              onClick={() => togglePin(note.id)}
+              className="mt-1 hidden md:inline-flex"
+            />
+          )}
         </div>
 
-        {/* ---- Metadata row --------------------------------------- */}
+        {/* Metadata row */}
         <div className="flex flex-wrap items-center gap-x-1 gap-y-1 text-ui-md text-banner-muted">
           <span className="inline-flex items-center gap-1.5 px-1.5 py-0.5">
             <Clock className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
@@ -341,10 +417,11 @@ export default function NoteEditor({ onBack, showBack = false }) {
           <button
             ref={folderButtonRef}
             type="button"
-            onClick={() => setFolderPickerOpen((v) => !v)}
-            aria-haspopup="menu"
-            aria-expanded={folderPickerOpen}
-            className="inline-flex max-w-[45%] items-center gap-1.5 rounded-control px-1.5 py-0.5 transition-colors duration-fast hover:bg-banner-hover hover:text-banner-text"
+            onClick={() => !isShared && setFolderPickerOpen((v) => !v)}
+            aria-haspopup={isShared ? undefined : 'menu'}
+            aria-expanded={isShared ? undefined : folderPickerOpen}
+            disabled={isShared}
+            className="inline-flex max-w-[45%] items-center gap-1.5 rounded-control px-1.5 py-0.5 transition-colors duration-fast enabled:hover:bg-banner-hover enabled:hover:text-banner-text disabled:cursor-default"
           >
             <FolderOpen className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             <span className="truncate">{currentFolder?.name || t('editor.noFolder', 'No folder')}</span>
@@ -354,10 +431,11 @@ export default function NoteEditor({ onBack, showBack = false }) {
           <button
             ref={tagButtonRef}
             type="button"
-            onClick={() => setTagPickerOpen((v) => !v)}
-            aria-haspopup="menu"
-            aria-expanded={tagPickerOpen}
-            className="inline-flex items-center gap-1.5 rounded-control px-1.5 py-0.5 transition-colors duration-fast hover:bg-banner-hover hover:text-banner-text"
+            onClick={() => !isShared && setTagPickerOpen((v) => !v)}
+            aria-haspopup={isShared ? undefined : 'menu'}
+            aria-expanded={isShared ? undefined : tagPickerOpen}
+            disabled={isShared}
+            className="inline-flex items-center gap-1.5 rounded-control px-1.5 py-0.5 transition-colors duration-fast enabled:hover:bg-banner-hover enabled:hover:text-banner-text disabled:cursor-default"
           >
             <Tag className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             <span>
@@ -380,7 +458,8 @@ export default function NoteEditor({ onBack, showBack = false }) {
             </ul>
           )}
         </div>
-      </header>
+        </header>
+      )}
 
       <FindReplaceBar editor={editorRef} isOpen={findReplaceOpen} onClose={() => setFindReplaceOpen(false)} />
 
@@ -428,7 +507,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
         </div>
       )}
 
-      {/* ---- Content ---------------------------------------------- */}
+      {/* Content */}
       <div className="min-h-0 flex-1 overflow-hidden">
         {isSpecialized ? (
           (() => {
@@ -441,27 +520,35 @@ export default function NoteEditor({ onBack, showBack = false }) {
                   setSpecializedContextMenu({ x: e.clientX, y: e.clientY })
                 }}
               >
-                <SpecializedEditor
-                  data={note.noteData}
-                  onChange={
-                    isReadOnly
-                      ? () => {}
-                      : (newData) => {
-                          const oldData = lastNoteDataRef.current
-                          if (oldData) {
-                            const delta =
-                              JSON.stringify(newData).length - JSON.stringify(oldData).length
-                            if (Math.abs(delta) > 100) {
-                              saveNoteVersion(note.id, '', note.title, oldData)
+                <fieldset
+                  disabled={isReadOnly}
+                  aria-label={isReadOnly ? 'Read-only note workspace' : undefined}
+                  className="h-full min-w-0 border-0 p-0"
+                >
+                  <SpecializedEditor
+                    key={note.id}
+                    data={normalizedNoteData}
+                    onChange={
+                      isReadOnly
+                        ? () => {}
+                        : (newData) => {
+                            const oldData = lastNoteDataRef.current
+                            if (oldData) {
+                              const delta =
+                                JSON.stringify(newData).length - JSON.stringify(oldData).length
+                              if (Math.abs(delta) > 100) {
+                                saveNoteVersion(note.id, '', note.title, oldData, note.noteType)
+                              }
                             }
+                            lastNoteDataRef.current = newData
+                            updateNote(note.id, { noteData: newData })
                           }
-                          lastNoteDataRef.current = newData
-                          updateNote(note.id, { noteData: newData })
-                        }
-                  }
-                  noteTitle={note.title}
-                  readOnly={isReadOnly}
-                />
+                    }
+                    noteTitle={title}
+                    onTitleChange={handleTitleChange}
+                    readOnly={isReadOnly}
+                  />
+                </fieldset>
               </div>
             )
           })()
@@ -470,19 +557,21 @@ export default function NoteEditor({ onBack, showBack = false }) {
             noteId={note.id}
             content={note.content}
             onChange={handleContentChange}
+            onDraftChange={handleContentDraft}
             placeholder={t('editor.placeholder', 'Start writing…')}
             paperType={paperType}
             onPaperTypeChange={handlePaperTypeChange}
             onEditorReady={setEditorRef}
             isExternalUpdate={isExternalUpdate}
+            readOnly={isReadOnly}
           />
         )}
       </div>
 
-      {/* ---- Status bar -------------------------------------------- */}
+      {/* Status bar */}
       {showNoteStatistics && <NoteStatistics note={note} />}
 
-      {/* ---- Overlays ---------------------------------------------- */}
+      {/* Overlays */}
       <Menu
         open={menuOpen}
         onClose={() => setMenuOpen(false)}
@@ -491,29 +580,39 @@ export default function NoteEditor({ onBack, showBack = false }) {
         label={t('editor.moreActions', 'Note actions')}
         width={230}
       >
-        <MenuItem icon={Copy} onClick={() => { duplicateNote(note.id); setMenuOpen(false) }}>
-          {t('editor.duplicate', 'Duplicate note')}
-        </MenuItem>
-        <MenuItem icon={Share2} onClick={() => { setShareModalOpen(true, note.id); setMenuOpen(false) }}>
-          {t('editor.share', 'Share note')}
-        </MenuItem>
-        <MenuItem icon={FolderOpen} onClick={() => { setMenuOpen(false); setFolderPickerOpen(true) }}>
-          {t('editor.moveToFolder', 'Move to folder')}
-        </MenuItem>
+        {!isShared && (
+          <MenuItem icon={Copy} onClick={() => { duplicateNote(note.id); setMenuOpen(false) }}>
+            {t('editor.duplicate', 'Duplicate note')}
+          </MenuItem>
+        )}
+        {cloudEnabled && !isShared && (
+          <MenuItem icon={Share2} onClick={() => { setShareModalOpen(true, note.id); setMenuOpen(false) }}>
+            {t('editor.share', 'Share note')}
+          </MenuItem>
+        )}
+        {!isShared && (
+          <MenuItem icon={FolderOpen} onClick={() => { setMenuOpen(false); setFolderPickerOpen(true) }}>
+            {t('editor.moveToFolder', 'Move to folder')}
+          </MenuItem>
+        )}
         <MenuSeparator />
         <MenuItem icon={Download} onClick={() => { setExportModalOpen(true); setMenuOpen(false) }}>
           {t('editor.export', 'Export')}
         </MenuItem>
-        <MenuItem icon={Upload} onClick={() => { setImportModalOpen(true); setMenuOpen(false) }}>
-          {t('editor.import', 'Import')}
-        </MenuItem>
+        {!isShared && (
+          <MenuItem icon={Upload} onClick={() => { setImportModalOpen(true); setMenuOpen(false) }}>
+            {t('editor.import', 'Import')}
+          </MenuItem>
+        )}
         <MenuItem icon={History} onClick={() => { setVersionHistoryOpen(true, note.id); setMenuOpen(false) }}>
           {t('editor.versionHistory', 'Version history')}
         </MenuItem>
-        <MenuItem icon={Bell} onClick={() => { setReminderModalOpen(true, note.id); setMenuOpen(false) }}>
-          {t('editor.setReminder', 'Set reminder')}
-        </MenuItem>
-        {!isSpecialized && (
+        {!isShared && (
+          <MenuItem icon={Bell} onClick={() => { setReminderModalOpen(true, note.id); setMenuOpen(false) }}>
+            {t('editor.setReminder', 'Set reminder')}
+          </MenuItem>
+        )}
+        {!isSpecialized && !isReadOnly && (
           <>
             <MenuSeparator />
             <MenuItem
@@ -534,16 +633,22 @@ export default function NoteEditor({ onBack, showBack = false }) {
             </MenuItem>
           </>
         )}
-        <MenuItem icon={Mic} onClick={() => { setVoiceInputActive(true); setMenuOpen(false) }}>
-          {t('editor.voiceInput', 'Voice input')}
-        </MenuItem>
-        <MenuSeparator />
-        <MenuItem icon={Archive} onClick={() => { archiveNote(note.id); setMenuOpen(false) }}>
-          {t('editor.archive', 'Archive note')}
-        </MenuItem>
-        <MenuItem icon={Trash2} tone="danger" onClick={handleDelete}>
-          {t('editor.moveToTrash', 'Move to trash')}
-        </MenuItem>
+        {!isReadOnly && (
+          <MenuItem icon={Mic} onClick={() => { setVoiceInputActive(true); setMenuOpen(false) }}>
+            {t('editor.voiceInput', 'Voice input')}
+          </MenuItem>
+        )}
+        {!isShared && (
+          <>
+            <MenuSeparator />
+            <MenuItem icon={Archive} onClick={() => { archiveNote(note.id); setMenuOpen(false) }}>
+              {t('editor.archive', 'Archive note')}
+            </MenuItem>
+            <MenuItem icon={Trash2} tone="danger" onClick={handleDelete}>
+              {t('editor.moveToTrash', 'Move to trash')}
+            </MenuItem>
+          </>
+        )}
       </Menu>
 
       <Menu
@@ -590,6 +695,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
           </label>
           <Input
             id="qn-new-tag"
+            maxLength={MAX_TAG_NAME_LENGTH}
             size="sm"
             value={newTagName}
             onChange={(e) => setNewTagName(e.target.value)}
@@ -693,28 +799,34 @@ export default function NoteEditor({ onBack, showBack = false }) {
           label={NOTE_TYPE_CONFIG[note.noteType]?.name || 'Note'}
           width={220}
         >
-          <MenuItem icon={Mic} onClick={() => { setVoiceInputActive(true); setSpecializedContextMenu(null) }}>
-            {t('editor.voiceInput', 'Voice input')}
-          </MenuItem>
+          {!isReadOnly && (
+            <MenuItem icon={Mic} onClick={() => { setVoiceInputActive(true); setSpecializedContextMenu(null) }}>
+              {t('editor.voiceInput', 'Voice input')}
+            </MenuItem>
+          )}
           <MenuItem
             icon={History}
             onClick={() => { setVersionHistoryOpen(true, note.id); setSpecializedContextMenu(null) }}
           >
             {t('editor.versionHistory', 'Version history')}
           </MenuItem>
-          <MenuSeparator />
-          <MenuItem icon={Copy} onClick={() => { duplicateNote(note.id); setSpecializedContextMenu(null) }}>
-            {t('editor.duplicate', 'Duplicate note')}
-          </MenuItem>
+          {!isShared && <MenuSeparator />}
+          {!isShared && (
+            <MenuItem icon={Copy} onClick={() => { duplicateNote(note.id); setSpecializedContextMenu(null) }}>
+              {t('editor.duplicate', 'Duplicate note')}
+            </MenuItem>
+          )}
           <MenuItem icon={Download} onClick={() => { setExportModalOpen(true); setSpecializedContextMenu(null) }}>
             {t('editor.export', 'Export')}
           </MenuItem>
-          <MenuItem
-            icon={Bell}
-            onClick={() => { setReminderModalOpen(true, note.id); setSpecializedContextMenu(null) }}
-          >
-            {t('editor.setReminder', 'Set reminder')}
-          </MenuItem>
+          {!isShared && (
+            <MenuItem
+              icon={Bell}
+              onClick={() => { setReminderModalOpen(true, note.id); setSpecializedContextMenu(null) }}
+            >
+              {t('editor.setReminder', 'Set reminder')}
+            </MenuItem>
+          )}
         </Menu>
       )}
     </div>

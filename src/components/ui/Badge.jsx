@@ -41,12 +41,11 @@ export function CountBadge({ value, tone = 'neutral', className = '' }) {
 /**
  * Tag pill.
  *
- * The tag colour is user-chosen, so it can never be relied on for text
- * contrast — a light green label on a light green tint measured 1.94:1
- * against WCAG's 4.5:1 requirement. The colour is therefore carried by a
- * dot and the border, while the label itself uses the standard text
- * colour. That keeps the colour as an identity cue without making it the
- * only cue, and keeps every tag readable whatever colour is picked.
+ * The tag colour is user-chosen and can therefore never be relied on for
+ * text contrast: a light label on a light tint of the same hue falls far
+ * below WCAG's 4.5:1 requirement. The colour is carried by the dot and the
+ * border while the label keeps the standard text colour, so the hue stays
+ * an identity cue without being the only cue.
  */
 export function TagChip({ name, color = '#6b7280', count, active, as = 'span', ...props }) {
   const Component = as

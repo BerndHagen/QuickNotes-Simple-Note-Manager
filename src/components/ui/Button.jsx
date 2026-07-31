@@ -25,8 +25,8 @@ const SIZES = {
 const ICON_SIZES = { sm: 'h-3.5 w-3.5', md: 'h-4 w-4', lg: 'h-[18px] w-[18px]' }
 
 /**
- * The app's only button. `loading` implies `disabled`, which is what
- * prevents the double-submit problem several dialogs used to have.
+ * The app's standard button. `loading` implies `disabled`, so a form
+ * cannot be submitted twice while a request is in flight.
  */
 const Button = forwardRef(function Button(
   {
@@ -82,16 +82,9 @@ const ICON_BUTTON_SIZES = {
 }
 
 /**
- * Square icon-only button. `label` is required — it becomes both the
- * accessible name and the tooltip, so no icon control ships nameless.
- */
-/**
- * Colour treatments that replace the variant entirely.
- *
- * These must not be *combined* with a variant: `text-content-muted` and
- * `text-banner-muted` are both `.text-*` utilities, so emitting both
- * leaves the winner up to stylesheet order rather than intent — which is
- * how the banner controls ended up rendering dark grey on dark green.
+ * Colour treatments that replace the variant entirely, never combine with
+ * one: a variant and a tone both emit `.text-*` utilities, and emitting
+ * both leaves the winner up to stylesheet order rather than intent.
  */
 const TONES = {
   onBanner: {
@@ -100,6 +93,10 @@ const TONES = {
   },
 }
 
+/**
+ * Square icon-only button. `label` is required — it becomes both the
+ * accessible name and the tooltip, so no icon control ships nameless.
+ */
 export const IconButton = forwardRef(function IconButton(
   {
     icon: Icon,

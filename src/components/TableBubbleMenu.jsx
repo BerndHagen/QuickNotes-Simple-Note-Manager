@@ -376,6 +376,7 @@ export default function TableBubbleMenu({ editor }) {
         duration: 100,
         placement: 'top',
         offset: [0, 8],
+        aria: { expanded: false, content: 'describedby' },
       }}
       shouldShow={({ editor, state }) => {
         return editor.isActive('table')

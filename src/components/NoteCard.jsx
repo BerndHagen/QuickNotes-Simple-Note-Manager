@@ -15,12 +15,20 @@ const CLAMP = { 0: 'hidden', 1: 'line-clamp-1', 2: 'line-clamp-2', 3: 'line-clam
  * navigable with Tab and operable with Enter/Space. `aria-current`
  * communicates which note the editor is showing.
  *
- * Honours three settings that previously existed in the store but were
- * never read by any component: `notePreviewLines`, `compactMode` and
- * `dateFormat`.
+ * Honours the `notePreviewLines`, `compactMode` and `dateFormat` settings.
  */
 const NoteCard = forwardRef(function NoteCard(
-  { note, isSelected, isMultiSelected, onClick, onContextMenu, isDragging, dragHandle },
+  {
+    note,
+    isSelected,
+    isMultiSelected,
+    onClick,
+    onContextMenu,
+    onMouseEnter,
+    onMouseLeave,
+    isDragging,
+    dragHandle,
+  },
   ref
 ) {
   const tags = useNotesStore((s) => s.tags)
@@ -51,6 +59,8 @@ const NoteCard = forwardRef(function NoteCard(
         type="button"
         onClick={onClick}
         onContextMenu={onContextMenu}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
         aria-current={isSelected ? 'true' : undefined}
         aria-pressed={isMultiSelected || undefined}
         className={[

@@ -18,4 +18,12 @@ export default defineConfig({
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
   ],
+  // Serves the production build from `dist/`, so run `npm run build` first.
+  // An already-running server on PORT is reused.
+  webServer: {
+    command: `npm run preview -- --port ${PORT} --strictPort`,
+    url: BASE,
+    reuseExistingServer: true,
+    timeout: 120_000,
+  },
 })

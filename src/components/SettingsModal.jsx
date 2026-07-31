@@ -28,14 +28,17 @@ import {
   ExternalLink,
   Github,
   FileText,
-  Clock
+  Clock,
+  HardDrive
 } from 'lucide-react'
 import { useUIStore, useNotesStore, useThemeStore } from '../store'
 import { backend, isBackendConfigured, getRedirectUrl, deleteUserAccount } from '../lib/backend'
+import { getAuthErrorMessage, validateNewPassword } from '../lib/authValidation'
 import { clearLocalData } from '../lib/db'
 import { useTranslation, LANGUAGES } from '../lib/useTranslation'
 import toast from 'react-hot-toast'
 import LegacyDialog from './ui/LegacyDialog'
+import { ConfirmDialog } from './FolderDialogs'
 
 export default function SettingsModal() {
   const { 
@@ -75,9 +78,18 @@ export default function SettingsModal() {
     autoSaveDelay,
     setAutoSaveDelay,
   } = useUIStore()
-  const { notes, folders, tags, user, setUser, syncWithBackend } = useNotesStore()
+  const {
+    notes,
+    folders,
+    tags,
+    user,
+    setUser,
+    activateCloudUser,
+    syncWithBackend,
+    logout,
+  } = useNotesStore()
   const { theme, setTheme } = useThemeStore()
-  const { t, language: currentLang } = useTranslation()
+  const { t } = useTranslation()
 
   const [activeTab, setActiveTab] = useState('general')
   const [showPassword, setShowPassword] = useState(false)
@@ -93,11 +105,15 @@ export default function SettingsModal() {
   const [showDeleteAccount, setShowDeleteAccount] = useState(false)
   const [deleteConfirmText, setDeleteConfirmText] = useState('')
   const [isDeletingAccount, setIsDeletingAccount] = useState(false)
+  const [confirmClearData, setConfirmClearData] = useState(false)
 
+  const cloudEnabled = isBackendConfigured()
   const tabs = [
     { id: 'general', label: t('settings.general'), icon: Monitor },
     { id: 'account', label: t('settings.account'), icon: User },
-    { id: 'sync', label: t('settings.sync'), icon: Cloud },
+    ...(cloudEnabled && !user?.isLocal
+      ? [{ id: 'sync', label: t('settings.sync'), icon: Cloud }]
+      : []),
     { id: 'data', label: t('settings.data'), icon: Database },
     { id: 'shortcuts', label: t('settings.shortcuts'), icon: Keyboard },
     { id: 'about', label: t('settings.aboutTab'), icon: Info },
@@ -110,20 +126,25 @@ export default function SettingsModal() {
       return
     }
 
+    if (!email.trim() || !password) {
+      toast.error('Enter your email and password')
+      return
+    }
+
     setIsLoading(true)
     try {
       const { data, error } = await backend.auth.signInWithPassword({
-        email,
+        email: email.trim().toLowerCase(),
         password,
       })
 
       if (error) throw error
 
-      setUser(data.user)
+      await activateCloudUser(data.user)
       toast.success(t('settings.toastLoginSuccess'))
-      syncWithBackend()
+      await syncWithBackend()
     } catch (error) {
-      toast.error(error.message)
+      toast.error(getAuthErrorMessage(error))
     } finally {
       setIsLoading(false)
     }
@@ -136,10 +157,16 @@ export default function SettingsModal() {
       return
     }
 
+    const passwordError = validateNewPassword(password)
+    if (passwordError) {
+      toast.error(passwordError)
+      return
+    }
+
     setIsLoading(true)
     try {
-      const { data, error } = await backend.auth.signUp({
-        email,
+      const { error } = await backend.auth.signUp({
+        email: email.trim().toLowerCase(),
         password,
         options: {
           emailRedirectTo: getRedirectUrl()
@@ -150,7 +177,7 @@ export default function SettingsModal() {
 
       toast.success(t('settings.toastRegistrationSuccess'))
     } catch (error) {
-      toast.error(error.message)
+      toast.error(getAuthErrorMessage(error))
     } finally {
       setIsLoading(false)
     }
@@ -163,14 +190,18 @@ export default function SettingsModal() {
       return
     }
 
-    if (!newEmail) {
+    const normalizedEmail = newEmail.trim().toLowerCase()
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
       toast.error(t('settings.toastEnterNewEmail'))
       return
     }
 
     setIsLoading(true)
     try {
-      const { error } = await backend.auth.updateUser({ email: newEmail })
+      const { error } = await backend.auth.updateUser(
+        { email: normalizedEmail },
+        { emailRedirectTo: getRedirectUrl() }
+      )
       if (error) throw error
       toast.success(t('settings.toastConfirmationSent'))
       setNewEmail('')
@@ -199,8 +230,9 @@ export default function SettingsModal() {
       return
     }
 
-    if (newPassword.length < 6) {
-      toast.error(t('settings.toastPasswordTooShort'))
+    const passwordError = validateNewPassword(newPassword)
+    if (passwordError) {
+      toast.error(passwordError)
       return
     }
 
@@ -217,7 +249,10 @@ export default function SettingsModal() {
         return
       }
 
-      const { error } = await backend.auth.updateUser({ password: newPassword })
+      const { error } = await backend.auth.updateUser({
+        password: newPassword,
+        current_password: currentPassword,
+      })
       if (error) throw error
       toast.success(t('settings.toastPasswordChanged'))
       setCurrentPassword('')
@@ -232,13 +267,8 @@ export default function SettingsModal() {
   }
 
   const handleLogout = async () => {
-    if (!isBackendConfigured()) {
-      setUser(null)
-      return
-    }
-
-    await backend.auth.signOut()
-    setUser(null)
+    await logout()
+    setSettingsOpen(false)
     toast.success(t('settings.toastLoggedOut'))
   }
 
@@ -291,15 +321,20 @@ export default function SettingsModal() {
   }
 
   const handleClearData = async () => {
-    if (
-      window.confirm(
-        t('settings.toastDeleteAllConfirm')
-      )
-    ) {
-      await clearLocalData()
-      toast.success(t('settings.toastLocalDataDeleted'))
-      window.location.reload()
-    }
+    await clearLocalData()
+    localStorage.removeItem('quicknotes-storage')
+    useNotesStore.setState({
+      notes: [],
+      folders: [],
+      tags: [],
+      selectedNoteId: null,
+      selectedFolderId: null,
+      selectedTagFilter: null,
+      searchQuery: '',
+      lastSyncTime: null,
+    })
+    toast.success(t('settings.toastLocalDataDeleted'))
+    window.location.reload()
   }
 
   if (!settingsOpen) return null
@@ -318,6 +353,8 @@ export default function SettingsModal() {
             </p>
           </div>
           <button
+            type="button"
+            aria-label={t('common.close', 'Close settings')}
             onClick={() => setSettingsOpen(false)}
             className="p-2 rounded-full hover:bg-white/20 text-white transition-colors"
           >
@@ -333,7 +370,7 @@ export default function SettingsModal() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] transition-colors ${
                   activeTab === tab.id
-                    ? 'bg-white dark:bg-gray-800 text-emerald-600 dark:text-emerald-400 shadow-sm font-medium'
+                    ? 'bg-white dark:bg-gray-800 text-emerald-700 dark:text-emerald-300 shadow-sm font-medium'
                     : 'text-gray-600 dark:text-gray-400 hover:bg-white/80 dark:hover:bg-gray-800/50'
                 }`}
               >
@@ -345,7 +382,7 @@ export default function SettingsModal() {
         </div>
         <div className="flex flex-col flex-1">
           <div className="flex items-center justify-between px-6 py-3 border-b border-[#cbd1db] dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
-            <h3 className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-[0.12em]">
+            <h3 className="text-[10px] font-bold text-gray-600 dark:text-gray-300 uppercase tracking-[0.12em]">
               {tabs.find((t) => t.id === activeTab)?.label}
             </h3>
           </div>
@@ -458,6 +495,10 @@ export default function SettingsModal() {
                         </div>
                       </div>
                       <button
+                        type="button"
+                        role="switch"
+                        aria-checked={confirmBeforeDelete}
+                        aria-label={t('settings.confirmBeforeDelete')}
                         onClick={() => setConfirmBeforeDelete(!confirmBeforeDelete)}
                         className={`relative w-11 h-6 rounded-full transition-colors ${
                           confirmBeforeDelete ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'
@@ -483,6 +524,10 @@ export default function SettingsModal() {
                         </div>
                       </div>
                       <button
+                        type="button"
+                        role="switch"
+                        aria-checked={spellCheck}
+                        aria-label={t('settings.spellCheck')}
                         onClick={() => setSpellCheck(!spellCheck)}
                         className={`relative w-11 h-6 rounded-full transition-colors ${
                           spellCheck ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'
@@ -508,6 +553,10 @@ export default function SettingsModal() {
                         </div>
                       </div>
                       <button
+                        type="button"
+                        role="switch"
+                        aria-checked={showNoteStatistics}
+                        aria-label={t('settings.showNoteStatistics')}
                         onClick={() => setShowNoteStatistics(!showNoteStatistics)}
                         className={`relative w-11 h-6 rounded-full transition-colors ${
                           showNoteStatistics ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'
@@ -523,11 +572,7 @@ export default function SettingsModal() {
                   </div>
                 </div>
 
-                {/* Note list display.
-                    These four settings already existed in the store,
-                    with translations in nine languages — but they had
-                    no UI and nothing read them. They are now surfaced
-                    and consumed by NoteCard and RichTextEditor. */}
+                {/* Note list display — read by NoteCard and RichTextEditor. */}
                 <div>
                   <h4 className="mb-3 text-sm font-medium text-gray-900 dark:text-white">
                     {t('settings.noteListDisplay', 'Note list display')}
@@ -600,6 +645,7 @@ export default function SettingsModal() {
                     {t('settings.defaultSortOrderDesc')}
                   </p>
                   <select
+                    aria-label={t('settings.defaultSortOrder')}
                     value={currentSort}
                     onChange={(e) => setCurrentSort(e.target.value)}
                     className="w-full px-3 py-2 text-sm rounded-lg border border-[#cbd1db] dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
@@ -626,6 +672,7 @@ export default function SettingsModal() {
                   <div className="flex items-center gap-3">
                     <Clock className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                     <select
+                      aria-label={t('settings.trashRetention')}
                       value={trashRetentionDays}
                       onChange={(e) => setTrashRetentionDays(Number(e.target.value))}
                       className="flex-1 px-3 py-2 text-sm rounded-lg border border-[#cbd1db] dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
@@ -642,7 +689,46 @@ export default function SettingsModal() {
             )}
             {activeTab === 'account' && (
               <div className="space-y-6">
-                {user ? (
+                {user?.isLocal ? (
+                  <div className="space-y-5">
+                    <div className="flex items-center gap-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900 dark:bg-emerald-950/30">
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-emerald-700 shadow-sm dark:bg-gray-800 dark:text-emerald-300">
+                        <HardDrive className="h-5 w-5" aria-hidden="true" />
+                      </span>
+                      <div>
+                        <p className="font-semibold text-gray-900 dark:text-white">My workspace</p>
+                        <p className="mt-0.5 text-sm text-emerald-800 dark:text-emerald-200">
+                          Saved privately on this device
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl border border-[#cbd1db] p-4 dark:border-gray-700">
+                      <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                        Local-first mode
+                      </h4>
+                      <p className="mt-2 text-sm leading-6 text-gray-600 dark:text-gray-300">
+                        This workspace does not use an account or a paid plan. Notes remain in this
+                        browser and all editing and organization features are available offline.
+                      </p>
+                      {!cloudEnabled && (
+                        <p className="mt-3 rounded-lg bg-gray-50 px-3 py-2.5 text-xs leading-5 text-gray-600 dark:bg-gray-900 dark:text-gray-300">
+                          Multi-device sync and collaboration become available when a self-hosted
+                          Supabase backend is configured.
+                        </p>
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                    >
+                      <LogOut className="h-4 w-4" aria-hidden="true" />
+                      Close workspace
+                    </button>
+                  </div>
+                ) : user ? (
                   <div className="space-y-6">
                     <div className="flex items-center gap-4 p-4 rounded-lg bg-gray-50 dark:bg-gray-900">
                       <Avatar user={user} size="xl" />
@@ -652,7 +738,7 @@ export default function SettingsModal() {
                         </p>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
                           {t('settings.memberSince')}{' '}
-                          {new Date(user.created_at).toLocaleDateString(currentLang === 'de' ? 'de-DE' : currentLang === 'es' ? 'es-ES' : currentLang === 'fr' ? 'fr-FR' : currentLang === 'pt' ? 'pt-BR' : currentLang === 'zh' ? 'zh-CN' : currentLang === 'ru' ? 'ru-RU' : currentLang === 'ar' ? 'ar-SA' : currentLang === 'hi' ? 'hi-IN' : 'en-US')}
+                          {new Date(user.created_at).toLocaleDateString('en-US')}
                         </p>
                       </div>
                     </div>
@@ -982,6 +1068,10 @@ export default function SettingsModal() {
                       </p>
                     </div>
                     <button
+                      type="button"
+                      role="switch"
+                      aria-checked={autoSync}
+                      aria-label={t('settings.autoSync', 'Automatic sync')}
                       onClick={() => setAutoSync(!autoSync)}
                       className={`relative w-11 h-6 rounded-full transition-colors ${
                         autoSync ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'
@@ -1004,6 +1094,7 @@ export default function SettingsModal() {
                       </p>
                     </div>
                     <select
+                      aria-label={t('settings.syncInterval', 'Sync interval')}
                       value={syncInterval}
                       onChange={(e) => setSyncInterval(Number(e.target.value))}
                       disabled={!autoSync}
@@ -1027,6 +1118,10 @@ export default function SettingsModal() {
                       </p>
                     </div>
                     <button
+                      type="button"
+                      role="switch"
+                      aria-checked={syncOnStartup}
+                      aria-label={t('settings.syncOnStartup', 'Sync on startup')}
                       onClick={() => setSyncOnStartup(!syncOnStartup)}
                       className={`relative w-11 h-6 rounded-full transition-colors ${
                         syncOnStartup ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'
@@ -1049,6 +1144,10 @@ export default function SettingsModal() {
                       </p>
                     </div>
                     <button
+                      type="button"
+                      role="switch"
+                      aria-checked={showSyncNotifications}
+                      aria-label={t('settings.showSyncNotifications', 'Show sync notifications')}
                       onClick={() => setShowSyncNotifications(!showSyncNotifications)}
                       className={`relative w-11 h-6 rounded-full transition-colors ${
                         showSyncNotifications ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'
@@ -1138,7 +1237,7 @@ export default function SettingsModal() {
                     {t('settings.deleteAllDataDesc')}
                   </p>
                   <button
-                    onClick={handleClearData}
+                    onClick={() => setConfirmClearData(true)}
                     className="flex items-center gap-2 px-4 py-2 text-red-600 transition-colors bg-red-100 rounded-lg dark:bg-red-900/30 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 border border-red-300 dark:border-red-800"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -1191,7 +1290,7 @@ export default function SettingsModal() {
                   </div>
                   <div className="text-center">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">QuickNotes</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{t('settings.version')} 1.1.3</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{t('settings.version')} 2.0.0</p>
                   </div>
                   <p className="text-center text-sm text-gray-500 dark:text-gray-400 max-w-sm">
                     {t('settings.aboutDescription')}
@@ -1252,6 +1351,14 @@ export default function SettingsModal() {
           </div>
         </div>
         </div>
+        <ConfirmDialog
+          open={confirmClearData}
+          onClose={() => setConfirmClearData(false)}
+          onConfirm={handleClearData}
+          title={t('settings.deleteAllData')}
+          description={t('settings.toastDeleteAllConfirm')}
+          confirmLabel={t('settings.deleteAllData')}
+        />
       </div>
     </LegacyDialog>
   )

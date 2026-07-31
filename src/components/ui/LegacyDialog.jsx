@@ -2,18 +2,12 @@ import { useRef } from 'react'
 import { useFocusTrap, useScrollLock, useEscapeKey } from './useFocusTrap'
 
 /**
- * Overlay wrapper for the dialogs that still carry their own bespoke
- * markup.
+ * Overlay wrapper for dialogs that carry their own bespoke panel markup.
  *
- * These screens were built before there was a shared `Modal`, and each
- * one hand-rolled its backdrop. None of them announced itself as a
- * dialog, trapped focus, restored focus on close, handled Escape or
- * locked background scrolling — and on short viewports several of them
- * pushed their own action buttons past the bottom edge.
+ * It supplies the backdrop, dialog semantics, focus trap, Escape handling
+ * and scroll lock around content it does not otherwise touch.
  *
- * Wrapping them here fixes all of that in one place without rewriting
- * their contents. New dialogs should use `Modal` instead; this exists so
- * the existing ones are correct today rather than eventually.
+ * New dialogs should use `Modal`, which owns its panel layout as well.
  */
 export default function LegacyDialog({
   open = true,
@@ -57,9 +51,8 @@ export default function LegacyDialog({
           // Never taller than the viewport, and always able to scroll
           // its own content so footer actions stay reachable.
           'relative my-auto flex max-h-[92dvh] w-full min-w-0 flex-col outline-none',
-          // `items-center` matters: the wrapped panels size themselves
-          // with `max-w-*`, and a flex column's default `stretch` pins
-          // such a child to the left edge instead of centring it.
+          // Wrapped panels size themselves with `max-w-*`; a flex column's
+          // default `stretch` would pin such a child to the left edge.
           'items-center',
           panelClassName,
         ].join(' ')}

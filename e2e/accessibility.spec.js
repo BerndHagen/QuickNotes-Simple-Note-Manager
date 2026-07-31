@@ -50,8 +50,8 @@ test.describe('accessibility', () => {
   test('the whole sidebar is reachable by keyboard', async ({ page }) => {
     await signIn(page)
 
-    // Tab from the top of the document and confirm the nav rows are
-    // focusable — they used to be click-only <div>s.
+    // Tab from the top of the document and confirm every nav row is
+    // reachable without a pointer.
     await page.keyboard.press('Tab') // skip link
     const skip = await page.evaluate(() => document.activeElement?.textContent)
     expect(skip).toMatch(/skip to content/i)

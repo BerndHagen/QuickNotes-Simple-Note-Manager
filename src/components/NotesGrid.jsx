@@ -20,8 +20,9 @@ import { formatDate, htmlToPlainText, truncateText, getNoteTypePreview } from '.
 import { useTranslation } from '../lib/useTranslation'
 import SortDropdown, { sortNotes } from './SortDropdown'
 import NoteEditor from './NoteEditor'
+import { ConfirmDialog } from './FolderDialogs'
 
-function NoteContextMenu({ x, y, note, onClose, folders, tags }) {
+function NoteContextMenu({ x, y, note, onClose, onRequestDelete, folders, tags }) {
   const menuRef = useRef(null)
   const folderButtonRef = useRef(null)
   const submenuRef = useRef(null)
@@ -230,8 +231,8 @@ function NoteContextMenu({ x, y, note, onClose, folders, tags }) {
       
       <button
         onClick={() => handleAction(() => {
-          if (confirmBeforeDelete && !window.confirm(t('settings.confirmDeleteMessage'))) return
-          deleteNote(note.id)
+          if (confirmBeforeDelete) onRequestDelete(note)
+          else deleteNote(note.id)
         })}
         className="flex items-center w-[calc(100%-12px)] gap-3 mx-1.5 px-3 py-2.5 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 dark:text-red-400 transition-colors rounded-lg"
       >
@@ -338,6 +339,7 @@ export default function NotesGrid({ sidebarToggle }) {
     setSearchQuery,
     setSelectedNote,
     createNote,
+    deleteNote,
   } = useNotesStore()
 
   const { currentSort, setCurrentSort, sidebarOpen } = useUIStore()
@@ -345,6 +347,7 @@ export default function NotesGrid({ sidebarToggle }) {
 
   const [showingEditor, setShowingEditor] = useState(false)
   const [contextMenu, setContextMenu] = useState(null)
+  const [pendingDeleteNote, setPendingDeleteNote] = useState(null)
 
   useEffect(() => {
     if (selectedNoteId) {
@@ -504,10 +507,20 @@ export default function NotesGrid({ sidebarToggle }) {
           note={contextMenu.note}
           folders={folders}
           tags={tags}
+          onRequestDelete={setPendingDeleteNote}
           onClose={() => setContextMenu(null)}
         />,
         document.body
       )}
+      <ConfirmDialog
+        open={Boolean(pendingDeleteNote)}
+        onClose={() => setPendingDeleteNote(null)}
+        onConfirm={() => deleteNote(pendingDeleteNote.id)}
+        title="Move note to trash?"
+        description={`“${pendingDeleteNote?.title || 'Untitled note'}” will remain recoverable from Trash.`}
+        confirmLabel="Move to trash"
+        icon={Trash2}
+      />
     </div>
   )
 }

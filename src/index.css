@@ -642,6 +642,82 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
   animation: auth-form-in 0.4s ease-out;
 }
 
+.qn-auth-hero {
+  isolation: isolate;
+  background:
+    radial-gradient(70% 70% at 18% 16%, rgba(52, 211, 153, 0.16), transparent 72%),
+    linear-gradient(138deg, #0b4a38 0%, #083d31 44%, #062d27 100%);
+}
+
+.qn-auth-hero::before,
+.qn-auth-hero::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+}
+
+.qn-auth-hero::before {
+  inset: 0;
+  z-index: 0;
+  opacity: 0.32;
+  background-image:
+    radial-gradient(
+      92% 68% at 100% 0%,
+      transparent 38%,
+      rgba(255, 255, 255, 0.08) 38.35%,
+      transparent 38.7%,
+      transparent 47%,
+      rgba(255, 255, 255, 0.06) 47.35%,
+      transparent 47.7%,
+      transparent 56%,
+      rgba(255, 255, 255, 0.045) 56.35%,
+      transparent 56.7%
+    ),
+    radial-gradient(80% 90% at 10% 100%, rgba(16, 185, 129, 0.18), transparent 68%);
+}
+
+.qn-auth-hero::after {
+  z-index: 0;
+  right: -12%;
+  bottom: -34%;
+  width: 72%;
+  aspect-ratio: 1;
+  border-radius: 999px;
+  background: rgba(16, 185, 129, 0.08);
+  filter: blur(70px);
+}
+
+.qn-auth-preview {
+  transform: perspective(1600px) rotateX(0.8deg) rotateY(-0.8deg);
+  transform-origin: 50% 100%;
+}
+
+@media (max-height: 840px) and (min-width: 1024px) {
+  .qn-auth-preview {
+    margin-top: 1rem;
+  }
+
+  .qn-auth-preview > div:last-child {
+    height: 270px;
+  }
+}
+
+@media (min-width: 1280px) and (min-height: 700px) {
+  body {
+    background:
+      radial-gradient(circle at 8% 10%, rgba(52, 211, 153, 0.18), transparent 26%),
+      linear-gradient(135deg, #073f37, #062f2b 55%, #075647);
+  }
+
+  .qn-workspace-frame {
+    height: calc(100dvh - 24px);
+    margin: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 16px;
+    box-shadow: 0 28px 80px rgba(2, 20, 17, 0.34), 0 4px 16px rgba(2, 20, 17, 0.2);
+  }
+}
+
 /* Quick note modal backdrop blur */
 .backdrop-blur {
   backdrop-filter: blur(4px);
@@ -1481,5 +1557,157 @@ div[role="status"][class*="go"] {
   .qn-text-box[data-wrap='right'] {
     float: none;
     margin: 8px 0;
+  }
+}
+
+/* ============================================================
+   Focused note workspaces
+   ------------------------------------------------------------
+   Specialized note types share the same visual grammar as the main
+   document editor: a calm, high-contrast hero, compact tool rail, and
+   paper-like working surface. Each type keeps a restrained accent
+   without turning the product into a collection of unrelated themes.
+   ============================================================ */
+.qn-type-todo { --qn-type-accent: #168966; }
+.qn-type-project { --qn-type-accent: #6d5bd0; }
+.qn-type-meeting { --qn-type-accent: #3978c5; }
+.qn-type-journal { --qn-type-accent: #b7791f; }
+.qn-type-brainstorm { --qn-type-accent: #c58a12; }
+.qn-type-shopping { --qn-type-accent: #c04476; }
+.qn-type-weekly { --qn-type-accent: #147d86; }
+
+.qn-type-editor {
+  background:
+    radial-gradient(circle at 50% -15%, color-mix(in srgb, var(--qn-type-accent) 5%, transparent), transparent 38%),
+    var(--qn-surface);
+}
+
+.qn-type-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: clamp(1.1rem, 2vw, 1.65rem) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  background:
+    radial-gradient(circle at 22% -40%, color-mix(in srgb, var(--qn-type-accent) 72%, white) 0%, transparent 45%),
+    linear-gradient(132deg, color-mix(in srgb, var(--qn-type-accent) 72%, #062f2b) 0%, #073e38 62%, #06332f 100%) !important;
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+}
+
+.qn-type-hero::after,
+.qn-type-picker-hero::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  width: 58%;
+  aspect-ratio: 1.6;
+  right: -9%;
+  bottom: -85%;
+  border-radius: 50%;
+  opacity: 0.24;
+  background:
+    repeating-radial-gradient(
+      ellipse at center,
+      transparent 0 11px,
+      rgba(255, 255, 255, 0.18) 12px 13px
+    );
+  transform: rotate(-8deg);
+  pointer-events: none;
+}
+
+.qn-type-hero h1,
+.qn-type-hero .text-gray-900,
+.qn-type-hero .text-gray-700 {
+  color: #fff !important;
+}
+
+.qn-type-hero .text-gray-500,
+.qn-type-hero .text-gray-400 {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.qn-type-hero .bg-white,
+.qn-type-hero .dark\:bg-gray-700 {
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(8px);
+}
+
+.qn-type-hero input {
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #fff !important;
+  backdrop-filter: blur(8px);
+}
+
+.qn-type-hero input::placeholder {
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+
+.qn-type-hero input.qn-focused-title {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none;
+}
+
+.qn-type-hero button {
+  outline-offset: 2px;
+}
+
+.qn-type-hero button:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.9);
+}
+
+.qn-type-tabs {
+  position: relative;
+  z-index: 4;
+  border-color: var(--qn-border-subtle) !important;
+  background: color-mix(in srgb, var(--qn-surface-raised) 94%, transparent) !important;
+  box-shadow: 0 4px 14px -14px rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(12px);
+}
+
+.qn-type-tabs button {
+  min-height: 2.25rem;
+}
+
+.qn-type-picker-hero {
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 15% -40%, color-mix(in srgb, var(--picker-accent) 82%, white) 0%, transparent 43%),
+    linear-gradient(132deg, color-mix(in srgb, var(--picker-accent) 68%, #062f2b), #073e38 72%, #06332f);
+}
+
+@media (max-width: 640px) {
+  .qn-type-hero {
+    padding: 1rem !important;
+  }
+
+  .qn-type-hero > .flex:first-child {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 0.85rem;
+  }
+
+  .qn-type-hero .grid-cols-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .qn-type-hero .text-3xl {
+    font-size: 1.35rem;
+    line-height: 1.65rem;
+  }
+
+  .qn-type-hero .w-16.h-16,
+  .qn-type-hero .w-14.h-14 {
+    transform: scale(0.86);
+    transform-origin: right top;
+  }
+
+  .qn-type-tabs {
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
   }
 }

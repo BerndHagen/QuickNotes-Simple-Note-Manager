@@ -8,9 +8,9 @@ const VIEWPORT_PADDING = 8
  * Positions a floating panel against an anchor rect and keeps it inside
  * the viewport.
  *
- * The previous menus read `getBoundingClientRect()` during render and
- * never recomputed, so they drifted out of place on scroll, resize and
- * browser zoom — and were clipped entirely on narrow screens.
+ * The position is recomputed on scroll, resize and zoom rather than read
+ * once during render, so a panel cannot drift away from its anchor or be
+ * clipped off the edge of a narrow screen.
  */
 export function useAnchoredPosition({ anchorRef, open, placement = 'bottom-start', offset = 6, point }) {
   const floatingRef = useRef(null)

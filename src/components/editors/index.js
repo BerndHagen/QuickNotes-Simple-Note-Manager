@@ -1,5 +1,18 @@
 
-export { NOTE_TYPES, NOTE_TYPE_CONFIG, CATEGORIES, getDefaultData, generateId } from './noteTypes'
+export {
+  NOTE_TYPES,
+  NOTE_TYPE_CONFIG,
+  NOTE_TYPE_STARTERS,
+  CATEGORIES,
+  SHOPPING_CATEGORIES,
+  getDefaultData,
+  normalizeNoteData,
+  getStarterData,
+  getStarterContent,
+  generateId,
+  formatDateKey,
+  parseDateKey,
+} from './noteTypes'
 export { default as TodoListEditor } from './TodoListEditor'
 export { default as ProjectPlannerEditor } from './ProjectPlannerEditor'
 export { default as MeetingNotesEditor } from './MeetingNotesEditor'

@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { formatNoteDate, groupNotesByDate, truncateText, htmlToPlainText } from './utils'
+import { afterEach, describe, it, expect, vi } from 'vitest'
+import { debounce, formatNoteDate, groupNotesByDate, truncateText, htmlToPlainText } from './utils'
 
 const daysAgo = (n) => {
   const d = new Date()
@@ -13,8 +13,6 @@ describe('formatNoteDate', () => {
     expect(formatNoteDate(new Date().toISOString(), 'en', 'relative')).toBe('Just now')
   })
 
-  // Regression: the `dateFormat` setting existed with translations in
-  // nine locales but no code path ever read it.
   it('renders an absolute date when the setting asks for one', () => {
     const result = formatNoteDate('2026-01-05T10:00:00.000Z', 'en', 'absolute')
     expect(result).toMatch(/Jan/)
@@ -76,5 +74,36 @@ describe('text helpers', () => {
   it('strips markup down to readable text', () => {
     expect(htmlToPlainText('<p>Hello <strong>world</strong></p>')).toBe('Hello world')
     expect(htmlToPlainText('')).toBe('')
+  })
+})
+
+describe('debounce', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('flushes the latest pending call immediately', () => {
+    vi.useFakeTimers()
+    const callback = vi.fn()
+    const debounced = debounce(callback, 400)
+
+    debounced('note-a', 'First title')
+    expect(callback).not.toHaveBeenCalled()
+
+    debounced.flush()
+    expect(callback).toHaveBeenCalledWith('note-a', 'First title')
+    vi.advanceTimersByTime(500)
+    expect(callback).toHaveBeenCalledTimes(1)
+  })
+
+  it('can cancel a pending call', () => {
+    vi.useFakeTimers()
+    const callback = vi.fn()
+    const debounced = debounce(callback, 400)
+
+    debounced('pending')
+    debounced.cancel()
+    vi.advanceTimersByTime(500)
+    expect(callback).not.toHaveBeenCalled()
   })
 })

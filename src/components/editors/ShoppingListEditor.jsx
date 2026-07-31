@@ -9,29 +9,17 @@ import {
   Edit3,
   ShoppingBag
 } from 'lucide-react'
-import { generateId } from './noteTypes'
-const DEFAULT_CATEGORIES = [
-  { id: 'produce', name: 'Produce', icon: '\u{1F96C}', color: '#22c55e' },
-  { id: 'dairy', name: 'Dairy', icon: '\u{1F95B}', color: '#60a5fa' },
-  { id: 'meat', name: 'Meat & Seafood', icon: '\u{1F969}', color: '#ef4444' },
-  { id: 'bakery', name: 'Bakery', icon: '\u{1F956}', color: '#f59e0b' },
-  { id: 'frozen', name: 'Frozen', icon: '\u{1F9CA}', color: '#06b6d4' },
-  { id: 'beverages', name: 'Beverages', icon: '\u{1F964}', color: '#8b5cf6' },
-  { id: 'snacks', name: 'Snacks', icon: '\u{1F37F}', color: '#ec4899' },
-  { id: 'household', name: 'Household', icon: '\u{1F3E0}', color: '#6b7280' },
-  { id: 'personal', name: 'Personal Care', icon: '\u{1F9F4}', color: '#10b981' },
-  { id: 'other', name: 'Other', icon: '\u{1F4E6}', color: '#9ca3af' },
-]
+import { generateId, SHOPPING_CATEGORIES } from './noteTypes'
+import FocusedNoteTitle from './FocusedNoteTitle'
 const UNITS = ['pcs', 'kg', 'g', 'lb', 'oz', 'L', 'ml', 'gal', 'pack', 'box', 'bag', 'bottle', 'can', 'bunch', 'dozen']
 
-export default function ShoppingListEditor({ data, onChange, noteTitle }) {
+export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleChange, readOnly }) {
   const [shoppingData, setShoppingData] = useState({
     items: data?.items || [],
-    categories: data?.categories || DEFAULT_CATEGORIES,
+    categories: data?.categories || SHOPPING_CATEGORIES,
     budget: data?.budget || null,
     currency: data?.currency || 'USD',
     showPrices: data?.showPrices ?? true,
-    sortByCategory: data?.sortByCategory ?? true,
   })
 
   const [newItemName, setNewItemName] = useState('')
@@ -40,7 +28,9 @@ export default function ShoppingListEditor({ data, onChange, noteTitle }) {
   const [newItemUnit, setNewItemUnit] = useState('pcs')
   const [newItemPrice, setNewItemPrice] = useState('')
   const [editingItem, setEditingItem] = useState(null)
-  const [expandedCategories, setExpandedCategories] = useState(new Set(DEFAULT_CATEGORIES.map(c => c.id)))
+  const [expandedCategories, setExpandedCategories] = useState(
+    new Set((data?.categories || SHOPPING_CATEGORIES).map(category => category.id))
+  )
   const [showSettings, setShowSettings] = useState(false)
   const isInitialMount = useRef(true)
   useEffect(() => {
@@ -97,13 +87,6 @@ export default function ShoppingListEditor({ data, onChange, noteTitle }) {
   const uncheckAll = () => {
     update('items', shoppingData.items.map(item => ({ ...item, checked: false })))
   }
-  const getItemsByCategory = () => {
-    const grouped = {}
-    shoppingData.categories.forEach(cat => {
-      grouped[cat.id] = shoppingData.items.filter(item => item.category === cat.id)
-    })
-    return grouped
-  }
   const calculateTotals = () => {
     const items = shoppingData.items
     const total = items.reduce((sum, item) => sum + (item.price || 0) * item.quantity, 0)
@@ -125,14 +108,18 @@ export default function ShoppingListEditor({ data, onChange, noteTitle }) {
   }[shoppingData.currency] || shoppingData.currency
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-gray-900">
-      <div className="flex-shrink-0 p-4 border-b border-[#cbd1db] dark:border-gray-700 bg-[#e5eaf0] dark:bg-gray-800">
+    <div className="qn-type-editor qn-type-shopping flex flex-col h-full bg-white dark:bg-gray-900">
+      <div className="qn-type-hero flex-shrink-0 p-4 border-b border-[#cbd1db] dark:border-gray-700 bg-[#e5eaf0] dark:bg-gray-800">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <ShoppingCart className="w-7 h-7" />
-              {noteTitle || 'Shopping List'}
-            </h1>
+            <FocusedNoteTitle
+              icon={ShoppingCart}
+              typeLabel="Shopping workspace"
+              title={noteTitle}
+              fallback="Shopping list"
+              onChange={onTitleChange}
+              readOnly={readOnly}
+            />
             <p className="text-gray-500 dark:text-gray-400 mt-1">
               {checkedCount} of {totalCount} items checked
             </p>
@@ -164,10 +151,11 @@ export default function ShoppingListEditor({ data, onChange, noteTitle }) {
           />
         </div>
       </div>
-      <div className="flex-shrink-0 p-4 border-b border-[#cbd1db] dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+      <div className="qn-type-tabs flex-shrink-0 p-4 border-b border-[#cbd1db] dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
         <div className="flex gap-2 flex-wrap">
           <input
             type="text"
+            aria-label="New shopping item"
             value={newItemName}
             onChange={(e) => setNewItemName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && addItem()}
@@ -175,6 +163,7 @@ export default function ShoppingListEditor({ data, onChange, noteTitle }) {
             className="flex-1 min-w-[200px] px-4 py-2 rounded-lg bg-white dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
           />
           <select
+            aria-label="Category for new item"
             value={newItemCategory}
             onChange={(e) => setNewItemCategory(e.target.value)}
             className="px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white"
@@ -186,12 +175,14 @@ export default function ShoppingListEditor({ data, onChange, noteTitle }) {
           <div className="flex">
             <input
               type="number"
+              aria-label="Quantity for new item"
               value={newItemQuantity}
               onChange={(e) => setNewItemQuantity(e.target.value)}
               placeholder="Qty"
               className="w-16 px-2 py-2 rounded-l-lg bg-white dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white text-center"
             />
             <select
+              aria-label="Unit for new item"
               value={newItemUnit}
               onChange={(e) => setNewItemUnit(e.target.value)}
               className="w-20 px-2 py-2 rounded-r-lg bg-white dark:bg-gray-700 border-y border-r border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white"
@@ -208,6 +199,7 @@ export default function ShoppingListEditor({ data, onChange, noteTitle }) {
               </span>
               <input
                 type="number"
+                aria-label="Estimated price for new item"
                 value={newItemPrice}
                 onChange={(e) => setNewItemPrice(e.target.value)}
                 placeholder="Price"
@@ -218,7 +210,8 @@ export default function ShoppingListEditor({ data, onChange, noteTitle }) {
           )}
           <button
             onClick={addItem}
-            className="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-medium flex items-center gap-2"
+            disabled={!newItemName.trim()}
+            className="px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-medium flex items-center gap-2"
           >
             <Plus className="w-5 h-5" />
             Add
@@ -236,12 +229,14 @@ export default function ShoppingListEditor({ data, onChange, noteTitle }) {
           <div className="flex gap-2">
             <button
               onClick={uncheckAll}
+              disabled={checkedCount === 0}
               className="text-sm text-gray-600 dark:text-gray-400 hover:text-emerald-500"
             >
               Uncheck All
             </button>
             <button
               onClick={clearChecked}
+              disabled={checkedCount === 0}
               className="text-sm text-red-500 hover:text-red-600"
             >
               Clear Checked
@@ -250,10 +245,11 @@ export default function ShoppingListEditor({ data, onChange, noteTitle }) {
         </div>
         {showSettings && (
           <div className="mt-3 p-4 rounded-lg bg-white dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600">
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <div>
                 <label className="text-sm text-gray-600 dark:text-gray-400 mb-1 block">Currency</label>
                 <select
+                  aria-label="Shopping list currency"
                   value={shoppingData.currency}
                   onChange={(e) => update('currency', e.target.value)}
                   className="w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-600 border border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white"
@@ -268,6 +264,7 @@ export default function ShoppingListEditor({ data, onChange, noteTitle }) {
                 <label className="text-sm text-gray-600 dark:text-gray-400 mb-1 block">Budget</label>
                 <input
                   type="number"
+                  aria-label="Shopping budget"
                   value={shoppingData.budget || ''}
                   onChange={(e) => update('budget', e.target.value ? parseFloat(e.target.value) : null)}
                   placeholder="Optional"
@@ -313,6 +310,7 @@ export default function ShoppingListEditor({ data, onChange, noteTitle }) {
                 >
                   <button
                     onClick={() => toggleCategory(category.id)}
+                    aria-expanded={isExpanded}
                     className="w-full flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                   >
                     <div className="flex items-center gap-3">
@@ -338,12 +336,13 @@ export default function ShoppingListEditor({ data, onChange, noteTitle }) {
                       {categoryItems.map((item) => (
                         <div
                           key={item.id}
-                          className={`flex items-center gap-3 p-3 ${
+                          className={`flex flex-wrap items-center gap-3 p-3 ${
                             item.checked ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-white dark:bg-gray-900'
                           }`}
                         >
                           <button
                             onClick={() => toggleChecked(item.id)}
+                            aria-label={item.checked ? `Mark ${item.name} as not purchased` : `Mark ${item.name} as purchased`}
                             className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
                               item.checked
                                 ? 'bg-emerald-500 border-emerald-500 text-white'
@@ -356,6 +355,7 @@ export default function ShoppingListEditor({ data, onChange, noteTitle }) {
                             {editingItem === item.id ? (
                               <input
                                 type="text"
+                                aria-label={`Rename ${item.name}`}
                                 value={item.name}
                                 onChange={(e) => updateItem(item.id, { name: e.target.value })}
                                 onBlur={() => setEditingItem(null)}
@@ -378,6 +378,7 @@ export default function ShoppingListEditor({ data, onChange, noteTitle }) {
                           <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
                             <input
                               type="number"
+                              aria-label={`Quantity for ${item.name}`}
                               value={item.quantity}
                               onChange={(e) => updateItem(item.id, { quantity: parseFloat(e.target.value) || 1 })}
                               className="w-14 px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 text-center outline-none text-gray-900 dark:text-white"
@@ -385,6 +386,7 @@ export default function ShoppingListEditor({ data, onChange, noteTitle }) {
                               step="0.1"
                             />
                             <select
+                              aria-label={`Unit for ${item.name}`}
                               value={item.unit}
                               onChange={(e) => updateItem(item.id, { unit: e.target.value })}
                               className="px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white"
@@ -394,11 +396,22 @@ export default function ShoppingListEditor({ data, onChange, noteTitle }) {
                               ))}
                             </select>
                           </div>
+                          <select
+                            aria-label={`Category for ${item.name}`}
+                            value={item.category}
+                            onChange={(e) => updateItem(item.id, { category: e.target.value })}
+                            className="max-w-32 px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 outline-none text-sm text-gray-900 dark:text-white"
+                          >
+                            {shoppingData.categories.map((itemCategory) => (
+                              <option key={itemCategory.id} value={itemCategory.id}>{itemCategory.icon} {itemCategory.name}</option>
+                            ))}
+                          </select>
                           {shoppingData.showPrices && (
                             <div className="flex items-center gap-1">
                               <span className="text-gray-500">{currencySymbol}</span>
                               <input
                                 type="number"
+                                aria-label={`Price for ${item.name}`}
                                 value={item.price || ''}
                                 onChange={(e) => updateItem(item.id, { price: e.target.value ? parseFloat(e.target.value) : null })}
                                 placeholder="0.00"
@@ -415,12 +428,14 @@ export default function ShoppingListEditor({ data, onChange, noteTitle }) {
                           <div className="flex gap-1">
                             <button
                               onClick={() => setEditingItem(item.id)}
+                              aria-label={`Rename ${item.name}`}
                               className="p-1 rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                             >
                               <Edit3 className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => deleteItem(item.id)}
+                              aria-label={`Delete ${item.name}`}
                               className="p-1 rounded text-gray-400 hover:text-red-500"
                             >
                               <Trash2 className="w-4 h-4" />

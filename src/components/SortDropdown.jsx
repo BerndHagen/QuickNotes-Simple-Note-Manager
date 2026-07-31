@@ -102,7 +102,7 @@ export function sortNotes(notes, sortOption) {
 
     switch (option.field) {
       case 'title':
-        comparison = a.title.localeCompare(b.title, 'de')
+        comparison = a.title.localeCompare(b.title, 'en-US')
         break
       case 'content': {
         const aLen = (a.content || '').length

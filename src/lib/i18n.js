@@ -647,8 +647,8 @@ export const translations = {
       formatTextA: 'The rich text editor provides comprehensive formatting options through the toolbar above the editor. You can apply bold, italic, underline, strikethrough, headings (H1, H2, H3), bullet lists, numbered lists, task lists, blockquotes, code blocks, and more. Most common keyboard shortcuts work seamlessly: Ctrl+B for bold, Ctrl+I for italic, Ctrl+U for underline. You can also highlight text, change colors, adjust font sizes, and insert tables and images.',
       addImagesQ: 'Can I add images to my notes?',
       addImagesA: 'Absolutely! There are several ways to add images to your notes. Click the image icon in the toolbar to upload an image from your device. You can also drag and drop images directly into your note editor. Images are automatically resized for optimal viewing and can be repositioned within your note. When cloud sync is enabled, your images are securely stored and available across all your devices.',
-      templatesQ: 'How do templates work?',
-      templatesA: 'Templates help you quickly create notes with predefined structures. Access templates by clicking on the Templates button in the sidebar. Choose from a variety of pre-made templates including meeting notes, project plans, daily journals, and more. When you select a template, a new note is created with the template structure already in place. You can also save your own notes as custom templates for future use.',
+      templatesQ: 'How do focused note types work?',
+      templatesA: 'Open Note types in the sidebar or use the sparkle button beside New note. Choose a purpose-built workspace such as Tasks, Project, Meeting, Journal, Ideas, Shopping, or Weekly Planner, then select a useful starting point. Each type has dedicated tools and structured data; Document starters use the complete rich-text editor. Everything remains editable after creation.',
       tagsQ: 'How do I use tags?',
       tagsA: 'Tags provide a flexible way to categorize and find your notes. Add tags to any note using the tag field below the note title in the editor. Tags appear in the sidebar where you can click on them to filter and view all notes with that specific tag. You can create new tags on the fly, customize tag colors for visual organization, and a single note can have multiple tags for cross-referencing.',
       favoritesQ: 'How do I mark notes as favorites?',
@@ -697,8 +697,6 @@ export const translations = {
       limitationText: 'To the fullest extent permitted by applicable law, QuickNotes and its creators, developers, and affiliates shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising out of or related to your use of the application. This includes, but is not limited to, loss of data, loss of profits, or damages resulting from service interruptions. Our total liability for any claims arising from your use of QuickNotes shall not exceed the amount you have paid us, if any, in the twelve months preceding the claim.',
       changes: 'Modifications to Terms',
       changesText: 'We reserve the right to modify, update, or replace these Terms of Service at any time at our sole discretion. When we make significant changes, we will notify you through the application or via email if you have an account. Your continued use of QuickNotes after any modifications to these terms indicates your acceptance of the updated terms. We encourage you to review these terms periodically to stay informed of any changes.',
-      premium: 'Premium Features',
-      premiumText: 'QuickNotes may offer premium features or subscription plans in the future. Any paid features will be clearly identified, and separate terms governing purchases, billing, and refunds will apply. Free features will remain available, though specific offerings may change over time. We will provide advance notice of any significant changes to our service offerings.',
       contact: 'Contact Information',
       contactText: 'If you have any questions about these Terms of Service, need clarification on any provisions, or have concerns about the application, please contact us via the Issues or Discussions section on our GitHub repository. We value your feedback and are committed to addressing your inquiries in a timely and professional manner.',
     },
@@ -1408,8 +1406,8 @@ export const translations = {
       formatTextA: 'Nutze die Toolbar über dem Editor. Die meisten Tastenkürzel funktionieren: Strg+B für fett, Strg+I für kursiv.',
       addImagesQ: 'Kann ich Bilder hinzufügen?',
       addImagesA: 'Ja! Klicke auf das Bild-Symbol oder ziehe Bilder direkt in deine Notiz.',
-      templatesQ: 'Wie funktionieren Vorlagen?',
-      templatesA: 'Klicke auf Vorlagen in der Seitenleiste, um vorgefertigte Notizvorlagen zu sehen.',
+      templatesQ: 'Wie funktionieren fokussierte Notiztypen?',
+      templatesA: 'Öffne „Notiztypen“ in der Seitenleiste oder nutze den Funkeln-Button neben „Neue Notiz“. Wähle einen spezialisierten Arbeitsbereich und anschließend einen passenden Ausgangspunkt. Jeder Typ bietet eigene Werkzeuge und strukturierte Daten; Dokument-Ausgangspunkte verwenden den vollständigen Rich-Text-Editor. Nach dem Erstellen bleibt alles bearbeitbar.',
       tagsQ: 'Wie nutze ich Tags?',
       tagsA: 'Füge Tags über das Tag-Feld im Editor hinzu. Klicke auf einen Tag in der Seitenleiste zum Filtern.',
       favoritesQ: 'Wie markiere ich Favoriten?',
@@ -4021,7 +4019,7 @@ export function t(lang, path) {
         if (result && result[k] !== undefined) {
           result = result[k]
         } else {
-          return path // Return path if not found
+          return path
         }
       }
       break

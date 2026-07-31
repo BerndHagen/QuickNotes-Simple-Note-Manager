@@ -19,7 +19,8 @@ import {
   Trophy,
   Flame
 } from 'lucide-react'
-import { generateId } from './noteTypes'
+import { formatDateKey, generateId, parseDateKey } from './noteTypes'
+import FocusedNoteTitle from './FocusedNoteTitle'
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 const SHORT_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -29,14 +30,14 @@ const TIME_BLOCKS = [
   { id: 'evening', label: 'Evening', icon: Moon, color: '#6366f1' },
 ]
 
-export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
+export default function WeeklyPlannerEditor({ data, onChange, noteTitle, onTitleChange, readOnly }) {
   const getWeekStart = (date = new Date()) => {
     const d = new Date(date)
     const day = d.getDay()
     const diff = d.getDate() - day + (day === 0 ? -6 : 1)
     d.setDate(diff)
     d.setHours(0, 0, 0, 0)
-    return d.toISOString().split('T')[0]
+    return formatDateKey(d)
   }
 
   const [plannerData, setPlannerData] = useState({
@@ -59,7 +60,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
     },
   })
 
-  const [activeView, setActiveView] = useState('week')
+  const [activeView, setActiveView] = useState(data?.preferredView || 'week')
   const [selectedDay, setSelectedDay] = useState(DAYS[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1].toLowerCase())
   const [newGoal, setNewGoal] = useState('')
   const [newTask, setNewTask] = useState('')
@@ -76,9 +77,9 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
     setPlannerData(prev => ({ ...prev, [field]: value }))
   }
   const navigateWeek = (direction) => {
-    const current = new Date(plannerData.weekStart)
+    const current = parseDateKey(plannerData.weekStart)
     current.setDate(current.getDate() + (direction * 7))
-    update('weekStart', current.toISOString().split('T')[0])
+    update('weekStart', formatDateKey(current))
   }
 
   const goToCurrentWeek = () => {
@@ -161,7 +162,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
     update('review', { ...plannerData.review, [field]: value })
   }
   const getDateForDay = (dayIndex) => {
-    const start = new Date(plannerData.weekStart)
+    const start = parseDateKey(plannerData.weekStart)
     start.setDate(start.getDate() + dayIndex)
     return start
   }
@@ -182,7 +183,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
 
   const stats = getStats()
   const completionPercent = stats.totalTasks > 0 ? Math.round((stats.completedTasks / stats.totalTasks) * 100) : 0
-  const weekStartDate = new Date(plannerData.weekStart)
+  const weekStartDate = parseDateKey(plannerData.weekStart)
   const weekEndDate = new Date(weekStartDate)
   weekEndDate.setDate(weekEndDate.getDate() + 6)
   const weekLabel = `${weekStartDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEndDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
@@ -194,17 +195,22 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
   ]
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-gray-900">
-      <div className="flex-shrink-0 p-4 border-b border-[#cbd1db] dark:border-gray-700 bg-[#e5eaf0] dark:bg-gray-800">
+    <div className="qn-type-editor qn-type-weekly flex flex-col h-full bg-white dark:bg-gray-900">
+      <div className="qn-type-hero flex-shrink-0 p-4 border-b border-[#cbd1db] dark:border-gray-700 bg-[#e5eaf0] dark:bg-gray-800">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <Calendar className="w-7 h-7" />
-              {noteTitle || 'Weekly Planner'}
-            </h1>
+            <FocusedNoteTitle
+              icon={Calendar}
+              typeLabel="Planning workspace"
+              title={noteTitle}
+              fallback="Weekly plan"
+              onChange={onTitleChange}
+              readOnly={readOnly}
+            />
             <div className="flex items-center gap-3 mt-2">
               <button
                 onClick={() => navigateWeek(-1)}
+                aria-label="Previous week"
                 className="p-1 rounded-lg bg-gray-200/50 dark:bg-gray-700 hover:bg-gray-300/50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300"
               >
                 <ChevronLeft className="w-5 h-5" />
@@ -212,6 +218,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
               <span className="text-gray-900 dark:text-white font-medium">{weekLabel}</span>
               <button
                 onClick={() => navigateWeek(1)}
+                aria-label="Next week"
                 className="p-1 rounded-lg bg-gray-200/50 dark:bg-gray-700 hover:bg-gray-300/50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300"
               >
                 <ChevronRight className="w-5 h-5" />
@@ -248,14 +255,15 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
           />
         </div>
       </div>
-      <div className="flex-shrink-0 flex gap-1 p-2 border-b border-[#cbd1db] dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+      <div className="qn-type-tabs flex-shrink-0 flex gap-1 p-2 border-b border-[#cbd1db] dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
         {views.map((view) => (
           <button
             key={view.id}
             onClick={() => setActiveView(view.id)}
+            aria-pressed={activeView === view.id}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               activeView === view.id
-                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600'
+                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
                 : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
             }`}
           >
@@ -280,6 +288,8 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
                   <button
                     key={day}
                     onClick={() => setSelectedDay(dayKey)}
+                    aria-label={`Plan ${day}, ${date.toLocaleDateString('en-US')}`}
+                    aria-pressed={selectedDay === dayKey}
                     className={`w-full p-3 flex flex-col items-center transition-colors ${
                       selectedDay === dayKey
                         ? 'bg-blue-100 dark:bg-blue-900/30 border-r-2 border-blue-500'
@@ -287,13 +297,13 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
                     }`}
                   >
                     <span className={`text-xs font-medium ${
-                      isToday ? 'text-blue-500' : 'text-gray-500'
+                      isToday || selectedDay === dayKey ? 'text-blue-800 dark:text-blue-300' : 'text-gray-500'
                     }`}>
                       {SHORT_DAYS[index]}
                     </span>
                     <span className={`text-lg font-bold ${
                       isToday 
-                        ? 'w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center'
+                        ? 'w-8 h-8 bg-blue-700 text-white rounded-full flex items-center justify-center'
                         : 'text-gray-900 dark:text-white'
                     }`}>
                       {date.getDate()}
@@ -331,6 +341,8 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
                       <button
                         key={rating}
                         onClick={() => updateDay(selectedDay, 'rating', rating)}
+                        aria-label={`Rate ${selectedDay} ${rating} out of 5`}
+                        aria-pressed={(plannerData.days[selectedDay]?.rating || 0) === rating}
                         className={`p-1 transition-colors ${
                           (plannerData.days[selectedDay]?.rating || 0) >= rating
                             ? 'text-yellow-500'
@@ -363,6 +375,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
                         <span className="flex-1 text-gray-900 dark:text-white">{event.text}</span>
                         <button
                           onClick={() => removeEvent(selectedDay, event.id)}
+                          aria-label={`Delete ${event.text}`}
                           className="p-1 text-gray-400 hover:text-red-500"
                         >
                           <X className="w-4 h-4" />
@@ -370,15 +383,17 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
                       </div>
                     ))}
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col gap-2 sm:flex-row">
                     <input
                       type="time"
+                      aria-label={`Time for new ${selectedDay} event`}
                       value={newEventTime}
                       onChange={(e) => setNewEventTime(e.target.value)}
                       className="px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white"
                     />
                     <input
                       type="text"
+                      aria-label={`New ${selectedDay} event`}
                       value={newEvent}
                       onChange={(e) => setNewEvent(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && addEvent(selectedDay)}
@@ -387,7 +402,8 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
                     />
                     <button
                       onClick={() => addEvent(selectedDay)}
-                      className="px-3 py-2 rounded-lg bg-purple-500 hover:bg-purple-600 text-white"
+                      aria-label={`Add event to ${selectedDay}`}
+                      className="px-3 py-2 rounded-lg bg-purple-700 hover:bg-purple-800 text-white"
                     >
                       <Plus className="w-5 h-5" />
                     </button>
@@ -423,7 +439,10 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
                                   : 'bg-gray-50 dark:bg-gray-800'
                               }`}
                             >
-                              <button onClick={() => toggleTask(selectedDay, task.id)}>
+                              <button
+                                onClick={() => toggleTask(selectedDay, task.id)}
+                                aria-label={task.completed ? `Mark ${task.text} incomplete` : `Complete ${task.text}`}
+                              >
                                 {task.completed ? (
                                   <CheckCircle2 className="w-5 h-5 text-green-500" />
                                 ) : (
@@ -437,6 +456,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
                               </span>
                               <button
                                 onClick={() => removeTask(selectedDay, task.id)}
+                                aria-label={`Delete ${task.text}`}
                                 className="p-1 text-gray-400 hover:text-red-500"
                               >
                                 <X className="w-4 h-4" />
@@ -447,8 +467,9 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
                       </div>
                     )
                   })}
-                  <div className="flex gap-2 mt-3">
+                  <div className="flex flex-col gap-2 mt-3 sm:flex-row">
                     <select
+                      aria-label={`Time block for new ${selectedDay} task`}
                       value={newTaskTime}
                       onChange={(e) => setNewTaskTime(e.target.value)}
                       className="px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-600 outline-none text-gray-900 dark:text-white"
@@ -459,6 +480,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
                     </select>
                     <input
                       type="text"
+                      aria-label={`New ${selectedDay} task`}
                       value={newTask}
                       onChange={(e) => setNewTask(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && addTask(selectedDay)}
@@ -467,7 +489,8 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
                     />
                     <button
                       onClick={() => addTask(selectedDay)}
-                      className="px-3 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white"
+                      aria-label={`Add task to ${selectedDay}`}
+                      className="px-3 py-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white"
                     >
                       <Plus className="w-5 h-5" />
                     </button>
@@ -476,6 +499,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
                 <div>
                   <h3 className="text-sm font-semibold text-gray-500 mb-2">Notes</h3>
                   <textarea
+                    aria-label={`Notes for ${selectedDay}`}
                     value={plannerData.days[selectedDay]?.note || ''}
                     onChange={(e) => updateDay(selectedDay, 'note', e.target.value)}
                     placeholder="Add notes for this day..."
@@ -496,9 +520,10 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
               </h2>
               <p className="text-gray-500">What do you want to accomplish this week?</p>
             </div>
-            <div className="flex gap-2 mb-6">
+            <div className="flex flex-col gap-2 mb-6 sm:flex-row">
               <input
                 type="text"
+                aria-label="New weekly goal"
                 value={newGoal}
                 onChange={(e) => setNewGoal(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && addGoal()}
@@ -507,7 +532,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
               />
               <button
                 onClick={addGoal}
-                className="px-6 py-3 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-medium"
+                className="px-6 py-3 rounded-xl bg-blue-700 hover:bg-blue-800 text-white font-medium"
               >
                 Add Goal
               </button>
@@ -519,7 +544,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
                   <p>No goals set for this week yet</p>
                 </div>
               ) : (
-                plannerData.weeklyGoals
+                [...plannerData.weeklyGoals]
                   .sort((a, b) => (b.priority ? 1 : 0) - (a.priority ? 1 : 0))
                   .map((goal) => (
                     <div
@@ -532,7 +557,10 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
                           : 'bg-gray-50 dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-700'
                       }`}
                     >
-                      <button onClick={() => toggleGoal(goal.id)}>
+                      <button
+                        onClick={() => toggleGoal(goal.id)}
+                        aria-label={goal.completed ? `Mark ${goal.text} incomplete` : `Complete ${goal.text}`}
+                      >
                         {goal.completed ? (
                           <CheckCircle2 className="w-6 h-6 text-green-500" />
                         ) : (
@@ -546,12 +574,15 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
                       </span>
                       <button
                         onClick={() => toggleGoalPriority(goal.id)}
+                        aria-label={goal.priority ? `Remove priority from ${goal.text}` : `Prioritize ${goal.text}`}
+                        aria-pressed={goal.priority}
                         className={`p-2 rounded ${goal.priority ? 'text-blue-500' : 'text-gray-400'}`}
                       >
                         <Flame className={`w-5 h-5 ${goal.priority ? 'fill-current' : ''}`} />
                       </button>
                       <button
                         onClick={() => removeGoal(goal.id)}
+                        aria-label={`Delete ${goal.text}`}
                         className="p-2 text-gray-400 hover:text-red-500"
                       >
                         <Trash2 className="w-5 h-5" />
@@ -592,23 +623,23 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
               </h2>
               <p className="text-gray-500">Reflect on your week and plan for the next</p>
             </div>
-            <div className="grid grid-cols-3 gap-4 mb-8">
+            <div className="grid grid-cols-1 gap-4 mb-8 sm:grid-cols-3">
               <div className="p-4 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-center">
                 <Trophy className="w-8 h-8 text-green-500 mx-auto mb-2" />
                 <div className="text-2xl font-bold text-green-600">{stats.completedTasks}</div>
-                <div className="text-sm text-green-500">Tasks Completed</div>
+                <div className="text-sm text-green-700 dark:text-green-300">Tasks Completed</div>
               </div>
               <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-center">
                 <Target className="w-8 h-8 text-blue-500 mx-auto mb-2" />
                 <div className="text-2xl font-bold text-blue-600">{stats.completedGoals}</div>
-                <div className="text-sm text-blue-500">Goals Achieved</div>
+                <div className="text-sm text-blue-700 dark:text-blue-300">Goals Achieved</div>
               </div>
               <div className="p-4 rounded-xl bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 text-center">
                 <Star className="w-8 h-8 text-purple-500 mx-auto mb-2" />
                 <div className="text-2xl font-bold text-purple-600">
                   {Object.values(plannerData.days).filter(d => d.rating).length}
                 </div>
-                <div className="text-sm text-purple-500">Days Rated</div>
+                <div className="text-sm text-purple-700 dark:text-purple-300">Days Rated</div>
               </div>
             </div>
 
@@ -618,6 +649,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
                   What did I accomplish this week?
                 </label>
                 <textarea
+                  aria-label="Weekly accomplishments"
                   value={plannerData.review.accomplishments}
                   onChange={(e) => updateReview('accomplishments', e.target.value)}
                   placeholder="List your wins and achievements..."
@@ -631,6 +663,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
                   What challenges did I face?
                 </label>
                 <textarea
+                  aria-label="Weekly challenges"
                   value={plannerData.review.challenges}
                   onChange={(e) => updateReview('challenges', e.target.value)}
                   placeholder="What obstacles or difficulties came up?"
@@ -644,6 +677,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
                   What did I learn?
                 </label>
                 <textarea
+                  aria-label="Weekly lessons"
                   value={plannerData.review.lessons}
                   onChange={(e) => updateReview('lessons', e.target.value)}
                   placeholder="Key insights and lessons from this week..."
@@ -657,6 +691,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle }) {
                   Focus for next week
                 </label>
                 <textarea
+                  aria-label="Focus for next week"
                   value={plannerData.review.nextWeekFocus}
                   onChange={(e) => updateReview('nextWeekFocus', e.target.value)}
                   placeholder="What's the priority for next week?"

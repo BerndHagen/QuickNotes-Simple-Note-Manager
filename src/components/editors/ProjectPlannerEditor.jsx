@@ -6,26 +6,27 @@ import {
   Users,
   Target,
   Edit3,
-  X,
   CheckCircle2,
   Milestone,
   BarChart3
 } from 'lucide-react'
-import { generateId } from './noteTypes'
+import { formatDateKey, generateId, parseDateKey } from './noteTypes'
+import FocusedNoteTitle from './FocusedNoteTitle'
+import Modal from '../ui/Modal'
 const COLUMN_COLORS = {
   backlog: { bg: 'bg-gray-100 dark:bg-gray-800', border: 'border-[#cbd1db] dark:border-gray-600', text: 'text-gray-600' },
   todo: { bg: 'bg-blue-50 dark:bg-blue-900/20', border: 'border-blue-300 dark:border-blue-700', text: 'text-blue-600' },
-  inProgress: { bg: 'bg-amber-50 dark:bg-amber-900/20', border: 'border-amber-300 dark:border-amber-700', text: 'text-amber-600' },
+  inProgress: { bg: 'bg-amber-50 dark:bg-amber-900/20', border: 'border-amber-300 dark:border-amber-700', text: 'text-amber-800 dark:text-amber-300' },
   done: { bg: 'bg-green-50 dark:bg-green-900/20', border: 'border-green-300 dark:border-green-700', text: 'text-green-600' },
 }
 
 const PRIORITIES = {
-  high: { label: 'High', color: '#ef4444', icon: '\u{1F534}' },
-  medium: { label: 'Medium', color: '#f59e0b', icon: '\u{1F7E1}' },
-  low: { label: 'Low', color: '#22c55e', icon: '\u{1F7E2}' },
+  high: { label: 'High', color: '#b91c1c', icon: '\u{1F534}' },
+  medium: { label: 'Medium', color: '#a16207', icon: '\u{1F7E1}' },
+  low: { label: 'Low', color: '#15803d', icon: '\u{1F7E2}' },
 }
 
-export default function ProjectPlannerEditor({ data, onChange, noteTitle }) {
+export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitleChange, readOnly }) {
   const [columns, setColumns] = useState(data?.columns || [
     { id: 'backlog', name: 'Backlog', tasks: [] },
     { id: 'todo', name: 'To Do', tasks: [] },
@@ -52,7 +53,7 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle }) {
     doneTasks: columns.find(c => c.id === 'done')?.tasks.length || 0,
     inProgressTasks: columns.find(c => c.id === 'inProgress')?.tasks.length || 0,
     overdueTasks: columns.reduce((sum, col) => {
-      return sum + col.tasks.filter(t => t.dueDate && t.dueDate < new Date().toISOString().split('T')[0] && col.id !== 'done').length
+      return sum + col.tasks.filter(t => t.dueDate && t.dueDate < formatDateKey() && col.id !== 'done').length
     }, 0),
   }
   stats.progress = stats.totalTasks > 0 ? Math.round((stats.doneTasks / stats.totalTasks) * 100) : 0
@@ -78,17 +79,19 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle }) {
     setNewTaskText('')
     setShowAddTask(null)
   }
-  const updateTask = (columnId, taskId, updates) => {
+  const saveTaskEdits = (taskToEdit, updates) => {
+    const { columnId: targetColumnId, ...taskUpdates } = updates
+    const taskRecord = Object.fromEntries(
+      Object.entries(taskToEdit).filter(([key]) => key !== 'columnId')
+    )
     setColumns(columns.map(col => {
-      if (col.id === columnId) {
-        return {
-          ...col,
-          tasks: col.tasks.map(task =>
-            task.id === taskId ? { ...task, ...updates } : task
-          ),
-        }
+      const tasksWithoutEditedTask = col.tasks.filter(task => task.id !== taskToEdit.id)
+      if (col.id !== targetColumnId) return { ...col, tasks: tasksWithoutEditedTask }
+
+      return {
+        ...col,
+        tasks: [...tasksWithoutEditedTask, { ...taskRecord, ...taskUpdates }],
       }
-      return col
     }))
   }
   const deleteTask = (columnId, taskId) => {
@@ -167,14 +170,18 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle }) {
   }
 
   return (
-    <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900">
-      <div className="flex-shrink-0 p-4 border-b border-[#cbd1db] dark:border-gray-700 bg-[#e5eaf0] dark:bg-gray-800">
+    <div className="qn-type-editor qn-type-project flex flex-col h-full bg-gray-50 dark:bg-gray-900">
+      <div className="qn-type-hero flex-shrink-0 p-4 border-b border-[#cbd1db] dark:border-gray-700 bg-[#e5eaf0] dark:bg-gray-800">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <Target className="w-7 h-7" />
-              {noteTitle || 'Project Planner'}
-            </h1>
+            <FocusedNoteTitle
+              icon={Target}
+              typeLabel="Project workspace"
+              title={noteTitle}
+              fallback="Project board"
+              onChange={onTitleChange}
+              readOnly={readOnly}
+            />
             <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
               {stats.totalTasks} tasks {"\u2022"} {stats.progress}% complete
             </p>
@@ -217,7 +224,7 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle }) {
           </div>
         </div>
       </div>
-      <div className="flex-shrink-0 flex gap-1 p-2 border-b border-[#cbd1db] dark:border-gray-700 bg-white dark:bg-gray-800">
+      <div className="qn-type-tabs flex-shrink-0 flex gap-1 p-2 border-b border-[#cbd1db] dark:border-gray-700 bg-white dark:bg-gray-800">
         {[
           { id: 'board', label: 'Kanban Board', icon: BarChart3 },
           { id: 'milestones', label: 'Milestones', icon: Milestone },
@@ -226,6 +233,7 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle }) {
           <button
             key={view.id}
             onClick={() => setActiveView(view.id)}
+            aria-pressed={activeView === view.id}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               activeView === view.id
                 ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600'
@@ -262,6 +270,7 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle }) {
                       </div>
                       <button
                         onClick={() => setShowAddTask(column.id)}
+                        aria-label={`Add task to ${column.name}`}
                         className="p-1 rounded hover:bg-white/50 dark:hover:bg-gray-700 transition-colors"
                       >
                         <Plus className="w-4 h-4 text-gray-500" />
@@ -279,13 +288,14 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle }) {
                               if (e.key === 'Escape') { setShowAddTask(null); setNewTaskText('') }
                             }}
                             placeholder="Task title..."
+                            aria-label={`New task title for ${column.name}`}
                             className="w-full px-3 py-2 rounded-lg bg-white dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-600 text-sm outline-none focus:border-purple-500"
                             autoFocus
                           />
                           <div className="flex gap-2 mt-2">
                             <button
                               onClick={() => addTask(column.id)}
-                              className="flex-1 px-3 py-1.5 rounded-lg bg-purple-500 hover:bg-purple-600 text-white text-sm"
+                              className="flex-1 px-3 py-1.5 rounded-lg bg-purple-700 hover:bg-purple-800 text-white text-sm"
                             >
                               Add Task
                             </button>
@@ -304,7 +314,6 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle }) {
                           task={task}
                           team={team}
                           onDragStart={(e) => handleDragStart(e, task, column.id)}
-                          onUpdate={(updates) => updateTask(column.id, task.id, updates)}
                           onDelete={() => deleteTask(column.id, task.id)}
                           onEdit={() => setEditingTask({ ...task, columnId: column.id })}
                         />
@@ -330,7 +339,7 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle }) {
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Milestones</h2>
                 <button
                   onClick={() => setShowMilestoneForm(true)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-500 hover:bg-purple-600 text-white text-sm"
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-700 hover:bg-purple-800 text-white text-sm"
                 >
                   <Plus className="w-4 h-4" />
                   Add Milestone
@@ -371,7 +380,7 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle }) {
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Team Members</h2>
                 <button
                   onClick={() => setShowTeamForm(true)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-500 hover:bg-purple-600 text-white text-sm"
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-700 hover:bg-purple-800 text-white text-sm"
                 >
                   <Plus className="w-4 h-4" />
                   Add Member
@@ -411,8 +420,9 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle }) {
         <TaskEditModal
           task={editingTask}
           team={team}
+          columns={columns}
           onSave={(updates) => {
-            updateTask(editingTask.columnId, editingTask.id, updates)
+            saveTaskEdits(editingTask, updates)
             setEditingTask(null)
           }}
           onClose={() => setEditingTask(null)}
@@ -421,10 +431,10 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle }) {
     </div>
   )
 }
-function TaskCard({ task, team, onDragStart, onUpdate, onDelete, onEdit }) {
+function TaskCard({ task, team, onDragStart, onDelete, onEdit }) {
   const priority = PRIORITIES[task.priority]
   const assignee = team.find(m => m.id === task.assignee)
-  const isOverdue = task.dueDate && task.dueDate < new Date().toISOString().split('T')[0]
+  const isOverdue = task.dueDate && task.dueDate < formatDateKey()
 
   return (
     <div
@@ -436,12 +446,22 @@ function TaskCard({ task, team, onDragStart, onUpdate, onDelete, onEdit }) {
         <h3 className="font-medium text-gray-900 dark:text-white text-sm flex-1">
           {task.title}
         </h3>
-        <button
-          onClick={onEdit}
-          className="p-1 opacity-0 group-hover:opacity-100 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
-        >
-          <Edit3 className="w-3 h-3 text-gray-400" />
-        </button>
+        <div className="flex items-center">
+          <button
+            onClick={onEdit}
+            aria-label={`Edit ${task.title}`}
+            className="p-1.5 rounded text-gray-500 hover:bg-gray-100 hover:text-purple-600 dark:hover:bg-gray-700"
+          >
+            <Edit3 className="w-3.5 h-3.5" aria-hidden="true" />
+          </button>
+          <button
+            onClick={onDelete}
+            aria-label={`Delete ${task.title}`}
+            className="p-1.5 rounded text-gray-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30"
+          >
+            <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+          </button>
+        </div>
       </div>
 
       {task.description && (
@@ -462,7 +482,7 @@ function TaskCard({ task, team, onDragStart, onUpdate, onDelete, onEdit }) {
             isOverdue ? 'bg-red-100 text-red-600' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
           }`}>
             <Calendar className="w-3 h-3" />
-            {new Date(task.dueDate).toLocaleDateString()}
+            {parseDateKey(task.dueDate).toLocaleDateString('en-US')}
           </span>
         )}
 
@@ -477,28 +497,52 @@ function TaskCard({ task, team, onDragStart, onUpdate, onDelete, onEdit }) {
     </div>
   )
 }
-function TaskEditModal({ task, team, onSave, onClose }) {
+function TaskEditModal({ task, team, columns, onSave, onClose }) {
   const [title, setTitle] = useState(task.title)
   const [description, setDescription] = useState(task.description || '')
   const [priority, setPriority] = useState(task.priority)
   const [dueDate, setDueDate] = useState(task.dueDate || '')
   const [assignee, setAssignee] = useState(task.assignee || '')
+  const [columnId, setColumnId] = useState(task.columnId)
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm modal-backdrop-animate">
-      <div className="modal-animate w-full max-w-lg bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-[#cbd1db] dark:border-gray-700">
-        <div className="flex items-center justify-between p-4 border-b border-[#cbd1db] dark:border-gray-700">
-          <h3 className="font-semibold text-gray-900 dark:text-white">Edit Task</h3>
-          <button onClick={onClose} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
-            <X className="w-5 h-5 text-gray-500" />
+    <Modal
+      open
+      onClose={onClose}
+      title="Edit task"
+      description="Refine the task details, priority, date, and owner."
+      size="lg"
+      bodyClassName="space-y-4"
+      footer={(
+        <>
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            Cancel
           </button>
-        </div>
-
-        <div className="p-4 space-y-4">
+          <button
+            onClick={() => onSave({
+              title: title.trim(),
+              description,
+              priority,
+              dueDate: dueDate || null,
+              assignee: assignee || null,
+              columnId,
+            })}
+            disabled={!title.trim()}
+            className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-50 text-white"
+          >
+            Save changes
+          </button>
+        </>
+      )}
+    >
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
             <input
               type="text"
+              aria-label="Title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="w-full px-3 py-2 rounded-lg border border-[#cbd1db] dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:border-purple-500"
@@ -508,6 +552,7 @@ function TaskEditModal({ task, team, onSave, onClose }) {
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
             <textarea
+              aria-label="Description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
@@ -515,10 +560,11 @@ function TaskEditModal({ task, team, onSave, onClose }) {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Priority</label>
               <select
+                aria-label="Priority"
                 value={priority}
                 onChange={(e) => setPriority(e.target.value)}
                 className="w-full px-3 py-2 rounded-lg border border-[#cbd1db] dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:border-purple-500"
@@ -533,6 +579,7 @@ function TaskEditModal({ task, team, onSave, onClose }) {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Due Date</label>
               <input
                 type="date"
+                aria-label="Due date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
                 className="w-full px-3 py-2 rounded-lg border border-[#cbd1db] dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:border-purple-500"
@@ -540,37 +587,36 @@ function TaskEditModal({ task, team, onSave, onClose }) {
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Assignee</label>
-            <select
-              value={assignee}
-              onChange={(e) => setAssignee(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-[#cbd1db] dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:border-purple-500"
-            >
-              <option value="">Unassigned</option>
-              {team.map((member) => (
-                <option key={member.id} value={member.id}>{member.name}</option>
-              ))}
-            </select>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
+              <select
+                aria-label="Status"
+                value={columnId}
+                onChange={(e) => setColumnId(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-[#cbd1db] dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:border-purple-500"
+              >
+                {columns.map((column) => (
+                  <option key={column.id} value={column.id}>{column.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Assignee</label>
+              <select
+                aria-label="Assignee"
+                value={assignee}
+                onChange={(e) => setAssignee(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-[#cbd1db] dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:border-purple-500"
+              >
+                <option value="">Unassigned</option>
+                {team.map((member) => (
+                  <option key={member.id} value={member.id}>{member.name}</option>
+                ))}
+              </select>
+            </div>
           </div>
-        </div>
-
-        <div className="flex justify-end gap-2 p-4 border-t border-[#cbd1db] dark:border-gray-700">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => onSave({ title, description, priority, dueDate: dueDate || null, assignee: assignee || null })}
-            className="px-4 py-2 rounded-lg bg-purple-500 hover:bg-purple-600 text-white"
-          >
-            Save Changes
-          </button>
-        </div>
-      </div>
-    </div>
+    </Modal>
   )
 }
 function MilestoneForm({ onSave, onCancel }) {
@@ -585,11 +631,13 @@ function MilestoneForm({ onSave, onCancel }) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Milestone name..."
+          aria-label="Milestone name"
           className="w-full px-3 py-2 rounded-lg border border-[#cbd1db] dark:border-gray-600 bg-white dark:bg-gray-800 text-sm outline-none focus:border-purple-500"
           autoFocus
         />
         <input
           type="date"
+          aria-label="Milestone due date"
           value={dueDate}
           onChange={(e) => setDueDate(e.target.value)}
           className="w-full px-3 py-2 rounded-lg border border-[#cbd1db] dark:border-gray-600 bg-white dark:bg-gray-800 text-sm outline-none focus:border-purple-500"
@@ -597,7 +645,7 @@ function MilestoneForm({ onSave, onCancel }) {
         <div className="flex gap-2">
           <button
             onClick={() => name && onSave(name, dueDate || null)}
-            className="flex-1 px-3 py-2 rounded-lg bg-purple-500 hover:bg-purple-600 text-white text-sm"
+            className="flex-1 px-3 py-2 rounded-lg bg-purple-700 hover:bg-purple-800 text-white text-sm"
           >
             Add Milestone
           </button>
@@ -613,7 +661,7 @@ function MilestoneForm({ onSave, onCancel }) {
   )
 }
 function MilestoneCard({ milestone, onToggle, onDelete }) {
-  const isOverdue = milestone.dueDate && milestone.dueDate < new Date().toISOString().split('T')[0] && !milestone.completed
+  const isOverdue = milestone.dueDate && milestone.dueDate < formatDateKey() && !milestone.completed
 
   return (
     <div className={`flex items-center gap-3 p-4 rounded-lg border ${
@@ -623,7 +671,10 @@ function MilestoneCard({ milestone, onToggle, onDelete }) {
           ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
           : 'bg-white dark:bg-gray-800 border-[#cbd1db] dark:border-gray-700'
     }`}>
-      <button onClick={onToggle}>
+      <button
+        onClick={onToggle}
+        aria-label={milestone.completed ? `Mark ${milestone.name} incomplete` : `Complete ${milestone.name}`}
+      >
         {milestone.completed ? (
           <CheckCircle2 className="w-6 h-6 text-green-500" />
         ) : (
@@ -636,12 +687,13 @@ function MilestoneCard({ milestone, onToggle, onDelete }) {
         </h3>
         {milestone.dueDate && (
           <span className={`text-xs ${isOverdue && !milestone.completed ? 'text-red-500' : 'text-gray-500'}`}>
-            Due: {new Date(milestone.dueDate).toLocaleDateString()}
+            Due: {parseDateKey(milestone.dueDate).toLocaleDateString('en-US')}
           </span>
         )}
       </div>
       <button
         onClick={onDelete}
+        aria-label={`Delete ${milestone.name}`}
         className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-red-500"
       >
         <Trash2 className="w-4 h-4" />
@@ -661,6 +713,7 @@ function TeamMemberForm({ onSave, onCancel }) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Name..."
+          aria-label="Team member name"
           className="w-full px-3 py-2 rounded-lg border border-[#cbd1db] dark:border-gray-600 bg-white dark:bg-gray-800 text-sm outline-none focus:border-purple-500"
           autoFocus
         />
@@ -669,12 +722,13 @@ function TeamMemberForm({ onSave, onCancel }) {
           value={role}
           onChange={(e) => setRole(e.target.value)}
           placeholder="Role (e.g., Developer, Designer)..."
+          aria-label="Team member role"
           className="w-full px-3 py-2 rounded-lg border border-[#cbd1db] dark:border-gray-600 bg-white dark:bg-gray-800 text-sm outline-none focus:border-purple-500"
         />
         <div className="flex gap-2">
           <button
             onClick={() => name && onSave(name, role)}
-            className="flex-1 px-3 py-2 rounded-lg bg-purple-500 hover:bg-purple-600 text-white text-sm"
+            className="flex-1 px-3 py-2 rounded-lg bg-purple-700 hover:bg-purple-800 text-white text-sm"
           >
             Add Member
           </button>
@@ -702,6 +756,7 @@ function TeamMemberCard({ member, tasksAssigned, onDelete }) {
       </div>
       <button
         onClick={onDelete}
+        aria-label={`Remove ${member.name}`}
         className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-red-500"
       >
         <Trash2 className="w-4 h-4" />

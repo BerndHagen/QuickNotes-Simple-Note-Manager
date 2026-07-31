@@ -6,13 +6,14 @@ import {
   HelpCircle,
   Copy,
   FolderOpen,
-  LayoutTemplate,
+  Keyboard,
   LogOut,
   Monitor,
   Moon,
   Pencil,
   Plus,
   Settings,
+  Sparkles,
   Star,
   Sun,
   Trash2,
@@ -22,14 +23,13 @@ import {
 import { useNotesStore, useThemeStore, useUIStore } from '../store'
 import { useTranslation } from '../lib/useTranslation'
 import { getFolderIcon } from '../lib/folderIcons'
+import { isBackendConfigured } from '../lib/backend'
 import { Avatar, Menu, MenuItem, MenuSeparator } from './ui'
 import { FolderDialog, ConfirmDialog } from './FolderDialogs'
 
 /**
- * Navigation row.
- *
- * A real `<button>`, so the rail is reachable by Tab and operable with
- * Enter/Space — the previous implementation used click-only `<div>`s.
+ * Navigation row. A real `<button>`, so the rail is reachable by Tab and
+ * operable with Enter/Space.
  */
 function NavItem({ icon: Icon, label, count, selected, onClick, iconColor, trailing }) {
   return (
@@ -124,10 +124,11 @@ export default function Sidebar({ onNavigate }) {
     setShowTrash,
     setDuplicateModalOpen,
     setArchiveViewOpen,
-    setTemplatesModalOpen,
+    setNoteTypesModalOpen,
     setTagManagerOpen,
     setSharedNotesViewOpen,
     setHelpModalOpen,
+    setShortcutsModalOpen,
   } = useUIStore()
 
   const [sections, setSections] = useState({ folders: true, tags: true })
@@ -138,9 +139,9 @@ export default function Sidebar({ onNavigate }) {
   const [accountOpen, setAccountOpen] = useState(false)
 
   /**
-   * One pass over `notes` for every count the rail shows.
-   * Previously each row ran its own `.filter()` on every render, so a
-   * workspace with N folders and M tags cost N+M+4 full array scans.
+   * Every count the rail shows, from a single pass over `notes` — a row
+   * filtering the array itself would cost one full scan per folder and tag
+   * on every render.
    */
   const counts = useMemo(() => {
     const byFolder = new Map()
@@ -186,11 +187,13 @@ export default function Sidebar({ onNavigate }) {
         : t('settings.themeSystem')
 
   const displayName = user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'Account'
+  const accountDetail = user?.isLocal ? t('auth.localWorkspace', 'Saved on this device') : user?.email
   const isAllNotes = !selectedFolderId && !selectedTagFilter
+  const cloudEnabled = isBackendConfigured()
 
   return (
     <nav aria-label="Workspace" className="flex h-full w-full flex-col bg-nav text-nav-text">
-      {/* ---- Brand ------------------------------------------------- */}
+      {/* Brand */}
       <div className="flex shrink-0 items-center gap-2.5 px-4 pb-4 pt-4">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-gradient-to-br from-primary-500 to-primary-700 text-white shadow-sm">
           <svg
@@ -221,7 +224,7 @@ export default function Sidebar({ onNavigate }) {
         />
       </div>
 
-      {/* ---- Quick note -------------------------------------------- */}
+      {/* Quick note */}
       <div className="shrink-0 px-4 pb-4">
         <button
           type="button"
@@ -234,7 +237,7 @@ export default function Sidebar({ onNavigate }) {
         </button>
       </div>
 
-      {/* ---- Scrollable navigation --------------------------------- */}
+      {/* Scrollable navigation */}
       <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-3 pb-4">
         <ul className="space-y-0.5">
           <li>
@@ -258,14 +261,16 @@ export default function Sidebar({ onNavigate }) {
               onClick={go(() => setSelectedTagFilter('__starred__'))}
             />
           </li>
-          <li>
-            <NavItem
-              icon={Users}
-              label={t('sidebar.sharedNotes', 'Shared with me')}
-              count={pendingShares?.length || 0}
-              onClick={go(() => setSharedNotesViewOpen(true))}
-            />
-          </li>
+          {cloudEnabled && (
+            <li>
+              <NavItem
+                icon={Users}
+                label={t('sidebar.sharedNotes', 'Shared with me')}
+                count={pendingShares?.length || 0}
+                onClick={go(() => setSharedNotesViewOpen(true))}
+              />
+            </li>
+          )}
           <li>
             <NavItem
               icon={Trash2}
@@ -284,9 +289,9 @@ export default function Sidebar({ onNavigate }) {
           </li>
           <li>
             <NavItem
-              icon={LayoutTemplate}
-              label={t('sidebar.templates', 'Templates')}
-              onClick={go(() => setTemplatesModalOpen(true))}
+              icon={Sparkles}
+              label={t('sidebar.noteTypes', 'Note types')}
+              onClick={go(() => setNoteTypesModalOpen(true))}
             />
           </li>
           <li>
@@ -298,7 +303,7 @@ export default function Sidebar({ onNavigate }) {
           </li>
         </ul>
 
-        {/* ---- Folders --------------------------------------------- */}
+        {/* Folders */}
         <section aria-label={t('sidebar.folders')}>
           <SectionHeader
             label={t('sidebar.folders')}
@@ -352,7 +357,7 @@ export default function Sidebar({ onNavigate }) {
           )}
         </section>
 
-        {/* ---- Tags ------------------------------------------------- */}
+        {/* Tags */}
         <section aria-label={t('sidebar.tags')}>
           <SectionHeader
             label={t('sidebar.tags')}
@@ -399,17 +404,21 @@ export default function Sidebar({ onNavigate }) {
         </section>
       </div>
 
-      {/* ---- Footer ------------------------------------------------ */}
+      {/* Footer */}
       <div className="qn-safe-bottom shrink-0 px-3 pb-3">
-        {/* The reference shows an "Upgrade to Pro" card here. QuickNotes
-            is GPL-3.0 and ships no paid tier, so that block is a mockup
-            artifact and is deliberately not implemented. */}
         <ul className="space-y-0.5 border-t border-nav-border pt-2">
           <li>
             <NavItem
               icon={Settings}
               label={t('sidebar.settings', 'Settings')}
               onClick={() => setSettingsOpen(true)}
+            />
+          </li>
+          <li>
+            <NavItem
+              icon={Keyboard}
+              label={t('sidebar.keyboardShortcuts', 'Keyboard shortcuts')}
+              onClick={() => setShortcutsModalOpen(true)}
             />
           </li>
           <li>
@@ -438,7 +447,7 @@ export default function Sidebar({ onNavigate }) {
           <Avatar user={user} size="md" />
           <span className="min-w-0 flex-1">
             <span className="block truncate text-ui-lg font-semibold text-nav-text">{displayName}</span>
-            <span className="block truncate text-ui-sm text-nav-subtle">{user?.email}</span>
+            <span className="block truncate text-ui-sm text-nav-subtle">{accountDetail}</span>
           </span>
           <ChevronDown className="h-3.5 w-3.5 shrink-0 text-nav-subtle" aria-hidden="true" />
         </button>
@@ -479,7 +488,9 @@ export default function Sidebar({ onNavigate }) {
             logout()
           }}
         >
-          {t('auth.signOut', 'Sign out')}
+          {user?.isLocal
+            ? t('auth.closeWorkspace', 'Close workspace')
+            : t('auth.signOut', 'Sign out')}
         </MenuItem>
       </Menu>
 

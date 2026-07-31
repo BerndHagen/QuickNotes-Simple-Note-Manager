@@ -10,13 +10,9 @@ const SIZES = {
 /**
  * User avatar with a deterministic initials fallback.
  *
- * The profile picture lives in `user_metadata.avatar_url`. The settings
- * screen rendered it but the sidebar did not, so a user with a picture
- * saw it in one place and initials in the other. Both now use this.
- *
- * A broken or slow image URL falls back to initials via `onError`
- * instead of the previous approach of hiding the `<img>` and unhiding
- * its DOM sibling, which broke as soon as the markup around it changed.
+ * The profile picture lives in `user_metadata.avatar_url`. A broken or
+ * unreachable URL falls back to initials through `onError`, so the
+ * fallback does not depend on the surrounding markup.
  */
 export default function Avatar({ user, size = 'md', className = '' }) {
   const url = user?.user_metadata?.avatar_url || null

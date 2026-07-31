@@ -3,6 +3,8 @@ import { X, Tag, Trash2, Edit2, Check, Plus, Hash } from 'lucide-react'
 import { useNotesStore, useUIStore } from '../store'
 import { useTranslation } from '../lib/useTranslation'
 import LegacyDialog from './ui/LegacyDialog'
+import { MAX_TAG_NAME_LENGTH } from '../lib/dataValidation'
+import toast from 'react-hot-toast'
 
 const TAG_COLORS = [
   // Reds
@@ -72,13 +74,17 @@ export default function TagManagerModal() {
 
   const handleSaveEdit = () => {
     if (editingName.trim() && editingTagId) {
-      updateTag(editingTagId, { 
-        name: editingName.trim(), 
-        color: editingColor 
-      })
-      setEditingTagId(null)
-      setEditingName('')
-      setEditingColor('')
+      try {
+        updateTag(editingTagId, {
+          name: editingName,
+          color: editingColor,
+        })
+        setEditingTagId(null)
+        setEditingName('')
+        setEditingColor('')
+      } catch (error) {
+        toast.error(error.message)
+      }
     }
   }
 
@@ -95,10 +101,14 @@ export default function TagManagerModal() {
 
   const handleCreateTag = () => {
     if (newTagName.trim()) {
-      createTag({
-        name: newTagName.trim(),
-        color: newTagColor
-      })
+      const alreadyExists = tags.some(
+        (tag) => tag.name.toLowerCase() === newTagName.trim().toLowerCase()
+      )
+      if (alreadyExists) {
+        toast.error('A tag with this name already exists')
+        return
+      }
+      createTag({ name: newTagName, color: newTagColor })
       setNewTagName('')
       setNewTagColor('#3b82f6')
       setShowNewTag(false)
@@ -143,6 +153,7 @@ export default function TagManagerModal() {
                   <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
                     type="text"
+                    maxLength={MAX_TAG_NAME_LENGTH}
                     value={newTagName}
                     onChange={(e) => setNewTagName(e.target.value)}
                     placeholder={t('tags.tagName', 'Tag name')}
@@ -209,6 +220,7 @@ export default function TagManagerModal() {
                           <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                           <input
                             type="text"
+                            maxLength={MAX_TAG_NAME_LENGTH}
                             value={editingName}
                             onChange={(e) => setEditingName(e.target.value)}
                             className="w-full pl-9 pr-3 py-2 bg-white dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"

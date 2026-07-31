@@ -6,7 +6,6 @@ import {
   Flag,
   ChevronDown,
   ChevronRight,
-  GripVertical,
   CheckCircle2,
   Circle,
   Clock,
@@ -21,7 +20,9 @@ import {
   ListTodo,
   X
 } from 'lucide-react'
-import { generateId } from './noteTypes'
+import { formatDateKey, generateId, parseDateKey } from './noteTypes'
+import FocusedNoteTitle from './FocusedNoteTitle'
+import { ConfirmDialog } from '../FolderDialogs'
 const PRIORITIES = {
   high: { label: 'High', color: '#ef4444', bgColor: '#fef2f2', icon: '\u{1F534}' },
   medium: { label: 'Medium', color: '#f59e0b', bgColor: '#fffbeb', icon: '\u{1F7E1}' },
@@ -43,7 +44,7 @@ const SORT_OPTIONS = [
   { id: 'alphabetical', label: 'A-Z' },
 ]
 
-export default function TodoListEditor({ data, onChange, noteTitle }) {
+export default function TodoListEditor({ data, onChange, noteTitle, onTitleChange, readOnly }) {
   const [tasks, setTasks] = useState(data?.tasks || [])
   const [filter, setFilter] = useState(data?.filter || 'all')
   const [sortBy, setSortBy] = useState(data?.sortBy || 'priority')
@@ -52,8 +53,7 @@ export default function TodoListEditor({ data, onChange, noteTitle }) {
   const [expandedTaskId, setExpandedTaskId] = useState(null)
   const [showFilterMenu, setShowFilterMenu] = useState(false)
   const [showSortMenu, setShowSortMenu] = useState(false)
-  const [draggedTask, setDraggedTask] = useState(null)
-  
+  const [clearCompletedOpen, setClearCompletedOpen] = useState(false)
   const inputRef = useRef(null)
   const filterRef = useRef(null)
   const sortRef = useRef(null)
@@ -165,7 +165,7 @@ export default function TodoListEditor({ data, onChange, noteTitle }) {
   }
   const getFilteredTasks = () => {
     let filtered = [...tasks]
-    const today = new Date().toISOString().split('T')[0]
+    const today = formatDateKey()
     switch (filter) {
       case 'active':
         filtered = filtered.filter(t => !t.completed)
@@ -192,11 +192,11 @@ export default function TodoListEditor({ data, onChange, noteTitle }) {
         case 'dueDate':
           if (!a.dueDate) return 1
           if (!b.dueDate) return -1
-          return new Date(a.dueDate) - new Date(b.dueDate)
+          return parseDateKey(a.dueDate) - parseDateKey(b.dueDate)
         case 'created':
           return new Date(b.createdAt) - new Date(a.createdAt)
         case 'alphabetical':
-          return a.text.localeCompare(b.text)
+          return a.text.localeCompare(b.text, 'en-US')
         default:
           return 0
       }
@@ -209,45 +209,25 @@ export default function TodoListEditor({ data, onChange, noteTitle }) {
     total: tasks.length,
     completed: tasks.filter(t => t.completed).length,
     active: tasks.filter(t => !t.completed).length,
-    overdue: tasks.filter(t => t.dueDate && t.dueDate < new Date().toISOString().split('T')[0] && !t.completed).length,
+    overdue: tasks.filter(t => t.dueDate && t.dueDate < formatDateKey() && !t.completed).length,
     progress: tasks.length > 0 ? Math.round((tasks.filter(t => t.completed).length / tasks.length) * 100) : 0,
   }
-  const handleDragStart = (e, task) => {
-    setDraggedTask(task)
-    e.dataTransfer.effectAllowed = 'move'
-  }
-
-  const handleDragOver = (e, task) => {
-    e.preventDefault()
-    if (!draggedTask || draggedTask.id === task.id) return
-  }
-
-  const handleDrop = (e, targetTask) => {
-    e.preventDefault()
-    if (!draggedTask || draggedTask.id === targetTask.id) return
-
-    const newTasks = [...tasks]
-    const draggedIndex = newTasks.findIndex(t => t.id === draggedTask.id)
-    const targetIndex = newTasks.findIndex(t => t.id === targetTask.id)
-
-    newTasks.splice(draggedIndex, 1)
-    newTasks.splice(targetIndex, 0, draggedTask)
-
-    setTasks(newTasks)
-    setDraggedTask(null)
-  }
-
   const filteredTasks = getFilteredTasks()
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-gray-900">
-      <div className="flex-shrink-0 p-4 border-b border-[#cbd1db] dark:border-gray-700 bg-[#e5eaf0] dark:bg-gray-800">
+    <>
+      <div className="qn-type-editor qn-type-todo flex flex-col h-full bg-white dark:bg-gray-900">
+      <div className="qn-type-hero flex-shrink-0 p-4 border-b border-[#cbd1db] dark:border-gray-700 bg-[#e5eaf0] dark:bg-gray-800">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <CheckCircle2 className="w-7 h-7" />
-              {noteTitle || 'To-Do List'}
-            </h1>
+            <FocusedNoteTitle
+              icon={CheckCircle2}
+              typeLabel="Task workspace"
+              title={noteTitle}
+              fallback="Task list"
+              onChange={onTitleChange}
+              readOnly={readOnly}
+            />
             <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
               {stats.active} tasks remaining {"\u2022"} {stats.completed} completed
             </p>
@@ -295,10 +275,12 @@ export default function TodoListEditor({ data, onChange, noteTitle }) {
           </div>
         </div>
       </div>
-      <div className="flex-shrink-0 p-3 border-b border-[#cbd1db] dark:border-gray-700 flex items-center gap-2 bg-gray-50 dark:bg-gray-800">
+      <div className="qn-type-tabs flex-shrink-0 p-3 border-b border-[#cbd1db] dark:border-gray-700 flex items-center gap-2 bg-gray-50 dark:bg-gray-800">
         <div className="relative" ref={filterRef}>
           <button
             onClick={() => setShowFilterMenu(!showFilterMenu)}
+            aria-label="Filter tasks"
+            aria-expanded={showFilterMenu}
             className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
           >
             <Filter className="w-4 h-4 text-gray-500" />
@@ -316,6 +298,7 @@ export default function TodoListEditor({ data, onChange, noteTitle }) {
                   <button
                     key={f.id}
                     onClick={() => { setFilter(f.id); setShowFilterMenu(false) }}
+                    aria-pressed={filter === f.id}
                     className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
                       filter === f.id ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600' : 'text-gray-700 dark:text-gray-300'
                     }`}
@@ -331,6 +314,8 @@ export default function TodoListEditor({ data, onChange, noteTitle }) {
         <div className="relative" ref={sortRef}>
           <button
             onClick={() => setShowSortMenu(!showSortMenu)}
+            aria-label="Sort tasks"
+            aria-expanded={showSortMenu}
             className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
           >
             <SortAsc className="w-4 h-4 text-gray-500" />
@@ -346,6 +331,7 @@ export default function TodoListEditor({ data, onChange, noteTitle }) {
                 <button
                   key={s.id}
                   onClick={() => { setSortBy(s.id); setShowSortMenu(false) }}
+                  aria-pressed={sortBy === s.id}
                   className={`w-full text-left px-4 py-2.5 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
                     sortBy === s.id ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600' : 'text-gray-700 dark:text-gray-300'
                   }`}
@@ -361,9 +347,7 @@ export default function TodoListEditor({ data, onChange, noteTitle }) {
         <button
           onClick={() => {
             const completedTasks = tasks.filter(t => t.completed)
-            if (completedTasks.length > 0 && confirm(`Delete ${completedTasks.length} completed tasks?`)) {
-              setTasks(tasks.filter(t => !t.completed))
-            }
+            if (completedTasks.length > 0) setClearCompletedOpen(true)
           }}
           className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm"
           disabled={!tasks.some(t => t.completed)}
@@ -377,6 +361,7 @@ export default function TodoListEditor({ data, onChange, noteTitle }) {
           <input
             ref={inputRef}
             type="text"
+            aria-label="New task"
             value={newTaskText}
             onChange={(e) => setNewTaskText(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && addTask()}
@@ -386,7 +371,7 @@ export default function TodoListEditor({ data, onChange, noteTitle }) {
           <button
             onClick={addTask}
             disabled={!newTaskText.trim()}
-            className="px-4 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white font-medium transition-colors flex items-center gap-2"
+            className="px-4 py-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white font-medium transition-colors flex items-center gap-2"
           >
             <Plus className="w-5 h-5" />
             Add
@@ -424,14 +409,23 @@ export default function TodoListEditor({ data, onChange, noteTitle }) {
               onAddSubtask={(text) => addSubtask(task.id, text)}
               onToggleSubtask={(subtaskId) => toggleSubtask(task.id, subtaskId)}
               onDeleteSubtask={(subtaskId) => deleteSubtask(task.id, subtaskId)}
-              onDragStart={(e) => handleDragStart(e, task)}
-              onDragOver={(e) => handleDragOver(e, task)}
-              onDrop={(e) => handleDrop(e, task)}
             />
           ))
         )}
       </div>
-    </div>
+      </div>
+      <ConfirmDialog
+        open={clearCompletedOpen}
+        onClose={() => setClearCompletedOpen(false)}
+        onConfirm={() => setTasks(tasks.filter((task) => !task.completed))}
+        title="Clear completed tasks?"
+        description={`${tasks.filter((task) => task.completed).length} completed task${
+          tasks.filter((task) => task.completed).length === 1 ? '' : 's'
+        } will be permanently removed from this note.`}
+        confirmLabel="Clear completed"
+        icon={CheckCheck}
+      />
+    </>
   )
 }
 function TaskItem({
@@ -449,9 +443,6 @@ function TaskItem({
   onAddSubtask,
   onToggleSubtask,
   onDeleteSubtask,
-  onDragStart,
-  onDragOver,
-  onDrop,
 }) {
   const [editText, setEditText] = useState(task.text)
   const [newSubtaskText, setNewSubtaskText] = useState('')
@@ -482,17 +473,13 @@ function TaskItem({
   }, [])
 
   const priority = PRIORITIES[task.priority]
-  const isOverdue = task.dueDate && task.dueDate < new Date().toISOString().split('T')[0] && !task.completed
+  const isOverdue = task.dueDate && task.dueDate < formatDateKey() && !task.completed
   const subtaskProgress = task.subtasks.length > 0 
     ? Math.round((task.subtasks.filter(st => st.completed).length / task.subtasks.length) * 100)
     : null
 
   return (
     <div
-      draggable
-      onDragStart={onDragStart}
-      onDragOver={onDragOver}
-      onDrop={onDrop}
       className={`group rounded-xl border-2 transition-all ${
         task.completed 
           ? 'bg-gray-50 dark:bg-gray-800/50 border-[#cbd1db] dark:border-gray-700 opacity-60' 
@@ -500,11 +487,9 @@ function TaskItem({
       }`}
     >
       <div className="flex items-center gap-3 p-3">
-        <div className="cursor-grab opacity-0 group-hover:opacity-100 transition-opacity">
-          <GripVertical className="w-4 h-4 text-gray-400" />
-        </div>
         <button
           onClick={onToggle}
+          aria-label={task.completed ? `Mark ${task.text} incomplete` : `Complete ${task.text}`}
           className="flex-shrink-0 transition-transform hover:scale-110"
         >
           {task.completed ? (
@@ -518,6 +503,7 @@ function TaskItem({
             <input
               ref={editInputRef}
               type="text"
+              aria-label={`Edit ${task.text}`}
               value={editText}
               onChange={(e) => setEditText(e.target.value)}
               onKeyDown={(e) => {
@@ -545,7 +531,7 @@ function TaskItem({
                   : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
               }`}>
                 <Calendar className="w-3 h-3" />
-                {new Date(task.dueDate).toLocaleDateString()}
+                {parseDateKey(task.dueDate).toLocaleDateString('en-US')}
               </span>
             )}
             {task.subtasks.length > 0 && (
@@ -557,6 +543,8 @@ function TaskItem({
         </div>
         <button
           onClick={() => onUpdate({ starred: !task.starred })}
+          aria-label={task.starred ? `Remove star from ${task.text}` : `Star ${task.text}`}
+          aria-pressed={task.starred}
           className={`p-1 rounded transition-colors ${
             task.starred ? 'text-yellow-500' : 'text-gray-300 hover:text-yellow-500'
           }`}
@@ -566,6 +554,8 @@ function TaskItem({
         <div className="relative" ref={priorityRef}>
           <button
             onClick={() => setShowPriorityMenu(!showPriorityMenu)}
+            aria-label={`Set priority for ${task.text}. Current priority: ${priority.label}`}
+            aria-expanded={showPriorityMenu}
             className="p-1.5 rounded-lg transition-colors"
             style={{ backgroundColor: priority.bgColor, color: priority.color }}
             title={`Priority: ${priority.label}`}
@@ -579,6 +569,7 @@ function TaskItem({
                 <button
                   key={key}
                   onClick={() => { onUpdate({ priority: key }); setShowPriorityMenu(false) }}
+                  aria-pressed={task.priority === key}
                   className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-800 ${
                     task.priority === key ? 'bg-gray-100 dark:bg-gray-800' : ''
                   }`}
@@ -595,24 +586,30 @@ function TaskItem({
             type="date"
             value={task.dueDate || ''}
             onChange={(e) => onUpdate({ dueDate: e.target.value || null })}
+            aria-label={`Due date for ${task.text}`}
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
             style={{ colorScheme: 'dark light' }}
           />
           <button 
+            type="button"
+            tabIndex={-1}
+            aria-hidden="true"
             className={`p-1.5 rounded-lg transition-all hover:scale-110 ${
               task.dueDate 
                 ? isOverdue 
                   ? 'bg-red-100 dark:bg-red-900/30 text-red-500 hover:bg-red-200 dark:hover:bg-red-900/50'
-                  : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 hover:bg-emerald-200 dark:hover:bg-emerald-900/50'
+                  : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-900/50'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-600'
             }`}
-            title={task.dueDate ? `Due: ${new Date(task.dueDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}` : "Set due date"}
+            title={task.dueDate ? `Due: ${parseDateKey(task.dueDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}` : "Set due date"}
           >
             <Calendar className="w-4 h-4" />
           </button>
         </div>
         <button
           onClick={onExpand}
+          aria-label={isExpanded ? `Collapse details for ${task.text}` : `Expand details for ${task.text}`}
+          aria-expanded={isExpanded}
           className="p-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
         >
           {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
@@ -620,7 +617,9 @@ function TaskItem({
         <div className="relative" ref={moreRef}>
           <button
             onClick={() => setShowMoreMenu(!showMoreMenu)}
-            className="p-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors opacity-0 group-hover:opacity-100"
+            aria-label={`More actions for ${task.text}`}
+            aria-expanded={showMoreMenu}
+            className="p-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
           >
             <MoreHorizontal className="w-4 h-4" />
           </button>
@@ -664,6 +663,7 @@ function TaskItem({
                 <div key={subtask.id} className="flex items-center gap-2 group/subtask">
                   <button
                     onClick={() => onToggleSubtask(subtask.id)}
+                    aria-label={subtask.completed ? `Mark ${subtask.text} incomplete` : `Complete ${subtask.text}`}
                     className="flex-shrink-0"
                   >
                     {subtask.completed ? (
@@ -677,6 +677,7 @@ function TaskItem({
                   </span>
                   <button
                     onClick={() => onDeleteSubtask(subtask.id)}
+                    aria-label={`Delete ${subtask.text}`}
                     className="p-1 opacity-0 group-hover/subtask:opacity-100 text-gray-400 hover:text-red-500"
                   >
                     <X className="w-3 h-3" />
@@ -685,9 +686,10 @@ function TaskItem({
               ))}
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row">
               <input
                 type="text"
+                aria-label={`New subtask for ${task.text}`}
                 value={newSubtaskText}
                 onChange={(e) => setNewSubtaskText(e.target.value)}
                 onKeyDown={(e) => {
@@ -706,7 +708,7 @@ function TaskItem({
                     setNewSubtaskText('')
                   }
                 }}
-                className="px-3 py-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 hover:bg-emerald-200 dark:hover:bg-emerald-800/30 text-sm"
+                className="px-3 py-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-800/30 text-sm font-medium"
               >
                 Add
               </button>
@@ -715,6 +717,7 @@ function TaskItem({
           <div>
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">Notes</span>
             <textarea
+              aria-label={`Notes for ${task.text}`}
               value={task.notes}
               onChange={(e) => onUpdate({ notes: e.target.value })}
               placeholder="Add notes..."

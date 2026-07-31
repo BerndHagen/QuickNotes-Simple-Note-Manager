@@ -31,9 +31,7 @@ describe('filterNotes', () => {
     expect(filterNotes(notes, { scope: 'trash' }).map((n) => n.title)).toEqual(['binned'])
   })
 
-  // Regression: the store's copy of this logic had no `__starred__`
-  // branch, so it fell through to a tag match on the literal string and
-  // returned nothing for the Favourites view.
+  // The favourites sentinel must not fall through to a literal tag match.
   it('treats __starred__ as a favourites filter, not a tag name', () => {
     const notes = [
       note({ title: 'fav', starred: true }),
@@ -55,8 +53,8 @@ describe('filterNotes', () => {
     expect(filterNotes(notes, { tagFilter: 'work', folderId: 'f1' }).map((n) => n.title)).toEqual(['a'])
   })
 
-  // Regression: the store searched `note.content` directly, so any query
-  // matching an HTML tag or attribute name matched every formatted note.
+  // Searching the stored HTML would make queries like "div" match every
+  // formatted note.
   it('searches rendered text, not the underlying HTML', () => {
     const notes = [
       note({ title: 'Recipe', content: '<div class="span"><p>Tomato soup</p></div>' }),

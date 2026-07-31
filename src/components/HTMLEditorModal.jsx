@@ -2,7 +2,9 @@ import { useState, useEffect, useRef } from 'react'
 import { X, Code, Copy, Check, Eye, EyeOff, Download, Upload, AlertTriangle } from 'lucide-react'
 import { useUIStore } from '../store'
 import { useTranslation } from '../lib/useTranslation'
+import { sanitizeNoteHtml } from '../lib/sanitizeHtml'
 import LegacyDialog from './ui/LegacyDialog'
+import { ConfirmDialog } from './FolderDialogs'
 
 export default function HTMLEditorModal({ editor }) {
   const { htmlEditorOpen, setHTMLEditorOpen } = useUIStore()
@@ -12,6 +14,7 @@ export default function HTMLEditorModal({ editor }) {
   const [showPreview, setShowPreview] = useState(false)
   const [copied, setCopied] = useState(false)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const [discardConfirmOpen, setDiscardConfirmOpen] = useState(false)
   const textareaRef = useRef(null)
 
   useEffect(() => {
@@ -45,7 +48,7 @@ export default function HTMLEditorModal({ editor }) {
 
   const handleApply = () => {
     if (editor) {
-      const cleanHtml = minifyHtml(htmlContent)
+      const cleanHtml = sanitizeNoteHtml(minifyHtml(htmlContent))
       editor.commands.setContent(cleanHtml)
       setHasUnsavedChanges(false)
       setHTMLEditorOpen(false)
@@ -93,9 +96,7 @@ export default function HTMLEditorModal({ editor }) {
 
   const handleClose = () => {
     if (hasUnsavedChanges) {
-      if (window.confirm('You have unsaved changes. Are you sure you want to close?')) {
-        setHTMLEditorOpen(false)
-      }
+      setDiscardConfirmOpen(true)
     } else {
       setHTMLEditorOpen(false)
     }
@@ -104,7 +105,7 @@ export default function HTMLEditorModal({ editor }) {
   if (!htmlEditorOpen) return null
 
   return (
-    <LegacyDialog label="Edit HTML" onClose={() => setHTMLEditorOpen(false)} align="center">
+    <LegacyDialog label="Edit HTML" onClose={handleClose} align="center">
       <div className="modal-animate bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-[#cbd1db] dark:border-gray-700 w-full max-w-4xl mx-4 h-[85vh] overflow-hidden flex flex-col">
         <div className="flex items-center justify-between p-5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
           <div className="flex items-center gap-3">
@@ -189,7 +190,7 @@ export default function HTMLEditorModal({ editor }) {
               </div>
               <div 
                 className="flex-1 p-4 overflow-auto prose prose-sm dark:prose-invert max-w-none"
-                dangerouslySetInnerHTML={{ __html: htmlContent }}
+                dangerouslySetInnerHTML={{ __html: sanitizeNoteHtml(htmlContent) }}
               />
             </div>
           )}
@@ -215,6 +216,18 @@ export default function HTMLEditorModal({ editor }) {
           </div>
         </div>
       </div>
+      <ConfirmDialog
+        open={discardConfirmOpen}
+        onClose={() => setDiscardConfirmOpen(false)}
+        onConfirm={() => {
+          setDiscardConfirmOpen(false)
+          setHTMLEditorOpen(false)
+        }}
+        title="Discard HTML changes?"
+        description="Your edits in the HTML source view have not been applied."
+        confirmLabel="Discard changes"
+        icon={AlertTriangle}
+      />
     </LegacyDialog>
   )
 }

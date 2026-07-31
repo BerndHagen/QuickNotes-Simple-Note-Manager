@@ -4,6 +4,7 @@ import { SaveStatus } from './SyncStatus'
 import { useUIStore } from '../store'
 import { useTranslation } from '../lib/useTranslation'
 import { formatSyncTime } from '../lib/utils'
+import { isBackendConfigured } from '../lib/backend'
 
 const calculateReadingTime = (wordCount) => {
   const minutes = Math.ceil(wordCount / 200)
@@ -68,49 +69,58 @@ export default function NoteStatistics({ note }) {
   }, [note])
 
   if (!stats) return null
+  const isSpecialized = note.noteType && note.noteType !== 'standard'
 
   /* Metrics scroll horizontally inside their own track on narrow
      screens; the save state stays pinned so it is never scrolled out
      of reach. */
   return (
     <footer className="qn-safe-bottom flex shrink-0 items-center gap-3 border-t border-subtle bg-surface px-3 py-2 sm:px-5">
-      <ul className="flex min-w-0 flex-1 items-center gap-3 overflow-x-auto text-ui-sm text-content-muted [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <li className="flex shrink-0 items-center gap-1.5">
-          <Type className="h-3.5 w-3.5 opacity-60" aria-hidden="true" />
-          <span className="tabular-nums">{stats.words.toLocaleString()}</span> words
-        </li>
-        <li className="flex shrink-0 items-center gap-1.5">
-          <Hash className="h-3.5 w-3.5 opacity-60" aria-hidden="true" />
-          <span className="tabular-nums">{stats.characters.toLocaleString()}</span> chars
-        </li>
-        <li className="flex shrink-0 items-center gap-1.5">
-          <Clock className="h-3.5 w-3.5 opacity-60" aria-hidden="true" />
-          {stats.readingTime}
-        </li>
-        {stats.checklistTotal > 0 && (
+      {isSpecialized ? (
+        <span className="min-w-0 flex-1 text-ui-sm text-content-subtle">
+          Structured workspace
+        </span>
+      ) : (
+        <ul className="flex min-w-0 flex-1 items-center gap-3 overflow-x-auto text-ui-sm text-content-muted [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <li className="flex shrink-0 items-center gap-1.5">
-            <FileText className="h-3.5 w-3.5 opacity-60" aria-hidden="true" />
-            <span className="tabular-nums">
-              {stats.checklistDone}/{stats.checklistTotal}
-            </span>{' '}
-            tasks
+            <Type className="h-3.5 w-3.5 opacity-60" aria-hidden="true" />
+            <span className="tabular-nums">{stats.words.toLocaleString('en-US')}</span> words
           </li>
-        )}
-      </ul>
+          <li className="flex shrink-0 items-center gap-1.5">
+            <Hash className="h-3.5 w-3.5 opacity-60" aria-hidden="true" />
+            <span className="tabular-nums">{stats.characters.toLocaleString('en-US')}</span> chars
+          </li>
+          <li className="flex shrink-0 items-center gap-1.5">
+            <Clock className="h-3.5 w-3.5 opacity-60" aria-hidden="true" />
+            {stats.readingTime}
+          </li>
+          {stats.checklistTotal > 0 && (
+            <li className="flex shrink-0 items-center gap-1.5">
+              <FileText className="h-3.5 w-3.5 opacity-60" aria-hidden="true" />
+              <span className="tabular-nums">
+                {stats.checklistDone}/{stats.checklistTotal}
+              </span>{' '}
+              tasks
+            </li>
+          )}
+        </ul>
+      )}
 
       <div className="flex shrink-0 items-center gap-2">
         <span className="hidden text-ui-sm text-content-subtle lg:inline">
           {t('editor.lastEdited', 'Last edited')}: {formatSyncTime(stats.updatedAt)}
         </span>
         <SaveStatus note={note} />
-        <button
-          type="button"
-          onClick={() => setShareModalOpen(true, note.id)}
-          className="hidden h-control-sm items-center gap-1.5 rounded-control border border-strong px-2.5 text-ui-sm font-medium text-content transition-colors duration-fast hover:bg-surface-hover sm:inline-flex"
-        >
-          <Share2 className="h-3.5 w-3.5" aria-hidden="true" />
-          {t('editor.share', 'Share')}
-        </button>
+        {isBackendConfigured() && (
+          <button
+            type="button"
+            onClick={() => setShareModalOpen(true, note.id)}
+            className="hidden h-control-sm items-center gap-1.5 rounded-control border border-strong px-2.5 text-ui-sm font-medium text-content transition-colors duration-fast hover:bg-surface-hover sm:inline-flex"
+          >
+            <Share2 className="h-3.5 w-3.5" aria-hidden="true" />
+            {t('editor.share', 'Share')}
+          </button>
+        )}
       </div>
     </footer>
   )
@@ -181,12 +191,12 @@ export function NoteStatisticsDetailed({ note }) {
     {
       title: 'Content',
       items: [
-        { label: 'Words', value: stats.words.toLocaleString() },
-        { label: 'Characters', value: stats.characters.toLocaleString() },
-        { label: 'Characters (with spaces)', value: stats.charactersWithSpaces.toLocaleString() },
-        { label: 'Sentences', value: stats.sentences.toLocaleString() },
-        { label: 'Paragraphs', value: stats.paragraphs.toLocaleString() },
-        { label: 'Lines', value: stats.lines.toLocaleString() },
+        { label: 'Words', value: stats.words.toLocaleString('en-US') },
+        { label: 'Characters', value: stats.characters.toLocaleString('en-US') },
+        { label: 'Characters (with spaces)', value: stats.charactersWithSpaces.toLocaleString('en-US') },
+        { label: 'Sentences', value: stats.sentences.toLocaleString('en-US') },
+        { label: 'Paragraphs', value: stats.paragraphs.toLocaleString('en-US') },
+        { label: 'Lines', value: stats.lines.toLocaleString('en-US') },
       ]
     },
     {

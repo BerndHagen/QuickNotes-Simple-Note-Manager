@@ -3,6 +3,7 @@ import { X, Bell, Calendar, Clock, Trash2, Plus, Check, AlertCircle } from 'luci
 import { useNotesStore, useUIStore } from '../store'
 import { useTranslation } from '../lib/useTranslation'
 import LegacyDialog from './ui/LegacyDialog'
+import { getNextReminderDate } from '../lib/reminders'
 
 export default function ReminderModal() {
   const { reminderModalOpen, setReminderModalOpen, reminderNoteId } = useUIStore()
@@ -12,6 +13,7 @@ export default function ReminderModal() {
   const [time, setTime] = useState('')
   const [repeat, setRepeat] = useState('none')
   const [reminders, setReminders] = useState([])
+  const [validationError, setValidationError] = useState('')
 
   const note = reminderNoteId ? notes.find(n => n.id === reminderNoteId) : getSelectedNote()
   useEffect(() => {
@@ -31,24 +33,38 @@ export default function ReminderModal() {
       
       notes.forEach(n => {
         if (n.reminders && n.reminders.length > 0) {
-          n.reminders.forEach(reminder => {
-            if (reminder.notified) return
+          let changed = false
+          const updatedReminders = n.reminders.map(reminder => {
+            if (reminder.notified) return reminder
             
             const reminderTime = new Date(reminder.datetime)
             if (reminderTime <= now) {
-              if (Notification.permission === 'granted') {
+              if ('Notification' in window && Notification.permission === 'granted') {
                 new Notification('QuickNotes Reminder', {
                   body: `\u{1F4DD} ${n.title}`,
                   icon: '/favicon.ico',
                   tag: reminder.id,
                 })
               }
-              const updatedReminders = n.reminders.map(r => 
-                r.id === reminder.id ? { ...r, notified: true } : r
+              changed = true
+              const nextDate = getNextReminderDate(
+                reminder.datetime,
+                reminder.repeat,
+                now,
+                reminder.repeatDay
               )
-              updateNote(n.id, { reminders: updatedReminders })
+              return nextDate
+                ? {
+                    ...reminder,
+                    datetime: nextDate.toISOString(),
+                    notified: false,
+                    lastTriggeredAt: now.toISOString(),
+                  }
+                : { ...reminder, notified: true, lastTriggeredAt: now.toISOString() }
             }
+            return reminder
           })
+          if (changed) void updateNote(n.id, { reminders: updatedReminders })
         }
       })
     }
@@ -56,29 +72,30 @@ export default function ReminderModal() {
     const interval = setInterval(checkReminders, 60000)
     
     return () => clearInterval(interval)
-  }, [notes])
-  useEffect(() => {
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission()
-    }
-  }, [])
+  }, [notes, updateNote])
 
   if (!reminderModalOpen) return null
 
-  const handleAddReminder = () => {
+  const handleAddReminder = async () => {
     if (!date || !time || !note) return
 
     const datetime = new Date(`${date}T${time}`)
     
     if (datetime <= new Date()) {
-      alert(t('reminders.selectFutureDate'))
+      setValidationError(t('reminders.selectFutureDate'))
       return
+    }
+
+    setValidationError('')
+    if ('Notification' in window && Notification.permission === 'default') {
+      await Notification.requestPermission()
     }
 
     const newReminder = {
       id: `reminder_${Date.now()}`,
       datetime: datetime.toISOString(),
       repeat,
+      ...(repeat === 'monthly' ? { repeatDay: datetime.getDate() } : {}),
       notified: false,
       createdAt: new Date().toISOString(),
     }
@@ -236,6 +253,11 @@ export default function ReminderModal() {
             <Plus className="w-4 h-4" />
             {t('reminders.addReminder')}
           </button>
+          {validationError && (
+            <p role="alert" className="text-xs font-medium text-red-600 dark:text-red-400">
+              {validationError}
+            </p>
+          )}
         </div>
         <div className="space-y-2 max-h-60 overflow-y-auto">
           {reminders.length === 0 ? (
@@ -245,7 +267,7 @@ export default function ReminderModal() {
               <p className="text-xs mt-1">{t('reminders.addReminderHint')}</p>
             </div>
           ) : (
-            reminders
+            [...reminders]
               .sort((a, b) => new Date(a.datetime) - new Date(b.datetime))
               .map((reminder) => {
                 const status = getReminderStatus(reminder)

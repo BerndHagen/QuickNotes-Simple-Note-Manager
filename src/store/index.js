@@ -4,6 +4,9 @@ import { generateId, repairMojibake } from '../lib/utils'
 import { filterNotes } from '../lib/filterNotes'
 import { db, saveNoteOffline, addToSyncQueue, getPendingSyncItems, removeSyncItem, clearLocalData, SyncStatus } from '../lib/db'
 import { backend, isBackendConfigured } from '../lib/backend'
+import { endLocalSession } from '../lib/localSession'
+import { limitNoteTitle, normalizeTagName, validateFolderName } from '../lib/dataValidation'
+import { buildFolderIdRemap, remapNoteFolder } from '../lib/syncReconciliation'
 import toast from 'react-hot-toast'
 const WELCOME_TITLE = 'Welcome to QuickNotes! \u{1F389}'
 
@@ -101,11 +104,13 @@ export const useNotesStore = create(
       isEditing: false,
       isSyncing: false,
       lastSyncTime: null,
+      lastSyncError: null,
       isOnline: navigator.onLine,
       user: null,
       isAuthChecked: false,
       sharedNotes: [],
       pendingShares: [],
+      cacheOwnerId: null,
       isNewUser: false,
       /** Transient realtime signal — deliberately not persisted. */
       externalUpdate: { noteId: null, token: 0 },
@@ -139,7 +144,7 @@ export const useNotesStore = create(
       createNote: (note = {}) => {
         const newNote = {
           id: generateId(),
-          title: note.title || 'New Note',
+          title: limitNoteTitle(note.title),
           content: note.content || '',
           folderId: note.folderId || get().selectedFolderId,
           tags: note.tags || [],
@@ -164,8 +169,30 @@ export const useNotesStore = create(
         return newNote
       },
 
+      /**
+       * Persist an in-progress editor draft in Zustand's synchronous local
+       * cache. The regular debounced update still performs IndexedDB/cloud
+       * queue work, but a reload cannot discard the most recent keystrokes.
+       */
+      updateNoteDraft: (id, updates) => {
+        set((state) => ({
+          notes: state.notes.map((note) =>
+            note.id === id ? { ...note, ...updates } : note
+          ),
+          sharedNotes: state.sharedNotes.map((share) =>
+            share.notes?.id === id
+              ? { ...share, notes: { ...share.notes, ...updates } }
+              : share
+          ),
+        }))
+      },
+
       updateNote: async (id, updates) => {
         const { notes, sharedNotes, user } = get()
+        const normalizedUpdates =
+          Object.prototype.hasOwnProperty.call(updates, 'title')
+            ? { ...updates, title: limitNoteTitle(updates.title, '') }
+            : updates
         
         const sharedNote = sharedNotes.find((share) => share.notes?.id === id)
         
@@ -174,39 +201,13 @@ export const useNotesStore = create(
             throw new Error('You do not have permission to edit this shared note')
           }
           
-          const keyMap = {
-            folderId: 'folder_id',
-            deletedAt: 'deleted_at',
-            archivedAt: 'archived_at',
-            noteType: 'note_type',
-            noteData: 'note_data',
-            sortOrder: 'sort_order',
-            createdAt: 'created_at',
-            updatedAt: 'updated_at',
-          }
-          const skipKeys = new Set(['syncStatus', 'order', 'reminders'])
-          const snakeUpdates = {}
-          for (const [key, value] of Object.entries(updates)) {
-            if (key.startsWith('_')) continue // skip internal flags like _isExternalUpdate
-            if (skipKeys.has(key)) continue
-            snakeUpdates[keyMap[key] || key] = value
-          }
-          
-          const { backend } = await import('../lib/backend')
-          const { error } = await backend
-            .from('notes')
-            .update({
-              ...snakeUpdates,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', id)
-          
-          if (error) throw error
+          const { updateSharedNote } = await import('../lib/backend')
+          await updateSharedNote(id, normalizedUpdates)
           
           set((state) => ({
             sharedNotes: state.sharedNotes.map((share) =>
               share.notes?.id === id
-                ? { ...share, notes: { ...share.notes, ...updates, updatedAt: new Date().toISOString() } }
+                ? { ...share, notes: { ...share.notes, ...normalizedUpdates, updatedAt: new Date().toISOString() } }
                 : share
             ),
           }))
@@ -215,7 +216,7 @@ export const useNotesStore = create(
         }
         
         const updatedNote = {
-          ...updates,
+          ...normalizedUpdates,
           updatedAt: new Date().toISOString(),
           syncStatus: SyncStatus.PENDING,
         }
@@ -511,9 +512,10 @@ export const useNotesStore = create(
       },
 
       createFolder: (folder = {}) => {
+        const name = validateFolderName(folder.name || 'New Folder', get().folders)
         const newFolder = {
           id: generateId(),
-          name: folder.name || 'New Folder',
+          name,
           icon: folder.icon || 'Folder',
           color: folder.color || '#6b7280',
           parentId: folder.parentId || null,
@@ -533,12 +535,16 @@ export const useNotesStore = create(
       },
 
       updateFolder: (id, updates) => {
+        const normalizedUpdates =
+          Object.prototype.hasOwnProperty.call(updates, 'name')
+            ? { ...updates, name: validateFolderName(updates.name, get().folders, id) }
+            : updates
         set((state) => ({
           folders: state.folders.map((folder) =>
             folder.id === id
               ? {
                   ...folder,
-                  ...updates,
+                  ...normalizedUpdates,
                   updatedAt: new Date().toISOString(),
                   syncStatus: SyncStatus.PENDING,
                 }
@@ -549,7 +555,7 @@ export const useNotesStore = create(
         const folder = get().folders.find((f) => f.id === id)
         if (folder) {
           db.folders.put(folder)
-          addToSyncQueue('folders', 'update', { id, ...updates })
+          addToSyncQueue('folders', 'update', { id, ...normalizedUpdates })
         }
       },
 
@@ -582,9 +588,16 @@ export const useNotesStore = create(
       },
 
       createTag: (tag) => {
+        const normalizedName = normalizeTagName(tag.name)
+
+        const existingTag = get().tags.find(
+          (existing) => existing.name.toLowerCase() === normalizedName
+        )
+        if (existingTag) return existingTag
+
         const newTag = {
           id: generateId(),
-          name: tag.name,
+          name: normalizedName,
           color: tag.color || '#6b7280',
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
@@ -605,7 +618,18 @@ export const useNotesStore = create(
         const oldTag = get().tags.find((t) => t.id === id)
         if (!oldTag) return
 
-        const updatedTag = { ...oldTag, ...updates, updatedAt: new Date().toISOString(), syncStatus: SyncStatus.PENDING }
+        const normalizedUpdates = { ...updates }
+        if (typeof normalizedUpdates.name === 'string') {
+          normalizedUpdates.name = normalizeTagName(normalizedUpdates.name)
+          const duplicate = get().tags.some(
+            (tag) =>
+              tag.id !== id &&
+              tag.name.toLowerCase() === normalizedUpdates.name.toLowerCase()
+          )
+          if (duplicate) throw new Error('A tag with this name already exists')
+        }
+
+        const updatedTag = { ...oldTag, ...normalizedUpdates, updatedAt: new Date().toISOString(), syncStatus: SyncStatus.PENDING }
 
         set((state) => ({
           tags: state.tags.map((tag) =>
@@ -613,17 +637,17 @@ export const useNotesStore = create(
           ),
         }))
 
-        if (updates.name && updates.name !== oldTag.name) {
+        if (normalizedUpdates.name && normalizedUpdates.name !== oldTag.name) {
           set((state) => ({
             notes: state.notes.map((note) => ({
               ...note,
-              tags: note.tags?.map((t) => t === oldTag.name ? updates.name : t) || [],
+              tags: note.tags?.map((t) => t === oldTag.name ? normalizedUpdates.name : t) || [],
             })),
             selectedTagFilter:
-              state.selectedTagFilter === oldTag.name ? updates.name : state.selectedTagFilter,
+              state.selectedTagFilter === oldTag.name ? normalizedUpdates.name : state.selectedTagFilter,
           }))
 
-          const affectedNotes = get().notes.filter(n => n.tags?.includes(updates.name))
+          const affectedNotes = get().notes.filter(n => n.tags?.includes(normalizedUpdates.name))
           for (const note of affectedNotes) {
             const updated = { ...note, updatedAt: new Date().toISOString(), syncStatus: SyncStatus.PENDING }
             saveNoteOffline(updated)
@@ -715,10 +739,53 @@ export const useNotesStore = create(
       setSearchQuery: (query) => set({ searchQuery: query }),
       setIsEditing: (editing) => set({ isEditing: editing }),
       setIsOnline: (online) => set({ isOnline: online }),
-      setUser: (user) => set({ user }),
+      setUser: (user) =>
+        set({
+          user,
+          ...(user?.isLocal ? { cacheOwnerId: 'local' } : {}),
+        }),
+      activateCloudUser: async (user, { adoptUnowned = false } = {}) => {
+        if (!user?.id) throw new Error('A valid cloud user is required')
+
+        const ownerId = get().cacheOwnerId
+        const mayAdoptLegacyCache = !ownerId && adoptUnowned
+        if (!mayAdoptLegacyCache && ownerId !== user.id) {
+          await clearLocalData()
+          localStorage.removeItem('quicknotes-storage')
+          set({
+            notes: [],
+            folders: [],
+            tags: [],
+            selectedNoteId: null,
+            selectedFolderId: null,
+            selectedTagFilter: null,
+            searchQuery: '',
+            sharedNotes: [],
+            pendingShares: [],
+            lastSyncTime: null,
+          })
+        }
+
+        set({ user, cacheOwnerId: user.id })
+      },
       setIsAuthChecked: (checked) => set({ isAuthChecked: checked }),
       
       logout: async () => {
+        if (!isBackendConfigured()) {
+          endLocalSession()
+          set({
+            user: null,
+            selectedFolderId: null,
+            selectedTagFilter: null,
+            searchQuery: '',
+            sharedNotes: [],
+            pendingShares: [],
+            isSyncing: false,
+            cacheOwnerId: 'local',
+          })
+          return
+        }
+
         if (isBackendConfigured()) {
           const { user } = get()
           if (user) {
@@ -752,6 +819,7 @@ export const useNotesStore = create(
           pendingShares: [],
           lastSyncTime: null,
           isSyncing: false,
+          cacheOwnerId: null,
         })
       },
 
@@ -760,30 +828,30 @@ export const useNotesStore = create(
 
       syncWithBackend: async () => {
         const { isSyncing } = get()
-        if (isSyncing) return
+        if (isSyncing) return false
         
-        set({ isSyncing: true })
+        set({ isSyncing: true, lastSyncError: null })
         
         if (!isBackendConfigured()) {
           set({ isSyncing: false })
-          return
+          return false
         }
         
         const { user } = get()
         if (!user) {
           set({ isSyncing: false })
-          return
+          return false
         }
 
         try {
           const { data: { session } } = await backend.auth.getSession()
           if (!session) {
             set({ user: null, isSyncing: false })
-            return
+            return false
           }
-        } catch {
-          set({ isSyncing: false })
-          return
+        } catch (error) {
+          set({ isSyncing: false, lastSyncError: error.message || 'Session validation failed' })
+          return false
         }
 
         const showNotifications = useUIStore.getState().showSyncNotifications
@@ -802,9 +870,8 @@ export const useNotesStore = create(
               .eq('id', item.data.id)
               .eq('user_id', user.id)
             
-            if (!error) {
-              await removeSyncItem(item.id)
-            }
+            if (error) throw error
+            await removeSyncItem(item.id)
           }
           
           const tagDeletions = pendingSyncItems.filter(
@@ -817,33 +884,26 @@ export const useNotesStore = create(
               .eq('id', item.data.id)
               .eq('user_id', user.id)
             
-            if (!error) {
-              await removeSyncItem(item.id)
-            }
+            if (error) throw error
+            await removeSyncItem(item.id)
           }
 
-          const { data: remoteFolders } = await backend
+          const { data: initialRemoteFolders, error: folderFetchError } = await backend
             .from('folders')
             .select('*')
             .eq('user_id', user.id)
+          if (folderFetchError) throw folderFetchError
 
           const localFolders = get().folders
-          const remoteFolderIds = new Set((remoteFolders || []).map(f => f.id))
-          
-          // Upload local folders that exist on server (update) or are new (insert)
-          // Skip only starter folders that don't have a matching remote ID AND the remote already has one with the same name
-          const remoteFolderNames = new Set((remoteFolders || []).map(f => f.name.toLowerCase()))
-          const starterFolderNames = new Set(['work', 'personal', 'ideas'])
-          
-          const foldersToUpload = localFolders.filter(folder => {
-            if (remoteFolderIds.has(folder.id)) {
-              return true
-            }
-            if (starterFolderNames.has(folder.name.toLowerCase()) && remoteFolderNames.has(folder.name.toLowerCase())) {
-              return false
-            }
-            return true
-          })
+          // A legacy/local starter can have the same name as its cloud copy but
+          // a different UUID. Canonicalize it to the cloud UUID so notes never
+          // upload a folder_id that was deliberately skipped.
+          const folderIdRemap = buildFolderIdRemap(
+            localFolders,
+            initialRemoteFolders || []
+          )
+
+          const foldersToUpload = localFolders.filter((folder) => !folderIdRemap.has(folder.id))
           
           for (const folder of foldersToUpload) {
             const folderData = {
@@ -852,7 +912,7 @@ export const useNotesStore = create(
               name: folder.name,
               icon: folder.icon || 'Folder',
               color: folder.color || '#10b981',
-              parent_id: folder.parentId || null,
+              parent_id: folderIdRemap.get(folder.parentId) || folder.parentId || null,
               created_at: folder.createdAt || new Date().toISOString(),
               updated_at: folder.updatedAt || folder.createdAt || new Date().toISOString(),
               sync_status: 'synced',
@@ -863,74 +923,62 @@ export const useNotesStore = create(
               .upsert(folderData)
               .select()
             
-            if (error) {
-            }
+            if (error) throw error
           }
 
-          if (remoteFolders && remoteFolders.length > 0) {
-            set((state) => {
-              const remoteFolderMap = new Map(remoteFolders.map(rf => [rf.id, rf]))
-              
-              const deletedFolderIds = new Set(folderDeletions.map(d => d.data.id))
-              
-              const mergedFolders = state.folders.map(lf => {
-                const remote = remoteFolderMap.get(lf.id)
-                if (remote) {
-                  return {
-                    id: remote.id,
-                    name: remote.name,
-                    icon: remote.icon || 'Folder',
-                    color: remote.color || '#10b981',
-                    parentId: remote.parent_id || null,
-                    createdAt: remote.created_at,
-                    updatedAt: remote.updated_at || remote.created_at,
-                    syncStatus: SyncStatus.SYNCED,
-                  }
-                }
-                return lf
-              })
-              
-              for (const rf of remoteFolders) {
-                if (deletedFolderIds.has(rf.id)) {
-                  continue
-                }
-                if (state.folders.find(lf => lf.id === rf.id)) {
-                  continue
-                }
-                mergedFolders.push({
-                  id: rf.id,
-                  name: rf.name,
-                  icon: rf.icon || 'Folder',
-                  color: rf.color || '#10b981',
-                  parentId: rf.parent_id || null,
-                  createdAt: rf.created_at,
-                  updatedAt: rf.updated_at || rf.created_at,
-                  syncStatus: SyncStatus.SYNCED,
-                })
-              }
-              
-              return { folders: mergedFolders }
+          const { data: remoteFolders, error: refreshedFolderError } = await backend
+            .from('folders')
+            .select('*')
+            .eq('user_id', user.id)
+          if (refreshedFolderError) throw refreshedFolderError
+
+          const canonicalFolders = (remoteFolders || []).map((folder) => ({
+            id: folder.id,
+            name: folder.name,
+            icon: folder.icon || 'Folder',
+            color: folder.color || '#10b981',
+            parentId: folder.parent_id || null,
+            createdAt: folder.created_at,
+            updatedAt: folder.updated_at || folder.created_at,
+            syncStatus: SyncStatus.SYNCED,
+          }))
+
+          set((state) => ({
+            folders: canonicalFolders,
+            notes: state.notes.map((note) => {
+              const remapped = remapNoteFolder(note, folderIdRemap)
+              return remapped === note
+                ? note
+                : { ...remapped, syncStatus: SyncStatus.PENDING }
+            }),
+            selectedFolderId:
+              folderIdRemap.get(state.selectedFolderId) || state.selectedFolderId,
+          }))
+
+          if (folderIdRemap.size > 0) {
+            const remappedNotes = get().notes.filter((note) =>
+              [...folderIdRemap.values()].includes(note.folderId)
+            )
+            await db.transaction('rw', db.folders, db.notes, async () => {
+              await db.folders.bulkDelete([...folderIdRemap.keys()])
+              await db.folders.bulkPut(canonicalFolders)
+              await db.notes.bulkPut(remappedNotes)
             })
+          } else if (canonicalFolders.length > 0) {
+            await db.folders.bulkPut(canonicalFolders)
           }
 
-          const { data: remoteTags } = await backend
+          const { data: initialRemoteTags, error: tagFetchError } = await backend
             .from('tags')
             .select('*')
             .eq('user_id', user.id)
+          if (tagFetchError) throw tagFetchError
 
           const localTags = get().tags
-          const remoteTagNames = new Set((remoteTags || []).map(t => t.name.toLowerCase()))
-          const remoteTagIds = new Set((remoteTags || []).map(t => t.id))
-          const starterTagNames = new Set(['welcome', 'getting-started', 'work', 'important', 'ideas', 'todo', 'personal', 'reference'])
-          
+          const remoteTagNames = new Set((initialRemoteTags || []).map((tag) => tag.name.toLowerCase()))
+          const remoteTagIds = new Set((initialRemoteTags || []).map((tag) => tag.id))
           const tagsToUpload = localTags.filter(tag => {
-            if (remoteTagIds.has(tag.id)) {
-              return true
-            }
-            if (starterTagNames.has(tag.name.toLowerCase()) && remoteTagNames.has(tag.name.toLowerCase())) {
-              return false
-            }
-            return true
+            return remoteTagIds.has(tag.id) || !remoteTagNames.has(tag.name.toLowerCase())
           })
           
           for (const tag of tagsToUpload) {
@@ -947,49 +995,31 @@ export const useNotesStore = create(
               .upsert(tagData)
               .select()
             
-            if (error) {
-            }
+            if (error) throw error
           }
 
-          if (remoteTags && remoteTags.length > 0) {
-            set((state) => {
-              const remoteTagMap = new Map(remoteTags.map(rt => [rt.id, rt]))
-              
-              const deletedTagIds = new Set(tagDeletions.map(d => d.data.id))
-              
-              const mergedTags = state.tags.map(lt => {
-                const remote = remoteTagMap.get(lt.id)
-                if (remote) {
-                  return {
-                    id: remote.id,
-                    name: remote.name,
-                    color: remote.color || '#3b82f6',
-                    createdAt: remote.created_at,
-                    syncStatus: SyncStatus.SYNCED,
-                  }
-                }
-                return lt
-              })
-              
-              for (const rt of remoteTags) {
-                if (deletedTagIds.has(rt.id)) {
-                  continue
-                }
-                if (state.tags.find(lt => lt.id === rt.id)) {
-                  continue
-                }
-                mergedTags.push({
-                  id: rt.id,
-                  name: rt.name,
-                  color: rt.color || '#3b82f6',
-                  createdAt: rt.created_at,
-                  syncStatus: SyncStatus.SYNCED,
-                })
-              }
-              
-              return { tags: mergedTags }
-            })
-          }
+          const { data: remoteTags, error: refreshedTagError } = await backend
+            .from('tags')
+            .select('*')
+            .eq('user_id', user.id)
+          if (refreshedTagError) throw refreshedTagError
+
+          const canonicalTags = (remoteTags || []).map((tag) => ({
+            id: tag.id,
+            name: tag.name,
+            color: tag.color || '#3b82f6',
+            createdAt: tag.created_at,
+            syncStatus: SyncStatus.SYNCED,
+          }))
+          const canonicalTagIds = new Set(canonicalTags.map((tag) => tag.id))
+          const staleTagIds = localTags
+            .filter((tag) => !canonicalTagIds.has(tag.id))
+            .map((tag) => tag.id)
+          set({ tags: canonicalTags })
+          await db.transaction('rw', db.tags, async () => {
+            if (staleTagIds.length > 0) await db.tags.bulkDelete(staleTagIds)
+            if (canonicalTags.length > 0) await db.tags.bulkPut(canonicalTags)
+          })
 
           const toSnakeCase = (note) => {
             // Merge reminders array into note_data JSONB for Supabase persistence
@@ -1009,7 +1039,7 @@ export const useNotesStore = create(
             return {
               id: note.id,
               user_id: user.id,
-              folder_id: note.folderId || null,
+              folder_id: folderIdRemap.get(note.folderId) || note.folderId || null,
               title: note.title,
               content: note.content,
               starred: note.starred || false,
@@ -1060,7 +1090,7 @@ export const useNotesStore = create(
           }
 
           const pendingNotes = get().notes.filter(
-            (n) => n.syncStatus === SyncStatus.PENDING && n.title !== WELCOME_TITLE
+            (n) => n.syncStatus === SyncStatus.PENDING
           )
 
           let syncedCount = 0
@@ -1096,9 +1126,8 @@ export const useNotesStore = create(
               .eq('id', item.data.id)
               .eq('user_id', user.id)
             
-            if (!error) {
-              await removeSyncItem(item.id)
-            }
+            if (error) throw error
+            await removeSyncItem(item.id)
           }
 
           const { data: remoteNotes, error: fetchError } = await backend
@@ -1163,19 +1192,20 @@ export const useNotesStore = create(
           } catch (err) {
           }
 
-          // Clean up sync queue: remove all non-deletion items that accumulated
-          // (insert/update items are synced via syncStatus, not the queue)
-          try {
-            const remainingItems = await getPendingSyncItems()
-            for (const item of remainingItems) {
-              if (item.operation !== 'delete') {
-                await removeSyncItem(item.id)
-              }
-            }
-          } catch (err) {
+          if (errorCount > 0) {
+            throw new Error(`${errorCount} note${errorCount === 1 ? '' : 's'} could not be uploaded`)
           }
 
-          set({ lastSyncTime: new Date().toISOString() })
+          // Insert/update items are represented by local syncStatus. Remove
+          // their queue records only after every corresponding write succeeds.
+          const remainingItems = await getPendingSyncItems()
+          for (const item of remainingItems) {
+            if (item.operation !== 'delete') {
+              await removeSyncItem(item.id)
+            }
+          }
+
+          set({ lastSyncTime: new Date().toISOString(), lastSyncError: null })
           
           const showNotifications = useUIStore.getState().showSyncNotifications
           
@@ -1186,10 +1216,12 @@ export const useNotesStore = create(
           } else if (syncToast) {
             toast.dismiss(syncToast)
           }
+          return true
         } catch (error) {
-          if (syncToast) {
-            toast.error(`Sync failed: ${error.message}`, { id: syncToast })
-          }
+          const message = error.message || 'Unknown synchronization error'
+          set({ lastSyncError: message })
+          toast.error(`Sync failed: ${message}`, syncToast ? { id: syncToast } : undefined)
+          return false
         } finally {
           set({ isSyncing: false })
         }
@@ -1218,14 +1250,11 @@ export const useNotesStore = create(
        * Applies a change that originated on the server (realtime
        * collaboration) without marking the note dirty.
        *
-       * The previous implementation pushed `_isExternalUpdate: true`
-       * through `updateNote`, which stamped a new `updatedAt`, set
-       * `syncStatus: PENDING` and persisted the private flag to
-       * IndexedDB. The editor then wrote the flag back to `false`,
-       * repeating all of it — so every inbound collaborator keystroke
-       * queued the note for re-upload with a timestamp newer than the
-       * server's, which is how remote edits ended up overwriting each
-       * other. The signal now lives in transient state instead.
+       * It deliberately bypasses `updateNote`: stamping a new `updatedAt`
+       * and queueing the note for upload would send an inbound edit
+       * straight back with a timestamp newer than the server's, so two
+       * collaborators would overwrite each other. The "this came from the
+       * server" signal lives in transient state, never in the note.
        */
       applyExternalUpdate: (id, patch) => {
         set((state) => ({
@@ -1256,11 +1285,7 @@ export const useNotesStore = create(
         try {
           const { createShareLink } = await import('../lib/backend')
           const share = await createShareLink(noteId, email, permission)
-          
-          set((state) => ({
-            pendingShares: [...state.pendingShares, share]
-          }))
-          
+
           toast.success(`Note shared with ${email}`)
           return share
         } catch (error) {
@@ -1417,6 +1442,7 @@ export const useNotesStore = create(
             pendingShares: normalizedPending,
           })
         } catch (error) {
+          toast.error(`Could not load shared notes: ${error.message || 'Unknown error'}`)
         }
       },
     }),
@@ -1427,6 +1453,7 @@ export const useNotesStore = create(
         folders: state.folders,
         tags: state.tags,
         lastSyncTime: state.lastSyncTime,
+        cacheOwnerId: state.cacheOwnerId,
       }),
       onRehydrateStorage: () => (state) => {
         // Repair any mojibake (double-encoded UTF-8) in stored notes
@@ -1472,7 +1499,6 @@ export const useUIStore = create(
       shareModalOpen: false,
       shareNoteId: null,
       sharedNotesViewOpen: false,
-      templateModalOpen: false,
       exportModalOpen: false,
       importModalOpen: false,
       reminderModalOpen: false,
@@ -1495,7 +1521,6 @@ export const useUIStore = create(
       multiSelectMode: false,
       selectedNoteIds: [],
       shortcutsModalOpen: false,
-      templatesModalOpen: false,
       noteTypesModalOpen: false,
       helpModalOpen: false,
       privacyModalOpen: false,
@@ -1529,7 +1554,6 @@ export const useUIStore = create(
   setSettingsOpen: (open) => set({ settingsOpen: open }),
   setShareModalOpen: (open, noteId = null) => set({ shareModalOpen: open, shareNoteId: noteId }),
   setSharedNotesViewOpen: (open) => set({ sharedNotesViewOpen: open }),
-  setTemplateModalOpen: (open) => set({ templateModalOpen: open }),
   setExportModalOpen: (open) => set({ exportModalOpen: open }),
   setImportModalOpen: (open) => set({ importModalOpen: open }),
   setReminderModalOpen: (open, noteId = null) => set({ reminderModalOpen: open, reminderNoteId: noteId }),
@@ -1554,7 +1578,6 @@ export const useUIStore = create(
   setVoiceInputActive: (active) => set({ voiceInputActive: active }),
   setMultiSelectMode: (mode) => set({ multiSelectMode: mode, selectedNoteIds: [] }),
   setShortcutsModalOpen: (open) => set({ shortcutsModalOpen: open }),
-  setTemplatesModalOpen: (open) => set({ templatesModalOpen: open }),
   setNoteTypesModalOpen: (open) => set({ noteTypesModalOpen: open }),
   setHelpModalOpen: (open) => set({ helpModalOpen: open }),
   setPrivacyModalOpen: (open) => set({ privacyModalOpen: open }),

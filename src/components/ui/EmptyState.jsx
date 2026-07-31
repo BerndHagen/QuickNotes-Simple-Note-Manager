@@ -2,8 +2,7 @@
  * Consistent empty / zero-result state.
  *
  * Every empty state answers the same three questions: what is missing,
- * why, and what the user can do about it. Keeping that in one component
- * stops the app drifting into a dozen different "nothing here" designs.
+ * why, and what the user can do about it.
  */
 export default function EmptyState({
   icon: Icon,

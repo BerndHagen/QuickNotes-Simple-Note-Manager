@@ -11,6 +11,18 @@ test.describe('workspace', () => {
     expect(errors).toEqual([])
   })
 
+  test('keeps a local workspace open across reloads', async ({ page }) => {
+    await signIn(page)
+    await expect(page.getByText(/saved locally/i).first()).toBeVisible()
+
+    await page.reload({ waitUntil: 'domcontentloaded' })
+
+    await expect(page.getByRole('navigation', { name: 'Workspace' })).toBeVisible({
+      timeout: 30_000,
+    })
+    await expect(page.getByText(/saved locally/i).first()).toBeVisible()
+  })
+
   test('creates, edits and persists a note across a reload', async ({ page }) => {
     await signIn(page)
     const title = `E2E note ${Date.now()}`
@@ -26,7 +38,7 @@ test.describe('workspace', () => {
     await page.reload({ waitUntil: 'domcontentloaded' })
     await expect(page.getByRole('navigation', { name: 'Workspace' })).toBeVisible({ timeout: 30_000 })
     await expect(page.getByRole('button', { name: new RegExp(title, 'i') }).first()).toBeVisible()
-    await expect(page.getByText('Persisted body text')).toBeVisible()
+    await expect(page.getByLabel('Note content').getByText('Persisted body text')).toBeVisible()
   })
 
   test('filters the list by search query and clears it', async ({ page }) => {
@@ -51,15 +63,14 @@ test.describe('workspace', () => {
     await expect(page.getByRole('button', { name: /clear search/i }).first()).toBeVisible()
   })
 
-  // Regression: Ctrl+N was documented everywhere but never registered.
   test('Ctrl+N opens the quick note dialog', async ({ page }) => {
     await signIn(page)
     await page.keyboard.press('Control+n')
     await expect(page.getByRole('dialog')).toBeVisible()
   })
 
-  // Regression: document-level handlers hijacked editor keys, so Ctrl+I
-  // opened the Import dialog instead of italicising the selection.
+  // Editor keys belong to the editor: a document-level handler must not
+  // claim Ctrl+I while the caret is in a note.
   test('Ctrl+I inside the editor does not open the import dialog', async ({ page }) => {
     await signIn(page)
     await createNote(page, `Shortcut scope ${Date.now()}`)

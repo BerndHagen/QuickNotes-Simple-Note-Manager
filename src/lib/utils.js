@@ -1,6 +1,4 @@
-import { v4 as uuidv4 } from 'uuid'
-
-export const generateId = () => uuidv4()
+export const generateId = () => globalThis.crypto.randomUUID()
 
 const timeTranslations = {
   en: {
@@ -120,20 +118,9 @@ const getTimeTranslation = (lang, key, n = 0) => {
   return text.replace('{n}', n.toString())
 }
 
-const getLocale = (lang) => {
-  const localeMap = {
-    en: 'en-US',
-    de: 'de-DE',
-    es: 'es-ES',
-    fr: 'fr-FR',
-    pt: 'pt-BR',
-    zh: 'zh-CN',
-    hi: 'hi-IN',
-    ar: 'ar-SA',
-    ru: 'ru-RU',
-  }
-  return localeMap[lang] || 'en-US'
-}
+// QuickNotes uses one predictable English formatting convention for dates,
+// times, sorting, and number grouping regardless of the translated UI language.
+const getLocale = () => 'en-US'
 
 export const formatDate = (date, lang = 'en') => {
   const d = new Date(date)
@@ -192,11 +179,8 @@ export const formatSyncTime = (date, lang = 'en') => {
 }
 
 /**
- * Formats a note timestamp honouring the user's `dateFormat` setting.
- *
- * The setting existed in the store (with translations in nine locales)
- * but nothing ever read it — every list row was hard-coded to relative
- * time.
+ * Formats a note timestamp according to the user's `dateFormat` setting:
+ * `relative` ("2 hours ago") or `absolute` (a fixed date and time).
  */
 export const formatNoteDate = (date, lang = 'en', dateFormat = 'relative') => {
   if (!date) return ''
@@ -366,14 +350,39 @@ export const generateTagColor = () => {
 
 export const debounce = (func, wait) => {
   let timeout
-  return function executedFunction(...args) {
-    const later = () => {
-      clearTimeout(timeout)
-      func(...args)
-    }
+  let lastArgs
+  let lastThis
+
+  const invoke = () => {
     clearTimeout(timeout)
-    timeout = setTimeout(later, wait)
+    timeout = undefined
+    const args = lastArgs
+    const context = lastThis
+    lastArgs = undefined
+    lastThis = undefined
+    return func.apply(context, args)
   }
+
+  function executedFunction(...args) {
+    lastArgs = args
+    lastThis = this
+    clearTimeout(timeout)
+    timeout = setTimeout(invoke, wait)
+  }
+
+  executedFunction.cancel = () => {
+    clearTimeout(timeout)
+    timeout = undefined
+    lastArgs = undefined
+    lastThis = undefined
+  }
+
+  executedFunction.flush = () => {
+    if (!timeout) return undefined
+    return invoke()
+  }
+
+  return executedFunction
 }
 
 export const onConnectionChange = (callback) => {

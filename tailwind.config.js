@@ -138,10 +138,10 @@ export default {
       },
 
       fontSize: {
-        // Semantic UI type scale. Tailwind's own `text-sm`/`text-lg`
-        // keys are left untouched on purpose: overriding them would
-        // silently restyle every one of the ~60 existing components.
-        // Redesigned surfaces use these `ui-*` / `title-*` keys.
+        // Semantic UI type scale. Tailwind's own `text-sm`/`text-lg` keys
+        // are deliberately left untouched — overriding them would restyle
+        // every component that uses them. Use these `ui-*` / `title-*`
+        // keys for app surfaces instead.
         'ui-2xs': ['10px', { lineHeight: '14px', letterSpacing: '0.05em' }],
         'ui-xs': ['11px', { lineHeight: '16px' }],
         'ui-sm': ['12px', { lineHeight: '18px' }],

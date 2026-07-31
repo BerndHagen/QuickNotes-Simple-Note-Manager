@@ -22,14 +22,13 @@ export const getSearchableText = (note) => {
 export const clearSearchCache = () => plainTextCache.clear()
 
 /**
- * The single filtering implementation for the note list, global search
- * and the store selector.
+ * The single filtering implementation behind the note list, global search
+ * and the store selector, so the three can never disagree about what a
+ * query or a view matches.
  *
- * Previously the store and NotesList each had their own version. They
- * disagreed in two ways that were visible to users: the store's copy
- * had no `__starred__` case (so the Favourites view would have returned
- * every note) and it searched the raw HTML, so a query like "div" or
- * "span" matched every formatted note.
+ * Body text is matched against the plain-text projection rather than the
+ * stored HTML, so a query like "div" or "span" does not match every
+ * formatted note.
  */
 export const filterNotes = (
   notes,

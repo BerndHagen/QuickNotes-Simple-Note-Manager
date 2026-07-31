@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Link2, X, Search, FileText, ArrowRight } from 'lucide-react'
 import { useNotesStore } from '../store'
 import { useTranslation } from '../lib/useTranslation'
+import toast from 'react-hot-toast'
 
 export default function NoteLinkPopover({ editor, isOpen, onClose, position }) {
   const { notes } = useNotesStore()
@@ -210,7 +211,7 @@ export function useNoteLinkHandler() {
           if (note) {
             setSelectedNote(noteId)
           } else {
-            alert('This linked note no longer exists')
+            toast.error('This linked note no longer exists')
           }
         }
       }

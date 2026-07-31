@@ -189,11 +189,8 @@ import {
 } from 'lucide-react'
 
 /**
- * Icon set offered when creating or editing a folder.
- *
- * This map used to be duplicated verbatim in Sidebar.jsx and
- * NoteEditor.jsx — two ~190-entry literals that had already drifted
- * apart. Both now import from here.
+ * Icon set offered when creating or editing a folder, and the single
+ * source every component resolves a stored icon name against.
  */
 export const folderIcons = {
   Activity,

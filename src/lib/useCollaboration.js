@@ -27,6 +27,8 @@ export const useRealtimeCollaboration = (noteId) => {
         applyExternalUpdate(noteId, {
           title: updatedNote.title,
           content: updatedNote.content,
+          noteType: updatedNote.note_type || 'standard',
+          noteData: updatedNote.note_data,
           updatedAt: updatedNote.updated_at,
         })
       }
@@ -87,5 +89,5 @@ export const useShareInvitations = () => {
         channelRef.current.unsubscribe()
       }
     }
-  }, [user?.email])
+  }, [loadSharedNotes, user?.email])
 }

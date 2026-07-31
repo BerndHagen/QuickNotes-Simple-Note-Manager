@@ -678,7 +678,18 @@ function VerticalEditorRuler({ containerRef }) {
   )
 }
 
-export default function RichTextEditor({ noteId, content, onChange, placeholder, paperType = 'plain', onPaperTypeChange, onEditorReady, isExternalUpdate = false }) {
+export default function RichTextEditor({
+  noteId,
+  content,
+  onChange,
+  onDraftChange,
+  placeholder,
+  paperType = 'plain',
+  onPaperTypeChange,
+  onEditorReady,
+  isExternalUpdate = false,
+  readOnly = false,
+}) {
   const [showContextMenu, setShowContextMenu] = useState(false)
   const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 })
   const [currentPaper, setCurrentPaper] = useState(paperType)
@@ -692,7 +703,14 @@ export default function RichTextEditor({ noteId, content, onChange, placeholder,
   const typingTimeoutRef = useRef(null)
   const lastCursorPosition = useRef({ from: 0, to: 0 })
   const lastSentContent = useRef('')
+  const onChangeRef = useRef(onChange)
+  const onDraftChangeRef = useRef(onDraftChange)
   const editorSettings = useEditorSettings()
+
+  useEffect(() => {
+    onChangeRef.current = onChange
+    onDraftChangeRef.current = onDraftChange
+  }, [onChange, onDraftChange])
 
   const generateContentHash = (html) => {
     if (!html) return ''
@@ -732,6 +750,7 @@ export default function RichTextEditor({ noteId, content, onChange, placeholder,
   }, [])
 
   const editor = useEditor({
+    editable: !readOnly,
     extensions: [
       StarterKit.configure({
         codeBlock: false,
@@ -793,6 +812,7 @@ export default function RichTextEditor({ noteId, content, onChange, placeholder,
       markUserTyping()
       isInternalUpdate.current = true
       lastKnownContent.current = editor.getHTML()
+      onDraftChangeRef.current?.(lastKnownContent.current)
       lastCursorPosition.current = {
         from: editor.state.selection.from,
         to: editor.state.selection.to
@@ -809,6 +829,9 @@ export default function RichTextEditor({ noteId, content, onChange, placeholder,
       attributes: {
         class: 'prose prose-lg dark:prose-invert max-w-none focus:outline-none min-h-[300px] px-4 py-2',
         spellcheck: useUIStore.getState().spellCheck ? 'true' : 'false',
+        role: 'textbox',
+        'aria-label': 'Note content',
+        'aria-multiline': 'true',
       },
       handleKeyDown: (view, event) => {
         markUserTyping()
@@ -844,6 +867,10 @@ export default function RichTextEditor({ noteId, content, onChange, placeholder,
   }, [editor, onEditorReady])
 
   useEffect(() => {
+    if (editor && !editor.isDestroyed) editor.setEditable(!readOnly)
+  }, [editor, readOnly])
+
+  useEffect(() => {
     const applySpellCheck = () => {
       if (editor && !editor.isDestroyed) {
         const el = editor.view.dom
@@ -857,26 +884,19 @@ export default function RichTextEditor({ noteId, content, onChange, placeholder,
     return () => unsub()
   }, [editor])
 
-  // Apply editor settings from EditorSettingsModal
+  // Editor settings apply to the live ProseMirror DOM node, which TipTap
+  // owns, so they are written as styles and classes rather than props.
   useEffect(() => {
     if (!editor || editor.isDestroyed) return
     const el = editor.view.dom
     if (!el) return
 
-    // Font family
     el.style.fontFamily = editorSettings.defaultFontFamily || 'Inter, system-ui, sans-serif'
-
-    // Font size
     el.style.fontSize = editorSettings.defaultFontSize || '16px'
-
-    // Line height
     el.style.lineHeight = editorSettings.defaultLineHeight || '1.5'
-
-    // Tab size
     el.style.tabSize = editorSettings.tabSize || 4
     el.style.MozTabSize = editorSettings.tabSize || 4
 
-    // Word wrap
     if (editorSettings.wordWrap) {
       el.style.overflowWrap = 'break-word'
       el.style.wordBreak = 'normal'
@@ -887,37 +907,30 @@ export default function RichTextEditor({ noteId, content, onChange, placeholder,
       el.style.whiteSpace = 'pre'
     }
 
-    // Show invisibles (whitespace characters)
     if (editorSettings.showInvisibles) {
       el.classList.add('show-invisibles')
     } else {
       el.classList.remove('show-invisibles')
     }
 
-    // Highlight current line
     if (editorSettings.highlightCurrentLine) {
       el.classList.add('highlight-current-line')
     } else {
       el.classList.remove('highlight-current-line')
     }
 
-    // Spellcheck from editor settings
     el.setAttribute('spellcheck', editorSettings.spellCheck ? 'true' : 'false')
-
-    // Autocorrect
     el.setAttribute('autocorrect', editorSettings.autoCorrect ? 'on' : 'off')
 
   }, [editor, editorSettings])
 
-  // Honours the user's "Auto-save delay" setting, which previously
-  // existed in the store but was never read — the delay was hard-coded.
   const autoSaveDelay = useUIStore((s) => s.autoSaveDelay)
 
   const debouncedOnChange = useMemo(
     () =>
       debounce((html) => {
         lastSentContent.current = html
-        onChange?.(html)
+        onChangeRef.current?.(html)
         if (debounceTimerRef.current) {
           clearTimeout(debounceTimerRef.current)
         }
@@ -927,8 +940,17 @@ export default function RichTextEditor({ noteId, content, onChange, placeholder,
           }
         }, 1000)
       }, autoSaveDelay ?? 300),
-    [onChange, autoSaveDelay]
+    [autoSaveDelay]
   )
+
+  useEffect(() => {
+    return () => {
+      // Flush the previous note before a switch or unmount. Draft state is
+      // already durable in localStorage; this commits IndexedDB/cloud queue
+      // work without allowing the next note to cancel the pending callback.
+      debouncedOnChange.flush()
+    }
+  }, [noteId, debouncedOnChange])
 
   useEffect(() => {
     return () => {
@@ -1017,7 +1039,7 @@ export default function RichTextEditor({ noteId, content, onChange, placeholder,
 
   useEffect(() => {
     const handleInsertTranslation = (event) => {
-      if (editor && event.detail?.translatedText) {
+      if (!readOnly && editor && event.detail?.translatedText) {
         if (event.detail.mode === 'selection') {
           editor.chain().focus().insertContent(event.detail.translatedText).run()
         } else {
@@ -1028,7 +1050,7 @@ export default function RichTextEditor({ noteId, content, onChange, placeholder,
     
     window.addEventListener('insertTranslatedText', handleInsertTranslation)
     return () => window.removeEventListener('insertTranslatedText', handleInsertTranslation)
-  }, [editor])
+  }, [editor, readOnly])
 
   const handlePaperChange = (type) => {
     setCurrentPaper(type)
@@ -1043,11 +1065,13 @@ export default function RichTextEditor({ noteId, content, onChange, placeholder,
 
   return (
     <div className="flex flex-col h-full">
-      <EditorToolbar editor={editor} currentPaper={currentPaper} onPaperChange={handlePaperChange} content={content} />
+      {!readOnly && (
+        <EditorToolbar editor={editor} currentPaper={currentPaper} onPaperChange={handlePaperChange} content={content} />
+      )}
       
-      <BubbleMenu 
+      {!readOnly && <BubbleMenu
         editor={editor} 
-        tippyOptions={{ duration: 100 }}
+        tippyOptions={{ duration: 100, aria: { expanded: false, content: 'describedby' } }}
         shouldShow={({ editor, state }) => {
           const { selection } = state
           const isImageSelected = selection.$from.parent.type.name === 'resizableImage' || 
@@ -1058,55 +1082,55 @@ export default function RichTextEditor({ noteId, content, onChange, placeholder,
         }}
         className="bg-white dark:bg-gray-800 shadow-xl rounded-lg border border-[#cbd1db] dark:border-gray-700 flex items-center p-1 gap-0.5"
       >
-        <BubbleButton onClick={() => editor.chain().focus().toggleBold().run()} isActive={editor.isActive('bold')}>
+        <BubbleButton label="Bold" onClick={() => editor.chain().focus().toggleBold().run()} isActive={editor.isActive('bold')}>
           <Bold className="w-4 h-4" />
         </BubbleButton>
-        <BubbleButton onClick={() => editor.chain().focus().toggleItalic().run()} isActive={editor.isActive('italic')}>
+        <BubbleButton label="Italic" onClick={() => editor.chain().focus().toggleItalic().run()} isActive={editor.isActive('italic')}>
           <Italic className="w-4 h-4" />
         </BubbleButton>
-        <BubbleButton onClick={() => editor.chain().focus().toggleUnderline().run()} isActive={editor.isActive('underline')}>
+        <BubbleButton label="Underline" onClick={() => editor.chain().focus().toggleUnderline().run()} isActive={editor.isActive('underline')}>
           <UnderlineIcon className="w-4 h-4" />
         </BubbleButton>
-        <BubbleButton onClick={() => editor.chain().focus().toggleHighlight().run()} isActive={editor.isActive('highlight')}>
+        <BubbleButton label="Highlight" onClick={() => editor.chain().focus().toggleHighlight().run()} isActive={editor.isActive('highlight')}>
           <Highlighter className="w-4 h-4" />
         </BubbleButton>
-        <BubbleButton onClick={() => editor.chain().focus().toggleStrike().run()} isActive={editor.isActive('strike')}>
+        <BubbleButton label="Strikethrough" onClick={() => editor.chain().focus().toggleStrike().run()} isActive={editor.isActive('strike')}>
           <Strikethrough className="w-4 h-4" />
         </BubbleButton>
         <div className="w-px h-5 mx-1 bg-gray-300 dark:bg-gray-600" />
-        <BubbleButton onClick={() => {
+        <BubbleButton label="Insert link" onClick={() => {
             useUIStore.getState().setLinkModalOpen(true)
           }} isActive={editor.isActive('link')}>
           <LinkIcon className="w-4 h-4" />
         </BubbleButton>
-      </BubbleMenu>
+      </BubbleMenu>}
 
-      <FloatingMenu
+      {!readOnly && <FloatingMenu
         editor={editor}
-        tippyOptions={{ duration: 100 }}
+        tippyOptions={{ duration: 100, aria: { expanded: false, content: 'describedby' } }}
         className="bg-white dark:bg-gray-800 shadow-xl rounded-lg border border-[#cbd1db] dark:border-gray-700 flex items-center p-1 gap-0.5"
       >
-        <BubbleButton onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}>
+        <BubbleButton label="Heading 1" onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}>
           <Heading1 className="w-4 h-4" />
         </BubbleButton>
-        <BubbleButton onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>
+        <BubbleButton label="Heading 2" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>
           <Heading2 className="w-4 h-4" />
         </BubbleButton>
-        <BubbleButton onClick={() => editor.chain().focus().toggleBulletList().run()}>
+        <BubbleButton label="Bullet list" onClick={() => editor.chain().focus().toggleBulletList().run()}>
           <List className="w-4 h-4" />
         </BubbleButton>
-        <BubbleButton onClick={() => editor.chain().focus().toggleTaskList().run()}>
+        <BubbleButton label="Checklist" onClick={() => editor.chain().focus().toggleTaskList().run()}>
           <CheckSquare className="w-4 h-4" />
         </BubbleButton>
-        <BubbleButton onClick={() => editor.chain().focus().toggleBlockquote().run()}>
+        <BubbleButton label="Quote" onClick={() => editor.chain().focus().toggleBlockquote().run()}>
           <Quote className="w-4 h-4" />
         </BubbleButton>
-        <BubbleButton onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}>
+        <BubbleButton label="Insert table" onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}>
           <TableIcon className="w-4 h-4" />
         </BubbleButton>
-      </FloatingMenu>
+      </FloatingMenu>}
 
-      <TableBubbleMenu editor={editor} />
+      {!readOnly && <TableBubbleMenu editor={editor} />}
 
       {editorSettings.showRuler && (
         <div className="flex">
@@ -1124,6 +1148,7 @@ export default function RichTextEditor({ noteId, content, onChange, placeholder,
           className={`relative flex-1 overflow-y-auto bg-white ${paperStyle.className || ''}`}
           style={paperStyle.style}
           onContextMenu={(e) => {
+            if (readOnly) return
             e.preventDefault()
             const { clientX, clientY } = e
             setContextMenuPos({ x: clientX, y: clientY })
@@ -1134,7 +1159,7 @@ export default function RichTextEditor({ noteId, content, onChange, placeholder,
         </div>
       </div>
 
-      {showContextMenu && createPortal(
+      {!readOnly && showContextMenu && createPortal(
         <ContextMenu
           ref={contextMenuRef}
           x={contextMenuPos.x}
@@ -1149,10 +1174,12 @@ export default function RichTextEditor({ noteId, content, onChange, placeholder,
   )
 }
 
-function BubbleButton({ onClick, isActive, children }) {
+function BubbleButton({ onClick, isActive, children, label }) {
   return (
     <button
+      type="button"
       onClick={onClick}
+      aria-label={label}
       className={`p-1.5 rounded transition-colors ${
         isActive
           ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300'
@@ -1454,7 +1481,9 @@ function ImageToolbarButton() {
   return (
     <PortalTooltip title="Insert Image" anchorRef={buttonRef}>
       <button
+        type="button"
         ref={buttonRef}
+        aria-label="Insert image"
         onMouseDown={(e) => {
           e.preventDefault()
           e.stopPropagation()
@@ -1695,6 +1724,7 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
     
     const button = (
       <button
+        type="button"
         ref={buttonRef}
         onMouseDown={(e) => {
           e.preventDefault()
@@ -1733,8 +1763,12 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
     
     const button = (
       <button
+        type="button"
         ref={buttonRef}
         disabled={disabled}
+        aria-label={title}
+        aria-expanded={isOpen}
+        aria-haspopup="menu"
         onMouseDown={(e) => {
           e.preventDefault()
           e.stopPropagation()

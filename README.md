@@ -6,20 +6,22 @@
 
 <p align="center">
   <b>A modern, feature-rich note-taking application with cloud sync, offline support, and a powerful rich text editor.</b><br>
-  <b>Organize your thoughts with folders, tags, templates, and more.</b>
+  <b>Organize your thoughts with folders, tags, and purpose-built note workspaces.</b>
 </p>
 
 <p align="center">
   <a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/releases"><img src="https://img.shields.io/github/v/release/BerndHagen/QuickNotes-Simple-Note-Manager?include_prereleases&style=flat-square&color=CD853F" alt="Latest Release"></a>&nbsp;&nbsp;
   <a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-GPL--3.0-blue?style=flat-square" alt="License"></a>&nbsp;&nbsp;
   <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react" alt="React Version">&nbsp;&nbsp;
-  <img src="https://img.shields.io/badge/Vite-5-646CFF?style=flat-square&logo=vite" alt="Vite Version">&nbsp;&nbsp;
+  <img src="https://img.shields.io/badge/Vite-8-646CFF?style=flat-square&logo=vite" alt="Vite Version">&nbsp;&nbsp;
   <img src="https://img.shields.io/badge/TailwindCSS-3-06B6D4?style=flat-square&logo=tailwindcss" alt="Tailwind CSS">&nbsp;&nbsp;
   <img src="https://img.shields.io/badge/Platform-Web-9f9f9f?style=flat-square" alt="Platform">&nbsp;&nbsp;
   <img src="https://img.shields.io/badge/Status-Active-brightgreen?style=flat-square" alt="Status">
 </p>
 
 **QuickNotes** is a browser-based note-taking application built with React and TipTap. It works fully offline using IndexedDB and can optionally sync to a cloud backend. Notes support rich text formatting, code blocks with syntax highlighting, tables, images, checklists, and more.
+
+A hosted build is available at **[berndhagen.github.io/QuickNotes-Simple-Note-Manager](https://berndhagen.github.io/QuickNotes-Simple-Note-Manager/)**. You can use it without an account — a local workspace keeps everything in your own browser — or sign up to sync and share notes across devices.
 
 ## Key Features
 
@@ -33,15 +35,15 @@
 - **Global Search:** Full-text search across all notes by title, content, and tags
 - **Find & Replace:** In-editor find and replace with regex support
 - **Quick Note:** Capture ideas instantly with a floating modal
-- **Templates:** Pre-built note templates for common use cases (empty note, to-do, meeting notes, project plan, code snippet, journal)
-- **Specialized Note Types:** Dedicated editors for brainstorming, meeting notes, project planning, shopping lists, weekly planners, journals, and to-do lists
-- **Version History:** View and restore previous versions of any note (up to 50 versions per note)
+- **Focused Note Types:** A unified creator with useful starters for documents, task lists, project boards, meetings, journals, idea boards, shopping lists, and weekly plans
+- **Specialized Workspaces:** Dedicated, structured editors whose controls, data, statistics, and exports match each note type
+- **Version History:** View and restore previous document or structured-workspace versions (up to 30 versions per note)
 - **Duplicate Detection:** Automatically find similar or duplicate notes
 - **Focus Mode:** Distraction-free writing experience
 - **Dark / Light / System Theme:** Three theme modes with automatic system preference detection
 - **Drag & Drop Sorting:** Reorder notes via drag and drop using @dnd-kit
-- **Export & Import:** Export notes as JSON, Markdown, or HTML; import from JSON
-- **Reminders:** Set reminders for individual notes
+- **Export & Import:** Export notes as JSON, Markdown, plain text, HTML, or print-ready PDF; import Markdown, plain-text, and HTML files
+- **Reminders:** Set one-time, daily, weekly, or monthly reminders
 - **Note Sharing:** Share notes with other users via invite links (requires backend)
 - **Real-Time Collaboration:** Live updates on shared notes via realtime subscriptions (requires backend)
 - **Voice Input:** Dictate notes using the Web Speech API
@@ -98,6 +100,7 @@
     - [GitHub Pages Deployment](#github-pages-deployment)
 14. [Environment Variables](#environment-variables)
     - [Setup](#setup)
+    - [Production Auth Checklist](#production-auth-checklist)
 15. [Dependencies](#dependencies)
     - [Runtime](#runtime)
     - [Dev](#dev)
@@ -105,6 +108,7 @@
     - [Development](#development)
     - [Production Build](#production-build-1)
     - [Linting](#linting)
+    - [Testing](#testing)
 17. [Contributing](#contributing)
     - [Areas for Contribution](#areas-for-contribution)
     - [Reporting Issues](#reporting-issues)
@@ -115,7 +119,7 @@
 
 ### Prerequisites
 
-- Node.js 18 or later
+- Node.js 20.19+ or 22.12+ (required by Vite 8)
 - npm
 
 ### Installation
@@ -145,12 +149,26 @@ QuickNotes-Simple-Note-Manager/
 ├── .env.example                          # Supabase environment variable template
 ├── .github/
 │   └── workflows/
-│       └── release.yml                   # GitHub Actions: build + create release
+│       ├── deploy.yml                    # GitHub Actions: build + publish to Pages
+│       └── release.yml                   # GitHub Actions: rolling + versioned releases
 ├── index.html                            # HTML entry point
 ├── package.json                          # Dependencies and scripts
 ├── postcss.config.js                     # PostCSS configuration (Tailwind)
 ├── tailwind.config.js                    # Tailwind CSS configuration
 ├── vite.config.js                        # Vite build configuration
+├── vitest.config.js                      # Unit test configuration
+├── playwright.config.js                  # Browser test configuration
+├── eslint.config.js                      # ESLint flat config
+│
+├── e2e/                                  # Playwright browser tests
+│   ├── helpers.js                        # Shared sign-in, viewport, and error helpers
+│   ├── accessibility.spec.js             # axe-core WCAG checks
+│   ├── responsive.spec.js                # 320px–1920px layout checks
+│   ├── workspace.spec.js                 # Core workspace flows
+│   └── note-types.spec.js                # Specialized workspace flows
+│
+├── supabase/
+│   └── migrations/                       # SQL migrations: schema, RLS, RPCs, constraints
 │
 ├── public/
 │   ├── 404.html                          # SPA fallback for GitHub Pages
@@ -163,24 +181,36 @@ QuickNotes-Simple-Note-Manager/
     ├── main.jsx                          # React entry point
     ├── index.css                         # Global CSS (Tailwind + custom styles)
     │
+    ├── styles/
+    │   └── tokens.css                    # Design tokens (colour, type, spacing, motion)
+    │
+    ├── hooks/
+    │   └── useBreakpoint.js              # compact / medium / wide layout modes
+    │
+    ├── test/
+    │   └── setup.js                      # Vitest environment setup
+    │
     ├── components/
     │   ├── index.js                      # Barrel exports for all components
     │   │
     │   ├── NoteEditor.jsx                # Main note editing view with toolbar
     │   ├── RichTextEditor.jsx            # TipTap editor wrapper with all extensions
     │   ├── NotesList.jsx                 # Note list panel (list view)
+    │   ├── NoteCard.jsx                  # Single row in the note list
     │   ├── NotesGrid.jsx                 # Note grid panel (grid view)
     │   ├── Sidebar.jsx                   # Navigation sidebar with folders & tags
     │   ├── AuthScreen.jsx                # Login / signup screen
+    │   ├── PasswordRecoveryScreen.jsx    # Password reset completion screen
     │   ├── ThemeProvider.jsx             # Dark / Light / System theme provider
+    │   ├── ErrorBoundary.jsx             # Top-level render error boundary
+    │   ├── SyncStatus.jsx                # Sync state indicator + manual sync trigger
     │   │
     │   ├── SettingsModal.jsx             # Application settings modal
-    │   ├── EditorSettingsModal.jsx        # Editor-specific settings (font, spacing)
-    │   ├── TemplateModal.jsx             # Quick template selection (Ctrl+T)
-    │   ├── NoteTemplatesModal.jsx        # Full template gallery with 25+ templates
-    │   ├── NoteTypesModal.jsx            # Specialized note type selector
-    │   ├── ExportModal.jsx               # Export notes (JSON / Markdown / HTML)
-    │   ├── ImportModal.jsx               # Import notes from JSON
+    │   ├── EditorSettingsModal.jsx       # Editor-specific settings (font, spacing)
+    │   ├── NoteTypesModal.jsx            # Unified note type + starter selector
+    │   ├── FolderDialogs.jsx             # Folder create/edit dialog + confirmations
+    │   ├── ExportModal.jsx               # Export notes (JSON / Markdown / text / HTML / PDF)
+    │   ├── ImportModal.jsx               # Import Markdown, plain-text, and HTML files
     │   ├── GlobalSearchModal.jsx         # Full-text search modal (Ctrl+K)
     │   ├── FindReplaceBar.jsx            # In-editor find & replace bar
     │   ├── QuickNoteModal.jsx            # Quick note capture modal (Ctrl+N)
@@ -209,12 +239,28 @@ QuickNotes-Simple-Note-Manager/
     │   ├── TableBubbleMenu.jsx           # Table editing bubble menu
     │   ├── ResizableImage.jsx            # Resizable image component
     │   ├── ResizableImageExtension.js    # TipTap extension for resizable images
+    │   ├── TextBoxExtension.js           # TipTap extension: movable text box
+    │   ├── TextBoxView.jsx               # Text box node view (drag, resize, wrap)
     │   ├── CustomTableCell.js            # TipTap extension: custom table cell
     │   └── CustomTableHeader.js          # TipTap extension: custom table header
     │
+    │   └── ui/                           # Shared primitives used across the app
+    │       ├── index.jsx                 # Barrel exports
+    │       ├── Modal.jsx                 # Dialog shell (focus trap, Escape, scroll lock)
+    │       ├── LegacyDialog.jsx          # Overlay wrapper for bespoke dialog panels
+    │       ├── Menu.jsx                  # Anchored, portal-rendered dropdown
+    │       ├── Button.jsx                # Button + IconButton
+    │       ├── Field.jsx                 # Label / control / hint + error wiring
+    │       ├── Badge.jsx                 # Count badges and tag pills
+    │       ├── Avatar.jsx                # Avatar with initials fallback
+    │       ├── EmptyState.jsx            # Empty and zero-result states
+    │       ├── Spinner.jsx               # Loading indicator
+    │       └── useFocusTrap.js           # Focus trap, scroll lock, Escape hooks
+    │
     │   └── editors/                      # Specialized note type editors
     │       ├── index.js                  # Editor registry + barrel exports
-    │       ├── noteTypes.js              # Note type definitions, configs, defaults
+    │       ├── noteTypes.js              # Configs, starters, defaults, and legacy normalization
+    │       ├── FocusedNoteTitle.jsx      # Shared editable workspace hero title
     │       ├── BrainstormEditor.jsx      # Brainstorming with idea cards + voting
     │       ├── JournalEditor.jsx         # Daily journal with mood tracking
     │       ├── MeetingNotesEditor.jsx    # Meeting notes with agenda + action items
@@ -226,7 +272,16 @@ QuickNotes-Simple-Note-Manager/
     ├── lib/
     │   ├── backend.js                    # Supabase backend with offline stub fallback
     │   ├── db.js                         # IndexedDB via Dexie (offline storage)
-    │   ├── i18n.js                       # Translations for 9 languages (3100+ lines)
+    │   ├── i18n.js                       # Translations for 9 languages (4000+ lines)
+    │   ├── localSession.js               # Durable local-workspace session state
+    │   ├── authValidation.js             # Email and password policy checks
+    │   ├── dataValidation.js             # Title, folder, and tag limits (match the DB)
+    │   ├── sanitizeHtml.js               # DOMPurify profile for untrusted note HTML
+    │   ├── filterNotes.js                # Shared search / scope / tag filtering
+    │   ├── folderIcons.js                # Folder icon set and colour palette
+    │   ├── shortcuts.js                  # Shortcut registry + user bindings
+    │   ├── reminders.js                  # One-time and repeating reminder scheduling
+    │   ├── syncReconciliation.js         # Local/cloud id reconciliation for sync
     │   ├── useCollaboration.js           # Real-time collaboration hooks
     │   ├── useTranslation.js             # Translation hook for components
     │   └── utils.js                      # Utility functions (dates, slugify, etc.)
@@ -267,11 +322,13 @@ The file `src/lib/backend.js` provides the backend layer using **Supabase** (`@s
 
 ### Dual Mode
 
-The backend operates in two modes depending on whether `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are configured:
+The backend operates in two modes depending on whether `VITE_SUPABASE_URL` and either
+`VITE_SUPABASE_PUBLISHABLE_KEY` (preferred) or the legacy
+`VITE_SUPABASE_ANON_KEY` are configured:
 
 | Mode | Condition | Behavior |
 |------|-----------|----------|
-| **Cloud** | Both env vars set and URL contains `supabase.co` | Full Supabase client with auth, real-time, cloud sync |
+| **Cloud** | URL and a public key are set | Full Supabase client with auth, realtime, cloud sync |
 | **Offline-only** | Env vars missing or invalid | Stub backend — app works fully offline without auth or sync |
 
 ### Stub Fallback (Offline-Only Mode)
@@ -306,7 +363,7 @@ backend.channel('name').on('postgres_changes', filter, callback).subscribe()
 | Function | Purpose |
 |----------|---------|
 | `backend.auth.*` | Authentication (signup, login, logout, session, password reset) |
-| `backend.from(table)` | CRUD query builder for `notes`, `folders`, `tags`, `shared_notes`, `accepted_shares` |
+| `backend.from(table)` | Query builder: read/write for `notes`, `folders`, `tags`; read-only for `note_versions`, `shared_notes`, `accepted_shares` |
 | `backend.channel()` | Realtime subscriptions for live collaboration |
 | `createShareLink()` | Create share invitation for a note |
 | `acceptShare()` | Accept a share invitation |
@@ -315,6 +372,8 @@ backend.channel('name').on('postgres_changes', filter, callback).subscribe()
 | `getPendingShares()` | Fetch pending share invitations |
 | `removeShare()` | Remove a share |
 | `leaveSharedNote()` | Leave a shared note |
+| `updateSharedNote()` | Apply a collaborator edit through the restricted RPC |
+| `subscribeToSharedNoteContent()` | Subscribe to realtime changes on a shared note |
 | `getRemoteNoteVersions()` | Fetch remote version history for a note |
 | `deleteUserAccount()` | Delete user account and all associated data via RPC |
 | `isBackendConfigured()` | Check if Supabase credentials are set |
@@ -332,7 +391,7 @@ QuickNotes uses Dexie (IndexedDB wrapper) with the following tables:
 | `folders` | `id, name, parentId, userId, createdAt, updatedAt, syncStatus` | Folder hierarchy |
 | `tags` | `id, name, color, userId, syncStatus` | Tag definitions |
 | `noteTags` | `[noteId+tagId], noteId, tagId` | Note-tag associations (legacy, not used — tags stored as array in notes) |
-| `noteVersions` | `++id, noteId, content, createdAt` | Version history (max 50 per note) |
+| `noteVersions` | `++id, noteId, title, content, noteType, noteData, createdAt` | Version history (max 30 per note) |
 | `syncQueue` | `++id, table, operation, data, timestamp` | Pending operations for cloud sync |
 
 ### Sync Status Enum
@@ -351,7 +410,7 @@ SyncStatus.ERROR    // Sync failed
 3. `syncWithBackend()` processes the queue:
    - Uploads pending folder/tag deletions
    - Uploads new/modified folders and tags
-   - Merges remote folders/tags into local state
+   - Reconciles case-insensitive folder/tag matches and remaps legacy local folder IDs
    - Uploads pending notes
    - Downloads remote notes and merges with local state
    - Cleans up the sync queue
@@ -404,7 +463,7 @@ Manages all UI state: modal visibility, sidebar state, view mode, sync settings,
 | Category | States |
 |----------|--------|
 | **Layout** | `sidebarOpen`, `notesListWidth`, `mobileView`, `viewMode` (`list` / `grid`) |
-| **Modals** | `settingsOpen`, `exportModalOpen`, `importModalOpen`, `globalSearchOpen`, `focusModeOpen`, `shortcutsModalOpen`, `templatesModalOpen`, `noteTypesModalOpen`, `helpModalOpen`, `privacyModalOpen`, `termsModalOpen`, `tagManagerOpen`, `translateModalOpen`, `editorSettingsOpen`, `htmlEditorOpen`, `shareModalOpen`, `sharedNotesViewOpen`, `templateModalOpen`, `versionHistoryOpen`, `duplicateModalOpen`, `reminderModalOpen`, `imageUploadOpen`, `linkModalOpen`, `archiveViewOpen`, `quickNoteOpen`, `showTrash`, `findReplaceOpen` |
+| **Modals** | `settingsOpen`, `exportModalOpen`, `importModalOpen`, `globalSearchOpen`, `focusModeOpen`, `shortcutsModalOpen`, `noteTypesModalOpen`, `helpModalOpen`, `privacyModalOpen`, `termsModalOpen`, `tagManagerOpen`, `translateModalOpen`, `editorSettingsOpen`, `htmlEditorOpen`, `shareModalOpen`, `sharedNotesViewOpen`, `versionHistoryOpen`, `duplicateModalOpen`, `reminderModalOpen`, `imageUploadOpen`, `linkModalOpen`, `archiveViewOpen`, `quickNoteOpen`, `showTrash`, `findReplaceOpen` |
 | **Sorting** | `currentSort` (e.g. `updated-desc`, `title-asc`, etc.) |
 | **Selection** | `multiSelectMode`, `selectedNoteIds` |
 | **Sync** | `autoSync`, `syncInterval`, `syncOnStartup`, `showSyncNotifications` |
@@ -455,13 +514,13 @@ Beyond the standard rich text editor, QuickNotes provides specialized editors fo
 | Type | Editor Component | Key Features |
 |------|------------------|-------------|
 | `standard` | `RichTextEditor.jsx` | Full WYSIWYG rich text |
-| `todo` | `TodoListEditor.jsx` | Tasks with priorities (low/medium/high/urgent), deadlines, categories, filtering |
-| `project` | `ProjectPlannerEditor.jsx` | Kanban-style columns (To Do / In Progress / Done), task cards with drag support |
-| `meeting` | `MeetingNotesEditor.jsx` | Attendees, agenda items, discussion notes, action items with owners |
-| `journal` | `JournalEditor.jsx` | Mood tracking, gratitude entries, daily highlights |
-| `brainstorm` | `BrainstormEditor.jsx` | Idea cards with voting/rating, grid and list views, category filtering |
-| `shopping` | `ShoppingListEditor.jsx` | Items with quantity, category, price, checked state |
-| `weekly` | `WeeklyPlannerEditor.jsx` | Day-by-day schedule with time slots and goals |
+| `todo` | `TodoListEditor.jsx` | Priorities, due dates, subtasks, notes, stars, filters, sorting, and progress |
+| `project` | `ProjectPlannerEditor.jsx` | Backlog-to-done board, milestones, team members, assignees, task details, and accessible status changes |
+| `meeting` | `MeetingNotesEditor.jsx` | Details, attendance, timed agenda, topic notes, decisions, owned actions, and copyable summary |
+| `journal` | `JournalEditor.jsx` | Mood, energy, weather, daily goals, highlights, gratitude, reflection prompts, tags, and free writing |
+| `brainstorm` | `BrainstormEditor.jsx` | Rapid capture, custom categories, voting, stars, notes, duplication, sorting, and grid/list views |
+| `shopping` | `ShoppingListEditor.jsx` | Categories, quantities, units, price estimates, currency, purchased totals, and budget tracking |
+| `weekly` | `WeeklyPlannerEditor.jsx` | Local-time-safe week planning, daily events, time-blocked tasks, ratings, goals, notes, and review |
 
 ### Note Type Configuration (`noteTypes.js`)
 
@@ -470,17 +529,18 @@ Each note type has a configuration object with:
 ```javascript
 {
   id: 'todo',
-  name: 'To-Do List',
-  description: 'Task management with priorities & deadlines',
+  name: 'Task List',
+  description: 'A focused task manager with the context needed to finish work.',
+  bestFor: 'Personal backlogs, checklists, routines, and delivery plans',
   icon: CheckSquare,           // Lucide icon component
-  color: '#22c55e',
-  gradient: 'from-green-500 to-emerald-600',
-  category: 'Productivity',
-  features: ['Priorities', 'Deadlines', 'Subtasks', 'Progress'],
+  color: '#168966',
+  category: 'Planning',
+  features: ['Priorities', 'Due dates', 'Subtasks', 'Progress & filters'],
+  keywords: ['todo', 'checklist', 'tasks', 'deadline', 'routine'],
 }
 ```
 
-The `getDefaultData(type)` function generates the initial structured data for each note type. Editor selection is handled by the `EDITOR_MAP` in `editors/index.js`.
+Each type provides at least four purposeful starters. `getDefaultData(type)` creates a clean schema, `getStarterData(type, starterId)` creates an independent starter workspace, and `normalizeNoteData(type, data)` safely migrates older note shapes. Editor selection is handled by `NOTE_TYPE_EDITORS` in `editors/index.js`.
 
 ## Internationalization (i18n)
 
@@ -512,7 +572,6 @@ tags.*          — Tag management
 trash.*         — Trash view
 settings.*      — Settings modal (all sections)
 share.*         — Note sharing
-templates.*     — Template names and labels
 help.*          — FAQ questions and answers
 terms.*         — Terms of service
 privacy.*       — Privacy policy
@@ -581,32 +640,47 @@ The app is installable as a PWA with:
 
 ## Database Schema
 
-When using a cloud backend, the following database tables are expected.
+When using a cloud backend, the following database tables are expected. The SQL in
+`supabase/migrations/` is the authoritative definition of the policies, grants,
+constraints, RPCs, and triggers described below. Apply it to a new project with the
+Supabase CLI:
+
+```bash
+supabase link --project-ref <your-project-ref>
+supabase db push
+```
 
 | Table | Purpose |
 |-------|---------|
 | `notes` | All notes with title, content, tags (array), note_type, note_data (JSONB), starred, pinned, deleted, archived, reminder |
 | `folders` | Folder hierarchy with name, icon, color, parent_id |
 | `tags` | Tag definitions with name and color |
-| `note_versions` | Version history (max 50 per note, auto-created on content change) |
+| `note_versions` | Version history (max 30 per note, auto-created on content change) |
 | `shared_notes` | Share invitations with permission levels and status |
 | `accepted_shares` | Denormalized accepted shares for fast access |
-| `collaboration_cursors` | Active editor tracking for real-time collaboration |
 
 ### Row Level Security
 
-All tables should have RLS enabled so users can only access:
+All public tables have RLS enabled. Anonymous roles have no table grants. Authenticated
+users can access:
 - Their own notes, folders, and tags
 - Notes shared with them (via `accepted_shares`)
 - Share invitations they created or received
+
+Shared-note writes go through a restricted RPC that accepts only title, content,
+note type, and structured note data. Direct updates remain owner-only.
 
 ### Stored Procedures
 
 | Procedure | Purpose |
 |-----------|---------|
+| `create_share_invitation(note_id, email, permission)` | Create a view/edit invitation for an owned note |
 | `accept_share_invitation(share_id)` | Accept share, create `accepted_shares` entry |
 | `decline_share_invitation(share_id)` | Decline share invitation |
+| `revoke_share_invitation(share_id)` | Revoke an invitation and cascade accepted access |
 | `leave_shared_note(note_id)` | Remove user from shared note |
+| `update_shared_note(note_id, patch)` | Apply an allow-listed collaborator edit |
+| `get_pending_share_invitations()` | Return safe invitation metadata for the signed-in recipient |
 | `delete_user_account()` | Permanently delete user account and all associated data |
 
 ### Triggers
@@ -614,47 +688,74 @@ All tables should have RLS enabled so users can only access:
 | Trigger | Purpose |
 |---------|---------|
 | `update_updated_at_column()` | Auto-update `updated_at` on notes, folders, shared_notes |
-| `create_note_version()` | Auto-create version on `notes.content` change (max 50) |
+| `create_note_version()` | Auto-create a version on document or structured-data changes (max 30) |
 
 ## GitHub Actions & Deployment
 
 ### Release Workflow (`.github/workflows/release.yml`)
 
-Triggered on every push to `main`:
+The workflow has two jobs, both of which check out the repository, install Node.js
+20, and run `npm ci` + `npm run build` before packaging `dist/` as a ZIP:
 
-1. Checks out code and installs Node.js 20
-2. Runs `npm ci` + `npm run build`
-3. Generates a timestamped release tag (`release-YYYYMMDD-HHMMSS`)
-4. Creates a ZIP of the `dist/` output
-5. Creates a GitHub Release with the ZIP artifact and auto-generated release notes from commit messages
+| Job | Trigger | Result |
+|-----|---------|--------|
+| `latest` | Every push to `main` | Replaces the rolling `latest` pre-release, `QuickNotes - Simple Note Manager (Latest Build)`, with the current build |
+| `versioned` | A pushed tag matching `v*.*.*` | Creates a permanent release named `QuickNotes - Simple Note Manager <tag>` |
+
+Release notes are generated from the commit range since the previous versioned tag
+and grouped into features, fixes, maintenance, and other changes based on
+Conventional-Commit prefixes.
+
+To publish a version, bump `version` in `package.json`, then tag and push:
+
+```bash
+git tag v2.0.0
+git push origin v2.0.0
+```
 
 ### GitHub Pages Deployment
 
-To deploy to GitHub Pages:
+`.github/workflows/deploy.yml` builds and publishes `dist/` on every push to
+`main`. To run it on a fork:
 
-1. Set repository secrets `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (optional — app works without them)
-2. The `base` path in `vite.config.js` is set to `/QuickNotes-Simple-Note-Manager/`
-3. Enable GitHub Pages in repository settings (source: GitHub Actions)
-4. Add a deploy workflow that builds and publishes the `dist/` directory
+1. Enable GitHub Pages in repository settings with **GitHub Actions** as the source
+2. Optionally add the repository secrets `VITE_SUPABASE_URL` and
+   `VITE_SUPABASE_ANON_KEY` (or `VITE_SUPABASE_PUBLISHABLE_KEY`) — without them the
+   deployed app runs in offline-only mode
+3. Update the `base` path in `vite.config.js` to match the fork's repository name
+   (it is set to `/QuickNotes-Simple-Note-Manager/`)
 
 ## Environment Variables
 
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `VITE_SUPABASE_URL` | No | Your Supabase project URL (e.g. `https://xxxxx.supabase.co`) |
-| `VITE_SUPABASE_ANON_KEY` | No | Your Supabase anon/public key (safe for frontend, protected by RLS) |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | No | Preferred Supabase public browser key (safe for frontend, protected by RLS) |
+| `VITE_SUPABASE_ANON_KEY` | No | Legacy fallback for older Supabase projects |
 
-When both variables are set and point to a valid Supabase instance, the app enables cloud sync, authentication, and sharing features. Without them, QuickNotes runs in local-only mode with full functionality except sync and auth.
+When `VITE_SUPABASE_URL` and one of the two keys are set and point to a valid Supabase instance, the app enables cloud sync, authentication, and sharing features. Without them, QuickNotes runs in local-only mode with full functionality except sync and auth.
 
 ### Setup
 
 1. Copy `.env.example` to `.env`
-2. Fill in your Supabase project URL and anon key (found in Supabase Dashboard → Settings → API)
+2. Fill in your Supabase project URL and publishable key (found in Supabase Dashboard → Settings → API)
 3. Restart the dev server
 
 > **Note:** Never expose the `service_role` key in frontend code — it bypasses Row Level Security and must only be used server-side.
 
-For GitHub Pages deployment, set these as **repository secrets** named `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (Settings → Secrets and variables → Actions).
+For GitHub Pages deployment, set these as **repository secrets** named
+`VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` (Settings → Secrets and
+variables → Actions).
+
+### Production Auth Checklist
+
+- Configure custom SMTP before inviting production users. Supabase's default email
+  sender is rate-limited and intended for evaluation.
+- Keep email confirmation enabled and add the deployed URL plus password-recovery
+  URL to Auth redirect allow-lists.
+- Enable leaked-password protection in the Supabase Auth password-security settings.
+- Use the app's 12-character minimum password policy; the UI also caps passwords at
+  128 characters.
 
 ## Dependencies
 
@@ -678,22 +779,38 @@ For GitHub Pages deployment, set these as **repository secrets** named `VITE_SUP
 | `lowlight` | ^3.1.0 | Lowlight adapter for highlight.js |
 | `lucide-react` | ^0.294.0 | Icon library |
 | `react-hot-toast` | ^2.4.1 | Toast notifications |
-| `uuid` | ^9.0.1 | UUID generation |
-| `@supabase/supabase-js` | ^2.95.3 | Supabase client for auth, database, and real-time |
+| `dompurify` | ^3.4.12 | Sanitizes imported and previewed rich-text HTML |
+| `@supabase/supabase-js` | ^2.111.0 | Supabase client for auth, database, and realtime |
 
 ### Dev
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| `vite` | ^5.0.0 | Build tool + dev server |
-| `@vitejs/plugin-react` | ^4.2.0 | React support for Vite |
+| `vite` | ^8.2.0 | Build tool + dev server |
+| `@vitejs/plugin-react` | ^6.0.5 | React support for Vite |
 | `tailwindcss` | ^3.3.5 | Utility-first CSS framework |
-| `postcss` | ^8.4.31 | CSS processing |
-| `autoprefixer` | ^10.4.16 | CSS vendor prefixes |
-| `eslint` | ^8.53.0 | Linting |
-| `eslint-plugin-react` | ^7.33.2 | React linting rules |
-| `eslint-plugin-react-hooks` | ^4.6.0 | React hooks linting |
-| `eslint-plugin-react-refresh` | ^0.4.4 | React hot refresh linting |
+| `postcss` | ^8.5.25 | CSS processing |
+| `autoprefixer` | ^10.5.4 | CSS vendor prefixes |
+| `eslint` | ^9.39.5 | Linting |
+| `eslint-plugin-react` | ^7.37.5 | React linting rules |
+| `eslint-plugin-react-hooks` | ^7.1.1 | React hooks linting |
+| `eslint-plugin-react-refresh` | ^0.5.3 | React hot refresh linting |
+| `eslint-config-prettier` | ^10.1.8 | Disables rules that conflict with formatting |
+| `vitest` | ^4.1.10 | Unit test runner |
+| `@vitest/coverage-v8` | ^4.1.10 | Coverage reporting |
+| `jsdom` | ^29.1.1 | DOM environment for unit tests |
+| `fake-indexeddb` | ^6.2.5 | IndexedDB implementation for unit tests |
+| `@testing-library/react` | ^16.3.2 | Component testing utilities |
+| `@testing-library/user-event` | ^14.6.1 | User interaction simulation |
+| `@testing-library/jest-dom` | ^7.0.0 | DOM assertions |
+| `@playwright/test` | ^1.62.0 | Browser test runner |
+| `@axe-core/playwright` | ^4.12.1 | Automated WCAG checks |
+
+The `overrides` block in `package.json` pins transitive dependencies that would
+otherwise resolve to versions with published advisories. `brace-expansion` is
+resolved through `vendor/brace-expansion-compat`, a small CommonJS adapter that
+exposes the patched `brace-expansion` 5 API in the callable shape `minimatch` 3
+expects.
 
 ## Build Instructions
 
@@ -722,6 +839,29 @@ npm run preview
 npm run lint
 ```
 
+### Testing
+
+Unit tests live next to the modules they cover (`src/**/*.test.js`) and run in a
+jsdom environment with `fake-indexeddb` standing in for browser storage:
+
+```bash
+npm test           # single run
+npm run test:watch # watch mode
+```
+
+Browser tests live in `e2e/` and cover core workspace flows, the specialized note
+type workspaces, responsive layout from 320px to 1920px, and automated WCAG A/AA
+checks via axe-core:
+
+```bash
+npm run build      # Playwright serves dist/ via `npm run preview`
+npm run test:e2e
+```
+
+The suite uses the local workspace by default. To exercise the cloud sign-in path
+instead, point the build at a Supabase project and export `QN_EMAIL` and
+`QN_PASSWORD` for a test account — never commit those credentials.
+
 ## Contributing
 
 Contributions are welcome! Here's how you can help:
@@ -732,14 +872,16 @@ Contributions are welcome! Here's how you can help:
 4. **Push** to the branch (`git push origin feature/amazing-feature`)
 5. **Open** a Pull Request
 
+Please run `npm run lint` and `npm test` before opening a pull request.
+
 ### Areas for Contribution
 
-- **Backend implementations** — Connect the `backend.js` abstraction to providers like Supabase, Firebase, or a custom REST API
+- **Alternative backends** — Implement the `backend.js` surface against another provider
 - **New note type editors** — Add specialized editors for new workflows
 - **Additional languages** — Extend `i18n.js` with new translations
 - **Accessibility** — Improve screen reader support and keyboard navigation
 - **Performance** — Optimize large note lists, editor startup time, and sync batching
-- **Testing** — Add unit and integration tests
+- **Test coverage** — Extend the unit and browser suites, especially around sync and sharing
 
 ### Reporting Issues
 

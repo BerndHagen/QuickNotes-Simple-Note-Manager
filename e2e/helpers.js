@@ -1,8 +1,15 @@
 import { expect } from '@playwright/test'
 
+/**
+ * Credentials for the cloud sign-in path, supplied by the environment.
+ *
+ * Never commit a working account here. Without `QN_EMAIL`/`QN_PASSWORD` the
+ * suite runs against the local workspace, which covers every test that does
+ * not exercise sync or sharing.
+ */
 export const CREDENTIALS = {
-  email: process.env.QN_EMAIL || 'qa.audit@quicknotes-e2e.dev',
-  password: process.env.QN_PASSWORD || 'QnAudit!2026xyz',
+  email: process.env.QN_EMAIL || '',
+  password: process.env.QN_PASSWORD || '',
 }
 
 export const VIEWPORTS = [
@@ -15,13 +22,40 @@ export const VIEWPORTS = [
   { name: '1920-desktop-xl', width: 1920, height: 1080 },
 ]
 
-/** Signs in and waits for the workspace shell to be interactive. */
+const resetKeyboardStart = (page) =>
+  page.evaluate(() => {
+    document.body.tabIndex = -1
+    document.body.focus()
+    document.body.removeAttribute('tabindex')
+  })
+
+/** Opens the available cloud or local workspace and waits for the shell. */
 export async function signIn(page) {
   await page.goto('./', { waitUntil: 'domcontentloaded' })
+
+  const localWorkspace = page.getByRole('button', {
+    name: /(?:create|continue to my) local workspace/i,
+  })
+  if (await localWorkspace.isVisible().catch(() => false)) {
+    await localWorkspace.click()
+    await expect(page.locator('#qn-main')).toBeVisible({ timeout: 30_000 })
+    await resetKeyboardStart(page)
+    return
+  }
+
+  if (!CREDENTIALS.email || !CREDENTIALS.password) {
+    throw new Error(
+      'This build is configured for a Supabase backend. Set QN_EMAIL and QN_PASSWORD ' +
+        'to a test account, or run against a build without Supabase credentials to use ' +
+        'the local workspace.'
+    )
+  }
+
   await page.getByLabel(/email/i).first().fill(CREDENTIALS.email)
   await page.locator('input[type="password"]').first().fill(CREDENTIALS.password)
   await page.locator('button[type="submit"]').first().click()
-  await expect(page.getByRole('navigation', { name: 'Workspace' })).toBeVisible({ timeout: 30_000 })
+  await expect(page.locator('#qn-main')).toBeVisible({ timeout: 30_000 })
+  await resetKeyboardStart(page)
 }
 
 /** Collects console errors and page exceptions for assertion at test end. */

@@ -15,9 +15,9 @@ import {
   Trophy,
   Target,
   X,
-  Flame
 } from 'lucide-react'
-import { generateId } from './noteTypes'
+import { formatDateKey, generateId, parseDateKey } from './noteTypes'
+import FocusedNoteTitle from './FocusedNoteTitle'
 const MOODS = [
   { id: 1, emoji: '\u{1F622}', label: 'Terrible', color: '#ef4444' },
   { id: 2, emoji: '\u{1F614}', label: 'Bad', color: '#f97316' },
@@ -40,9 +40,9 @@ const WEATHER = [
   { id: 'snowy', emoji: '\u2744\uFE0F', label: 'Snowy' },
 ]
 
-export default function JournalEditor({ data, onChange, noteTitle }) {
+export default function JournalEditor({ data, onChange, noteTitle, onTitleChange, readOnly }) {
   const [journalData, setJournalData] = useState({
-    date: data?.date || new Date().toISOString().split('T')[0],
+    date: data?.date || formatDateKey(),
     mood: data?.mood || null,
     energy: data?.energy || null,
     weather: data?.weather || null,
@@ -52,15 +52,14 @@ export default function JournalEditor({ data, onChange, noteTitle }) {
     lessons: data?.lessons || '',
     goals: data?.goals || [],
     freeWrite: data?.freeWrite || '',
-    photos: data?.photos || [],
     tags: data?.tags || [],
+    preferredSection: data?.preferredSection || 'morning',
   })
 
-  const [activeSection, setActiveSection] = useState('morning')
+  const [activeSection, setActiveSection] = useState(data?.preferredSection || 'morning')
   const [newHighlight, setNewHighlight] = useState('')
   const [newGoal, setNewGoal] = useState('')
   const [newTag, setNewTag] = useState('')
-  const [streakDays, setStreakDays] = useState(0)
   const isInitialMount = useRef(true)
   useEffect(() => {
     if (isInitialMount.current) { isInitialMount.current = false; return }
@@ -118,13 +117,13 @@ export default function JournalEditor({ data, onChange, noteTitle }) {
     update('tags', journalData.tags.filter(t => t !== tag))
   }
   const changeDate = (days) => {
-    const current = new Date(journalData.date)
+    const current = parseDateKey(journalData.date)
     current.setDate(current.getDate() + days)
-    update('date', current.toISOString().split('T')[0])
+    update('date', formatDateKey(current))
   }
 
-  const isToday = journalData.date === new Date().toISOString().split('T')[0]
-  const dateDisplay = new Date(journalData.date).toLocaleDateString('en-US', {
+  const isToday = journalData.date === formatDateKey()
+  const dateDisplay = parseDateKey(journalData.date).toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -149,17 +148,22 @@ export default function JournalEditor({ data, onChange, noteTitle }) {
   ]
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-gray-900">
-      <div className="flex-shrink-0 p-4 border-b border-[#cbd1db] dark:border-gray-700 bg-[#e5eaf0] dark:bg-gray-800">
+    <div className="qn-type-editor qn-type-journal flex flex-col h-full bg-white dark:bg-gray-900">
+      <div className="qn-type-hero flex-shrink-0 p-4 border-b border-[#cbd1db] dark:border-gray-700 bg-[#e5eaf0] dark:bg-gray-800">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <BookOpen className="w-7 h-7" />
-              {noteTitle || 'Daily Journal'}
-            </h1>
+            <FocusedNoteTitle
+              icon={BookOpen}
+              typeLabel="Journal workspace"
+              title={noteTitle}
+              fallback="Daily journal"
+              onChange={onTitleChange}
+              readOnly={readOnly}
+            />
             <div className="flex items-center gap-3 mt-2">
               <button
                 onClick={() => changeDate(-1)}
+                aria-label="Previous journal day"
                 className="p-1 rounded-lg bg-gray-200/50 dark:bg-gray-700 hover:bg-gray-300/50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300"
               >
                 <ChevronLeft className="w-5 h-5" />
@@ -168,6 +172,7 @@ export default function JournalEditor({ data, onChange, noteTitle }) {
               <button
                 onClick={() => changeDate(1)}
                 disabled={isToday}
+                aria-label="Next journal day"
                 className="p-1 rounded-lg bg-gray-200/50 dark:bg-gray-700 hover:bg-gray-300/50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 disabled:opacity-50"
               >
                 <ChevronRight className="w-5 h-5" />
@@ -176,10 +181,9 @@ export default function JournalEditor({ data, onChange, noteTitle }) {
           </div>
           
           <div className="text-right">
-            <div className="flex items-center gap-2 mb-2">
-              <Flame className="w-6 h-6 text-amber-500" />
-              <span className="text-2xl font-bold text-gray-900 dark:text-white">{streakDays}</span>
-              <span className="text-gray-500 dark:text-gray-400 text-sm">day streak</span>
+            <div className="flex items-baseline justify-end gap-2 mb-2">
+              <span className="text-2xl font-bold text-gray-900 dark:text-white">{completionPercent}%</span>
+              <span className="text-gray-500 dark:text-gray-400 text-sm">entry complete</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-32 h-2 rounded-full bg-gray-300 dark:bg-gray-600 overflow-hidden">
@@ -188,7 +192,6 @@ export default function JournalEditor({ data, onChange, noteTitle }) {
                   style={{ width: `${completionPercent}%` }}
                 />
               </div>
-              <span className="text-gray-900 dark:text-white text-sm">{completionPercent}%</span>
             </div>
           </div>
         </div>
@@ -219,14 +222,15 @@ export default function JournalEditor({ data, onChange, noteTitle }) {
           )}
         </div>
       </div>
-      <div className="flex-shrink-0 flex gap-1 p-2 border-b border-[#cbd1db] dark:border-gray-700 bg-gray-50 dark:bg-gray-800 overflow-x-auto">
+      <div className="qn-type-tabs flex-shrink-0 flex gap-1 p-2 border-b border-[#cbd1db] dark:border-gray-700 bg-gray-50 dark:bg-gray-800 overflow-x-auto">
         {sections.map(section => (
           <button
             key={section.id}
             onClick={() => setActiveSection(section.id)}
+            aria-pressed={activeSection === section.id}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
               activeSection === section.id
-                ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600'
+                ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300'
                 : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
             }`}
           >
@@ -248,6 +252,7 @@ export default function JournalEditor({ data, onChange, noteTitle }) {
                   <button
                     key={mood.id}
                     onClick={() => update('mood', mood.id)}
+                    aria-pressed={journalData.mood === mood.id}
                     className={`flex flex-col items-center gap-2 p-4 rounded-xl transition-all ${
                       journalData.mood === mood.id
                         ? 'bg-amber-100 dark:bg-amber-900/30 ring-2 ring-amber-500 scale-110'
@@ -270,6 +275,7 @@ export default function JournalEditor({ data, onChange, noteTitle }) {
                   <button
                     key={level.id}
                     onClick={() => update('energy', level.id)}
+                    aria-pressed={journalData.energy === level.id}
                     className={`flex flex-col items-center gap-1 p-3 rounded-xl transition-all flex-1 max-w-[100px] ${
                       journalData.energy === level.id
                         ? 'bg-amber-100 dark:bg-amber-900/30 ring-2 ring-amber-500'
@@ -301,6 +307,7 @@ export default function JournalEditor({ data, onChange, noteTitle }) {
                   <button
                     key={w.id}
                     onClick={() => update('weather', w.id)}
+                    aria-pressed={journalData.weather === w.id}
                     className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${
                       journalData.weather === w.id
                         ? 'bg-amber-100 dark:bg-amber-900/30 ring-2 ring-amber-500'
@@ -328,7 +335,10 @@ export default function JournalEditor({ data, onChange, noteTitle }) {
                         : 'bg-gray-50 dark:bg-gray-800'
                     }`}
                   >
-                    <button onClick={() => toggleGoal(goal.id)}>
+                    <button
+                      onClick={() => toggleGoal(goal.id)}
+                      aria-label={goal.completed ? `Mark ${goal.text} incomplete` : `Complete ${goal.text}`}
+                    >
                       {goal.completed ? (
                         <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
                           <Star className="w-4 h-4 text-white fill-white" />
@@ -342,6 +352,7 @@ export default function JournalEditor({ data, onChange, noteTitle }) {
                     </span>
                     <button
                       onClick={() => removeGoal(goal.id)}
+                      aria-label={`Delete ${goal.text}`}
                       className="p-1 text-gray-400 hover:text-red-500"
                     >
                       <X className="w-4 h-4" />
@@ -349,9 +360,10 @@ export default function JournalEditor({ data, onChange, noteTitle }) {
                   </div>
                 ))}
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-col gap-2 sm:flex-row">
                 <input
                   type="text"
+                  aria-label="New journal goal"
                   value={newGoal}
                   onChange={(e) => setNewGoal(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && addGoal()}
@@ -360,7 +372,8 @@ export default function JournalEditor({ data, onChange, noteTitle }) {
                 />
                 <button
                   onClick={addGoal}
-                  className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white"
+                  aria-label="Add journal goal"
+                  className="px-4 py-2 rounded-xl bg-amber-700 hover:bg-amber-800 text-white"
                 >
                   <Plus className="w-5 h-5" />
                 </button>
@@ -385,11 +398,12 @@ export default function JournalEditor({ data, onChange, noteTitle }) {
                     <div className="flex-1">
                       <p className="text-gray-900 dark:text-white">{highlight.text}</p>
                       <p className="text-xs text-gray-500 mt-1">
-                        {new Date(highlight.timestamp).toLocaleTimeString()}
+                        {new Date(highlight.timestamp).toLocaleTimeString('en-US')}
                       </p>
                     </div>
                     <button
                       onClick={() => removeHighlight(highlight.id)}
+                      aria-label={`Delete ${highlight.text}`}
                       className="p-1 text-amber-400 hover:text-red-500"
                     >
                       <X className="w-4 h-4" />
@@ -397,9 +411,10 @@ export default function JournalEditor({ data, onChange, noteTitle }) {
                   </div>
                 ))}
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-col gap-2 sm:flex-row">
                 <input
                   type="text"
+                  aria-label="New highlight"
                   value={newHighlight}
                   onChange={(e) => setNewHighlight(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && addHighlight()}
@@ -408,7 +423,8 @@ export default function JournalEditor({ data, onChange, noteTitle }) {
                 />
                 <button
                   onClick={addHighlight}
-                  className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white"
+                  aria-label="Add highlight"
+                  className="px-4 py-2 rounded-xl bg-amber-700 hover:bg-amber-800 text-white"
                 >
                   <Plus className="w-5 h-5" />
                 </button>
@@ -420,6 +436,7 @@ export default function JournalEditor({ data, onChange, noteTitle }) {
                 Challenges Faced
               </h3>
               <textarea
+                aria-label="Challenges faced today"
                 value={journalData.challenges}
                 onChange={(e) => update('challenges', e.target.value)}
                 placeholder="What challenges did you face today?"
@@ -444,6 +461,7 @@ export default function JournalEditor({ data, onChange, noteTitle }) {
                     </div>
                     <input
                       type="text"
+                      aria-label={`Gratitude item ${index + 1}`}
                       value={journalData.gratitude[index]}
                       onChange={(e) => updateGratitude(index, e.target.value)}
                       placeholder={`I'm grateful for...`}
@@ -459,6 +477,7 @@ export default function JournalEditor({ data, onChange, noteTitle }) {
                 Lessons Learned
               </h3>
               <textarea
+                aria-label="Lessons learned today"
                 value={journalData.lessons}
                 onChange={(e) => update('lessons', e.target.value)}
                 placeholder="What did you learn today?"
@@ -508,18 +527,23 @@ export default function JournalEditor({ data, onChange, noteTitle }) {
                 {journalData.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="flex items-center gap-1 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 text-sm"
+                    className="flex items-center gap-1 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 text-sm"
                   >
                     #{tag}
-                    <button onClick={() => removeTag(tag)} className="hover:text-red-500">
+                    <button
+                      onClick={() => removeTag(tag)}
+                      aria-label={`Remove ${tag} tag`}
+                      className="hover:text-red-500"
+                    >
                       <X className="w-3 h-3" />
                     </button>
                   </span>
                 ))}
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-col gap-2 sm:flex-row">
                 <input
                   type="text"
+                  aria-label="New journal tag"
                   value={newTag}
                   onChange={(e) => setNewTag(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && addTag()}
@@ -528,7 +552,7 @@ export default function JournalEditor({ data, onChange, noteTitle }) {
                 />
                 <button
                   onClick={addTag}
-                  className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white"
+                  className="px-4 py-2 rounded-xl bg-amber-700 hover:bg-amber-800 text-white"
                 >
                   Add
                 </button>
@@ -538,7 +562,7 @@ export default function JournalEditor({ data, onChange, noteTitle }) {
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
                 Reflection Prompts
               </h3>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {[
                   'What made me smile today?',
                   'What would I do differently?',
@@ -573,6 +597,7 @@ export default function JournalEditor({ data, onChange, noteTitle }) {
               </p>
             </div>
             <textarea
+              aria-label="Free writing"
               value={journalData.freeWrite}
               onChange={(e) => update('freeWrite', e.target.value)}
               placeholder="Start writing..."

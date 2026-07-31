@@ -4,9 +4,8 @@ import { AlertCircle } from 'lucide-react'
 /**
  * Label + control + hint/error wrapper.
  *
- * Wires `htmlFor`/`id`, `aria-describedby` and `aria-invalid` for you so
- * form controls cannot ship without an accessible name or an announced
- * error — both were missing across the existing dialogs.
+ * Wires `htmlFor`/`id`, `aria-describedby` and `aria-invalid` for you, so a
+ * control cannot end up without an accessible name or an announced error.
  */
 export function Field({ label, hint, error, required, children, className = '', htmlFor }) {
   const generatedId = useId()
@@ -126,7 +125,7 @@ export function Toggle({ checked, onChange, label, description, disabled, id: pr
   )
 }
 
-/** Segmented single-choice control — replaces ad-hoc radio button rows. */
+/** Segmented single-choice control, for a small fixed set of options. */
 export function SegmentedControl({ value, onChange, options, label, size = 'md' }) {
   return (
     <div

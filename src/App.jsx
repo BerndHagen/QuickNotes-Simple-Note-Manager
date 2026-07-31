@@ -7,7 +7,6 @@ import {
   ErrorBoundary,
   QuickNoteModal,
   SettingsModal,
-  TemplateModal,
   ThemeProvider,
   ExportModal,
   ImportModal,
@@ -22,8 +21,8 @@ import {
   SharedNotesView,
 } from './components'
 import AuthScreen from './components/AuthScreen'
+import PasswordRecoveryScreen from './components/PasswordRecoveryScreen'
 import KeyboardShortcutsModal from './components/KeyboardShortcutsModal'
-import NoteTemplatesModal from './components/NoteTemplatesModal'
 import NoteTypesModal from './components/NoteTypesModal'
 import HelpModal from './components/HelpModal'
 import PrivacyModal from './components/PrivacyModal'
@@ -34,6 +33,7 @@ import EditorSettingsModal from './components/EditorSettingsModal'
 import { useNotesStore, useUIStore } from './store'
 import { onConnectionChange } from './lib/utils'
 import { backend, isBackendConfigured } from './lib/backend'
+import { createLocalUser, hasLocalSession } from './lib/localSession'
 import { useShareInvitations } from './lib/useCollaboration'
 import { useAppShortcuts } from './lib/shortcuts'
 import { useLayoutMode } from './hooks/useBreakpoint'
@@ -55,12 +55,23 @@ function AppLoading() {
 }
 
 export default function App() {
-  const { setIsOnline, syncWithBackend, isOnline, user, setUser, setIsAuthChecked } = useNotesStore()
+  const {
+    notes,
+    selectedNoteId,
+    setSelectedNote,
+    setIsOnline,
+    syncWithBackend,
+    isOnline,
+    user,
+    setUser,
+    activateCloudUser,
+    setIsAuthChecked,
+  } = useNotesStore()
   const {
     sidebarOpen,
     setSidebarOpen,
     toggleSidebar,
-    setTemplateModalOpen,
+    setNoteTypesModalOpen,
     setFindReplaceOpen,
     setExportModalOpen,
     setImportModalOpen,
@@ -77,6 +88,7 @@ export default function App() {
   } = useUIStore()
 
   const [isLoading, setIsLoading] = useState(true)
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false)
   const { isCompact, isWide, sidebarIsOverlay } = useLayoutMode()
   const sidebarToggleRef = useRef(null)
 
@@ -87,17 +99,19 @@ export default function App() {
   }, [])
 
   useEffect(() => {
+    if (!isBackendConfigured()) {
+      if (hasLocalSession()) setUser(createLocalUser())
+      setIsAuthChecked(true)
+      setIsLoading(false)
+      return undefined
+    }
+
     const checkSession = async () => {
-      if (!isBackendConfigured()) {
-        setIsAuthChecked(true)
-        setIsLoading(false)
-        return
-      }
       try {
         const {
           data: { session },
         } = await backend.auth.getSession()
-        if (session?.user) setUser(session.user)
+        if (session?.user) await activateCloudUser(session.user, { adoptUnowned: true })
       } catch {
         /* falls through to the sign-in screen */
       } finally {
@@ -110,39 +124,41 @@ export default function App() {
 
     const {
       data: { subscription },
-    } = backend.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session?.user) {
-        setUser(session.user)
-        const isNewUser =
-          session.user.created_at &&
-          new Date().getTime() - new Date(session.user.created_at).getTime() < 60000
-        if (isNewUser && !localStorage.getItem(`quicknotes-setup-${session.user.id}`)) {
-          useNotesStore.getState().initializeStarterContent()
-          localStorage.setItem(`quicknotes-setup-${session.user.id}`, 'true')
-        }
+    } = backend.auth.onAuthStateChange((event, session) => {
+      if ((event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') && session?.user) {
+        if (event === 'PASSWORD_RECOVERY') setIsPasswordRecovery(true)
+        // Supabase advises deferring additional client work outside the auth callback.
+        setTimeout(() => {
+          void activateCloudUser(session.user)
+        }, 0)
       } else if (event === 'SIGNED_OUT') {
-        // Clear all local data to prevent cross-account data leaks
-        const { clearLocalData } = await import('./lib/db')
-        await clearLocalData()
-        localStorage.removeItem('quicknotes-storage')
-        setUser(null)
-        useNotesStore.setState({
-          notes: [],
-          folders: [],
-          tags: [],
-          selectedNoteId: null,
-          selectedFolderId: null,
-          selectedTagFilter: null,
-          searchQuery: '',
-          sharedNotes: [],
-          pendingShares: [],
-          lastSyncTime: null,
-        })
+        setIsPasswordRecovery(false)
+        setTimeout(() => {
+          void (async () => {
+            const { clearLocalData } = await import('./lib/db')
+            await clearLocalData()
+            localStorage.removeItem('quicknotes-storage')
+            setUser(null)
+            useNotesStore.setState({
+              notes: [],
+              folders: [],
+              tags: [],
+              selectedNoteId: null,
+              selectedFolderId: null,
+              selectedTagFilter: null,
+              searchQuery: '',
+              sharedNotes: [],
+              pendingShares: [],
+              lastSyncTime: null,
+              cacheOwnerId: null,
+            })
+          })()
+        }, 0)
       }
     })
 
     return () => subscription?.unsubscribe()
-  }, [setIsAuthChecked, setUser])
+  }, [activateCloudUser, setIsAuthChecked, setUser])
 
   useEffect(() => {
     return onConnectionChange((online) => {
@@ -156,9 +172,32 @@ export default function App() {
   }, [user, setIsOnline, syncWithBackend])
 
   useEffect(() => {
-    if (!isOnline || !user) return
-    useNotesStore.getState().loadSharedNotes()
-    if (useUIStore.getState().syncOnStartup) syncWithBackend()
+    if (!isOnline || !user) return undefined
+    let cancelled = false
+
+    const loadWorkspace = async () => {
+      await useNotesStore.getState().loadSharedNotes()
+      const syncSucceeded = useUIStore.getState().syncOnStartup
+        ? await syncWithBackend()
+        : false
+
+      if (
+        !cancelled &&
+        syncSucceeded &&
+        !user.isLocal &&
+        useNotesStore.getState().notes.length === 0 &&
+        !localStorage.getItem(`quicknotes-setup-${user.id}`)
+      ) {
+        useNotesStore.getState().initializeStarterContent()
+        localStorage.setItem(`quicknotes-setup-${user.id}`, 'true')
+        await useNotesStore.getState().syncWithBackend()
+      }
+    }
+
+    void loadWorkspace()
+    return () => {
+      cancelled = true
+    }
   }, [user, isOnline, syncWithBackend])
 
   useEffect(() => {
@@ -186,6 +225,12 @@ export default function App() {
   }, [user])
 
   useEffect(() => {
+    if (!user || selectedNoteId || notes.length === 0) return
+    const firstAvailableNote = notes.find((note) => !note.deleted && !note.archived)
+    if (firstAvailableNote) setSelectedNote(firstAvailableNote.id)
+  }, [notes, selectedNoteId, setSelectedNote, user])
+
+  useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState !== 'visible' || !user || !isOnline) return
       if (!useUIStore.getState().autoSync) return
@@ -211,7 +256,7 @@ export default function App() {
       focusMode: () => setFocusModeOpen(true),
       settings: () => setSettingsOpen(true),
       shortcuts: () => setShortcutsModalOpen(true),
-      templates: () => setTemplateModalOpen(true),
+      templates: () => setNoteTypesModalOpen(true),
       export: () => setExportModalOpen(true),
       import: () => setImportModalOpen(true),
       insertLink: () => setLinkModalOpen(true),
@@ -232,7 +277,7 @@ export default function App() {
       setFocusModeOpen,
       setSettingsOpen,
       setShortcutsModalOpen,
-      setTemplateModalOpen,
+      setNoteTypesModalOpen,
       setExportModalOpen,
       setImportModalOpen,
       setLinkModalOpen,
@@ -271,6 +316,17 @@ export default function App() {
     )
   }
 
+  if (isPasswordRecovery) {
+    return (
+      <ThemeProvider>
+        <PasswordRecoveryScreen
+          onComplete={() => setIsPasswordRecovery(false)}
+          onCancel={() => backend.auth.signOut()}
+        />
+      </ThemeProvider>
+    )
+  }
+
   const showList = !isCompact || mobileView === 'notes'
   const showEditor = !isCompact || mobileView === 'editor'
 
@@ -287,7 +343,7 @@ export default function App() {
 
   return (
     <ThemeProvider>
-      <div className="flex h-[100dvh] overflow-hidden bg-app text-content">
+      <div className="qn-workspace-frame flex h-[100dvh] overflow-hidden bg-app text-content">
         <a href="#qn-main" className="qn-skip-link">
           Skip to content
         </a>
@@ -303,11 +359,11 @@ export default function App() {
         <div
           id="qn-sidebar"
           /**
-           * A closed drawer is translated off-screen but still rendered,
-           * so without `inert` its buttons stay in the tab order and a
-           * keyboard user tabs into controls they cannot see (measured
-           * at x = -252 while still reporting as visible).
-           * `inert` takes a string here because React 18 passes unknown
+           * A closed drawer is translated off-screen but still rendered, so
+           * without `inert` its buttons stay in the tab order and a keyboard
+           * user can focus controls they cannot see.
+           *
+           * `inert` takes a string because React 18 passes unknown
            * attributes through verbatim.
            */
           inert={sidebarIsOverlay && !sidebarOpen ? '' : undefined}
@@ -355,7 +411,6 @@ export default function App() {
 
         <QuickNoteModal />
         <SettingsModal />
-        <TemplateModal />
         <ExportModal />
         <ImportModal />
         <ReminderModal />
@@ -365,8 +420,7 @@ export default function App() {
         <GlobalSearchModal />
         <ArchiveView />
         <KeyboardShortcutsModal />
-        <NoteTemplatesModal />
-        <NoteTypesModal />
+        <NoteTypesModal onCreated={() => isCompact && setMobileView('editor')} />
         <HelpModal />
         <PrivacyModal />
         <TermsModal />

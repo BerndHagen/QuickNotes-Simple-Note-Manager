@@ -5,6 +5,7 @@ import { useTranslation } from '../lib/useTranslation'
 import { hasSpecializedEditor } from './editors'
 import toast from 'react-hot-toast'
 import LegacyDialog from './ui/LegacyDialog'
+import { escapeHtml, sanitizeNoteHtml } from '../lib/sanitizeHtml'
 
 const noteDataToHtml = (noteType, noteData, noteTitle) => {
   if (!noteData) return '<p>No content</p>'
@@ -23,12 +24,27 @@ const noteDataToHtml = (noteType, noteData, noteTitle) => {
       html += '</tr></thead><tbody>'
       tasks.forEach(task => {
         const status = task.completed ? '✅' : '⬜'
-        const priority = task.priority === 'high' ? '🔴 High' : task.priority === 'medium' ? '🟡 Medium' : '🟢 Low'
+        const priority = {
+          high: '🔴 High',
+          medium: '🟡 Medium',
+          low: '🟢 Low',
+          none: 'No priority',
+        }[task.priority] || 'No priority'
         const due = task.dueDate || '-'
         html += `<tr><td style="border:1px solid #e5e7eb;padding:8px">${status}</td>`
         html += `<td style="border:1px solid #e5e7eb;padding:8px">${task.text || task.title || ''}</td>`
         html += `<td style="border:1px solid #e5e7eb;padding:8px">${priority}</td>`
         html += `<td style="border:1px solid #e5e7eb;padding:8px">${due}</td></tr>`
+        if (task.subtasks?.length) {
+          html += `<tr><td></td><td colspan="3" style="border:1px solid #e5e7eb;padding:8px"><strong>Subtasks:</strong><ul>`
+          task.subtasks.forEach(subtask => {
+            html += `<li>${subtask.completed ? '✅' : '⬜'} ${subtask.text || ''}</li>`
+          })
+          html += '</ul></td></tr>'
+        }
+        if (task.notes) {
+          html += `<tr><td></td><td colspan="3" style="border:1px solid #e5e7eb;padding:8px"><strong>Notes:</strong> ${task.notes}</td></tr>`
+        }
       })
       html += '</tbody></table>'
       return html
@@ -49,7 +65,9 @@ const noteDataToHtml = (noteType, noteData, noteTitle) => {
         categories[cat].push(item)
       })
       Object.entries(categories).forEach(([cat, catItems]) => {
-        html += `<h3>${cat.charAt(0).toUpperCase() + cat.slice(1)}</h3>`
+        const categoryName = noteData.categories?.find(category => category.id === cat)?.name
+          || cat.charAt(0).toUpperCase() + cat.slice(1)
+        html += `<h3>${categoryName}</h3>`
         html += '<table style="width:100%;border-collapse:collapse;margin:8px 0"><thead><tr>'
         html += '<th style="border:1px solid #e5e7eb;padding:6px;background:#f3f4f6">✓</th>'
         html += '<th style="border:1px solid #e5e7eb;padding:6px;background:#f3f4f6">Item</th>'
@@ -61,6 +79,9 @@ const noteDataToHtml = (noteType, noteData, noteTitle) => {
           html += `<td style="border:1px solid #e5e7eb;padding:6px">${item.name || ''}</td>`
           html += `<td style="border:1px solid #e5e7eb;padding:6px">${item.quantity || 1} ${item.unit || 'pcs'}</td>`
           html += `<td style="border:1px solid #e5e7eb;padding:6px">${item.price ? `${currency} ${item.price}` : '-'}</td></tr>`
+          if (item.note) {
+            html += `<tr><td></td><td colspan="3" style="border:1px solid #e5e7eb;padding:6px"><em>${item.note}</em></td></tr>`
+          }
         })
         html += '</tbody></table>'
       })
@@ -71,18 +92,37 @@ const noteDataToHtml = (noteType, noteData, noteTitle) => {
 
     case 'meeting': {
       let html = ''
-      if (noteData.date) html += `<p><strong>Date:</strong> ${noteData.date}${noteData.time ? ` at ${noteData.time}` : ''}</p>`
+      if (noteTitle || noteData.title) html += `<h2>${noteTitle || noteData.title}</h2>`
+      if (noteData.date) html += `<p><strong>Date:</strong> ${noteData.date}</p>`
+      if (noteData.startTime || noteData.endTime) {
+        html += `<p><strong>Time:</strong> ${noteData.startTime || '—'}${noteData.endTime ? `–${noteData.endTime}` : ''}</p>`
+      }
       if (noteData.location) html += `<p><strong>Location:</strong> ${noteData.location}</p>`
       const attendees = noteData.attendees || []
       if (attendees.length > 0) {
         html += `<h3>Attendees (${attendees.length})</h3><ul>`
-        attendees.forEach(a => { html += `<li>${typeof a === 'string' ? a : (a.name || a.email || '')}</li>` })
+        attendees.forEach(a => {
+          const name = typeof a === 'string' ? a : (a.name || a.email || '')
+          const role = typeof a === 'object' && a.role ? ` — ${a.role}` : ''
+          const attendance = typeof a === 'object' && a.present === false ? ' (absent)' : ''
+          html += `<li>${name}${role}${attendance}</li>`
+        })
         html += '</ul>'
       }
       const agenda = noteData.agenda || []
       if (agenda.length > 0) {
         html += '<h3>Agenda</h3><ol>'
-        agenda.forEach(item => { html += `<li>${typeof item === 'string' ? item : (item.text || item.title || '')}</li>` })
+        agenda.forEach(item => {
+          if (typeof item === 'string') {
+            html += `<li>${item}</li>`
+            return
+          }
+          const meta = [
+            item.duration ? `${item.duration} min` : '',
+            item.presenter || '',
+          ].filter(Boolean).join(' · ')
+          html += `<li>${item.completed ? '✅ ' : ''}${item.topic || item.text || item.title || ''}${meta ? ` <em>(${meta})</em>` : ''}${item.notes ? `<p>${item.notes}</p>` : ''}</li>`
+        })
         html += '</ol>'
       }
       if (noteData.notes) html += `<h3>Notes</h3><div>${noteData.notes}</div>`
@@ -90,10 +130,11 @@ const noteDataToHtml = (noteType, noteData, noteTitle) => {
       if (actions.length > 0) {
         html += '<h3>Action Items</h3><ul>'
         actions.forEach(a => {
-          const text = typeof a === 'string' ? a : (a.text || a.title || '')
-          const assignee = a.assignee ? ` (${a.assignee})` : ''
+          const text = typeof a === 'string' ? a : (a.task || a.text || a.title || '')
+          const assignee = a.owner || a.assignee ? ` — ${a.owner || a.assignee}` : ''
+          const dueDate = a.dueDate ? ` · due ${a.dueDate}` : ''
           const done = a.completed ? '✅ ' : '⬜ '
-          html += `<li>${done}${text}${assignee}</li>`
+          html += `<li>${done}${text}${assignee}${dueDate}</li>`
         })
         html += '</ul>'
       }
@@ -111,6 +152,15 @@ const noteDataToHtml = (noteType, noteData, noteTitle) => {
       if (noteData.date) html += `<p><strong>Date:</strong> ${noteData.date}</p>`
       if (noteData.mood) html += `<p><strong>Mood:</strong> ${noteData.mood}/5</p>`
       if (noteData.energy) html += `<p><strong>Energy:</strong> ${noteData.energy}/5</p>`
+      if (noteData.weather) html += `<p><strong>Weather:</strong> ${noteData.weather}</p>`
+      const goals = noteData.goals || []
+      if (goals.length > 0) {
+        html += '<h3>Daily goals</h3><ul>'
+        goals.forEach(goal => {
+          html += `<li>${goal.completed ? '✅' : '⬜'} ${goal.text || goal}</li>`
+        })
+        html += '</ul>'
+      }
       const gratitude = (noteData.gratitude || []).filter(g => g)
       if (gratitude.length > 0) {
         html += '<h3>Gratitude</h3><ul>'
@@ -126,6 +176,7 @@ const noteDataToHtml = (noteType, noteData, noteTitle) => {
       if (noteData.challenges) html += `<h3>Challenges</h3><p>${noteData.challenges}</p>`
       if (noteData.lessons) html += `<h3>Lessons</h3><p>${noteData.lessons}</p>`
       if (noteData.freeWrite) html += `<h3>Free Write</h3><p>${noteData.freeWrite}</p>`
+      if (noteData.tags?.length) html += `<p><strong>Tags:</strong> ${noteData.tags.map(tag => `#${tag}`).join(' ')}</p>`
       return html || '<p>No journal entry</p>'
     }
 
@@ -138,9 +189,14 @@ const noteDataToHtml = (noteType, noteData, noteTitle) => {
         html += `<h3>Ideas (${ideas.length})</h3>`
         ideas.forEach((idea, i) => {
           const title = typeof idea === 'string' ? idea : (idea.title || idea.text || `Idea ${i + 1}`)
-          html += `<h4>${i + 1}. ${title}</h4>`
+          const category = typeof idea === 'object'
+            ? noteData.categories?.find(item => item.id === idea.category)?.name
+            : ''
+          html += `<h4>${i + 1}. ${idea.starred ? '★ ' : ''}${title}</h4>`
+          if (category) html += `<p><em>Category: ${category}</em></p>`
           if (idea.description) html += `<p>${idea.description}</p>`
-          if (idea.votes) html += `<p><em>Votes: ${idea.votes}</em></p>`
+          if (idea.notes) html += `<p>${idea.notes}</p>`
+          if (typeof idea === 'object') html += `<p><em>Score: ${idea.votes || 0}</em></p>`
         })
       }
       return html || '<p>No ideas yet</p>'
@@ -155,7 +211,8 @@ const noteDataToHtml = (noteType, noteData, noteTitle) => {
           html += '<ul>'
           col.tasks.forEach(task => {
             const text = typeof task === 'string' ? task : (task.title || task.text || '')
-            const assignee = task.assignee ? ` [${task.assignee}]` : ''
+            const assigneeName = noteData.team?.find(member => member.id === task.assignee)?.name
+            const assignee = task.assignee ? ` [${assigneeName || task.assignee}]` : ''
             html += `<li>${text}${assignee}</li>`
           })
           html += '</ul>'
@@ -167,7 +224,7 @@ const noteDataToHtml = (noteType, noteData, noteTitle) => {
       if (milestones.length > 0) {
         html += '<h3>Milestones</h3><ul>'
         milestones.forEach(m => {
-          const text = typeof m === 'string' ? m : (m.title || m.text || '')
+          const text = typeof m === 'string' ? m : (m.name || m.title || m.text || '')
           const date = m.date || m.dueDate ? ` (${m.date || m.dueDate})` : ''
           const done = m.completed ? '✅ ' : '⬜ '
           html += `<li>${done}${text}${date}</li>`
@@ -180,7 +237,7 @@ const noteDataToHtml = (noteType, noteData, noteTitle) => {
     case 'weekly': {
       let html = ''
       if (noteData.weekStart) html += `<p><strong>Week starting:</strong> ${noteData.weekStart}</p>`
-      const goals = noteData.goals || []
+      const goals = noteData.weeklyGoals || noteData.goals || []
       if (goals.length > 0) {
         html += '<h3>Weekly Goals</h3><ul>'
         goals.forEach(g => {
@@ -217,9 +274,15 @@ const noteDataToHtml = (noteType, noteData, noteTitle) => {
           })
           html += '</ul>'
         }
+        if (day.note) html += `<p><strong>Notes:</strong> ${day.note}</p>`
+        if (day.rating) html += `<p><strong>Day rating:</strong> ${day.rating}/5</p>`
       })
       const review = noteData.review
       if (review) {
+        if (review.accomplishments) html += `<h3>Accomplishments</h3><p>${review.accomplishments}</p>`
+        if (review.challenges) html += `<h3>Challenges</h3><p>${review.challenges}</p>`
+        if (review.lessons) html += `<h3>Lessons</h3><p>${review.lessons}</p>`
+        if (review.nextWeekFocus) html += `<h3>Next week’s focus</h3><p>${review.nextWeekFocus}</p>`
         if (review.highlight) html += `<h3>Weekly Highlight</h3><p>${review.highlight}</p>`
         if (review.wins && review.wins.length > 0) {
           html += '<h3>Wins</h3><ul>'
@@ -306,7 +369,7 @@ const generatePDF = async (note) => {
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>${note.title}</title>
+  <title>${escapeHtml(note.title)}</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     
@@ -429,7 +492,7 @@ const generatePDF = async (note) => {
   </style>
 </head>
 <body>
-  <h1>${note.title}</h1>
+  <h1>${escapeHtml(note.title)}</h1>
   <div class="meta">
     Created: ${new Date(note.createdAt).toLocaleDateString('en-US', { 
       year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' 
@@ -440,11 +503,11 @@ const generatePDF = async (note) => {
   </div>
   ${note.tags && note.tags.length > 0 ? `
   <div class="tags">
-    ${note.tags.map(tag => `<span class="tag">#${tag}</span>`).join('')}
+    ${note.tags.map(tag => `<span class="tag">#${escapeHtml(tag)}</span>`).join('')}
   </div>
   ` : ''}
   <div class="content">
-    ${note.content || '<p>No content</p>'}
+    ${sanitizeNoteHtml(note.content) || '<p>No content</p>'}
   </div>
 </body>
 </html>

@@ -1,39 +1,280 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import {
-  FileText,
-  Mail,
-  Lock,
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  CheckCircle2,
   Eye,
   EyeOff,
-  User,
-  ArrowRight,
-  CheckCircle,
-  AlertCircle,
-  Cloud,
-  Shield,
-  Zap,
+  FileText,
   FolderOpen,
-  Star,
-  RefreshCw,
-  Sparkles,
-  Layout,
-  Share2,
-  Search,
+  HardDrive,
   History,
-  Globe,
-  Palette
+  LayoutGrid,
+  Lock,
+  Mail,
+  RefreshCw,
+  Search,
+  ShieldCheck,
+  Sparkles,
+  User,
+  WifiOff,
 } from 'lucide-react'
-import { backend, isBackendConfigured, getRedirectUrl } from '../lib/backend'
+import { backend, getRedirectUrl, isBackendConfigured } from '../lib/backend'
+import {
+  getAuthErrorMessage,
+  MIN_PASSWORD_LENGTH,
+  validateNewPassword,
+} from '../lib/authValidation'
+import { createLocalUser, startLocalSession } from '../lib/localSession'
 import { useNotesStore, useUIStore } from '../store'
 import HelpModal from './HelpModal'
 import PrivacyModal from './PrivacyModal'
 import TermsModal from './TermsModal'
 
+const FEATURE_POINTS = [
+  {
+    icon: HardDrive,
+    title: 'Local-first by design',
+    description: 'Write instantly. Your notes remain available even when the network is not.',
+  },
+  {
+    icon: LayoutGrid,
+    title: 'Built for real work',
+    description: 'Rich documents, tasks, tables, folders, tags, templates, and focused note types.',
+  },
+  {
+    icon: ShieldCheck,
+    title: 'Open and self-hostable',
+    description: 'No artificial limits, upgrade prompts, or locked productivity features.',
+  },
+]
+
+function BrandMark({ compact = false }) {
+  return (
+    <div className="flex items-center gap-3">
+      <span
+        className={`flex shrink-0 items-center justify-center rounded-[12px] border border-white/15 bg-gradient-to-br from-primary-400 to-primary-700 text-white shadow-lg shadow-emerald-950/20 ${
+          compact ? 'h-10 w-10' : 'h-11 w-11'
+        }`}
+      >
+        <FileText className={compact ? 'h-5 w-5' : 'h-[22px] w-[22px]'} aria-hidden="true" />
+      </span>
+      <span>
+        <span
+          className={`block font-bold tracking-[-0.02em] ${
+            compact ? 'text-title-md text-content' : 'text-[20px] leading-6 text-white'
+          }`}
+        >
+          QuickNotes
+        </span>
+        {!compact && (
+          <span className="block text-ui-sm font-medium text-white/55">A calmer writing workspace</span>
+        )}
+      </span>
+    </div>
+  )
+}
+
+function WorkspacePreview() {
+  const tasks = [
+    'Shape the launch story and release notes',
+    'Review the final interaction details',
+    'Prepare the open-source release checklist',
+  ]
+
+  return (
+    <div
+      className="qn-auth-preview relative mt-8 w-full overflow-hidden rounded-[22px] border border-white/15 bg-white/95 p-2 shadow-2xl shadow-emerald-950/35"
+      aria-hidden="true"
+    >
+      <div className="flex h-8 items-center gap-1.5 px-2.5">
+        <span className="h-2.5 w-2.5 rounded-full bg-[#ff6b65]" />
+        <span className="h-2.5 w-2.5 rounded-full bg-[#f4bf4f]" />
+        <span className="h-2.5 w-2.5 rounded-full bg-[#62c554]" />
+        <span className="ml-auto flex items-center gap-1 text-[9px] font-semibold text-slate-400">
+          <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+          Saved locally
+        </span>
+      </div>
+
+      <div className="flex h-[318px] overflow-hidden rounded-[15px] border border-slate-200 bg-white">
+        <div className="flex w-[132px] shrink-0 flex-col bg-[#0b2d24] px-2.5 py-3 text-white">
+          <div className="mb-4 flex items-center gap-2 px-1">
+            <span className="flex h-6 w-6 items-center justify-center rounded-[7px] bg-emerald-500">
+              <FileText className="h-3.5 w-3.5" />
+            </span>
+            <span className="text-[10px] font-bold">QuickNotes</span>
+          </div>
+          <div className="mb-3 flex h-7 items-center gap-2 rounded-[7px] bg-emerald-500/90 px-2 text-[9px] font-bold">
+            <span className="text-sm leading-none">+</span>
+            Quick note
+          </div>
+          {[
+            ['All notes', '12'],
+            ['Favorites', '4'],
+            ['Archive', ''],
+          ].map(([label, count], index) => (
+            <div
+              key={label}
+              className={`mb-0.5 flex h-6 items-center gap-1.5 rounded-[6px] px-1.5 text-[8px] ${
+                index === 0 ? 'bg-white/10 text-white' : 'text-white/55'
+              }`}
+            >
+              {index === 0 ? <FolderOpen className="h-3 w-3" /> : <History className="h-3 w-3" />}
+              <span className="flex-1">{label}</span>
+              {count && <span className="rounded bg-white/10 px-1">{count}</span>}
+            </div>
+          ))}
+          <p className="mb-1 mt-3 px-1.5 text-[7px] font-bold uppercase tracking-[0.14em] text-white/35">
+            Folders
+          </p>
+          {['Projects', 'Personal', 'Reading'].map((label) => (
+            <div key={label} className="flex h-5 items-center gap-1.5 px-1.5 text-[8px] text-white/55">
+              <FolderOpen className="h-2.5 w-2.5" />
+              {label}
+            </div>
+          ))}
+          <div className="mt-auto rounded-[8px] border border-white/10 bg-white/[0.04] p-2">
+            <p className="text-[8px] font-semibold">Open-source workspace</p>
+            <p className="mt-0.5 text-[7px] leading-3 text-white/40">All features included.</p>
+          </div>
+        </div>
+
+        <div className="w-[176px] shrink-0 border-r border-slate-200 bg-slate-50 p-2.5">
+          <div className="mb-2 flex items-center">
+            <p className="flex-1 text-[10px] font-bold text-slate-800">All notes</p>
+            <span className="rounded-full bg-slate-200 px-1.5 text-[8px] font-semibold text-slate-500">
+              12
+            </span>
+          </div>
+          <div className="mb-3 flex h-7 items-center gap-1.5 rounded-[7px] border border-slate-200 bg-white px-2 text-[8px] text-slate-400">
+            <Search className="h-3 w-3" />
+            Search notes
+          </div>
+          {[
+            ['Product launch notes', 'Goals, milestones, and release plan…', true],
+            ['Design critique', 'Decisions and follow-up actions…', false],
+            ['Friday reflections', 'What moved forward this week…', false],
+          ].map(([title, preview, active]) => (
+            <div
+              key={title}
+              className={`mb-2 rounded-[9px] border p-2.5 ${
+                active
+                  ? 'border-emerald-300 bg-emerald-50'
+                  : 'border-slate-200 bg-white'
+              }`}
+            >
+              <p className="truncate text-[9px] font-bold text-slate-800">{title}</p>
+              <p className="mt-1 line-clamp-2 text-[7px] leading-3 text-slate-400">{preview}</p>
+              <div className="mt-2 flex items-center gap-1 text-[7px] text-slate-400">
+                Today
+                <span>·</span>
+                <span className={active ? 'text-emerald-600' : ''}>Projects</span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="min-w-0 flex-1 bg-white p-2.5">
+          <div className="qn-banner-surface rounded-[10px] px-4 py-3 text-white">
+            <p className="text-[12px] font-bold">Product launch notes</p>
+            <p className="mt-1.5 text-[7px] text-white/55">Today · Projects · #launch</p>
+          </div>
+          <div className="my-2 flex h-7 items-center gap-2 border-y border-slate-100 text-[8px] font-semibold text-slate-400">
+            <span>↶</span>
+            <span>↷</span>
+            <span className="rounded bg-slate-100 px-2 py-1">Heading</span>
+            <b className="text-slate-700">B</b>
+            <i className="text-slate-700">I</i>
+            <span>☷</span>
+          </div>
+          <div className="px-3 py-2">
+            <p className="text-[13px] font-bold tracking-tight text-slate-800">Launch with clarity</p>
+            <div className="mb-4 mt-2 h-px bg-gradient-to-r from-emerald-400 via-slate-200 to-slate-200" />
+            <p className="mb-3 max-w-[42ch] text-[8px] leading-[14px] text-slate-500">
+              Keep the story focused, the handoff calm, and every important decision easy to find.
+            </p>
+            <div className="space-y-2">
+              {tasks.map((task, index) => (
+                <div key={task} className="flex items-start gap-2 text-[8px] leading-3 text-slate-600">
+                  <span
+                    className={`mt-px flex h-3 w-3 shrink-0 items-center justify-center rounded-[3px] ${
+                      index < 2 ? 'bg-emerald-500 text-white' : 'border border-slate-300'
+                    }`}
+                  >
+                    {index < 2 && <Check className="h-2 w-2" />}
+                  </span>
+                  {task}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function AuthField({ id, label, icon: Icon, error, trailing, className = '', ...inputProps }) {
+  return (
+    <div className={className}>
+      <label htmlFor={id} className="mb-1.5 block text-ui-sm font-semibold text-content-muted">
+        {label}
+      </label>
+      <div className="group relative">
+        <Icon
+          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-content-subtle transition-colors group-focus-within:text-accent-text"
+          aria-hidden="true"
+        />
+        <input
+          id={id}
+          aria-invalid={!!error}
+          aria-describedby={error ? `${id}-error` : undefined}
+          className="h-11 w-full rounded-[10px] border border-strong bg-surface-raised pl-10 pr-3 text-ui-lg text-content shadow-xs outline-none transition-[border-color,box-shadow] placeholder:text-content-subtle focus:border-accent focus:ring-2 focus:ring-[var(--qn-accent-soft)] aria-[invalid=true]:border-danger"
+          {...inputProps}
+        />
+        {trailing}
+      </div>
+      {error && (
+        <p id={`${id}-error`} role="alert" className="mt-1.5 text-ui-sm text-danger-text">
+          {error}
+        </p>
+      )}
+    </div>
+  )
+}
+
+function SubmitButton({ loading, children }) {
+  return (
+    <button
+      type="submit"
+      disabled={loading}
+      className="flex h-11 w-full items-center justify-center gap-2 rounded-[10px] bg-accent px-4 text-ui-lg font-semibold text-accent-on shadow-md shadow-emerald-900/10 transition-[background-color,box-shadow,transform] duration-fast hover:-translate-y-px hover:bg-accent-hover hover:shadow-lg active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+    >
+      {loading ? (
+        <RefreshCw className="h-4 w-4 animate-spin" aria-hidden="true" />
+      ) : (
+        <>
+          {children}
+          <ArrowRight className="h-4 w-4" aria-hidden="true" />
+        </>
+      )}
+    </button>
+  )
+}
+
 export default function AuthScreen() {
-  const [mode, setMode] = useState('login')
+  const cloudEnabled = isBackendConfigured()
+  const notes = useNotesStore((state) => state.notes)
+  const setUser = useNotesStore((state) => state.setUser)
+  const initializeStarterContent = useNotesStore((state) => state.initializeStarterContent)
+
+  const [mode, setMode] = useState(cloudEnabled ? 'login' : 'local')
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [mounted, setMounted] = useState(false)
+  const [notice, setNotice] = useState('')
+  const [errors, setErrors] = useState({})
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -42,609 +283,552 @@ export default function AuthScreen() {
     lastName: '',
     agreeToTerms: false,
   })
-  const [errors, setErrors] = useState({})
 
-  const { setUser } = useNotesStore()
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  const features = [
-    { icon: FileText, title: 'Rich Text Editor', description: 'Full WYSIWYG editor with formatting, tables, and media support' },
-    { icon: FolderOpen, title: 'Smart Organization', description: 'Folders, tags, and powerful search to find anything instantly' },
-    { icon: Cloud, title: 'Cloud Sync', description: 'Seamless synchronization across all your devices in real-time' },
-    { icon: Zap, title: 'Offline-First', description: 'Works without internet — syncs automatically when online' },
-    { icon: Layout, title: 'Specialized Notes', description: '7 note types including todos, projects, meetings, and more' },
-    { icon: Share2, title: 'Collaboration', description: 'Share notes with others and work together in real-time' },
-    { icon: History, title: 'Version History', description: 'Track every change with full revision history and rollback' },
-    { icon: Globe, title: 'Multi-Language', description: 'Built-in translation support for over 30 languages' },
-    { icon: Palette, title: 'Custom Themes', description: 'Personalize your workspace with light and dark themes' },
-  ]
-
-  const stats = [
-    { value: '7+', label: 'Note Types' },
-    { value: '100%', label: 'Free & Open Source' },
-    { value: 'PWA', label: 'Works Offline' },
-  ]
+  const changeMode = (nextMode) => {
+    setMode(nextMode)
+    setErrors({})
+    setNotice('')
+  }
 
   const handleInputChange = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
-    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: '' }))
+    setFormData((current) => ({ ...current, [field]: value }))
+    if (errors[field] || errors.form) {
+      setErrors((current) => ({ ...current, [field]: '', form: '' }))
+    }
   }
 
   const validateForm = () => {
-    const newErrors = {}
-    if (!formData.email) newErrors.email = 'Email is required'
-    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Invalid email format'
-    if (!formData.password) newErrors.password = 'Password is required'
-    else if (mode === 'register' && formData.password.length < 8) newErrors.password = 'Password must be at least 8 characters'
-    if (mode === 'register') {
-      if (!formData.firstName) newErrors.firstName = 'First name is required'
-      if (!formData.lastName) newErrors.lastName = 'Last name is required'
-      if (!formData.confirmPassword) newErrors.confirmPassword = 'Please confirm your password'
-      else if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match'
-      if (!formData.agreeToTerms) newErrors.agreeToTerms = 'You must agree to the terms'
+    const nextErrors = {}
+    if (!formData.email) nextErrors.email = 'Email is required'
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) nextErrors.email = 'Enter a valid email address'
+
+    if (mode === 'login' || mode === 'register') {
+      if (!formData.password) nextErrors.password = 'Password is required'
+      else if (mode === 'register') {
+        const passwordError = validateNewPassword(formData.password)
+        if (passwordError) nextErrors.password = passwordError
+      }
     }
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
+
+    if (mode === 'register') {
+      if (!formData.firstName.trim()) nextErrors.firstName = 'First name is required'
+      if (!formData.lastName.trim()) nextErrors.lastName = 'Last name is required'
+      if (!formData.confirmPassword) nextErrors.confirmPassword = 'Confirm your password'
+      else if (formData.password !== formData.confirmPassword) {
+        nextErrors.confirmPassword = 'Passwords do not match'
+      }
+      if (!formData.agreeToTerms) nextErrors.agreeToTerms = 'Please accept the terms to continue'
+    }
+
+    setErrors(nextErrors)
+    return Object.keys(nextErrors).length === 0
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
+  const handleSubmit = async (event) => {
+    event.preventDefault()
     if (!validateForm()) return
-    if (!isBackendConfigured()) {
-      setErrors({ email: 'Backend is not configured. Please check .env file.' })
-      return
-    }
+
     setIsLoading(true)
     setErrors({})
+    setNotice('')
+
     try {
       if (mode === 'register') {
         const { error } = await backend.auth.signUp({
           email: formData.email,
           password: formData.password,
-          options: { 
-            data: { first_name: formData.firstName, last_name: formData.lastName },
-            emailRedirectTo: getRedirectUrl()
+          options: {
+            data: {
+              first_name: formData.firstName.trim(),
+              last_name: formData.lastName.trim(),
+            },
+            emailRedirectTo: getRedirectUrl(),
           },
         })
         if (error) throw error
-        setMode('confirmation')
+        changeMode('confirmation')
       } else if (mode === 'login') {
-        const { data, error } = await backend.auth.signInWithPassword({
+        const { error } = await backend.auth.signInWithPassword({
           email: formData.email,
           password: formData.password,
         })
         if (error) throw error
-        if (data.user) setUser(data.user)
+        // App's auth-state listener activates the correct account-scoped cache.
       } else if (mode === 'forgot') {
         const { error } = await backend.auth.resetPasswordForEmail(formData.email, {
-          redirectTo: getRedirectUrl()
+          redirectTo: getRedirectUrl(),
         })
         if (error) throw error
-        setErrors({ email: 'Password reset email has been sent!' })
+        setNotice('A password reset link has been sent to your email.')
       }
-    } catch (err) {
-      const errorMessages = {
-        'Invalid login credentials': 'Invalid email or password',
-        'User already registered': 'Email is already registered',
-      }
-      setErrors({ email: errorMessages[err.message] || err.message })
+    } catch (error) {
+      setErrors({ form: getAuthErrorMessage(error) })
     } finally {
       setIsLoading(false)
     }
   }
 
-  const renderLoginForm = () => (
-    <div className="auth-form-animate">
-      {/* Header */}
-      <div className="text-center mb-8">
-        <div className="inline-flex items-center justify-center w-14 h-14 mb-4 rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-600 shadow-lg shadow-emerald-500/20">
-          <Lock className="w-7 h-7 text-white" />
-        </div>
-        <h2 className="text-2xl font-bold tracking-tight text-gray-900">Welcome back</h2>
-        <p className="mt-1.5 text-sm text-gray-500">Sign in to continue to your workspace</p>
-      </div>
-      
-      {/* Form Card */}
-      <div className="p-6 bg-white border border-[#cbd1db] rounded-2xl shadow-sm">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="qn-auth-email" className="block mb-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Email Address</label>
-            <div className="relative group">
-              <Mail className="absolute w-4.5 h-4.5 text-gray-500 transition-colors -translate-y-1/2 left-3.5 top-1/2 group-focus-within:text-emerald-500" />
-              <input
-                id="qn-auth-email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-                className={`w-full pl-11 pr-4 py-3 bg-gray-50/80 border rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-gray-900 placeholder-gray-400 text-sm ${
-                  errors.email ? 'border-red-300 bg-red-50/50' : 'border-[#cbd1db]'
-                }`}
-                placeholder="you@example.com"
-              />
-            </div>
-            {errors.email && (
-              <p className="flex items-center gap-1 mt-1.5 text-sm text-red-600">
-                <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
-                {errors.email}
-              </p>
-            )}
-          </div>
-          <div>
-            <label htmlFor="qn-auth-password" className="block mb-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Password</label>
-            <div className="relative group">
-              <Lock className="absolute w-4.5 h-4.5 text-gray-500 transition-colors -translate-y-1/2 left-3.5 top-1/2 group-focus-within:text-emerald-500" />
-              <input
-                id="qn-auth-password"
-                type={showPassword ? 'text' : 'password'}
-                value={formData.password}
-                onChange={(e) => handleInputChange('password', e.target.value)}
-                className={`w-full pl-11 pr-12 py-3 bg-gray-50/80 border rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-gray-900 placeholder-gray-400 text-sm ${
-                  errors.password ? 'border-red-300 bg-red-50/50' : 'border-[#cbd1db]'
-                }`}
-                placeholder="Enter your password"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-                aria-pressed={showPassword}
-                className="absolute p-1.5 text-gray-500 -translate-y-1/2 rounded-lg right-3 top-1/2 hover:text-gray-700 hover:bg-gray-100 transition-colors"
-              >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
-            {errors.password && (
-              <p className="flex items-center gap-1 mt-1.5 text-sm text-red-600">
-                <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
-                {errors.password}
-              </p>
-            )}
-          </div>
-          <div className="flex items-center justify-between pt-1">
-            <label className="flex items-center cursor-pointer">
-              <input type="checkbox" className="w-4 h-4 border-[#cbd1db] rounded text-emerald-600 focus:ring-emerald-500" />
-              <span className="ml-2 text-sm text-gray-600">Remember me</span>
-            </label>
-            <button
-              type="button"
-              onClick={() => setMode('forgot')}
-              className="text-sm font-medium text-emerald-700 hover:text-emerald-800 transition-colors"
-            >
-              Forgot password?
-            </button>
-          </div>
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="relative flex items-center justify-center w-full px-4 py-3 space-x-2 font-semibold text-white transition-all rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-60 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 hover:-translate-y-0.5 active:translate-y-0"
-          >
-            {isLoading ? (
-              <RefreshCw className="w-5 h-5 animate-spin" />
-            ) : (
-              <>
-                <span>Sign in</span>
-                <ArrowRight className="w-5 h-5" />
-              </>
-            )}
-          </button>
-        </form>
-      </div>
+  const openLocalWorkspace = () => {
+    if (notes.length === 0) initializeStarterContent()
+    startLocalSession()
+    setUser(createLocalUser())
+  }
 
-      {/* Divider */}
-      <div className="relative my-6">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-[#cbd1db]" />
-        </div>
-        <div className="relative flex justify-center text-xs">
-          <span className="px-3 text-gray-500 bg-white font-medium uppercase tracking-wider">New to QuickNotes?</span>
-        </div>
+  const renderModeTabs = () => {
+    if (!cloudEnabled || !['login', 'register'].includes(mode)) return null
+    return (
+      <div
+        role="tablist"
+        aria-label="Account access"
+        className="mb-7 grid grid-cols-2 rounded-[10px] border border-subtle bg-surface-sunken p-1"
+      >
+        {[
+          ['login', 'Sign in'],
+          ['register', 'Create account'],
+        ].map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            role="tab"
+            aria-selected={mode === value}
+            onClick={() => changeMode(value)}
+            className={`h-9 rounded-[7px] text-ui-md font-semibold transition-colors ${
+              mode === value
+                ? 'bg-surface-raised text-content shadow-xs'
+                : 'text-content-muted hover:text-content'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+    )
+  }
+
+  const renderLocalWorkspace = () => (
+    <div className="auth-form-animate">
+      <div className="mb-7 flex h-12 w-12 items-center justify-center rounded-[14px] border border-accent-border bg-accent-soft text-accent-text">
+        <HardDrive className="h-6 w-6" aria-hidden="true" />
+      </div>
+      <p className="mb-2 text-ui-sm font-bold uppercase tracking-[0.14em] text-accent-text">
+        Local-first workspace
+      </p>
+      <h1 className="text-[30px] font-bold leading-[1.15] tracking-[-0.035em] text-content">
+        {notes.length > 0 ? 'Welcome back to your notes.' : 'Start writing without an account.'}
+      </h1>
+      <p className="mt-3 text-ui-lg leading-6 text-content-muted">
+        Everything is stored privately in this browser. QuickNotes works offline and does not
+        require a subscription or a cloud account.
+      </p>
+
+      <div className="my-7 space-y-3 rounded-[14px] border border-subtle bg-surface-sunken/70 p-4">
+        {[
+          ['Private on this device', ShieldCheck],
+          ['Available without a connection', WifiOff],
+          ['Every editor and organization feature included', Sparkles],
+        ].map(([label, Icon]) => (
+          <div key={label} className="flex items-center gap-3 text-ui-md font-medium text-content">
+            <span className="flex h-7 w-7 items-center justify-center rounded-[8px] bg-accent-soft text-accent-text">
+              <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+            </span>
+            {label}
+          </div>
+        ))}
       </div>
 
       <button
-        onClick={() => setMode('register')}
-        className="flex items-center justify-center w-full px-4 py-2.5 text-sm font-semibold text-emerald-700 transition-all bg-emerald-50 hover:bg-emerald-100 rounded-xl border border-[#cbd1db]"
+        type="button"
+        onClick={openLocalWorkspace}
+        className="flex h-12 w-full items-center justify-center gap-2 rounded-[11px] bg-accent px-4 text-ui-lg font-semibold text-accent-on shadow-md shadow-emerald-900/10 transition-[background-color,box-shadow,transform] duration-fast hover:-translate-y-px hover:bg-accent-hover hover:shadow-lg active:translate-y-0"
       >
-        Create a free account
+        {notes.length > 0 ? 'Continue to my workspace' : 'Create local workspace'}
+        <ArrowRight className="h-4 w-4" aria-hidden="true" />
+      </button>
+
+      {cloudEnabled && (
+        <button
+          type="button"
+          onClick={() => changeMode('login')}
+          className="mt-4 flex w-full items-center justify-center gap-2 py-2 text-ui-md font-semibold text-content-muted hover:text-content"
+        >
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+          Back to cloud sign in
+        </button>
+      )}
+    </div>
+  )
+
+  const renderLogin = () => (
+    <div className="auth-form-animate">
+      <p className="mb-2 text-ui-sm font-bold uppercase tracking-[0.14em] text-accent-text">
+        Good to see you
+      </p>
+      <h1 className="text-[30px] font-bold leading-[1.15] tracking-[-0.035em] text-content">
+        Welcome back.
+      </h1>
+      <p className="mb-7 mt-2 text-ui-lg text-content-muted">
+        Sign in to sync your workspace across devices.
+      </p>
+
+      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+        <AuthField
+          id="qn-auth-email"
+          label="Email address"
+          icon={Mail}
+          type="email"
+          value={formData.email}
+          onChange={(event) => handleInputChange('email', event.target.value)}
+          placeholder="you@example.com"
+          autoComplete="email"
+          error={errors.email}
+        />
+        <AuthField
+          id="qn-auth-password"
+          label="Password"
+          icon={Lock}
+          type={showPassword ? 'text' : 'password'}
+          value={formData.password}
+          onChange={(event) => handleInputChange('password', event.target.value)}
+          placeholder="Enter your password"
+          autoComplete="current-password"
+          error={errors.password}
+          trailing={
+            <button
+              type="button"
+              onClick={() => setShowPassword((visible) => !visible)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-control text-content-subtle hover:bg-surface-hover hover:text-content"
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          }
+        />
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={() => changeMode('forgot')}
+            className="text-ui-md font-semibold text-accent-text hover:text-accent-hover"
+          >
+            Forgot password?
+          </button>
+        </div>
+        {errors.form && (
+          <p role="alert" className="rounded-control border border-danger-border bg-danger-soft px-3 py-2.5 text-ui-md text-danger-text">
+            {errors.form}
+          </p>
+        )}
+        <SubmitButton loading={isLoading}>Sign in</SubmitButton>
+      </form>
+
+      <div className="my-6 flex items-center gap-3">
+        <span className="h-px flex-1 bg-[var(--qn-border)]" />
+        <span className="text-ui-xs font-semibold uppercase tracking-[0.1em] text-content-subtle">
+          No account needed
+        </span>
+        <span className="h-px flex-1 bg-[var(--qn-border)]" />
+      </div>
+      <button
+        type="button"
+        onClick={() => changeMode('local')}
+        className="flex h-11 w-full items-center justify-center gap-2 rounded-[10px] border border-strong bg-surface-raised text-ui-md font-semibold text-content shadow-xs hover:bg-surface-hover"
+      >
+        <HardDrive className="h-4 w-4 text-accent-text" aria-hidden="true" />
+        Use a private local workspace
       </button>
     </div>
   )
 
-  const renderRegisterForm = () => (
+  const renderRegister = () => (
     <div className="auth-form-animate">
-      {/* Header */}
-      <div className="text-center mb-6">
-        <div className="inline-flex items-center justify-center w-14 h-14 mb-4 rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-600 shadow-lg shadow-emerald-500/20">
-          <User className="w-7 h-7 text-white" />
-        </div>
-        <h2 className="text-2xl font-bold tracking-tight text-gray-900">Create your account</h2>
-        <p className="mt-1.5 text-sm text-gray-500">Start organizing your thoughts today</p>
-      </div>
-      
-      {/* Form Card */}
-      <div className="p-6 bg-white border border-[#cbd1db] rounded-2xl shadow-sm">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label htmlFor="qn-auth-first-name" className="block mb-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">First name</label>
-              <div className="relative group">
-                <User className="absolute w-4.5 h-4.5 text-gray-500 transition-colors -translate-y-1/2 left-3.5 top-1/2 group-focus-within:text-emerald-500" />
-                <input
-                id="qn-auth-first-name"
-                  type="text"
-                  value={formData.firstName}
-                  onChange={(e) => handleInputChange('firstName', e.target.value)}
-                  className={`w-full pl-11 pr-4 py-3 bg-gray-50/80 border rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-gray-900 placeholder-gray-400 text-sm ${
-                    errors.firstName ? 'border-red-300' : 'border-[#cbd1db]'
-                  }`}
-                  placeholder="John"
-                />
-              </div>
-              {errors.firstName && <p className="mt-1 text-sm text-red-600">{errors.firstName}</p>}
-            </div>
-            <div>
-              <label htmlFor="qn-auth-last-name" className="block mb-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Last name</label>
-              <input
-                id="qn-auth-last-name"
-                type="text"
-                value={formData.lastName}
-                onChange={(e) => handleInputChange('lastName', e.target.value)}
-                className={`w-full px-4 py-3 bg-gray-50/80 border rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-gray-900 placeholder-gray-400 text-sm ${
-                  errors.lastName ? 'border-red-300' : 'border-[#cbd1db]'
-                }`}
-                placeholder="Doe"
-              />
-              {errors.lastName && <p className="mt-1 text-sm text-red-600">{errors.lastName}</p>}
-            </div>
-          </div>
-          <div>
-            <label htmlFor="qn-auth-email-2" className="block mb-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Email Address</label>
-            <div className="relative group">
-              <Mail className="absolute w-4.5 h-4.5 text-gray-500 transition-colors -translate-y-1/2 left-3.5 top-1/2 group-focus-within:text-emerald-500" />
-              <input
-                id="qn-auth-email-2"
-                type="email"
-                value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-                className={`w-full pl-11 pr-4 py-3 bg-gray-50/80 border rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-gray-900 placeholder-gray-400 text-sm ${
-                  errors.email ? 'border-red-300' : 'border-[#cbd1db]'
-                }`}
-                placeholder="john.doe@example.com"
-              />
-            </div>
-            {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
-          </div>
-          <div>
-            <label htmlFor="qn-auth-password-2" className="block mb-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Password</label>
-            <div className="relative group">
-              <Lock className="absolute w-4.5 h-4.5 text-gray-500 transition-colors -translate-y-1/2 left-3.5 top-1/2 group-focus-within:text-emerald-500" />
-              <input
-                id="qn-auth-password-2"
-                type={showPassword ? 'text' : 'password'}
-                value={formData.password}
-                onChange={(e) => handleInputChange('password', e.target.value)}
-                className={`w-full pl-11 pr-12 py-3 bg-gray-50/80 border rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-gray-900 placeholder-gray-400 text-sm ${
-                  errors.password ? 'border-red-300' : 'border-[#cbd1db]'
-                }`}
-                placeholder="At least 8 characters"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-                aria-pressed={showPassword}
-                className="absolute p-1.5 text-gray-500 -translate-y-1/2 rounded-lg right-3 top-1/2 hover:text-gray-700 hover:bg-gray-100 transition-colors"
-              >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
-            {formData.password && (
-              <div className="mt-2">
-                <div className="flex gap-1">
-                  {[1, 2, 3, 4].map((level) => (
-                    <div
-                      key={level}
-                      className={`h-1 flex-1 rounded-full transition-colors ${
-                        formData.password.length >= level * 3
-                          ? level <= 1
-                            ? 'bg-red-400'
-                            : level <= 2
-                            ? 'bg-orange-400'
-                            : level <= 3
-                            ? 'bg-yellow-400'
-                            : 'bg-emerald-500'
-                          : 'bg-gray-200'
-                      }`}
-                    />
-                  ))}
-                </div>
-                <p className="mt-1 text-xs text-gray-500">
-                  {formData.password.length < 4 ? 'Too short' : formData.password.length < 7 ? 'Weak' : formData.password.length < 10 ? 'Good' : 'Strong'}
-                </p>
-              </div>
-            )}
-            {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
-          </div>
-          <div>
-            <label htmlFor="qn-auth-confirm-password" className="block mb-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Confirm Password</label>
-            <div className="relative group">
-              <Lock className="absolute w-4.5 h-4.5 text-gray-500 transition-colors -translate-y-1/2 left-3.5 top-1/2 group-focus-within:text-emerald-500" />
-              <input
-                id="qn-auth-confirm-password"
-                type="password"
-                value={formData.confirmPassword}
-                onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                className={`w-full pl-11 pr-4 py-3 bg-gray-50/80 border rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-gray-900 placeholder-gray-400 text-sm ${
-                  errors.confirmPassword ? 'border-red-300' : 'border-[#cbd1db]'
-                }`}
-                placeholder="Repeat password"
-              />
-            </div>
-            {errors.confirmPassword && <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>}
-          </div>
-          <label className="flex items-start gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={formData.agreeToTerms}
-              onChange={(e) => handleInputChange('agreeToTerms', e.target.checked)}
-              className={`mt-0.5 w-4 h-4 rounded border-[#cbd1db] text-emerald-600 focus:ring-emerald-500 ${
-                errors.agreeToTerms ? 'border-red-300' : ''
-              }`}
-            />
-            <span className="text-sm text-gray-500 leading-tight">
-              I agree to the{' '}
-              <button type="button" onClick={() => useUIStore.getState().setTermsModalOpen(true)} className="text-emerald-700 hover:text-emerald-800 font-medium">Terms of Service</button>{' '}
-              and{' '}
-              <button type="button" onClick={() => useUIStore.getState().setPrivacyModalOpen(true)} className="text-emerald-700 hover:text-emerald-800 font-medium">Privacy Policy</button>
-            </span>
-          </label>
-          {errors.agreeToTerms && <p className="text-sm text-red-600">{errors.agreeToTerms}</p>}
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="relative flex items-center justify-center w-full px-4 py-3 space-x-2 font-semibold text-white transition-all rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-60 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 hover:-translate-y-0.5 active:translate-y-0"
-          >
-            {isLoading ? (
-              <RefreshCw className="w-5 h-5 animate-spin" />
-            ) : (
-              <>
-                <span>Create account</span>
-                <ArrowRight className="w-5 h-5" />
-              </>
-            )}
-          </button>
-        </form>
-      </div>
-      
-      <p className="text-sm text-center text-gray-500 mt-6">
-        Already have an account?{' '}
-        <button onClick={() => setMode('login')} className="font-medium text-emerald-700 hover:text-emerald-800 transition-colors">
-          Sign in
-        </button>
+      <p className="mb-2 text-ui-sm font-bold uppercase tracking-[0.14em] text-accent-text">
+        Your workspace, everywhere
       </p>
+      <h1 className="text-[30px] font-bold leading-[1.15] tracking-[-0.035em] text-content">
+        Create your account.
+      </h1>
+      <p className="mb-6 mt-2 text-ui-lg text-content-muted">
+        Sync notes and collaborate without giving up offline access.
+      </p>
+
+      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+        <div className="grid grid-cols-2 gap-3">
+          <AuthField
+            id="qn-auth-first-name"
+            label="First name"
+            icon={User}
+            type="text"
+            value={formData.firstName}
+            onChange={(event) => handleInputChange('firstName', event.target.value)}
+            autoComplete="given-name"
+            error={errors.firstName}
+          />
+          <AuthField
+            id="qn-auth-last-name"
+            label="Last name"
+            icon={User}
+            type="text"
+            value={formData.lastName}
+            onChange={(event) => handleInputChange('lastName', event.target.value)}
+            autoComplete="family-name"
+            error={errors.lastName}
+          />
+        </div>
+        <AuthField
+          id="qn-auth-register-email"
+          label="Email address"
+          icon={Mail}
+          type="email"
+          value={formData.email}
+          onChange={(event) => handleInputChange('email', event.target.value)}
+          autoComplete="email"
+          error={errors.email}
+        />
+        <AuthField
+          id="qn-auth-register-password"
+          label="Password"
+          icon={Lock}
+          type={showPassword ? 'text' : 'password'}
+          value={formData.password}
+          onChange={(event) => handleInputChange('password', event.target.value)}
+          placeholder={`At least ${MIN_PASSWORD_LENGTH} characters`}
+          autoComplete="new-password"
+          error={errors.password}
+          trailing={
+            <button
+              type="button"
+              onClick={() => setShowPassword((visible) => !visible)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-control text-content-subtle hover:bg-surface-hover hover:text-content"
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          }
+        />
+        <p className="-mt-2 text-ui-xs text-content-subtle">
+          Use at least {MIN_PASSWORD_LENGTH} characters. A memorable passphrase works well.
+        </p>
+        <AuthField
+          id="qn-auth-confirm-password"
+          label="Confirm password"
+          icon={Lock}
+          type="password"
+          value={formData.confirmPassword}
+          onChange={(event) => handleInputChange('confirmPassword', event.target.value)}
+          autoComplete="new-password"
+          error={errors.confirmPassword}
+        />
+        <label className="flex cursor-pointer items-start gap-3 rounded-control p-1 text-ui-md leading-5 text-content-muted">
+          <input
+            type="checkbox"
+            checked={formData.agreeToTerms}
+            onChange={(event) => handleInputChange('agreeToTerms', event.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded border-strong text-accent focus:ring-accent"
+          />
+          <span>
+            I agree to the{' '}
+            <button
+              type="button"
+              onClick={() => useUIStore.getState().setTermsModalOpen(true)}
+              className="font-semibold text-accent-text hover:text-accent-hover"
+            >
+              Terms
+            </button>{' '}
+            and{' '}
+            <button
+              type="button"
+              onClick={() => useUIStore.getState().setPrivacyModalOpen(true)}
+              className="font-semibold text-accent-text hover:text-accent-hover"
+            >
+              Privacy Policy
+            </button>
+            .
+          </span>
+        </label>
+        {errors.agreeToTerms && (
+          <p role="alert" className="text-ui-sm text-danger-text">
+            {errors.agreeToTerms}
+          </p>
+        )}
+        {errors.form && (
+          <p role="alert" className="rounded-control border border-danger-border bg-danger-soft px-3 py-2.5 text-ui-md text-danger-text">
+            {errors.form}
+          </p>
+        )}
+        <SubmitButton loading={isLoading}>Create account</SubmitButton>
+      </form>
+    </div>
+  )
+
+  const renderForgot = () => (
+    <div className="auth-form-animate">
+      <button
+        type="button"
+        onClick={() => changeMode('login')}
+        className="mb-7 flex items-center gap-2 text-ui-md font-semibold text-content-muted hover:text-content"
+      >
+        <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+        Back to sign in
+      </button>
+      <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-[14px] border border-accent-border bg-accent-soft text-accent-text">
+        <Lock className="h-6 w-6" aria-hidden="true" />
+      </div>
+      <h1 className="text-[30px] font-bold tracking-[-0.035em] text-content">Reset your password.</h1>
+      <p className="mb-7 mt-2 text-ui-lg leading-6 text-content-muted">
+        Enter your account email and we’ll send a secure reset link.
+      </p>
+      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+        <AuthField
+          id="qn-auth-reset-email"
+          label="Email address"
+          icon={Mail}
+          type="email"
+          value={formData.email}
+          onChange={(event) => handleInputChange('email', event.target.value)}
+          autoComplete="email"
+          error={errors.email}
+        />
+        {notice && (
+          <p role="status" className="flex items-start gap-2 rounded-control border border-success-border bg-success-soft px-3 py-2.5 text-ui-md text-success-text">
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+            {notice}
+          </p>
+        )}
+        {errors.form && (
+          <p role="alert" className="rounded-control border border-danger-border bg-danger-soft px-3 py-2.5 text-ui-md text-danger-text">
+            {errors.form}
+          </p>
+        )}
+        <SubmitButton loading={isLoading}>Send reset link</SubmitButton>
+      </form>
     </div>
   )
 
   const renderConfirmation = () => (
-    <div className="space-y-6 auth-form-animate">
-      <div className="text-center">
-        <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-emerald-100 to-teal-100">
-          <Mail className="w-8 h-8 text-emerald-600" />
-        </div>
-        <h2 className="text-3xl font-bold tracking-tight text-gray-900">Check your email</h2>
-        <p className="mt-2 text-gray-500">
-          We've sent a confirmation link to<br />
-          <span className="font-semibold text-gray-900">{formData.email}</span>
-        </p>
+    <div className="auth-form-animate text-center">
+      <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-[18px] border border-success-border bg-success-soft text-success-text">
+        <Mail className="h-7 w-7" aria-hidden="true" />
       </div>
-      <div className="p-4 border bg-emerald-50/80 border-emerald-200/50 rounded-xl">
-        <div className="flex items-start gap-3">
-          <CheckCircle className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" />
-          <div className="text-sm text-emerald-800">
-            <p className="font-semibold">Almost there!</p>
-            <p className="mt-1 text-emerald-700">Click the link in your email to verify your account, then you can sign in.</p>
-          </div>
-        </div>
-      </div>
-      <div className="space-y-4 text-center">
-        <p className="text-sm text-gray-500">Didn't receive the email? Check your spam folder.</p>
-        <button
-          onClick={() => {
-            setMode('login')
-            setFormData({ ...formData, password: '', confirmPassword: '' })
-          }}
-          className="flex items-center justify-center w-full px-4 py-3 space-x-2 font-semibold text-white transition-all rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-lg shadow-emerald-500/20 hover:-translate-y-0.5 active:translate-y-0"
-        >
-          <span>Back to sign in</span>
-          <ArrowRight className="w-5 h-5" />
-        </button>
-      </div>
-    </div>
-  )
-
-  const renderForgotPassword = () => (
-    <div className="auth-form-animate">
-      {/* Header */}
-      <div className="text-center mb-6">
-        <div className="inline-flex items-center justify-center w-14 h-14 mb-4 rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-600 shadow-lg shadow-emerald-500/20">
-          <Lock className="w-7 h-7 text-white" />
-        </div>
-        <h2 className="text-2xl font-bold tracking-tight text-gray-900">Reset password</h2>
-        <p className="mt-1.5 text-sm text-gray-500">Enter your email and we'll send you a reset link</p>
-      </div>
-      
-      {/* Form Card */}
-      <div className="p-6 bg-white border border-[#cbd1db] rounded-2xl shadow-sm">
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <label htmlFor="qn-auth-email-3" className="block mb-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Email Address</label>
-            <div className="relative group">
-              <Mail className="absolute w-4.5 h-4.5 text-gray-500 transition-colors -translate-y-1/2 left-3.5 top-1/2 group-focus-within:text-emerald-500" />
-              <input
-                id="qn-auth-email-3"
-                type="email"
-                value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-                className={`w-full pl-11 pr-4 py-3 bg-gray-50/80 border rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-gray-900 placeholder-gray-400 text-sm ${
-                  errors.email ? 'border-red-300' : 'border-[#cbd1db]'
-                }`}
-                placeholder="you@example.com"
-              />
-            </div>
-            {errors.email && (
-              <p className={`mt-1.5 text-sm flex items-center gap-1 ${errors.email.includes('sent') ? 'text-emerald-600' : 'text-red-600'}`}>
-                {errors.email.includes('sent') ? <CheckCircle className="w-3.5 h-3.5 flex-shrink-0" /> : <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />}
-                {errors.email}
-              </p>
-            )}
-          </div>
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="relative flex items-center justify-center w-full px-4 py-3 space-x-2 font-semibold text-white transition-all rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-60 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 hover:-translate-y-0.5 active:translate-y-0"
-          >
-            {isLoading ? (
-              <RefreshCw className="w-5 h-5 animate-spin" />
-            ) : (
-              <>
-                <span>Send reset link</span>
-                <ArrowRight className="w-5 h-5" />
-              </>
-            )}
-          </button>
-        </form>
-      </div>
-      
-      <p className="text-sm text-center text-gray-500 mt-6">
-        <button onClick={() => setMode('login')} className="font-medium text-emerald-700 hover:text-emerald-800 transition-colors">
-          {"\u2190"} Back to sign in
-        </button>
+      <p className="mb-2 text-ui-sm font-bold uppercase tracking-[0.14em] text-success-text">
+        One last step
       </p>
+      <h1 className="text-[30px] font-bold tracking-[-0.035em] text-content">Check your inbox.</h1>
+      <p className="mx-auto mt-3 max-w-[34ch] text-ui-lg leading-6 text-content-muted">
+        We sent a confirmation link to <strong className="font-semibold text-content">{formData.email}</strong>.
+      </p>
+      <button
+        type="button"
+        onClick={() => changeMode('login')}
+        className="mt-7 flex h-11 w-full items-center justify-center gap-2 rounded-[10px] bg-accent text-ui-lg font-semibold text-accent-on hover:bg-accent-hover"
+      >
+        Back to sign in
+        <ArrowRight className="h-4 w-4" aria-hidden="true" />
+      </button>
     </div>
   )
 
   return (
-    <div className="flex min-h-screen">
-      {/* Left Side - Hero/Brand Panel */}
-      <div className="relative flex-col justify-between hidden overflow-hidden text-white lg:flex lg:w-[55%] bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800">
-        {/* Animated Background Elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute w-[500px] h-[500px] bg-emerald-400/20 rounded-full -top-20 -left-20 blur-3xl auth-float" />
-          <div className="absolute w-[400px] h-[400px] bg-teal-400/15 rounded-full bottom-10 right-0 blur-3xl auth-float-delayed" />
-          <div className="absolute w-[300px] h-[300px] bg-emerald-300/10 rounded-full top-1/2 left-1/3 blur-3xl auth-float-slow" />
-          {/* Grid pattern overlay */}
-          <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '32px 32px' }} />
-        </div>
+    <div className="qn-auth-page relative min-h-[100dvh] overflow-hidden bg-app text-content">
+      <div className="pointer-events-none absolute inset-0 opacity-80" aria-hidden="true">
+        <div className="absolute -left-24 -top-32 h-[420px] w-[420px] rounded-full bg-primary-400/10 blur-3xl" />
+        <div className="absolute -bottom-40 right-[28%] h-[520px] w-[520px] rounded-full bg-primary-500/10 blur-3xl" />
+      </div>
 
-        <div className="relative z-10 flex flex-col justify-between h-full px-12 py-10 xl:px-16">
-          {/* Logo */}
-          <div className={`transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-11 h-11 bg-white/15 rounded-xl backdrop-blur-sm border border-white/10">
-                <FileText className="w-6 h-6" />
-              </div>
-              <span className="text-xl font-bold tracking-tight">QuickNotes</span>
-            </div>
+      <main className="relative z-10 mx-auto grid h-[100dvh] max-w-[1680px] lg:grid-cols-[minmax(0,1.08fr)_minmax(430px,0.72fr)]">
+        <section className="qn-auth-hero relative hidden overflow-hidden border-r border-white/10 px-10 py-9 text-white lg:flex lg:flex-col xl:px-16 xl:py-11">
+          <div className="relative z-10">
+            <BrandMark />
           </div>
 
-          {/* Main Hero Content */}
-          <div className="flex-1 flex flex-col justify-center py-8">
-            <div className={`transition-all duration-700 delay-100 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 mb-6 text-xs font-medium bg-white/10 rounded-full backdrop-blur-sm border border-white/10">
-                <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
-                Free & Open Source
-              </div>
-              <h1 className="mb-4 text-4xl font-bold leading-tight tracking-tight xl:text-5xl">
-                Your thoughts,<br />
-                <span className="text-emerald-200">organized beautifully.</span>
-              </h1>
-              <p className="text-lg leading-relaxed text-emerald-100/80 max-w-md">
-                A powerful note-taking workspace with rich text editing, cloud sync, and offline support.
-              </p>
+          <div className="relative z-10 my-auto max-w-[760px] py-4 xl:py-8">
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.08] px-3 py-1.5 text-ui-sm font-semibold text-white/80 backdrop-blur">
+              <Sparkles className="h-3.5 w-3.5 text-primary-300" aria-hidden="true" />
+              Free, open-source, and yours to run
             </div>
+            <h1 className="max-w-[680px] text-[42px] font-bold leading-[1.04] tracking-[-0.045em] xl:text-[52px]">
+              Make room for the ideas that matter.
+            </h1>
+            <p className="mt-5 max-w-[590px] text-[16px] leading-7 text-white/60">
+              A focused note workspace with the depth of a document editor and the speed of a
+              quick capture tool.
+            </p>
 
-            {/* Feature Grid */}
-            <div className={`grid grid-cols-3 gap-3 mt-10 transition-all duration-700 delay-200 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-              {features.map((feature, index) => {
-                const Icon = feature.icon
-                return (
-                  <div key={index} className="flex items-start gap-3 p-3 transition-colors rounded-xl bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.06]">
-                    <div className="flex-shrink-0 p-2 rounded-lg bg-white/10">
-                      <Icon className="w-4 h-4" />
-                    </div>
-                    <div className="min-w-0">
-                      <h3 className="text-sm font-semibold leading-tight">{feature.title}</h3>
-                      <p className="mt-0.5 text-xs leading-snug text-emerald-200/60">{feature.description}</p>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
+            <WorkspacePreview />
           </div>
 
-          {/* Bottom Stats */}
-          <div className={`transition-all duration-700 delay-300 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-            <div className="flex items-center gap-8 pt-6 border-t border-white/10">
-              {stats.map((stat, index) => (
-                <div key={index}>
-                  <p className="text-2xl font-bold">{stat.value}</p>
-                  <p className="text-xs text-emerald-200/60 mt-0.5">{stat.label}</p>
+          <div className="relative z-10 hidden grid-cols-3 gap-5 border-t border-white/10 pt-6 xl:grid">
+            {FEATURE_POINTS.map(({ icon: Icon, title, description }) => (
+              <div key={title} className="min-w-0">
+                <div className="mb-2 flex items-center gap-2">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-[8px] bg-white/[0.08] text-primary-300">
+                    <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+                  </span>
+                  <p className="text-ui-md font-semibold text-white/90">{title}</p>
                 </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Right Side - Auth Forms */}
-      <div className="flex flex-col flex-1 bg-white">
-        {/* Mobile logo */}
-        <div className="flex items-center justify-center py-6 lg:hidden">
-          <div className="flex items-center gap-2.5">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-600 shadow-lg shadow-emerald-500/20">
-              <FileText className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-xl font-bold text-gray-900">QuickNotes</span>
-          </div>
-        </div>
-
-        {/* Form Container */}
-        <div className="flex items-center justify-center flex-1 px-6 py-8 sm:px-8">
-          <div className="w-full max-w-[420px]">
-            {mode === 'login' && renderLoginForm()}
-            {mode === 'register' && renderRegisterForm()}
-            {mode === 'confirmation' && renderConfirmation()}
-            {mode === 'forgot' && renderForgotPassword()}
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="px-6 py-6">
-          <div className="max-w-[420px] mx-auto">
-            <div className="flex items-center justify-center gap-6 mb-3">
-              <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                <Shield className="w-3.5 h-3.5" />
-                <span>Secure</span>
+                <p className="text-ui-sm leading-[18px] text-white/40">{description}</p>
               </div>
-              <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                <Lock className="w-3.5 h-3.5" />
-                <span>Self-Hosted</span>
+            ))}
+          </div>
+        </section>
+
+        <section className="flex min-h-0 flex-col bg-surface/95 backdrop-blur-sm">
+          <div className="flex items-center justify-between border-b border-subtle px-5 py-4 lg:hidden">
+            <BrandMark compact />
+            <span className="rounded-full border border-accent-border bg-accent-soft px-2.5 py-1 text-ui-xs font-semibold text-accent-text">
+              Open source
+            </span>
+          </div>
+
+          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-5 py-8 sm:px-8 lg:px-10 xl:px-16">
+            <div className="mx-auto my-auto w-full max-w-[440px]">
+              <div className="mb-7 hidden items-center justify-between lg:flex">
+                <span className="text-ui-sm font-medium text-content-subtle">
+                  {cloudEnabled ? 'Secure cloud access' : 'No cloud server configured'}
+                </span>
+                <span className="rounded-full border border-accent-border bg-accent-soft px-2.5 py-1 text-ui-xs font-semibold text-accent-text">
+                  {cloudEnabled ? 'Offline-ready' : 'Local mode'}
+                </span>
               </div>
-              <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                <CheckCircle className="w-3.5 h-3.5" />
-                <span>Open Source</span>
-              </div>
-            </div>
-            <div className="flex justify-center gap-6 text-xs text-gray-500">
-              <button onClick={() => useUIStore.getState().setHelpModalOpen(true)} className="hover:text-gray-600 transition-colors">Help</button>
-              <button onClick={() => useUIStore.getState().setPrivacyModalOpen(true)} className="hover:text-gray-600 transition-colors">Privacy</button>
-              <button onClick={() => useUIStore.getState().setTermsModalOpen(true)} className="hover:text-gray-600 transition-colors">Terms</button>
+
+              {renderModeTabs()}
+              {mode === 'local' && renderLocalWorkspace()}
+              {mode === 'login' && renderLogin()}
+              {mode === 'register' && renderRegister()}
+              {mode === 'forgot' && renderForgot()}
+              {mode === 'confirmation' && renderConfirmation()}
             </div>
           </div>
-        </div>
-      </div>
+
+          <footer className="px-5 pb-5 pt-2 sm:px-8 lg:px-10 xl:px-16">
+            <div className="mx-auto flex max-w-[440px] items-center justify-between gap-4 border-t border-subtle pt-4 text-ui-sm text-content-subtle">
+              <span>QuickNotes · Open-source edition</span>
+              <nav aria-label="Legal and support" className="flex items-center gap-4">
+                <button
+                  type="button"
+                  onClick={() => useUIStore.getState().setHelpModalOpen(true)}
+                  className="hover:text-content"
+                >
+                  Help
+                </button>
+                <button
+                  type="button"
+                  onClick={() => useUIStore.getState().setPrivacyModalOpen(true)}
+                  className="hover:text-content"
+                >
+                  Privacy
+                </button>
+                <button
+                  type="button"
+                  onClick={() => useUIStore.getState().setTermsModalOpen(true)}
+                  className="hover:text-content"
+                >
+                  Terms
+                </button>
+              </nav>
+            </div>
+          </footer>
+        </section>
+      </main>
+
       <HelpModal />
       <PrivacyModal />
       <TermsModal />

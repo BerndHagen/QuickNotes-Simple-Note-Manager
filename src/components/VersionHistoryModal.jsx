@@ -5,16 +5,22 @@ import { getNoteVersions } from '../lib/db'
 import { getRemoteNoteVersions, isBackendConfigured } from '../lib/backend'
 import toast from 'react-hot-toast'
 import LegacyDialog from './ui/LegacyDialog'
+import { sanitizeNoteHtml } from '../lib/sanitizeHtml'
+import { ConfirmDialog } from './FolderDialogs'
 
 export default function VersionHistoryModal() {
   const { versionHistoryOpen, setVersionHistoryOpen, versionHistoryNoteId } = useUIStore()
-  const { notes, updateNote } = useNotesStore()
+  const { notes, sharedNotes, updateNote } = useNotesStore()
   const [versions, setVersions] = useState([])
   const [selectedVersion, setSelectedVersion] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [showPreview, setShowPreview] = useState(false)
+  const [confirmRestore, setConfirmRestore] = useState(false)
 
-  const note = notes.find((n) => n.id === versionHistoryNoteId)
+  const note =
+    notes.find((candidate) => candidate.id === versionHistoryNoteId)
+    || sharedNotes.find((share) => share.notes?.id === versionHistoryNoteId)?.notes
+  const canRestore = !note?.isShared || note.sharePermission === 'edit'
 
   useEffect(() => {
     if (versionHistoryOpen && versionHistoryNoteId) {
@@ -56,28 +62,26 @@ export default function VersionHistoryModal() {
     }
   }
 
-  const handleRestore = () => {
-    if (!selectedVersion) return
+  const handleRestore = async () => {
+    if (!selectedVersion || !canRestore) return
 
-    if (window.confirm('Do you want to restore this version? The current version will be overwritten.')) {
-      const updates = {}
-      if (selectedVersion.noteData) {
-        try {
-          updates.noteData = typeof selectedVersion.noteData === 'string' 
-            ? JSON.parse(selectedVersion.noteData) 
-            : selectedVersion.noteData
-        } catch (e) {
-          toast.error('Failed to parse version data')
-          return
-        }
+    const updates = {}
+    if (Object.prototype.hasOwnProperty.call(selectedVersion, 'noteData')) {
+      try {
+        updates.noteData = typeof selectedVersion.noteData === 'string'
+          ? JSON.parse(selectedVersion.noteData)
+          : selectedVersion.noteData
+      } catch {
+        toast.error('Failed to parse version data')
+        return
       }
-      if (selectedVersion.content) {
-        updates.content = selectedVersion.content
-      }
-      updateNote(versionHistoryNoteId, updates)
-      toast.success('Version restored')
-      handleClose()
     }
+    if (typeof selectedVersion.content === 'string') updates.content = selectedVersion.content
+    if (typeof selectedVersion.title === 'string') updates.title = selectedVersion.title
+    if (selectedVersion.noteType) updates.noteType = selectedVersion.noteType
+    await updateNote(versionHistoryNoteId, updates)
+    toast.success('Version restored')
+    handleClose()
   }
 
   const handleClose = () => {
@@ -85,6 +89,7 @@ export default function VersionHistoryModal() {
     setSelectedVersion(null)
     setVersions([])
     setShowPreview(false)
+    setConfirmRestore(false)
   }
 
   const formatDate = (dateString) => {
@@ -106,7 +111,7 @@ export default function VersionHistoryModal() {
       return `${days} day${days !== 1 ? 's' : ''} ago`
     }
 
-    return date.toLocaleDateString('en-US', {
+    return date.toLocaleString('en-US', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -288,7 +293,7 @@ export default function VersionHistoryModal() {
                     <div
                       className="prose dark:prose-invert max-w-none"
                       dangerouslySetInnerHTML={{
-                        __html: version?.content || note?.content || '',
+                        __html: sanitizeNoteHtml(version?.content || note?.content || ''),
                       }}
                     />
                   )
@@ -314,9 +319,9 @@ export default function VersionHistoryModal() {
             >
               Close
             </button>
-            {selectedVersion && (
+            {selectedVersion && canRestore && (
               <button
-                onClick={handleRestore}
+                onClick={() => setConfirmRestore(true)}
                 className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
               >
                 <RotateCcw className="w-4 h-4" />
@@ -325,6 +330,15 @@ export default function VersionHistoryModal() {
             )}
           </div>
         </div>
+        <ConfirmDialog
+          open={confirmRestore}
+          onClose={() => setConfirmRestore(false)}
+          onConfirm={handleRestore}
+          title="Restore this version?"
+          description="The current note will be replaced. It remains available in version history."
+          confirmLabel="Restore version"
+          tone="primary"
+        />
       </div>
     </LegacyDialog>
   )

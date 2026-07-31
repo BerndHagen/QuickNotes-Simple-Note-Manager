@@ -3,12 +3,14 @@ import { X, AlertTriangle, Copy, FileText, Trash2, ExternalLink } from 'lucide-r
 import { useNotesStore, useUIStore } from '../store'
 import toast from 'react-hot-toast'
 import LegacyDialog from './ui/LegacyDialog'
+import { ConfirmDialog } from './FolderDialogs'
 
 export default function DuplicateDetectionModal() {
   const { duplicateModalOpen, setDuplicateModalOpen } = useUIStore()
   const { notes, deleteNote, setSelectedNote } = useNotesStore()
   const [duplicates, setDuplicates] = useState([])
   const [isAnalyzing, setIsAnalyzing] = useState(true)
+  const [pendingDeleteId, setPendingDeleteId] = useState(null)
 
   useEffect(() => {
     if (duplicateModalOpen) {
@@ -143,8 +145,12 @@ export default function DuplicateDetectionModal() {
   }
 
   const handleDeleteDuplicate = (noteId) => {
-    if (window.confirm('Move this note to trash?')) {
-      deleteNote(noteId)
+    setPendingDeleteId(noteId)
+  }
+
+  const confirmDeleteDuplicate = () => {
+    if (pendingDeleteId) {
+      deleteNote(pendingDeleteId)
       toast.success('Note moved to trash')
       analyzeDuplicates()
     }
@@ -315,6 +321,15 @@ export default function DuplicateDetectionModal() {
           </button>
         </div>
       </div>
+      <ConfirmDialog
+        open={Boolean(pendingDeleteId)}
+        onClose={() => setPendingDeleteId(null)}
+        onConfirm={confirmDeleteDuplicate}
+        title="Move duplicate to trash?"
+        description="The note will remain recoverable from Trash until it is permanently deleted."
+        confirmLabel="Move to trash"
+        icon={Trash2}
+      />
     </LegacyDialog>
   )
 }

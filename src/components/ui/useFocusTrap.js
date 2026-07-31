@@ -47,7 +47,7 @@ export function useFocusTrap(ref, active, { initialFocusRef } = {}) {
     const node = ref.current
     if (!node) return
 
-    // Defer so the dialog content has mounted before we look for targets.
+    // Defer until the dialog content has mounted, so targets exist.
     const focusFrame = requestAnimationFrame(() => {
       // Prefer the first control in the dialog *body*: landing on the
       // close button would make Enter dismiss the dialog the user just

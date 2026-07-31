@@ -17,12 +17,13 @@ import {
   Copy,
   User
 } from 'lucide-react'
-import { generateId } from './noteTypes'
+import toast from 'react-hot-toast'
+import { formatDateKey, generateId, parseDateKey } from './noteTypes'
+import FocusedNoteTitle from './FocusedNoteTitle'
 
-export default function MeetingNotesEditor({ data, onChange, noteTitle }) {
+export default function MeetingNotesEditor({ data, onChange, noteTitle, onTitleChange, readOnly }) {
   const [meetingData, setMeetingData] = useState({
-    title: data?.title || '',
-    date: data?.date || new Date().toISOString().split('T')[0],
+    date: data?.date || formatDateKey(),
     startTime: data?.startTime || '',
     endTime: data?.endTime || '',
     location: data?.location || '',
@@ -166,8 +167,8 @@ export default function MeetingNotesEditor({ data, onChange, noteTitle }) {
   const removeDecision = (id) => {
     update('decisions', meetingData.decisions.filter(d => d.id !== id))
   }
-  const exportMeetingNotes = () => {
-    const markdown = `# ${meetingData.title || 'Meeting Notes'}
+  const copyMeetingSummary = async () => {
+    const markdown = `# ${noteTitle || 'Meeting Notes'}
 
 **Date:** ${meetingData.date}
 **Time:** ${meetingData.startTime} - ${meetingData.endTime}
@@ -184,13 +185,17 @@ ${meetingData.agenda.map((item, i) => `${i + 1}. ${item.topic} (${item.duration}
 ${meetingData.decisions.map((d, i) => `${i + 1}. ${d.text}`).join('\n')}
 
 ## Action Items
-${meetingData.actionItems.map(item => `- [ ] ${item.task}${item.owner ? ` @${item.owner}` : ''}${item.dueDate ? ` (Due: ${item.dueDate})` : ''}`).join('\n')}
+${meetingData.actionItems.map(item => `- [${item.completed ? 'x' : ' '}] ${item.task}${item.owner ? ` @${item.owner}` : ''}${item.dueDate ? ` (Due: ${item.dueDate})` : ''}`).join('\n')}
 
 ## Notes
 ${meetingData.notes}
 `
-    navigator.clipboard.writeText(markdown)
-    alert('Meeting notes copied to clipboard!')
+    try {
+      await navigator.clipboard.writeText(markdown)
+      toast.success('Meeting summary copied')
+    } catch {
+      toast.error('Could not copy the meeting summary')
+    }
   }
   const stats = {
     attendees: meetingData.attendees.length,
@@ -212,14 +217,18 @@ ${meetingData.notes}
   ]
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-gray-900">
-      <div className="flex-shrink-0 p-4 border-b border-[#cbd1db] dark:border-gray-700 bg-[#e5eaf0] dark:bg-gray-800">
+    <div className="qn-type-editor qn-type-meeting flex flex-col h-full bg-white dark:bg-gray-900">
+      <div className="qn-type-hero flex-shrink-0 p-4 border-b border-[#cbd1db] dark:border-gray-700 bg-[#e5eaf0] dark:bg-gray-800">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <Users className="w-7 h-7" />
-              {noteTitle || 'Meeting Notes'}
-            </h1>
+            <FocusedNoteTitle
+              icon={Users}
+              typeLabel="Meeting workspace"
+              title={noteTitle}
+              fallback="Meeting notes"
+              onChange={onTitleChange}
+              readOnly={readOnly}
+            />
             <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
               {meetingData.date} {"\u2022"} {stats.attendees} attendees {"\u2022"} {stats.agendaItems} agenda items
             </p>
@@ -236,12 +245,14 @@ ${meetingData.notes}
             <div className="flex flex-col gap-1">
               <button
                 onClick={() => timerRunning ? setTimerRunning(false) : setTimerRunning(true)}
+                aria-label={timerRunning ? 'Pause meeting timer' : 'Start meeting timer'}
                 className="p-2 rounded-lg bg-gray-200/50 dark:bg-gray-700 hover:bg-gray-300/50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300"
               >
                 {timerRunning ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
               </button>
               <button
                 onClick={() => { setTimerSeconds(0); setTimerRunning(false); setCurrentAgendaItem(null) }}
+                aria-label="Reset meeting timer"
                 className="p-2 rounded-lg bg-gray-200/50 dark:bg-gray-700 hover:bg-gray-300/50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300"
               >
                 <RotateCcw className="w-4 h-4" />
@@ -268,14 +279,15 @@ ${meetingData.notes}
           </div>
         </div>
       </div>
-      <div className="flex-shrink-0 flex gap-1 p-2 border-b border-[#cbd1db] dark:border-gray-700 bg-gray-50 dark:bg-gray-800 overflow-x-auto">
+      <div className="qn-type-tabs flex-shrink-0 flex gap-1 p-2 border-b border-[#cbd1db] dark:border-gray-700 bg-gray-50 dark:bg-gray-800 overflow-x-auto">
         {sections.map(section => (
           <button
             key={section.id}
             onClick={() => setActiveSection(section.id)}
+            aria-pressed={activeSection === section.id}
             className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
               activeSection === section.id
-                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600'
+                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
                 : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
             }`}
           >
@@ -292,34 +304,25 @@ ${meetingData.notes}
         <div className="flex-1" />
         
         <button
-          onClick={exportMeetingNotes}
+          onClick={copyMeetingSummary}
+          type="button"
           className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30"
         >
           <Copy className="w-4 h-4" />
-          Export
+          Copy summary
         </button>
       </div>
       <div className="flex-1 overflow-y-auto p-4">
         {activeSection === 'details' && (
           <div className="max-w-2xl mx-auto space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Meeting Title</label>
-              <input
-                type="text"
-                value={meetingData.title}
-                onChange={(e) => update('title', e.target.value)}
-                placeholder="Enter meeting title..."
-                className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-[#cbd1db] dark:border-gray-600 focus:border-blue-500 outline-none text-gray-900 dark:text-white"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   <Calendar className="w-4 h-4 inline mr-1" /> Date
                 </label>
                 <input
                   type="date"
+                  aria-label="Meeting date"
                   value={meetingData.date}
                   onChange={(e) => update('date', e.target.value)}
                   className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-[#cbd1db] dark:border-gray-600 focus:border-blue-500 outline-none text-gray-900 dark:text-white"
@@ -331,6 +334,7 @@ ${meetingData.notes}
                 </label>
                 <input
                   type="text"
+                  aria-label="Meeting location"
                   value={meetingData.location}
                   onChange={(e) => update('location', e.target.value)}
                   placeholder="Room / Zoom link..."
@@ -339,13 +343,14 @@ ${meetingData.notes}
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   <Clock className="w-4 h-4 inline mr-1" /> Start Time
                 </label>
                 <input
                   type="time"
+                  aria-label="Meeting start time"
                   value={meetingData.startTime}
                   onChange={(e) => update('startTime', e.target.value)}
                   className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-[#cbd1db] dark:border-gray-600 focus:border-blue-500 outline-none text-gray-900 dark:text-white"
@@ -357,6 +362,7 @@ ${meetingData.notes}
                 </label>
                 <input
                   type="time"
+                  aria-label="Meeting end time"
                   value={meetingData.endTime}
                   onChange={(e) => update('endTime', e.target.value)}
                   className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-[#cbd1db] dark:border-gray-600 focus:border-blue-500 outline-none text-gray-900 dark:text-white"
@@ -367,9 +373,10 @@ ${meetingData.notes}
         )}
         {activeSection === 'attendees' && (
           <div className="max-w-2xl mx-auto">
-            <div className="flex gap-2 mb-4">
+            <div className="flex flex-col gap-2 mb-4 sm:flex-row">
               <input
                 type="text"
+                aria-label="New attendee name"
                 value={newAttendee}
                 onChange={(e) => setNewAttendee(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && addAttendee()}
@@ -378,7 +385,7 @@ ${meetingData.notes}
               />
               <button
                 onClick={addAttendee}
-                className="px-4 py-3 rounded-xl bg-blue-500 hover:bg-blue-600 text-white flex items-center gap-2"
+                className="px-4 py-3 rounded-xl bg-blue-700 hover:bg-blue-800 text-white flex items-center gap-2"
               >
                 <Plus className="w-5 h-5" />
                 Add
@@ -402,6 +409,7 @@ ${meetingData.notes}
                   >
                     <button
                       onClick={() => updateAttendee(attendee.id, { present: !attendee.present })}
+                      aria-label={attendee.present ? `Mark ${attendee.name} absent` : `Mark ${attendee.name} present`}
                       className="flex-shrink-0"
                     >
                       {attendee.present ? (
@@ -419,6 +427,7 @@ ${meetingData.notes}
                       <div className="font-medium text-gray-900 dark:text-white">{attendee.name}</div>
                       <input
                         type="text"
+                        aria-label={`${attendee.name} role`}
                         value={attendee.role}
                         onChange={(e) => updateAttendee(attendee.id, { role: e.target.value })}
                         placeholder="Role (optional)..."
@@ -428,6 +437,7 @@ ${meetingData.notes}
                     
                     <button
                       onClick={() => removeAttendee(attendee.id)}
+                      aria-label={`Remove ${attendee.name}`}
                       className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-red-500"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -441,10 +451,11 @@ ${meetingData.notes}
         {activeSection === 'agenda' && (
           <div className="max-w-2xl mx-auto">
             <div className="mb-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-700">
-              <div className="grid grid-cols-3 gap-3 mb-3">
-                <div className="col-span-2">
+              <div className="grid grid-cols-1 gap-3 mb-3 sm:grid-cols-3">
+                <div className="sm:col-span-2">
                   <input
                     type="text"
+                    aria-label="New agenda topic"
                     value={newAgendaItem.topic}
                     onChange={(e) => setNewAgendaItem({ ...newAgendaItem, topic: e.target.value })}
                     placeholder="Agenda topic..."
@@ -453,6 +464,7 @@ ${meetingData.notes}
                 </div>
                 <div>
                   <select
+                    aria-label="Planned agenda duration"
                     value={newAgendaItem.duration}
                     onChange={(e) => setNewAgendaItem({ ...newAgendaItem, duration: parseInt(e.target.value) })}
                     className="w-full px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 outline-none text-sm"
@@ -467,9 +479,10 @@ ${meetingData.notes}
                   </select>
                 </div>
               </div>
-              <div className="flex gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row">
                 <input
                   type="text"
+                  aria-label="Agenda presenter"
                   value={newAgendaItem.presenter}
                   onChange={(e) => setNewAgendaItem({ ...newAgendaItem, presenter: e.target.value })}
                   placeholder="Presenter (optional)..."
@@ -477,7 +490,7 @@ ${meetingData.notes}
                 />
                 <button
                   onClick={addAgendaItem}
-                  className="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-sm flex items-center gap-2"
+                  className="px-4 py-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-sm flex items-center gap-2"
                 >
                   <Plus className="w-4 h-4" />
                   Add
@@ -505,6 +518,7 @@ ${meetingData.notes}
                     <div className="flex items-start gap-3">
                       <button
                         onClick={() => updateAgendaItem(item.id, { completed: !item.completed })}
+                        aria-label={item.completed ? `Mark ${item.topic} incomplete` : `Complete ${item.topic}`}
                         className="flex-shrink-0 mt-1"
                       >
                         {item.completed ? (
@@ -535,6 +549,7 @@ ${meetingData.notes}
                         </div>
                         
                         <textarea
+                          aria-label={`Notes for ${item.topic}`}
                           value={item.notes}
                           onChange={(e) => updateAgendaItem(item.id, { notes: e.target.value })}
                           placeholder="Add notes for this topic..."
@@ -547,6 +562,7 @@ ${meetingData.notes}
                         {!item.completed && (
                           <button
                             onClick={() => currentAgendaItem === item.id ? stopAgendaTimer() : startAgendaTimer(item.id)}
+                            aria-label={currentAgendaItem === item.id ? `Stop timer for ${item.topic}` : `Start timer for ${item.topic}`}
                             className={`p-2 rounded-lg ${
                               currentAgendaItem === item.id
                                 ? 'bg-red-100 text-red-600 hover:bg-red-200'
@@ -558,6 +574,7 @@ ${meetingData.notes}
                         )}
                         <button
                           onClick={() => removeAgendaItem(item.id)}
+                          aria-label={`Delete ${item.topic}`}
                           className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-red-500"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -573,6 +590,7 @@ ${meetingData.notes}
         {activeSection === 'notes' && (
           <div className="max-w-2xl mx-auto">
             <textarea
+              aria-label="Meeting notes"
               value={meetingData.notes}
               onChange={(e) => update('notes', e.target.value)}
               placeholder="Take meeting notes here..."
@@ -583,10 +601,11 @@ ${meetingData.notes}
         {activeSection === 'actions' && (
           <div className="max-w-2xl mx-auto">
             <div className="mb-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-700">
-              <div className="grid grid-cols-3 gap-3 mb-3">
-                <div className="col-span-2">
+              <div className="grid grid-cols-1 gap-3 mb-3 sm:grid-cols-3">
+                <div className="sm:col-span-2">
                   <input
                     type="text"
+                    aria-label="New action item"
                     value={newActionItem.task}
                     onChange={(e) => setNewActionItem({ ...newActionItem, task: e.target.value })}
                     placeholder="Action item..."
@@ -596,14 +615,16 @@ ${meetingData.notes}
                 <div>
                   <input
                     type="date"
+                    aria-label="Action item due date"
                     value={newActionItem.dueDate}
                     onChange={(e) => setNewActionItem({ ...newActionItem, dueDate: e.target.value })}
                     className="w-full px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 outline-none text-sm"
                   />
                 </div>
               </div>
-              <div className="flex gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row">
                 <select
+                  aria-label="Action item owner"
                   value={newActionItem.owner}
                   onChange={(e) => setNewActionItem({ ...newActionItem, owner: e.target.value })}
                   className="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-gray-700 border border-[#cbd1db] dark:border-gray-600 outline-none text-sm"
@@ -615,7 +636,7 @@ ${meetingData.notes}
                 </select>
                 <button
                   onClick={addActionItem}
-                  className="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-sm flex items-center gap-2"
+                  className="px-4 py-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-sm flex items-center gap-2"
                 >
                   <Plus className="w-4 h-4" />
                   Add
@@ -640,6 +661,7 @@ ${meetingData.notes}
                   >
                     <button
                       onClick={() => updateActionItem(item.id, { completed: !item.completed })}
+                      aria-label={item.completed ? `Mark ${item.task} incomplete` : `Complete ${item.task}`}
                     >
                       {item.completed ? (
                         <CheckCircle2 className="w-6 h-6 text-green-500" />
@@ -662,7 +684,7 @@ ${meetingData.notes}
                         {item.dueDate && (
                           <span className="flex items-center gap-1">
                             <Calendar className="w-3 h-3" />
-                            {new Date(item.dueDate).toLocaleDateString()}
+                            {parseDateKey(item.dueDate).toLocaleDateString('en-US')}
                           </span>
                         )}
                       </div>
@@ -670,6 +692,7 @@ ${meetingData.notes}
                     
                     <button
                       onClick={() => removeActionItem(item.id)}
+                      aria-label={`Delete ${item.task}`}
                       className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-red-500"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -682,9 +705,10 @@ ${meetingData.notes}
         )}
         {activeSection === 'decisions' && (
           <div className="max-w-2xl mx-auto">
-            <div className="flex gap-2 mb-4">
+            <div className="flex flex-col gap-2 mb-4 sm:flex-row">
               <input
                 type="text"
+                aria-label="New decision"
                 value={newDecision}
                 onChange={(e) => setNewDecision(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && addDecision()}
@@ -693,7 +717,7 @@ ${meetingData.notes}
               />
               <button
                 onClick={addDecision}
-                className="px-4 py-3 rounded-xl bg-blue-500 hover:bg-blue-600 text-white flex items-center gap-2"
+                className="px-4 py-3 rounded-xl bg-blue-700 hover:bg-blue-800 text-white flex items-center gap-2"
               >
                 <Plus className="w-5 h-5" />
                 Add
@@ -717,11 +741,12 @@ ${meetingData.notes}
                     <div className="flex-1">
                       <div className="text-gray-900 dark:text-white">{decision.text}</div>
                       <div className="text-xs text-gray-500 mt-1">
-                        {new Date(decision.timestamp).toLocaleString()}
+                        {new Date(decision.timestamp).toLocaleString('en-US')}
                       </div>
                     </div>
                     <button
                       onClick={() => removeDecision(decision.id)}
+                      aria-label={`Delete decision ${index + 1}`}
                       className="p-2 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-800/50 text-amber-500 hover:text-red-500"
                     >
                       <Trash2 className="w-4 h-4" />

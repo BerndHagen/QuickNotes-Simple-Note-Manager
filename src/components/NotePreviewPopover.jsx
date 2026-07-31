@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from 'react'
+import { cloneElement, useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { Eye, FileText, Calendar, Tag, Folder } from 'lucide-react'
 import { useNotesStore } from '../store'
 
@@ -91,15 +92,13 @@ export default function NotePreviewPopover({ noteId, children, position = 'right
 
   return (
     <>
-      <div
-        ref={triggerRef}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-      >
-        {children}
-      </div>
+      {cloneElement(children, {
+        ref: triggerRef,
+        onMouseEnter: handleMouseEnter,
+        onMouseLeave: handleMouseLeave,
+      })}
 
-      {isVisible && (
+      {isVisible && createPortal(
         <div
           ref={popoverRef}
           className="fixed z-50 w-80 bg-white dark:bg-gray-800 border border-[#cbd1db] dark:border-gray-700 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
@@ -164,7 +163,8 @@ export default function NotePreviewPopover({ noteId, children, position = 'right
             {note.starred && <span className="text-yellow-500">{"\u2B50"} Favorite</span>}
             {note.pinned && <span className="text-blue-500">{"\u{1F4CC}"} Pinned</span>}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   )

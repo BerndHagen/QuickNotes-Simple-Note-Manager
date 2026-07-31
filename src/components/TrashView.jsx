@@ -1,14 +1,16 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Trash2, RotateCcw, X, Clock, AlertTriangle } from 'lucide-react'
 import { useNotesStore, useUIStore } from '../store'
 import { formatDate, htmlToPlainText, truncateText } from '../lib/utils'
 import { useTranslation } from '../lib/useTranslation'
 import LegacyDialog from './ui/LegacyDialog'
+import { ConfirmDialog } from './FolderDialogs'
 
 export default function TrashView() {
   const { t, language } = useTranslation()
   const { notes, restoreNote, permanentlyDeleteNote } = useNotesStore()
   const { showTrash, setShowTrash } = useUIStore()
+  const [deleteTarget, setDeleteTarget] = useState(null)
 
   const trashedNotes = useMemo(() => {
     return notes
@@ -29,15 +31,11 @@ export default function TrashView() {
   }
 
   const handleEmptyTrash = () => {
-    if (window.confirm(t('trash.emptyTrashConfirm'))) {
-      trashedNotes.forEach(note => permanentlyDeleteNote(note.id))
-    }
+    trashedNotes.forEach(note => permanentlyDeleteNote(note.id))
   }
 
-  const handlePermanentDelete = (noteId, noteTitle) => {
-    if (window.confirm(t('trash.permanentDeleteConfirm'))) {
-      permanentlyDeleteNote(noteId)
-    }
+  const handlePermanentDelete = () => {
+    if (deleteTarget?.id) permanentlyDeleteNote(deleteTarget.id)
   }
 
   if (!showTrash) return null
@@ -75,7 +73,7 @@ export default function TrashView() {
               {t('trash.restoreAll')}
             </button>
             <button
-              onClick={handleEmptyTrash}
+              onClick={() => setDeleteTarget({ all: true })}
               className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
             >
               <Trash2 className="w-4 h-4" />
@@ -131,7 +129,7 @@ export default function TrashView() {
                           <RotateCcw className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => handlePermanentDelete(note.id, note.title)}
+                          onClick={() => setDeleteTarget({ id: note.id, title: note.title })}
                           className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 rounded-lg transition-colors"
                           title={t('trash.permanentDelete')}
                         >
@@ -145,6 +143,18 @@ export default function TrashView() {
             </div>
           )}
         </div>
+        <ConfirmDialog
+          open={!!deleteTarget}
+          onClose={() => setDeleteTarget(null)}
+          onConfirm={deleteTarget?.all ? handleEmptyTrash : handlePermanentDelete}
+          title={deleteTarget?.all ? t('trash.emptyTrash') : t('trash.permanentDelete')}
+          description={
+            deleteTarget?.all
+              ? t('trash.emptyTrashConfirm')
+              : `${t('trash.permanentDeleteConfirm')} “${deleteTarget?.title || ''}”`
+          }
+          confirmLabel={deleteTarget?.all ? t('trash.emptyTrash') : t('trash.permanentDelete')}
+        />
       </div>
     </LegacyDialog>
   )

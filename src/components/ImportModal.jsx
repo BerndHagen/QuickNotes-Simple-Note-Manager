@@ -9,7 +9,21 @@ import {
 } from 'lucide-react'
 import { useNotesStore, useUIStore } from '../store'
 import { useTranslation } from '../lib/useTranslation'
+import { sanitizeNoteHtml } from '../lib/sanitizeHtml'
+import { MAX_NOTE_TITLE_LENGTH, MAX_TAG_NAME_LENGTH } from '../lib/dataValidation'
 import LegacyDialog from './ui/LegacyDialog'
+
+const MAX_IMPORT_FILE_SIZE = 10 * 1024 * 1024
+const MAX_IMPORT_FILES = 100
+const SUPPORTED_EXTENSIONS = new Set(['md', 'markdown', 'txt', 'html', 'htm'])
+
+const normalizeTags = (tags) => Array.from(
+  new Set(
+    tags
+      .map((tag) => tag.trim().replace(/^#+/, '').toLowerCase())
+      .filter((tag) => tag && tag.length <= MAX_TAG_NAME_LENGTH)
+  )
+)
 
 const markdownToHtml = (markdown) => {
   if (!markdown) return ''
@@ -173,9 +187,9 @@ const parseFile = async (file) => {
       }
       
       resolve({
-        title: title.substring(0, 100),
-        content: htmlContent,
-        tags,
+        title: (title.trim() || 'Untitled Note').substring(0, MAX_NOTE_TITLE_LENGTH),
+        content: sanitizeNoteHtml(htmlContent),
+        tags: normalizeTags(tags),
         originalFilename: file.name,
       })
     }
@@ -192,6 +206,7 @@ export default function ImportModal() {
   const [files, setFiles] = useState([])
   const [importing, setImporting] = useState(false)
   const [results, setResults] = useState([])
+  const [selectionErrors, setSelectionErrors] = useState([])
   const fileInputRef = useRef(null)
   const { t } = useTranslation()
 
@@ -207,22 +222,47 @@ export default function ImportModal() {
     }
   }
 
+  const addFiles = (incomingFiles) => {
+    const accepted = []
+    const rejected = []
+
+    for (const file of incomingFiles) {
+      const extension = file.name.split('.').pop().toLowerCase()
+      if (!SUPPORTED_EXTENSIONS.has(extension)) {
+        rejected.push({ filename: file.name, success: false, error: 'Unsupported file format' })
+      } else if (file.size > MAX_IMPORT_FILE_SIZE) {
+        rejected.push({ filename: file.name, success: false, error: 'File exceeds the 10 MB limit' })
+      } else {
+        accepted.push(file)
+      }
+    }
+
+    setFiles((current) => {
+      const available = Math.max(0, MAX_IMPORT_FILES - current.length)
+      const next = accepted.slice(0, available)
+      if (accepted.length > available) {
+        rejected.push({
+          filename: `${accepted.length - available} additional file(s)`,
+          success: false,
+          error: `A maximum of ${MAX_IMPORT_FILES} files can be imported at once`,
+        })
+      }
+      return [...current, ...next]
+    })
+    if (rejected.length > 0) setSelectionErrors((current) => [...current, ...rejected])
+  }
+
   const handleDrop = (e) => {
     e.preventDefault()
     e.stopPropagation()
     setDragActive(false)
     
-    const droppedFiles = Array.from(e.dataTransfer.files).filter(file => {
-      const ext = file.name.split('.').pop().toLowerCase()
-      return ['md', 'markdown', 'txt', 'html', 'htm'].includes(ext)
-    })
-    
-    setFiles(prev => [...prev, ...droppedFiles])
+    addFiles(Array.from(e.dataTransfer.files))
   }
 
   const handleFileSelect = (e) => {
-    const selectedFiles = Array.from(e.target.files)
-    setFiles(prev => [...prev, ...selectedFiles])
+    addFiles(Array.from(e.target.files))
+    e.target.value = ''
   }
 
   const removeFile = (index) => {
@@ -258,7 +298,7 @@ export default function ImportModal() {
       }
     }
     
-    setResults(importResults)
+    setResults((current) => [...current, ...importResults])
     setImporting(false)
     setFiles([])
   }
@@ -267,6 +307,7 @@ export default function ImportModal() {
     setImportModalOpen(false)
     setFiles([])
     setResults([])
+    setSelectionErrors([])
   }
 
   const getFileIcon = (filename) => {
@@ -343,6 +384,21 @@ export default function ImportModal() {
           </div>
         ) : (
           <>
+            {selectionErrors.length > 0 && (
+              <div className="mb-4 space-y-2" role="alert">
+                {selectionErrors.map((result, index) => (
+                  <div
+                    key={`${result.filename}-${index}`}
+                    className="flex items-start gap-2 rounded-lg bg-red-50 p-3 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-200"
+                  >
+                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                    <span>
+                      <strong>{result.filename}:</strong> {result.error}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
             <div
               onDragEnter={handleDrag}
               onDragLeave={handleDrag}

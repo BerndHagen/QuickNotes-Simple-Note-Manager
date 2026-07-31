@@ -39,6 +39,7 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
 
       - name: Create ZIP archive
         run: |
@@ -168,7 +169,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
-          name: "Latest Build"
+          name: "QuickNotes - Simple Note Manager (Latest Build)"
           body: ${{ steps.notes.outputs.body }}
           prerelease: true
           files: quicknotes-latest.zip
@@ -200,6 +201,7 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
 
       - name: Extract version
         id: version
@@ -340,6 +342,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
-          name: ${{ steps.version.outputs.tag }}
+          name: QuickNotes - Simple Note Manager ${{ steps.version.outputs.tag }}
           body: ${{ steps.notes.outputs.body }}
           files: quicknotes-${{ steps.version.outputs.tag }}.zip

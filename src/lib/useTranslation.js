@@ -18,10 +18,10 @@ const lookup = (catalogue, keys) => {
  *
  * When a key is missing and no fallback is supplied it returns the key
  * path, which is what makes an untranslated string visible in the UI
- * (e.g. "settings.noteListDisplay"). Callers that have sensible English
- * copy should pass it as the second argument. Appending a `||` fallback
- * instead does nothing, because the returned key path is itself truthy —
- * that mistake was present at 182 call sites.
+ * (e.g. "settings.noteListDisplay").
+ *
+ * Pass English copy as the second argument. Appending `|| 'copy'` to the
+ * call instead has no effect, because the returned key path is truthy.
  */
 export function useTranslation() {
   const { language } = useUIStore()

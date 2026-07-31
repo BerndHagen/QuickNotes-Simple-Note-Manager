@@ -5,10 +5,8 @@ import TextBoxView from './TextBoxView'
 /**
  * Word-style text box.
  *
- * The previous implementation was a plain block `div` locked into the
- * document flow: it could not be moved, resized, wrapped or aligned.
- * This version stores the geometry and layout mode on the node so a box
- * behaves the way it does in a word processor:
+ * Geometry and layout mode are stored on the node, so a box can be moved,
+ * resized, aligned and wrapped the way it is in a word processor:
  *
  *   wrap: 'inline'  — sits in the text flow as a block
  *        'left'     — floats left, text wraps down the right side

@@ -43,7 +43,13 @@ export const removeSyncItem = async (id) => {
   return await db.syncQueue.delete(id)
 }
 
-export const saveNoteVersion = async (noteId, content, title, noteData = null) => {
+export const saveNoteVersion = async (
+  noteId,
+  content,
+  title,
+  noteData = null,
+  noteType = 'standard'
+) => {
   const MAX_VERSIONS = 30
   const versions = await db.noteVersions.where('noteId').equals(noteId).toArray()
   
@@ -57,6 +63,7 @@ export const saveNoteVersion = async (noteId, content, title, noteData = null) =
     noteId,
     title: title || '',
     content: content || '',
+    noteType,
     createdAt: new Date().toISOString(),
   }
   

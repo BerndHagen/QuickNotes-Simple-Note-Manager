@@ -13,6 +13,7 @@ import {
   Search,
   Star,
   StarOff,
+  Sparkles,
   Tag,
   Trash2,
   X,
@@ -203,7 +204,13 @@ export default function NotesList({ sidebarToggle, onOpenNote }) {
     reorderNotes,
   } = useNotesStore()
 
-  const { currentSort, setCurrentSort, viewMode, setViewMode } = useUIStore()
+  const {
+    currentSort,
+    setCurrentSort,
+    viewMode,
+    setViewMode,
+    setNoteTypesModalOpen,
+  } = useUIStore()
   const { t } = useTranslation()
 
   const [contextMenu, setContextMenu] = useState(null)
@@ -375,6 +382,11 @@ export default function NotesList({ sidebarToggle, onOpenNote }) {
           </span>
           <SortDropdown currentSort={currentSort} onSortChange={setCurrentSort} />
           <IconButton
+            icon={Sparkles}
+            label="Choose a focused note type"
+            onClick={() => setNoteTypesModalOpen(true)}
+          />
+          <IconButton
             icon={Plus}
             variant="primary"
             label={t('notes.createNew', 'New note')}
@@ -408,7 +420,7 @@ export default function NotesList({ sidebarToggle, onOpenNote }) {
               className="absolute right-1 top-1/2 -translate-y-1/2"
             />
           ) : (
-            <kbd className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 rounded border border-subtle bg-surface-sunken px-1.5 py-0.5 text-ui-xs font-medium text-content-subtle">
+            <kbd className="pointer-events-none absolute right-2.5 top-1/2 hidden -translate-y-1/2 rounded border border-subtle bg-surface-sunken px-1.5 py-0.5 text-ui-xs font-medium text-content-muted sm:inline-flex">
               Ctrl F
             </kbd>
           )}

@@ -1,167 +1,340 @@
-import { useState } from 'react'
-import { X, Sparkles, ChevronRight } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import {
+  ArrowRight,
+  Check,
+  Search,
+  Sparkles,
+} from 'lucide-react'
 import { useUIStore, useNotesStore } from '../store'
-import { NOTE_TYPES, NOTE_TYPE_CONFIG, getDefaultData, CATEGORIES } from './editors'
-import { useTranslation } from '../lib/useTranslation'
-import LegacyDialog from './ui/LegacyDialog'
-export default function NoteTypesModal() {
+import {
+  NOTE_TYPES,
+  NOTE_TYPE_CONFIG,
+  NOTE_TYPE_STARTERS,
+  CATEGORIES,
+  getStarterContent,
+  getStarterData,
+} from './editors'
+import { Button, Input, Modal } from './ui'
+import { MAX_NOTE_TITLE_LENGTH } from '../lib/dataValidation'
+
+const types = Object.values(NOTE_TYPE_CONFIG)
+
+export default function NoteTypesModal({ onCreated }) {
   const { noteTypesModalOpen, setNoteTypesModalOpen } = useUIStore()
   const { createNote } = useNotesStore()
   const [selectedCategory, setSelectedCategory] = useState('all')
-  const [hoveredType, setHoveredType] = useState(null)
-  const { t } = useTranslation()
+  const [query, setQuery] = useState('')
+  const [selectedType, setSelectedType] = useState(NOTE_TYPES.STANDARD)
+  const [selectedStarter, setSelectedStarter] = useState(
+    NOTE_TYPE_STARTERS[NOTE_TYPES.STANDARD][0].id
+  )
+  const [title, setTitle] = useState(NOTE_TYPE_STARTERS[NOTE_TYPES.STANDARD][0].title)
 
-  const handleClose = () => {
-    setNoteTypesModalOpen(false)
+  const config = NOTE_TYPE_CONFIG[selectedType]
+  const starters = NOTE_TYPE_STARTERS[selectedType] || []
+  const activeStarter =
+    starters.find((starter) => starter.id === selectedStarter) || starters[0]
+
+  const filteredTypes = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase()
+
+    return types.filter((type) => {
+      const matchesCategory =
+        selectedCategory === 'all' || type.category === selectedCategory
+      const haystack = [
+        type.name,
+        type.description,
+        type.bestFor,
+        type.category,
+        ...(type.features || []),
+        ...(type.keywords || []),
+      ].join(' ').toLowerCase()
+
+      return matchesCategory && (!normalizedQuery || haystack.includes(normalizedQuery))
+    })
+  }, [query, selectedCategory])
+
+  const selectType = (typeId) => {
+    const starter = NOTE_TYPE_STARTERS[typeId]?.[0]
+    setSelectedType(typeId)
+    setSelectedStarter(starter?.id || 'blank')
+    setTitle(starter?.title || NOTE_TYPE_CONFIG[typeId]?.name || 'New note')
   }
 
-  if (!noteTypesModalOpen) return null
-  const noteTypes = Object.entries(NOTE_TYPE_CONFIG).map(([key, config]) => ({
-    id: key,
-    ...config,
-  }))
-  const filteredTypes = selectedCategory === 'all'
-    ? noteTypes
-    : noteTypes.filter(t => t.category === selectedCategory)
-  const handleSelectType = (typeId) => {
-    const config = NOTE_TYPE_CONFIG[typeId]
+  const selectStarter = (starter) => {
+    setSelectedStarter(starter.id)
+    setTitle(starter.title)
+  }
 
-    if (typeId === NOTE_TYPES.STANDARD) {
-      createNote({
-        title: 'New Note',
-        content: '',
-        noteType: NOTE_TYPES.STANDARD,
-        noteData: null,
-      })
-    } else {
-      createNote({
-        title: config.name,
-        content: '',
-        noteType: typeId,
-        noteData: getDefaultData(typeId),
-      })
-    }
-    
-    handleClose()
+  const close = () => setNoteTypesModalOpen(false)
+
+  const createSelectedNote = () => {
+    const cleanTitle = title.trim() || activeStarter?.title || config.name
+    createNote({
+      title: cleanTitle,
+      content: getStarterContent(selectedType, selectedStarter),
+      noteType: selectedType,
+      noteData: getStarterData(selectedType, selectedStarter),
+    })
+    close()
+    onCreated?.()
   }
 
   return (
-    <LegacyDialog label="Note types" onClose={() => setNoteTypesModalOpen(false)} align="center">
-      <div 
-        className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-[#cbd1db] dark:border-gray-700 w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col modal-animate"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between p-6 bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
-          <div>
-            <h2 className="text-2xl font-bold flex items-center gap-3">
-              <Sparkles className="w-7 h-7" />
-              {t('noteTypes.title')}
-            </h2>
-            <p className="text-sm text-white/70 mt-1 ml-10">
-              {t('noteTypes.subtitle')}
-            </p>
-          </div>
-          <button
-            onClick={handleClose}
-            className="p-2 rounded-full hover:bg-white/20 transition-colors"
+    <Modal
+      open={noteTypesModalOpen}
+      onClose={close}
+      title="Create a focused note"
+      description="Choose the workspace that matches the work—not just a decorative template."
+      icon={Sparkles}
+      size="3xl"
+      bodyClassName="p-0 sm:p-0"
+      contentClassName="sm:h-[min(820px,88dvh)]"
+      footer={
+        <>
+          <Button variant="ghost" onClick={close}>
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            iconRight={ArrowRight}
+            onClick={createSelectedNote}
           >
-            <X className="w-6 h-6" />
-          </button>
-        </div>
-        <div className="flex items-center gap-2 p-4 border-b border-[#cbd1db] dark:border-gray-700 bg-gray-50 dark:bg-gray-800 overflow-x-auto">
-          <button
-            onClick={() => setSelectedCategory('all')}
-            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-              selectedCategory === 'all'
-                ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
-                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-            }`}
-          >
-            {t('noteTypes.allTypes')}
-          </button>
-          {CATEGORIES.filter(cat => cat.id !== 'all').map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setSelectedCategory(cat.id)}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                selectedCategory === cat.id
-                  ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
-                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-              }`}
+            Create {config.shortName.toLowerCase()}
+          </Button>
+        </>
+      }
+    >
+      <div className="grid min-h-0 lg:h-full lg:grid-cols-[minmax(300px,0.88fr)_minmax(380px,1.12fr)]">
+        <section
+          aria-label="Note types"
+          className="min-h-0 border-b border-subtle bg-surface-sunken lg:border-b-0 lg:border-r"
+        >
+          <div className="sticky top-0 z-10 border-b border-subtle bg-surface-sunken/95 p-4 backdrop-blur sm:p-5">
+            <label htmlFor="qn-type-search" className="qn-sr-only">
+              Search note types
+            </label>
+            <div className="relative">
+              <Search
+                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-content-subtle"
+                aria-hidden="true"
+              />
+              <Input
+                id="qn-type-search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Search by goal or feature…"
+                className="pl-9"
+              />
+            </div>
+
+            <div
+              className="mt-3 flex gap-1.5 overflow-x-auto pb-1"
+              aria-label="Filter note types"
             >
-              {cat.name}
-            </button>
-          ))}
-        </div>
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredTypes.map((type) => {
-              const IconComponent = type.icon
-              const isHovered = hoveredType === type.id
-              
-              return (
-                <button
-                  key={type.id}
-                  onClick={() => handleSelectType(type.id)}
-                  onMouseEnter={() => setHoveredType(type.id)}
-                  onMouseLeave={() => setHoveredType(null)}
-                  className={`relative p-5 rounded-xl text-left transition-all duration-200 group border-2 flex flex-col h-full ${
-                    isHovered
-                      ? 'border-indigo-500 shadow-lg scale-[1.02]'
-                      : 'border-[#cbd1db] dark:border-gray-700 hover:border-[#cbd1db] dark:hover:border-gray-600'
-                  }`}
-                  style={{
-                    background: isHovered
-                      ? `linear-gradient(135deg, ${type.color}10, ${type.color}05)`
-                      : undefined
-                  }}
-                >
-                  <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110"
-                    style={{ 
-                      backgroundColor: `${type.color}20`,
-                      color: type.color
-                    }}
+              {CATEGORIES.map((category) => {
+                const active = selectedCategory === category.id
+                return (
+                  <button
+                    key={category.id}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => setSelectedCategory(category.id)}
+                    className={[
+                      'shrink-0 rounded-full border px-3 py-1.5 text-ui-sm font-medium transition-colors',
+                      active
+                        ? 'border-accent bg-accent-soft text-accent-text'
+                        : 'border-subtle bg-surface-raised text-content-muted hover:border-strong hover:text-content',
+                    ].join(' ')}
                   >
-                    <IconComponent className="w-6 h-6" />
-                  </div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white mb-1 flex items-center gap-2">
-                    {type.name}
-                    <ChevronRight className={`w-4 h-4 transition-transform ${isHovered ? 'translate-x-1' : ''}`} style={{ color: type.color }} />
-                  </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
-                    {type.description}
-                  </p>
-                  <div className="flex flex-wrap gap-1 mt-auto pt-3">
-                    {type.features.map((feature, i) => (
-                      <span
-                        key={i}
-                        className="px-2 py-0.5 text-xs rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
-                      >
-                        {feature}
-                      </span>
-                    ))}
-                  </div>
-                  <div 
-                    className="absolute top-3 right-3 px-2 py-0.5 rounded-full text-xs font-medium"
-                    style={{ 
-                      backgroundColor: `${type.color}15`,
-                      color: type.color
-                    }}
-                  >
-                    {CATEGORIES.find(c => c.id === type.category)?.name || type.category}
-                  </div>
-                </button>
-              )
-            })}
+                    {category.name}
+                  </button>
+                )
+              })}
+            </div>
           </div>
-        </div>
-        <div className="p-4 border-t border-[#cbd1db] dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-          <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
-            {t('noteTypes.footer1')}<br />{t('noteTypes.footer2')}
-          </p>
-        </div>
+
+          <div className="space-y-2 p-3 sm:p-4 lg:max-h-full lg:overflow-y-auto">
+            {filteredTypes.length === 0 ? (
+              <div className="rounded-card border border-dashed border-strong bg-surface-raised px-5 py-10 text-center">
+                <p className="text-ui-lg font-medium text-content">No matching note type</p>
+                <p className="mt-1 text-ui-md text-content-muted">
+                  Try a broader goal or choose another category.
+                </p>
+              </div>
+            ) : (
+              filteredTypes.map((type) => {
+                const Icon = type.icon
+                const active = selectedType === type.id
+                return (
+                  <button
+                    key={type.id}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => selectType(type.id)}
+                    className={[
+                      'group flex w-full items-start gap-3 rounded-card border p-3.5 text-left transition-all duration-fast',
+                      active
+                        ? 'border-accent bg-surface-raised shadow-sm ring-1 ring-[var(--qn-accent-soft)]'
+                        : 'border-transparent bg-transparent hover:border-subtle hover:bg-surface-raised',
+                    ].join(' ')}
+                  >
+                    <span
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px]"
+                      style={{ backgroundColor: `${type.color}18`, color: type.color }}
+                    >
+                      <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-center justify-between gap-2">
+                        <span className="text-ui-lg font-semibold text-content">
+                          {type.name}
+                        </span>
+                        <span className="text-ui-xs font-medium uppercase tracking-wide text-content-subtle">
+                          {type.category}
+                        </span>
+                      </span>
+                      <span className="mt-0.5 block text-ui-md leading-relaxed text-content-muted">
+                        {type.description}
+                      </span>
+                    </span>
+                    {active && (
+                      <Check
+                        className="mt-1 h-4 w-4 shrink-0 text-accent-text"
+                        aria-hidden="true"
+                      />
+                    )}
+                  </button>
+                )
+              })
+            )}
+          </div>
+        </section>
+
+        <section aria-label={`${config.name} setup`} className="min-h-0 bg-surface-raised">
+          <div className="h-full overflow-y-auto">
+            <div
+              className="qn-type-picker-hero relative overflow-hidden px-5 py-6 text-white sm:px-7"
+              style={{ '--picker-accent': config.color }}
+            >
+              <div className="relative z-[1] flex items-start gap-4">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[12px] border border-white/20 bg-white/10 shadow-sm">
+                  <config.icon className="h-6 w-6" aria-hidden="true" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-ui-xs font-semibold uppercase tracking-[0.16em] text-white/65">
+                    {config.category} workspace
+                  </p>
+                  <h3 className="mt-1 text-title-md font-semibold">{config.name}</h3>
+                  <p className="mt-1 max-w-xl text-ui-md leading-relaxed text-white/75">
+                    {config.bestFor}
+                  </p>
+                </div>
+              </div>
+
+              <div className="relative z-[1] mt-5 flex flex-wrap gap-2">
+                {config.features.map((feature) => (
+                  <span
+                    key={feature}
+                    className="rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-ui-sm text-white/85"
+                  >
+                    {feature}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-6 px-5 py-5 sm:px-7 sm:py-6">
+              <div>
+                <label
+                  htmlFor="qn-new-note-title"
+                  className="mb-1.5 block text-ui-sm font-medium text-content-muted"
+                >
+                  Note title
+                </label>
+                <Input
+                  id="qn-new-note-title"
+                  maxLength={MAX_NOTE_TITLE_LENGTH}
+                  value={title}
+                  onChange={(event) => setTitle(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' && title.trim()) createSelectedNote()
+                  }}
+                  placeholder={config.name}
+                />
+              </div>
+
+              <fieldset>
+                <legend className="text-ui-lg font-semibold text-content">
+                  Choose a starting point
+                </legend>
+                <p className="mt-1 text-ui-md text-content-muted">
+                  Every option stays fully editable. Starters provide useful structure, not sample clutter.
+                </p>
+
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  {starters.map((starter) => {
+                    const active = starter.id === selectedStarter
+                    return (
+                      <label
+                        key={starter.id}
+                        className={[
+                          'relative cursor-pointer rounded-card border p-3.5 transition-all',
+                          active
+                            ? 'border-accent bg-accent-soft shadow-xs'
+                            : 'border-subtle bg-surface-raised hover:border-strong hover:bg-surface-hover',
+                        ].join(' ')}
+                      >
+                        <input
+                          type="radio"
+                          name="note-starter"
+                          value={starter.id}
+                          checked={active}
+                          onChange={() => selectStarter(starter)}
+                          className="qn-sr-only"
+                        />
+                        <span className="flex items-start gap-3">
+                          <span
+                            aria-hidden="true"
+                            className={[
+                              'mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border',
+                              active
+                                ? 'border-accent bg-accent text-accent-on'
+                                : 'border-strong bg-surface-raised',
+                            ].join(' ')}
+                          >
+                            {active && <span className="h-1.5 w-1.5 rounded-full bg-current" />}
+                          </span>
+                          <span>
+                            <span className="block text-ui-md font-semibold text-content">
+                              {starter.name}
+                            </span>
+                            <span className="mt-0.5 block text-ui-sm leading-relaxed text-content-muted">
+                              {starter.description}
+                            </span>
+                          </span>
+                        </span>
+                      </label>
+                    )
+                  })}
+                </div>
+              </fieldset>
+
+              <div className="rounded-card border border-subtle bg-surface-sunken p-4">
+                <div className="flex items-center gap-2 text-ui-md font-semibold text-content">
+                  <Sparkles className="h-4 w-4 text-accent-text" aria-hidden="true" />
+                  Built as a real workspace
+                </div>
+                <p className="mt-1.5 text-ui-sm leading-relaxed text-content-muted">
+                  {selectedType === NOTE_TYPES.STANDARD
+                    ? 'Uses the complete document editor with formatting, tables, tasks, links, media, and focus tools.'
+                    : `Uses a dedicated ${config.shortName.toLowerCase()} editor with structured data, meaningful progress, and export support.`}
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
-    </LegacyDialog>
+    </Modal>
   )
 }

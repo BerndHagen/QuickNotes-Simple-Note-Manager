@@ -76,13 +76,6 @@ export default function TermsModal() {
             </p>
 
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mt-6 mb-3">
-              {t('terms.premium')}
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
-              {t('terms.premiumText')}
-            </p>
-
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mt-6 mb-3">
               {t('terms.contact')}
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-4">

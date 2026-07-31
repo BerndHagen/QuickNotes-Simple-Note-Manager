@@ -8,9 +8,8 @@ const STORAGE_KEY = 'quicknotes-shortcuts'
  * `owner: 'app'`    — bound by useAppShortcuts and user-customisable.
  * `owner: 'editor'` — provided by TipTap's own keymap. Listed so the
  *                     shortcuts dialog is complete, but not rebindable:
- *                     the editor owns those keys, and registering them
- *                     at document level is what previously made Ctrl+I
- *                     open the Import dialog mid-sentence.
+ *                     the editor owns those keys, and binding them at
+ *                     document level would hijack them mid-sentence.
  *
  * `whileTyping: true` means the shortcut still fires when focus is in a
  * text field or the editor. Everything else is suppressed there so
@@ -24,7 +23,7 @@ export const DEFAULT_SHORTCUTS = {
   focusMode: { key: 'f', ctrl: true, shift: true, owner: 'app', whileTyping: true, description: 'Focus mode' },
   settings: { key: ',', ctrl: true, owner: 'app', description: 'Open settings' },
   shortcuts: { key: '/', ctrl: true, owner: 'app', description: 'Keyboard shortcuts' },
-  templates: { key: 't', ctrl: true, owner: 'app', description: 'Insert template' },
+  templates: { key: 't', ctrl: true, owner: 'app', description: 'Choose note type' },
   export: { key: 'e', ctrl: true, shift: true, owner: 'app', description: 'Export note' },
   import: { key: 'i', ctrl: true, shift: true, owner: 'app', description: 'Import notes' },
   duplicate: { key: 'd', ctrl: true, shift: true, owner: 'app', description: 'Duplicate note' },
