@@ -90,7 +90,14 @@ jobs:
                 CAT="OTHER" ;;
             esac
             
-            BULLETS=$(echo "$BODY" | grep -E '^\s*[-*•]\s+' | sed 's/^[[:space:]]*[-*•][[:space:]]*//' || true)
+            # Wrapped bullets continue on indented lines; join them back
+            # together before stripping the marker.
+            BULLETS=$(echo "$BODY" | awk '
+              /^[[:space:]]*[-*•][[:space:]]+/ { if (buf != "") print buf; buf = $0; next }
+              /^[[:space:]]*$/ { if (buf != "") { print buf; buf = "" } next }
+              { if (buf != "") { sub(/^[[:space:]]+/, "", $0); buf = buf " " $0 } }
+              END { if (buf != "") print buf }
+            ' | sed 's/^[[:space:]]*[-*•][[:space:]]*//' || true)
             
             if [ -n "$BULLETS" ]; then
               while IFS= read -r item; do
@@ -254,7 +261,14 @@ jobs:
                 CAT="OTHER" ;;
             esac
             
-            BULLETS=$(echo "$BODY" | grep -E '^\s*[-*•]\s+' | sed 's/^[[:space:]]*[-*•][[:space:]]*//' || true)
+            # Wrapped bullets continue on indented lines; join them back
+            # together before stripping the marker.
+            BULLETS=$(echo "$BODY" | awk '
+              /^[[:space:]]*[-*•][[:space:]]+/ { if (buf != "") print buf; buf = $0; next }
+              /^[[:space:]]*$/ { if (buf != "") { print buf; buf = "" } next }
+              { if (buf != "") { sub(/^[[:space:]]+/, "", $0); buf = buf " " $0 } }
+              END { if (buf != "") print buf }
+            ' | sed 's/^[[:space:]]*[-*•][[:space:]]*//' || true)
             
             if [ -n "$BULLETS" ]; then
               while IFS= read -r item; do
