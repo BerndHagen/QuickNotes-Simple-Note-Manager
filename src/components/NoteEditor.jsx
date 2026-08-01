@@ -361,7 +361,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
 
       {/* Banner header */}
       {!isSpecialized && (
-        <header className="qn-banner-surface m-2 shrink-0 rounded-card px-4 py-3.5 text-banner-text sm:mx-3 sm:px-5 sm:py-4">
+        <header className="qn-banner-surface qn-editor-measure m-2 shrink-0 rounded-card px-4 py-3.5 text-banner-text sm:mx-3 sm:px-5 sm:py-4">
         <div className="mb-2 flex items-start gap-1.5">
 
           <div className="min-w-0 flex-1">

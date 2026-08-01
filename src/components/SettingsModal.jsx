@@ -35,6 +35,7 @@ import { useUIStore, useNotesStore, useThemeStore } from '../store'
 import { backend, isBackendConfigured, getRedirectUrl, deleteUserAccount } from '../lib/backend'
 import { getAuthErrorMessage, validateNewPassword } from '../lib/authValidation'
 import { clearLocalData } from '../lib/db'
+import { setLocalDisplayName } from '../lib/localSession'
 import { useTranslation, LANGUAGES } from '../lib/useTranslation'
 import toast from 'react-hot-toast'
 import LegacyDialog from './ui/LegacyDialog'
@@ -100,6 +101,10 @@ export default function SettingsModal() {
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [displayName, setDisplayName] = useState(
+    () => user?.user_metadata?.first_name || user?.user_metadata?.full_name || ''
+  )
+  const [savingName, setSavingName] = useState(false)
   const [showChangeEmail, setShowChangeEmail] = useState(false)
   const [showChangePassword, setShowChangePassword] = useState(false)
   const [showDeleteAccount, setShowDeleteAccount] = useState(false)
@@ -180,6 +185,36 @@ export default function SettingsModal() {
       toast.error(getAuthErrorMessage(error))
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleSaveName = async () => {
+    const name = displayName.trim()
+    if (!name) {
+      toast.error(t('settings.nameRequired', 'Enter a display name'))
+      return
+    }
+    if (name.length > 60) {
+      toast.error(t('settings.nameTooLong', 'Use 60 characters or fewer'))
+      return
+    }
+    setSavingName(true)
+    try {
+      // A local workspace has no account to write to, so the name lives in the
+      // store and is persisted with the rest of the local session.
+      if (user?.isLocal || !isBackendConfigured()) {
+        setLocalDisplayName(name)
+        setUser({ ...user, user_metadata: { ...(user?.user_metadata || {}), first_name: name, full_name: name } })
+      } else {
+        const { error } = await backend.auth.updateUser({ data: { first_name: name, full_name: name } })
+        if (error) throw error
+        setUser({ ...user, user_metadata: { ...(user?.user_metadata || {}), first_name: name, full_name: name } })
+      }
+      toast.success(t('settings.nameUpdated', 'Display name updated'))
+    } catch (error) {
+      toast.error(getAuthErrorMessage(error))
+    } finally {
+      setSavingName(false)
     }
   }
 
@@ -696,10 +731,41 @@ export default function SettingsModal() {
                         <HardDrive className="h-5 w-5" aria-hidden="true" />
                       </span>
                       <div>
-                        <p className="font-semibold text-content">My workspace</p>
+                        <p className="font-semibold text-content">
+                          {user?.user_metadata?.first_name || 'My workspace'}
+                        </p>
                         <p className="mt-0.5 text-sm text-emerald-800 dark:text-emerald-200">
                           Saved privately on this device
                         </p>
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl border border-subtle p-4">
+                      <h4 className="mb-1 text-sm font-semibold text-content">
+                        {t('settings.displayName', 'Display name')}
+                      </h4>
+                      <p className="mb-3 text-xs text-content-muted">
+                        {t('settings.displayNameHint', 'Shown in the sidebar and on notes you share.')}
+                      </p>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={displayName}
+                          maxLength={60}
+                          onChange={(e) => setDisplayName(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === 'Enter') handleSaveName() }}
+                          placeholder="My workspace"
+                          aria-label={t('settings.displayName', 'Display name')}
+                          className="flex-1 px-3 py-2 text-sm border rounded-lg outline-none border-strong bg-surface-raised text-content focus:border-accent"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleSaveName}
+                          disabled={savingName}
+                          className="px-4 py-2 text-sm text-white transition-colors rounded-lg bg-accent hover:bg-accent-hover disabled:opacity-50"
+                        >
+                          {savingName ? t('settings.saving') : t('common.save')}
+                        </button>
                       </div>
                     </div>
 
@@ -794,6 +860,34 @@ export default function SettingsModal() {
                       <p className="mt-2 text-xs text-content-muted">
                         {t('settings.profilePictureHint')}
                       </p>
+                    </div>
+                    <div className="p-4 border border-subtle rounded-lg">
+                      <h4 className="mb-1 text-sm font-medium text-content">
+                        {t('settings.displayName', 'Display name')}
+                      </h4>
+                      <p className="mb-3 text-xs text-content-muted">
+                        {t('settings.displayNameHint', 'Shown in the sidebar and on notes you share.')}
+                      </p>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={displayName}
+                          maxLength={60}
+                          onChange={(e) => setDisplayName(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === 'Enter') handleSaveName() }}
+                          placeholder={t('settings.displayName', 'Display name')}
+                          aria-label={t('settings.displayName', 'Display name')}
+                          className="flex-1 px-3 py-2 text-sm border rounded-lg outline-none border-strong bg-surface-raised text-content focus:border-accent"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleSaveName}
+                          disabled={savingName}
+                          className="px-4 py-2 text-sm text-white transition-colors rounded-lg bg-accent hover:bg-accent-hover disabled:opacity-50"
+                        >
+                          {savingName ? t('settings.saving') : t('common.save')}
+                        </button>
+                      </div>
                     </div>
                     <div className="p-4 border border-subtle rounded-lg ">
                       <div className="flex items-center justify-between">

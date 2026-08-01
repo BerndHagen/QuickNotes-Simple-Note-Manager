@@ -1155,7 +1155,9 @@ export default function RichTextEditor({
             setShowContextMenu(true)
           }}
         >
-          <EditorContent editor={editor} />
+          <div className="qn-editor-measure">
+            <EditorContent editor={editor} />
+          </div>
         </div>
       </div>
 

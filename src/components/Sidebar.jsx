@@ -198,8 +198,8 @@ export default function Sidebar({ onNavigate }) {
     >
       {/* Brand */}
       <div className="flex shrink-0 items-center gap-2.5 px-4 pb-4 pt-4">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-white/10 bg-[linear-gradient(140deg,#0e5341,#05352a)] text-white shadow-sm">
-          <NotepadGlyph className="h-[21px] w-[21px]" />
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[11px] border border-white/10 bg-[linear-gradient(140deg,#0e5341,#05352a)] text-white shadow-sm">
+          <NotepadGlyph className="h-6 w-6 shrink-0" />
         </span>
         <div className="min-w-0 flex-1">
           <p className="truncate text-title-xs font-bold leading-tight text-nav-text">QuickNotes</p>
@@ -220,11 +220,11 @@ export default function Sidebar({ onNavigate }) {
         <button
           type="button"
           onClick={go(() => setQuickNoteOpen(true))}
-          className="flex h-10 w-full items-center gap-2 rounded-[10px] qn-banner-surface px-3.5 text-ui-lg font-semibold text-white shadow-sm transition-[filter] duration-fast hover:brightness-110"
+          className="flex h-10 w-full items-center gap-2 rounded-[10px] bg-[#10b981] px-3.5 text-ui-lg font-semibold text-[#04241c] shadow-sm transition-[filter] duration-fast hover:brightness-105"
         >
           <Plus className="h-4 w-4 shrink-0" aria-hidden="true" />
           <span className="flex-1 text-left">{t('sidebar.quickNote')}</span>
-          <kbd className="shrink-0 text-ui-xs font-medium text-white/70">Ctrl N</kbd>
+          <kbd className="shrink-0 font-sans text-ui-xs font-semibold text-[#04241c]/70">Ctrl + N</kbd>
         </button>
       </div>
 

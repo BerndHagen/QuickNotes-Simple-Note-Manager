@@ -7,17 +7,41 @@
  */
 
 const LOCAL_SESSION_KEY = 'quicknotes-local-session'
+const LOCAL_NAME_KEY = 'quicknotes-local-name'
+const DEFAULT_LOCAL_NAME = 'My workspace'
 
-export const createLocalUser = () => ({
-  id: 'quicknotes-local-workspace',
-  email: '',
-  isLocal: true,
-  app_metadata: { provider: 'local' },
-  user_metadata: {
-    first_name: 'My workspace',
-    full_name: 'My workspace',
-  },
-})
+/** The name a local workspace shows, which outlives a reload. */
+export const getLocalDisplayName = () => {
+  try {
+    return window.localStorage.getItem(LOCAL_NAME_KEY) || DEFAULT_LOCAL_NAME
+  } catch {
+    return DEFAULT_LOCAL_NAME
+  }
+}
+
+export const setLocalDisplayName = (name) => {
+  try {
+    const trimmed = (name || '').trim()
+    if (trimmed) window.localStorage.setItem(LOCAL_NAME_KEY, trimmed)
+    else window.localStorage.removeItem(LOCAL_NAME_KEY)
+  } catch {
+    /* storage unavailable — the name simply falls back to the default */
+  }
+}
+
+export const createLocalUser = () => {
+  const name = getLocalDisplayName()
+  return {
+    id: 'quicknotes-local-workspace',
+    email: '',
+    isLocal: true,
+    app_metadata: { provider: 'local' },
+    user_metadata: {
+      first_name: name,
+      full_name: name,
+    },
+  }
+}
 
 export const hasLocalSession = () => {
   try {

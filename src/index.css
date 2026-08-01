@@ -642,172 +642,61 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
   animation: auth-form-in 0.4s ease-out;
 }
 
-/* Sign-in canvas.
-   A light working surface with a faint blueprint grid, a few soft panels and
-   dot clusters drifting very slowly across it. Everything here is decoration
-   behind the card: the panel in the centre is untouched. */
-.qn-auth-page {
-  background: linear-gradient(135deg, #f4f4f5, #eceded 45%, #e7e7e7);
-}
-
-.qn-auth-page::before {
-  content: '';
-  position: absolute;
-  inset: -15%;
-  pointer-events: none;
+/* Application canvas.
+   A soft sage field with broad bands of light sweeping across it, shared by
+   the sign-in screen and the workspace so the two feel like one product. The
+   top right is deliberately the deepest tone, which is what lets the white
+   panel edge read against it. The bands drift slowly; nothing else moves. */
+.qn-canvas {
+  background-color: #e9f1ed;
   background-image:
-    linear-gradient(to right, rgba(90, 100, 96, 0.09) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(90, 100, 96, 0.09) 1px, transparent 1px);
-  background-size: 104px 104px;
-  animation: qn-bg-grid 120s linear infinite;
+    radial-gradient(68% 52% at 14% 86%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0) 62%),
+    radial-gradient(86% 44% at 44% 58%, rgba(255, 255, 255, 0.62) 0%, rgba(255, 255, 255, 0) 66%),
+    radial-gradient(58% 40% at 72% 80%, rgba(216, 232, 224, 0.7) 0%, rgba(216, 232, 224, 0) 62%),
+    radial-gradient(74% 62% at 94% 4%, rgba(188, 209, 199, 0.9) 0%, rgba(188, 209, 199, 0) 64%),
+    linear-gradient(158deg, #f2f8f5 0%, #e9f1ed 42%, #dfeae4 100%);
+  background-size:
+    150% 150%,
+    150% 150%,
+    150% 150%,
+    150% 150%,
+    100% 100%;
+  background-position:
+    12% 88%,
+    44% 58%,
+    72% 80%,
+    94% 4%,
+    0% 0%;
+  animation: qn-canvas-drift 48s ease-in-out infinite alternate;
 }
 
-.dark .qn-auth-page {
-  background: linear-gradient(135deg, #12171c, #0d1116 55%, #151b21);
+@keyframes qn-canvas-drift {
+  from {
+    background-position: 12% 88%, 44% 58%, 72% 80%, 94% 4%, 0% 0%;
+  }
+  to {
+    background-position: 20% 78%, 52% 66%, 64% 72%, 88% 12%, 0% 0%;
+  }
 }
 
-.dark .qn-auth-page::before {
+.dark .qn-canvas {
+  background-color: #0e1315;
   background-image:
-    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
-}
-
-/* Soft panels: large, low-contrast rounded rectangles that drift and breathe. */
-.qn-auth-panel {
-  position: absolute;
-  border-radius: 26px;
-  border: 1px solid #dbdfdd;
-  background: linear-gradient(140deg, #f4f4f5, #eceded 60%, #dadfdd);
-  box-shadow: 0 24px 60px rgba(90, 100, 96, 0.06);
-  will-change: transform;
-}
-
-.dark .qn-auth-panel {
-  border-color: rgba(255, 255, 255, 0.05);
-  background: linear-gradient(140deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012));
-  box-shadow: none;
-}
-
-.qn-auth-panel--a {
-  left: -6%;
-  top: 8%;
-  width: 26vw;
-  height: 30vh;
-  animation: qn-bg-float-a 34s ease-in-out infinite;
-}
-
-.qn-auth-panel--b {
-  right: -8%;
-  top: -6%;
-  width: 30vw;
-  height: 34vh;
-  border-radius: 34px;
-  animation: qn-bg-float-b 44s ease-in-out infinite;
-}
-
-.qn-auth-panel--c {
-  right: 4%;
-  bottom: -10%;
-  width: 22vw;
-  height: 32vh;
-  animation: qn-bg-float-a 52s ease-in-out infinite reverse;
-}
-
-.qn-auth-panel--d {
-  left: 10%;
-  bottom: -14%;
-  width: 18vw;
-  height: 26vh;
-  border-radius: 20px;
-  animation: qn-bg-float-b 38s ease-in-out infinite reverse;
-}
-
-/* Dot clusters, the blueprint detail from the reference. */
-.qn-auth-dots {
-  position: absolute;
-  background-image: radial-gradient(circle, rgba(90, 100, 96, 0.26) 1.1px, transparent 1.4px);
-  background-size: 17px 17px;
-  opacity: 0.5;
-  will-change: transform;
-}
-
-.dark .qn-auth-dots {
-  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.14) 1.1px, transparent 1.4px);
-  opacity: 0.35;
-}
-
-.qn-auth-dots--a {
-  left: 3%;
-  bottom: 16%;
-  width: 190px;
-  height: 130px;
-  animation: qn-bg-float-b 40s ease-in-out infinite;
-}
-
-.qn-auth-dots--b {
-  right: 12%;
-  top: 12%;
-  width: 150px;
-  height: 110px;
-  animation: qn-bg-float-a 46s ease-in-out infinite reverse;
-}
-
-/* A whisper of brand colour so the canvas is not purely grey. */
-.qn-auth-glow {
-  position: absolute;
-  border-radius: 999px;
-  filter: blur(90px);
-  will-change: transform;
-}
-
-.qn-auth-glow--a {
-  left: -10%;
-  top: -12%;
-  width: 460px;
-  height: 460px;
-  background: rgba(218, 223, 221, 0.85);
-  animation: qn-bg-float-a 56s ease-in-out infinite;
-}
-
-.qn-auth-glow--b {
-  right: -6%;
-  bottom: -16%;
-  width: 520px;
-  height: 520px;
-  background: rgba(219, 223, 221, 0.8);
-  animation: qn-bg-float-b 64s ease-in-out infinite reverse;
-}
-
-.dark .qn-auth-glow--a {
-  background: rgba(52, 211, 153, 0.1);
-}
-
-.dark .qn-auth-glow--b {
-  background: rgba(16, 185, 129, 0.08);
-}
-
-@keyframes qn-bg-grid {
-  from { transform: translate3d(0, 0, 0); }
-  to { transform: translate3d(104px, 104px, 0); }
-}
-
-@keyframes qn-bg-float-a {
-  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
-  50% { transform: translate3d(2.2vw, -2.4vh, 0) scale(1.04); }
-}
-
-@keyframes qn-bg-float-b {
-  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
-  50% { transform: translate3d(-2.6vw, 2.2vh, 0) scale(1.05); }
+    radial-gradient(68% 52% at 14% 86%, rgba(38, 52, 47, 0.85) 0%, rgba(38, 52, 47, 0) 62%),
+    radial-gradient(86% 44% at 44% 58%, rgba(30, 42, 38, 0.7) 0%, rgba(30, 42, 38, 0) 66%),
+    radial-gradient(58% 40% at 72% 80%, rgba(24, 34, 31, 0.7) 0%, rgba(24, 34, 31, 0) 62%),
+    radial-gradient(74% 62% at 94% 4%, rgba(8, 12, 12, 0.9) 0%, rgba(8, 12, 12, 0) 64%),
+    linear-gradient(158deg, #131a1c 0%, #0f1518 42%, #0a0e11 100%);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .qn-auth-page::before,
-  .qn-auth-panel,
-  .qn-auth-dots,
-  .qn-auth-glow {
-    animation: none !important;
+  .qn-canvas {
+    animation: none;
   }
+}
+
+.qn-auth-page {
+  background-color: #e9f1ed;
 }
 
 /* Sign-in hero and navigation rail share one material: an emerald-tinted deep
@@ -928,10 +817,6 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
      are both saturated green, so a green canvas of any lightness sits in the
      same hue family and the frame's edge dissolves into it. The light theme
      keeps a light canvas — the dark one belongs to the dark theme. */
-  body {
-    background: linear-gradient(135deg, #f4f4f5, #eceded 45%, #e7e7e7);
-  }
-
   .dark body {
     background: linear-gradient(135deg, #12171c, #0d1116 55%, #151b21);
   }
@@ -1633,6 +1518,21 @@ body {
 }
 
 /* Premium editor area subtle paper feel */
+/* Editor column measure.
+   Past roughly 1440px the note header and the text would otherwise run the
+   full width of an ultrawide display. Both are held to a readable column and
+   centred; below that width nothing changes. */
+.qn-editor-measure {
+  width: 100%;
+}
+
+@media (min-width: 1440px) {
+  .qn-editor-measure {
+    max-width: 1180px;
+    margin-inline: auto;
+  }
+}
+
 .editor-paper {
   background-image: 
     radial-gradient(ellipse at 50% 0%, rgba(16, 185, 129, 0.02) 0%, transparent 50%);

@@ -15,7 +15,6 @@ import {
   RefreshCw,
   Search,
   ShieldCheck,
-  Sparkles,
   User,
   WifiOff,
 } from 'lucide-react'
@@ -381,7 +380,7 @@ export default function AuthScreen() {
       <div
         role="tablist"
         aria-label="Account access"
-        className="mb-7 grid grid-cols-2 rounded-[10px] border border-subtle bg-surface-sunken p-1"
+        className="mb-7 grid grid-cols-2 rounded-[10px] border border-strong bg-surface-sunken p-1"
       >
         {[
           ['login', 'Sign in'],
@@ -395,7 +394,7 @@ export default function AuthScreen() {
             onClick={() => changeMode(value)}
             className={`h-9 rounded-[7px] text-ui-md font-semibold transition-colors ${
  mode === value
- ? 'bg-surface-raised text-content shadow-xs'
+ ? 'bg-accent text-white shadow-xs'
                 : 'text-content-muted hover:text-content'
             }`}
           >
@@ -426,7 +425,7 @@ export default function AuthScreen() {
         {[
           ['Private on this device', ShieldCheck],
           ['Available without a connection', WifiOff],
-          ['Every editor and organization feature included', Sparkles],
+          ['Every editor and organization feature included', LayoutGrid],
         ].map(([label, Icon]) => (
           <div key={label} className="flex items-center gap-3 text-ui-md font-medium text-content">
             <span className="flex h-7 w-7 items-center justify-center rounded-[8px] bg-accent-soft text-accent-text">
@@ -731,17 +730,7 @@ export default function AuthScreen() {
   // reads as a card sitting on it. Continuing the hero across the whole page
   // instead just produced one large green field with the card lost inside it.
   return (
-    <div className="qn-auth-page relative flex min-h-[100dvh] items-center justify-center overflow-hidden text-content">
-      <div className="qn-auth-bg pointer-events-none absolute inset-0" aria-hidden="true">
-        <span className="qn-auth-panel qn-auth-panel--a" />
-        <span className="qn-auth-panel qn-auth-panel--b" />
-        <span className="qn-auth-panel qn-auth-panel--c" />
-        <span className="qn-auth-panel qn-auth-panel--d" />
-        <span className="qn-auth-dots qn-auth-dots--a" />
-        <span className="qn-auth-dots qn-auth-dots--b" />
-        <span className="qn-auth-glow qn-auth-glow--a" />
-        <span className="qn-auth-glow qn-auth-glow--b" />
-      </div>
+    <div className="qn-auth-page qn-canvas relative flex min-h-[100dvh] items-center justify-center overflow-hidden text-content">
 
       <main className="relative z-10 grid h-[100dvh] w-full max-w-[1680px] overflow-hidden lg:grid-cols-[minmax(0,1.06fr)_clamp(430px,32vw,660px)] 2xl:h-[min(100dvh-72px,1000px)] 2xl:rounded-[26px] 2xl:shadow-[0_40px_90px_rgba(2,20,14,0.45)]">
         <section className="qn-auth-hero relative hidden overflow-hidden border-r border-white/10 px-10 py-9 text-white lg:flex lg:flex-col xl:px-16 xl:py-11">
@@ -750,8 +739,7 @@ export default function AuthScreen() {
           </div>
 
           <div className="relative z-10 mx-auto my-auto w-full max-w-[860px] py-4 xl:py-8">
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.08] px-3 py-1.5 text-ui-sm font-semibold text-white/80 backdrop-blur">
-              <Sparkles className="h-3.5 w-3.5 text-primary-300" aria-hidden="true" />
+            <div className="mb-5 inline-flex items-center rounded-full border border-white/20 bg-white/[0.08] px-3.5 py-1.5 text-ui-sm font-semibold tracking-[0.01em] text-white/85">
               Free, open-source, and yours to run
             </div>
             <h1 className="max-w-[680px] text-[42px] font-bold leading-[1.04] tracking-[-0.045em] xl:text-[52px]">
