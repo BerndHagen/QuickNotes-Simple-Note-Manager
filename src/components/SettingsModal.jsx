@@ -1412,7 +1412,7 @@ export default function SettingsModal() {
                   </div>
                   <div className="text-center">
                     <h3 className="text-lg font-semibold text-content">QuickNotes</h3>
-                    <p className="text-sm text-content-muted">{t('settings.version')} 2.0.2</p>
+                    <p className="text-sm text-content-muted">{t('settings.version')} 2.1.0</p>
                   </div>
                   <p className="text-center text-sm text-content-muted max-w-sm">
                     {t('settings.aboutDescription')}

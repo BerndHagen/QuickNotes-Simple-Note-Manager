@@ -177,7 +177,7 @@ export default function HelpModal() {
               {t('help.termsOfService')}
             </Button>
           </div>
-          <p className="mt-3 text-center text-ui-xs text-content-muted">QuickNotes v2.0.2</p>
+          <p className="mt-3 text-center text-ui-xs text-content-muted">QuickNotes v2.1.0</p>
         </div>
       </div>
     </Modal>

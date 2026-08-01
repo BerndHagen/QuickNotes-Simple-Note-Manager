@@ -609,6 +609,7 @@ export default function AuthScreen() {
             type="text"
             value={formData.firstName}
             onChange={(event) => handleInputChange('firstName', event.target.value)}
+            placeholder="Jane"
             autoComplete="given-name"
             error={errors.firstName}
           />
@@ -619,6 +620,7 @@ export default function AuthScreen() {
             type="text"
             value={formData.lastName}
             onChange={(event) => handleInputChange('lastName', event.target.value)}
+            placeholder="Doe"
             autoComplete="family-name"
             error={errors.lastName}
           />
@@ -630,6 +632,7 @@ export default function AuthScreen() {
           type="email"
           value={formData.email}
           onChange={(event) => handleInputChange('email', event.target.value)}
+          placeholder="you@example.com"
           autoComplete="email"
           error={errors.email}
         />
@@ -664,6 +667,7 @@ export default function AuthScreen() {
           type="password"
           value={formData.confirmPassword}
           onChange={(event) => handleInputChange('confirmPassword', event.target.value)}
+          placeholder="Re-enter your password"
           autoComplete="new-password"
           error={errors.confirmPassword}
         />
@@ -739,6 +743,7 @@ export default function AuthScreen() {
           type="email"
           value={formData.email}
           onChange={(event) => handleInputChange('email', event.target.value)}
+          placeholder="you@example.com"
           autoComplete="email"
           error={errors.email}
         />
@@ -785,7 +790,7 @@ export default function AuthScreen() {
   return (
     <div className="qn-auth-page qn-canvas relative flex min-h-[100dvh] items-center justify-center overflow-hidden text-content">
 
-      <main className="relative z-10 grid h-[100dvh] w-full max-w-[1680px] overflow-hidden lg:grid-cols-[minmax(0,1.06fr)_clamp(430px,32vw,660px)] 2xl:h-[min(100dvh-72px,1000px)] 2xl:rounded-[26px] 2xl:shadow-[0_40px_90px_rgba(2,20,14,0.45)]">
+      <main className="qn-auth-frame relative z-10 grid h-[100dvh] w-full max-w-[1680px] overflow-hidden lg:grid-cols-[minmax(0,1.06fr)_clamp(430px,32vw,660px)] 2xl:h-[min(100dvh-72px,1000px)] 2xl:rounded-[26px]">
         <section className="qn-auth-hero relative hidden overflow-hidden border-r border-white/10 px-10 py-9 text-white lg:flex lg:flex-col xl:px-16 xl:py-11">
           <div className="relative z-10 mx-auto w-full max-w-[860px]">
             <BrandMark />
@@ -821,7 +826,7 @@ export default function AuthScreen() {
           </div>
         </section>
 
-        <section className="flex min-h-0 flex-col bg-surface backdrop-blur-sm">
+        <section className="qn-auth-form-panel flex min-h-0 flex-col bg-surface backdrop-blur-sm">
           <div className="flex items-center justify-between border-b border-subtle px-5 py-4 lg:hidden">
             <BrandMark compact />
             <span className="rounded-full border border-accent-border bg-accent-soft px-2.5 py-1 text-ui-xs font-semibold text-accent-text">

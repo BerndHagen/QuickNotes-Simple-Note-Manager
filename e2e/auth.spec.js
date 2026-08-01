@@ -38,6 +38,15 @@ test.describe('authentication entry', () => {
     test.skip(!(await registerTab.isVisible().catch(() => false)), 'Cloud registration is not configured.')
 
     await registerTab.click()
+
+    await expect(page.getByLabel('First name')).toHaveAttribute('placeholder', 'Jane')
+    await expect(page.getByLabel('Last name')).toHaveAttribute('placeholder', 'Doe')
+    await expect(page.getByLabel('Email address')).toHaveAttribute('placeholder', 'you@example.com')
+    await expect(page.getByLabel('Confirm password')).toHaveAttribute(
+      'placeholder',
+      'Re-enter your password',
+    )
+
     await page.getByRole('button', { name: 'Create account', exact: true }).last().click()
 
     const firstName = page.getByLabel('First name')

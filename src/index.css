@@ -596,6 +596,62 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
 
 .qn-auth-page {
   background: transparent;
+  isolation: isolate;
+}
+
+/* A quiet architectural grid gives the authentication canvas some structure
+   without competing with the form. It is intentionally strongest around the
+   outer frame, where the shared app canvas is visible on large displays. */
+.qn-auth-page::before {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.58;
+  background-image:
+    linear-gradient(rgba(8, 61, 49, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(8, 61, 49, 0.035) 1px, transparent 1px);
+  background-size: 56px 56px;
+  -webkit-mask-image: radial-gradient(ellipse 90% 82% at 50% 18%, #000 0%, transparent 76%);
+  mask-image: radial-gradient(ellipse 90% 82% at 50% 18%, #000 0%, transparent 76%);
+}
+
+.dark .qn-auth-page::before {
+  opacity: 0.42;
+  background-image:
+    linear-gradient(rgba(167, 243, 208, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(167, 243, 208, 0.045) 1px, transparent 1px);
+}
+
+.qn-auth-frame {
+  box-shadow:
+    0 44px 110px rgba(2, 31, 24, 0.3),
+    0 10px 32px rgba(15, 23, 42, 0.12),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.65);
+}
+
+.dark .qn-auth-frame {
+  box-shadow:
+    0 44px 110px rgba(0, 0, 0, 0.5),
+    0 10px 32px rgba(0, 0, 0, 0.3),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+/* The form stays paper-like and high-contrast, with a restrained cool wash in
+   the corners to connect it to the branded hero instead of reading as a flat
+   white slab. */
+.qn-auth-form-panel {
+  background-color: var(--qn-surface-base);
+  background-image:
+    radial-gradient(72% 46% at 100% 0%, rgba(16, 185, 129, 0.065) 0%, transparent 72%),
+    radial-gradient(58% 38% at 0% 100%, rgba(8, 61, 49, 0.035) 0%, transparent 76%);
+}
+
+.dark .qn-auth-form-panel {
+  background-image:
+    radial-gradient(72% 46% at 100% 0%, rgba(16, 185, 129, 0.08) 0%, transparent 72%),
+    radial-gradient(58% 38% at 0% 100%, rgba(52, 211, 153, 0.035) 0%, transparent 76%);
 }
 
 /* Sign-in hero and navigation rail share one material: an emerald-tinted deep
@@ -609,8 +665,9 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
 .qn-nav-surface {
   isolation: isolate;
   background:
-    radial-gradient(70% 70% at 18% 16%, rgba(52, 211, 153, 0.16), transparent 72%),
-    linear-gradient(138deg, #0b4a38 0%, #083d31 44%, #062d27 100%);
+    radial-gradient(70% 70% at 16% 14%, rgba(52, 211, 153, 0.18), transparent 72%),
+    radial-gradient(58% 62% at 100% 78%, rgba(14, 116, 144, 0.11), transparent 74%),
+    linear-gradient(138deg, #0b4a38 0%, #08382f 44%, #072c2a 72%, #071f27 100%);
 }
 
 .qn-nav-surface {
@@ -644,7 +701,10 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
       rgba(255, 255, 255, 0.045) 56.35%,
       transparent 56.7%
     ),
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
     radial-gradient(80% 90% at 10% 100%, rgba(16, 185, 129, 0.18), transparent 68%);
+  background-size: auto, 48px 48px, 48px 48px, auto;
 }
 
 .qn-auth-hero::after,
