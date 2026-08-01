@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react'
+import { buttonClasses } from './ui'
 import { X, Upload, Link, Image as ImageIcon, FileImage, Loader2 } from 'lucide-react'
 import { useUIStore } from '../store'
 import toast from 'react-hot-toast'
@@ -250,7 +251,7 @@ export default function ImageUploadModal({ editor }) {
           <button
             onClick={handleInsert}
             disabled={!imageUrl || isLoading}
-            className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className={buttonClasses({ variant: 'primary' })}
           >
             Insert
           </button>

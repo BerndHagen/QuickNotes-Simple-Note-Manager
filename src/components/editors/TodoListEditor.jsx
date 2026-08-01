@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { buttonClasses } from '../ui'
 import {
   Plus,
   Trash2,
@@ -371,7 +372,7 @@ export default function TodoListEditor({ data, onChange, noteTitle, onTitleChang
           <button
             onClick={addTask}
             disabled={!newTaskText.trim()}
-            className="px-4 py-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 disabled:bg-surface-active dark:disabled:bg-surface-sunken text-white font-medium transition-colors flex items-center gap-2"
+            className={buttonClasses({ variant: 'primary' })}
           >
             <Plus className="w-5 h-5" />
             Add
@@ -598,7 +599,7 @@ function TaskItem({
  task.dueDate 
  ? isOverdue 
                   ? 'bg-red-100 dark:bg-red-900/30 text-red-500 hover:bg-red-200 dark:hover:bg-red-900/50'
-                  : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-900/50'
+                  : 'bg-accent-soft text-accent-text hover:bg-accent-soft-hover'
                 : 'bg-surface-sunken text-content-muted hover:bg-surface-sunken dark:hover:bg-surface-active'
             }`}
             title={task.dueDate ? `Due: ${parseDateKey(task.dueDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}` : "Set due date"}

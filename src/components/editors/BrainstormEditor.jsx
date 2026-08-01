@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { buttonClasses } from '../ui'
 import {
   Lightbulb,
   Plus,
@@ -206,7 +207,7 @@ export default function BrainstormEditor({ data, onChange, noteTitle, onTitleCha
           </div>
           <button
             onClick={addIdea}
-            className="px-6 py-3 rounded-lg bg-emerald-700 text-white font-semibold hover:bg-emerald-800 transition-colors flex items-center gap-2"
+            className={buttonClasses({ variant: 'primary' })}
           >
             <Plus className="w-5 h-5" />
             Add Idea
@@ -622,7 +623,7 @@ export default function BrainstormEditor({ data, onChange, noteTitle, onTitleCha
             <button
               onClick={addCategory}
               disabled={!newCategoryName.trim()}
-              className="px-4 py-2 rounded-lg bg-accent text-white hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
+              className={buttonClasses({ variant: 'primary' })}
             >
               Add category
             </button>

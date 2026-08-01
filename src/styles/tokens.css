@@ -71,7 +71,7 @@
   --qn-nav-active-text: #ffffff;
 
   /* --- Borders ---------------------------------------------- */
-  --qn-border-subtle: #e8eaee;
+  --qn-border-subtle: #d8e1df;
   --qn-border: #dcdfe5;
   --qn-border-strong: #c3c8d1;
 
@@ -300,7 +300,14 @@
 .qn-banner-surface::after {
   content: '';
   position: absolute;
-  inset: 0;
+  /* Fixed extent, anchored right. The arcs are sized in percentages, so on a
+     header that spans an ultrawide column they smear into a blurry wash; a
+     bounded layer keeps them at the scale they were drawn for. */
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: auto;
+  width: min(100%, 940px);
   z-index: -1;
   pointer-events: none;
   opacity: 0.5;

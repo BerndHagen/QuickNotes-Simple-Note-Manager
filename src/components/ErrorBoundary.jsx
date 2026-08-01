@@ -1,4 +1,5 @@
 import React from 'react'
+import { buttonClasses } from './ui'
 import { AlertTriangle, RefreshCw } from 'lucide-react'
 
 export default class ErrorBoundary extends React.Component {
@@ -43,7 +44,7 @@ export default class ErrorBoundary extends React.Component {
             </button>
             <button
               onClick={this.handleReload}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg bg-emerald-600 hover:bg-emerald-700"
+              className={buttonClasses({ variant: 'primary' })}
             >
               <RefreshCw className="w-4 h-4" />
               Reload page

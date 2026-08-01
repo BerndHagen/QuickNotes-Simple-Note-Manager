@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { buttonClasses } from './ui'
 import { X, Search, Replace, ChevronDown, ChevronUp, CaseSensitive, WholeWord, Regex } from 'lucide-react'
 import { useTranslation } from '../lib/useTranslation'
 
@@ -349,7 +350,7 @@ export default function FindReplaceBar({ editor, isOpen, onClose }) {
           <button
             onClick={replaceAllMatches}
             disabled={matchCount === 0}
-            className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+            className={buttonClasses({ variant: 'primary' })}
           >
             {t('findReplace.replaceAll')}
           </button>

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { buttonClasses } from './ui'
 import { X, Tag, Trash2, Edit2, Check, Plus, Hash } from 'lucide-react'
 import { useNotesStore, useUIStore } from '../store'
 import { useTranslation } from '../lib/useTranslation'
@@ -183,7 +184,7 @@ export default function TagManagerModal() {
                 <button
                   onClick={handleCreateTag}
                   disabled={!newTagName.trim()}
-                  className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-surface-active dark:disabled:bg-surface-active text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                  className={buttonClasses({ variant: 'primary' }) + ' flex-1'}
                 >
                   <Check className="w-4 h-4" />
                   {t('common.create', 'Create')}
@@ -248,7 +249,7 @@ export default function TagManagerModal() {
                       <div className="flex gap-2">
                         <button
                           onClick={handleSaveEdit}
-                          className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                          className={buttonClasses({ variant: 'primary' }) + ' flex-1'}
                         >
                           <Check className="w-4 h-4" />
                           {t('common.save', 'Save')}

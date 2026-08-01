@@ -904,13 +904,9 @@ export default function SettingsModal() {
                             />
                           </div>
                           <div className="flex justify-start">
-                            <button
-                              type="submit"
-                              disabled={isLoading}
-                              className="px-4 py-2 text-sm text-white transition-colors rounded-lg bg-primary-600 hover:bg-primary-700 disabled:opacity-50"
-                            >
-                              {isLoading ? t('settings.sending') : t('settings.sendConfirmation')}
-                            </button>
+                            <Button type="submit" variant="primary" loading={isLoading}>
+                              {t('settings.sendConfirmation')}
+                            </Button>
                           </div>
                         </form>
                       )}
@@ -958,13 +954,9 @@ export default function SettingsModal() {
                             />
                           </div>
                           <div className="flex justify-start">
-                            <button
-                              type="submit"
-                              disabled={isLoading}
-                              className="px-4 py-2 text-sm text-white transition-colors rounded-lg bg-primary-600 hover:bg-primary-700 disabled:opacity-50"
-                            >
-                              {isLoading ? t('settings.updating') : t('settings.updatePassword')}
-                            </button>
+                            <Button type="submit" variant="primary" loading={isLoading}>
+                              {t('settings.updatePassword')}
+                            </Button>
                           </div>
                         </form>
                       )}
@@ -1094,13 +1086,9 @@ export default function SettingsModal() {
                     </div>
 
                     <div className="flex gap-3">
-                      <button
-                        type="submit"
-                        disabled={isLoading}
-                        className="flex-1 px-4 py-2 text-white transition-colors rounded-lg bg-primary-600 hover:bg-primary-700 disabled:opacity-50"
-                      >
-                        {isLoading ? t('settings.loading') : t('settings.signIn')}
-                      </button>
+                      <Button type="submit" variant="primary" loading={isLoading} className="flex-1">
+                        {t('settings.signIn')}
+                      </Button>
                       <button
                         type="button"
                         onClick={handleSignUp}
@@ -1130,13 +1118,9 @@ export default function SettingsModal() {
                       </p>
                     </div>
                   </div>
-                  <button
-                    onClick={syncWithBackend}
-                    disabled={!user}
-                    className="px-4 py-2 text-white transition-colors rounded-lg bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
+                  <Button variant="primary" onClick={syncWithBackend} disabled={!user}>
                     {t('settings.syncNow')}
-                  </button>
+                  </Button>
                 </div>
                 <div className="space-y-4">
                   <h4 className="text-sm font-medium text-content">

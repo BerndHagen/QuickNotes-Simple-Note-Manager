@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { buttonClasses } from '../ui'
 import {
   Calendar,
   Plus,
@@ -532,7 +533,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle, onTitle
               />
               <button
                 onClick={addGoal}
-                className="px-6 py-3 rounded-xl bg-accent hover:bg-accent-hover text-white font-medium"
+                className={buttonClasses({ variant: 'primary' })}
               >
                 Add Goal
               </button>

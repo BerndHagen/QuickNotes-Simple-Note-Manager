@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { buttonClasses } from '../ui'
 import {
   BookOpen,
   Sun,
@@ -373,7 +374,7 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
                 <button
                   onClick={addGoal}
                   aria-label="Add journal goal"
-                  className="px-4 py-2 rounded-xl bg-accent hover:bg-accent-hover text-white"
+                  className={buttonClasses({ variant: 'primary' })}
                 >
                   <Plus className="w-5 h-5" />
                 </button>
@@ -424,7 +425,7 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
                 <button
                   onClick={addHighlight}
                   aria-label="Add highlight"
-                  className="px-4 py-2 rounded-xl bg-accent hover:bg-accent-hover text-white"
+                  className={buttonClasses({ variant: 'primary' })}
                 >
                   <Plus className="w-5 h-5" />
                 </button>
@@ -552,7 +553,7 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
                 />
                 <button
                   onClick={addTag}
-                  className="px-4 py-2 rounded-xl bg-accent hover:bg-accent-hover text-white"
+                  className={buttonClasses({ variant: 'primary' })}
                 >
                   Add
                 </button>

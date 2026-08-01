@@ -1155,9 +1155,7 @@ export default function RichTextEditor({
             setShowContextMenu(true)
           }}
         >
-          <div className="qn-editor-measure">
-            <EditorContent editor={editor} />
-          </div>
+          <EditorContent editor={editor} />
         </div>
       </div>
 
@@ -1184,7 +1182,7 @@ function BubbleButton({ onClick, isActive, children, label }) {
       aria-label={label}
       className={`p-1.5 rounded transition-colors ${
  isActive
- ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300'
+ ? 'bg-accent-soft text-accent-text'
           : 'hover:bg-surface-hover text-content-muted'
       }`}
     >

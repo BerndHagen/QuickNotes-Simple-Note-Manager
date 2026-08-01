@@ -562,19 +562,24 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
 }
 
 /* Note card hover effect */
+/* The hover accent is an inset shadow rather than a left border.
+   As a border it overrode the card's own left edge with 3px of transparent,
+   so a resting card showed a border on three sides and nothing on the left. */
 .note-card {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  border-left: 3px solid transparent;
+  transition:
+    background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .note-card:hover {
   background-color: rgba(16, 185, 129, 0.03);
-  border-left-color: rgba(16, 185, 129, 0.3);
+  box-shadow: inset 3px 0 0 rgba(16, 185, 129, 0.3);
 }
 
 .dark .note-card:hover {
   background-color: rgba(16, 185, 129, 0.04);
-  border-left-color: rgba(16, 185, 129, 0.35);
+  box-shadow: inset 3px 0 0 rgba(16, 185, 129, 0.35);
 }
 
 /* Enterprise surface shimmer on hover */
@@ -668,44 +673,21 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
   height: 100%;
 }
 
-.qn-wave {
-  will-change: transform;
-}
-
-.qn-wave--d { fill: #d9e6e4; animation: qn-wave-drift-d 34s ease-in-out infinite alternate; }
-.qn-wave--c { fill: #cbdfdd; animation: qn-wave-drift-c 28s ease-in-out infinite alternate; }
-.qn-wave--b { fill: #b8d4d0; animation: qn-wave-drift-b 23s ease-in-out infinite alternate; }
-.qn-wave--a { fill: #afcfca; animation: qn-wave-drift-a 19s ease-in-out infinite alternate; }
+.qn-wave--d { fill: #d9e6e4; }
+.qn-wave--c { fill: #cbdfdd; }
+.qn-wave--b { fill: #b8d4d0; }
+.qn-wave--a { fill: #afcfca; }
 
 .dark .qn-wave--d { fill: #1d2a29; }
 .dark .qn-wave--c { fill: #223130; }
 .dark .qn-wave--b { fill: #273a37; }
 .dark .qn-wave--a { fill: #2d423e; }
 
-/* Each band travels a slightly different path, so the crests drift apart and
-   back together instead of sliding as one block. */
-@keyframes qn-wave-drift-d {
-  from { transform: translate(0, 0); }
-  to { transform: translate(-46px, -18px); }
-}
-
-@keyframes qn-wave-drift-c {
-  from { transform: translate(0, 0); }
-  to { transform: translate(38px, -13px); }
-}
-
-@keyframes qn-wave-drift-b {
-  from { transform: translate(0, 0); }
-  to { transform: translate(-30px, -9px); }
-}
-
-@keyframes qn-wave-drift-a {
-  from { transform: translate(0, 0); }
-  to { transform: translate(24px, -6px); }
-}
-
+/* The morph runs inside the SVG, so it is paused rather than unset. */
 @media (prefers-reduced-motion: reduce) {
-  .qn-wave { animation: none; }
+  .qn-canvas-waves animate {
+    display: none;
+  }
 }
 
 /* The sign-in screen sits directly on the canvas. */
@@ -1532,21 +1514,6 @@ body {
 }
 
 /* Premium editor area subtle paper feel */
-/* Editor column measure.
-   Past roughly 1440px the note header and the text would otherwise run the
-   full width of an ultrawide display. Both are held to a readable column and
-   centred; below that width nothing changes. */
-.qn-editor-measure {
-  width: 100%;
-}
-
-@media (min-width: 1440px) {
-  .qn-editor-measure {
-    max-width: 1180px;
-    margin-inline: auto;
-  }
-}
-
 .editor-paper {
   background-image: 
     radial-gradient(ellipse at 50% 0%, rgba(16, 185, 129, 0.02) 0%, transparent 50%);

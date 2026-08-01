@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { buttonClasses } from '../ui'
 import {
   ShoppingCart,
   Plus,
@@ -211,7 +212,7 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
           <button
             onClick={addItem}
             disabled={!newItemName.trim()}
-            className="px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-medium flex items-center gap-2"
+            className={buttonClasses({ variant: 'primary' })}
           >
             <Plus className="w-5 h-5" />
             Add

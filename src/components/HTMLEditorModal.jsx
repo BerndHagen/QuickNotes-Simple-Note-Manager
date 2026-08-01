@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { buttonClasses } from './ui'
 import { X, Code, Copy, Check, Eye, EyeOff, Download, Upload, AlertTriangle } from 'lucide-react'
 import { useUIStore } from '../store'
 import { useTranslation } from '../lib/useTranslation'
@@ -209,7 +210,7 @@ export default function HTMLEditorModal({ editor }) {
             <button
               onClick={handleApply}
               disabled={!hasUnsavedChanges}
-              className="px-4 py-2 font-medium text-white transition-colors rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+              className={buttonClasses({ variant: 'primary' })}
             >
               Apply Changes
             </button>

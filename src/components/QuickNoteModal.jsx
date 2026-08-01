@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { buttonClasses } from './ui'
 import { createPortal } from 'react-dom'
 import { X, Zap, Tag, FolderOpen, Plus } from 'lucide-react'
 import { useNotesStore, useUIStore } from '../store'
@@ -335,7 +336,7 @@ export default function QuickNoteModal() {
                     />
                     <button
                       onClick={handleCreateTag}
-                      className="p-1 bg-primary-600 text-white rounded hover:bg-primary-700 transition-colors"
+                      className={buttonClasses({ variant: 'primary' })}
                     >
                       <Plus className="w-4 h-4" />
                     </button>
@@ -397,7 +398,7 @@ export default function QuickNoteModal() {
           </button>
           <button
             onClick={handleSave}
-            className="px-4 py-2 text-sm bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors flex items-center gap-2"
+            className={buttonClasses({ variant: 'primary' })}
           >
             {t('common.save')}
             <span className="text-xs opacity-75">{"\u2318+\u21B5"}</span>

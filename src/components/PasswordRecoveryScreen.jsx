@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { buttonClasses } from './ui'
 import { CheckCircle2, Eye, EyeOff, FileText, Lock, RefreshCw } from 'lucide-react'
 import { backend } from '../lib/backend'
 import { getAuthErrorMessage, MIN_PASSWORD_LENGTH, validateNewPassword } from '../lib/authValidation'
@@ -115,7 +116,7 @@ export default function PasswordRecoveryScreen({ onComplete, onCancel }) {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="flex h-11 w-full items-center justify-center gap-2 rounded-[10px] bg-accent px-4 text-ui-lg font-semibold text-accent-on shadow-md hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
+            className={buttonClasses({ variant: 'primary' }) + ' w-full'}
           >
             {isSubmitting ? (
               <RefreshCw className="h-4 w-4 animate-spin" aria-hidden="true" />

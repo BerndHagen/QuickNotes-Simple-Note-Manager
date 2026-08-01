@@ -747,7 +747,7 @@ export default function ExportModal() {
           disabled={isExporting || (!note && !exportAll)}
           className={`w-full py-3 rounded-lg font-medium transition-all flex items-center justify-center gap-2 ${
  exportSuccess
- ? 'bg-green-600 text-white'
+ ? 'bg-success text-white'
               : isExporting
               ? 'bg-gray-400 text-white cursor-wait'
               : 'qn-banner-surface hover:from-emerald-700 hover:to-teal-700 text-white'

@@ -25,6 +25,23 @@ const SIZES = {
 const ICON_SIZES = { sm: 'h-3.5 w-3.5', md: 'h-4 w-4', lg: 'h-[18px] w-[18px]' }
 
 /**
+ * The class string behind <Button>, exported so a control that cannot be the
+ * component — one wrapped in a form row, or carrying its own layout — still
+ * takes its appearance from here. There is one definition of what a button
+ * looks like in this app, and this is it.
+ */
+export function buttonClasses({ variant = 'secondary', size = 'md', fullWidth = false } = {}) {
+  return [
+    'inline-flex shrink-0 select-none items-center justify-center whitespace-nowrap font-medium',
+    'transition-[background-color,color,box-shadow,filter] duration-fast ease-qn',
+    'disabled:cursor-not-allowed',
+    VARIANTS[variant] || VARIANTS.secondary,
+    SIZES[size] || SIZES.md,
+    fullWidth ? 'w-full' : '',
+  ].join(' ')
+}
+
+/**
  * The app's standard button. `loading` implies `disabled`, so a form
  * cannot be submitted twice while a request is in flight.
  */

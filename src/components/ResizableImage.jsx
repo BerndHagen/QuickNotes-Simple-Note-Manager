@@ -158,7 +158,7 @@ export default function ResizableImage({ node, updateAttributes, deleteNode, sel
               <button
                 onClick={handleFlipH}
                 className={`p-1.5 rounded transition-colors ${
- flipH ? 'bg-primary-100 dark:bg-accent-soft text-primary-600' : 'hover:bg-surface-hover text-content-muted'
+ flipH ? 'bg-accent-soft text-accent-text' : 'hover:bg-surface-hover text-content-muted'
  }`}
                 title="Flip horizontal"
               >
@@ -167,7 +167,7 @@ export default function ResizableImage({ node, updateAttributes, deleteNode, sel
               <button
                 onClick={handleFlipV}
                 className={`p-1.5 rounded transition-colors ${
- flipV ? 'bg-primary-100 dark:bg-accent-soft text-primary-600' : 'hover:bg-surface-hover text-content-muted'
+ flipV ? 'bg-accent-soft text-accent-text' : 'hover:bg-surface-hover text-content-muted'
  }`}
                 title="Flip vertical"
               >
@@ -192,7 +192,7 @@ export default function ResizableImage({ node, updateAttributes, deleteNode, sel
               <button
                 onClick={() => handleAlign('left')}
                 className={`p-1.5 rounded transition-colors ${
- align === 'left' ? 'bg-primary-100 dark:bg-accent-soft text-primary-600' : 'hover:bg-surface-hover text-content-muted'
+ align === 'left' ? 'bg-accent-soft text-accent-text' : 'hover:bg-surface-hover text-content-muted'
  }`}
                 title="Align left"
               >
@@ -201,7 +201,7 @@ export default function ResizableImage({ node, updateAttributes, deleteNode, sel
               <button
                 onClick={() => handleAlign('center')}
                 className={`p-1.5 rounded transition-colors ${
- align === 'center' || !align ? 'bg-primary-100 dark:bg-accent-soft text-primary-600' : 'hover:bg-surface-hover text-content-muted'
+ align === 'center' || !align ? 'bg-accent-soft text-accent-text' : 'hover:bg-surface-hover text-content-muted'
  }`}
                 title="Align center"
               >
@@ -210,7 +210,7 @@ export default function ResizableImage({ node, updateAttributes, deleteNode, sel
               <button
                 onClick={() => handleAlign('right')}
                 className={`p-1.5 rounded transition-colors ${
- align === 'right' ? 'bg-primary-100 dark:bg-accent-soft text-primary-600' : 'hover:bg-surface-hover text-content-muted'
+ align === 'right' ? 'bg-accent-soft text-accent-text' : 'hover:bg-surface-hover text-content-muted'
  }`}
                 title="Align right"
               >

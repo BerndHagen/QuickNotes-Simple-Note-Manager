@@ -64,7 +64,7 @@ export default function SortDropdown({ currentSort, onSortChange }) {
               onClick={() => handleSelect(option)}
               className={`w-full flex items-center gap-3 px-3 py-2 text-sm transition-colors ${
  currentSort === option.id
- ? 'bg-primary-50 dark:bg-accent-soft text-primary-600 dark:text-primary-400'
+ ? 'bg-primary-50 dark:bg-accent-soft text-accent-text dark:text-primary-400'
                   : 'text-content-muted hover:bg-surface-sunken dark:hover:bg-surface-raised'
               }`}
             >

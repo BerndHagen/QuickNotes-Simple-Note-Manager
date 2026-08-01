@@ -1,4 +1,5 @@
 import { useCallback, useState, useEffect } from 'react'
+import { buttonClasses } from './ui'
 import { X, Mail, Link2, Copy, Check, Trash2, UserPlus, Users } from 'lucide-react'
 import { useNotesStore } from '../store'
 import { useUIStore } from '../store'
@@ -176,7 +177,7 @@ export default function ShareNoteModal() {
               <button
                 type="submit"
                 disabled={isLoading || !email.trim()}
-                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-surface-active dark:disabled:bg-surface-active text-white py-2.5 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                className={buttonClasses({ variant: 'primary', fullWidth: true })}
               >
                 <UserPlus className="w-4 h-4" />
                 {isLoading ? 'Sharing...' : 'Create Share'}

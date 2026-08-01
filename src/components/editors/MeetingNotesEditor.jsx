@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { buttonClasses } from '../ui'
 import {
   Users,
   Plus,
@@ -306,7 +307,7 @@ ${meetingData.notes}
         <button
           onClick={copyMeetingSummary}
           type="button"
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-accent-text hover:bg-accent-soft"
+          className={buttonClasses({ variant: 'primary' })}
         >
           <Copy className="w-4 h-4" />
           Copy summary
@@ -385,7 +386,7 @@ ${meetingData.notes}
               />
               <button
                 onClick={addAttendee}
-                className="px-4 py-3 rounded-xl bg-accent hover:bg-accent-hover text-white flex items-center gap-2"
+                className={buttonClasses({ variant: 'primary' })}
               >
                 <Plus className="w-5 h-5" />
                 Add
@@ -490,7 +491,7 @@ ${meetingData.notes}
                 />
                 <button
                   onClick={addAgendaItem}
-                  className="px-4 py-2 rounded-lg bg-accent hover:bg-accent-hover text-white text-sm flex items-center gap-2"
+                  className={buttonClasses({ variant: 'primary' })}
                 >
                   <Plus className="w-4 h-4" />
                   Add
@@ -636,7 +637,7 @@ ${meetingData.notes}
                 </select>
                 <button
                   onClick={addActionItem}
-                  className="px-4 py-2 rounded-lg bg-accent hover:bg-accent-hover text-white text-sm flex items-center gap-2"
+                  className={buttonClasses({ variant: 'primary' })}
                 >
                   <Plus className="w-4 h-4" />
                   Add
@@ -717,7 +718,7 @@ ${meetingData.notes}
               />
               <button
                 onClick={addDecision}
-                className="px-4 py-3 rounded-xl bg-accent hover:bg-accent-hover text-white flex items-center gap-2"
+                className={buttonClasses({ variant: 'primary' })}
               >
                 <Plus className="w-5 h-5" />
                 Add

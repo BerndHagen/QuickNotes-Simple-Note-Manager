@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { buttonClasses } from './ui'
 import { Trash2, RotateCcw, X, Clock, AlertTriangle } from 'lucide-react'
 import { useNotesStore, useUIStore } from '../store'
 import { formatDate, htmlToPlainText, truncateText } from '../lib/utils'
@@ -67,7 +68,7 @@ export default function TrashView() {
           <div className="px-4 py-3 border-b border-subtle flex items-center justify-between bg-surface-sunken">
             <button
               onClick={handleRestoreAll}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-lg transition-colors"
+              className={buttonClasses({ variant: 'primary' })}
             >
               <RotateCcw className="w-4 h-4" />
               {t('trash.restoreAll')}

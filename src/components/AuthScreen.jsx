@@ -25,7 +25,7 @@ import {
   validateNewPassword,
 } from '../lib/authValidation'
 import { createLocalUser, startLocalSession } from '../lib/localSession'
-import { NotepadGlyph } from './ui'
+import { buttonClasses, NotepadGlyph } from './ui'
 import { useNotesStore, useUIStore } from '../store'
 import HelpModal from './HelpModal'
 import PrivacyModal from './PrivacyModal'
@@ -250,7 +250,7 @@ function SubmitButton({ loading, children }) {
     <button
       type="submit"
       disabled={loading}
-      className="flex h-11 w-full items-center justify-center gap-2 rounded-[10px] bg-accent px-4 text-ui-lg font-semibold text-accent-on shadow-md shadow-emerald-900/10 transition-[background-color,box-shadow,transform] duration-fast hover:-translate-y-px hover:bg-accent-hover hover:shadow-lg active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+      className={buttonClasses({ variant: 'primary' }) + ' w-full'}
     >
       {loading ? (
         <RefreshCw className="h-4 w-4 animate-spin" aria-hidden="true" />
@@ -439,7 +439,7 @@ export default function AuthScreen() {
       <button
         type="button"
         onClick={openLocalWorkspace}
-        className="flex h-12 w-full items-center justify-center gap-2 rounded-[11px] bg-accent px-4 text-ui-lg font-semibold text-accent-on shadow-md shadow-emerald-900/10 transition-[background-color,box-shadow,transform] duration-fast hover:-translate-y-px hover:bg-accent-hover hover:shadow-lg active:translate-y-0"
+        className={buttonClasses({ variant: 'primary' }) + ' w-full'}
       >
         {notes.length > 0 ? 'Continue to my workspace' : 'Create local workspace'}
         <ArrowRight className="h-4 w-4" aria-hidden="true" />
