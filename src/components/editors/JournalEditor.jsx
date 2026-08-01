@@ -18,6 +18,8 @@ import {
   X,
 } from 'lucide-react'
 import { formatDateKey, generateId, parseDateKey } from './noteTypes'
+import { useLatestValue } from './useLatestValue'
+import { useEditorDataSync } from './useEditorDataSync'
 import FocusedNoteTitle from './FocusedNoteTitle'
 const MOODS = [
   { id: 1, emoji: '\u{1F622}', label: 'Terrible', color: '#ef4444' },
@@ -61,14 +63,24 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
   const [newHighlight, setNewHighlight] = useState('')
   const [newGoal, setNewGoal] = useState('')
   const [newTag, setNewTag] = useState('')
+  const onChangeRef = useLatestValue(onChange)
+  const skipChangeRef = useEditorDataSync(data, journalData, (incoming) => {
+    setJournalData(incoming)
+    setActiveSection(incoming?.preferredSection || 'morning')
+  })
   const isInitialMount = useRef(true)
   useEffect(() => {
     if (isInitialMount.current) { isInitialMount.current = false; return }
-    onChange?.(journalData)
-  }, [journalData])
+    if (skipChangeRef.current) { skipChangeRef.current = false; return }
+    onChangeRef.current?.(journalData)
+  }, [journalData, onChangeRef, skipChangeRef])
 
   const update = (field, value) => {
     setJournalData(prev => ({ ...prev, [field]: value }))
+  }
+  const selectSection = (section) => {
+    setActiveSection(section)
+    update('preferredSection', section)
   }
 
   const updateGratitude = (index, value) => {
@@ -227,7 +239,7 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
         {sections.map(section => (
           <button
             key={section.id}
-            onClick={() => setActiveSection(section.id)}
+            onClick={() => selectSection(section.id)}
             aria-pressed={activeSection === section.id}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
  activeSection === section.id
@@ -575,7 +587,7 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
                   <button
                     key={prompt}
                     onClick={() => {
-                      setActiveSection('write')
+                      selectSection('write')
                       update('freeWrite', journalData.freeWrite + (journalData.freeWrite ? '\n\n' : '') + prompt + '\n')
                     }}
                     className="p-3 rounded-xl bg-surface-sunken hover:bg-accent-soft dark:hover:bg-amber-900/20 text-left text-sm text-content-muted transition-colors"

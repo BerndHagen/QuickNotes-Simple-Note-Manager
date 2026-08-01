@@ -24,12 +24,9 @@ import {
   MIN_PASSWORD_LENGTH,
   validateNewPassword,
 } from '../lib/authValidation'
-import { createLocalUser, startLocalSession } from '../lib/localSession'
+import { createLocalUser, endLocalSession, startLocalSession } from '../lib/localSession'
 import { buttonClasses, NotepadGlyph } from './ui'
 import { useNotesStore, useUIStore } from '../store'
-import HelpModal from './HelpModal'
-import PrivacyModal from './PrivacyModal'
-import TermsModal from './TermsModal'
 
 const FEATURE_POINTS = [
   {
@@ -250,10 +247,14 @@ function SubmitButton({ loading, children }) {
     <button
       type="submit"
       disabled={loading}
+      aria-busy={loading}
       className={buttonClasses({ variant: 'primary' }) + ' w-full'}
     >
       {loading ? (
-        <RefreshCw className="h-4 w-4 animate-spin" aria-hidden="true" />
+        <>
+          <RefreshCw className="h-4 w-4 animate-spin" aria-hidden="true" />
+          <span>{children}&hellip;</span>
+        </>
       ) : (
         <>
           {children}
@@ -267,7 +268,7 @@ function SubmitButton({ loading, children }) {
 export default function AuthScreen() {
   const cloudEnabled = isBackendConfigured()
   const notes = useNotesStore((state) => state.notes)
-  const setUser = useNotesStore((state) => state.setUser)
+  const activateLocalUser = useNotesStore((state) => state.activateLocalUser)
   const initializeStarterContent = useNotesStore((state) => state.initializeStarterContent)
 
   const [mode, setMode] = useState(cloudEnabled ? 'login' : 'local')
@@ -321,6 +322,26 @@ export default function AuthScreen() {
     }
 
     setErrors(nextErrors)
+    const firstInvalidField = {
+      login: [
+        ['email', 'qn-auth-email'],
+        ['password', 'qn-auth-password'],
+      ],
+      register: [
+        ['firstName', 'qn-auth-first-name'],
+        ['lastName', 'qn-auth-last-name'],
+        ['email', 'qn-auth-register-email'],
+        ['password', 'qn-auth-register-password'],
+        ['confirmPassword', 'qn-auth-confirm-password'],
+        ['agreeToTerms', 'qn-auth-agree-to-terms'],
+      ],
+      forgot: [['email', 'qn-auth-reset-email']],
+    }[mode]?.find(([field]) => nextErrors[field])
+
+    if (firstInvalidField) {
+      requestAnimationFrame(() => document.getElementById(firstInvalidField[1])?.focus())
+    }
+
     return Object.keys(nextErrors).length === 0
   }
 
@@ -368,17 +389,30 @@ export default function AuthScreen() {
     }
   }
 
-  const openLocalWorkspace = () => {
-    if (notes.length === 0) initializeStarterContent()
+  const openLocalWorkspace = async () => {
+    setErrors({})
+    setIsLoading(true)
     startLocalSession()
-    setUser(createLocalUser())
+
+    try {
+      const activated = await activateLocalUser(createLocalUser())
+      if (!activated) throw new Error('The local workspace could not be opened.')
+      if (useNotesStore.getState().notes.length === 0) initializeStarterContent()
+    } catch (error) {
+      endLocalSession()
+      setErrors({
+        form: error?.message || 'The local workspace could not be opened. Please try again.',
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const renderModeTabs = () => {
     if (!cloudEnabled || !['login', 'register'].includes(mode)) return null
     return (
       <div
-        role="tablist"
+        role="group"
         aria-label="Account access"
         className="mb-7 grid grid-cols-2 rounded-[10px] border border-strong bg-surface-sunken p-1"
       >
@@ -389,12 +423,11 @@ export default function AuthScreen() {
           <button
             key={value}
             type="button"
-            role="tab"
-            aria-selected={mode === value}
+            aria-pressed={mode === value}
             onClick={() => changeMode(value)}
             className={`h-9 rounded-[7px] text-ui-md font-semibold transition-colors ${
- mode === value
- ? 'bg-accent text-white shadow-xs'
+              mode === value
+                ? 'bg-accent text-accent-on shadow-xs'
                 : 'text-content-muted hover:text-content'
             }`}
           >
@@ -421,6 +454,12 @@ export default function AuthScreen() {
         require a subscription or a cloud account.
       </p>
 
+      {errors.form && (
+        <div role="alert" className="mt-4 rounded-card border border-danger-border bg-danger-soft px-3 py-2 text-ui-md text-danger-text">
+          {errors.form}
+        </div>
+      )}
+
       <div className="my-7 space-y-3 rounded-[14px] border border-subtle bg-surface-sunken p-4">
         {[
           ['Private on this device', ShieldCheck],
@@ -439,10 +478,21 @@ export default function AuthScreen() {
       <button
         type="button"
         onClick={openLocalWorkspace}
+        disabled={isLoading}
+        aria-busy={isLoading || undefined}
         className={buttonClasses({ variant: 'primary' }) + ' w-full'}
       >
-        {notes.length > 0 ? 'Continue to my workspace' : 'Create local workspace'}
-        <ArrowRight className="h-4 w-4" aria-hidden="true" />
+        {isLoading ? (
+          <>
+            <RefreshCw className="h-4 w-4 animate-spin" aria-hidden="true" />
+            Opening workspace&hellip;
+          </>
+        ) : (
+          <>
+            {notes.length > 0 ? 'Continue to my workspace' : 'Create local workspace'}
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </>
+        )}
       </button>
 
       {cloudEnabled && (
@@ -617,15 +667,20 @@ export default function AuthScreen() {
           autoComplete="new-password"
           error={errors.confirmPassword}
         />
-        <label className="flex cursor-pointer items-start gap-3 rounded-control p-1 text-ui-md leading-5 text-content-muted">
+        <div className="flex items-start gap-3 rounded-control p-1 text-ui-md leading-5 text-content-muted">
           <input
+            id="qn-auth-agree-to-terms"
             type="checkbox"
             checked={formData.agreeToTerms}
             onChange={(event) => handleInputChange('agreeToTerms', event.target.checked)}
+            aria-invalid={!!errors.agreeToTerms}
+            aria-describedby={errors.agreeToTerms ? 'qn-auth-agree-to-terms-error' : undefined}
             className="mt-0.5 h-4 w-4 rounded border-strong text-accent focus:ring-accent"
           />
           <span>
-            I agree to the{' '}
+            <label htmlFor="qn-auth-agree-to-terms" className="cursor-pointer">
+              I agree to the
+            </label>{' '}
             <button
               type="button"
               onClick={() => useUIStore.getState().setTermsModalOpen(true)}
@@ -643,9 +698,9 @@ export default function AuthScreen() {
             </button>
             .
           </span>
-        </label>
+        </div>
         {errors.agreeToTerms && (
-          <p role="alert" className="text-ui-sm text-danger-text">
+          <p id="qn-auth-agree-to-terms-error" role="alert" className="text-ui-sm text-danger-text">
             {errors.agreeToTerms}
           </p>
         )}
@@ -726,9 +781,7 @@ export default function AuthScreen() {
     </div>
   )
 
-  // The backdrop is the same neutral desk the workspace uses, so the green hero
-  // reads as a card sitting on it. Continuing the hero across the whole page
-  // instead just produced one large green field with the card lost inside it.
+  // Authentication and workspace layouts share the same neutral canvas.
   return (
     <div className="qn-auth-page qn-canvas relative flex min-h-[100dvh] items-center justify-center overflow-hidden text-content">
 
@@ -757,7 +810,7 @@ export default function AuthScreen() {
             {FEATURE_POINTS.map(({ icon: Icon, title, description }) => (
               <div key={title} className="min-w-0">
                 <div className="mb-2 flex items-center gap-2">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-[8px] bg-white/[0.08] text-primary-300">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-[8px] bg-white/[0.08] text-accent-text">
                     <Icon className="h-3.5 w-3.5" aria-hidden="true" />
                   </span>
                   <p className="text-ui-md font-semibold text-white/90">{title}</p>
@@ -827,9 +880,6 @@ export default function AuthScreen() {
         </section>
       </main>
 
-      <HelpModal />
-      <PrivacyModal />
-      <TermsModal />
     </div>
   )
 }

@@ -31,6 +31,37 @@ test.describe('accessibility', () => {
     expect(format(violations)).toBe('')
   })
 
+  test('dark workspace and editor have no WCAG A/AA violations', async ({ page }) => {
+    await page.emulateMedia({ colorScheme: 'dark' })
+    await signIn(page)
+
+    const paperStyles = [
+      'Plain',
+      'Lined',
+      'Lined + Margin',
+      'College Rule',
+      'Grid',
+      'Grid (Small)',
+      'Dotted',
+      'Dotted (Dense)',
+      'Sepia',
+      'Blueprint',
+      'Dark',
+      'Dark Lined',
+    ]
+
+    for (const paperStyle of paperStyles) {
+      await page.getByRole('button', { name: 'Paper Style' }).click()
+      await page
+        .getByRole('dialog')
+        .getByRole('button', { name: paperStyle, exact: true })
+        .click()
+
+      const { violations } = await analyse(page, '.ProseMirror')
+      expect(format(violations), `${paperStyle} paper`).toBe('')
+    }
+  })
+
   test('settings dialog has no WCAG A/AA violations', async ({ page }) => {
     await signIn(page)
     await page.getByRole('button', { name: /^settings$/i }).first().click()

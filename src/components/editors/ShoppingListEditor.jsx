@@ -10,7 +10,14 @@ import {
   Edit3,
   ShoppingBag
 } from 'lucide-react'
-import { generateId, SHOPPING_CATEGORIES } from './noteTypes'
+import {
+  generateId,
+  normalizeOptionalAmount,
+  normalizePositiveQuantity,
+  SHOPPING_CATEGORIES,
+} from './noteTypes'
+import { useLatestValue } from './useLatestValue'
+import { useEditorDataSync } from './useEditorDataSync'
 import FocusedNoteTitle from './FocusedNoteTitle'
 const UNITS = ['pcs', 'kg', 'g', 'lb', 'oz', 'L', 'ml', 'gal', 'pack', 'box', 'bag', 'bottle', 'can', 'bunch', 'dozen']
 
@@ -18,7 +25,7 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
   const [shoppingData, setShoppingData] = useState({
     items: data?.items || [],
     categories: data?.categories || SHOPPING_CATEGORIES,
-    budget: data?.budget || null,
+    budget: normalizeOptionalAmount(data?.budget),
     currency: data?.currency || 'USD',
     showPrices: data?.showPrices ?? true,
   })
@@ -33,14 +40,20 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
     new Set((data?.categories || SHOPPING_CATEGORIES).map(category => category.id))
   )
   const [showSettings, setShowSettings] = useState(false)
+  const onChangeRef = useLatestValue(onChange)
+  const skipChangeRef = useEditorDataSync(data, shoppingData, setShoppingData)
   const isInitialMount = useRef(true)
   useEffect(() => {
     if (isInitialMount.current) { isInitialMount.current = false; return }
-    onChange?.(shoppingData)
-  }, [shoppingData])
+    if (skipChangeRef.current) { skipChangeRef.current = false; return }
+    onChangeRef.current?.(shoppingData)
+  }, [onChangeRef, shoppingData, skipChangeRef])
 
   const update = (field, value) => {
-    setShoppingData(prev => ({ ...prev, [field]: value }))
+    setShoppingData((current) => ({
+      ...current,
+      [field]: typeof value === 'function' ? value(current[field]) : value,
+    }))
   }
   const addItem = () => {
     if (!newItemName.trim()) return
@@ -48,28 +61,28 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
       id: generateId(),
       name: newItemName.trim(),
       category: newItemCategory,
-      quantity: parseFloat(newItemQuantity) || 1,
+      quantity: normalizePositiveQuantity(newItemQuantity),
       unit: newItemUnit,
-      price: parseFloat(newItemPrice) || null,
+      price: normalizeOptionalAmount(newItemPrice),
       checked: false,
       note: '',
       createdAt: new Date().toISOString(),
     }
-    update('items', [...shoppingData.items, item])
+    update('items', (items) => [...items, item])
     setNewItemName('')
     setNewItemPrice('')
     setNewItemQuantity('1')
   }
   const updateItem = (id, updates) => {
-    update('items', shoppingData.items.map(item =>
+    update('items', (items) => items.map(item =>
       item.id === id ? { ...item, ...updates } : item
     ))
   }
   const deleteItem = (id) => {
-    update('items', shoppingData.items.filter(item => item.id !== id))
+    update('items', (items) => items.filter(item => item.id !== id))
   }
   const toggleChecked = (id) => {
-    update('items', shoppingData.items.map(item =>
+    update('items', (items) => items.map(item =>
       item.id === id ? { ...item, checked: !item.checked } : item
     ))
   }
@@ -83,10 +96,10 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
     setExpandedCategories(newExpanded)
   }
   const clearChecked = () => {
-    update('items', shoppingData.items.filter(item => !item.checked))
+    update('items', (items) => items.filter(item => !item.checked))
   }
   const uncheckAll = () => {
-    update('items', shoppingData.items.map(item => ({ ...item, checked: false })))
+    update('items', (items) => items.map(item => ({ ...item, checked: false })))
   }
   const calculateTotals = () => {
     const items = shoppingData.items
@@ -131,7 +144,7 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
                 <div className="text-2xl font-bold text-content">
                   {currencySymbol}{total.toFixed(2)}
                 </div>
-                {shoppingData.budget && (
+                {shoppingData.budget != null && (
                   <div className={`text-sm ${total > shoppingData.budget ? 'text-red-500 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
                     Budget: {currencySymbol}{shoppingData.budget.toFixed(2)}
                     {total > shoppingData.budget && ' (Over!)'}
@@ -179,6 +192,8 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
               aria-label="Quantity for new item"
               value={newItemQuantity}
               onChange={(e) => setNewItemQuantity(e.target.value)}
+              min="0.1"
+              step="0.1"
               placeholder="Qty"
               className="w-16 px-2 py-2 rounded-l-lg bg-white dark:bg-surface-sunken border border-subtle outline-none text-content text-center"
             />
@@ -204,6 +219,7 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
                 value={newItemPrice}
                 onChange={(e) => setNewItemPrice(e.target.value)}
                 placeholder="Price"
+                min="0"
                 step="0.01"
                 className="w-20 px-2 py-2 rounded-r-lg bg-white dark:bg-surface-sunken border border-subtle outline-none text-content"
               />
@@ -266,9 +282,11 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
                 <input
                   type="number"
                   aria-label="Shopping budget"
-                  value={shoppingData.budget || ''}
-                  onChange={(e) => update('budget', e.target.value ? parseFloat(e.target.value) : null)}
+                  value={shoppingData.budget ?? ''}
+                  onChange={(e) => update('budget', normalizeOptionalAmount(e.target.value))}
                   placeholder="Optional"
+                  min="0"
+                  step="0.01"
                   className="w-full px-3 py-2 rounded-lg bg-surface-sunken dark:bg-surface-active border border-subtle outline-none text-content"
                 />
               </div>
@@ -346,7 +364,7 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
                             aria-label={item.checked ? `Mark ${item.name} as not purchased` : `Mark ${item.name} as purchased`}
                             className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
  item.checked
- ? 'bg-emerald-500 border-emerald-500 text-white'
+ ? 'bg-accent border-accent text-accent-on'
                                 : 'border-subtle  hover:border-emerald-500'
                             }`}
                           >
@@ -381,7 +399,9 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
                               type="number"
                               aria-label={`Quantity for ${item.name}`}
                               value={item.quantity}
-                              onChange={(e) => updateItem(item.id, { quantity: parseFloat(e.target.value) || 1 })}
+                              onChange={(e) => updateItem(item.id, {
+                                quantity: normalizePositiveQuantity(e.target.value),
+                              })}
                               className="w-14 px-2 py-1 rounded bg-surface-sunken border border-subtle text-center outline-none text-content"
                               min="0.1"
                               step="0.1"
@@ -413,9 +433,12 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
                               <input
                                 type="number"
                                 aria-label={`Price for ${item.name}`}
-                                value={item.price || ''}
-                                onChange={(e) => updateItem(item.id, { price: e.target.value ? parseFloat(e.target.value) : null })}
+                                value={item.price ?? ''}
+                                onChange={(e) => updateItem(item.id, {
+                                  price: normalizeOptionalAmount(e.target.value),
+                                })}
                                 placeholder="0.00"
+                                min="0"
                                 step="0.01"
                                 className="w-20 px-2 py-1 rounded bg-surface-sunken border border-subtle outline-none text-content text-right"
                               />

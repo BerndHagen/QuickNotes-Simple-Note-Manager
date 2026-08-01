@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useId, useRef } from 'react'
 import { Link2, X, Search, FileText, ArrowRight } from 'lucide-react'
 import { useNotesStore } from '../store'
 import { useTranslation } from '../lib/useTranslation'
@@ -12,22 +12,24 @@ export default function NoteLinkPopover({ editor, isOpen, onClose, position }) {
   const [selectedIndex, setSelectedIndex] = useState(0)
   const inputRef = useRef(null)
   const popoverRef = useRef(null)
+  const titleId = useId()
+  const listboxId = useId()
 
   useEffect(() => {
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase()
       const filtered = notes
-        .filter(note => !note.deleted)
+        .filter(note => note?.id && !note.deleted)
         .filter(note => 
-          note.title.toLowerCase().includes(query) ||
-          note.content?.toLowerCase().includes(query)
+          String(note.title || '').toLowerCase().includes(query) ||
+          String(note.content || '').toLowerCase().includes(query)
         )
         .slice(0, 8)
       setFilteredNotes(filtered)
       setSelectedIndex(0)
     } else {
       const recent = notes
-        .filter(note => !note.deleted)
+        .filter(note => note?.id && !note.deleted)
         .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
         .slice(0, 5)
       setFilteredNotes(recent)
@@ -37,25 +39,37 @@ export default function NoteLinkPopover({ editor, isOpen, onClose, position }) {
 
   useEffect(() => {
     if (isOpen && inputRef.current) {
-      setTimeout(() => {
+      const focusTimer = setTimeout(() => {
         inputRef.current?.focus()
       }, 50)
+      return () => clearTimeout(focusTimer)
     }
   }, [isOpen])
+
+  useEffect(() => {
+    if (!isOpen) return
+    const handlePointerDown = (event) => {
+      if (!popoverRef.current?.contains(event.target)) onClose()
+    }
+    document.addEventListener('pointerdown', handlePointerDown)
+    return () => document.removeEventListener('pointerdown', handlePointerDown)
+  }, [isOpen, onClose])
 
   const handleKeyDown = (e) => {
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault()
-        setSelectedIndex(prev => 
-          prev < filteredNotes.length - 1 ? prev + 1 : 0
-        )
+        setSelectedIndex((previous) => {
+          if (filteredNotes.length === 0) return 0
+          return previous < filteredNotes.length - 1 ? previous + 1 : 0
+        })
         break
       case 'ArrowUp':
         e.preventDefault()
-        setSelectedIndex(prev => 
-          prev > 0 ? prev - 1 : filteredNotes.length - 1
-        )
+        setSelectedIndex((previous) => {
+          if (filteredNotes.length === 0) return 0
+          return previous > 0 ? previous - 1 : filteredNotes.length - 1
+        })
         break
       case 'Enter':
         e.preventDefault()
@@ -64,6 +78,8 @@ export default function NoteLinkPopover({ editor, isOpen, onClose, position }) {
         }
         break
       case 'Escape':
+        e.preventDefault()
+        e.stopPropagation()
         onClose()
         break
     }
@@ -72,11 +88,15 @@ export default function NoteLinkPopover({ editor, isOpen, onClose, position }) {
   const insertNoteLink = (note) => {
     if (!editor) return
 
-    const linkHtml = `<a href="note://${note.id}" class="note-link" data-note-id="${note.id}">${note.title}</a>`
+    const link = document.createElement('a')
+    link.href = '#'
+    link.className = 'note-link'
+    link.dataset.noteId = String(note.id)
+    link.textContent = String(note.title || t('notes.untitled', 'Untitled note'))
     
     editor.chain()
       .focus()
-      .insertContent(linkHtml)
+      .insertContent(link.outerHTML)
       .insertContent(' ')
       .run()
 
@@ -86,7 +106,7 @@ export default function NoteLinkPopover({ editor, isOpen, onClose, position }) {
 
   const getPreview = (content) => {
     if (!content) return t('noteLink.emptyNote')
-    const text = content.replace(/<[^>]*>/g, '')
+    const text = String(content).replace(/<[^>]*>/g, '')
     return text.substring(0, 60) + (text.length > 60 ? '...' : '')
   }
 
@@ -95,14 +115,18 @@ export default function NoteLinkPopover({ editor, isOpen, onClose, position }) {
   return (
     <div
       ref={popoverRef}
-      className="fixed z-50 bg-surface-raised rounded-xl shadow-2xl border border-subtle w-80 overflow-hidden"
+      role="dialog"
+      aria-modal="false"
+      aria-labelledby={titleId}
+      className="fixed z-50 w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-xl border border-subtle bg-surface-raised shadow-2xl"
       style={(() => {
-        const popoverWidth = 320
+        const popoverWidth = Math.min(320, Math.max(window.innerWidth - 24, 0))
         const popoverHeight = 400
         const padding = 12
-        const rawX = position?.x || 100
-        const rawY = position?.y || 100
-        const clampedX = Math.min(Math.max(rawX, padding), window.innerWidth - popoverWidth - padding)
+        const rawX = position?.x ?? 100
+        const rawY = position?.y ?? 100
+        const maxX = Math.max(padding, window.innerWidth - popoverWidth - padding)
+        const clampedX = Math.min(Math.max(rawX, padding), maxX)
         const spaceBelow = window.innerHeight - rawY - padding
         const clampedY = spaceBelow < popoverHeight 
           ? Math.max(rawY - popoverHeight, padding)
@@ -112,19 +136,21 @@ export default function NoteLinkPopover({ editor, isOpen, onClose, position }) {
     >
       <div className="p-3 border-b border-subtle bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20">
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-semibold text-content flex items-center gap-2">
-            <Link2 className="w-4 h-4 text-emerald-600" />
+          <h3 id={titleId} className="text-sm font-semibold text-content flex items-center gap-2">
+            <Link2 className="w-4 h-4 text-emerald-600" aria-hidden="true" />
             {t('noteLink.title')}
           </h3>
           <button
+            type="button"
             onClick={onClose}
+            aria-label={t('common.close', 'Close')}
             className="p-1 hover:bg-surface-sunken dark:hover:bg-surface-sunken rounded transition-colors"
           >
-            <X className="w-4 h-4 text-content-muted" />
+            <X className="w-4 h-4 text-content-muted" aria-hidden="true" />
           </button>
         </div>
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-content-subtle" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-content-subtle" aria-hidden="true" />
           <input
             ref={inputRef}
             type="text"
@@ -132,11 +158,17 @@ export default function NoteLinkPopover({ editor, isOpen, onClose, position }) {
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={t('noteLink.searchNotes')}
+            aria-label={t('noteLink.searchNotes', 'Search notes')}
+            role="combobox"
+            aria-autocomplete="list"
+            aria-expanded="true"
+            aria-controls={listboxId}
+            aria-activedescendant={filteredNotes[selectedIndex] ? `${listboxId}-option-${selectedIndex}` : undefined}
             className="w-full pl-9 pr-3 py-2 bg-surface-raised border border-subtle rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
           />
         </div>
       </div>
-      <div className="max-h-64 overflow-y-auto">
+      <div id={listboxId} role="listbox" aria-label={t('noteLink.title', 'Link to a note')} className="max-h-64 overflow-y-auto">
         {filteredNotes.length === 0 ? (
           <div className="p-4 text-center text-content-muted">
             <FileText className="w-8 h-8 mx-auto mb-2 opacity-30" />
@@ -152,6 +184,10 @@ export default function NoteLinkPopover({ editor, isOpen, onClose, position }) {
             {filteredNotes.map((note, index) => (
               <button
                 key={note.id}
+                id={`${listboxId}-option-${index}`}
+                type="button"
+                role="option"
+                aria-selected={index === selectedIndex}
                 onClick={() => insertNoteLink(note)}
                 onMouseEnter={() => setSelectedIndex(index)}
                 className={`w-full px-3 py-2 flex items-start gap-3 transition-colors ${
@@ -160,7 +196,7 @@ export default function NoteLinkPopover({ editor, isOpen, onClose, position }) {
                     : 'hover:bg-surface-hover'
                 }`}
               >
-                <FileText className={`w-5 h-5 flex-shrink-0 mt-0.5 ${
+                <FileText aria-hidden="true" className={`w-5 h-5 flex-shrink-0 mt-0.5 ${
  index === selectedIndex ? 'text-emerald-600' : 'text-content-subtle'
  }`} />
                 <div className="flex-1 text-left min-w-0">
@@ -176,7 +212,7 @@ export default function NoteLinkPopover({ editor, isOpen, onClose, position }) {
                   </p>
                 </div>
                 {index === selectedIndex && (
-                  <ArrowRight className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-1" />
+                  <ArrowRight className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-1" aria-hidden="true" />
                 )}
               </button>
             ))}
@@ -202,7 +238,7 @@ export function useNoteLinkHandler() {
 
   useEffect(() => {
     const handleClick = (e) => {
-      const link = e.target.closest('a.note-link')
+      const link = e.target.closest?.('a.note-link')
       if (link) {
         e.preventDefault()
         const noteId = link.dataset.noteId
@@ -233,6 +269,7 @@ export function useBacklinks(noteId) {
     }
 
     const linkedNotes = notes.filter(note => {
+      if (!note) return false
       if (note.id === noteId || note.deleted) return false
       return note.content?.includes(`note://${noteId}`) || 
              note.content?.includes(`data-note-id="${noteId}"`)

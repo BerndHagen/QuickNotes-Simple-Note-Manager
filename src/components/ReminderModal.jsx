@@ -1,94 +1,198 @@
-import { useState, useEffect } from 'react'
-import { X, Bell, Calendar, Clock, Trash2, Plus, Check, AlertCircle } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
+import { AlertCircle, Bell, Calendar, Check, Clock, Plus, Trash2 } from 'lucide-react'
 import { useNotesStore, useUIStore } from '../store'
 import { useTranslation } from '../lib/useTranslation'
-import LegacyDialog from './ui/LegacyDialog'
 import { getNextReminderDate } from '../lib/reminders'
+import { Badge, Button, Field, IconButton, Input, Modal, Select } from './ui'
+
+const toDateInputValue = (date) => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+const getDefaultReminderDate = () => {
+  const tomorrow = new Date()
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  return toDateInputValue(tomorrow)
+}
+
+const getReminderStatus = (reminder) => {
+  const now = new Date()
+  const reminderTime = new Date(reminder.datetime)
+  if (reminder.notified) return 'sent'
+  if (reminderTime <= now) return 'overdue'
+
+  const hoursUntilReminder = (reminderTime - now) / (1000 * 60 * 60)
+  if (hoursUntilReminder < 1) return 'soon'
+  if (hoursUntilReminder < 24) return 'today'
+  return 'upcoming'
+}
+
+const STATUS_PRESENTATION = {
+  sent: { tone: 'success', icon: Check, fallback: 'Sent' },
+  overdue: { tone: 'danger', icon: AlertCircle, fallback: 'Overdue' },
+  soon: { tone: 'warning', icon: Bell, fallback: 'Due soon' },
+  today: { tone: 'warning', icon: Bell, fallback: 'Today' },
+  upcoming: { tone: 'info', icon: Bell, fallback: 'Upcoming' },
+}
 
 export default function ReminderModal() {
   const { reminderModalOpen, setReminderModalOpen, reminderNoteId } = useUIStore()
   const { notes, updateNote, getSelectedNote } = useNotesStore()
-  const { t } = useTranslation()
-  const [date, setDate] = useState('')
-  const [time, setTime] = useState('')
+  const { t, language } = useTranslation()
+  const [date, setDate] = useState(getDefaultReminderDate)
+  const [time, setTime] = useState('09:00')
   const [repeat, setRepeat] = useState('none')
   const [reminders, setReminders] = useState([])
   const [validationError, setValidationError] = useState('')
+  const [notificationWarning, setNotificationWarning] = useState('')
 
-  const note = reminderNoteId ? notes.find(n => n.id === reminderNoteId) : getSelectedNote()
-  useEffect(() => {
-    if (note?.reminders) {
-      setReminders(note.reminders)
-    } else {
-      setReminders([])
-    }
-    const tomorrow = new Date()
-    tomorrow.setDate(tomorrow.getDate() + 1)
-    setDate(tomorrow.toISOString().split('T')[0])
+  const note = reminderNoteId
+    ? notes.find((candidate) => candidate.id === reminderNoteId)
+    : getSelectedNote()
+
+  const resetForm = useCallback(() => {
+    setDate(getDefaultReminderDate())
     setTime('09:00')
-  }, [note?.id, reminderModalOpen])
+    setRepeat('none')
+    setValidationError('')
+    setNotificationWarning('')
+  }, [])
+
+  const closeModal = useCallback(() => {
+    setReminderModalOpen(false)
+    resetForm()
+  }, [resetForm, setReminderModalOpen])
+
+  useEffect(() => {
+    setReminders(note?.reminders || [])
+  }, [note?.id, note?.reminders])
+
+  useEffect(() => {
+    if (reminderModalOpen) resetForm()
+  }, [note?.id, reminderModalOpen, resetForm])
+
   useEffect(() => {
     const checkReminders = () => {
       const now = new Date()
-      
-      notes.forEach(n => {
-        if (n.reminders && n.reminders.length > 0) {
-          let changed = false
-          const updatedReminders = n.reminders.map(reminder => {
-            if (reminder.notified) return reminder
-            
-            const reminderTime = new Date(reminder.datetime)
-            if (reminderTime <= now) {
-              if ('Notification' in window && Notification.permission === 'granted') {
-                new Notification('QuickNotes Reminder', {
-                  body: `\u{1F4DD} ${n.title}`,
-                  icon: '/favicon.ico',
-                  tag: reminder.id,
-                })
+
+      notes.forEach((candidate) => {
+        if (!candidate.reminders?.length) return
+
+        let changed = false
+        const updatedReminders = candidate.reminders.map((reminder) => {
+          if (reminder.notified) return reminder
+
+          const reminderTime = new Date(reminder.datetime)
+          if (reminderTime > now) return reminder
+
+          if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification('QuickNotes Reminder', {
+              body: `📝 ${candidate.title}`,
+              icon: `${import.meta.env.BASE_URL}favicon.png`,
+              tag: reminder.id,
+            })
+          }
+
+          changed = true
+          const nextDate = getNextReminderDate(
+            reminder.datetime,
+            reminder.repeat,
+            now,
+            reminder.repeatDay
+          )
+          return nextDate
+            ? {
+                ...reminder,
+                datetime: nextDate.toISOString(),
+                notified: false,
+                lastTriggeredAt: now.toISOString(),
               }
-              changed = true
-              const nextDate = getNextReminderDate(
-                reminder.datetime,
-                reminder.repeat,
-                now,
-                reminder.repeatDay
-              )
-              return nextDate
-                ? {
-                    ...reminder,
-                    datetime: nextDate.toISOString(),
-                    notified: false,
-                    lastTriggeredAt: now.toISOString(),
-                  }
-                : { ...reminder, notified: true, lastTriggeredAt: now.toISOString() }
-            }
-            return reminder
-          })
-          if (changed) void updateNote(n.id, { reminders: updatedReminders })
-        }
+            : { ...reminder, notified: true, lastTriggeredAt: now.toISOString() }
+        })
+
+        if (changed) void updateNote(candidate.id, { reminders: updatedReminders })
       })
     }
+
     checkReminders()
-    const interval = setInterval(checkReminders, 60000)
-    
-    return () => clearInterval(interval)
+    const interval = window.setInterval(checkReminders, 60_000)
+    return () => window.clearInterval(interval)
   }, [notes, updateNote])
 
-  if (!reminderModalOpen) return null
+  const formatReminderDate = useCallback(
+    (datetime) => {
+      const reminderDate = new Date(datetime)
+      const now = new Date()
+      const tomorrow = new Date(now)
+      tomorrow.setDate(tomorrow.getDate() + 1)
 
-  const handleAddReminder = async () => {
+      const timeLabel = new Intl.DateTimeFormat(language, {
+        hour: '2-digit',
+        minute: '2-digit',
+      }).format(reminderDate)
+
+      if (reminderDate.toDateString() === now.toDateString()) {
+        return `${t('reminders.today')}, ${timeLabel}`
+      }
+      if (reminderDate.toDateString() === tomorrow.toDateString()) {
+        return `${t('reminders.tomorrow')}, ${timeLabel}`
+      }
+
+      return new Intl.DateTimeFormat(language, {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }).format(reminderDate)
+    },
+    [language, t]
+  )
+
+  const getRepeatLabel = (value) => {
+    if (value === 'daily') return t('reminders.daily')
+    if (value === 'weekly') return t('reminders.weekly')
+    if (value === 'monthly') return t('reminders.monthly')
+    return ''
+  }
+
+  const handleAddReminder = async (event) => {
+    event.preventDefault()
     if (!date || !time || !note) return
 
     const datetime = new Date(`${date}T${time}`)
-    
-    if (datetime <= new Date()) {
+    if (Number.isNaN(datetime.getTime()) || datetime <= new Date()) {
       setValidationError(t('reminders.selectFutureDate'))
       return
     }
 
     setValidationError('')
-    if ('Notification' in window && Notification.permission === 'default') {
-      await Notification.requestPermission()
+    setNotificationWarning('')
+
+    if (!('Notification' in window)) {
+      setNotificationWarning(
+        t(
+          'reminders.notificationsUnavailable',
+          'System notifications are not available in this browser. The reminder will remain visible here.'
+        )
+      )
+    } else if (Notification.permission === 'default') {
+      try {
+        const permission = await Notification.requestPermission()
+        if (permission !== 'granted') {
+          setNotificationWarning(t('reminders.enableNotifications'))
+        }
+      } catch {
+        setNotificationWarning(
+          t(
+            'reminders.notificationPermissionFailed',
+            'Notification permission could not be requested. Check your browser settings.'
+          )
+        )
+      }
     }
 
     const newReminder = {
@@ -102,225 +206,185 @@ export default function ReminderModal() {
 
     const updatedReminders = [...reminders, newReminder]
     setReminders(updatedReminders)
-    updateNote(note.id, { reminders: updatedReminders })
-    const tomorrow = new Date()
-    tomorrow.setDate(tomorrow.getDate() + 1)
-    setDate(tomorrow.toISOString().split('T')[0])
+    void updateNote(note.id, { reminders: updatedReminders })
+    setDate(getDefaultReminderDate())
     setTime('09:00')
     setRepeat('none')
   }
 
   const handleDeleteReminder = (reminderId) => {
-    const updatedReminders = reminders.filter(r => r.id !== reminderId)
+    const updatedReminders = reminders.filter((reminder) => reminder.id !== reminderId)
     setReminders(updatedReminders)
-    if (note) {
-      updateNote(note.id, { reminders: updatedReminders })
-    }
+    if (note) void updateNote(note.id, { reminders: updatedReminders })
   }
 
-  const formatReminderDate = (datetime) => {
-    const date = new Date(datetime)
-    const now = new Date()
-    const tomorrow = new Date(now)
-    tomorrow.setDate(tomorrow.getDate() + 1)
-    
-    const isToday = date.toDateString() === now.toDateString()
-    const isTomorrow = date.toDateString() === tomorrow.toDateString()
-    
-    const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-    
-    if (isToday) return `${t('reminders.today')} at ${timeStr}`
-    if (isTomorrow) return `${t('reminders.tomorrow')} at ${timeStr}`
-    
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'short',
-      month: 'short', 
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  }
-
-  const getReminderStatus = (reminder) => {
-    const now = new Date()
-    const reminderTime = new Date(reminder.datetime)
-    
-    if (reminder.notified) return 'completed'
-    if (reminderTime <= now) return 'overdue'
-    
-    const diffMs = reminderTime - now
-    const diffHours = diffMs / (1000 * 60 * 60)
-    
-    if (diffHours < 1) return 'soon'
-    if (diffHours < 24) return 'today'
-    return 'upcoming'
-  }
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'completed': return 'text-green-600 bg-green-50 dark:bg-green-900/20'
-      case 'overdue': return 'text-red-600 bg-red-50 dark:bg-red-900/20'
-      case 'soon': return 'text-orange-600 bg-orange-50 dark:bg-orange-900/20'
-      case 'today': return 'text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20'
-      default: return 'text-blue-600 bg-blue-50 dark:bg-blue-900/20'
-    }
-  }
-
-  const getRepeatLabel = (repeat) => {
-    switch (repeat) {
-      case 'daily': return t('reminders.daily')
-      case 'weekly': return t('reminders.weekly')
-      case 'monthly': return t('reminders.monthly')
-      default: return ''
-    }
-  }
+  const notificationsDenied =
+    typeof window !== 'undefined' &&
+    'Notification' in window &&
+    Notification.permission === 'denied'
 
   return (
-    <LegacyDialog label="Reminders" onClose={() => setReminderModalOpen(false)} align="center">
-      <div 
-        className="bg-surface-raised rounded-2xl shadow-2xl border border-subtle max-w-md w-full mx-4 modal-animate overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between p-5 qn-banner-surface text-white">
-          <div className="flex items-center gap-3">
-            <Bell className="w-6 h-6" />
-            <div>
-              <h2 className="text-lg font-bold">{t('reminders.title')}</h2>
-              <p className="text-sm text-white/70">Set reminders for your notes</p>
-            </div>
+    <Modal
+      open={reminderModalOpen}
+      onClose={closeModal}
+      title={t('reminders.title')}
+      description={t('reminders.subtitle', 'Set reminders for your notes')}
+      icon={Bell}
+      size="md"
+    >
+      <div className="space-y-5">
+        {note ? (
+          <div className="rounded-card border border-subtle bg-surface-sunken px-3 py-2.5">
+            <p className="text-ui-sm text-content-muted">{t('reminders.remindersFor')}</p>
+            <p className="truncate text-ui-lg font-medium text-content">{note.title}</p>
           </div>
-          <button
-            onClick={() => setReminderModalOpen(false)}
-            className="p-2 rounded-full hover:bg-white/20 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-        <div className="p-6">
-        {note && (
-          <div className="mb-4 p-3 bg-surface-sunken rounded-lg border border-subtle">
-            <p className="text-sm text-content-muted">{t('reminders.remindersFor')}</p>
-            <p className="font-medium text-content truncate">{note.title}</p>
+        ) : (
+          <div role="alert" className="rounded-card border border-danger-border bg-danger-soft p-3 text-ui-md text-danger-text">
+            {t('reminders.noNoteSelected', 'Select a note before adding a reminder.')}
           </div>
         )}
-        <div className="space-y-3 mb-6 p-4 bg-surface-sunken rounded-xl border border-subtle">
-          <div className="flex gap-3">
-            <div className="flex-1">
-              <label className="block text-xs font-medium text-content-muted mb-1">{t('reminders.date')}</label>
+
+        <form
+          onSubmit={handleAddReminder}
+          className="space-y-4 rounded-card border border-subtle bg-surface-sunken p-4"
+        >
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Field label={t('reminders.date')} htmlFor="qn-reminder-date">
               <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-content-subtle" />
-                <input
+                <Calendar
+                  className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-content-subtle"
+                  aria-hidden="true"
+                />
+                <Input
+                  id="qn-reminder-date"
                   type="date"
                   value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  min={new Date().toISOString().split('T')[0]}
-                  className="w-full pl-10 pr-3 py-2 bg-surface-raised border border-subtle rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
+                  min={toDateInputValue(new Date())}
+                  onChange={(event) => {
+                    setDate(event.target.value)
+                    setValidationError('')
+                  }}
+                  className="pl-9"
+                  data-autofocus
                 />
               </div>
-            </div>
-            <div className="flex-1">
-              <label className="block text-xs font-medium text-content-muted mb-1">{t('reminders.time')}</label>
+            </Field>
+
+            <Field label={t('reminders.time')} htmlFor="qn-reminder-time">
               <div className="relative">
-                <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-content-subtle" />
-                <input
+                <Clock
+                  className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-content-subtle"
+                  aria-hidden="true"
+                />
+                <Input
+                  id="qn-reminder-time"
                   type="time"
                   value={time}
-                  onChange={(e) => setTime(e.target.value)}
-                  className="w-full pl-10 pr-3 py-2 bg-surface-raised border border-subtle rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
+                  onChange={(event) => {
+                    setTime(event.target.value)
+                    setValidationError('')
+                  }}
+                  className="pl-9"
                 />
               </div>
-            </div>
+            </Field>
           </div>
 
-          <div>
-            <label className="block text-xs font-medium text-content-muted mb-1">{t('reminders.repeat')}</label>
-            <select
+          <Field label={t('reminders.repeat')} htmlFor="qn-reminder-repeat">
+            <Select
+              id="qn-reminder-repeat"
               value={repeat}
-              onChange={(e) => setRepeat(e.target.value)}
-              className="w-full px-3 py-2 bg-surface-raised border border-subtle rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
+              onChange={(event) => setRepeat(event.target.value)}
             >
               <option value="none">{t('reminders.dontRepeat')}</option>
               <option value="daily">{t('reminders.daily')}</option>
               <option value="weekly">{t('reminders.weekly')}</option>
               <option value="monthly">{t('reminders.monthly')}</option>
-            </select>
-          </div>
+            </Select>
+          </Field>
 
-          <button
-            onClick={handleAddReminder}
-            className="w-full py-2 qn-banner-surface hover:from-emerald-700 hover:to-teal-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            {t('reminders.addReminder')}
-          </button>
           {validationError && (
-            <p role="alert" className="text-xs font-medium text-red-600 dark:text-red-400">
+            <p role="alert" className="text-ui-sm font-medium text-danger-text">
               {validationError}
             </p>
           )}
-        </div>
-        <div className="space-y-2 max-h-60 overflow-y-auto">
+
+          <Button type="submit" variant="primary" icon={Plus} fullWidth disabled={!note}>
+            {t('reminders.addReminder')}
+          </Button>
+        </form>
+
+        <section aria-labelledby="qn-reminders-list-heading">
+          <h3 id="qn-reminders-list-heading" className="mb-2 text-ui-sm font-semibold text-content-muted">
+            {t('reminders.scheduled', 'Scheduled reminders')}
+          </h3>
+
           {reminders.length === 0 ? (
-            <div className="text-center py-8 text-content-muted">
-              <Bell className="w-12 h-12 mx-auto mb-2 opacity-30" />
-              <p>{t('reminders.noReminders')}</p>
-              <p className="text-xs mt-1">{t('reminders.addReminderHint')}</p>
+            <div className="rounded-card border border-dashed border-subtle py-7 text-center text-content-muted">
+              <Bell className="mx-auto mb-2 h-9 w-9 opacity-35" aria-hidden="true" />
+              <p className="text-ui-md font-medium">{t('reminders.noReminders')}</p>
+              <p className="mt-1 text-ui-sm">{t('reminders.addReminderHint')}</p>
             </div>
           ) : (
-            [...reminders]
-              .sort((a, b) => new Date(a.datetime) - new Date(b.datetime))
-              .map((reminder) => {
-                const status = getReminderStatus(reminder)
-                return (
-                  <div
-                    key={reminder.id}
-                    className={`p-3 rounded-lg flex items-center justify-between gap-3 ${getStatusColor(status)}`}
-                  >
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      {status === 'completed' ? (
-                        <Check className="w-5 h-5 flex-shrink-0" />
-                      ) : status === 'overdue' ? (
-                        <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                      ) : (
-                        <Bell className="w-5 h-5 flex-shrink-0" />
-                      )}
-                      <div className="min-w-0">
-                        <p className="font-medium text-sm">
-                          {formatReminderDate(reminder.datetime)}
-                        </p>
+            <ul className="max-h-64 space-y-2 overflow-y-auto overscroll-contain pr-1" aria-live="polite">
+              {[...reminders]
+                .sort((first, second) => new Date(first.datetime) - new Date(second.datetime))
+                .map((reminder) => {
+                  const status = getReminderStatus(reminder)
+                  const presentation = STATUS_PRESENTATION[status]
+                  const StatusIcon = presentation.icon
+                  const formattedDate = formatReminderDate(reminder.datetime)
+                  return (
+                    <li
+                      key={reminder.id}
+                      className="flex items-center gap-3 rounded-card border border-subtle bg-surface-raised p-3"
+                    >
+                      <StatusIcon className="h-5 w-5 shrink-0 text-content-muted" aria-hidden="true" />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-ui-md font-medium text-content">{formattedDate}</p>
+                          <Badge tone={presentation.tone}>
+                            {t(`reminders.status.${status}`, presentation.fallback)}
+                          </Badge>
+                        </div>
                         {reminder.repeat !== 'none' && (
-                          <p className="text-xs opacity-75">
+                          <p className="mt-0.5 text-ui-sm text-content-muted">
                             {t('reminders.repeats')} {getRepeatLabel(reminder.repeat)}
                           </p>
                         )}
                       </div>
-                    </div>
-                    <button
-                      onClick={() => handleDeleteReminder(reminder.id)}
-                      className="p-1.5 hover:bg-black/10 rounded-lg transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                )
-              })
+                      <IconButton
+                        icon={Trash2}
+                        size="sm"
+                        variant="danger-ghost"
+                        label={t('reminders.deleteReminder', `Delete reminder for ${formattedDate}`)}
+                        onClick={() => handleDeleteReminder(reminder.id)}
+                      />
+                    </li>
+                  )
+                })}
+            </ul>
           )}
-        </div>
-        {'Notification' in window && Notification.permission === 'denied' && (
-          <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg flex items-start gap-2">
-            <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+        </section>
+
+        {(notificationsDenied || notificationWarning) && (
+          <div
+            role="status"
+            className="flex items-start gap-2 rounded-card border border-warning-border bg-warning-soft p-3 text-content"
+          >
+            <AlertCircle
+              className="mt-0.5 h-5 w-5 shrink-0 text-warning-text"
+              aria-hidden="true"
+            />
             <div>
-              <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                {t('reminders.notificationsBlocked')}
-              </p>
-              <p className="text-xs text-yellow-700 dark:text-yellow-300">
-                {t('reminders.enableNotifications')}
+              <p className="text-ui-md font-medium">{t('reminders.notificationsBlocked')}</p>
+              <p className="mt-0.5 text-ui-sm">
+                {notificationWarning || t('reminders.enableNotifications')}
               </p>
             </div>
           </div>
         )}
-        </div>
       </div>
-    </LegacyDialog>
+    </Modal>
   )
 }

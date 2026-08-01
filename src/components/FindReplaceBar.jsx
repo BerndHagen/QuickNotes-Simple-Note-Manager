@@ -1,7 +1,17 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { buttonClasses } from './ui'
-import { X, Search, Replace, ChevronDown, ChevronUp, CaseSensitive, WholeWord, Regex } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import {
+  CaseSensitive,
+  ChevronDown,
+  ChevronUp,
+  Regex,
+  Replace,
+  Search,
+  WholeWord,
+  X,
+} from 'lucide-react'
+import { Button, IconButton, Input } from './ui'
 import { useTranslation } from '../lib/useTranslation'
+import { createEditorSearchPattern, findEditorMatches } from '../lib/editorSearch'
 
 export default function FindReplaceBar({ editor, isOpen, onClose }) {
   const { t } = useTranslation()
@@ -13,349 +23,272 @@ export default function FindReplaceBar({ editor, isOpen, onClose }) {
   const [caseSensitive, setCaseSensitive] = useState(false)
   const [wholeWord, setWholeWord] = useState(false)
   const [useRegex, setUseRegex] = useState(false)
+  const [searchError, setSearchError] = useState('')
   const findInputRef = useRef(null)
+
+  const collectMatches = useCallback(() => {
+    if (!editor || !findText) return { matches: [], error: '' }
+
+    const compiled = createEditorSearchPattern(findText, {
+      caseSensitive,
+      wholeWord,
+      useRegex,
+    })
+    if (compiled.error) return { matches: [], error: compiled.error }
+
+    return findEditorMatches(editor.state.doc, compiled.pattern)
+  }, [caseSensitive, editor, findText, useRegex, wholeWord])
+
+  const refreshSearch = useCallback(() => {
+    const { matches, error } = collectMatches()
+    setSearchError(error)
+    setMatchCount(matches.length)
+    setCurrentMatch((current) => {
+      if (matches.length === 0) return 0
+      if (current < 1) return 1
+      return Math.min(current, matches.length)
+    })
+    return matches
+  }, [collectMatches])
+
   useEffect(() => {
-    if (isOpen && findInputRef.current) {
-      findInputRef.current.focus()
-      findInputRef.current.select()
-    }
+    if (!isOpen) return
+    findInputRef.current?.focus()
+    findInputRef.current?.select()
   }, [isOpen])
+
   useEffect(() => {
-    if (!isOpen && editor) {
-      clearHighlights()
-    }
-  }, [isOpen])
-  useEffect(() => {
-    if (editor && findText && isOpen) {
-      const timeoutId = setTimeout(() => {
-        performSearch()
-      }, 150)
-      return () => clearTimeout(timeoutId)
-    } else {
+    if (!isOpen) {
       setMatchCount(0)
       setCurrentMatch(0)
-      clearHighlights()
+      setSearchError('')
+      return undefined
     }
-  }, [findText, caseSensitive, wholeWord, useRegex, editor, isOpen])
 
-  const clearHighlights = useCallback(() => {
-    if (!editor) return
-    const { from, to } = { from: 0, to: editor.state.doc.content.size }
-    editor.chain().focus().setTextSelection({ from, to }).unsetMark('highlight').run()
-    editor.commands.setTextSelection(0)
-  }, [editor])
+    const timeoutId = window.setTimeout(refreshSearch, 150)
+    return () => window.clearTimeout(timeoutId)
+  }, [isOpen, refreshSearch])
 
-  const performSearch = useCallback(() => {
-    if (!editor || !findText) return []
+  useEffect(() => {
+    if (!editor || !isOpen) return undefined
+    const handleEditorUpdate = () => refreshSearch()
+    editor.on('update', handleEditorUpdate)
+    return () => editor.off('update', handleEditorUpdate)
+  }, [editor, isOpen, refreshSearch])
 
-    const doc = editor.state.doc
-    let matches = []
-    doc.descendants((node, pos) => {
-      if (node.isText) {
-        const nodeText = node.text || ''
-        let pattern
-        
-        try {
-          if (useRegex) {
-            pattern = new RegExp(findText, caseSensitive ? 'g' : 'gi')
-          } else {
-            let escapedText = findText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-            if (wholeWord) {
-              escapedText = `\\b${escapedText}\\b`
-            }
-            pattern = new RegExp(escapedText, caseSensitive ? 'g' : 'gi')
-          }
-          
-          let match
-          while ((match = pattern.exec(nodeText)) !== null) {
-            matches.push({
-              from: pos + match.index,
-              to: pos + match.index + match[0].length,
-              text: match[0]
-            })
-          }
-        } catch (e) {
-        }
-      }
-    })
-    
-    setMatchCount(matches.length)
-    if (matches.length > 0 && currentMatch === 0) {
-      setCurrentMatch(1)
-    } else if (matches.length === 0) {
-      setCurrentMatch(0)
-    }
-    
-    return matches
-  }, [editor, findText, caseSensitive, wholeWord, useRegex, currentMatch])
+  const selectMatch = useCallback(
+    (match) => {
+      if (!editor || !match) return
+      editor.chain().focus().setTextSelection({ from: match.from, to: match.to }).run()
 
-  const findTextPositionInEditor = useCallback((searchText, occurrence = 1) => {
-    if (!editor || !searchText) return null
-
-    const doc = editor.state.doc
-    let count = 0
-    let foundPos = null
-    doc.descendants((node, pos) => {
-      if (foundPos) return false
-      
-      if (node.isText) {
-        const nodeText = node.text || ''
-        let pattern
-        
-        try {
-          if (useRegex) {
-            pattern = new RegExp(searchText, caseSensitive ? 'g' : 'gi')
-          } else {
-            let escapedText = searchText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-            if (wholeWord) {
-              escapedText = `\\b${escapedText}\\b`
-            }
-            pattern = new RegExp(escapedText, caseSensitive ? 'g' : 'gi')
-          }
-          
-          let match
-          while ((match = pattern.exec(nodeText)) !== null) {
-            count++
-            if (count === occurrence) {
-              foundPos = {
-                from: pos + match.index,
-                to: pos + match.index + match[0].length,
-                text: match[0]
-              }
-              return false
-            }
-          }
-        } catch (e) {
-        }
-      }
-    })
-    
-    return foundPos
-  }, [editor, caseSensitive, wholeWord, useRegex])
-
-  const goToNextMatch = useCallback(() => {
-    if (matchCount === 0) return
-    
-    const next = currentMatch >= matchCount ? 1 : currentMatch + 1
-    setCurrentMatch(next)
-    
-    const pos = findTextPositionInEditor(findText, next)
-    if (pos && editor) {
-      editor.chain().focus().setTextSelection({ from: pos.from, to: pos.to }).run()
-      const editorElement = editor.view.dom
       const selection = window.getSelection()
-      if (selection.rangeCount > 0) {
-        const range = selection.getRangeAt(0)
-        const rect = range.getBoundingClientRect()
-        const editorRect = editorElement.getBoundingClientRect()
-        
-        if (rect.top < editorRect.top || rect.bottom > editorRect.bottom) {
-          editorElement.scrollTop += rect.top - editorRect.top - editorRect.height / 2
-        }
+      if (!selection?.rangeCount) return
+      const rect = selection.getRangeAt(0).getBoundingClientRect()
+      const editorElement = editor.view.dom
+      const editorRect = editorElement.getBoundingClientRect()
+      if (rect.top < editorRect.top || rect.bottom > editorRect.bottom) {
+        editorElement.scrollTop += rect.top - editorRect.top - editorRect.height / 2
       }
-    }
-  }, [matchCount, currentMatch, findText, findTextPositionInEditor, editor])
+    },
+    [editor]
+  )
 
-  const goToPrevMatch = useCallback(() => {
-    if (matchCount === 0) return
-    
-    const prev = currentMatch <= 1 ? matchCount : currentMatch - 1
-    setCurrentMatch(prev)
-    
-    const pos = findTextPositionInEditor(findText, prev)
-    if (pos && editor) {
-      editor.chain().focus().setTextSelection({ from: pos.from, to: pos.to }).run()
-    }
-  }, [matchCount, currentMatch, findText, findTextPositionInEditor, editor])
+  const goToMatch = useCallback(
+    (direction) => {
+      const { matches, error } = collectMatches()
+      setSearchError(error)
+      setMatchCount(matches.length)
+      if (error || matches.length === 0) {
+        setCurrentMatch(0)
+        return
+      }
+
+      const currentIndex = Math.max(0, currentMatch - 1)
+      const nextIndex = (currentIndex + direction + matches.length) % matches.length
+      setCurrentMatch(nextIndex + 1)
+      selectMatch(matches[nextIndex])
+    },
+    [collectMatches, currentMatch, selectMatch]
+  )
 
   const replaceCurrentMatch = useCallback(() => {
-    if (!editor || matchCount === 0 || !findText) return
-    
-    const pos = findTextPositionInEditor(findText, currentMatch)
-    if (pos) {
-      editor.chain()
-        .focus()
-        .setTextSelection({ from: pos.from, to: pos.to })
-        .deleteSelection()
-        .insertContent(replaceText)
-        .run()
-      setTimeout(() => {
-        performSearch()
-      }, 50)
-    }
-  }, [editor, matchCount, currentMatch, findText, replaceText, findTextPositionInEditor, performSearch])
+    if (!editor || !findText) return
+    const { matches, error } = collectMatches()
+    setSearchError(error)
+    if (error || matches.length === 0) return
+
+    const index = Math.min(Math.max(currentMatch, 1), matches.length) - 1
+    const match = matches[index]
+    editor.view.dispatch(editor.state.tr.insertText(replaceText, match.from, match.to))
+    editor.commands.focus()
+    refreshSearch()
+  }, [collectMatches, currentMatch, editor, findText, refreshSearch, replaceText])
 
   const replaceAllMatches = useCallback(() => {
     if (!editor || !findText) return
-    
-    const text = editor.getText()
-    let pattern
-    
-    try {
-      if (useRegex) {
-        pattern = new RegExp(findText, caseSensitive ? 'g' : 'gi')
-      } else {
-        let escapedText = findText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-        if (wholeWord) {
-          escapedText = `\\b${escapedText}\\b`
-        }
-        pattern = new RegExp(escapedText, caseSensitive ? 'g' : 'gi')
-      }
-      let html = editor.getHTML()
-      const matches = text.match(pattern) || []
-      matches.forEach(match => {
-        html = html.replace(new RegExp(match.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), caseSensitive ? '' : 'i'), replaceText)
-      })
-      
-      editor.commands.setContent(html)
-      
-      setMatchCount(0)
-      setCurrentMatch(0)
-    } catch (e) {
-    }
-  }, [editor, findText, replaceText, caseSensitive, wholeWord, useRegex])
+    const { matches, error } = collectMatches()
+    setSearchError(error)
+    if (error || matches.length === 0) return
 
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      if (e.shiftKey) {
-        goToPrevMatch()
-      } else {
-        goToNextMatch()
-      }
-    } else if (e.key === 'Escape') {
+    let transaction = editor.state.tr
+    for (let index = matches.length - 1; index >= 0; index -= 1) {
+      const match = matches[index]
+      transaction = transaction.insertText(replaceText, match.from, match.to)
+    }
+
+    editor.view.dispatch(transaction)
+    editor.commands.focus()
+    setCurrentMatch(0)
+    refreshSearch()
+  }, [collectMatches, editor, findText, refreshSearch, replaceText])
+
+  const handleFindKeyDown = (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault()
+      goToMatch(event.shiftKey ? -1 : 1)
+    } else if (event.key === 'Escape') {
+      event.preventDefault()
       onClose()
     }
   }
 
   if (!isOpen) return null
 
+  const resultText = searchError
+    ? searchError
+    : matchCount > 0
+      ? `${currentMatch} of ${matchCount}`
+      : t('findReplace.noResults')
+
   return (
-    <div className="bg-surface-raised border-b border-subtle px-4 py-2 shadow-sm">
-      <div className="flex items-center gap-2 flex-wrap">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-content-subtle" />
-          <input
-            ref={findInputRef}
-            type="text"
-            value={findText}
-            onChange={(e) => setFindText(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={t('findReplace.findInNote')}
-            className="w-full pl-10 pr-20 py-2 bg-surface-sunken dark:bg-surface-sunken border border-subtle focus:border-emerald-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm"
+    <section
+      role="search"
+      aria-label={t('findReplace.findInNote')}
+      className="border-b border-subtle bg-surface-raised px-3 py-2 shadow-xs sm:px-4"
+    >
+      <div className="flex flex-wrap items-start gap-2">
+        <div className="min-w-[min(100%,15rem)] flex-1">
+          <div className="relative">
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-content-subtle"
+              aria-hidden="true"
+            />
+            <Input
+              ref={findInputRef}
+              value={findText}
+              onChange={(event) => setFindText(event.target.value)}
+              onKeyDown={handleFindKeyDown}
+              placeholder={t('findReplace.findInNote')}
+              aria-label={t('findReplace.findInNote')}
+              aria-invalid={!!searchError}
+              aria-describedby="qn-find-results"
+              className="pl-9 pr-20"
+            />
+            {!searchError && (
+              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-ui-xs text-content-muted">
+                {matchCount > 0 ? `${currentMatch}/${matchCount}` : '0/0'}
+              </span>
+            )}
+          </div>
+          <p
+            id="qn-find-results"
+            role={searchError ? 'alert' : 'status'}
+            className={`mt-1 text-ui-xs ${searchError ? 'text-danger-text' : 'sr-only'}`}
+          >
+            {resultText}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-1" aria-label="Search options">
+          <IconButton
+            icon={CaseSensitive}
+            size="sm"
+            label={`${t('findReplace.caseSensitive')} (Alt+C)`}
+            active={caseSensitive}
+            aria-pressed={caseSensitive}
+            onClick={() => setCaseSensitive((enabled) => !enabled)}
           />
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-content-muted">
-            {matchCount > 0 ? `${currentMatch}/${matchCount}` : t('findReplace.noResults')}
-          </span>
+          <IconButton
+            icon={WholeWord}
+            size="sm"
+            label={`${t('findReplace.wholeWord')} (Alt+W)`}
+            active={wholeWord}
+            aria-pressed={wholeWord}
+            onClick={() => setWholeWord((enabled) => !enabled)}
+          />
+          <IconButton
+            icon={Regex}
+            size="sm"
+            label={`${t('findReplace.useRegex')} (Alt+R)`}
+            active={useRegex}
+            aria-pressed={useRegex}
+            onClick={() => setUseRegex((enabled) => !enabled)}
+          />
         </div>
+
         <div className="flex items-center gap-1">
-          <button
-            onClick={() => setCaseSensitive(!caseSensitive)}
-            className={`p-2 rounded-lg transition-colors ${
- caseSensitive 
- ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600' 
-                : 'hover:bg-surface-hover text-content-muted'
-            }`}
-            title={`${t('findReplace.caseSensitive')} (Alt+C)`}
-          >
-            <CaseSensitive className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => setWholeWord(!wholeWord)}
-            className={`p-2 rounded-lg transition-colors ${
- wholeWord 
- ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600' 
-                : 'hover:bg-surface-hover text-content-muted'
-            }`}
-            title={`${t('findReplace.wholeWord')} (Alt+W)`}
-          >
-            <WholeWord className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => setUseRegex(!useRegex)}
-            className={`p-2 rounded-lg transition-colors ${
- useRegex 
- ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600' 
-                : 'hover:bg-surface-hover text-content-muted'
-            }`}
-            title={`${t('findReplace.useRegex')} (Alt+R)`}
-          >
-            <Regex className="w-4 h-4" />
-          </button>
+          <IconButton
+            icon={ChevronUp}
+            size="sm"
+            label={`${t('findReplace.previousMatch')} (Shift+Enter)`}
+            disabled={matchCount === 0 || !!searchError}
+            onClick={() => goToMatch(-1)}
+          />
+          <IconButton
+            icon={ChevronDown}
+            size="sm"
+            label={`${t('findReplace.nextMatch')} (Enter)`}
+            disabled={matchCount === 0 || !!searchError}
+            onClick={() => goToMatch(1)}
+          />
+          <IconButton
+            icon={Replace}
+            size="sm"
+            label={t('findReplace.toggleReplace')}
+            active={showReplace}
+            aria-pressed={showReplace}
+            onClick={() => setShowReplace((visible) => !visible)}
+          />
+          <IconButton icon={X} size="sm" label="Close find and replace (Esc)" onClick={onClose} />
         </div>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={goToPrevMatch}
-            disabled={matchCount === 0}
-            className="p-2 hover:bg-surface-hover rounded-lg transition-colors disabled:opacity-50"
-            title={`${t('findReplace.previousMatch')} (Shift+Enter)`}
-          >
-            <ChevronUp className="w-4 h-4" />
-          </button>
-          <button
-            onClick={goToNextMatch}
-            disabled={matchCount === 0}
-            className="p-2 hover:bg-surface-hover rounded-lg transition-colors disabled:opacity-50"
-            title={`${t('findReplace.nextMatch')} (Enter)`}
-          >
-            <ChevronDown className="w-4 h-4" />
-          </button>
-        </div>
-        <button
-          onClick={() => setShowReplace(!showReplace)}
-          className={`p-2 rounded-lg transition-colors ${
- showReplace 
- ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600' 
-              : 'hover:bg-surface-hover text-content-muted'
-          }`}
-          title={t('findReplace.toggleReplace')}
-        >
-          <Replace className="w-4 h-4" />
-        </button>
-        <button
-          onClick={onClose}
-          className="p-2 hover:bg-surface-hover rounded-lg transition-colors"
-          title="Close (Esc)"
-        >
-          <X className="w-4 h-4" />
-        </button>
       </div>
+
       {showReplace && (
-        <div className="flex items-center gap-2 mt-2">
-          <div className="relative flex-1 min-w-[200px]">
-            <Replace className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-content-subtle" />
-            <input
-              type="text"
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <div className="min-w-[min(100%,15rem)] flex-1">
+            <Input
               value={replaceText}
-              onChange={(e) => setReplaceText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault()
+              onChange={(event) => setReplaceText(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault()
                   replaceCurrentMatch()
-                } else if (e.key === 'Escape') {
+                } else if (event.key === 'Escape') {
+                  event.preventDefault()
                   onClose()
                 }
               }}
               placeholder={t('findReplace.replaceWith')}
-              className="w-full pl-10 pr-4 py-2 bg-surface-sunken dark:bg-surface-sunken border border-subtle focus:border-emerald-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm"
+              aria-label={t('findReplace.replaceWith')}
             />
           </div>
-          <button
+          <Button
+            size="sm"
             onClick={replaceCurrentMatch}
-            disabled={matchCount === 0}
-            className="px-3 py-2 bg-surface-sunken hover:bg-surface-sunken dark:hover:bg-surface-active rounded-lg text-sm font-medium transition-colors disabled:opacity-50 border border-subtle "
+            disabled={matchCount === 0 || !!searchError}
           >
             {t('findReplace.replace')}
-          </button>
-          <button
+          </Button>
+          <Button
+            size="sm"
+            variant="primary"
             onClick={replaceAllMatches}
-            disabled={matchCount === 0}
-            className={buttonClasses({ variant: 'primary' })}
+            disabled={matchCount === 0 || !!searchError}
           >
             {t('findReplace.replaceAll')}
-          </button>
+          </Button>
         </div>
       )}
-    </div>
+    </section>
   )
 }

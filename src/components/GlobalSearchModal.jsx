@@ -1,353 +1,420 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
-import {
-  Search,
-  FileText,
-  Folder,
-  Tag,
-  ChevronRight,
-  Loader2
-} from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { ChevronRight, FileText, Folder, Loader2, Search, Tag } from 'lucide-react'
 import { useNotesStore, useUIStore } from '../store'
-import { debounce } from '../lib/utils'
+import { debounce, htmlToPlainText } from '../lib/utils'
+import { formatShortcut, loadShortcuts } from '../lib/shortcuts'
 import { useTranslation } from '../lib/useTranslation'
-import LegacyDialog from './ui/LegacyDialog'
+import { Input, Modal } from './ui'
+
+const EMPTY_RESULTS = { notes: [], folders: [], tags: [] }
+
+const getMatchType = (note, query) => {
+  if (note.title.toLowerCase().includes(query)) return 'title'
+  if (note.tags?.some((tag) => tag.toLowerCase().includes(query))) return 'tag'
+  return 'content'
+}
+
+const getMatchPreview = (note, query) => {
+  const content = htmlToPlainText(note.content || '')
+  const index = content.toLowerCase().indexOf(query)
+  if (index === -1) return content.length > 100 ? `${content.slice(0, 100)}…` : content
+
+  const start = Math.max(0, index - 40)
+  const end = Math.min(content.length, index + query.length + 40)
+  return `${start > 0 ? '…' : ''}${content.slice(start, end)}${end < content.length ? '…' : ''}`
+}
+
+const highlightMatch = (text, query) => {
+  if (!query) return text
+  const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const parts = String(text || '').split(new RegExp(`(${escapedQuery})`, 'gi'))
+  return parts.map((part, index) =>
+    index % 2 === 1 ? (
+      <mark key={`${part}-${index}`} className="rounded bg-warning-soft px-0.5 text-inherit">
+        {part}
+      </mark>
+    ) : (
+      part
+    )
+  )
+}
+
+const readGlobalSearchShortcut = () => formatShortcut(loadShortcuts().globalSearch)
 
 export default function GlobalSearchModal() {
   const { t } = useTranslation()
-  const { globalSearchOpen, setGlobalSearchOpen } = useUIStore()
-  const { notes, folders, tags, setSelectedNote, setSelectedFolder, setSelectedTagFilter } = useNotesStore()
-  
+  const {
+    globalSearchOpen,
+    setGlobalSearchOpen,
+    setMobileView,
+  } = useUIStore()
+  const {
+    notes,
+    folders,
+    tags,
+    setSelectedNote,
+    setSelectedFolder,
+    setSelectedTagFilter,
+  } = useNotesStore()
+
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState({ notes: [], folders: [], tags: [] })
+  const [results, setResults] = useState(EMPTY_RESULTS)
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [isSearching, setIsSearching] = useState(false)
+  const [shortcutLabel, setShortcutLabel] = useState(readGlobalSearchShortcut)
   const inputRef = useRef(null)
-  const resultsRef = useRef(null)
 
-  useEffect(() => {
-    if (globalSearchOpen) {
-      setQuery('')
-      setResults({ notes: [], folders: [], tags: [] })
-      setSelectedIndex(0)
-      setTimeout(() => inputRef.current?.focus(), 100)
-    }
-  }, [globalSearchOpen])
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (!globalSearchOpen) return
+  const performSearch = useMemo(
+    () =>
+      debounce((searchQuery) => {
+        const normalizedQuery = searchQuery.trim().toLowerCase()
+        if (!normalizedQuery) {
+          setResults(EMPTY_RESULTS)
+          setIsSearching(false)
+          return
+        }
 
-      const totalResults = results.notes.length + results.folders.length + results.tags.length
+        const matchedNotes = notes
+          .filter((note) => !note.deleted && !note.archived)
+          .filter((note) => {
+            const titleMatch = note.title.toLowerCase().includes(normalizedQuery)
+            const contentMatch = htmlToPlainText(note.content || '')
+              .toLowerCase()
+              .includes(normalizedQuery)
+            const tagMatch = note.tags?.some((tag) =>
+              tag.toLowerCase().includes(normalizedQuery)
+            )
+            return titleMatch || contentMatch || tagMatch
+          })
+          .slice(0, 10)
+          .map((note) => ({
+            ...note,
+            matchType: getMatchType(note, normalizedQuery),
+            preview: getMatchPreview(note, normalizedQuery),
+          }))
 
-      switch (e.key) {
-        case 'ArrowDown':
-          e.preventDefault()
-          setSelectedIndex((prev) => (prev + 1) % Math.max(totalResults, 1))
-          break
-        case 'ArrowUp':
-          e.preventDefault()
-          setSelectedIndex((prev) => (prev - 1 + Math.max(totalResults, 1)) % Math.max(totalResults, 1))
-          break
-        case 'Enter':
-          e.preventDefault()
-          handleSelectResult(selectedIndex)
-          break
-        case 'Escape':
-          setGlobalSearchOpen(false)
-          break
-      }
-    }
-
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [globalSearchOpen, results, selectedIndex])
-  useEffect(() => {
-    const handleGlobalShortcut = (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'f') {
-        e.preventDefault()
-        setGlobalSearchOpen(true)
-      }
-    }
-
-    document.addEventListener('keydown', handleGlobalShortcut)
-    return () => document.removeEventListener('keydown', handleGlobalShortcut)
-  }, [])
-
-  const performSearch = useCallback(
-    debounce((searchQuery) => {
-      if (!searchQuery.trim()) {
-        setResults({ notes: [], folders: [], tags: [] })
-        setIsSearching(false)
-        return
-      }
-
-      const q = searchQuery.toLowerCase()
-      const matchedNotes = notes
-        .filter((note) => !note.deleted && !note.archived)
-        .filter((note) => {
-          const titleMatch = note.title.toLowerCase().includes(q)
-          const contentMatch = stripHtml(note.content || '').toLowerCase().includes(q)
-          const tagMatch = note.tags?.some((t) => t.toLowerCase().includes(q))
-          return titleMatch || contentMatch || tagMatch
+        setResults({
+          notes: matchedNotes,
+          folders: folders
+            .filter((folder) => folder.name.toLowerCase().includes(normalizedQuery))
+            .slice(0, 5),
+          tags: tags
+            .filter((tag) => tag.name.toLowerCase().includes(normalizedQuery))
+            .slice(0, 5),
         })
-        .slice(0, 10)
-        .map((note) => ({
-          ...note,
-          matchType: getMatchType(note, q),
-          preview: getMatchPreview(note, q),
-        }))
-      const matchedFolders = folders
-        .filter((folder) => folder.name.toLowerCase().includes(q))
-        .slice(0, 5)
-      const matchedTags = tags
-        .filter((tag) => tag.name.toLowerCase().includes(q))
-        .slice(0, 5)
-
-      setResults({
-        notes: matchedNotes,
-        folders: matchedFolders,
-        tags: matchedTags,
-      })
-      setIsSearching(false)
-    }, 200),
-    [notes, folders, tags]
+        setSelectedIndex(0)
+        setIsSearching(false)
+      }, 200),
+    [folders, notes, tags]
   )
 
-  const handleQueryChange = (e) => {
-    const value = e.target.value
-    setQuery(value)
-    setIsSearching(true)
+  const flattenedResults = useMemo(
+    () => [
+      ...results.notes.map((item) => ({ type: 'note', item })),
+      ...results.folders.map((item) => ({ type: 'folder', item })),
+      ...results.tags.map((item) => ({ type: 'tag', item })),
+    ],
+    [results]
+  )
+
+  const totalResults = flattenedResults.length
+  const activeOptionId = totalResults > 0 ? `qn-search-option-${selectedIndex}` : undefined
+
+  const closeSearch = useCallback(() => {
+    performSearch.cancel()
+    setGlobalSearchOpen(false)
+  }, [performSearch, setGlobalSearchOpen])
+
+  const selectResult = useCallback(
+    (index) => {
+      const result = flattenedResults[index]
+      if (!result) return
+
+      if (result.type === 'note') {
+        setSelectedNote(result.item.id)
+        setMobileView('editor')
+      } else if (result.type === 'folder') {
+        setSelectedFolder(result.item.id)
+        setMobileView('notes')
+      } else {
+        setSelectedTagFilter(result.item.name)
+        setMobileView('notes')
+      }
+      closeSearch()
+    },
+    [
+      closeSearch,
+      flattenedResults,
+      setMobileView,
+      setSelectedFolder,
+      setSelectedNote,
+      setSelectedTagFilter,
+    ]
+  )
+
+  useEffect(() => () => performSearch.cancel(), [performSearch])
+
+  useEffect(() => {
+    if (!globalSearchOpen) {
+      performSearch.cancel()
+      return
+    }
+    setQuery('')
+    setResults(EMPTY_RESULTS)
     setSelectedIndex(0)
+    setIsSearching(false)
+  }, [globalSearchOpen, performSearch])
+
+  useEffect(() => {
+    const updateShortcut = () => setShortcutLabel(readGlobalSearchShortcut())
+    window.addEventListener('quicknotes:shortcuts-changed', updateShortcut)
+    return () => window.removeEventListener('quicknotes:shortcuts-changed', updateShortcut)
+  }, [])
+
+  useEffect(() => {
+    if (!activeOptionId) return
+    document.getElementById(activeOptionId)?.scrollIntoView?.({ block: 'nearest' })
+  }, [activeOptionId])
+
+  const handleQueryChange = (event) => {
+    const value = event.target.value
+    setQuery(value)
+    setSelectedIndex(0)
+
+    if (!value.trim()) {
+      performSearch.cancel()
+      setResults(EMPTY_RESULTS)
+      setIsSearching(false)
+      return
+    }
+
+    setIsSearching(true)
     performSearch(value)
   }
 
-  const stripHtml = (html) => {
-    const div = document.createElement('div')
-    div.innerHTML = html
-    return div.textContent || div.innerText || ''
-  }
-
-  const getMatchType = (note, query) => {
-    if (note.title.toLowerCase().includes(query)) return 'title'
-    if (note.tags?.some((t) => t.toLowerCase().includes(query))) return 'tag'
-    return 'content'
-  }
-
-  const getMatchPreview = (note, query) => {
-    const content = stripHtml(note.content || '')
-    const lowerContent = content.toLowerCase()
-    const index = lowerContent.indexOf(query)
-    
-    if (index === -1) return content.slice(0, 100) + '...'
-    
-    const start = Math.max(0, index - 40)
-    const end = Math.min(content.length, index + query.length + 40)
-    let preview = content.slice(start, end)
-    
-    if (start > 0) preview = '...' + preview
-    if (end < content.length) preview = preview + '...'
-    
-    return preview
-  }
-
-  const highlightMatch = (text, query) => {
-    if (!query) return text
-    const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')
-    const parts = text.split(regex)
-    
-    return parts.map((part, i) =>
-      regex.test(part) ? (
-        <mark key={i} className="bg-yellow-200 dark:bg-yellow-800 text-inherit rounded px-0.5">
-          {part}
-        </mark>
-      ) : (
-        part
-      )
-    )
-  }
-
-  const handleSelectResult = (index) => {
-    let currentIndex = 0
-    for (const note of results.notes) {
-      if (currentIndex === index) {
-        setSelectedNote(note.id)
-        setGlobalSearchOpen(false)
-        return
+  const handleSearchKeyDown = (event) => {
+    if (event.key === 'ArrowDown') {
+      event.preventDefault()
+      if (totalResults > 0) setSelectedIndex((index) => (index + 1) % totalResults)
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault()
+      if (totalResults > 0) {
+        setSelectedIndex((index) => (index - 1 + totalResults) % totalResults)
       }
-      currentIndex++
-    }
-    for (const folder of results.folders) {
-      if (currentIndex === index) {
-        setSelectedFolder(folder.id)
-        setGlobalSearchOpen(false)
-        return
-      }
-      currentIndex++
-    }
-    for (const tag of results.tags) {
-      if (currentIndex === index) {
-        setSelectedTagFilter(tag.name)
-        setGlobalSearchOpen(false)
-        return
-      }
-      currentIndex++
+    } else if (event.key === 'Enter' && totalResults > 0) {
+      event.preventDefault()
+      selectResult(selectedIndex)
     }
   }
 
-  const getResultIndex = (type, itemIndex) => {
-    let offset = 0
-    if (type === 'folder') offset = results.notes.length
-    if (type === 'tag') offset = results.notes.length + results.folders.length
-    return offset + itemIndex
-  }
-
-  const totalResults = results.notes.length + results.folders.length + results.tags.length
-
-  if (!globalSearchOpen) return null
+  const resultFooter = (
+    <div className="flex w-full flex-wrap items-center justify-between gap-2 text-ui-sm text-content-muted">
+      <span role="status" aria-live="polite">
+        {query && !isSearching
+          ? `${totalResults} ${t(totalResults === 1 ? 'search.result' : 'search.results')}`
+          : t('search.startTyping')}
+      </span>
+      <span className="inline-flex items-center gap-2">
+        <kbd className="kbd">{shortcutLabel}</kbd>
+        <span>{t('search.globalSearch')}</span>
+      </span>
+    </div>
+  )
 
   return (
-    <LegacyDialog label="Search all notes" onClose={() => setGlobalSearchOpen(false)} align="top">
+    <Modal
+      open={globalSearchOpen}
+      onClose={closeSearch}
+      title={t('search.globalSearch')}
+      icon={Search}
+      size="xl"
+      initialFocusRef={inputRef}
+      contentClassName="sm:self-start sm:mt-[8dvh]"
+      bodyClassName="p-0 sm:p-0"
+      footer={resultFooter}
+    >
+      <div className="flex items-center gap-3 border-b border-subtle px-4 py-3 sm:px-5">
+        <Search className="h-5 w-5 shrink-0 text-content-subtle" aria-hidden="true" />
+        <Input
+          ref={inputRef}
+          type="search"
+          value={query}
+          onChange={handleQueryChange}
+          onKeyDown={handleSearchKeyDown}
+          role="combobox"
+          aria-label={t('search.searchPlaceholder')}
+          aria-autocomplete="list"
+          aria-controls="qn-global-search-results"
+          aria-expanded={totalResults > 0}
+          aria-activedescendant={activeOptionId}
+          placeholder={t('search.searchPlaceholder')}
+          className="h-auto border-0 bg-transparent px-0 py-1 text-lg shadow-none focus:border-transparent focus:ring-0"
+        />
+        {isSearching && (
+          <span role="status" className="shrink-0">
+            <Loader2 className="h-5 w-5 animate-spin text-content-muted" aria-hidden="true" />
+            <span className="qn-sr-only">{t('common.loading')}</span>
+          </span>
+        )}
+        <kbd className="kbd hidden sm:inline-flex">Esc</kbd>
+      </div>
+
       <div
-        className="bg-surface-raised rounded-2xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden border border-subtle modal-animate"
-        onClick={(e) => e.stopPropagation()}
+        id="qn-global-search-results"
+        role={totalResults > 0 ? 'listbox' : undefined}
+        aria-label={totalResults > 0 ? t('search.globalSearch') : undefined}
+        className="max-h-[min(60dvh,560px)] overflow-y-auto overscroll-contain"
       >
-        <div className="h-1.5 qn-banner-surface" />
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-subtle">
-          <Search className="w-5 h-5 text-content-subtle" />
-          <input
-            ref={inputRef}
-            type="text"
-            value={query}
-            onChange={handleQueryChange}
-            placeholder="Search notes, folders, or tags..."
-            className="flex-1 bg-transparent text-lg outline-none text-content placeholder:text-content-subtle"
-          />
-          {isSearching && <Loader2 className="w-5 h-5 text-content-subtle animate-spin" />}
-          <kbd className="kbd hidden sm:inline-flex">
-            ESC
-          </kbd>
-        </div>
-        <div ref={resultsRef} className="max-h-[60vh] overflow-y-auto">
-          {query && totalResults === 0 && !isSearching && (
-            <div className="p-8 text-center text-content-muted">
-              <Search className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p>No results for "{query}"</p>
-            </div>
-          )}
-          {results.notes.length > 0 && (
-            <div className="p-2">
-              <div className="px-3 py-1.5 text-xs font-semibold text-content-muted uppercase">
-                Notes
-              </div>
-              {results.notes.map((note, i) => (
+        {query && totalResults === 0 && !isSearching && (
+          <div className="p-8 text-center text-content-muted" role="status">
+            <Search className="mx-auto mb-3 h-10 w-10 opacity-40" aria-hidden="true" />
+            <p>
+              {t('search.noResults')} “{query}”
+            </p>
+          </div>
+        )}
+
+        {results.notes.length > 0 && (
+          <div
+            role="group"
+            aria-label={t('search.notes')}
+            data-label={t('search.notes')}
+            className="mx-2 mt-2 before:block before:px-3 before:py-1.5 before:text-ui-xs before:font-semibold before:uppercase before:tracking-wider before:text-content-muted before:content-[attr(data-label)]"
+          >
+            {results.notes.map((note, index) => {
+              const resultIndex = index
+              const selected = selectedIndex === resultIndex
+              return (
                 <button
+                  id={`qn-search-option-${resultIndex}`}
                   key={note.id}
-                  onClick={() => {
-                    setSelectedNote(note.id)
-                    setGlobalSearchOpen(false)
-                  }}
-                  className={`w-full px-3 py-2 rounded-lg flex items-start gap-3 text-left transition-colors ${
- selectedIndex === getResultIndex('note', i)
- ? 'bg-primary-100 dark:bg-accent-soft'
-                      : 'hover:bg-surface-hover'
+                  type="button"
+                  role="option"
+                  aria-selected={selected}
+                  tabIndex={-1}
+                  onMouseEnter={() => setSelectedIndex(resultIndex)}
+                  onClick={() => selectResult(resultIndex)}
+                  className={`flex w-full items-start gap-3 rounded-control px-3 py-2 text-left transition-colors ${
+                    selected ? 'bg-accent-soft' : 'hover:bg-surface-hover'
                   }`}
                 >
-                  <FileText className="w-5 h-5 mt-0.5 text-content-subtle shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-content truncate">
-                      {highlightMatch(note.title, query)}
-                    </div>
-                    <div className="text-sm text-content-muted line-clamp-2">
-                      {highlightMatch(note.preview, query)}
-                    </div>
+                  <FileText className="mt-0.5 h-5 w-5 shrink-0 text-content-subtle" aria-hidden="true" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-medium text-content">
+                      {highlightMatch(note.title, query.trim())}
+                    </span>
+                    <span className="line-clamp-2 block text-ui-md text-content-muted">
+                      {highlightMatch(note.preview, query.trim())}
+                    </span>
                     {note.matchType === 'tag' && (
-                      <div className="flex items-center gap-1 mt-1">
-                        <Tag className="w-3 h-3 text-content-subtle" />
-                        <span className="text-xs text-content-subtle">
-                          Tags: {note.tags?.join(', ')}
-                        </span>
-                      </div>
+                      <span className="mt-1 flex items-center gap-1 text-ui-xs text-content-muted">
+                        <Tag className="h-3 w-3" aria-hidden="true" />
+                        {t('search.tags')}: {note.tags?.join(', ')}
+                      </span>
                     )}
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-content-subtle shrink-0 mt-1" />
+                  </span>
+                  <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-content-subtle" aria-hidden="true" />
                 </button>
-              ))}
-            </div>
-          )}
-          {results.folders.length > 0 && (
-            <div className="p-2 border-t border-subtle">
-              <div className="px-3 py-1.5 text-xs font-semibold text-content-muted uppercase">
-                Folders
-              </div>
-              {results.folders.map((folder, i) => (
+              )
+            })}
+          </div>
+        )}
+
+        {results.folders.length > 0 && (
+          <div
+            role="group"
+            aria-label={t('search.folders')}
+            data-label={t('search.folders')}
+            className="mx-2 mt-2 border-t border-subtle pt-2 before:block before:px-3 before:py-1.5 before:text-ui-xs before:font-semibold before:uppercase before:tracking-wider before:text-content-muted before:content-[attr(data-label)]"
+          >
+            {results.folders.map((folder, index) => {
+              const resultIndex = results.notes.length + index
+              const selected = selectedIndex === resultIndex
+              return (
                 <button
+                  id={`qn-search-option-${resultIndex}`}
                   key={folder.id}
-                  onClick={() => {
-                    setSelectedFolder(folder.id)
-                    setGlobalSearchOpen(false)
-                  }}
-                  className={`w-full px-3 py-2 rounded-lg flex items-center gap-3 text-left transition-colors ${
- selectedIndex === getResultIndex('folder', i)
- ? 'bg-primary-100 dark:bg-accent-soft'
-                      : 'hover:bg-surface-hover'
+                  type="button"
+                  role="option"
+                  aria-selected={selected}
+                  tabIndex={-1}
+                  onMouseEnter={() => setSelectedIndex(resultIndex)}
+                  onClick={() => selectResult(resultIndex)}
+                  className={`flex w-full items-center gap-3 rounded-control px-3 py-2 text-left transition-colors ${
+                    selected ? 'bg-accent-soft' : 'hover:bg-surface-hover'
                   }`}
                 >
-                  <Folder className="w-5 h-5" style={{ color: folder.color }} />
-                  <span className="font-medium text-content">
-                    {highlightMatch(folder.name, query)}
+                  <Folder
+                    className="h-5 w-5 shrink-0"
+                    style={{ color: folder.color }}
+                    aria-hidden="true"
+                  />
+                  <span className="min-w-0 flex-1 truncate font-medium text-content">
+                    {highlightMatch(folder.name, query.trim())}
                   </span>
-                  <ChevronRight className="w-4 h-4 text-content-subtle ml-auto" />
+                  <ChevronRight className="h-4 w-4 shrink-0 text-content-subtle" aria-hidden="true" />
                 </button>
-              ))}
-            </div>
-          )}
-          {results.tags.length > 0 && (
-            <div className="p-2 border-t border-subtle">
-              <div className="px-3 py-1.5 text-xs font-semibold text-content-muted uppercase">
-                Tags
-              </div>
-              {results.tags.map((tag, i) => (
+              )
+            })}
+          </div>
+        )}
+
+        {results.tags.length > 0 && (
+          <div
+            role="group"
+            aria-label={t('search.tags')}
+            data-label={t('search.tags')}
+            className="mx-2 mt-2 border-t border-subtle pt-2 before:block before:px-3 before:py-1.5 before:text-ui-xs before:font-semibold before:uppercase before:tracking-wider before:text-content-muted before:content-[attr(data-label)]"
+          >
+            {results.tags.map((tag, index) => {
+              const resultIndex = results.notes.length + results.folders.length + index
+              const selected = selectedIndex === resultIndex
+              return (
                 <button
+                  id={`qn-search-option-${resultIndex}`}
                   key={tag.id}
-                  onClick={() => {
-                    setSelectedTagFilter(tag.name)
-                    setGlobalSearchOpen(false)
-                  }}
-                  className={`w-full px-3 py-2 rounded-lg flex items-center gap-3 text-left transition-colors ${
- selectedIndex === getResultIndex('tag', i)
- ? 'bg-primary-100 dark:bg-accent-soft'
-                      : 'hover:bg-surface-hover'
+                  type="button"
+                  role="option"
+                  aria-selected={selected}
+                  tabIndex={-1}
+                  onMouseEnter={() => setSelectedIndex(resultIndex)}
+                  onClick={() => selectResult(resultIndex)}
+                  className={`flex w-full items-center gap-3 rounded-control px-3 py-2 text-left transition-colors ${
+                    selected ? 'bg-accent-soft' : 'hover:bg-surface-hover'
                   }`}
                 >
                   <span
-                    className="w-4 h-4 rounded-full"
+                    className="h-3 w-3 shrink-0 rounded-full"
                     style={{ backgroundColor: tag.color }}
+                    aria-hidden="true"
                   />
-                  <span className="font-medium text-content">
-                    #{highlightMatch(tag.name, query)}
+                  <span className="min-w-0 flex-1 truncate font-medium text-content">
+                    #{highlightMatch(tag.name, query.trim())}
                   </span>
-                  <ChevronRight className="w-4 h-4 text-content-subtle ml-auto" />
+                  <ChevronRight className="h-4 w-4 shrink-0 text-content-subtle" aria-hidden="true" />
                 </button>
-              ))}
+              )
+            })}
+          </div>
+        )}
+
+        {!query && (
+          <div className="p-6 text-center text-content-muted">
+            <p className="text-ui-md">{t('search.startTyping')}</p>
+            <div className="mt-4 flex flex-wrap justify-center gap-4 text-ui-xs">
+              <span>
+                <kbd className="kbd">↑↓</kbd> {t('search.navigate')}
+              </span>
+              <span>
+                <kbd className="kbd">↵</kbd> {t('search.open')}
+              </span>
+              <span>
+                <kbd className="kbd">Esc</kbd> {t('search.close')}
+              </span>
             </div>
-          )}
-          {!query && (
-            <div className="p-6 text-center text-content-muted">
-              <p className="text-sm">Start typing to search</p>
-              <div className="flex justify-center gap-4 mt-4 text-xs">
-                <span><kbd className="kbd px-1.5 py-0.5">{"\u2191\u2193"}</kbd> Navigate</span>
-                <span><kbd className="kbd px-1.5 py-0.5">{"\u21B5"}</kbd> Open</span>
-                <span><kbd className="kbd px-1.5 py-0.5">ESC</kbd> Close</span>
-              </div>
-            </div>
-          )}
-        </div>
-        {totalResults > 0 && (
-          <div className="px-4 py-2 border-t border-subtle text-xs text-content-muted flex items-center justify-between">
-            <span>{totalResults} result{totalResults !== 1 ? 's' : ''}</span>
-            <span>Ctrl+Shift+F for global search</span>
           </div>
         )}
       </div>
-    </LegacyDialog>
+    </Modal>
   )
 }

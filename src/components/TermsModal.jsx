@@ -1,89 +1,56 @@
-import { X, FileText } from 'lucide-react'
+import { FileText } from 'lucide-react'
 import { useUIStore } from '../store'
 import { useTranslation } from '../lib/useTranslation'
-import LegacyDialog from './ui/LegacyDialog'
+import { Modal } from './ui'
 
 export default function TermsModal() {
   const { termsModalOpen, setTermsModalOpen } = useUIStore()
   const { t } = useTranslation()
 
-  if (!termsModalOpen) return null
+  const sections = [
+    ['acceptance', t('terms.acceptance'), t('terms.acceptanceText')],
+    ['license', t('terms.license'), t('terms.licenseText')],
+    ['user-content', t('terms.userContent'), t('terms.userContentText')],
+    ['disclaimer', t('terms.disclaimer'), t('terms.disclaimerText')],
+    ['limitation', t('terms.limitation'), t('terms.limitationText')],
+    ['changes', t('terms.changes'), t('terms.changesText')],
+    ['contact', t('terms.contact'), t('terms.contactText')],
+  ]
 
   return (
-    <LegacyDialog label="Terms of service" onClose={() => setTermsModalOpen(false)} align="center">
-      <div className="bg-surface-raised rounded-2xl shadow-2xl border border-subtle w-full max-w-2xl mx-4 max-h-[85vh] overflow-hidden flex flex-col modal-animate">
-        <div className="flex items-center justify-between p-5 qn-banner-surface text-white">
-          <div className="flex items-center gap-3">
-            <FileText className="w-6 h-6" />
-            <div>
-              <h2 className="text-lg font-bold">{t('terms.title')}</h2>
-              <p className="text-sm text-white/70">Usage terms and conditions</p>
-            </div>
-          </div>
-          <button
-            onClick={() => setTermsModalOpen(false)}
-            className="p-2 rounded-full hover:bg-white/20 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+    <Modal
+      open={termsModalOpen}
+      onClose={() => setTermsModalOpen(false)}
+      title={t('terms.title')}
+      description="Usage terms and conditions"
+      icon={FileText}
+      size="xl"
+      bodyClassName="!overflow-hidden p-0 sm:p-0"
+    >
+      <article
+        role="region"
+        aria-label={t('terms.title')}
+        tabIndex={0}
+        className="h-full overflow-y-auto overscroll-contain px-5 py-5 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--qn-focus-ring)] sm:px-6"
+      >
+        <p className="mb-6 text-ui-sm text-content-muted">
+          {t('terms.lastUpdated')}: August 1, 2026
+        </p>
+
+        <div className="space-y-6">
+          {sections.map(([id, heading, content]) => (
+            <section key={id} aria-labelledby={`qn-terms-${id}`}>
+              <h3
+                id={`qn-terms-${id}`}
+                className="text-title-xs font-semibold text-content"
+              >
+                {heading}
+              </h3>
+              <p className="mt-2 text-ui-md leading-relaxed text-content-muted">{content}</p>
+            </section>
+          ))}
         </div>
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="prose dark:prose-invert max-w-none">
-            <p className="text-content-muted mb-6">
-              {t('terms.lastUpdated')}: December 2024
-            </p>
-
-            <h3 className="text-lg font-semibold text-content mt-6 mb-3">
-              {t('terms.acceptance')}
-            </h3>
-            <p className="text-content-muted mb-4">
-              {t('terms.acceptanceText')}
-            </p>
-
-            <h3 className="text-lg font-semibold text-content mt-6 mb-3">
-              {t('terms.license')}
-            </h3>
-            <p className="text-content-muted mb-4">
-              {t('terms.licenseText')}
-            </p>
-
-            <h3 className="text-lg font-semibold text-content mt-6 mb-3">
-              {t('terms.userContent')}
-            </h3>
-            <p className="text-content-muted mb-4">
-              {t('terms.userContentText')}
-            </p>
-
-            <h3 className="text-lg font-semibold text-content mt-6 mb-3">
-              {t('terms.disclaimer')}
-            </h3>
-            <p className="text-content-muted mb-4">
-              {t('terms.disclaimerText')}
-            </p>
-
-            <h3 className="text-lg font-semibold text-content mt-6 mb-3">
-              {t('terms.limitation')}
-            </h3>
-            <p className="text-content-muted mb-4">
-              {t('terms.limitationText')}
-            </p>
-
-            <h3 className="text-lg font-semibold text-content mt-6 mb-3">
-              {t('terms.changes')}
-            </h3>
-            <p className="text-content-muted mb-4">
-              {t('terms.changesText')}
-            </p>
-
-            <h3 className="text-lg font-semibold text-content mt-6 mb-3">
-              {t('terms.contact')}
-            </h3>
-            <p className="text-content-muted mb-4">
-              {t('terms.contactText')}
-            </p>
-          </div>
-        </div>
-      </div>
-    </LegacyDialog>
+      </article>
+    </Modal>
   )
 }

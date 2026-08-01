@@ -1,6 +1,7 @@
-import { useState, useRef, useEffect } from 'react'
-import { Filter, Calendar, Type, FileText, Clock, ChevronDown, Check, GripVertical } from 'lucide-react'
+import { useRef, useState } from 'react'
+import { Filter, Calendar, Type, FileText, Clock, Check, GripVertical } from 'lucide-react'
 import { useTranslation } from '../lib/useTranslation'
+import { IconButton, Menu, MenuItem, MenuLabel } from './ui'
 const SORT_OPTION_IDS = [
   { id: 'manual', labelKey: 'sort.manual', icon: GripVertical, field: 'order', order: 'asc' },
   { id: 'updated-desc', labelKey: 'sort.lastModified', icon: Clock, field: 'updatedAt', order: 'desc' },
@@ -17,20 +18,9 @@ const SORT_OPTIONS = SORT_OPTION_IDS
 export default function SortDropdown({ currentSort, onSortChange }) {
   const { t } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
-  const dropdownRef = useRef(null)
+  const triggerRef = useRef(null)
 
   const currentOption = SORT_OPTION_IDS.find((o) => o.id === currentSort) || SORT_OPTION_IDS[0]
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false)
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
 
   const handleSelect = (option) => {
     onSortChange(option.id)
@@ -38,44 +28,42 @@ export default function SortDropdown({ currentSort, onSortChange }) {
   }
 
   return (
-    <div className="relative" ref={dropdownRef}>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1 p-2 text-sm text-content-muted transition-colors rounded-lg dark:text-content-subtle hover:text-content dark:hover:text-white hover:bg-surface-sunken dark:hover:bg-surface-sunken"
-        title={`${t('sort.sortBy')}: ${t(currentOption.labelKey)}`}
-        aria-label={`${t('sort.sortBy')}: ${t(currentOption.labelKey)}`}
+    <>
+      <IconButton
+        ref={triggerRef}
+        icon={Filter}
+        label={`${t('sort.sortBy')}: ${t(currentOption.labelKey)}`}
+        active={isOpen}
+        aria-haspopup="menu"
         aria-expanded={isOpen}
+        onClick={() => setIsOpen((open) => !open)}
+      />
+      <Menu
+        open={isOpen}
+        onClose={() => setIsOpen(false)}
+        anchorRef={triggerRef}
+        placement="bottom-end"
+        label={t('sort.sortBy')}
+        width={240}
       >
-        <Filter className="w-4 h-4" />
-        <span className="sr-only">{t(currentOption.labelKey)}</span>
-        <ChevronDown className={`w-3 h-3 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
-
-      {isOpen && (
-        <div className="absolute right-0 z-50 w-56 py-1.5 mt-1.5 bg-white border border-subtle rounded-2xl shadow-xl shadow-black/5 dark:shadow-black/20 dark:bg-surface-sunken backdrop-blur-xl">
-          <div className="px-3 py-2 border-b border-subtle">
-            <p className="text-xs font-medium text-content-muted uppercase dark:text-content-subtle">
-              {t('sort.sortBy')}
-            </p>
-          </div>
-          {SORT_OPTION_IDS.map((option) => (
-            <button
-              key={option.id}
-              onClick={() => handleSelect(option)}
-              className={`w-full flex items-center gap-3 px-3 py-2 text-sm transition-colors ${
- currentSort === option.id
- ? 'bg-primary-50 dark:bg-accent-soft text-accent-text dark:text-primary-400'
-                  : 'text-content-muted hover:bg-surface-sunken dark:hover:bg-surface-raised'
-              }`}
-            >
-              <option.icon className="w-4 h-4" />
-              <span className="flex-1 text-left">{t(option.labelKey)}</span>
-              {currentSort === option.id && <Check className="w-4 h-4" />}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+        <MenuLabel>{t('sort.sortBy')}</MenuLabel>
+        {SORT_OPTION_IDS.map((option) => (
+          <MenuItem
+            key={option.id}
+            icon={option.icon}
+            selected={currentSort === option.id}
+            trailing={
+              currentSort === option.id ? (
+                <Check className="h-4 w-4 shrink-0" aria-hidden="true" />
+              ) : null
+            }
+            onClick={() => handleSelect(option)}
+          >
+            {t(option.labelKey)}
+          </MenuItem>
+        ))}
+      </Menu>
+    </>
   )
 }
 export function sortNotes(notes, sortOption) {

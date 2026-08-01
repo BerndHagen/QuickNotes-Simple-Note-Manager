@@ -39,6 +39,13 @@ import HTMLEditorModal from './HTMLEditorModal'
 import { formatDate, debounce } from '../lib/utils'
 import { useTranslation } from '../lib/useTranslation'
 import { saveNoteVersion } from '../lib/db'
+import {
+  advanceVersionCheckpoint,
+  createVersionCheckpointTracker,
+  createVersionSnapshot,
+  versionSnapshotsEqual,
+} from '../lib/versionCheckpoints'
+import { insertTextIntoActiveField } from '../lib/textFieldInsertion'
 import { useRealtimeCollaboration } from '../lib/useCollaboration'
 import { getFolderIcon } from '../lib/folderIcons'
 import { MAX_NOTE_TITLE_LENGTH, MAX_TAG_NAME_LENGTH } from '../lib/dataValidation'
@@ -114,7 +121,9 @@ export default function NoteEditor({ onBack, showBack = false }) {
   const tagButtonRef = useRef(null)
   const folderButtonRef = useRef(null)
   const titleInputRef = useRef(null)
-  const lastNoteDataRef = useRef(null)
+  const versionTrackerRef = useRef(null)
+  const versionBaselineRef = useRef(null)
+  const lastExternalVersionTokenRef = useRef(0)
 
   const { theme } = useThemeStore()
   const isDarkMode =
@@ -141,17 +150,15 @@ export default function NoteEditor({ onBack, showBack = false }) {
     () => hasSpecializedEditor(noteType) ? normalizeNoteData(noteType, noteData) : noteData,
     [noteType, noteData]
   )
+  versionBaselineRef.current = createVersionSnapshot(note, {
+    title,
+    noteData: hasSpecializedEditor(noteType) ? normalizedNoteData : note?.noteData,
+  })
 
   useEffect(() => {
     if (!noteId) return
-    setTitle(noteTitle || '')
-    if (hasSpecializedEditor(noteType) && normalizedNoteData) {
-      lastNoteDataRef.current = normalizedNoteData
-    }
-    // Intentionally keyed on the note id only: re-running on every
-    // keystroke would fight the controlled title input.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [noteId])
+    versionTrackerRef.current = createVersionCheckpointTracker(versionBaselineRef.current)
+  }, [noteId, noteType])
 
   /**
    * A collaborator's change arrived for the note we are viewing.
@@ -162,41 +169,94 @@ export default function NoteEditor({ onBack, showBack = false }) {
   const isExternalUpdate = externalUpdate.noteId === noteId && externalUpdate.token > 0
 
   useEffect(() => {
-    if (isExternalUpdate && noteTitle !== undefined) setTitle(noteTitle || '')
-  }, [externalUpdate.token, isExternalUpdate, noteTitle])
+    if (noteTitle !== undefined) setTitle(noteTitle || '')
+  }, [noteId, noteTitle])
+
+  useEffect(() => {
+    const tracker = versionTrackerRef.current
+    const baseline = versionBaselineRef.current
+    if (
+      !noteId ||
+      tracker?.latest?.id !== noteId ||
+      versionSnapshotsEqual(tracker.latest, baseline)
+    ) return
+    versionTrackerRef.current = createVersionCheckpointTracker(baseline)
+  }, [noteId, noteType, noteTitle, note?.content, noteData, title])
+
+  useEffect(() => {
+    if (
+      !isExternalUpdate ||
+      lastExternalVersionTokenRef.current === externalUpdate.token
+    ) return
+    lastExternalVersionTokenRef.current = externalUpdate.token
+    versionTrackerRef.current = createVersionCheckpointTracker(versionBaselineRef.current)
+  }, [externalUpdate.token, isExternalUpdate])
+
+  const recordVersionChange = (updates) => {
+    if (!note || (note.isShared && note.sharePermission === 'view')) return
+
+    const initialSnapshot = versionBaselineRef.current
+    const currentTracker = versionTrackerRef.current || createVersionCheckpointTracker(initialSnapshot)
+    const nextSnapshot = createVersionSnapshot(currentTracker.latest, updates)
+    const result = advanceVersionCheckpoint(currentTracker, nextSnapshot)
+    versionTrackerRef.current = result.tracker
+
+    if (!result.checkpoint) return
+    const checkpoint = result.checkpoint
+    void saveNoteVersion(
+      checkpoint.id,
+      checkpoint.content,
+      checkpoint.title,
+      checkpoint.noteData,
+      checkpoint.noteType
+    ).catch(() => {
+      toast.error(t('editor.versionSaveFailed', 'Could not create a recovery checkpoint'))
+    })
+  }
 
   const debouncedTitleUpdate = useMemo(
     () =>
-      debounce(async (id, newTitle) => {
+      debounce(async (id, newTitle, previousTitle) => {
         try {
           await updateNote(id, { title: newTitle })
         } catch {
+          setTitle((currentTitle) => currentTitle === newTitle ? previousTitle : currentTitle)
           toast.error(t('editor.titleSaveFailed', 'Could not save the title'))
         }
       }, 400),
     [updateNote, t]
   )
 
+  const debouncedNoteDataUpdate = useMemo(
+    () =>
+      debounce(async (id, newData) => {
+        try {
+          await updateNote(id, { noteData: newData })
+        } catch {
+          toast.error(t('editor.contentSaveFailed', 'Could not save your changes'))
+        }
+      }, 400),
+    [t, updateNote]
+  )
+
   const handleTitleChange = (e) => {
     const newTitle = e.target.value
+    recordVersionChange({ title: newTitle })
     setTitle(newTitle)
-    if (noteId) debouncedTitleUpdate(noteId, newTitle)
+    if (noteId) debouncedTitleUpdate(noteId, newTitle, noteTitle || '')
   }
 
   useEffect(() => {
     return () => {
-      // A note switch must not let the next note's keystroke cancel this
-      // note's pending title write.
+      // A note switch must not let the next note's edits cancel pending writes.
       debouncedTitleUpdate.flush()
+      debouncedNoteDataUpdate.flush()
     }
-  }, [noteId, debouncedTitleUpdate])
+  }, [debouncedNoteDataUpdate, debouncedTitleUpdate, noteId])
 
   const handleContentChange = async (content) => {
     if (!note) return
-    const oldContent = note.content || ''
-    if (Math.abs(content.length - oldContent.length) > 100) {
-      saveNoteVersion(note.id, oldContent, note.title, null, note.noteType)
-    }
+    recordVersionChange({ content })
     try {
       await updateNote(note.id, { content })
     } catch {
@@ -205,7 +265,9 @@ export default function NoteEditor({ onBack, showBack = false }) {
   }
 
   const handleContentDraft = (content) => {
-    if (note?.id) updateNoteDraft(note.id, { content })
+    if (!note?.id) return
+    recordVersionChange({ content })
+    updateNoteDraft(note.id, { content })
   }
 
   const handleDelete = () => {
@@ -535,16 +597,9 @@ export default function NoteEditor({ onBack, showBack = false }) {
                       isReadOnly
                         ? () => {}
                         : (newData) => {
-                            const oldData = lastNoteDataRef.current
-                            if (oldData) {
-                              const delta =
-                                JSON.stringify(newData).length - JSON.stringify(oldData).length
-                              if (Math.abs(delta) > 100) {
-                                saveNoteVersion(note.id, '', note.title, oldData, note.noteType)
-                              }
-                            }
-                            lastNoteDataRef.current = newData
-                            updateNote(note.id, { noteData: newData })
+                            recordVersionChange({ noteData: newData, title })
+                            updateNoteDraft(note.id, { noteData: newData })
+                            debouncedNoteDataUpdate(note.id, newData)
                           }
                     }
                     noteTitle={title}
@@ -765,13 +820,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
               return
             }
             const activeEl = document.activeElement
-            if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) {
-              const start = activeEl.selectionStart ?? activeEl.value.length
-              const end = activeEl.selectionEnd ?? activeEl.value.length
-              activeEl.value = `${activeEl.value.slice(0, start)}${text} ${activeEl.value.slice(end)}`
-              activeEl.selectionStart = activeEl.selectionEnd = start + text.length + 1
-              activeEl.dispatchEvent(new Event('input', { bubbles: true }))
-            } else {
+            if (!activeEl || !insertTextIntoActiveField(text)) {
               toast(t('editor.voiceHint', 'Click into a text field first, then speak'))
             }
           }}

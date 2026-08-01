@@ -1,5 +1,4 @@
-import { useMemo, useState, useEffect, useRef } from 'react'
-import { createPortal } from 'react-dom'
+import { lazy, Suspense, useMemo, useState, useEffect, useRef } from 'react'
 import {
   Plus,
   Search,
@@ -11,134 +10,23 @@ import {
   FolderInput,
   PinOff,
   StarOff,
-  ChevronRight,
   FileText,
-  ArrowLeft
+  ArrowLeft,
+  MoreHorizontal,
 } from 'lucide-react'
 import { useNotesStore, useUIStore } from '../store'
 import { formatDate, htmlToPlainText, truncateText, getNoteTypePreview } from '../lib/utils'
+import { filterNotes } from '../lib/filterNotes'
 import { useTranslation } from '../lib/useTranslation'
 import SortDropdown, { sortNotes } from './SortDropdown'
-import NoteEditor from './NoteEditor'
 import { ConfirmDialog } from './FolderDialogs'
+import { Button, IconButton, Input, Menu, MenuItem, MenuLabel, MenuSeparator, Spinner } from './ui'
 
-function NoteContextMenu({ x, y, note, onClose, onRequestDelete, folders, tags }) {
-  const menuRef = useRef(null)
-  const folderButtonRef = useRef(null)
-  const submenuRef = useRef(null)
-  const hoverTimeoutRef = useRef(null)
+const NoteEditor = lazy(() => import('./NoteEditor'))
+
+function NoteContextMenu({ point, note, onClose, onRequestDelete, folders }) {
   const { toggleStar, togglePin, duplicateNote, deleteNote, updateNote } = useNotesStore()
   const { confirmBeforeDelete } = useUIStore()
-  const { t } = useTranslation()
-  const [showFolderMenu, setShowFolderMenu] = useState(false)
-  const [position, setPosition] = useState({ x, y })
-  const [submenuPosition, setSubmenuPosition] = useState({ x: 0, y: 0, openLeft: false })
-  const [maxHeight, setMaxHeight] = useState('auto')
-
-  useEffect(() => {
-    return () => {
-      if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current)
-    }
-  }, [])
-
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      const clickedInMenu = menuRef.current?.contains(e.target)
-      const clickedInSubmenu = submenuRef.current?.contains(e.target)
-      if (!clickedInMenu && !clickedInSubmenu) {
-        onClose()
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [onClose])
-
-  useEffect(() => {
-    if (menuRef.current) {
-      const rect = menuRef.current.getBoundingClientRect()
-      const padding = 10
-      const bottomPadding = 60
-      
-      let adjustedX = x
-      let adjustedY = y
-      let calculatedMaxHeight = 'auto'
-
-      if (x + rect.width > window.innerWidth - padding) {
-        adjustedX = window.innerWidth - rect.width - padding
-      }
-      if (adjustedX < padding) adjustedX = padding
-
-      const spaceBelow = window.innerHeight - y - bottomPadding
-      const spaceAbove = y - padding
-      
-      if (rect.height > spaceBelow) {
-        if (spaceAbove > spaceBelow && spaceAbove >= rect.height) {
-          adjustedY = y - rect.height
-        } else {
-          if (spaceAbove > spaceBelow) {
-            calculatedMaxHeight = `${spaceAbove - padding}px`
-            adjustedY = padding
-          } else {
-            calculatedMaxHeight = `${spaceBelow - padding}px`
-            adjustedY = y
-          }
-        }
-      }
-      
-      if (adjustedY < padding) adjustedY = padding
-
-      setPosition({ x: adjustedX, y: adjustedY })
-      setMaxHeight(calculatedMaxHeight)
-    }
-  }, [x, y])
-
-  useEffect(() => {
-    if (showFolderMenu && folderButtonRef.current) {
-      const buttonRect = folderButtonRef.current.getBoundingClientRect()
-      const menuRect = menuRef.current?.getBoundingClientRect()
-      const padding = 10
-      const submenuWidth = 160
-      const submenuHeight = Math.min(300, (folders.length + 1) * 36 + 8)
-      
-      const spaceRight = window.innerWidth - (menuRect?.right || buttonRect.right) - padding
-      const spaceLeft = (menuRect?.left || buttonRect.left) - padding
-      const openLeft = spaceRight < submenuWidth && spaceLeft >= submenuWidth
-      
-      let subX = openLeft 
-        ? (menuRect?.left || buttonRect.left) - submenuWidth 
-        : (menuRect?.right || buttonRect.right)
-      
-      let subY = buttonRect.top
-      const bottomPadding = 60
-      if (subY + submenuHeight > window.innerHeight - bottomPadding) {
-        subY = window.innerHeight - bottomPadding - submenuHeight
-      }
-      if (subY < padding) subY = padding
-      
-      setSubmenuPosition({ x: subX, y: subY, openLeft })
-    }
-  }, [showFolderMenu, folders.length])
-
-  const handleFolderButtonEnter = () => {
-    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current)
-    setShowFolderMenu(true)
-  }
-
-  const handleFolderButtonLeave = () => {
-    hoverTimeoutRef.current = setTimeout(() => {
-      setShowFolderMenu(false)
-    }, 150)
-  }
-
-  const handleSubmenuEnter = () => {
-    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current)
-  }
-
-  const handleSubmenuLeave = () => {
-    hoverTimeoutRef.current = setTimeout(() => {
-      setShowFolderMenu(false)
-    }, 150)
-  }
 
   const handleAction = (action) => {
     action()
@@ -146,104 +34,66 @@ function NoteContextMenu({ x, y, note, onClose, onRequestDelete, folders, tags }
   }
 
   return (
-    <div
-      ref={menuRef}
-      className="fixed z-[9999] bg-surface-raised rounded-2xl shadow-xl shadow-black/5 dark:shadow-black/20 border border-subtle py-1.5 min-w-[200px] backdrop-blur-xl overflow-y-auto float-up"
-      style={{ left: position.x, top: position.y, maxHeight: maxHeight }}
+    <Menu
+      open
+      point={point}
+      onClose={onClose}
+      label={`Actions for ${note.title || 'Untitled note'}`}
+      width={224}
     >
-      <button
+      <MenuItem
+        icon={note.pinned ? PinOff : Pin}
         onClick={() => handleAction(() => togglePin(note.id))}
-        className="flex items-center w-[calc(100%-12px)] gap-3 mx-1.5 px-3 py-2.5 text-sm text-content hover:bg-surface-sunken dark:hover:bg-surface-sunken dark:text-content-subtle transition-colors rounded-lg"
       >
-        {note.pinned ? <PinOff className="w-4 h-4 text-content-subtle" /> : <Pin className="w-4 h-4 text-content-subtle" />}
-        <span>{note.pinned ? 'Unpin' : 'Pin to Top'}</span>
-      </button>
-      <button
+        {note.pinned ? 'Unpin' : 'Pin to top'}
+      </MenuItem>
+      <MenuItem
+        icon={note.starred ? StarOff : Star}
         onClick={() => handleAction(() => toggleStar(note.id))}
-        className="flex items-center w-[calc(100%-12px)] gap-3 mx-1.5 px-3 py-2.5 text-sm text-content hover:bg-surface-sunken dark:hover:bg-surface-sunken dark:text-content-subtle transition-colors rounded-lg"
       >
-        {note.starred ? <StarOff className="w-4 h-4 text-content-subtle" /> : <Star className="w-4 h-4 text-content-subtle" />}
-        <span>{note.starred ? 'Remove from Favorites' : 'Add to Favorites'}</span>
-      </button>
-      
-      <div className="my-1.5 mx-3 border-t border-subtle dark:border-subtle" />
-      
-      <button
+        {note.starred ? 'Remove from favorites' : 'Add to favorites'}
+      </MenuItem>
+      <MenuSeparator />
+      <MenuItem
+        icon={Copy}
         onClick={() => handleAction(() => duplicateNote(note.id))}
-        className="flex items-center w-[calc(100%-12px)] gap-3 mx-1.5 px-3 py-2.5 text-sm text-content hover:bg-surface-sunken dark:hover:bg-surface-sunken dark:text-content-subtle transition-colors rounded-lg"
       >
-        <Copy className="w-4 h-4 text-content-subtle" />
-        <span>Duplicate</span>
-      </button>
-
-      <div 
-        className="relative mx-1.5"
-        onMouseEnter={handleFolderButtonEnter}
-        onMouseLeave={handleFolderButtonLeave}
+        Duplicate
+      </MenuItem>
+      <MenuLabel>Move to folder</MenuLabel>
+      <MenuItem
+        icon={FolderInput}
+        selected={!note.folderId}
+        onClick={() => handleAction(() => updateNote(note.id, { folderId: null }))}
       >
-        <button
-          ref={folderButtonRef}
-          onClick={() => setShowFolderMenu(!showFolderMenu)}
-          className={`flex items-center justify-between w-full px-3 py-2.5 text-sm text-content hover:bg-surface-sunken dark:hover:bg-surface-sunken dark:text-content-subtle transition-colors rounded-lg ${showFolderMenu ? 'bg-surface-sunken dark:bg-surface-sunken' : ''}`}
+        No folder
+      </MenuItem>
+      {folders.map((folder) => (
+        <MenuItem
+          key={folder.id}
+          selected={note.folderId === folder.id}
+          onClick={() => handleAction(() => updateNote(note.id, { folderId: folder.id }))}
         >
-          <div className="flex items-center gap-3">
-            <FolderInput className="w-4 h-4 text-content-subtle" />
-            <span>Move to Folder</span>
-          </div>
-          <ChevronRight className={`w-4 h-4 text-content-subtle transition-transform ${submenuPosition.openLeft ? 'rotate-180' : ''}`} />
-        </button>
-        {showFolderMenu && createPortal(
-          <div 
-            ref={submenuRef}
-            onMouseEnter={handleSubmenuEnter}
-            onMouseLeave={handleSubmenuLeave}
-            className="fixed bg-surface-raised rounded-2xl shadow-xl shadow-black/5 dark:shadow-black/20 border border-subtle py-1.5 min-w-[160px] max-h-[300px] overflow-y-auto z-[10000] backdrop-blur-xl"
-            style={{
-              left: submenuPosition.x,
-              top: submenuPosition.y,
-            }}
-          >
-            <button
-              onClick={() => handleAction(() => updateNote(note.id, { folderId: null }))}
-              className={`w-[calc(100%-12px)] mx-1.5 px-3 py-2.5 text-left text-sm hover:bg-surface-sunken dark:hover:bg-surface-sunken transition-colors rounded-lg ${
- !note.folderId ? 'text-emerald-600 dark:text-emerald-400' : 'text-content-muted'
- }`}
-            >
-              No Folder
-            </button>
-            {folders.map((folder) => (
-              <button
-                key={folder.id}
-                onClick={() => handleAction(() => updateNote(note.id, { folderId: folder.id }))}
-                className={`w-[calc(100%-12px)] mx-1.5 px-3 py-2.5 text-left text-sm hover:bg-surface-sunken dark:hover:bg-surface-sunken transition-colors rounded-lg ${
- note.folderId === folder.id ? 'text-emerald-600 dark:text-emerald-400' : 'text-content-muted'
- }`}
-              >
-                {folder.name}
-              </button>
-            ))}
-          </div>,
-          document.body
-        )}
-      </div>
-      
-      <div className="my-1.5 mx-3 border-t border-subtle dark:border-subtle" />
-      
-      <button
+          {folder.name}
+        </MenuItem>
+      ))}
+      <MenuSeparator />
+      <MenuItem
+        icon={Trash2}
+        tone="danger"
         onClick={() => handleAction(() => {
           if (confirmBeforeDelete) onRequestDelete(note)
           else deleteNote(note.id)
         })}
-        className="flex items-center w-[calc(100%-12px)] gap-3 mx-1.5 px-3 py-2.5 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 dark:text-red-400 transition-colors rounded-lg"
       >
-        <Trash2 className="w-4 h-4" />
-        <span>Delete</span>
-      </button>
-    </div>
+        Move to trash
+      </MenuItem>
+    </Menu>
   )
 }
 
-function GridNoteCard({ note, isSelected, onClick, onContextMenu }) {
+function GridNoteCard({ note, isSelected, onClick, onOpenMenu }) {
+  const cardRef = useRef(null)
   const { tags } = useNotesStore()
   const { toggleStar } = useNotesStore()
   const { language } = useTranslation()
@@ -253,62 +103,88 @@ function GridNoteCard({ note, isSelected, onClick, onContextMenu }) {
     if (specialPreview) return specialPreview
     const plainText = htmlToPlainText(note.content)
     return truncateText(plainText, 150)
-  }, [note.content, note.noteType, note.noteData])
+  }, [note])
 
   const getTagColor = (tagName) => {
     const tag = tags.find((t) => t.name === tagName)
     return tag?.color || '#6b7280'
   }
 
+  const openMenuAtCard = () => {
+    const rect = cardRef.current?.getBoundingClientRect()
+    if (!rect) return
+    onOpenMenu({ x: rect.right - 12, y: rect.top + 40 })
+  }
+
   return (
-    <div
-      onClick={onClick}
-      onContextMenu={onContextMenu}
-      className={`group relative flex flex-col p-4 bg-surface-raised rounded-2xl border cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 ${
- isSelected
- ? 'border-emerald-500/60 ring-2 ring-emerald-500/20 shadow-md'
-          : 'border-subtle hover:border-emerald-200 dark:hover:border-emerald-800'
+    <article
+      ref={cardRef}
+      onContextMenu={(event) => {
+        event.preventDefault()
+        onOpenMenu({ x: event.clientX, y: event.clientY })
+      }}
+      className={`group relative flex min-h-48 flex-col rounded-card border bg-surface-raised p-4 shadow-xs transition-[border-color,box-shadow,transform] duration-fast hover:-translate-y-0.5 hover:shadow-md ${
+        isSelected
+          ? 'border-accent ring-2 ring-[var(--qn-accent-soft)]'
+          : 'border-subtle hover:border-strong'
       }`}
     >
+      <button
+        type="button"
+        onClick={onClick}
+        onKeyDown={(event) => {
+          if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
+            event.preventDefault()
+            openMenuAtCard()
+          }
+        }}
+        aria-label={`Open ${note.title || 'Untitled note'}`}
+        aria-current={isSelected ? 'true' : undefined}
+        className="absolute inset-0 z-0 rounded-card outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--qn-focus-ring)]"
+      />
       {note.pinned && (
-        <div className="absolute -top-1 -right-1">
-          <Pin className="w-4 h-4 text-primary-500 fill-primary-500" />
-        </div>
+        <Pin
+          className="pointer-events-none absolute -right-1 -top-1 z-10 h-4 w-4 fill-accent text-accent-text"
+          aria-label="Pinned"
+        />
       )}
-      <div className="flex items-start justify-between gap-2 mb-2">
-        <h3 className="flex-1 font-semibold text-content line-clamp-2">
+      <div className="pointer-events-none relative z-10 mb-2 flex items-start justify-between gap-2">
+        <h3 className="line-clamp-2 flex-1 font-semibold text-content">
           {note.title}
         </h3>
-        <button
-          onClick={(e) => {
-            e.stopPropagation()
-            toggleStar(note.id)
-          }}
-          className="p-1 transition-opacity rounded opacity-0 group-hover:opacity-100 hover:bg-surface-hover"
-        >
-          <Star
-            className={`w-4 h-4 ${
- note.starred
- ? 'fill-yellow-400 text-yellow-400'
-                : 'text-content-subtle'
-            }`}
+        <div className="pointer-events-auto -mr-1 -mt-1 flex items-center">
+          <IconButton
+            icon={Star}
+            size="sm"
+            label={note.starred ? 'Remove from favorites' : 'Add to favorites'}
+            active={note.starred}
+            onClick={() => toggleStar(note.id)}
+            className={note.starred ? '' : 'opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100'}
           />
-        </button>
+          <IconButton
+            icon={MoreHorizontal}
+            size="sm"
+            label={`More actions for ${note.title || 'Untitled note'}`}
+            onClick={openMenuAtCard}
+            className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
+          />
+        </div>
       </div>
-      <p className="flex-1 mb-3 text-sm text-content-muted line-clamp-4">
+      <p className="pointer-events-none relative z-10 mb-3 flex-1 text-sm text-content-muted line-clamp-4">
         {preview || 'No content'}
       </p>
       {note.tags && note.tags.length > 0 && (
-        <div className="flex flex-wrap gap-1 mb-3">
+        <div className="pointer-events-none relative z-10 mb-3 flex flex-wrap gap-1">
           {note.tags.slice(0, 3).map((tag) => (
             <span
               key={tag}
-              className="px-1.5 py-0.5 rounded text-[10px] font-medium"
-              style={{
-                backgroundColor: `${getTagColor(tag)}20`,
-                color: getTagColor(tag),
-              }}
+              className="inline-flex items-center gap-1 rounded bg-surface-sunken px-1.5 py-0.5 text-[10px] font-medium text-content-muted"
             >
+              <span
+                className="h-1.5 w-1.5 rounded-full"
+                style={{ backgroundColor: getTagColor(tag) }}
+                aria-hidden="true"
+              />
               #{tag}
             </span>
           ))}
@@ -319,11 +195,11 @@ function GridNoteCard({ note, isSelected, onClick, onContextMenu }) {
           )}
         </div>
       )}
-      <div className="flex items-center gap-2 pt-2 text-xs text-emerald-600 border-t border-subtle dark:text-emerald-400">
-        <Clock className="w-3 h-3" />
+      <div className="pointer-events-none relative z-10 flex items-center gap-2 border-t border-subtle pt-2 text-xs text-content-subtle">
+        <Clock className="h-3 w-3" aria-hidden="true" />
         <span>{formatDate(note.updatedAt, language)}</span>
       </div>
-    </div>
+    </article>
   )
 }
 
@@ -331,7 +207,6 @@ export default function NotesGrid({ sidebarToggle }) {
   const {
     notes,
     folders,
-    tags,
     selectedNoteId,
     selectedFolderId,
     selectedTagFilter,
@@ -356,39 +231,17 @@ export default function NotesGrid({ sidebarToggle }) {
   }, [selectedNoteId])
 
   const filteredNotes = useMemo(() => {
-    let result = notes.filter((note) => !note.deleted && !note.archived)
-
-    if (selectedTagFilter === '__starred__') {
-      result = result.filter((note) => note.starred)
-    } else if (selectedTagFilter) {
-      result = result.filter((note) => note.tags?.includes(selectedTagFilter))
-    }
-
-    if (selectedFolderId) {
-      result = result.filter((note) => note.folderId === selectedFolderId)
-    }
-
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase()
-      result = result.filter(
-        (note) =>
-          note.title.toLowerCase().includes(query) ||
-          htmlToPlainText(note.content).toLowerCase().includes(query) ||
-          note.tags?.some((tag) => tag.toLowerCase().includes(query))
-      )
-    }
-
+    const result = filterNotes(notes, {
+      folderId: selectedFolderId,
+      tagFilter: selectedTagFilter,
+      query: searchQuery,
+    })
     return sortNotes(result, currentSort)
   }, [notes, selectedFolderId, selectedTagFilter, searchQuery, currentSort])
 
   const handleNoteClick = (note) => {
     setSelectedNote(note.id)
     setShowingEditor(true)
-  }
-
-  const handleContextMenu = (e, note) => {
-    e.preventDefault()
-    setContextMenu({ x: e.clientX, y: e.clientY, note })
   }
 
   const handleBackToGrid = () => {
@@ -418,54 +271,69 @@ export default function NotesGrid({ sidebarToggle }) {
   if (showingEditor && selectedNoteId) {
     return (
       <div className="flex flex-col w-full h-full">
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-subtle bg-white/80 dark:bg-surface-sunken backdrop-blur-sm">
-          <button
+        <div className="flex items-center gap-2 border-b border-subtle bg-surface-raised/95 px-3 py-3 backdrop-blur-sm sm:gap-3 sm:px-4">
+          {!sidebarOpen && sidebarToggle}
+          <Button
+            size="sm"
+            variant="ghost"
+            icon={ArrowLeft}
             onClick={handleBackToGrid}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-content-muted hover:text-content dark:hover:text-white hover:bg-surface-hover rounded-lg transition-colors"
           >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Grid
-          </button>
-          <span className="text-sm text-content-subtle">|</span>
-          <span className="text-sm text-content-muted">{getTitle()}</span>
+            Back to grid
+          </Button>
+          <span className="h-4 w-px bg-[var(--qn-border)]" aria-hidden="true" />
+          <span className="truncate text-sm text-content-muted">{getTitle()}</span>
         </div>
         <div className="flex-1 min-h-0">
-          <NoteEditor />
+          <Suspense
+            fallback={
+              <div className="flex min-h-0 flex-1 items-center justify-center bg-surface-raised">
+                <Spinner label="Loading the editor" />
+              </div>
+            }
+          >
+            <NoteEditor />
+          </Suspense>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col w-full h-full bg-white">
-      <div className="z-20 flex-shrink-0 px-6 py-4 border-b border-subtle bg-white">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className={`pl-10 text-[15px] font-bold tracking-tight text-content ${sidebarOpen ? 'md:pl-0' : ''} dark:text-white`}>
-            {getTitle()}
-          </h2>
-          <div className="flex items-center gap-2">
+    <main className="flex h-full w-full flex-col bg-surface-base">
+      <header className="z-20 flex-shrink-0 border-b border-subtle bg-surface-raised px-4 py-4 sm:px-6">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-2">
+            {!sidebarOpen && sidebarToggle}
+            <h2 className="truncate text-[15px] font-bold tracking-tight text-content">
+              {getTitle()}
+            </h2>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
             <SortDropdown currentSort={currentSort} onSortChange={setCurrentSort} />
-            <button
+            <Button
+              size="sm"
+              variant="primary"
+              icon={Plus}
               onClick={handleCreateNote}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white transition-all rounded-xl shadow-md shadow-emerald-500/15 qn-banner-surface hover:from-emerald-500 hover:to-teal-500 active:scale-[0.98]"
             >
-              <Plus className="w-4 h-4" />
-              New Note
-            </button>
+              <span className="hidden sm:inline">New note</span>
+              <span className="sr-only sm:hidden">New note</span>
+            </Button>
           </div>
         </div>
         <div className="relative max-w-md">
-          <Search className="absolute w-4 h-4 text-content-subtle -translate-y-1/2 left-3 top-1/2" />
-          <input
-            type="text"
+          <Search className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-content-subtle" aria-hidden="true" />
+          <Input
             placeholder={t('notes.searchPlaceholder')}
+            aria-label={t('notes.searchPlaceholder')}
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full py-2.5 pl-10 pr-4 text-[13px] text-content placeholder:text-content-subtle bg-surface-sunken border border-subtle rounded-xl dark:bg-surface-sunken dark:border-subtle/60 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:text-white transition-all"
+            onChange={(event) => setSearchQuery(event.target.value)}
+            className="bg-surface-sunken pl-9"
           />
         </div>
-      </div>
-      <div className="flex-1 min-h-0 p-6 overflow-y-auto">
+      </header>
+      <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
         {filteredNotes.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <div className="flex items-center justify-center w-20 h-20 mb-5 rounded-2xl bg-surface-sunken">
@@ -475,12 +343,14 @@ export default function NotesGrid({ sidebarToggle }) {
               {searchQuery ? t('notes.noNotesFound') : t('notes.noNotes')}
             </p>
             {!searchQuery && (
-              <button
+              <Button
+                size="sm"
+                variant="primary"
                 onClick={handleCreateNote}
-                className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white rounded-xl qn-banner-surface hover:from-emerald-500 hover:to-teal-500 transition-all shadow-md shadow-emerald-500/15 active:scale-[0.98]"
+                className="mt-3"
               >
                 {t('notes.createFirst')}
-              </button>
+              </Button>
             )}
           </div>
         ) : (
@@ -491,7 +361,7 @@ export default function NotesGrid({ sidebarToggle }) {
                 note={note}
                 isSelected={selectedNoteId === note.id}
                 onClick={() => handleNoteClick(note)}
-                onContextMenu={(e) => handleContextMenu(e, note)}
+                onOpenMenu={(point) => setContextMenu({ point, note })}
               />
             ))}
           </div>
@@ -500,17 +370,14 @@ export default function NotesGrid({ sidebarToggle }) {
       <div className="flex-shrink-0 px-6 py-3 text-[11px] text-center text-content-subtle border-t border-subtle dark:text-content-muted font-semibold">
         {filteredNotes.length} {filteredNotes.length === 1 ? t('notes.note') : t('notes.notes')}
       </div>
-      {contextMenu && createPortal(
+      {contextMenu && (
         <NoteContextMenu
-          x={contextMenu.x}
-          y={contextMenu.y}
+          point={contextMenu.point}
           note={contextMenu.note}
           folders={folders}
-          tags={tags}
           onRequestDelete={setPendingDeleteNote}
           onClose={() => setContextMenu(null)}
-        />,
-        document.body
+        />
       )}
       <ConfirmDialog
         open={Boolean(pendingDeleteNote)}
@@ -521,6 +388,6 @@ export default function NotesGrid({ sidebarToggle }) {
         confirmLabel="Move to trash"
         icon={Trash2}
       />
-    </div>
+    </main>
   )
 }

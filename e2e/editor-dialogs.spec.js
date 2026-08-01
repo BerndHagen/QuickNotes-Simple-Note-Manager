@@ -1,0 +1,101 @@
+import { expect, test } from '@playwright/test'
+import AxeBuilder from '@axe-core/playwright'
+import { expectNoHorizontalOverflow, signIn } from './helpers'
+
+const formatViolations = (violations) =>
+  violations
+    .map((violation) =>
+      `${violation.id}: ${violation.nodes.map((node) => node.target.join(' ')).join(', ')}`
+    )
+    .join('\n')
+
+const expectDialogQuality = async (page, dialog) => {
+  const viewport = page.viewportSize()
+  const box = await dialog.boundingBox()
+  expect(box.x).toBeGreaterThanOrEqual(-1)
+  expect(box.x + box.width).toBeLessThanOrEqual(viewport.width + 1)
+
+  const clippedControls = await dialog
+    .locator('button, input, textarea, select, [role="button"]')
+    .evaluateAll((controls) =>
+      controls
+        .filter((control) => {
+          const rect = control.getBoundingClientRect()
+          const style = getComputedStyle(control)
+          return (
+            style.display !== 'none' &&
+            style.visibility !== 'hidden' &&
+            rect.width > 0 &&
+            (rect.left < -1 || rect.right > window.innerWidth + 1)
+          )
+        })
+        .map((control) => control.getAttribute('aria-label') || control.textContent?.trim())
+    )
+  expect(clippedControls).toEqual([])
+  await expectNoHorizontalOverflow(page)
+
+  const { violations } = await new AxeBuilder({ page })
+    .include('[role="dialog"]')
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .analyze()
+  expect(formatViolations(violations)).toBe('')
+}
+
+test.describe('editor dialogs on a small screen', () => {
+  test.use({ viewport: { width: 320, height: 640 } })
+
+  test.beforeEach(async ({ page }) => {
+    await signIn(page)
+    await page.getByRole('heading', { name: 'Welcome to QuickNotes' }).click()
+    await expect(page.getByLabel('Note title')).toBeVisible()
+  })
+
+  test('image upload rejects an unsafe embedded file before reading it', async ({ page }) => {
+    await page.getByRole('button', { name: 'Insert image' }).first().click()
+
+    const dialog = page.getByRole('dialog', { name: 'Insert image' })
+    await expect(dialog).toBeVisible()
+    await expect(dialog.getByText(/image host.*IP address/i)).toBeVisible()
+    await dialog.getByRole('radio', { name: 'Upload file' }).click()
+    await dialog.getByLabel('Choose image file').setInputFiles({
+      name: 'too-large.png',
+      mimeType: 'image/png',
+      buffer: Buffer.alloc(513 * 1024),
+    })
+
+    await expect(dialog.getByRole('alert')).toContainText('512 KB or smaller')
+    await expect(dialog.getByRole('button', { name: 'Insert image' })).toBeDisabled()
+    await expectDialogQuality(page, dialog)
+  })
+
+  test('link insertion rejects executable schemes and remains keyboard usable', async ({ page }) => {
+    await page.getByRole('button', { name: /Insert Link/ }).first().click()
+
+    const dialog = page.getByRole('dialog', { name: 'Insert link' })
+    const address = dialog.getByLabel(/Web address/i)
+    await expect(address).toBeFocused()
+    await address.fill('javascript:alert(1)')
+    await dialog.getByRole('button', { name: 'Insert link' }).click()
+
+    await expect(dialog.getByRole('alert')).toContainText('Only HTTP and HTTPS')
+    await expect(address).toBeFocused()
+    await expectDialogQuality(page, dialog)
+  })
+
+  test('HTML tools report blocked clipboard access without clipping controls', async ({ page }) => {
+    await page.evaluate(() => {
+      Object.defineProperty(navigator, 'clipboard', {
+        configurable: true,
+        value: { writeText: () => Promise.reject(new Error('denied')) },
+      })
+    })
+    await page.getByRole('button', { name: 'Edit HTML Source' }).click()
+
+    const dialog = page.getByRole('dialog', { name: 'HTML editor' })
+    await expect(dialog).toBeVisible()
+    await dialog.getByRole('button', { name: 'Copy' }).click()
+    await expect(dialog.getByRole('alert')).toContainText('Clipboard access was blocked')
+    await expect(dialog.getByRole('textbox', { name: 'HTML source' })).toBeFocused()
+    await expectDialogQuality(page, dialog)
+  })
+})

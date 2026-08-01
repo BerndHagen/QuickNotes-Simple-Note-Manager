@@ -11,7 +11,8 @@
     "lint": "eslint . --report-unused-disable-directives",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:deployment": "npm run build && node scripts/validate-deployment.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import {
   ArrowRight,
   Check,
@@ -29,6 +29,7 @@ export default function NoteTypesModal({ onCreated }) {
     NOTE_TYPE_STARTERS[NOTE_TYPES.STANDARD][0].id
   )
   const [title, setTitle] = useState(NOTE_TYPE_STARTERS[NOTE_TYPES.STANDARD][0].title)
+  const searchRef = useRef(null)
 
   const config = NOTE_TYPE_CONFIG[selectedType]
   const starters = NOTE_TYPE_STARTERS[selectedType] || []
@@ -88,6 +89,7 @@ export default function NoteTypesModal({ onCreated }) {
       description="Choose the workspace that matches the work—not just a decorative template."
       icon={Sparkles}
       size="3xl"
+      initialFocusRef={searchRef}
       bodyClassName="p-0 sm:p-0"
       contentClassName="sm:h-[min(820px,88dvh)]"
       footer={
@@ -121,6 +123,7 @@ export default function NoteTypesModal({ onCreated }) {
               />
               <Input
                 id="qn-type-search"
+                ref={searchRef}
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search by goal or feature…"
@@ -258,7 +261,10 @@ export default function NoteTypesModal({ onCreated }) {
                   value={title}
                   onChange={(event) => setTitle(event.target.value)}
                   onKeyDown={(event) => {
-                    if (event.key === 'Enter' && title.trim()) createSelectedNote()
+                    if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
+                      event.preventDefault()
+                      createSelectedNote()
+                    }
                   }}
                   placeholder={config.name}
                 />

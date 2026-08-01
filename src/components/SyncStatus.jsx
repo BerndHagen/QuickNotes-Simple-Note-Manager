@@ -96,6 +96,7 @@ export function SyncStatusPill({ className = '' }) {
  */
 export function SaveStatus({ note, className = '' }) {
   const { t } = useTranslation()
+  const isLocalWorkspace = useNotesStore((state) => Boolean(state.user?.isLocal))
   const [justSaved, setJustSaved] = useState(false)
   const pending = note?.syncStatus === 'pending'
 
@@ -108,7 +109,7 @@ export function SaveStatus({ note, className = '' }) {
 
   if (!note) return null
 
-  if (!isBackendConfigured()) {
+  if (!isBackendConfigured() || isLocalWorkspace) {
     return (
       <span className={`inline-flex items-center gap-1.5 text-ui-sm text-success-text ${className}`}>
         <HardDrive className="h-3.5 w-3.5" aria-hidden="true" />

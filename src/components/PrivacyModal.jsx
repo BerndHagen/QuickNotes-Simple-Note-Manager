@@ -1,89 +1,56 @@
-import { X, Shield } from 'lucide-react'
+import { Shield } from 'lucide-react'
 import { useUIStore } from '../store'
 import { useTranslation } from '../lib/useTranslation'
-import LegacyDialog from './ui/LegacyDialog'
+import { Modal } from './ui'
 
 export default function PrivacyModal() {
   const { privacyModalOpen, setPrivacyModalOpen } = useUIStore()
   const { t } = useTranslation()
 
-  if (!privacyModalOpen) return null
+  const sections = [
+    ['data-collection', t('privacy.dataCollection'), t('privacy.dataCollectionText')],
+    ['local-storage', t('privacy.localStorage'), t('privacy.localStorageText')],
+    ['cloud-sync', t('privacy.cloudSync'), t('privacy.cloudSyncText')],
+    ['browser-storage', t('privacy.cookies'), t('privacy.cookiesText')],
+    ['third-party', t('privacy.thirdParty'), t('privacy.thirdPartyText')],
+    ['your-rights', t('privacy.yourRights'), t('privacy.yourRightsText')],
+    ['contact', t('privacy.contact'), t('privacy.contactText')],
+  ]
 
   return (
-    <LegacyDialog label="Privacy policy" onClose={() => setPrivacyModalOpen(false)} align="center">
-      <div className="bg-surface-raised rounded-2xl shadow-2xl border border-subtle w-full max-w-2xl mx-4 max-h-[85vh] overflow-hidden flex flex-col modal-animate">
-        <div className="flex items-center justify-between p-5 qn-banner-surface text-white">
-          <div className="flex items-center gap-3">
-            <Shield className="w-6 h-6" />
-            <div>
-              <h2 className="text-lg font-bold">{t('privacy.title')}</h2>
-              <p className="text-sm text-white/70">How we handle your data</p>
-            </div>
-          </div>
-          <button
-            onClick={() => setPrivacyModalOpen(false)}
-            className="p-2 rounded-full hover:bg-white/20 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+    <Modal
+      open={privacyModalOpen}
+      onClose={() => setPrivacyModalOpen(false)}
+      title={t('privacy.title')}
+      description="How we handle your data"
+      icon={Shield}
+      size="xl"
+      bodyClassName="!overflow-hidden p-0 sm:p-0"
+    >
+      <article
+        role="region"
+        aria-label={t('privacy.title')}
+        tabIndex={0}
+        className="h-full overflow-y-auto overscroll-contain px-5 py-5 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--qn-focus-ring)] sm:px-6"
+      >
+        <p className="mb-6 text-ui-sm text-content-muted">
+          {t('privacy.lastUpdated')}: August 1, 2026
+        </p>
+
+        <div className="space-y-6">
+          {sections.map(([id, heading, content]) => (
+            <section key={id} aria-labelledby={`qn-privacy-${id}`}>
+              <h3
+                id={`qn-privacy-${id}`}
+                className="text-title-xs font-semibold text-content"
+              >
+                {heading}
+              </h3>
+              <p className="mt-2 text-ui-md leading-relaxed text-content-muted">{content}</p>
+            </section>
+          ))}
         </div>
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="prose dark:prose-invert max-w-none">
-            <p className="text-content-muted mb-6">
-              {t('privacy.lastUpdated')}: December 2024
-            </p>
-
-            <h3 className="text-lg font-semibold text-content mt-6 mb-3">
-              {t('privacy.dataCollection')}
-            </h3>
-            <p className="text-content-muted mb-4">
-              {t('privacy.dataCollectionText')}
-            </p>
-
-            <h3 className="text-lg font-semibold text-content mt-6 mb-3">
-              {t('privacy.localStorage')}
-            </h3>
-            <p className="text-content-muted mb-4">
-              {t('privacy.localStorageText')}
-            </p>
-
-            <h3 className="text-lg font-semibold text-content mt-6 mb-3">
-              {t('privacy.cloudSync')}
-            </h3>
-            <p className="text-content-muted mb-4">
-              {t('privacy.cloudSyncText')}
-            </p>
-
-            <h3 className="text-lg font-semibold text-content mt-6 mb-3">
-              {t('privacy.cookies')}
-            </h3>
-            <p className="text-content-muted mb-4">
-              {t('privacy.cookiesText')}
-            </p>
-
-            <h3 className="text-lg font-semibold text-content mt-6 mb-3">
-              {t('privacy.thirdParty')}
-            </h3>
-            <p className="text-content-muted mb-4">
-              {t('privacy.thirdPartyText')}
-            </p>
-
-            <h3 className="text-lg font-semibold text-content mt-6 mb-3">
-              {t('privacy.yourRights')}
-            </h3>
-            <p className="text-content-muted mb-4">
-              {t('privacy.yourRightsText')}
-            </p>
-
-            <h3 className="text-lg font-semibold text-content mt-6 mb-3">
-              {t('privacy.contact')}
-            </h3>
-            <p className="text-content-muted mb-4">
-              {t('privacy.contactText')}
-            </p>
-          </div>
-        </div>
-      </div>
-    </LegacyDialog>
+      </article>
+    </Modal>
   )
 }

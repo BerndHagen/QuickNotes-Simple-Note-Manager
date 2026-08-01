@@ -22,6 +22,8 @@ import {
   X
 } from 'lucide-react'
 import { formatDateKey, generateId, parseDateKey } from './noteTypes'
+import { useLatestValue } from './useLatestValue'
+import { useEditorDataSync } from './useEditorDataSync'
 import FocusedNoteTitle from './FocusedNoteTitle'
 import { ConfirmDialog } from '../FolderDialogs'
 const PRIORITIES = {
@@ -58,11 +60,19 @@ export default function TodoListEditor({ data, onChange, noteTitle, onTitleChang
   const inputRef = useRef(null)
   const filterRef = useRef(null)
   const sortRef = useRef(null)
+  const onChangeRef = useLatestValue(onChange)
+  const currentEditorData = { tasks, filter, sortBy }
+  const skipChangeRef = useEditorDataSync(data, currentEditorData, (incoming) => {
+    setTasks(incoming?.tasks || [])
+    setFilter(incoming?.filter || 'all')
+    setSortBy(incoming?.sortBy || 'priority')
+  })
   const isInitialMount = useRef(true)
   useEffect(() => {
     if (isInitialMount.current) { isInitialMount.current = false; return }
-    onChange?.({ tasks, filter, sortBy })
-  }, [tasks, filter, sortBy])
+    if (skipChangeRef.current) { skipChangeRef.current = false; return }
+    onChangeRef.current?.({ tasks, filter, sortBy })
+  }, [filter, onChangeRef, skipChangeRef, sortBy, tasks])
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (filterRef.current && !filterRef.current.contains(e.target)) {
@@ -91,12 +101,12 @@ export default function TodoListEditor({ data, onChange, noteTitle, onTitleChang
       completedAt: null,
     }
     
-    setTasks([newTask, ...tasks])
+    setTasks((currentTasks) => [newTask, ...currentTasks])
     setNewTaskText('')
     inputRef.current?.focus()
   }
   const toggleTask = (taskId) => {
-    setTasks(tasks.map(task => {
+    setTasks((currentTasks) => currentTasks.map(task => {
       if (task.id === taskId) {
         return {
           ...task,
@@ -108,12 +118,12 @@ export default function TodoListEditor({ data, onChange, noteTitle, onTitleChang
     }))
   }
   const updateTask = (taskId, updates) => {
-    setTasks(tasks.map(task => 
+    setTasks((currentTasks) => currentTasks.map(task =>
       task.id === taskId ? { ...task, ...updates } : task
     ))
   }
   const deleteTask = (taskId) => {
-    setTasks(tasks.filter(task => task.id !== taskId))
+    setTasks((currentTasks) => currentTasks.filter(task => task.id !== taskId))
   }
   const duplicateTask = (task) => {
     const newTask = {
@@ -123,11 +133,11 @@ export default function TodoListEditor({ data, onChange, noteTitle, onTitleChang
       completedAt: null,
       createdAt: new Date().toISOString(),
     }
-    setTasks([newTask, ...tasks])
+    setTasks((currentTasks) => [newTask, ...currentTasks])
   }
   const addSubtask = (taskId, text) => {
     if (!text.trim()) return
-    setTasks(tasks.map(task => {
+    setTasks((currentTasks) => currentTasks.map(task => {
       if (task.id === taskId) {
         return {
           ...task,
@@ -141,7 +151,7 @@ export default function TodoListEditor({ data, onChange, noteTitle, onTitleChang
     }))
   }
   const toggleSubtask = (taskId, subtaskId) => {
-    setTasks(tasks.map(task => {
+    setTasks((currentTasks) => currentTasks.map(task => {
       if (task.id === taskId) {
         return {
           ...task,
@@ -154,7 +164,7 @@ export default function TodoListEditor({ data, onChange, noteTitle, onTitleChang
     }))
   }
   const deleteSubtask = (taskId, subtaskId) => {
-    setTasks(tasks.map(task => {
+    setTasks((currentTasks) => currentTasks.map(task => {
       if (task.id === taskId) {
         return {
           ...task,
@@ -418,7 +428,7 @@ export default function TodoListEditor({ data, onChange, noteTitle, onTitleChang
       <ConfirmDialog
         open={clearCompletedOpen}
         onClose={() => setClearCompletedOpen(false)}
-        onConfirm={() => setTasks(tasks.filter((task) => !task.completed))}
+        onConfirm={() => setTasks((currentTasks) => currentTasks.filter((task) => !task.completed))}
         title="Clear completed tasks?"
         description={`${tasks.filter((task) => task.completed).length} completed task${
           tasks.filter((task) => task.completed).length === 1 ? '' : 's'

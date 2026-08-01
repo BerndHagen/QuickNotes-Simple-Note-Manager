@@ -11,6 +11,8 @@ import {
   BarChart3
 } from 'lucide-react'
 import { formatDateKey, generateId, parseDateKey } from './noteTypes'
+import { useLatestValue } from './useLatestValue'
+import { useEditorDataSync } from './useEditorDataSync'
 import FocusedNoteTitle from './FocusedNoteTitle'
 import Modal from '../ui/Modal'
 const COLUMN_COLORS = {
@@ -43,11 +45,19 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitl
   const [editingTask, setEditingTask] = useState(null)
   const [showMilestoneForm, setShowMilestoneForm] = useState(false)
   const [showTeamForm, setShowTeamForm] = useState(false)
+  const onChangeRef = useLatestValue(onChange)
+  const currentEditorData = { columns, milestones, team }
+  const skipChangeRef = useEditorDataSync(data, currentEditorData, (incoming) => {
+    setColumns(incoming?.columns || [])
+    setMilestones(incoming?.milestones || [])
+    setTeam(incoming?.team || [])
+  })
   const isInitialMount = useRef(true)
   useEffect(() => {
     if (isInitialMount.current) { isInitialMount.current = false; return }
-    onChange?.({ columns, milestones, team })
-  }, [columns, milestones, team])
+    if (skipChangeRef.current) { skipChangeRef.current = false; return }
+    onChangeRef.current?.({ columns, milestones, team })
+  }, [columns, milestones, onChangeRef, skipChangeRef, team])
   const stats = {
     totalTasks: columns.reduce((sum, col) => sum + col.tasks.length, 0),
     doneTasks: columns.find(c => c.id === 'done')?.tasks.length || 0,
@@ -295,7 +305,7 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitl
                           <div className="flex gap-2 mt-2">
                             <button
                               onClick={() => addTask(column.id)}
-                              className="flex-1 px-3 py-1.5 rounded-lg bg-accent hover:bg-accent-hover text-white text-sm"
+                              className="flex-1 px-3 py-1.5 rounded-lg bg-accent hover:bg-accent-hover text-accent-on text-sm"
                             >
                               Add Task
                             </button>
@@ -339,7 +349,7 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitl
                 <h2 className="text-lg font-semibold text-content">Milestones</h2>
                 <button
                   onClick={() => setShowMilestoneForm(true)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-accent hover:bg-accent-hover text-white text-sm"
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-accent hover:bg-accent-hover text-accent-on text-sm"
                 >
                   <Plus className="w-4 h-4" />
                   Add Milestone
@@ -380,7 +390,7 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitl
                 <h2 className="text-lg font-semibold text-content">Team Members</h2>
                 <button
                   onClick={() => setShowTeamForm(true)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-accent hover:bg-accent-hover text-white text-sm"
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-accent hover:bg-accent-hover text-accent-on text-sm"
                 >
                   <Plus className="w-4 h-4" />
                   Add Member
@@ -531,7 +541,7 @@ function TaskEditModal({ task, team, columns, onSave, onClose }) {
               columnId,
             })}
             disabled={!title.trim()}
-            className="px-4 py-2 rounded-lg bg-accent hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50 text-white"
+            className="px-4 py-2 rounded-lg bg-accent hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50 text-accent-on"
           >
             Save changes
           </button>
@@ -645,7 +655,7 @@ function MilestoneForm({ onSave, onCancel }) {
         <div className="flex gap-2">
           <button
             onClick={() => name && onSave(name, dueDate || null)}
-            className="flex-1 px-3 py-2 rounded-lg bg-accent hover:bg-accent-hover text-white text-sm"
+            className="flex-1 px-3 py-2 rounded-lg bg-accent hover:bg-accent-hover text-accent-on text-sm"
           >
             Add Milestone
           </button>
@@ -728,7 +738,7 @@ function TeamMemberForm({ onSave, onCancel }) {
         <div className="flex gap-2">
           <button
             onClick={() => name && onSave(name, role)}
-            className="flex-1 px-3 py-2 rounded-lg bg-accent hover:bg-accent-hover text-white text-sm"
+            className="flex-1 px-3 py-2 rounded-lg bg-accent hover:bg-accent-hover text-accent-on text-sm"
           >
             Add Member
           </button>

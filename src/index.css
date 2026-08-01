@@ -4,9 +4,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ========================================
-   ENTERPRISE BASE STYLES
-   ======================================== */
+/* Base document styles */
 
 @layer base {
   html {
@@ -69,9 +67,7 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
   outline-offset: 2px;
 }
 
-/* ========================================
-   ENTERPRISE SCROLLBAR
-   ======================================== */
+/* Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -112,7 +108,7 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
   scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
 }
 
-/* Dark mode dropdown text color fix */
+/* Legacy dropdown labels on dark surfaces */
 .dark
   button.text-left.text-sm:not(.text-red-600):not(.text-emerald-700):not(
     [class*="text-gray-"]
@@ -546,25 +542,7 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
   border-top-color: #374151;
 }
 
-/* Sync indicator animation */
-@keyframes pulse-sync {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
-}
-
-.sync-indicator {
-  animation: pulse-sync 1.5s ease-in-out infinite;
-}
-
-/* Note card hover effect */
-/* The hover accent is an inset shadow rather than a left border.
-   As a border it overrode the card's own left edge with 3px of transparent,
-   so a resting card showed a border on three sides and nothing on the left. */
+/* Note-card hover accent preserves the card's border geometry. */
 .note-card {
   transition:
     background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
@@ -582,56 +560,6 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
   box-shadow: inset 3px 0 0 rgba(16, 185, 129, 0.35);
 }
 
-/* Enterprise surface shimmer on hover */
-.surface-hover {
-  position: relative;
-  overflow: hidden;
-}
-
-.surface-hover::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, transparent 40%, rgba(16, 185, 129, 0.03) 50%, transparent 60%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  pointer-events: none;
-}
-
-.surface-hover:hover::after {
-  opacity: 1;
-}
-
-/* Auth page animations */
-@keyframes auth-float {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(30px, -20px) scale(1.05); }
-  66% { transform: translate(-20px, 15px) scale(0.95); }
-}
-
-@keyframes auth-float-delayed {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(-25px, 20px) scale(1.03); }
-  66% { transform: translate(15px, -25px) scale(0.97); }
-}
-
-@keyframes auth-float-slow {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(20px, -15px) scale(1.02); }
-}
-
-.auth-float {
-  animation: auth-float 20s ease-in-out infinite;
-}
-
-.auth-float-delayed {
-  animation: auth-float-delayed 25s ease-in-out infinite;
-}
-
-.auth-float-slow {
-  animation: auth-float-slow 30s ease-in-out infinite;
-}
-
 @keyframes auth-form-in {
   from {
     opacity: 0;
@@ -647,50 +575,25 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
   animation: auth-form-in 0.4s ease-out;
 }
 
-/* Application canvas.
-   A pale field with four curved bands lifting out of the bottom-left corner.
-   The field lives on <body>; the bands are drawn by CanvasWaves and sit at
-   z-index -1, above the field and below everything the app renders. */
+/* Shared static canvas behind authentication and the inset workspace. */
 .qn-canvas {
-  background: linear-gradient(148deg, #f2f5f4 0%, #eef3f2 46%, #e9f0ef 100%);
+  background-color: #eef3f2;
+  background-image:
+    radial-gradient(120% 96% at 12% 6%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0) 58%),
+    radial-gradient(96% 80% at 92% 96%, rgba(175, 207, 202, 0.5) 0%, rgba(175, 207, 202, 0) 62%),
+    linear-gradient(152deg, #f4f7f6 0%, #eef3f2 46%, #e5edea 100%);
+  background-attachment: fixed;
 }
 
 .dark .qn-canvas {
-  background: linear-gradient(148deg, #141a1c 0%, #101619 46%, #0c1114 100%);
+  background-color: #0f1417;
+  background-image:
+    radial-gradient(120% 96% at 12% 6%, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 58%),
+    radial-gradient(96% 80% at 92% 96%, rgba(24, 64, 53, 0.55) 0%, rgba(24, 64, 53, 0) 62%),
+    linear-gradient(152deg, #141a1d 0%, #0f1417 46%, #0a0e11 100%);
+  background-attachment: fixed;
 }
 
-.qn-canvas-waves {
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.qn-canvas-waves svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
-.qn-wave--d { fill: #d9e6e4; }
-.qn-wave--c { fill: #cbdfdd; }
-.qn-wave--b { fill: #b8d4d0; }
-.qn-wave--a { fill: #afcfca; }
-
-.dark .qn-wave--d { fill: #1d2a29; }
-.dark .qn-wave--c { fill: #223130; }
-.dark .qn-wave--b { fill: #273a37; }
-.dark .qn-wave--a { fill: #2d423e; }
-
-/* The morph runs inside the SVG, so it is paused rather than unset. */
-@media (prefers-reduced-motion: reduce) {
-  .qn-canvas-waves animate {
-    display: none;
-  }
-}
-
-/* The sign-in screen sits directly on the canvas. */
 .qn-auth-page {
   background: transparent;
 }
@@ -767,10 +670,8 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
   transform-origin: 50% 100%;
 }
 
-/* The hero column carries a fixed stack — brand, headline, preview, feature
-   strip — that is taller than a laptop window. Rather than clipping it, the
-   preview shrinks as the window gets shorter and the feature strip steps out
-   before anything can be cut off. */
+/* Short laptop viewports reduce the preview before hiding the feature strip,
+   keeping the complete authentication hero inside the window. */
 @media (min-width: 1024px) and (max-height: 1010px) {
   .qn-auth-preview {
     margin-top: 1.5rem;
@@ -808,11 +709,7 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
 }
 
 @media (min-width: 1280px) and (min-height: 700px) {
-  /* The canvas the workspace frame rests on.
-     A quiet neutral rather than a second green: the rail and the editor banner
-     are both saturated green, so a green canvas of any lightness sits in the
-     same hue family and the frame's edge dissolves into it. The light theme
-     keeps a light canvas — the dark one belongs to the dark theme. */
+  /* Inset desktop frame and surrounding canvas. */
   .dark body {
     background: linear-gradient(135deg, #12171c, #0d1116 55%, #151b21);
   }
@@ -970,12 +867,15 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
 }
 
 /* Paper background dark mode adjustments */
+.dark .paper-plain,
 .dark .paper-lined,
+.dark .paper-lined-margin,
+.dark .paper-college,
 .dark .paper-grid,
-.dark .paper-dotted,
 .dark .paper-grid-small,
+.dark .paper-dotted,
 .dark .paper-dotted-dense {
-  /* Apply subtle dark patterns that are visible on dark backgrounds */
+  background-color: var(--qn-surface-raised) !important;
   --pattern-color: rgba(255, 255, 255, 0.08);
 }
 
@@ -988,20 +888,48 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
   ) !important;
 }
 
-.dark .paper-grid {
+.dark .paper-lined-margin {
+  background-image:
+    linear-gradient(90deg, transparent 60px, #b91c1c 60px, #b91c1c 62px, transparent 62px),
+    repeating-linear-gradient(
+      transparent,
+      transparent 31px,
+      var(--pattern-color) 31px,
+      var(--pattern-color) 32px
+    ) !important;
+}
+
+.dark .paper-college {
+  background-image:
+    linear-gradient(90deg, transparent 40px, #2563eb 40px, #2563eb 42px, transparent 42px),
+    repeating-linear-gradient(
+      transparent,
+      transparent 27px,
+      var(--pattern-color) 27px,
+      var(--pattern-color) 28px
+    ) !important;
+}
+
+.dark .paper-grid,
+.dark .paper-grid-small {
   background-image: 
     linear-gradient(var(--pattern-color) 1px, transparent 1px), 
     linear-gradient(90deg, var(--pattern-color) 1px, transparent 1px) !important;
 }
 
-.dark .paper-dotted {
+.dark .paper-dotted,
+.dark .paper-dotted-dense {
   background-image: radial-gradient(circle, var(--pattern-color) 1px, transparent 1px) !important;
 }
 
-/* Auto-apply dark background for dark theme when using plain paper */
-.dark .paper-plain,
-.dark [class=""] {
-  background-color: #1f2937;
+.dark .paper-sepia {
+  background-color: #2b251b !important;
+  background-image: repeating-linear-gradient(
+    transparent,
+    transparent 31px,
+    rgba(253, 230, 138, 0.12) 31px,
+    rgba(253, 230, 138, 0.12) 32px
+  ) !important;
 }
 
 /* Dark paper backgrounds - ensure text visibility */
@@ -1155,98 +1083,10 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
   border-radius: 2px;
 }
 
-/* Reminder badge styles */
-.reminder-badge {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  width: 8px;
-  height: 8px;
-  background-color: #f97316;
-  border-radius: 50%;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
-}
-
-/* Sync indicator animation */
-.sync-indicator {
-  animation: pulse-glow 1.5s ease-in-out infinite;
-}
-
-@keyframes pulse-glow {
-  0%,
-  100% {
-    opacity: 1;
-    filter: drop-shadow(0 0 2px currentColor);
-  }
-  50% {
-    opacity: 0.6;
-    filter: drop-shadow(0 0 6px currentColor);
-  }
-}
-
-.surface-elevated {
-  @apply bg-white dark:bg-gray-900 shadow-sm;
-  border: 1px solid rgba(0, 0, 0, 0.04);
-}
-
-.dark .surface-elevated {
-  border-color: rgba(255, 255, 255, 0.04);
-}
-
-/* Enterprise divider */
-.divider {
-  @apply h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent dark:via-gray-700/50;
-}
-
 /* Image resizable node view */
 .ProseMirror .node-resizableImage {
   display: block;
   max-width: 100%;
-}
-
-/* Skeleton loading animation */
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-/* Toast notification enhancements */
-.toast-success {
-  @apply bg-emerald-50 dark:bg-emerald-900/50 border-emerald-200 dark:border-emerald-800;
-}
-
-.toast-error {
-  @apply bg-red-50 dark:bg-red-900/50 border-red-200 dark:border-red-800;
-}
-
-/* Dropdown animation */
-@keyframes dropdown-in {
-  from {
-    opacity: 0;
-    transform: translateY(-4px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.dropdown-animate {
-  animation: dropdown-in 0.15s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Modal animation */
@@ -1261,17 +1101,8 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
   }
 }
 
-@keyframes modal-backdrop-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
 .modal-animate {
   animation: modal-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.modal-backdrop-animate {
-  animation: modal-backdrop-in 0.25s ease-out;
 }
 
 /* Subtle slide-up for floating elements */
@@ -1290,42 +1121,14 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
   animation: float-up 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Slide-in animation for sidebar */
-@keyframes slide-in-left {
-  from {
-    transform: translateX(-100%);
-    opacity: 0.5;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
 /* Focus mode editor - transparent background to inherit theme */
 .focus-mode-editor .bg-white {
   background-color: transparent !important;
 }
 
 
-
-
-
-
-
-
-/* ========================================
-   MOBILE RESPONSIVENESS - Enhanced UX
-   ======================================== */
-
-/* Base mobile improvements */
 /* ============================================================
    Responsive behaviour
-   ------------------------------------------------------------
-   Only rules that target elements this app actually renders.
-   The previous block styled ~15 class names (.fab-button,
-   .mobile-bottom-toolbar, .sidebar-tablet, .modal-content, ...)
-   that exist nowhere in the source.
    ============================================================ */
 
 /* Nothing may push the page sideways, at any width. */
@@ -1398,122 +1201,13 @@ body {
   }
 }
 
-/* ========================================
-   ENTERPRISE PREMIUM POLISH
-   ======================================== */
+/* Shared interface details */
 
-/* Premium sidebar gradient - distinctly gray to create visual separation */
-.sidebar-premium {
-  background: linear-gradient(180deg, #f0f2f5 0%, #e8ecf1 50%, #e3e8ee 100%);
+/* Wrapped editor toolbar keeps every formatting action reachable. */
+.editor-toolbar > .qn-toolbar-sep {
+  align-self: stretch;
 }
 
-.dark .sidebar-premium {
-  background: linear-gradient(180deg, rgba(17,24,39,0.95) 0%, rgba(17,24,39,1) 100%);
-}
-
-/* Premium notes list - mid-tone between sidebar and editor */
-.notes-list-premium {
-  background: linear-gradient(180deg, #f4f6f8 0%, #eef1f5 100%);
-}
-
-.dark .notes-list-premium {
-  background: linear-gradient(180deg, rgba(17,24,39,0.6) 0%, rgba(17,24,39,0.8) 100%);
-}
-
-/* Premium toolbar shadow */
-.toolbar-premium {
-  background: linear-gradient(180deg, #fafbfc 0%, #f5f7f9 100%);
-  box-shadow: 0 1px 3px -1px rgba(0,0,0,0.06), 0 1px 0 0 rgba(0,0,0,0.03);
-}
-
-.dark .toolbar-premium {
-  background: linear-gradient(180deg, rgba(3,7,18,1) 0%, rgba(17,24,39,0.9) 100%);
-  box-shadow: 0 1px 3px -1px rgba(0,0,0,0.3), 0 1px 0 0 rgba(255,255,255,0.02);
-}
-
-/* Subtle inner shadow for input fields */
-.input-enterprise {
-  box-shadow: inset 0 1px 2px rgba(0,0,0,0.04);
-}
-
-.dark .input-enterprise {
-  box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
-}
-
-/* Premium button glow on hover */
-.btn-glow:hover {
-  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.15), 0 4px 12px -2px rgba(16, 185, 129, 0.15);
-}
-
-.dark .btn-glow:hover {
-  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.2), 0 4px 12px -2px rgba(16, 185, 129, 0.1);
-}
-
-/* Sidebar logo badge with premium shadow */
-.logo-badge {
-  box-shadow: 0 2px 8px -2px rgba(16, 185, 129, 0.4), 0 4px 16px -4px rgba(16, 185, 129, 0.2);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.logo-badge:hover {
-  box-shadow: 0 4px 12px -2px rgba(16, 185, 129, 0.5), 0 6px 20px -4px rgba(16, 185, 129, 0.3);
-  transform: scale(1.05);
-}
-
-/* Sidebar section label with tracking */
-.section-label {
-  letter-spacing: 0.12em;
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: #9ca3af;
-  transition: color 0.15s ease;
-}
-
-.section-label:hover {
-  color: #6b7280;
-}
-
-.dark .section-label:hover {
-  color: #9ca3af;
-}
-
-/* Quick Note button pulse effect */
-@keyframes subtle-pulse {
-  0%, 100% { box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.15), 0 2px 4px -2px rgba(16, 185, 129, 0.1); }
-  50% { box-shadow: 0 4px 12px -1px rgba(16, 185, 129, 0.25), 0 2px 8px -2px rgba(16, 185, 129, 0.15); }
-}
-
-.quick-note-btn {
-  animation: subtle-pulse 3s ease-in-out infinite;
-}
-
-.quick-note-btn:hover {
-  animation: none;
-}
-
-/* Enhanced folder count badge */
-.count-badge {
-  min-width: 24px;
-  text-align: center;
-  font-variant-numeric: tabular-nums;
-  transition: all 0.2s ease;
-}
-
-/* Smooth sidebar nav hover with subtle translateX */
-.nav-item-slide {
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.nav-item-slide:hover {
-  transform: translateX(2px);
-}
-
-.nav-item-slide:active {
-  transform: translateX(0px);
-}
-
-/* Premium editor area subtle paper feel */
 .editor-paper {
   background-image: 
     radial-gradient(ellipse at 50% 0%, rgba(16, 185, 129, 0.02) 0%, transparent 50%);
@@ -1522,76 +1216,6 @@ body {
 .dark .editor-paper {
   background-image: 
     radial-gradient(ellipse at 50% 0%, rgba(16, 185, 129, 0.03) 0%, transparent 50%);
-}
-
-/* Toast notifications enterprise style */
-[data-sonner-toaster] [data-sonner-toast],
-div[role="status"][class*="go"] {
-  border-radius: 16px !important;
-  font-weight: 500 !important;
-}
-
-/* Status indicator styles */
-.status-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  display: inline-block;
-}
-
-.status-online {
-  background-color: #10b981;
-  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
-}
-
-.status-offline {
-  background-color: #f59e0b;
-  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
-}
-
-/* Premium card elevation on selected state */
-.card-selected {
-  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.3), 0 2px 8px -2px rgba(16, 185, 129, 0.1);
-}
-
-.dark .card-selected {
-  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.4), 0 2px 8px -2px rgba(16, 185, 129, 0.15);
-}
-
-/* Enterprise empty state illustration */
-.empty-state-glow {
-  position: relative;
-}
-
-.empty-state-glow::before {
-  content: '';
-  position: absolute;
-  inset: -20px;
-  background: radial-gradient(ellipse at center, rgba(16, 185, 129, 0.06) 0%, transparent 70%);
-  border-radius: 50%;
-  z-index: -1;
-}
-
-/* Premium badge with subtle shine */
-.badge-shine {
-  position: relative;
-  overflow: hidden;
-}
-
-.badge-shine::after {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.1) 50%, transparent 60%);
-  animation: badge-shine 3s ease-in-out infinite;
-}
-
-@keyframes badge-shine {
-  0%, 100% { transform: translateX(-100%) translateY(-100%); }
-  50% { transform: translateX(100%) translateY(100%); }
 }
 
 /* ============================================================
@@ -1676,9 +1300,7 @@ div[role="status"][class*="go"] {
    paper-like working surface. Each type keeps a restrained accent
    without turning the product into a collection of unrelated themes.
    ============================================================ */
-/* Every workspace hero uses the product's green. The type is already named
-   and iconed in the hero, so tinting each one a different hue only made the
-   app look like several unrelated products. */
+/* One product accent unifies every specialized workspace hero. */
 .qn-type-todo,
 .qn-type-project,
 .qn-type-meeting,
@@ -1728,10 +1350,8 @@ div[role="status"][class*="go"] {
   pointer-events: none;
 }
 
-/* The hero is a dark surface, so the text and tiles inside it are re-tinted
-   here rather than in each of the eight specialized editors. Keyed on the
-   semantic token classes the editors use; the bare palette names are kept as
-   a fallback for any block that has not been converted yet. */
+/* Centralized hero contrast rules cover semantic tokens and legacy palette
+   utilities used by specialized workspace content. */
 .qn-type-hero h1,
 .qn-type-hero .text-content,
 .qn-type-hero .text-gray-900,

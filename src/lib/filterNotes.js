@@ -11,11 +11,40 @@ export const STARRED_FILTER = '__starred__'
  */
 const plainTextCache = new Map()
 
+const collectStructuredText = (value, parts, seen) => {
+  if (value == null) return
+  if (typeof value === 'string' || typeof value === 'number') {
+    parts.push(String(value))
+    return
+  }
+  if (typeof value !== 'object' || seen.has(value)) return
+
+  seen.add(value)
+  if (Array.isArray(value)) {
+    value.forEach((item) => collectStructuredText(item, parts, seen))
+  } else {
+    Object.values(value).forEach((item) => collectStructuredText(item, parts, seen))
+  }
+}
+
 export const getSearchableText = (note) => {
   const cached = plainTextCache.get(note.id)
-  if (cached && cached.source === note.content) return cached.text
-  const text = htmlToPlainText(note.content || '').toLowerCase()
-  plainTextCache.set(note.id, { source: note.content, text })
+  if (
+    cached &&
+    cached.contentSource === note.content &&
+    cached.structuredSource === note.noteData
+  ) {
+    return cached.text
+  }
+
+  const structuredParts = []
+  collectStructuredText(note.noteData, structuredParts, new WeakSet())
+  const text = [htmlToPlainText(note.content || ''), ...structuredParts].join(' ').toLowerCase()
+  plainTextCache.set(note.id, {
+    contentSource: note.content,
+    structuredSource: note.noteData,
+    text,
+  })
   return text
 }
 

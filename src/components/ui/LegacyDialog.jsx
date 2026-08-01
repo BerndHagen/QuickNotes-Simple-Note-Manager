@@ -1,4 +1,5 @@
 import { useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useFocusTrap, useScrollLock, useEscapeKey } from './useFocusTrap'
 
 /**
@@ -27,7 +28,7 @@ export default function LegacyDialog({
 
   if (!open) return null
 
-  return (
+  return createPortal(
     <div
       className={[
         'fixed inset-0 z-dialog flex justify-center overflow-y-auto overscroll-contain p-3 sm:p-4',
@@ -48,6 +49,7 @@ export default function LegacyDialog({
         tabIndex={-1}
         data-dialog-body
         className={[
+          'qn-legacy-dialog-panel',
           // Never taller than the viewport, and always able to scroll
           // its own content so footer actions stay reachable.
           'relative my-auto flex max-h-[92dvh] w-full min-w-0 flex-col outline-none',
@@ -59,6 +61,7 @@ export default function LegacyDialog({
       >
         {children}
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

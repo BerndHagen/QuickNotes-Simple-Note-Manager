@@ -65,6 +65,20 @@ describe('filterNotes', () => {
     expect(filterNotes(notes, { query: 'tomato' }).map((n) => n.title)).toEqual(['Recipe'])
   })
 
+  it('searches text stored by structured note editors', () => {
+    const target = note({
+      id: 'structured',
+      title: 'Saturday',
+      noteType: 'todo',
+      noteData: {
+        tasks: [{ text: 'Buy ZebraNeedle42 supplies', subtasks: [{ text: 'Call Sam' }] }],
+      },
+    })
+
+    expect(filterNotes([target], { query: 'zebraneedle42' })).toEqual([target])
+    expect(filterNotes([target], { query: 'call sam' })).toEqual([target])
+  })
+
   it('matches on title and tags case-insensitively', () => {
     const notes = [note({ title: 'Quarterly Report', tags: ['Finance'] })]
     expect(filterNotes(notes, { query: 'quarterly' })).toHaveLength(1)
@@ -81,6 +95,14 @@ describe('filterNotes', () => {
     const target = note({ id: 'n1', title: 'T', content: '<p>before</p>' })
     expect(filterNotes([target], { query: 'before' })).toHaveLength(1)
     const updated = { ...target, content: '<p>after</p>' }
+    expect(filterNotes([updated], { query: 'before' })).toHaveLength(0)
+    expect(filterNotes([updated], { query: 'after' })).toHaveLength(1)
+  })
+
+  it('re-reads structured content when note data changes', () => {
+    const target = note({ id: 'n1', noteData: { tasks: [{ text: 'before' }] } })
+    expect(filterNotes([target], { query: 'before' })).toHaveLength(1)
+    const updated = { ...target, noteData: { tasks: [{ text: 'after' }] } }
     expect(filterNotes([updated], { query: 'before' })).toHaveLength(0)
     expect(filterNotes([updated], { query: 'after' })).toHaveLength(1)
   })

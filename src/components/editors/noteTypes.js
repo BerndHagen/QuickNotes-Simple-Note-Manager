@@ -21,16 +21,28 @@ export const NOTE_TYPES = {
 }
 
 export const formatDateKey = (date = new Date()) => {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
+  const safeDate = date instanceof Date && !Number.isNaN(date.getTime()) ? date : new Date()
+  const year = safeDate.getFullYear()
+  const month = String(safeDate.getMonth() + 1).padStart(2, '0')
+  const day = String(safeDate.getDate()).padStart(2, '0')
   return `${year}-${month}-${day}`
 }
 
 export const parseDateKey = (value) => {
-  if (!value) return new Date()
-  const [year, month, day] = value.split('-').map(Number)
-  return new Date(year, month - 1, day)
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || ''))
+  if (!match) return new Date()
+
+  const [, yearText, monthText, dayText] = match
+  const year = Number(yearText)
+  const month = Number(monthText)
+  const day = Number(dayText)
+  const date = new Date(year, month - 1, day)
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) return new Date()
+  return date
 }
 
 const today = () => formatDateKey()
@@ -45,6 +57,17 @@ const getWeekStart = () => {
 
 export const generateId = () =>
   `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`
+
+export const normalizePositiveQuantity = (value, fallback = 1) => {
+  const number = Number(value)
+  return Number.isFinite(number) && number > 0 ? number : fallback
+}
+
+export const normalizeOptionalAmount = (value) => {
+  if (value == null || value === '') return null
+  const number = Number(value)
+  return Number.isFinite(number) && number >= 0 ? number : null
+}
 
 const task = (text, options = {}) => ({
   id: generateId(),
@@ -720,6 +743,17 @@ export const NOTE_TYPE_STARTERS = {
 export const getDefaultData = (noteType) =>
   baseData[noteType]?.() || null
 
+const asRecord = (value) =>
+  value && typeof value === 'object' && !Array.isArray(value) ? value : {}
+
+const asList = (value) =>
+  Array.isArray(value)
+    ? value.filter((item) => typeof item === 'string' || (item && typeof item === 'object'))
+    : []
+
+const allowedValue = (value, allowed, fallback) =>
+  allowed.includes(value) ? value : fallback
+
 /**
  * Bring notes created by older QuickNotes releases onto the current
  * editor contract without discarding user fields. Several historical
@@ -727,7 +761,7 @@ export const getDefaultData = (noteType) =>
  * `weeklyGoals`, `time` vs `startTime`, and nested shopping items).
  */
 export const normalizeNoteData = (noteType, value) => {
-  const data = value || {}
+  const data = asRecord(value)
   const defaults = getDefaultData(noteType)
   if (!defaults) return value || null
 
@@ -736,25 +770,47 @@ export const normalizeNoteData = (noteType, value) => {
       return {
         ...defaults,
         ...data,
-        tasks: (data.tasks || []).map((item) => ({
-          ...task(item.text || item.title || 'Untitled task'),
-          ...item,
-          subtasks: item.subtasks || [],
-        })),
+        tasks: asList(data.tasks).map((item) => {
+          const taskData = typeof item === 'string' ? { text: item } : item
+          return {
+            ...task(taskData.text || taskData.title || 'Untitled task'),
+            ...taskData,
+            text: String(taskData.text || taskData.title || 'Untitled task'),
+            priority: allowedValue(taskData.priority, ['high', 'medium', 'low', 'none'], 'none'),
+            completed: !!taskData.completed,
+            subtasks: asList(taskData.subtasks).map((subtask) => {
+              const subtaskData = typeof subtask === 'string' ? { text: subtask } : subtask
+              return {
+                ...subtaskData,
+                id: subtaskData.id || generateId(),
+                text: String(subtaskData.text || subtaskData.title || 'Subtask'),
+                completed: !!subtaskData.completed,
+              }
+            }),
+          }
+        }),
+        filter: allowedValue(data.filter, ['all', 'active', 'completed', 'today', 'overdue', 'starred'], 'all'),
+        sortBy: allowedValue(data.sortBy, ['priority', 'dueDate', 'created', 'alphabetical'], 'priority'),
       }
 
-    case NOTE_TYPES.PROJECT:
+    case NOTE_TYPES.PROJECT: {
+      const sourceColumns = asList(data.columns).filter((column) => typeof column === 'object')
       return {
         ...defaults,
         ...data,
-        columns: (data.columns?.length ? data.columns : defaults.columns).map((column) => ({
+        columns: (sourceColumns.length ? sourceColumns : defaults.columns).map((column) => ({
           ...column,
-          tasks: (column.tasks || []).map((item) => ({
-            ...projectTask(item.title || item.text || 'Untitled task'),
-            ...item,
-          })),
+          tasks: asList(column.tasks).map((item) => {
+            const taskData = typeof item === 'string' ? { title: item } : item
+            return {
+              ...projectTask(taskData.title || taskData.text || 'Untitled task'),
+              ...taskData,
+              title: String(taskData.title || taskData.text || 'Untitled task'),
+              priority: allowedValue(taskData.priority, ['high', 'medium', 'low'], 'medium'),
+            }
+          }),
         })),
-        milestones: (data.milestones || []).map((milestone) =>
+        milestones: asList(data.milestones).map((milestone) =>
           typeof milestone === 'string'
             ? {
                 id: generateId(),
@@ -771,7 +827,7 @@ export const normalizeNoteData = (noteType, value) => {
                 createdAt: milestone.createdAt || new Date().toISOString(),
               }
         ),
-        team: (data.team || []).map((member) =>
+        team: asList(data.team).map((member) =>
           typeof member === 'string'
             ? { id: generateId(), name: member, role: '', avatar: member.charAt(0).toUpperCase() }
             : {
@@ -783,6 +839,7 @@ export const normalizeNoteData = (noteType, value) => {
               }
         ),
       }
+    }
 
     case NOTE_TYPES.MEETING:
       return {
@@ -790,7 +847,8 @@ export const normalizeNoteData = (noteType, value) => {
         ...data,
         startTime: data.startTime || data.time || '',
         endTime: data.endTime || '',
-        attendees: (data.attendees || []).map((attendee) =>
+        notes: typeof data.notes === 'string' ? data.notes : '',
+        attendees: asList(data.attendees).map((attendee) =>
           typeof attendee === 'string'
             ? { id: generateId(), name: attendee, present: true, role: '' }
             : {
@@ -801,15 +859,20 @@ export const normalizeNoteData = (noteType, value) => {
                 role: attendee.role || '',
               }
         ),
-        agenda: (data.agenda || []).map((item) =>
+        agenda: asList(data.agenda).map((item) =>
           typeof item === 'string'
             ? agendaItem(item, 10)
             : {
-                ...agendaItem(item.topic || item.text || item.title || 'Agenda item', item.duration || 10),
+                ...agendaItem(
+                  item.topic || item.text || item.title || 'Agenda item',
+                  normalizePositiveQuantity(item.duration, 10)
+                ),
                 ...item,
+                duration: normalizePositiveQuantity(item.duration, 10),
+                actualDuration: normalizeOptionalAmount(item.actualDuration) ?? 0,
               }
         ),
-        actionItems: (data.actionItems || []).map((item) =>
+        actionItems: asList(data.actionItems).map((item) =>
           typeof item === 'string'
             ? { id: generateId(), task: item, owner: '', dueDate: '', completed: false }
             : {
@@ -820,7 +883,7 @@ export const normalizeNoteData = (noteType, value) => {
                 completed: !!item.completed,
               }
         ),
-        decisions: (data.decisions || []).map((decision) =>
+        decisions: asList(data.decisions).map((decision) =>
           typeof decision === 'string'
             ? { id: generateId(), text: decision, timestamp: new Date().toISOString() }
             : {
@@ -833,13 +896,26 @@ export const normalizeNoteData = (noteType, value) => {
       }
 
     case NOTE_TYPES.JOURNAL: {
-      const gratitude = [...(data.gratitude || [])]
+      const gratitude = asList(data.gratitude).map((item) =>
+        typeof item === 'string' ? item : String(item.text || '')
+      )
       while (gratitude.length < 3) gratitude.push('')
       return {
         ...defaults,
         ...data,
+        mood: [1, 2, 3, 4, 5].includes(data.mood) ? data.mood : null,
+        energy: [1, 2, 3, 4, 5].includes(data.energy) ? data.energy : null,
+        weather: allowedValue(data.weather, ['sunny', 'cloudy', 'rainy', 'stormy', 'snowy'], null),
+        preferredSection: allowedValue(
+          data.preferredSection,
+          ['morning', 'day', 'evening', 'reflect', 'write'],
+          'morning'
+        ),
+        challenges: typeof data.challenges === 'string' ? data.challenges : '',
+        lessons: typeof data.lessons === 'string' ? data.lessons : '',
+        freeWrite: typeof data.freeWrite === 'string' ? data.freeWrite : '',
         gratitude: gratitude.slice(0, 3),
-        highlights: (data.highlights || []).map((highlight) =>
+        highlights: asList(data.highlights).map((highlight) =>
           typeof highlight === 'string'
             ? { id: generateId(), text: highlight, timestamp: new Date().toISOString() }
             : {
@@ -849,7 +925,7 @@ export const normalizeNoteData = (noteType, value) => {
                 timestamp: highlight.timestamp || new Date().toISOString(),
               }
         ),
-        goals: (data.goals || []).map((goal) =>
+        goals: asList(data.goals).map((goal) =>
           typeof goal === 'string'
             ? { id: generateId(), text: goal, completed: false }
             : {
@@ -859,20 +935,33 @@ export const normalizeNoteData = (noteType, value) => {
                 completed: !!goal.completed,
               }
         ),
-        tags: data.tags || [],
+        tags: asList(data.tags).filter((tag) => typeof tag === 'string'),
       }
     }
 
-    case NOTE_TYPES.BRAINSTORM:
+    case NOTE_TYPES.BRAINSTORM: {
+      const categories = asList(data.categories).filter((category) => typeof category === 'object')
+      const safeCategories = (categories.length ? categories : defaults.categories).map(
+        (category, index) => ({
+          ...category,
+          id: category.id || `category-${index + 1}`,
+          name: category.name || `Category ${index + 1}`,
+          color: category.color || '#64748b',
+        })
+      )
+      const categoryIds = new Set(safeCategories.map((category) => category.id))
+      const fallbackCategory = categoryIds.has('uncategorized')
+        ? 'uncategorized'
+        : safeCategories[0]?.id
       return {
         ...defaults,
         ...data,
-        ideas: (data.ideas || []).map((idea) =>
+        ideas: asList(data.ideas).map((idea) =>
           typeof idea === 'string'
             ? {
                 id: generateId(),
                 text: idea,
-                category: 'uncategorized',
+                category: fallbackCategory,
                 votes: 0,
                 starred: false,
                 notes: '',
@@ -881,44 +970,72 @@ export const normalizeNoteData = (noteType, value) => {
             : {
                 id: idea.id || generateId(),
                 text: idea.text || idea.title || 'Untitled idea',
-                category: idea.category || 'uncategorized',
-                votes: idea.votes || 0,
+                category: categoryIds.has(idea.category) ? idea.category : fallbackCategory,
+                votes: Number.isFinite(Number(idea.votes)) ? Number(idea.votes) : 0,
                 starred: !!idea.starred,
                 notes: idea.notes || idea.description || '',
                 createdAt: idea.createdAt || new Date().toISOString(),
               }
         ),
-        categories: data.categories?.length ? data.categories : defaults.categories,
+        categories: safeCategories,
+        topic: typeof data.topic === 'string' ? data.topic : '',
+        viewMode: allowedValue(data.viewMode, ['grid', 'list'], 'grid'),
+        sortBy: allowedValue(data.sortBy, ['newest', 'oldest', 'votes', 'starred'], 'newest'),
+        selectedCategory: data.selectedCategory === 'all' || categoryIds.has(data.selectedCategory)
+          ? data.selectedCategory
+          : 'all',
       }
+    }
 
     case NOTE_TYPES.SHOPPING: {
-      const legacyItems = (data.categories || []).flatMap((category) =>
-        (category.items || []).map((item) => ({ ...item, category: item.category || category.id }))
+      const sourceCategories = asList(data.categories).filter((category) => typeof category === 'object')
+      const legacyItems = sourceCategories.flatMap((category) =>
+        asList(category.items)
+          .filter((item) => typeof item === 'object')
+          .map((item) => ({ ...item, category: item.category || category.id }))
       )
-      const sourceItems = data.items || legacyItems
-      const categories = (data.categories?.length ? data.categories : defaults.categories).map((category) => {
+      const directItems = asList(data.items).filter((item) => typeof item === 'object')
+      const sourceItems = directItems.length ? directItems : legacyItems
+      const categories = (sourceCategories.length ? sourceCategories : defaults.categories).map((category, index) => {
         const known = SHOPPING_CATEGORIES.find((item) => item.id === category.id)
-        return { ...known, ...category, items: undefined }
+        return {
+          ...known,
+          ...category,
+          id: category.id || `category-${index + 1}`,
+          name: category.name || `Category ${index + 1}`,
+          icon: category.icon || '📦',
+          color: category.color || '#64748b',
+          items: undefined,
+        }
       })
+      const categoryIds = new Set(categories.map((category) => category.id))
+      const fallbackCategory = categoryIds.has('other') ? 'other' : categories[0]?.id
       return {
         ...defaults,
         ...data,
         items: sourceItems.map((item) => ({
           ...shoppingItem(item.name || item.text || 'Untitled item', item.category || 'other'),
           ...item,
+          quantity: normalizePositiveQuantity(item.quantity),
+          price: normalizeOptionalAmount(item.price),
+          category: categoryIds.has(item.category) ? item.category : fallbackCategory,
+          checked: !!item.checked,
         })),
         categories,
+        budget: normalizeOptionalAmount(data.budget),
+        currency: allowedValue(data.currency, ['USD', 'EUR', 'GBP', 'JPY'], defaults.currency),
+        showPrices: data.showPrices !== false,
       }
     }
 
     case NOTE_TYPES.WEEKLY: {
       const days = emptyDays()
       Object.keys(days).forEach((day) => {
-        const sourceDay = data.days?.[day] || {}
+        const sourceDay = asRecord(asRecord(data.days)[day])
         days[day] = {
           ...days[day],
           ...sourceDay,
-          tasks: (sourceDay.tasks || []).map((item) =>
+          tasks: asList(sourceDay.tasks).map((item) =>
             typeof item === 'string'
               ? {
                   id: generateId(),
@@ -930,11 +1047,11 @@ export const normalizeNoteData = (noteType, value) => {
                   ...item,
                   id: item.id || generateId(),
                   text: item.text || item.title || 'Task',
-                  timeBlock: item.timeBlock || 'morning',
+                  timeBlock: allowedValue(item.timeBlock, ['morning', 'afternoon', 'evening'], 'morning'),
                   completed: !!item.completed,
                 }
           ),
-          events: (sourceDay.events || []).map((item) =>
+          events: asList(sourceDay.events).map((item) =>
             typeof item === 'string'
               ? { id: generateId(), text: item, time: '' }
               : {
@@ -946,37 +1063,43 @@ export const normalizeNoteData = (noteType, value) => {
           ),
         }
       })
-      const legacyWins = (data.review?.wins || [])
+      const review = asRecord(data.review)
+      const legacyWins = asList(review.wins)
         .map((item) => typeof item === 'string' ? item : item.text)
         .filter(Boolean)
         .join('\n')
-      const legacyImprovements = (data.review?.improvements || [])
+      const legacyImprovements = asList(review.improvements)
         .map((item) => typeof item === 'string' ? item : item.text)
         .filter(Boolean)
         .join('\n')
+      const sourceGoals = asList(data.weeklyGoals).length
+        ? asList(data.weeklyGoals)
+        : asList(data.goals)
+      const weeklyGoals = sourceGoals.map((goal) =>
+        typeof goal === 'string'
+          ? { id: generateId(), text: goal, completed: false, priority: false }
+          : {
+              ...goal,
+              id: goal.id || generateId(),
+              text: goal.text || goal.title || 'Weekly goal',
+              completed: !!goal.completed,
+              priority: !!goal.priority,
+            }
+      )
 
       return {
         ...defaults,
         ...data,
-        weeklyGoals: (data.weeklyGoals || data.goals || []).map((goal) =>
-          typeof goal === 'string'
-            ? { id: generateId(), text: goal, completed: false, priority: false }
-            : {
-                ...goal,
-                id: goal.id || generateId(),
-                text: goal.text || goal.title || 'Weekly goal',
-                completed: !!goal.completed,
-                priority: !!goal.priority,
-              }
-        ),
+        weeklyGoals,
         days,
+        preferredView: allowedValue(data.preferredView, ['week', 'goals', 'review'], 'week'),
         review: {
           ...defaults.review,
-          ...(data.review || {}),
-          accomplishments: data.review?.accomplishments || legacyWins,
-          challenges: data.review?.challenges || legacyImprovements,
-          lessons: data.review?.lessons || data.review?.highlight || '',
-          nextWeekFocus: data.review?.nextWeekFocus || '',
+          ...review,
+          accomplishments: review.accomplishments || legacyWins,
+          challenges: review.challenges || legacyImprovements,
+          lessons: review.lessons || review.highlight || '',
+          nextWeekFocus: review.nextWeekFocus || '',
         },
       }
     }

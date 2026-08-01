@@ -6,7 +6,6 @@ export const useRealtimeCollaboration = (noteId) => {
   const applyExternalUpdate = useNotesStore((s) => s.applyExternalUpdate)
   const channelRef = useRef(null)
   const lastUpdateRef = useRef(null)
-  const isLocalUpdateRef = useRef(false)
 
   useEffect(() => {
     if (!noteId) return
@@ -20,8 +19,6 @@ export const useRealtimeCollaboration = (noteId) => {
           return
         }
         lastUpdateRef.current = updateKey
-
-        isLocalUpdateRef.current = false
 
         // Server-authored change: applied without dirtying the note.
         applyExternalUpdate(noteId, {
@@ -41,15 +38,8 @@ export const useRealtimeCollaboration = (noteId) => {
         channelRef.current.unsubscribe()
       }
       lastUpdateRef.current = null
-      isLocalUpdateRef.current = false
     }
   }, [noteId, applyExternalUpdate])
-
-  const markLocalUpdate = () => {
-    isLocalUpdateRef.current = true
-  }
-
-  return { markLocalUpdate }
 }
 
 export const useShareInvitations = () => {
@@ -69,14 +59,18 @@ export const useShareInvitations = () => {
           table: 'shared_notes',
           filter: `email=eq.${user.email}`,
         },
-        (payload) => {
-          loadSharedNotes()
+        () => {
+          void loadSharedNotes()
           
           if ('Notification' in window && Notification.permission === 'granted') {
-            new Notification('New Note Shared', {
-              body: 'Someone shared a note with you',
-              icon: '/icons/icon-192x192.png'
-            })
+            try {
+              new Notification('New note shared', {
+                body: 'Someone shared a note with you.',
+                icon: `${import.meta.env.BASE_URL}icons/icon-192x192.png`,
+              })
+            } catch {
+              // The invitation remains visible in Shared notes when system notifications fail.
+            }
           }
         }
       )

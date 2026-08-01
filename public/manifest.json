@@ -1,24 +1,26 @@
 {
   "name": "QuickNotes - Simple Note Manager",
   "short_name": "QuickNotes",
-  "description": "A modern, professional note-taking application with rich text editing, cloud sync, and offline support.",
-  "start_url": "/QuickNotes-Simple-Note-Manager/",
+  "description": "An offline-first note manager with rich text editing and optional cloud sync.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#1f2937",
-  "theme_color": "#10b981",
+  "background_color": "#ffffff",
+  "theme_color": "#083d31",
   "orientation": "any",
   "icons": [
     {
-      "src": "/QuickNotes-Simple-Note-Manager/icons/icon-192x192.png",
+      "src": "icons/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "/QuickNotes-Simple-Note-Manager/icons/icon-512x512.png",
+      "src": "icons/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ],
   "categories": ["productivity", "utilities"],
@@ -27,8 +29,15 @@
       "name": "New Note",
       "short_name": "New",
       "description": "Create a new note",
-      "url": "/QuickNotes-Simple-Note-Manager/?action=new",
-      "icons": [{ "src": "/QuickNotes-Simple-Note-Manager/icons/icon-96x96.png", "sizes": "96x96" }]
+      "url": "./?action=new",
+      "icons": [
+        {
+          "src": "icons/icon-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
     }
-  ]
+  ],
+  "prefer_related_applications": false
 }

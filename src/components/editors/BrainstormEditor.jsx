@@ -18,6 +18,8 @@ import {
   Copy
 } from 'lucide-react'
 import { generateId } from './noteTypes'
+import { useLatestValue } from './useLatestValue'
+import { useEditorDataSync } from './useEditorDataSync'
 import FocusedNoteTitle from './FocusedNoteTitle'
 import Modal from '../ui/Modal'
 const DEFAULT_CATEGORIES = [
@@ -46,11 +48,14 @@ export default function BrainstormEditor({ data, onChange, noteTitle, onTitleCha
   const [newCategoryName, setNewCategoryName] = useState('')
   const [newCategoryColor, setNewCategoryColor] = useState('#6b7280')
   const [expandedIdea, setExpandedIdea] = useState(null)
+  const onChangeRef = useLatestValue(onChange)
+  const skipChangeRef = useEditorDataSync(data, brainstormData, setBrainstormData)
   const isInitialMount = useRef(true)
   useEffect(() => {
     if (isInitialMount.current) { isInitialMount.current = false; return }
-    onChange?.(brainstormData)
-  }, [brainstormData])
+    if (skipChangeRef.current) { skipChangeRef.current = false; return }
+    onChangeRef.current?.(brainstormData)
+  }, [brainstormData, onChangeRef, skipChangeRef])
 
   const update = (field, value) => {
     setBrainstormData(prev => ({ ...prev, [field]: value }))

@@ -276,9 +276,7 @@ export const getRemoteNoteVersions = async (noteId) => {
     .order('created_at', { ascending: false })
     .limit(30)
   
-  if (error) {
-    return []
-  }
+  if (error) throw error
   
   return (data || []).map(v => ({
     id: v.id,

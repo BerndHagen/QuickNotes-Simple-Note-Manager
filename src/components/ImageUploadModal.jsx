@@ -1,9 +1,26 @@
-import { useState, useCallback } from 'react'
-import { buttonClasses } from './ui'
-import { X, Upload, Link, Image as ImageIcon, FileImage, Loader2 } from 'lucide-react'
-import { useUIStore } from '../store'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { FileImage, Image as ImageIcon, Link, Upload } from 'lucide-react'
 import toast from 'react-hot-toast'
-import LegacyDialog from './ui/LegacyDialog'
+import { useUIStore } from '../store'
+import {
+  MAX_EMBEDDED_IMAGE_BYTES,
+  SUPPORTED_EMBEDDED_IMAGE_TYPES,
+  formatFileSize,
+  validateEmbeddedImage,
+} from '../lib/imageEmbedding'
+import { normalizeWebUrl } from '../lib/webUrls'
+import { Button, Field, Input, Modal, SegmentedControl } from './ui'
+
+const FILE_ACCEPT = SUPPORTED_EMBEDDED_IMAGE_TYPES.join(',')
+
+const readAsDataUrl = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result)
+    reader.onerror = () => reject(reader.error || new Error('The image could not be read.'))
+    reader.onabort = () => reject(new Error('Reading the image was cancelled.'))
+    reader.readAsDataURL(file)
+  })
 
 export default function ImageUploadModal({ editor }) {
   const { imageUploadOpen, setImageUploadOpen } = useUIStore()
@@ -13,250 +30,304 @@ export default function ImageUploadModal({ editor }) {
   const [isLoading, setIsLoading] = useState(false)
   const [dragActive, setDragActive] = useState(false)
   const [previewUrl, setPreviewUrl] = useState('')
+  const [failedPreviewUrl, setFailedPreviewUrl] = useState('')
+  const [urlError, setUrlError] = useState('')
+  const [fileError, setFileError] = useState('')
+  const fileInputRef = useRef(null)
+  const readRequestRef = useRef(0)
 
-  const handleDrag = useCallback((e) => {
-    e.preventDefault()
-    e.stopPropagation()
-    if (e.type === 'dragenter' || e.type === 'dragover') {
-      setDragActive(true)
-    } else if (e.type === 'dragleave') {
-      setDragActive(false)
-    }
-  }, [])
-
-  const processFile = async (file) => {
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please upload only image files')
-      return
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image too large (max. 5MB)')
-      return
-    }
-
-    setIsLoading(true)
-
-    try {
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        const base64 = e.target.result
-        setPreviewUrl(base64)
-        setImageUrl(base64)
-        setAltText(file.name.replace(/\.[^/.]+$/, ''))
-        setIsLoading(false)
-      }
-      reader.onerror = () => {
-        toast.error('Error reading file')
-        setIsLoading(false)
-      }
-      reader.readAsDataURL(file)
-    } catch (error) {
-      toast.error('Error processing image')
-      setIsLoading(false)
-    }
-  }
-
-  const handleDrop = useCallback((e) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setDragActive(false)
-
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      processFile(e.dataTransfer.files[0])
-    }
-  }, [])
-
-  const handleFileInput = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      processFile(e.target.files[0])
-    }
-  }
-
-  const handleUrlChange = (e) => {
-    const url = e.target.value
-    setImageUrl(url)
-    if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
-      setPreviewUrl(url)
-    } else {
-      setPreviewUrl('')
-    }
-  }
-
-  const handleInsert = () => {
-    if (!imageUrl) {
-      toast.error('Please enter an image URL or upload a file')
-      return
-    }
-
-    if (editor) {
-      editor.chain().focus().setImage({ 
-        src: imageUrl, 
-        alt: altText || 'Image',
-        title: altText || ''
-      }).run()
-      toast.success('Image inserted')
-    }
-
-    handleClose()
-  }
-
-  const handleClose = () => {
-    setImageUploadOpen(false)
+  const reset = useCallback(() => {
+    readRequestRef.current += 1
+    setActiveTab('url')
     setImageUrl('')
     setAltText('')
     setPreviewUrl('')
-    setActiveTab('url')
+    setFailedPreviewUrl('')
+    setUrlError('')
+    setFileError('')
+    setIsLoading(false)
+    setDragActive(false)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }, [])
+
+  const handleClose = useCallback(() => {
+    setImageUploadOpen(false)
+    reset()
+  }, [reset, setImageUploadOpen])
+
+  useEffect(() => {
+    if (!imageUploadOpen) reset()
+  }, [imageUploadOpen, reset])
+
+  const processFile = useCallback(async (file) => {
+    const validation = validateEmbeddedImage(file)
+    if (!validation.ok) {
+      setFileError(validation.error)
+      setImageUrl('')
+      setPreviewUrl('')
+      setFailedPreviewUrl('')
+      if (fileInputRef.current) fileInputRef.current.value = ''
+      return
+    }
+
+    const requestId = readRequestRef.current + 1
+    readRequestRef.current = requestId
+    setFileError('')
+    setFailedPreviewUrl('')
+    setIsLoading(true)
+
+    try {
+      const dataUrl = await readAsDataUrl(file)
+      if (readRequestRef.current !== requestId) return
+      if (typeof dataUrl !== 'string' || !dataUrl.startsWith(`data:${file.type};base64,`)) {
+        throw new Error('The selected file is not a valid embedded image.')
+      }
+      setImageUrl(dataUrl)
+      setPreviewUrl(dataUrl)
+      setFailedPreviewUrl('')
+      setAltText(file.name.replace(/\.[^/.]+$/, '').slice(0, 500))
+    } catch (error) {
+      if (readRequestRef.current === requestId) {
+        setFileError(error.message || 'The image could not be read.')
+        setImageUrl('')
+        setPreviewUrl('')
+        setFailedPreviewUrl('')
+      }
+    } finally {
+      if (readRequestRef.current === requestId) setIsLoading(false)
+    }
+  }, [])
+
+  const handleDrag = (event) => {
+    event.preventDefault()
+    event.stopPropagation()
+    if (isLoading) return
+    setDragActive(event.type === 'dragenter' || event.type === 'dragover')
   }
 
-  if (!imageUploadOpen) return null
+  const handleDrop = (event) => {
+    event.preventDefault()
+    event.stopPropagation()
+    setDragActive(false)
+    if (!isLoading && event.dataTransfer.files?.[0]) void processFile(event.dataTransfer.files[0])
+  }
+
+  const handleUrlChange = (event) => {
+    setImageUrl(event.target.value)
+    setPreviewUrl('')
+    setFailedPreviewUrl('')
+    setUrlError('')
+  }
+
+  const validateRemoteImage = () => {
+    const normalized = normalizeWebUrl(imageUrl)
+    setUrlError(normalized.error)
+    if (!normalized.value) {
+      setPreviewUrl('')
+      return ''
+    }
+    if (normalized.value === failedPreviewUrl) {
+      setUrlError('QuickNotes could not load an image from this address.')
+      return ''
+    }
+    setImageUrl(normalized.value)
+    setPreviewUrl(normalized.value)
+    return normalized.value
+  }
+
+  const handleInsert = () => {
+    const source = activeTab === 'url' ? validateRemoteImage() : imageUrl
+    if (!source) {
+      if (activeTab === 'upload' && !fileError) setFileError('Choose an image to embed.')
+      return
+    }
+    if (!editor) {
+      toast.error('The editor is not available. Reopen the note and try again.')
+      return
+    }
+
+    editor
+      .chain()
+      .focus()
+      .setImage({
+        src: source,
+        alt: altText.trim(),
+        title: altText.trim(),
+      })
+      .run()
+    toast.success('Image inserted')
+    handleClose()
+  }
+
+  const canInsert =
+    activeTab === 'url'
+      ? imageUrl.trim().length > 0 && imageUrl !== failedPreviewUrl
+      : imageUrl.length > 0
 
   return (
-    <LegacyDialog label="Insert image" onClose={() => setImageUploadOpen(false)} align="center">
-      <div className="modal-animate bg-surface-raised rounded-2xl shadow-2xl border border-subtle w-full max-w-lg mx-4 overflow-hidden">
-        <div className="flex items-center justify-between p-5 qn-banner-surface text-white">
-          <div className="flex items-center gap-3">
-            <ImageIcon className="w-6 h-6" />
-            <div>
-              <h2 className="text-lg font-bold">Insert Image</h2>
-              <p className="text-sm text-white/70">Add an image to your note</p>
-            </div>
-          </div>
-          <button
-            onClick={handleClose}
-            className="p-2 rounded-full hover:bg-white/20 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-        <div className="flex border-b border-subtle">
-          <button
-            onClick={() => setActiveTab('url')}
-            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
- activeTab === 'url'
- ? 'text-primary-600 border-b-2 border-primary-500 bg-primary-50 dark:bg-accent-soft'
-                : 'text-content-muted hover:text-content dark:hover:text-content-subtle'
-            }`}
-          >
-            <Link className="w-4 h-4" />
-            URL
-          </button>
-          <button
-            onClick={() => setActiveTab('upload')}
-            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
- activeTab === 'upload'
- ? 'text-primary-600 border-b-2 border-primary-500 bg-primary-50 dark:bg-accent-soft'
-                : 'text-content-muted hover:text-content dark:hover:text-content-subtle'
-            }`}
-          >
-            <Upload className="w-4 h-4" />
-            Upload
-          </button>
-        </div>
-        <div className="p-6 space-y-4">
-          {activeTab === 'url' && (
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-content-muted mb-1">
-                  Image URL
-                </label>
-                <input
-                  type="url"
-                  value={imageUrl}
-                  onChange={handleUrlChange}
-                  placeholder="https://example.com/image.jpg"
-                  className="w-full px-3 py-2 border border-subtle rounded-lg bg-white dark:bg-surface-sunken text-content focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                />
-              </div>
-            </div>
-          )}
+    <Modal
+      open={imageUploadOpen}
+      onClose={handleClose}
+      title="Insert image"
+      description="Add a hosted image or embed a small file in this note."
+      icon={ImageIcon}
+      size="lg"
+      footer={
+        <>
+          <Button variant="ghost" onClick={handleClose}>
+            Cancel
+          </Button>
+          <Button variant="primary" onClick={handleInsert} disabled={!canInsert || isLoading}>
+            Insert image
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-5">
+        <SegmentedControl
+          label="Image source"
+          value={activeTab}
+          onChange={(value) => {
+            if (value === activeTab) return
+            setActiveTab(value)
+            setImageUrl('')
+            setAltText('')
+            setUrlError('')
+            setFileError('')
+            setPreviewUrl('')
+            setFailedPreviewUrl('')
+            if (fileInputRef.current) fileInputRef.current.value = ''
+          }}
+          options={[
+            { value: 'url', label: 'Image URL' },
+            { value: 'upload', label: 'Upload file' },
+          ]}
+        />
 
-          {activeTab === 'upload' && (
-            <div
-              className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
- dragActive
- ? 'border-primary-500 bg-primary-50 dark:bg-accent-soft'
-                  : 'border-subtle  hover:border-subtle dark:hover:border-subtle'
-              }`}
+        {activeTab === 'url' ? (
+          <div className="space-y-3">
+            <Field
+              label="Image URL"
+              error={urlError}
+              hint="HTTPS is added automatically when no protocol is entered."
+            >
+              {(fieldProps) => (
+                <div className="relative">
+                  <Link
+                    className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-content-subtle"
+                    aria-hidden="true"
+                  />
+                  <Input
+                    {...fieldProps}
+                    type="text"
+                    inputMode="url"
+                    autoComplete="url"
+                    value={imageUrl}
+                    onChange={handleUrlChange}
+                    onBlur={validateRemoteImage}
+                    placeholder="https://example.com/image.jpg"
+                    className="pl-9"
+                  />
+                </div>
+              )}
+            </Field>
+            <p className="rounded-control border border-subtle bg-surface-sunken px-3 py-2 text-ui-sm text-content-muted">
+              Hosted images are not saved with the note and may change or disappear. Loading them
+              contacts the image host, which can see connection details such as your IP address.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept={FILE_ACCEPT}
+              aria-label="Choose image file"
+              className="sr-only"
+              onChange={(event) => {
+                const file = event.target.files?.[0]
+                if (file) void processFile(file)
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
               onDragEnter={handleDrag}
               onDragLeave={handleDrag}
               onDragOver={handleDrag}
               onDrop={handleDrop}
+              disabled={isLoading}
+              className={`flex w-full flex-col items-center rounded-control border-2 border-dashed px-4 py-8 text-center transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--qn-focus-ring)] disabled:cursor-wait disabled:opacity-60 ${
+                dragActive
+                  ? 'border-accent bg-accent-soft'
+                  : 'border-strong bg-surface-sunken hover:border-accent hover:bg-surface-hover'
+              }`}
             >
               {isLoading ? (
-                <div className="flex flex-col items-center gap-3">
-                  <Loader2 className="w-10 h-10 text-primary-500 animate-spin" />
-                  <p className="text-sm text-content-muted">
-                    Processing image...
-                  </p>
-                </div>
+                <>
+                  <Upload className="mb-3 h-9 w-9 animate-pulse text-accent-text" aria-hidden="true" />
+                  <span className="text-ui-md font-medium text-content">Reading image...</span>
+                </>
               ) : (
                 <>
-                  <FileImage className="w-10 h-10 text-content-subtle mx-auto mb-3" />
-                  <p className="text-sm text-content-muted mb-2">
-                    Drag image here or
-                  </p>
-                  <label className="cursor-pointer">
-                    <span className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm rounded-lg inline-block">
-                      Choose file
-                    </span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFileInput}
-                      className="hidden"
-                    />
-                  </label>
-                  <p className="text-xs text-content-subtle mt-3">
-                    Max. 5MB {"\u2022"} JPG, PNG, GIF, WebP
-                  </p>
+                  <FileImage className="mb-3 h-9 w-9 text-content-subtle" aria-hidden="true" />
+                  <span className="text-ui-md font-medium text-content">Choose an image</span>
+                  <span className="mt-1 text-ui-sm text-content-muted">or drag one here</span>
+                  <span className="mt-3 text-ui-xs text-content-subtle">
+                    JPG, PNG, GIF, or WebP &middot; up to {formatFileSize(MAX_EMBEDDED_IMAGE_BYTES)}
+                  </span>
                 </>
               )}
-            </div>
-          )}
-          <div>
-            <label className="block text-sm font-medium text-content-muted mb-1">
-              Alternative text (optional)
-            </label>
-            <input
+            </button>
+            {fileError && (
+              <p role="alert" className="text-ui-sm text-danger-text">
+                {fileError}
+              </p>
+            )}
+            <p className="text-ui-sm text-content-subtle">
+              Embedded images work offline but count toward this browser&apos;s QuickNotes storage.
+            </p>
+          </div>
+        )}
+
+        <Field
+          label="Alternative text"
+          hint="Describe the image for screen readers. Leave blank only when it is decorative."
+        >
+          {(fieldProps) => (
+            <Input
+              {...fieldProps}
               type="text"
               value={altText}
-              onChange={(e) => setAltText(e.target.value)}
-              placeholder="Description of the image"
-              className="w-full px-3 py-2 border border-subtle rounded-lg bg-white dark:bg-surface-sunken text-content focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              maxLength={500}
+              onChange={(event) => setAltText(event.target.value)}
+              placeholder="What the image shows"
             />
-          </div>
-          {previewUrl && (
-            <div className="border border-subtle rounded-lg p-3">
-              <p className="text-xs text-content-muted mb-2">Preview:</p>
-              <img
-                src={previewUrl}
-                alt="Preview"
-                className="max-h-48 mx-auto rounded object-contain"
-                onError={() => {
-                  setPreviewUrl('')
-                  toast.error('Could not load image')
-                }}
-              />
-            </div>
           )}
-        </div>
-        <div className="flex justify-end gap-3 px-6 py-4 border-t border-subtle">
-          <button
-            onClick={handleClose}
-            className="px-4 py-2 text-content-muted hover:bg-surface-sunken dark:hover:bg-surface-sunken rounded-lg transition-colors border border-subtle "
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleInsert}
-            disabled={!imageUrl || isLoading}
-            className={buttonClasses({ variant: 'primary' })}
-          >
-            Insert
-          </button>
-        </div>
+        </Field>
+
+        {previewUrl && (
+          <figure className="rounded-control border border-subtle bg-surface-sunken p-3">
+            <figcaption className="mb-2 text-ui-sm font-medium text-content-muted">Preview</figcaption>
+            <img
+              src={previewUrl}
+              alt={altText.trim() || 'Image preview'}
+              referrerPolicy="no-referrer"
+              className="mx-auto max-h-48 max-w-full rounded-control object-contain"
+              onError={() => {
+                setPreviewUrl('')
+                if (activeTab === 'upload') {
+                  setImageUrl('')
+                  setFileError('The selected file could not be decoded as an image.')
+                } else {
+                  setFailedPreviewUrl(previewUrl)
+                  setUrlError('QuickNotes could not load an image from this address.')
+                }
+              }}
+            />
+          </figure>
+        )}
       </div>
-    </LegacyDialog>
+    </Modal>
   )
 }

@@ -1,42 +1,44 @@
 import { useEffect } from 'react'
-import { useThemeStore } from '../store'
+import { useThemeStore, useUIStore } from '../store'
+import { LANGUAGES } from '../lib/i18n'
+
+const THEME_COLORS = {
+  light: '#ffffff',
+  dark: '#0b0f14',
+}
+
+function applyTheme(theme) {
+  const root = window.document.documentElement
+  root.classList.remove('light', 'dark')
+  root.classList.add(theme)
+
+  document
+    .querySelector('meta[name="theme-color"]')
+    ?.setAttribute('content', THEME_COLORS[theme])
+}
 
 export function ThemeProvider({ children }) {
   const { theme } = useThemeStore()
+  const language = useUIStore((state) => state.language)
 
   useEffect(() => {
-    const root = window.document.documentElement
-    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
-      ? 'dark'
-      : 'light'
-
-    const activeTheme = theme === 'system' ? systemTheme : theme
-
-    root.classList.remove('light', 'dark')
-    root.classList.add(activeTheme)
-
-    const metaThemeColor = document.querySelector('meta[name="theme-color"]')
-    if (metaThemeColor) {
-      metaThemeColor.setAttribute(
-        'content',
-        activeTheme === 'dark' ? '#1f2937' : '#ffffff'
-      )
-    }
-  }, [theme])
-  useEffect(() => {
-    if (theme !== 'system') return
-
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+    const resolveTheme = () => (theme === 'system' ? (mediaQuery.matches ? 'dark' : 'light') : theme)
+    const handleChange = () => applyTheme(resolveTheme())
 
-    const handleChange = (e) => {
-      const root = window.document.documentElement
-      root.classList.remove('light', 'dark')
-      root.classList.add(e.matches ? 'dark' : 'light')
-    }
+    handleChange()
+    if (theme !== 'system') return undefined
 
     mediaQuery.addEventListener('change', handleChange)
     return () => mediaQuery.removeEventListener('change', handleChange)
   }, [theme])
+
+  useEffect(() => {
+    const selectedLanguage = LANGUAGES.find(({ code }) => code === language) || LANGUAGES[0]
+    const root = window.document.documentElement
+    root.lang = selectedLanguage.code
+    root.dir = selectedLanguage.dir
+  }, [language])
 
   return children
 }

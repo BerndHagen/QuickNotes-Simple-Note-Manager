@@ -135,6 +135,7 @@ export default function Sidebar({ onNavigate }) {
   const [folderDialog, setFolderDialog] = useState(null)
   const [folderMenu, setFolderMenu] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
+  const [isSigningOut, setIsSigningOut] = useState(false)
   const accountRef = useRef(null)
   const [accountOpen, setAccountOpen] = useState(false)
 
@@ -308,7 +309,7 @@ export default function Sidebar({ onNavigate }) {
               <NavIconButton
                 icon={Plus}
                 label={t('folders.createFolder', 'New folder')}
-                onClick={() => setFolderDialog({})}
+                onClick={go(() => setFolderDialog({}))}
               />
             }
           />
@@ -342,7 +343,7 @@ export default function Sidebar({ onNavigate }) {
                         <NavIconButton
                           icon={Pencil}
                           label={`${t('common.edit', 'Edit')} ${folder.name}`}
-                          onClick={() => setFolderDialog({ folder })}
+                          onClick={go(() => setFolderDialog({ folder }))}
                           className="absolute right-1.5 bg-[rgba(8,61,49,0.92)] opacity-0 backdrop-blur-sm focus-visible:opacity-100 group-hover:opacity-100"
                         />
                       }
@@ -364,7 +365,7 @@ export default function Sidebar({ onNavigate }) {
               <NavIconButton
                 icon={Settings}
                 label={t('tags.manage', 'Manage tags')}
-                onClick={() => setTagManagerOpen(true)}
+                onClick={go(() => setTagManagerOpen(true))}
               />
             }
           />
@@ -402,21 +403,21 @@ export default function Sidebar({ onNavigate }) {
             <NavItem
               icon={Settings}
               label={t('sidebar.settings', 'Settings')}
-              onClick={() => setSettingsOpen(true)}
+              onClick={go(() => setSettingsOpen(true))}
             />
           </li>
           <li>
             <NavItem
               icon={Keyboard}
               label={t('sidebar.keyboardShortcuts', 'Keyboard shortcuts')}
-              onClick={() => setShortcutsModalOpen(true)}
+              onClick={go(() => setShortcutsModalOpen(true))}
             />
           </li>
           <li>
             <NavItem
               icon={HelpCircle}
               label={t('sidebar.help', 'Help & Support')}
-              onClick={() => setHelpModalOpen(true)}
+              onClick={go(() => setHelpModalOpen(true))}
               trailing={
                 <ChevronRight
                   className="pointer-events-none absolute right-3 h-3.5 w-3.5 text-nav-subtle"
@@ -457,6 +458,7 @@ export default function Sidebar({ onNavigate }) {
           onClick={() => {
             setAccountOpen(false)
             setSettingsOpen(true)
+            onNavigate?.()
           }}
         >
           {t('sidebar.settings', 'Settings')}
@@ -474,9 +476,20 @@ export default function Sidebar({ onNavigate }) {
         <MenuItem
           icon={LogOut}
           tone="danger"
-          onClick={() => {
-            setAccountOpen(false)
-            logout()
+          disabled={isSigningOut}
+          aria-busy={isSigningOut || undefined}
+          onClick={async () => {
+            if (isSigningOut) return
+            setIsSigningOut(true)
+            try {
+              const signedOut = await logout()
+              if (signedOut) {
+                setAccountOpen(false)
+                onNavigate?.()
+              }
+            } finally {
+              setIsSigningOut(false)
+            }
           }}
         >
           {user?.isLocal
@@ -497,6 +510,7 @@ export default function Sidebar({ onNavigate }) {
           onClick={() => {
             setFolderDialog({ folder: folderMenu.folder })
             setFolderMenu(null)
+            onNavigate?.()
           }}
         >
           {t('common.edit', 'Edit folder')}
@@ -508,6 +522,7 @@ export default function Sidebar({ onNavigate }) {
           onClick={() => {
             setConfirmDelete(folderMenu.folder)
             setFolderMenu(null)
+            onNavigate?.()
           }}
         >
           {t('common.delete', 'Delete folder')}

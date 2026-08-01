@@ -1,234 +1,268 @@
-import { useState, useEffect, useRef } from 'react'
-import { buttonClasses } from './ui'
-import { X, Code, Copy, Check, Eye, EyeOff, Download, Upload, AlertTriangle } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { AlertTriangle, Check, Code, Copy, Download, Eye, EyeOff, Upload } from 'lucide-react'
 import { useUIStore } from '../store'
-import { useTranslation } from '../lib/useTranslation'
 import { sanitizeNoteHtml } from '../lib/sanitizeHtml'
-import LegacyDialog from './ui/LegacyDialog'
+import { Button, Modal, Textarea } from './ui'
 import { ConfirmDialog } from './FolderDialogs'
+
+export const MAX_HTML_IMPORT_BYTES = 2 * 1024 * 1024
+
+export function readHtmlFile(file) {
+  if (!file) return Promise.reject(new Error('Choose an HTML file to import.'))
+
+  const supportedExtension = /\.(?:html?|xhtml)$/i.test(file.name)
+  const supportedType = ['', 'text/html', 'application/xhtml+xml'].includes(file.type)
+  if (!supportedExtension || !supportedType) {
+    return Promise.reject(new Error('Choose an .html or .htm file.'))
+  }
+  if (file.size > MAX_HTML_IMPORT_BYTES) {
+    return Promise.reject(new Error('HTML files must be 2 MB or smaller.'))
+  }
+
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      if (typeof reader.result !== 'string') {
+        reject(new Error('The HTML file could not be read as text.'))
+        return
+      }
+      resolve(reader.result)
+    }
+    reader.onerror = () => reject(reader.error || new Error('The HTML file could not be read.'))
+    reader.onabort = () => reject(new Error('Import was cancelled.'))
+    reader.readAsText(file)
+  })
+}
 
 export default function HTMLEditorModal({ editor }) {
   const { htmlEditorOpen, setHTMLEditorOpen } = useUIStore()
-  const { t } = useTranslation()
-  
   const [htmlContent, setHtmlContent] = useState('')
   const [showPreview, setShowPreview] = useState(false)
   const [copied, setCopied] = useState(false)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [discardConfirmOpen, setDiscardConfirmOpen] = useState(false)
+  const [operationError, setOperationError] = useState('')
+  const [isImporting, setIsImporting] = useState(false)
   const textareaRef = useRef(null)
+  const fileInputRef = useRef(null)
+  const copyTimerRef = useRef(null)
 
   useEffect(() => {
-    if (htmlEditorOpen && editor) {
-      const currentHtml = editor.getHTML()
-      setHtmlContent(formatHtml(currentHtml))
-      setHasUnsavedChanges(false)
-    }
+    if (!htmlEditorOpen || !editor) return
+    setHtmlContent(editor.getHTML() || '')
+    setHasUnsavedChanges(false)
+    setShowPreview(false)
+    setCopied(false)
+    setOperationError('')
+    setIsImporting(false)
   }, [htmlEditorOpen, editor])
 
-  const formatHtml = (html) => {
-    if (!html) return ''
-    
-    let formatted = html
-      .replace(/></g, '>\n<')
-      .replace(/(<\/(?:div|p|h[1-6]|ul|ol|li|table|tr|td|th|blockquote|pre|hr|br)>)/gi, '$1\n')
-      .replace(/(<(?:div|p|h[1-6]|ul|ol|li|table|tr|blockquote|pre)[^>]*>)/gi, '\n$1')
-    
-    formatted = formatted.replace(/\n\s*\n\s*\n/g, '\n\n')
-    
-    return formatted.trim()
-  }
-
-  const minifyHtml = (html) => {
-    return html
-      .replace(/\n/g, '')
-      .replace(/\s+/g, ' ')
-      .replace(/>\s+</g, '><')
-      .trim()
-  }
+  useEffect(
+    () => () => {
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current)
+    },
+    []
+  )
 
   const handleApply = () => {
-    if (editor) {
-      const cleanHtml = sanitizeNoteHtml(minifyHtml(htmlContent))
-      editor.commands.setContent(cleanHtml)
-      setHasUnsavedChanges(false)
-      setHTMLEditorOpen(false)
+    if (!editor) {
+      setOperationError('The editor is not available. Reopen the note and try again.')
+      return
     }
+    editor.commands.setContent(sanitizeNoteHtml(htmlContent))
+    setHasUnsavedChanges(false)
+    setHTMLEditorOpen(false)
   }
 
   const handleCopy = async () => {
+    setOperationError('')
     try {
+      if (!navigator.clipboard?.writeText) throw new Error('Clipboard access is unavailable.')
       await navigator.clipboard.writeText(htmlContent)
       setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    } catch (err) {
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current)
+      copyTimerRef.current = setTimeout(() => setCopied(false), 2000)
+    } catch {
+      setCopied(false)
+      setOperationError('Clipboard access was blocked. Select the HTML source and copy it manually.')
+      textareaRef.current?.focus()
     }
   }
 
   const handleExport = () => {
-    const blob = new Blob([htmlContent], { type: 'text/html' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'note-content.html'
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    setOperationError('')
+    let objectUrl = ''
+    try {
+      const safeHtml = sanitizeNoteHtml(htmlContent)
+      const blob = new Blob([safeHtml], { type: 'text/html;charset=utf-8' })
+      objectUrl = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = objectUrl
+      link.download = 'note-content.html'
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 0)
+    } catch {
+      if (objectUrl) URL.revokeObjectURL(objectUrl)
+      setOperationError('QuickNotes could not create the HTML download. Try again.')
+    }
   }
 
-  const handleImport = () => {
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = '.html,.htm,.txt'
-    input.onchange = (e) => {
-      const file = e.target.files[0]
-      if (file) {
-        const reader = new FileReader()
-        reader.onload = (event) => {
-          setHtmlContent(event.target.result)
-          setHasUnsavedChanges(true)
-        }
-        reader.readAsText(file)
-      }
+  const handleImport = async (file) => {
+    if (!file || isImporting) return
+    setOperationError('')
+    setIsImporting(true)
+    try {
+      const imported = await readHtmlFile(file)
+      setHtmlContent(sanitizeNoteHtml(imported))
+      setHasUnsavedChanges(true)
+    } catch (error) {
+      setOperationError(error.message || 'The HTML file could not be imported.')
+    } finally {
+      setIsImporting(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
     }
-    input.click()
   }
 
   const handleClose = () => {
     if (hasUnsavedChanges) {
       setDiscardConfirmOpen(true)
-    } else {
-      setHTMLEditorOpen(false)
+      return
     }
+    setHTMLEditorOpen(false)
   }
 
-  if (!htmlEditorOpen) return null
+  const footer = (
+    <>
+      <span className="mr-auto self-center text-ui-sm text-content-subtle" aria-live="polite">
+        {htmlContent.length.toLocaleString()} characters
+      </span>
+      <Button variant="ghost" onClick={handleClose}>
+        Cancel
+      </Button>
+      <Button variant="primary" onClick={handleApply} disabled={!hasUnsavedChanges}>
+        Apply changes
+      </Button>
+    </>
+  )
 
   return (
-    <LegacyDialog label="Edit HTML" onClose={handleClose} align="center">
-      <div className="modal-animate bg-surface-raised rounded-2xl shadow-2xl border border-subtle w-full max-w-4xl mx-4 h-[85vh] overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between p-5 qn-banner-surface text-white">
-          <div className="flex items-center gap-3">
-            <Code className="w-6 h-6" />
-            <h2 className="text-lg font-bold">HTML Editor</h2>
-            {hasUnsavedChanges && (
-              <span className="px-2 py-1 text-[11px] font-semibold text-white bg-white/20 rounded-lg">
-                Unsaved changes
-              </span>
-            )}
+    <>
+      <Modal
+        open={htmlEditorOpen}
+        onClose={handleClose}
+        title="HTML editor"
+        description="Review or edit the note's underlying HTML."
+        icon={Code}
+        size="3xl"
+        initialFocusRef={textareaRef}
+        footer={footer}
+      >
+        <div className="space-y-4">
+          <div className="flex items-start gap-2.5 rounded-card border border-warning-border bg-warning-soft p-3 text-ui-md text-warning-text">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+            <p>
+              Unsupported or unsafe markup is removed when you import, preview, export, or apply
+              changes. Invalid structure can still change the note&apos;s formatting.
+            </p>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowPreview(!showPreview)}
-              className={`p-2 rounded-full transition-colors ${
- showPreview 
- ? 'bg-white/20 text-white' 
-                  : 'hover:bg-white/20 text-white/70'
-              }`}
-              title={showPreview ? 'Hide Preview' : 'Show Preview'}
+
+          {operationError && (
+            <p
+              role="alert"
+              className="rounded-control border border-danger-border bg-danger-soft px-3 py-2 text-ui-md text-danger-text"
             >
-              {showPreview ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-            </button>
-            <button
-              onClick={handleClose}
-              className="p-2 rounded-full hover:bg-white/20 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 px-6 py-3 text-sm border-b bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800">
-          <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
-          <p className="text-amber-700 dark:text-amber-300">
-            <strong>Warning:</strong> Direct HTML editing can break formatting. Use with caution.
-          </p>
-        </div>
-        <div className="flex flex-1 overflow-hidden">
-          <div className={`flex flex-col flex-1 ${showPreview ? 'border-r border-subtle' : ''}`}>
-            <div className="flex items-center gap-2 px-4 py-2 border-b border-subtle bg-surface-sunken ">
-              <span className="text-xs font-medium text-content-muted">HTML Source</span>
-              <div className="flex-1" />
-              <button
-                onClick={handleCopy}
-                className="flex items-center gap-1 px-2 py-1 text-xs transition-colors rounded hover:bg-surface-sunken dark:hover:bg-surface-sunken"
-              >
-                {copied ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
-                {copied ? 'Copied!' : 'Copy'}
-              </button>
-              <button
-                onClick={handleImport}
-                className="flex items-center gap-1 px-2 py-1 text-xs transition-colors rounded hover:bg-surface-sunken dark:hover:bg-surface-sunken"
-              >
-                <Upload className="w-3 h-3" />
-                Import
-              </button>
-              <button
-                onClick={handleExport}
-                className="flex items-center gap-1 px-2 py-1 text-xs transition-colors rounded hover:bg-surface-sunken dark:hover:bg-surface-sunken"
-              >
-                <Download className="w-3 h-3" />
-                Export
-              </button>
-            </div>
-            <textarea
-              ref={textareaRef}
-              value={htmlContent}
-              onChange={(e) => {
-                setHtmlContent(e.target.value)
-                setHasUnsavedChanges(true)
-              }}
-              className="flex-1 w-full p-4 font-mono text-sm text-content bg-white border-none outline-none resize-none dark:bg-surface-sunken dark:text-content"
-              spellCheck={false}
-              placeholder="Enter HTML code here..."
-            />
-          </div>
-          {showPreview && (
-            <div className="flex flex-col flex-1">
-              <div className="flex items-center gap-2 px-4 py-2 border-b border-subtle bg-surface-sunken ">
-                <Eye className="w-4 h-4 text-content-subtle" />
-                <span className="text-xs font-medium text-content-muted">Preview</span>
-              </div>
-              <div 
-                className="flex-1 p-4 overflow-auto prose prose-sm dark:prose-invert max-w-none"
-                dangerouslySetInnerHTML={{ __html: sanitizeNoteHtml(htmlContent) }}
-              />
-            </div>
+              {operationError}
+            </p>
           )}
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".html,.htm,.xhtml,text/html,application/xhtml+xml"
+            aria-label="Import HTML file"
+            className="sr-only"
+            onChange={(event) => void handleImport(event.target.files?.[0])}
+          />
+
+          <section className="overflow-hidden rounded-card border border-subtle bg-surface-raised">
+            <div className="flex flex-wrap items-center gap-1.5 border-b border-subtle bg-surface-sunken px-3 py-2">
+              <h3 className="mr-auto text-ui-sm font-medium text-content-muted">HTML source</h3>
+              <Button
+                size="sm"
+                variant={showPreview ? 'subtle' : 'ghost'}
+                icon={showPreview ? EyeOff : Eye}
+                aria-pressed={showPreview}
+                onClick={() => setShowPreview((visible) => !visible)}
+              >
+                {showPreview ? 'Hide preview' : 'Show preview'}
+              </Button>
+              <Button size="sm" variant="ghost" icon={copied ? Check : Copy} onClick={handleCopy}>
+                {copied ? 'Copied' : 'Copy'}
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                icon={Upload}
+                loading={isImporting}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                Import
+              </Button>
+              <Button size="sm" variant="ghost" icon={Download} onClick={handleExport}>
+                Export
+              </Button>
+            </div>
+
+            <div className={showPreview ? 'grid min-w-0 md:grid-cols-2' : 'grid min-w-0'}>
+              <div className="min-w-0">
+                <Textarea
+                  ref={textareaRef}
+                  aria-label="HTML source"
+                  value={htmlContent}
+                  onChange={(event) => {
+                    setHtmlContent(event.target.value)
+                    setHasUnsavedChanges(true)
+                    setOperationError('')
+                  }}
+                  className="h-[42dvh] min-h-64 rounded-none border-0 font-mono text-ui-sm focus:ring-2 md:h-[50dvh]"
+                  spellCheck={false}
+                  placeholder="Enter supported note HTML"
+                />
+              </div>
+
+              {showPreview && (
+                <div className="min-w-0 border-t border-subtle md:border-l md:border-t-0">
+                  <div className="flex h-control-sm items-center gap-1.5 border-b border-subtle bg-surface-sunken px-3 text-ui-sm font-medium text-content-muted">
+                    <Eye className="h-3.5 w-3.5" aria-hidden="true" />
+                    Sanitized preview
+                  </div>
+                  <div
+                    aria-label="HTML preview"
+                    className="prose prose-sm h-[42dvh] min-h-64 max-w-none overflow-auto p-4 dark:prose-invert md:h-[calc(50dvh-32px)]"
+                    dangerouslySetInnerHTML={{ __html: sanitizeNoteHtml(htmlContent) }}
+                  />
+                </div>
+              )}
+            </div>
+          </section>
         </div>
-        <div className="flex items-center justify-between px-6 py-4 border-t border-subtle bg-surface-sunken">
-          <p className="text-xs text-content-muted">
-            {htmlContent.length} characters
-          </p>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleClose}
-              className="px-4 py-2 text-content transition-colors rounded-lg dark:text-content-subtle hover:bg-surface-sunken dark:hover:bg-surface-sunken border border-subtle "
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleApply}
-              disabled={!hasUnsavedChanges}
-              className={buttonClasses({ variant: 'primary' })}
-            >
-              Apply Changes
-            </button>
-          </div>
-        </div>
-      </div>
+      </Modal>
+
       <ConfirmDialog
         open={discardConfirmOpen}
         onClose={() => setDiscardConfirmOpen(false)}
         onConfirm={() => {
           setDiscardConfirmOpen(false)
+          setHasUnsavedChanges(false)
           setHTMLEditorOpen(false)
         }}
         title="Discard HTML changes?"
-        description="Your edits in the HTML source view have not been applied."
+        description="Your edits to the HTML source have not been applied."
         confirmLabel="Discard changes"
         icon={AlertTriangle}
       />
-    </LegacyDialog>
+    </>
   )
 }

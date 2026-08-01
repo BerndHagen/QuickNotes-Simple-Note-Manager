@@ -66,6 +66,7 @@ export default function KeyboardShortcutsModal() {
   const [conflict, setConflict] = useState(null)
   const [dirty, setDirty] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [saveError, setSaveError] = useState('')
   const firstFieldRef = useRef(null)
 
   useEffect(() => {
@@ -75,10 +76,11 @@ export default function KeyboardShortcutsModal() {
     setConflict(null)
     setDirty(false)
     setSaved(false)
+    setSaveError('')
   }, [shortcutsModalOpen])
 
   useEffect(() => {
-    if (!recording) return
+    if (!recording || conflict) return
 
     const onKeyDown = (e) => {
       e.preventDefault()
@@ -105,15 +107,21 @@ export default function KeyboardShortcutsModal() {
         return
       }
 
+      if (sameBinding(shortcuts[recording], candidate)) {
+        setRecording(null)
+        return
+      }
+
       setShortcuts((prev) => ({ ...prev, [recording]: candidate }))
       setRecording(null)
       setDirty(true)
       setSaved(false)
+      setSaveError('')
     }
 
     window.addEventListener('keydown', onKeyDown, true)
     return () => window.removeEventListener('keydown', onKeyDown, true)
-  }, [recording, shortcuts])
+  }, [conflict, recording, shortcuts])
 
   const modifiedCount = useMemo(
     () =>
@@ -125,9 +133,15 @@ export default function KeyboardShortcutsModal() {
   )
 
   const handleSave = () => {
-    saveShortcuts(shortcuts)
-    setDirty(false)
-    setSaved(true)
+    try {
+      saveShortcuts(shortcuts)
+      setDirty(false)
+      setSaved(true)
+      setSaveError('')
+    } catch {
+      setSaved(false)
+      setSaveError('Keyboard shortcuts could not be saved in this browser. Your changes have not been applied.')
+    }
   }
 
   const resolveConflict = () => {
@@ -148,6 +162,7 @@ export default function KeyboardShortcutsModal() {
     setRecording(null)
     setDirty(true)
     setSaved(false)
+    setSaveError('')
   }
 
   return (
@@ -170,6 +185,7 @@ export default function KeyboardShortcutsModal() {
               setShortcuts({ ...DEFAULT_SHORTCUTS })
               setDirty(true)
               setSaved(false)
+              setSaveError('')
             }}
           >
             Reset all
@@ -214,6 +230,16 @@ export default function KeyboardShortcutsModal() {
         </div>
       )}
 
+      {saveError && (
+        <div
+          role="alert"
+          className="mb-4 flex gap-2.5 rounded-card border border-danger-border bg-danger-soft p-3 text-danger-text"
+        >
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+          <p className="text-ui-md">{saveError}</p>
+        </div>
+      )}
+
       <div className="space-y-6">
         {CATEGORIES.map((category, categoryIndex) => (
           <section key={category.id}>
@@ -249,6 +275,7 @@ export default function KeyboardShortcutsModal() {
                             }))
                             setDirty(true)
                             setSaved(false)
+                            setSaveError('')
                           }}
                         />
                       )}
@@ -256,9 +283,11 @@ export default function KeyboardShortcutsModal() {
                         <button
                           ref={categoryIndex === 0 && actionIndex === 0 ? firstFieldRef : undefined}
                           type="button"
+                          disabled={!!conflict}
                           onClick={() => setRecording(isRecording ? null : action)}
                           aria-label={`Change shortcut for ${shortcut.description}. Currently ${formatShortcut(shortcut)}`}
-                          className={`min-w-[108px] rounded-control px-2.5 py-1 font-mono text-ui-sm transition-colors duration-fast ${
+                          aria-pressed={isRecording}
+                          className={`min-w-[108px] rounded-control px-2.5 py-1 font-mono text-ui-sm transition-colors duration-fast disabled:cursor-not-allowed disabled:opacity-60 ${
  isRecording
  ? 'bg-accent text-accent-on'
                               : 'bg-surface-sunken text-content hover:bg-surface-hover'

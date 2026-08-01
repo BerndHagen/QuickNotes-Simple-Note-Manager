@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { buttonClasses } from './ui'
 import { X, Tag, Trash2, Edit2, Check, Plus, Hash } from 'lucide-react'
 import { useNotesStore, useUIStore } from '../store'
@@ -48,6 +48,19 @@ const TAG_COLORS = [
   '#9ca3af', '#4b5563',
 ]
 
+function handleColorKeyDown(event, index, onChange) {
+  let nextIndex
+  if (event.key === 'Home') nextIndex = 0
+  else if (event.key === 'End') nextIndex = TAG_COLORS.length - 1
+  else if (['ArrowRight', 'ArrowDown'].includes(event.key)) nextIndex = (index + 1) % TAG_COLORS.length
+  else if (['ArrowLeft', 'ArrowUp'].includes(event.key)) nextIndex = (index - 1 + TAG_COLORS.length) % TAG_COLORS.length
+  else return
+
+  event.preventDefault()
+  onChange(TAG_COLORS[nextIndex])
+  event.currentTarget.parentElement?.querySelectorAll('[role="radio"]')[nextIndex]?.focus()
+}
+
 export default function TagManagerModal() {
   const { t } = useTranslation()
   const { tagManagerOpen, setTagManagerOpen } = useUIStore()
@@ -60,17 +73,32 @@ export default function TagManagerModal() {
   const [newTagName, setNewTagName] = useState('')
   const [newTagColor, setNewTagColor] = useState('#3b82f6')
   const [deleteConfirmId, setDeleteConfirmId] = useState(null)
+  const managedTags = Array.isArray(tags)
+    ? tags.filter((tag) => tag?.id && typeof tag.name === 'string')
+    : []
+  const availableNotes = Array.isArray(notes) ? notes.filter(Boolean) : []
+
+  useEffect(() => {
+    if (!tagManagerOpen) return
+    setEditingTagId(null)
+    setEditingName('')
+    setEditingColor('')
+    setShowNewTag(false)
+    setNewTagName('')
+    setNewTagColor('#3b82f6')
+    setDeleteConfirmId(null)
+  }, [tagManagerOpen])
 
   if (!tagManagerOpen) return null
 
   const getNotesCountForTag = (tagName) => {
-    return notes.filter(n => n.tags?.includes(tagName) && !n.deleted).length
+    return availableNotes.filter(n => n.tags?.includes(tagName) && !n.deleted).length
   }
 
   const handleStartEdit = (tag) => {
     setEditingTagId(tag.id)
-    setEditingName(tag.name)
-    setEditingColor(tag.color)
+    setEditingName(String(tag.name || ''))
+    setEditingColor(TAG_COLORS.includes(tag.color) ? tag.color : '#3b82f6')
   }
 
   const handleSaveEdit = () => {
@@ -96,23 +124,31 @@ export default function TagManagerModal() {
   }
 
   const handleDeleteTag = (tagId) => {
-    deleteTag(tagId)
-    setDeleteConfirmId(null)
+    try {
+      deleteTag(tagId)
+      setDeleteConfirmId(null)
+    } catch (error) {
+      toast.error(error?.message || 'The tag could not be deleted')
+    }
   }
 
   const handleCreateTag = () => {
     if (newTagName.trim()) {
-      const alreadyExists = tags.some(
-        (tag) => tag.name.toLowerCase() === newTagName.trim().toLowerCase()
+      const alreadyExists = managedTags.some(
+        (tag) => String(tag?.name || '').toLowerCase() === newTagName.trim().toLowerCase()
       )
       if (alreadyExists) {
         toast.error('A tag with this name already exists')
         return
       }
-      createTag({ name: newTagName, color: newTagColor })
-      setNewTagName('')
-      setNewTagColor('#3b82f6')
-      setShowNewTag(false)
+      try {
+        createTag({ name: newTagName.trim(), color: newTagColor })
+        setNewTagName('')
+        setNewTagColor('#3b82f6')
+        setShowNewTag(false)
+      } catch (error) {
+        toast.error(error?.message || 'The tag could not be created')
+      }
     }
   }
 
@@ -131,15 +167,18 @@ export default function TagManagerModal() {
             </div>
           </div>
           <button
+            type="button"
             onClick={() => setTagManagerOpen(false)}
+            aria-label={t('common.close', 'Close')}
             className="p-2 rounded-full hover:bg-white/20 transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
         <div className="flex-1 overflow-y-auto p-6">
           {!showNewTag && (
             <button
+              type="button"
               onClick={() => setShowNewTag(true)}
               className="w-full mb-4 p-3 border-2 border-dashed border-subtle rounded-xl hover:border-emerald-500 dark:hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors flex items-center justify-center gap-2 text-content-muted hover:text-emerald-600 dark:hover:text-emerald-400"
             >
@@ -158,6 +197,7 @@ export default function TagManagerModal() {
                     value={newTagName}
                     onChange={(e) => setNewTagName(e.target.value)}
                     placeholder={t('tags.tagName', 'Tag name')}
+                    aria-label={t('tags.tagName', 'Tag name')}
                     className="w-full pl-9 pr-3 py-2 bg-surface-raised border border-subtle rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
                     autoFocus
                     onKeyDown={(e) => {
@@ -167,11 +207,18 @@ export default function TagManagerModal() {
                   />
                 </div>
               </div>
-              <div className="flex flex-wrap gap-1.5 mb-3">
-                {TAG_COLORS.map((color) => (
+              <div role="radiogroup" aria-label="New tag colour" className="flex flex-wrap gap-1.5 mb-3">
+                {TAG_COLORS.map((color, index) => (
                   <button
                     key={color}
+                    type="button"
+                    role="radio"
+                    aria-checked={newTagColor === color}
+                    aria-label={`Colour ${color}`}
+                    title={color}
+                    tabIndex={newTagColor === color ? 0 : -1}
                     onClick={() => setNewTagColor(color)}
+                    onKeyDown={(event) => handleColorKeyDown(event, index, setNewTagColor)}
                     className={`w-6 h-6 rounded-full transition-transform hover:scale-110 ${
  newTagColor === color ? 'ring-2 ring-offset-2 ring-gray-400 dark:ring-gray-500' : ''
  }`}
@@ -182,6 +229,7 @@ export default function TagManagerModal() {
 
               <div className="flex gap-2">
                 <button
+                  type="button"
                   onClick={handleCreateTag}
                   disabled={!newTagName.trim()}
                   className={buttonClasses({ variant: 'primary' }) + ' flex-1'}
@@ -190,6 +238,7 @@ export default function TagManagerModal() {
                   {t('common.create', 'Create')}
                 </button>
                 <button
+                  type="button"
                   onClick={() => {
                     setShowNewTag(false)
                     setNewTagName('')
@@ -201,7 +250,7 @@ export default function TagManagerModal() {
               </div>
             </div>
           )}
-          {tags.length === 0 ? (
+          {managedTags.length === 0 ? (
             <div className="text-center py-12 text-content-muted">
               <Tag className="w-12 h-12 mx-auto mb-3 opacity-30" />
               <p>{t('tags.noTags', 'No tags yet')}</p>
@@ -209,7 +258,7 @@ export default function TagManagerModal() {
             </div>
           ) : (
             <div className="space-y-2">
-              {tags.map((tag) => (
+              {managedTags.map((tag) => (
                 <div
                   key={tag.id}
                   className="p-3 bg-surface-sunken rounded-xl border border-subtle hover:border-subtle dark:hover:border-subtle transition-colors"
@@ -223,6 +272,7 @@ export default function TagManagerModal() {
                             type="text"
                             maxLength={MAX_TAG_NAME_LENGTH}
                             value={editingName}
+                            aria-label={`Tag name for ${tag.name || 'tag'}`}
                             onChange={(e) => setEditingName(e.target.value)}
                             className="w-full pl-9 pr-3 py-2 bg-surface-raised border border-subtle rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
                             autoFocus
@@ -233,11 +283,18 @@ export default function TagManagerModal() {
                           />
                         </div>
                       </div>
-                      <div className="flex flex-wrap gap-1.5 mb-3">
-                        {TAG_COLORS.map((color) => (
+                      <div role="radiogroup" aria-label={`Colour for ${tag.name || 'tag'}`} className="flex flex-wrap gap-1.5 mb-3">
+                        {TAG_COLORS.map((color, index) => (
                           <button
                             key={color}
+                            type="button"
+                            role="radio"
+                            aria-checked={editingColor === color}
+                            aria-label={`Colour ${color}`}
+                            title={color}
+                            tabIndex={editingColor === color ? 0 : -1}
                             onClick={() => setEditingColor(color)}
+                            onKeyDown={(event) => handleColorKeyDown(event, index, setEditingColor)}
                             className={`w-6 h-6 rounded-full transition-transform hover:scale-110 ${
  editingColor === color ? 'ring-2 ring-offset-2 ring-gray-400 dark:ring-gray-500' : ''
  }`}
@@ -248,13 +305,16 @@ export default function TagManagerModal() {
 
                       <div className="flex gap-2">
                         <button
+                          type="button"
                           onClick={handleSaveEdit}
+                          disabled={!editingName.trim()}
                           className={buttonClasses({ variant: 'primary' }) + ' flex-1'}
                         >
                           <Check className="w-4 h-4" />
                           {t('common.save', 'Save')}
                         </button>
                         <button
+                          type="button"
                           onClick={handleCancelEdit}
                           className="px-4 py-2 bg-surface-sunken hover:bg-surface-sunken dark:hover:bg-surface-active text-content-muted rounded-lg font-medium transition-colors border border-subtle "
                         >
@@ -269,12 +329,14 @@ export default function TagManagerModal() {
                       </p>
                       <div className="flex gap-2">
                         <button
+                          type="button"
                           onClick={() => handleDeleteTag(tag.id)}
                           className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
                         >
                           {t('common.delete', 'Delete')}
                         </button>
                         <button
+                          type="button"
                           onClick={() => setDeleteConfirmId(null)}
                           className="px-4 py-2 bg-surface-sunken hover:bg-surface-sunken dark:hover:bg-surface-active text-content-muted rounded-lg font-medium transition-colors border border-subtle "
                         >
@@ -283,13 +345,13 @@ export default function TagManagerModal() {
                       </div>
                     </div>
                   ) : (
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex min-w-0 items-center gap-3">
                         <div
                           className="w-4 h-4 rounded-full flex-shrink-0"
                           style={{ backgroundColor: tag.color }}
                         />
-                        <span className="font-medium text-content">
+                        <span className="truncate font-medium text-content">
                           #{tag.name}
                         </span>
                         <span className="text-sm text-content-muted">
@@ -300,18 +362,22 @@ export default function TagManagerModal() {
                       </div>
                       <div className="flex items-center gap-1">
                         <button
+                          type="button"
                           onClick={() => handleStartEdit(tag)}
+                          aria-label={`${t('common.edit', 'Edit')} ${tag.name || 'tag'}`}
                           className="p-2 hover:bg-surface-sunken dark:hover:bg-surface-sunken rounded-lg transition-colors text-content-muted hover:text-content dark:hover:text-content-subtle"
                           title={t('common.edit', 'Edit')}
                         >
-                          <Edit2 className="w-4 h-4" />
+                          <Edit2 className="w-4 h-4" aria-hidden="true" />
                         </button>
                         <button
+                          type="button"
                           onClick={() => setDeleteConfirmId(tag.id)}
+                          aria-label={`${t('common.delete', 'Delete')} ${tag.name || 'tag'}`}
                           className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors text-content-muted hover:text-red-600"
                           title={t('common.delete', 'Delete')}
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-4 h-4" aria-hidden="true" />
                         </button>
                       </div>
                     </div>

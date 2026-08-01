@@ -26,9 +26,8 @@ const ICON_SIZES = { sm: 'h-3.5 w-3.5', md: 'h-4 w-4', lg: 'h-[18px] w-[18px]' }
 
 /**
  * The class string behind <Button>, exported so a control that cannot be the
- * component — one wrapped in a form row, or carrying its own layout — still
- * takes its appearance from here. There is one definition of what a button
- * looks like in this app, and this is it.
+ * component — one wrapped in a form row, or carrying its own layout — can use
+ * the same variants and control sizing.
  */
 export function buttonClasses({ variant = 'secondary', size = 'md', fullWidth = false } = {}) {
   return [

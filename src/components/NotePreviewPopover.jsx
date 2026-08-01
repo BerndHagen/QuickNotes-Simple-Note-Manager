@@ -1,4 +1,4 @@
-import { cloneElement, useState, useRef, useEffect } from 'react'
+import { cloneElement, useState, useRef, useEffect, useId, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { Eye, FileText, Calendar, Tag, Folder } from 'lucide-react'
 import { useNotesStore } from '../store'
@@ -9,6 +9,7 @@ export default function NotePreviewPopover({ noteId, children, position = 'right
   const triggerRef = useRef(null)
   const popoverRef = useRef(null)
   const timeoutRef = useRef(null)
+  const previewId = useId()
 
   const { notes, folders } = useNotesStore()
   const note = notes.find((n) => n.id === noteId)
@@ -21,38 +22,43 @@ export default function NotePreviewPopover({ noteId, children, position = 'right
     }
   }, [])
 
-  const handleMouseEnter = () => {
+  const updatePosition = useCallback(() => {
+    if (!triggerRef.current) return
+
+    const rect = triggerRef.current.getBoundingClientRect()
+    const padding = 10
+    const gap = 10
+    const popoverWidth = Math.min(320, Math.max(window.innerWidth - padding * 2, 0))
+    const popoverHeight = Math.min(280, Math.max(window.innerHeight - padding * 2, 0))
+    const leftX = rect.left - popoverWidth - gap
+    const rightX = rect.right + gap
+    const preferredX = position === 'left' ? leftX : rightX
+    const fallbackX = position === 'left' ? rightX : leftX
+    const fits = (x) => x >= padding && x + popoverWidth <= window.innerWidth - padding
+    const x = Math.min(
+      Math.max(fits(preferredX) ? preferredX : fits(fallbackX) ? fallbackX : preferredX, padding),
+      Math.max(padding, window.innerWidth - popoverWidth - padding)
+    )
+    const y = Math.min(
+      Math.max(rect.top, padding),
+      Math.max(padding, window.innerHeight - popoverHeight - padding)
+    )
+
+    setCoords({ x, y })
+  }, [position])
+
+  const showPreview = (delay = 500) => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
     }
-    
+
     timeoutRef.current = setTimeout(() => {
-      if (triggerRef.current) {
-        const rect = triggerRef.current.getBoundingClientRect()
-        const popoverWidth = 320
-        const popoverHeight = 280
-
-        let x = rect.left - popoverWidth - 10
-        let y = rect.top
-
-        if (x < 10) {
-          return
-        }
-
-        if (y + popoverHeight > window.innerHeight - 10) {
-          y = window.innerHeight - popoverHeight - 10
-        }
-        if (y < 10) {
-          y = 10
-        }
-
-        setCoords({ x, y })
-        setIsVisible(true)
-      }
-    }, 500)
+      updatePosition()
+      setIsVisible(true)
+    }, delay)
   }
 
-  const handleMouseLeave = () => {
+  const hidePreview = () => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
     }
@@ -62,11 +68,26 @@ export default function NotePreviewPopover({ noteId, children, position = 'right
     }, 100)
   }
 
+  useEffect(() => {
+    if (!isVisible) return
+    const handleViewportChange = () => updatePosition()
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') setIsVisible(false)
+    }
+    window.addEventListener('resize', handleViewportChange)
+    window.addEventListener('scroll', handleViewportChange, true)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      window.removeEventListener('resize', handleViewportChange)
+      window.removeEventListener('scroll', handleViewportChange, true)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isVisible, updatePosition])
+
   const getContentPreview = (content) => {
     if (!content) return 'No content'
-    const div = document.createElement('div')
-    div.innerHTML = content
-    const text = div.textContent || div.innerText || ''
+    const parsed = new DOMParser().parseFromString(String(content), 'text/html')
+    const text = parsed.body.textContent || ''
     return text.slice(0, 300) + (text.length > 300 ? '...' : '')
   }
 
@@ -77,7 +98,9 @@ export default function NotePreviewPopover({ noteId, children, position = 'right
 
   const formatDate = (dateString) => {
     if (!dateString) return ''
-    return new Date(dateString).toLocaleDateString('en-US', {
+    const date = new Date(dateString)
+    if (Number.isNaN(date.getTime())) return 'Date unavailable'
+    return date.toLocaleDateString(undefined, {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -89,26 +112,51 @@ export default function NotePreviewPopover({ noteId, children, position = 'right
   if (!note) return children
 
   const folder = getFolder()
+  const childRef = children.ref
+  const setTriggerRef = (node) => {
+    triggerRef.current = node
+    if (typeof childRef === 'function') childRef(node)
+    else if (childRef) childRef.current = node
+  }
 
   return (
     <>
       {cloneElement(children, {
-        ref: triggerRef,
-        onMouseEnter: handleMouseEnter,
-        onMouseLeave: handleMouseLeave,
+        ref: setTriggerRef,
+        'aria-describedby': isVisible
+          ? [children.props['aria-describedby'], previewId].filter(Boolean).join(' ')
+          : children.props['aria-describedby'],
+        onMouseEnter: (event) => {
+          children.props.onMouseEnter?.(event)
+          showPreview()
+        },
+        onMouseLeave: (event) => {
+          children.props.onMouseLeave?.(event)
+          hidePreview()
+        },
+        onFocus: (event) => {
+          children.props.onFocus?.(event)
+          showPreview(0)
+        },
+        onBlur: (event) => {
+          children.props.onBlur?.(event)
+          hidePreview()
+        },
       })}
 
       {isVisible && createPortal(
         <div
           ref={popoverRef}
-          className="fixed z-50 w-80 bg-surface-raised border border-subtle rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+          id={previewId}
+          role="tooltip"
+          className="fixed z-50 w-[min(20rem,calc(100vw-1.25rem))] bg-surface-raised border border-subtle rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
           style={{ left: coords.x, top: coords.y }}
           onMouseEnter={() => {
             if (timeoutRef.current) {
               clearTimeout(timeoutRef.current)
             }
           }}
-          onMouseLeave={handleMouseLeave}
+          onMouseLeave={hidePreview}
         >
           <div className="px-4 py-3 bg-surface-sunken border-b border-subtle">
             <div className="flex items-start gap-2">

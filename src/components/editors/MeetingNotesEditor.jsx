@@ -20,6 +20,8 @@ import {
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { formatDateKey, generateId, parseDateKey } from './noteTypes'
+import { useLatestValue } from './useLatestValue'
+import { useEditorDataSync } from './useEditorDataSync'
 import FocusedNoteTitle from './FocusedNoteTitle'
 
 export default function MeetingNotesEditor({ data, onChange, noteTitle, onTitleChange, readOnly }) {
@@ -45,11 +47,14 @@ export default function MeetingNotesEditor({ data, onChange, noteTitle, onTitleC
   const [newDecision, setNewDecision] = useState('')
   
   const timerRef = useRef(null)
+  const onChangeRef = useLatestValue(onChange)
+  const skipChangeRef = useEditorDataSync(data, meetingData, setMeetingData)
   const isInitialMount = useRef(true)
   useEffect(() => {
     if (isInitialMount.current) { isInitialMount.current = false; return }
-    onChange?.(meetingData)
-  }, [meetingData])
+    if (skipChangeRef.current) { skipChangeRef.current = false; return }
+    onChangeRef.current?.(meetingData)
+  }, [meetingData, onChangeRef, skipChangeRef])
   useEffect(() => {
     if (timerRunning) {
       timerRef.current = setInterval(() => {

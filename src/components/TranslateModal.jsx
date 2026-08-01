@@ -1,14 +1,13 @@
-import { useState, useEffect } from 'react'
-import {
-  X,
-  Languages,
-  Copy,
-  Check,
-  Globe
-} from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { Check, Copy, Globe2, Languages, ShieldCheck } from 'lucide-react'
 import { useUIStore } from '../store'
 import { useTranslation } from '../lib/useTranslation'
-import LegacyDialog from './ui/LegacyDialog'
+import {
+  MAX_TRANSLATION_BYTES,
+  getUtf8ByteLength,
+  translateText,
+} from '../lib/translation'
+import { Button, Field, Modal, Select, Spinner, Textarea } from './ui'
 
 const LANGUAGES = [
   { code: 'en', name: 'English' },
@@ -76,412 +75,298 @@ function stripHtml(html) {
   return doc.body.textContent || ''
 }
 
+const resolveTargetLanguage = (language) => {
+  if (language === 'zh') return 'zh-CN'
+  return language !== 'en' && LANGUAGES.some((item) => item.code === language) ? language : 'de'
+}
+
 export default function TranslateModal() {
-  const { translateModalOpen, setTranslateModalOpen, translateText: textToTranslate, setTranslateText } = useUIStore()
-  const { t } = useTranslation()
-  
+  const {
+    translateModalOpen,
+    setTranslateModalOpen,
+    translateText: textToTranslate,
+    setTranslateText,
+  } = useUIStore()
+  const { t, language } = useTranslation()
+
   const [sourceLang, setSourceLang] = useState('en')
-  const [targetLang, setTargetLang] = useState('en')
+  const [targetLang, setTargetLang] = useState(() => resolveTargetLanguage(language))
   const [sourceText, setSourceText] = useState('')
-  const [copied, setCopied] = useState(false)
   const [translatedText, setTranslatedText] = useState('')
+  const [errorMessage, setErrorMessage] = useState('')
+  const [clipboardError, setClipboardError] = useState('')
+  const [copiedTarget, setCopiedTarget] = useState(null)
   const [isTranslating, setIsTranslating] = useState(false)
-  const [translationError, setTranslationError] = useState(false)
+  const abortRef = useRef(null)
+  const requestIdRef = useRef(0)
+  const copyTimerRef = useRef(null)
 
-  useEffect(() => {
-    if (translateModalOpen) {
-      const cleanText = textToTranslate?.includes('<') ? stripHtml(textToTranslate) : textToTranslate
-      setSourceText(cleanText || '')
-      setCopied(false)
-      setTranslatedText('')
-      setTranslationError(false)
-      setIsTranslating(false)
-    }
-  }, [translateModalOpen, textToTranslate])
+  const cancelTranslation = useCallback(() => {
+    requestIdRef.current += 1
+    abortRef.current?.abort()
+    abortRef.current = null
+    setIsTranslating(false)
+  }, [])
 
-  useEffect(() => {
+  const clearResult = useCallback(() => {
+    cancelTranslation()
     setTranslatedText('')
-    setTranslationError(false)
-  }, [sourceLang, targetLang])
+    setErrorMessage('')
+    setClipboardError('')
+    setCopiedTarget(null)
+  }, [cancelTranslation])
 
-  const mapLanguageCode = (code, api = 'mymemory') => {
-    if (api === 'mymemory') {
-      const mapping = {
-        'zh-CN': 'zh-CN',
-        'zh-TW': 'zh-TW',
-      }
-      return mapping[code] || code
-    }
-    const mapping = {
-      'zh-CN': 'zh',
-      'zh-TW': 'zh',
-      'pt': 'pt',
-    }
-    return mapping[code] || code
-  }
-  const translateWithMyMemory = async (text, from, to) => {
-    const langPair = `${mapLanguageCode(from, 'mymemory')}|${mapLanguageCode(to, 'mymemory')}`
-    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${langPair}&de=quicknotes@example.com`
-    
-    const response = await fetch(url)
-    if (!response.ok) throw new Error('MyMemory API failed')
-    
-    const data = await response.json()
-    if (data.responseStatus === 200 && data.responseData?.translatedText) {
-      const translated = data.responseData.translatedText
-      
-      if (translated.toLowerCase() === text.toLowerCase()) {
-        throw new Error('Translation same as input')
-      }
-      
-      const suspiciousPatterns = [
-        /fils de discussion/i,
-        /\[Translation.*/i,
-        /NO QUERY SPECIFIED/i,
-        /PLEASE SELECT/i,
-      ]
-      
-      if (suspiciousPatterns.some(pattern => pattern.test(translated))) {
-        throw new Error('Suspicious translation detected')
-      }
-      
-      const matchQuality = data.responseData?.match
-      if (matchQuality && parseFloat(matchQuality) < 0.5) {
-        throw new Error('Low quality translation match')
-      }
-      
-      return translated
-    }
-    throw new Error('MyMemory translation failed')
-  }
-
-  const translateWithLingva = async (text, from, to) => {
-    const instances = [
-      'https://lingva.ml',
-      'https://translate.plausibility.cloud',
-      'https://lingva.lunar.icu',
-    ]
-    
-    for (const instance of instances) {
-      try {
-        const url = `${instance}/api/v1/${mapLanguageCode(from, 'lingva')}/${mapLanguageCode(to, 'lingva')}/${encodeURIComponent(text)}`
-        const response = await fetch(url)
-        if (response.ok) {
-          const data = await response.json()
-          if (data.translation) {
-            return data.translation
-          }
-        }
-      } catch (e) {
-        continue
-      }
-    }
-    throw new Error('Lingva translation failed')
-  }
-
-  const translateWithLibreTranslate = async (text, from, to) => {
-    const instances = [
-      'https://libretranslate.com/translate',
-      'https://translate.argosopentech.com/translate',
-      'https://trans.zillyhuhn.com/translate',
-    ]
-    
-    for (const instanceUrl of instances) {
-      try {
-        const response = await fetch(instanceUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            q: text,
-            source: mapLanguageCode(from),
-            target: mapLanguageCode(to),
-            format: 'text'
-          })
-        })
-        
-        if (response.ok) {
-          const data = await response.json()
-          if (data.translatedText) {
-            return data.translatedText
-          }
-        }
-      } catch (e) {
-        continue
-      }
-    }
-    throw new Error('LibreTranslate failed')
-  }
-
-  const translateWithSimplyTranslate = async (text, from, to) => {
-    const instances = [
-      'https://simplytranslate.org',
-      'https://st.tokhmi.xyz',
-      'https://translate.bus-hit.me',
-    ]
-    
-    for (const instance of instances) {
-      try {
-        const url = `${instance}/api/translate/?engine=google&from=${from}&to=${to}&text=${encodeURIComponent(text)}`
-        const response = await fetch(url)
-        if (response.ok) {
-          const data = await response.json()
-          if (data.translated_text) {
-            return data.translated_text
-          }
-        }
-      } catch (e) {
-        continue
-      }
-    }
-    throw new Error('SimplyTranslate failed')
-  }
-
-  const handleTranslate = async () => {
-    if (!sourceText.trim()) return
-    if (sourceLang === targetLang) {
-      setTranslatedText(sourceText)
+  useEffect(() => {
+    if (!translateModalOpen) {
+      cancelTranslation()
       return
     }
 
-    setIsTranslating(true)
-    setTranslationError(false)
+    const cleanText = textToTranslate?.includes('<') ? stripHtml(textToTranslate) : textToTranslate
+    setSourceText(cleanText || '')
+    setTargetLang(resolveTargetLanguage(language))
     setTranslatedText('')
+    setErrorMessage('')
+    setClipboardError('')
+    setCopiedTarget(null)
+  }, [cancelTranslation, language, textToTranslate, translateModalOpen])
 
-    const textToTranslate = sourceText.trim()
-    
-    try {
-      try {
-        const result = await translateWithSimplyTranslate(textToTranslate, sourceLang, targetLang)
-        setTranslatedText(result)
-        return
-      } catch (e) {
-      }
-
-      try {
-        const result = await translateWithLingva(textToTranslate, sourceLang, targetLang)
-        setTranslatedText(result)
-        return
-      } catch (e) {
-      }
-
-      try {
-        const result = await translateWithMyMemory(textToTranslate, sourceLang, targetLang)
-        setTranslatedText(result)
-        return
-      } catch (e) {
-      }
-
-      try {
-        const result = await translateWithLibreTranslate(textToTranslate, sourceLang, targetLang)
-        setTranslatedText(result)
-        return
-      } catch (e) {
-      }
-
-      throw new Error('All translation services are currently unavailable. Please try again later.')
-      
-    } catch (error) {
-      setTranslationError(true)
-      setTranslatedText(error.message || 'Translation failed. Please try again.')
-    } finally {
-      setIsTranslating(false)
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort()
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current)
     }
-  }
-
-  const handleCopyText = async () => {
-    if (!sourceText.trim()) return
-    
-    try {
-      await navigator.clipboard.writeText(sourceText)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    } catch (err) {
-    }
-  }
+  }, [])
 
   const handleClose = () => {
+    cancelTranslation()
     setTranslateModalOpen(false)
     setTranslateText('')
   }
 
-  if (!translateModalOpen) return null
+  const handleSourceChange = (event) => {
+    setSourceText(event.target.value)
+    clearResult()
+  }
+
+  const handleLanguageChange = (setter) => (event) => {
+    setter(event.target.value)
+    clearResult()
+  }
+
+  const handleTranslate = async () => {
+    clearResult()
+    const requestId = requestIdRef.current + 1
+    requestIdRef.current = requestId
+    const controller = new AbortController()
+    abortRef.current = controller
+    setIsTranslating(true)
+
+    try {
+      const result = await translateText(sourceText, {
+        source: sourceLang,
+        target: targetLang,
+        signal: controller.signal,
+      })
+      if (requestId === requestIdRef.current) setTranslatedText(result)
+    } catch (error) {
+      if (error?.name !== 'AbortError' && requestId === requestIdRef.current) {
+        setErrorMessage(error?.message || 'Translation failed. Try again later.')
+      }
+    } finally {
+      if (requestId === requestIdRef.current) {
+        abortRef.current = null
+        setIsTranslating(false)
+      }
+    }
+  }
+
+  const copyToClipboard = async (value, target) => {
+    setClipboardError('')
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error('Clipboard API unavailable')
+      await navigator.clipboard.writeText(value)
+      setCopiedTarget(target)
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current)
+      copyTimerRef.current = setTimeout(() => setCopiedTarget(null), 2000)
+    } catch {
+      setClipboardError('Clipboard access is unavailable. Select the text and copy it manually.')
+    }
+  }
+
+  const byteCount = getUtf8ByteLength(sourceText)
+  const isOverLimit = byteCount > MAX_TRANSLATION_BYTES
+  const sameLanguage = sourceLang === targetLang
+  const cannotTranslate = !sourceText.trim() || isOverLimit || sameLanguage
+
   return (
-    <LegacyDialog label="Translate" onClose={() => setTranslateModalOpen(false)} align="center">
-      <div className="bg-surface-raised rounded-2xl shadow-2xl border border-subtle w-full max-w-lg mx-4 max-h-[85vh] overflow-hidden flex flex-col modal-animate">
-        <div className="flex items-center justify-between p-5 qn-banner-surface text-white">
-          <div className="flex items-center gap-3">
-            <Languages className="w-6 h-6" />
-            <div>
-              <h2 className="text-lg font-bold">{t('translate.title')}</h2>
-              <p className="text-sm text-white/70">Translate your notes to any language</p>
-            </div>
-          </div>
-          <button
-            onClick={handleClose}
-            className="p-2 rounded-full hover:bg-white/20 transition-colors"
+    <Modal
+      open={translateModalOpen}
+      onClose={handleClose}
+      title={t('translate.title', 'Translate text')}
+      description="Translate a note or selected passage into another language."
+      icon={Languages}
+      size="xl"
+      footer={
+        <>
+          <Button variant="secondary" onClick={handleClose}>
+            {t('common.close', 'Close')}
+          </Button>
+          <Button
+            variant="primary"
+            icon={Languages}
+            loading={isTranslating}
+            disabled={cannotTranslate}
+            onClick={handleTranslate}
           >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-        <div className="flex-1 p-6 space-y-4 overflow-y-auto">
-          <div className="flex items-start gap-3 p-4 border border-blue-200 rounded-lg bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800">
-            <Globe className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
-                Free Translation Service
-              </p>
-              <p className="mt-1 text-sm text-blue-600 dark:text-blue-300">
-                {t('translate.freeServiceInfo', 'Free and reliable translations powered by MyMemory API with multiple fallbacks.')}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="flex-1">
-              <label className="block mb-2 text-sm font-medium text-content-muted">
-                <Globe className="inline w-4 h-4 mr-1" /> {t('translate.from', 'From')}
-              </label>
-              <select
-                value={sourceLang}
-                onChange={(e) => setSourceLang(e.target.value)}
-                className="w-full px-3 py-2 text-content bg-surface-sunken border border-subtle rounded-lg dark:bg-surface-sunken dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                {LANGUAGES.map((lang) => (
-                  <option key={lang.code} value={lang.code}>
-                    {lang.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            
-            <div className="flex-1">
-              <label className="block mb-2 text-sm font-medium text-content-muted">
-                <Globe className="inline w-4 h-4 mr-1" /> {t('translate.to', 'To')}
-              </label>
-              <select
-                value={targetLang}
-                onChange={(e) => setTargetLang(e.target.value)}
-                className="w-full px-3 py-2 text-content bg-surface-sunken border border-subtle rounded-lg dark:bg-surface-sunken dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                {LANGUAGES.map((lang) => (
-                  <option key={lang.code} value={lang.code}>
-                    {lang.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
+            {isTranslating
+              ? t('translate.translating', 'Translating…')
+              : t('translate.translate', 'Translate')}
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-5">
+        <div className="flex items-start gap-3 rounded-card border border-info-border bg-info-soft p-3.5 text-info-text">
+          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-medium text-content-muted">
-                {t('translate.originalText', 'Original Text')}
-              </label>
-              <button
-                onClick={handleCopyText}
-                disabled={!sourceText.trim()}
-                className="flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {copied ? (
-                  <>
-                    <Check className="w-4 h-4" />
-                    {t('translate.copied', 'Copied!')}
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-4 h-4" />
-                    {t('translate.copyToClipboard', 'Copy')}
-                  </>
-                )}
-              </button>
-            </div>
-            <textarea
-              value={sourceText}
-              onChange={(e) => setSourceText(e.target.value)}
-              placeholder={t('translate.noTextSelected', 'Enter or paste text to translate...')}
-              className="w-full h-40 px-4 py-3 text-content placeholder:text-content-subtle border border-subtle rounded-lg resize-none bg-surface-sunken dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-            <p className="mt-1 text-xs text-content-muted">
-              {sourceText.length} {t('notes.characters', 'characters')}
+            <p className="text-ui-md font-semibold">Translation privacy</p>
+            <p className="mt-0.5 text-ui-sm leading-relaxed">
+              Text is sent to MyMemory only when you choose Translate. Do not submit confidential
+              content to the public translation service.
             </p>
           </div>
-          {(translatedText || isTranslating || translationError) && (
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-content-muted">
-                  {t('translate.translatedText', 'Translated Text')}
-                </label>
-                {translatedText && (
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(translatedText).then(() => {
-                        setCopied(true)
-                        setTimeout(() => setCopied(false), 2000)
-                      })
-                    }}
-                    className="flex items-center gap-1 text-sm text-green-600 dark:text-green-400 hover:underline"
-                  >
-                    {copied ? (
-                      <>
-                        <Check className="w-4 h-4" />
-                        {t('translate.copied', 'Copied!')}
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-4 h-4" />
-                        {t('translate.copyToClipboard', 'Copy')}
-                      </>
-                    )}
-                  </button>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label={t('translate.from', 'From')} htmlFor="qn-translation-source-language">
+            <Select
+              id="qn-translation-source-language"
+              value={sourceLang}
+              onChange={handleLanguageChange(setSourceLang)}
+            >
+              {LANGUAGES.map((item) => (
+                <option key={item.code} value={item.code}>
+                  {item.name}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Field label={t('translate.to', 'To')} htmlFor="qn-translation-target-language">
+            <Select
+              id="qn-translation-target-language"
+              value={targetLang}
+              onChange={handleLanguageChange(setTargetLang)}
+            >
+              {LANGUAGES.map((item) => (
+                <option key={item.code} value={item.code}>
+                  {item.name}
+                </option>
+              ))}
+            </Select>
+          </Field>
+        </div>
+
+        {sameLanguage && (
+          <p role="status" className="text-ui-sm text-warning-text">
+            Choose a different target language to translate this text.
+          </p>
+        )}
+
+        <Field
+          label={t('translate.originalText', 'Source text')}
+          htmlFor="qn-translation-source"
+          error={isOverLimit ? 'Select a shorter passage before translating.' : undefined}
+          hint={`${byteCount.toLocaleString()} of ${MAX_TRANSLATION_BYTES.toLocaleString()} bytes`}
+        >
+          {({ id, ...fieldProps }) => (
+            <div className="space-y-2">
+              <Textarea
+                id={id}
+                {...fieldProps}
+                value={sourceText}
+                onChange={handleSourceChange}
+                rows={7}
+                placeholder={t(
+                  'translate.noTextSelected',
+                  'Enter or paste text to translate…'
                 )}
+              />
+              <div className="flex justify-end">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon={copiedTarget === 'source' ? Check : Copy}
+                  disabled={!sourceText.trim()}
+                  onClick={() => copyToClipboard(sourceText, 'source')}
+                >
+                  {copiedTarget === 'source'
+                    ? t('translate.copied', 'Copied')
+                    : t('translate.copyToClipboard', 'Copy source')}
+                </Button>
               </div>
-              <div className="relative">
-                <textarea
-                  value={translatedText}
-                  readOnly
-                  placeholder={isTranslating ? (t('translate.translating', 'Translating...')) : (translationError ? (t('translate.translationError', 'Translation failed, opening Google Translate...')) : '')}
-                  className="w-full h-40 px-4 py-3 text-content placeholder:text-content-subtle border border-subtle rounded-lg resize-none bg-green-50 dark:bg-green-900/20 dark:border-green-700 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
-                {isTranslating && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-surface-raised rounded-lg">
-                    <div className="flex items-center gap-2 text-content-muted">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-500"></div>
-                      {t('translate.translating', 'Translating...')}
-                    </div>
-                  </div>
-                )}
-              </div>
-              {translatedText && (
-                <p className="mt-1 text-xs text-content-muted">
-                  {translatedText.length} {t('notes.characters', 'characters')}
-                </p>
-              )}
             </div>
           )}
-          <button
-            onClick={handleTranslate}
-            disabled={!sourceText.trim() || isTranslating || sourceLang === targetLang}
-            className="flex items-center justify-center w-full gap-2 px-4 py-3 font-medium text-white transition-all rounded-lg shadow-lg qn-banner-surface hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed shadow-blue-500/25"
+        </Field>
+
+        {isTranslating && (
+          <div role="status" className="flex items-center gap-3 rounded-card border border-subtle bg-surface-sunken p-4 text-ui-md text-content-muted">
+            <Spinner size="sm" label={t('translate.translating', 'Translating text')} />
+            <span>{t('translate.translating', 'Translating…')}</span>
+          </div>
+        )}
+
+        {errorMessage && (
+          <div role="alert" className="rounded-card border border-danger-border bg-danger-soft p-3.5 text-ui-md text-danger-text">
+            <p className="font-semibold">Translation failed</p>
+            <p className="mt-0.5">{errorMessage}</p>
+          </div>
+        )}
+
+        {translatedText && (
+          <Field
+            label={t('translate.translatedText', 'Translation')}
+            htmlFor="qn-translation-result"
+            hint={`${translatedText.length.toLocaleString()} characters · MyMemory`}
           >
-            <Languages className="w-5 h-5" />
-            {isTranslating 
-              ? (t('translate.translating', 'Translating...')) 
-              : sourceLang === targetLang 
-                ? 'Select different languages'
-                : (t('translate.translate', 'Translate'))
-            }
-          </button>
-        </div>
-        <div className="flex items-center justify-between px-6 py-4 border-t border-subtle bg-surface-sunken">
-          <p className="text-xs text-content-muted">
-            {t('translate.poweredBy', 'Powered by MyMemory, Lingva & LibreTranslate')}
+            {({ id, ...fieldProps }) => (
+              <div className="space-y-2">
+                <Textarea
+                  id={id}
+                  {...fieldProps}
+                  value={translatedText}
+                  readOnly
+                  rows={7}
+                  className="bg-success-soft"
+                />
+                <div className="flex justify-end">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    icon={copiedTarget === 'translation' ? Check : Copy}
+                    onClick={() => copyToClipboard(translatedText, 'translation')}
+                  >
+                    {copiedTarget === 'translation'
+                      ? t('translate.copied', 'Copied')
+                      : t('translate.copyToClipboard', 'Copy translation')}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </Field>
+        )}
+
+        {clipboardError && (
+          <p role="alert" className="text-ui-sm text-danger-text">
+            {clipboardError}
           </p>
-          <button
-            onClick={handleClose}
-            className="px-4 py-2 text-content transition-colors rounded-lg dark:text-content-subtle hover:bg-surface-sunken dark:hover:bg-surface-raised border border-subtle "
-          >
-            {t('common.close', 'Close')}
-          </button>
-        </div>
+        )}
+
+        <p className="flex items-center gap-1.5 text-ui-xs text-content-subtle">
+          <Globe2 className="h-3.5 w-3.5" aria-hidden="true" />
+          Translation quality varies by language and context. Review the result before using it.
+        </p>
       </div>
-    </LegacyDialog>
+    </Modal>
   )
 }

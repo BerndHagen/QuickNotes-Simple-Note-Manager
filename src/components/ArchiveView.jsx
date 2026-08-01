@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { Archive, ArchiveRestore, X, Search, Calendar, Clock, Folder } from 'lucide-react'
-import { useNotesStore, useUIStore } from '../store'
-import { formatDate } from '../lib/utils'
-import { useTranslation } from '../lib/useTranslation'
+import { Archive, ArchiveRestore, Calendar, Clock, Folder, Search } from 'lucide-react'
 import toast from 'react-hot-toast'
-import LegacyDialog from './ui/LegacyDialog'
+import { useNotesStore, useUIStore } from '../store'
+import { formatDate, htmlToPlainText } from '../lib/utils'
+import { useTranslation } from '../lib/useTranslation'
+import { Button, EmptyState, IconButton, Input, Modal } from './ui'
 
 export default function ArchiveView() {
   const { t, language } = useTranslation()
@@ -13,20 +13,18 @@ export default function ArchiveView() {
   const [searchQuery, setSearchQuery] = useState('')
 
   const archivedNotes = notes.filter((note) => note.archived && !note.deleted)
-
+  const normalizedQuery = searchQuery.trim().toLowerCase()
   const filteredNotes = archivedNotes.filter((note) => {
-    if (!searchQuery) return true
-    const q = searchQuery.toLowerCase()
+    if (!normalizedQuery) return true
     return (
-      note.title.toLowerCase().includes(q) ||
-      stripHtml(note.content || '').toLowerCase().includes(q)
+      String(note.title || '').toLowerCase().includes(normalizedQuery) ||
+      htmlToPlainText(note.content || '').toLowerCase().includes(normalizedQuery)
     )
   })
 
-  const stripHtml = (html) => {
-    const div = document.createElement('div')
-    div.innerHTML = html
-    return div.textContent || div.innerText || ''
+  const closeArchive = () => {
+    setArchiveViewOpen(false)
+    setSearchQuery('')
   }
 
   const handleUnarchive = (noteId) => {
@@ -37,125 +35,133 @@ export default function ArchiveView() {
   const handleOpenNote = (noteId) => {
     unarchiveNote(noteId)
     setSelectedNote(noteId)
-    setArchiveViewOpen(false)
+    closeArchive()
     toast.success(t('archive.noteRestoredOpened'))
   }
 
-  const getFolder = (folderId) => {
-    return folders.find((f) => f.id === folderId)
-  }
-
   const getContentPreview = (content) => {
-    const text = stripHtml(content || '')
-    return text.slice(0, 150) + (text.length > 150 ? '...' : '')
+    const text = htmlToPlainText(content || '')
+    return text.length > 150 ? `${text.slice(0, 150).trim()}…` : text
   }
 
-  if (!archiveViewOpen) return null
+  const countLabel = `${archivedNotes.length} ${
+    archivedNotes.length === 1 ? t('archive.archivedNote') : t('archive.archivedNotes')
+  }`
 
   return (
-    <LegacyDialog label="Archive" onClose={() => setArchiveViewOpen(false)} align="center">
-      <div className="bg-surface-raised rounded-2xl shadow-2xl border border-subtle w-full max-w-3xl mx-4 max-h-[85vh] overflow-hidden flex flex-col modal-animate">
-        <div className="flex items-center justify-between p-5 qn-banner-surface text-white shrink-0">
-          <div className="flex items-center gap-3">
-            <Archive className="w-6 h-6" />
-            <div>
-              <h2 className="text-lg font-bold">{t('archive.title')}</h2>
-              <p className="text-sm text-white/70">
-                {archivedNotes.length} {archivedNotes.length !== 1 ? t('archive.archivedNotes') : t('archive.archivedNote')}
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={() => setArchiveViewOpen(false)}
-            className="p-2 rounded-full hover:bg-white/20 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="px-6 py-3 border-b border-subtle">
+    <Modal
+      open={archiveViewOpen}
+      onClose={closeArchive}
+      title={t('archive.title')}
+      description={countLabel}
+      icon={Archive}
+      size="2xl"
+      bodyClassName="!overflow-hidden p-0 sm:p-0"
+    >
+      <div className="flex h-full min-h-0 flex-col">
+        <div className="shrink-0 border-b border-subtle px-5 py-3 sm:px-6">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-content-subtle" />
-            <input
-              type="text"
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-content-subtle"
+              aria-hidden="true"
+            />
+            <Input
+              type="search"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              aria-label={t('archive.searchPlaceholder')}
               placeholder={t('archive.searchPlaceholder')}
-              className="w-full pl-10 pr-4 py-2 bg-surface-sunken border-none rounded-lg text-sm focus:ring-2 focus:ring-primary-500"
+              className="bg-surface-sunken pl-9"
             />
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4">
+        <div
+          role="region"
+          aria-label={t('archive.title')}
+          tabIndex={0}
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--qn-focus-ring)]"
+        >
           {filteredNotes.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center py-12">
-              <Archive className="w-16 h-16 text-content-subtle dark:text-content-muted mb-4" />
-              <h3 className="text-lg font-medium text-content mb-2">
-                {searchQuery ? t('archive.noResults') : t('archive.empty')}
-              </h3>
-              <p className="text-content-muted max-w-sm">
-                {searchQuery
-                  ? `${t('archive.noArchivedFound')} "${searchQuery}".`
-                  : t('archive.emptyDescription')}
-              </p>
-            </div>
+            <EmptyState
+              icon={Archive}
+              title={searchQuery ? t('archive.noResults') : t('archive.empty')}
+              description={
+                searchQuery
+                  ? `${t('archive.noArchivedFound')} “${searchQuery}”.`
+                  : t('archive.emptyDescription')
+              }
+              action={
+                searchQuery ? (
+                  <Button variant="secondary" size="sm" onClick={() => setSearchQuery('')}>
+                    {t('common.clear', 'Clear search')}
+                  </Button>
+                ) : null
+              }
+            />
           ) : (
-            <div className="space-y-3">
+            <ul className="space-y-3">
               {filteredNotes.map((note) => {
-                const folder = getFolder(note.folderId)
+                const folder = folders.find((candidate) => candidate.id === note.folderId)
+                const title = note.title || t('notes.untitled', 'Untitled note')
+                const headingId = `qn-archived-note-${note.id}`
                 return (
-                  <div
-                    key={note.id}
-                    className="p-4 bg-surface-sunken rounded-lg hover:bg-surface-hover transition-colors group"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-content truncate mb-1">
-                          {note.title}
-                        </h4>
-                        <p className="text-sm text-content-muted line-clamp-2 mb-2">
-                          {getContentPreview(note.content)}
-                        </p>
-                        <div className="flex items-center gap-4 text-xs text-content-subtle">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="w-3 h-3" />
-                            Archived: {formatDate(note.archivedAt, language)}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            Created: {formatDate(note.createdAt, language)}
-                          </span>
-                          {folder && (
-                            <span className="flex items-center gap-1">
-                              <Folder className="w-3 h-3" />
-                              {folder.name}
+                  <li key={note.id}>
+                    <article
+                      aria-labelledby={headingId}
+                      className="rounded-card border border-subtle bg-surface-sunken p-4 transition-colors hover:bg-surface-hover"
+                    >
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0 flex-1">
+                          <h3 id={headingId} className="truncate text-ui-lg font-medium text-content">
+                            {title}
+                          </h3>
+                          <p className="mt-1 line-clamp-2 text-ui-md text-content-muted">
+                            {getContentPreview(note.content) || t('notes.noPreview')}
+                          </p>
+                          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-ui-xs text-content-muted">
+                            <span className="flex items-center gap-1.5">
+                              <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
+                              Archived: {formatDate(note.archivedAt, language)}
                             </span>
-                          )}
+                            <span className="flex items-center gap-1.5">
+                              <Clock className="h-3.5 w-3.5" aria-hidden="true" />
+                              Created: {formatDate(note.createdAt, language)}
+                            </span>
+                            {folder && (
+                              <span className="flex items-center gap-1.5">
+                                <Folder className="h-3.5 w-3.5" aria-hidden="true" />
+                                {folder.name}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex shrink-0 items-center justify-end gap-2">
+                          <IconButton
+                            icon={ArchiveRestore}
+                            size="sm"
+                            label={`${t('archive.removeFromArchive')}: ${title}`}
+                            onClick={() => handleUnarchive(note.id)}
+                          />
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            aria-label={`${t('common.open')} ${title}`}
+                            onClick={() => handleOpenNote(note.id)}
+                          >
+                            {t('common.open')}
+                          </Button>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={() => handleUnarchive(note.id)}
-                          className="p-2 hover:bg-surface-sunken dark:hover:bg-surface-sunken rounded-lg transition-colors"
-                          title={t('archive.removeFromArchive')}
-                        >
-                          <ArchiveRestore className="w-4 h-4 text-content-muted" />
-                        </button>
-                        <button
-                          onClick={() => handleOpenNote(note.id)}
-                          className="px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white text-sm rounded-lg transition-colors"
-                        >
-                          {t('common.open')}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+                    </article>
+                  </li>
                 )
               })}
-            </div>
+            </ul>
           )}
         </div>
       </div>
-    </LegacyDialog>
+    </Modal>
   )
 }

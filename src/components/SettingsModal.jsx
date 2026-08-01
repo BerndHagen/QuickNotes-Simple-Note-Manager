@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Avatar, Button, Field, Input, SegmentedControl, Toggle } from './ui'
 import {
   X,
@@ -34,8 +34,9 @@ import {
 import { useUIStore, useNotesStore, useThemeStore } from '../store'
 import { backend, isBackendConfigured, getRedirectUrl, deleteUserAccount } from '../lib/backend'
 import { getAuthErrorMessage, validateNewPassword } from '../lib/authValidation'
-import { clearLocalData } from '../lib/db'
 import { setLocalDisplayName } from '../lib/localSession'
+import { createWorkspaceBackup } from '../lib/workspaceBackup'
+import { normalizeWebUrl } from '../lib/webUrls'
 import { useTranslation, LANGUAGES } from '../lib/useTranslation'
 import toast from 'react-hot-toast'
 import LegacyDialog from './ui/LegacyDialog'
@@ -66,8 +67,6 @@ export default function SettingsModal() {
     currentSort,
     setCurrentSort,
     setImportModalOpen,
-    setPrivacyModalOpen,
-    setTermsModalOpen,
     trashRetentionDays,
     setTrashRetentionDays,
     notePreviewLines,
@@ -84,8 +83,12 @@ export default function SettingsModal() {
     folders,
     tags,
     user,
+    cacheOwnerId,
     setUser,
     activateCloudUser,
+    deactivateWorkspace,
+    deleteWorkspace,
+    setSelectedNote,
     syncWithBackend,
     logout,
   } = useNotesStore()
@@ -111,6 +114,8 @@ export default function SettingsModal() {
   const [deleteConfirmText, setDeleteConfirmText] = useState('')
   const [isDeletingAccount, setIsDeletingAccount] = useState(false)
   const [confirmClearData, setConfirmClearData] = useState(false)
+  const [isSigningOut, setIsSigningOut] = useState(false)
+  const avatarUrlRef = useRef(null)
 
   const cloudEnabled = isBackendConfigured()
   const tabs = [
@@ -145,7 +150,8 @@ export default function SettingsModal() {
 
       if (error) throw error
 
-      await activateCloudUser(data.user)
+      const activated = await activateCloudUser(data.user)
+      if (!activated) throw new Error('Your cloud workspace could not be opened on this device.')
       toast.success(t('settings.toastLoginSuccess'))
       await syncWithBackend()
     } catch (error) {
@@ -302,9 +308,17 @@ export default function SettingsModal() {
   }
 
   const handleLogout = async () => {
-    await logout()
-    setSettingsOpen(false)
-    toast.success(t('settings.toastLoggedOut'))
+    if (isSigningOut) return
+    setIsSigningOut(true)
+    try {
+      const signedOut = await logout()
+      if (signedOut) {
+        setSettingsOpen(false)
+        toast.success(t('settings.toastLoggedOut'))
+      }
+    } finally {
+      setIsSigningOut(false)
+    }
   }
 
   const handleDeleteAccount = async () => {
@@ -314,19 +328,25 @@ export default function SettingsModal() {
     }
 
     setIsDeletingAccount(true)
+    let accountDeleted = false
     try {
+      const ownerId = cacheOwnerId || user?.id
       await deleteUserAccount()
-      await clearLocalData()
+      accountDeleted = true
+      const localDataDeleted = ownerId
+        ? await deleteWorkspace(ownerId, { deactivate: true })
+        : await deactivateWorkspace({ persistWorkspace: false })
+      if (!localDataDeleted) throw new Error('The browser copy of this workspace could not be deleted.')
       localStorage.removeItem('quicknotes-remember')
-      localStorage.removeItem('quicknotes-storage')
-      localStorage.removeItem('quicknotes-ui-settings')
-      localStorage.removeItem('quicknotes-theme')
-      setUser(null)
       toast.success(t('settings.toastAccountDeleted'))
       setSettingsOpen(false)
-      window.location.reload()
-    } catch (error) {
-      toast.error(t('settings.toastAccountDeleteFailed'))
+    } catch {
+      if (accountDeleted) {
+        await deactivateWorkspace({ persistWorkspace: false })
+        toast.error('Your account was deleted, but its browser data could not be cleared. Clear this site\'s data before using a shared device.')
+      } else {
+        toast.error(t('settings.toastAccountDeleteFailed'))
+      }
     } finally {
       setIsDeletingAccount(false)
       setDeleteConfirmText('')
@@ -335,41 +355,35 @@ export default function SettingsModal() {
   }
 
   const handleExportData = () => {
-    const data = {
-      notes,
-      folders,
-      tags,
-      exportedAt: new Date().toISOString(),
+    try {
+      const backup = createWorkspaceBackup({ notes, folders, tags })
+      const blob = new Blob([JSON.stringify(backup, null, 2)], {
+        type: 'application/json;charset=utf-8',
+      })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `quicknotes-backup-${new Date().toISOString().split('T')[0]}.json`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(url)
+      toast.success(t('settings.toastDataExported'))
+    } catch {
+      toast.error('The workspace backup could not be created.')
     }
-
-    const blob = new Blob([JSON.stringify(data, null, 2)], {
-      type: 'application/json',
-    })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `quicknotes-export-${new Date().toISOString().split('T')[0]}.json`
-    a.click()
-    URL.revokeObjectURL(url)
-
-    toast.success(t('settings.toastDataExported'))
   }
 
   const handleClearData = async () => {
-    await clearLocalData()
-    localStorage.removeItem('quicknotes-storage')
-    useNotesStore.setState({
-      notes: [],
-      folders: [],
-      tags: [],
-      selectedNoteId: null,
-      selectedFolderId: null,
-      selectedTagFilter: null,
-      searchQuery: '',
-      lastSyncTime: null,
-    })
-    toast.success(t('settings.toastLocalDataDeleted'))
-    window.location.reload()
+    const ownerId = cacheOwnerId || (user?.isLocal ? 'local' : user?.id)
+    try {
+      const deleted = await deleteWorkspace(ownerId)
+      if (!deleted) throw new Error('No active workspace was found.')
+      setConfirmClearData(false)
+      toast.success(t('settings.toastLocalDataDeleted'))
+    } catch {
+      toast.error('The workspace data could not be deleted from this browser.')
+    }
   }
 
   if (!settingsOpen) return null
@@ -377,7 +391,7 @@ export default function SettingsModal() {
   return (
     <LegacyDialog label="Settings" onClose={() => setSettingsOpen(false)} align="center">
       <div className="bg-surface-raised rounded-2xl shadow-2xl border border-subtle w-full max-w-3xl mx-4 h-[80vh] overflow-hidden flex flex-col modal-animate">
-        <div className="flex items-center justify-between px-6 py-5 qn-banner-surface">
+        <div className="flex items-center justify-between px-4 py-4 sm:px-6 sm:py-5 qn-banner-surface">
           <div className="text-white">
             <h2 className="text-xl font-bold flex items-center gap-2">
               <Settings className="w-6 h-6" />
@@ -389,46 +403,48 @@ export default function SettingsModal() {
           </div>
           <button
             type="button"
-            aria-label={t('common.close', 'Close settings')}
+            aria-label={`${t('common.close', 'Close')} ${t('settings.title', 'settings')}`}
             onClick={() => setSettingsOpen(false)}
             className="p-2 rounded-full hover:bg-white/20 text-white transition-colors"
           >
             <X className="w-6 h-6" />
           </button>
         </div>
-        <div className="flex flex-1 overflow-hidden">
-        <div className="w-48 p-4 border-r border-subtle bg-surface-sunken ">
-          <nav className="space-y-1">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden sm:flex-row">
+        <div className="shrink-0 border-b border-subtle bg-surface-sunken p-2 sm:w-48 sm:border-b-0 sm:border-r sm:p-4">
+          <nav aria-label="Settings sections" className="grid grid-cols-3 gap-1 sm:block sm:space-y-1">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
+                type="button"
+                aria-current={activeTab === tab.id ? 'page' : undefined}
                 onClick={() => setActiveTab(tab.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] transition-colors ${
+                className={`flex min-w-0 w-full items-center justify-center gap-1.5 rounded-xl px-2 py-2 text-xs transition-colors sm:justify-start sm:gap-3 sm:px-3 sm:text-[13px] ${
  activeTab === tab.id
  ? 'bg-surface-raised text-emerald-700 dark:text-emerald-300 shadow-sm font-medium'
                     : 'text-content-muted hover:bg-white/80 dark:hover:bg-surface-raised'
                 }`}
               >
-                <tab.icon className={`w-4 h-4 ${activeTab === tab.id ? 'text-emerald-500 dark:text-emerald-400' : 'text-content-subtle'}`} />
-                {tab.label}
+                <tab.icon className={`h-4 w-4 shrink-0 ${activeTab === tab.id ? 'text-emerald-500 dark:text-emerald-400' : 'text-content-subtle'}`} />
+                <span className="min-w-0 truncate">{tab.label}</span>
               </button>
             ))}
           </nav>
         </div>
-        <div className="flex flex-col flex-1">
-          <div className="flex items-center justify-between px-6 py-3 border-b border-subtle bg-surface-sunken dark:bg-surface-raised">
+        <div data-settings-content className="flex min-w-0 flex-1 flex-col">
+          <div className="flex items-center justify-between border-b border-subtle bg-surface-sunken px-4 py-3 dark:bg-surface-raised sm:px-6">
             <h3 className="text-[10px] font-bold text-content-muted uppercase tracking-[0.12em]">
               {tabs.find((t) => t.id === activeTab)?.label}
             </h3>
           </div>
-          <div className="flex-1 p-6 overflow-y-auto">
+          <div data-settings-pane className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6">
             {activeTab === 'general' && (
               <div className="space-y-6">
                 <div>
                   <h4 className="mb-3 text-sm font-medium text-content">
                     {t('settings.appearance')}
                   </h4>
-                  <div className="flex gap-3">
+                  <div role="group" aria-label={t('settings.appearance')} className="grid grid-cols-3 gap-2 sm:gap-3">
                     {[
                       { id: 'light', label: t('settings.light'), icon: Sun },
                       { id: 'dark', label: t('settings.dark'), icon: Moon },
@@ -436,14 +452,16 @@ export default function SettingsModal() {
                     ].map((option) => (
                       <button
                         key={option.id}
+                        type="button"
+                        aria-pressed={theme === option.id}
                         onClick={() => setTheme(option.id)}
-                        className={`flex-1 flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-colors ${
+                        className={`flex min-w-0 flex-col items-center gap-2 rounded-lg border-2 p-3 transition-colors sm:p-4 ${
  theme === option.id
- ? 'border-primary-500 bg-primary-50 dark:bg-accent-soft text-primary-700 dark:text-primary-100 ring-1 ring-[rgba(16,185,129,0.10)] dark:ring-[rgba(16,185,129,0.20)]'
+ ? 'border-accent bg-accent-soft text-accent-text ring-1 ring-[rgba(16,185,129,0.10)] dark:ring-[rgba(16,185,129,0.20)]'
                             : 'border-subtle hover:border-subtle dark:hover:border-subtle'
                         }`}
                       >
-                        <option.icon className={`w-6 h-6 ${theme === option.id ? 'text-primary-600 dark:text-primary-300' : 'text-content-muted'}`} />
+                        <option.icon aria-hidden="true" className={`w-6 h-6 ${theme === option.id ? 'text-accent-text dark:text-accent-text' : 'text-content-muted'}`} />
                         <span className="text-sm text-content">{option.label}</span>
                       </button>
                     ))}
@@ -454,29 +472,21 @@ export default function SettingsModal() {
                   <h4 className="mb-3 text-sm font-medium text-content">
                     {t('settings.language')}
                   </h4>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div role="group" aria-label={t('settings.language')} className="grid grid-cols-3 gap-2">
                     {LANGUAGES.map((lang) => (
                       <button
                         key={lang.code}
+                        type="button"
+                        aria-pressed={language === lang.code}
                         onClick={() => setLanguage(lang.code)}
                         className={`flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-colors ${
  language === lang.code
- ? 'border-primary-500 bg-primary-50 dark:bg-accent-soft text-primary-700 dark:text-primary-100 ring-1 ring-[rgba(16,185,129,0.10)] dark:ring-[rgba(16,185,129,0.20)]'
+ ? 'border-accent bg-accent-soft text-accent-text ring-1 ring-[rgba(16,185,129,0.10)] dark:ring-[rgba(16,185,129,0.20)]'
                             : 'border-subtle hover:border-subtle dark:hover:border-subtle'
                         }`}
                         dir={lang.dir}
                       >
-                        <img 
-                          src={`https://flagcdn.com/w40/${lang.countryCode.toLowerCase()}.png`}
-                          srcSet={`https://flagcdn.com/w80/${lang.countryCode.toLowerCase()}.png 2x`}
-                          alt={lang.name}
-                          className="w-8 h-6 object-cover rounded shadow-sm"
-                          onError={(e) => {
-                            e.target.style.display = 'none'
-                            e.target.nextSibling.style.display = 'block'
-                          }}
-                        />
-                        <span className="hidden text-lg font-bold text-content-muted">{lang.countryCode}</span>
+                        <span aria-hidden="true" className="text-xl leading-6">{lang.flag}</span>
                         <span className="text-xs font-medium text-content dark:text-content-subtle">{lang.nativeName}</span>
                       </button>
                     ))}
@@ -490,21 +500,26 @@ export default function SettingsModal() {
                   <p className="mb-3 text-xs text-content-muted">
                     {t('settings.viewModeDesc')}
                   </p>
-                  <div className="flex gap-3">
+                  <div role="group" aria-label={t('settings.viewMode')} className="grid gap-3 min-[360px]:grid-cols-2">
                     {[
                       { id: 'list', label: t('settings.viewList'), icon: List, description: t('settings.viewListDesc') },
                       { id: 'grid', label: t('settings.viewGrid'), icon: LayoutGrid, description: t('settings.viewGridDesc') },
                     ].map((option) => (
                       <button
                         key={option.id}
-                        onClick={() => setViewMode(option.id)}
-                        className={`flex-1 flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-colors ${
+                        type="button"
+                        aria-pressed={viewMode === option.id}
+                        onClick={() => {
+                          if (option.id === 'grid') setSelectedNote(null)
+                          setViewMode(option.id)
+                        }}
+                        className={`flex min-w-0 flex-col items-center gap-2 rounded-lg border-2 p-4 transition-colors ${
  viewMode === option.id
- ? 'border-primary-500 bg-primary-50 dark:bg-accent-soft text-primary-700 dark:text-primary-100 ring-1 ring-[rgba(16,185,129,0.10)] dark:ring-[rgba(16,185,129,0.20)]'
+ ? 'border-accent bg-accent-soft text-accent-text ring-1 ring-[rgba(16,185,129,0.10)] dark:ring-[rgba(16,185,129,0.20)]'
                             : 'border-subtle hover:border-subtle dark:hover:border-subtle'
                         }`}
                       >
-                        <option.icon className={`w-6 h-6 ${viewMode === option.id ? 'text-primary-600 dark:text-primary-300' : 'text-content-muted'}`} />
+                        <option.icon aria-hidden="true" className={`w-6 h-6 ${viewMode === option.id ? 'text-accent-text dark:text-accent-text' : 'text-content-muted'}`} />
                         <span className="text-sm font-medium text-content">{option.label}</span>
                         <span className="text-xs text-center text-content-muted">{option.description}</span>
                       </button>
@@ -517,10 +532,10 @@ export default function SettingsModal() {
                     {t('settings.editorPreferences')}
                   </h4>
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-surface-sunken">
-                      <div className="flex items-center gap-3">
-                        <Shield className="w-4 h-4 text-content-muted" />
-                        <div>
+                    <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-surface-sunken">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <Shield className="h-4 w-4 shrink-0 text-content-muted" />
+                        <div className="min-w-0">
                           <p className="text-sm font-medium text-content">
                             {t('settings.confirmBeforeDelete')}
                           </p>
@@ -535,8 +550,8 @@ export default function SettingsModal() {
                         aria-checked={confirmBeforeDelete}
                         aria-label={t('settings.confirmBeforeDelete')}
                         onClick={() => setConfirmBeforeDelete(!confirmBeforeDelete)}
-                        className={`relative w-11 h-6 rounded-full transition-colors ${
- confirmBeforeDelete ? 'bg-primary-600' : 'bg-surface-active dark:bg-surface-active'
+                        className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
+ confirmBeforeDelete ? 'bg-accent' : 'bg-surface-active dark:bg-surface-active'
  }`}
                       >
                         <span
@@ -546,10 +561,10 @@ export default function SettingsModal() {
                         />
                       </button>
                     </div>
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-surface-sunken">
-                      <div className="flex items-center gap-3">
-                        <SpellCheck className="w-4 h-4 text-content-muted" />
-                        <div>
+                    <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-surface-sunken">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <SpellCheck className="h-4 w-4 shrink-0 text-content-muted" />
+                        <div className="min-w-0">
                           <p className="text-sm font-medium text-content">
                             {t('settings.spellCheck')}
                           </p>
@@ -564,8 +579,8 @@ export default function SettingsModal() {
                         aria-checked={spellCheck}
                         aria-label={t('settings.spellCheck')}
                         onClick={() => setSpellCheck(!spellCheck)}
-                        className={`relative w-11 h-6 rounded-full transition-colors ${
- spellCheck ? 'bg-primary-600' : 'bg-surface-active dark:bg-surface-active'
+                        className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
+ spellCheck ? 'bg-accent' : 'bg-surface-active dark:bg-surface-active'
  }`}
                       >
                         <span
@@ -575,10 +590,10 @@ export default function SettingsModal() {
                         />
                       </button>
                     </div>
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-surface-sunken">
-                      <div className="flex items-center gap-3">
-                        <BarChart3 className="w-4 h-4 text-content-muted" />
-                        <div>
+                    <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-surface-sunken">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <BarChart3 className="h-4 w-4 shrink-0 text-content-muted" />
+                        <div className="min-w-0">
                           <p className="text-sm font-medium text-content">
                             {t('settings.showNoteStatistics')}
                           </p>
@@ -593,8 +608,8 @@ export default function SettingsModal() {
                         aria-checked={showNoteStatistics}
                         aria-label={t('settings.showNoteStatistics')}
                         onClick={() => setShowNoteStatistics(!showNoteStatistics)}
-                        className={`relative w-11 h-6 rounded-full transition-colors ${
- showNoteStatistics ? 'bg-primary-600' : 'bg-surface-active dark:bg-surface-active'
+                        className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
+ showNoteStatistics ? 'bg-accent' : 'bg-surface-active dark:bg-surface-active'
  }`}
                       >
                         <span
@@ -617,7 +632,7 @@ export default function SettingsModal() {
                       label={t('settings.notePreviewLines')}
                       hint={t('settings.notePreviewLinesDesc')}
                     >
-                      {({ id, ...a11y }) => (
+                      {(a11y) => (
                         <SegmentedControl
                           {...a11y}
                           label={t('settings.notePreviewLines')}
@@ -683,7 +698,7 @@ export default function SettingsModal() {
                     aria-label={t('settings.defaultSortOrder')}
                     value={currentSort}
                     onChange={(e) => setCurrentSort(e.target.value)}
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-subtle bg-surface-raised text-content focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-subtle bg-surface-raised text-content focus:ring-2 focus:ring-accent focus:border-accent"
                   >
                     <option value="manual">{t('sort.manual')}</option>
                     <option value="updated-desc">{t('sort.lastModified')}</option>
@@ -710,7 +725,7 @@ export default function SettingsModal() {
                       aria-label={t('settings.trashRetention')}
                       value={trashRetentionDays}
                       onChange={(e) => setTrashRetentionDays(Number(e.target.value))}
-                      className="flex-1 px-3 py-2 text-sm rounded-lg border border-subtle bg-surface-raised text-content focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                      className="flex-1 px-3 py-2 text-sm rounded-lg border border-subtle bg-surface-raised text-content focus:ring-2 focus:ring-accent focus:border-accent"
                     >
                       <option value={7}>7 {t('settings.days')}</option>
                       <option value={14}>14 {t('settings.days')}</option>
@@ -783,6 +798,8 @@ export default function SettingsModal() {
                     <button
                       type="button"
                       onClick={handleLogout}
+                      disabled={isSigningOut}
+                      aria-busy={isSigningOut || undefined}
                       className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-content transition-colors hover:bg-surface-sunken dark:text-content-subtle dark:hover:bg-surface-sunken"
                     >
                       <LogOut className="h-4 w-4" aria-hidden="true" />
@@ -810,6 +827,9 @@ export default function SettingsModal() {
                       </div>
                       <div className="flex gap-2">
                         <input
+                          ref={avatarUrlRef}
+                          aria-label={t('settings.profilePictureUrl')}
+                          aria-describedby="qn-avatar-url-hint"
                           type="url"
                           defaultValue={user.user_metadata?.avatar_url || ''}
                           placeholder="https://example.com/your-image.jpg"
@@ -817,14 +837,19 @@ export default function SettingsModal() {
                           id="avatar-url-input"
                         />
                         <button
+                          type="button"
                           onClick={async () => {
-                            const input = document.getElementById('avatar-url-input')
-                            const url = input.value.trim()
-                            
-                            if (url && !url.startsWith('http')) {
-                              toast.error(t('settings.toastInvalidUrl'))
+                            const rawUrl = avatarUrlRef.current?.value.trim() || ''
+                            const normalized = rawUrl
+                              ? normalizeWebUrl(rawUrl)
+                              : { value: '', error: '' }
+
+                            if (normalized.error) {
+                              toast.error(normalized.error)
                               return
                             }
+
+                            const url = normalized.value
                             
                             setIsLoading(true)
                             try {
@@ -840,19 +865,19 @@ export default function SettingsModal() {
                               }
                               
                               toast.success(url ? t('settings.toastProfilePictureUpdated') : t('settings.toastProfilePictureRemoved'))
-                            } catch (error) {
+                            } catch {
                               toast.error(t('settings.toastProfilePictureFailed'))
                             } finally {
                               setIsLoading(false)
                             }
                           }}
                           disabled={isLoading}
-                          className="px-4 py-2 text-sm text-white transition-colors rounded-lg bg-primary-600 hover:bg-primary-700 disabled:opacity-50"
+                          className="px-4 py-2 text-sm text-accent-on transition-colors rounded-lg bg-accent hover:bg-accent-hover disabled:opacity-50"
                         >
                           {isLoading ? t('settings.saving') : t('common.save')}
                         </button>
                       </div>
-                      <p className="mt-2 text-xs text-content-muted">
+                      <p id="qn-avatar-url-hint" className="mt-2 text-xs text-content-muted">
                         {t('settings.profilePictureHint')}
                       </p>
                     </div>
@@ -886,23 +911,28 @@ export default function SettingsModal() {
                           <h4 className="text-sm font-medium text-content">{t('settings.changeEmail')}</h4>
                         </div>
                         <button
+                          type="button"
+                          aria-expanded={showChangeEmail}
+                          aria-controls="qn-change-email-form"
                           onClick={() => setShowChangeEmail(!showChangeEmail)}
-                          className="px-3 py-1.5 text-sm text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-accent-soft rounded-lg transition-colors"
+                          className="px-3 py-1.5 text-sm text-accent-text dark:text-accent-text hover:bg-accent-soft dark:hover:bg-accent-soft rounded-lg transition-colors"
                         >
                           {showChangeEmail ? t('common.cancel') : t('settings.change')}
                         </button>
                       </div>
                       {showChangeEmail && (
-                        <form onSubmit={handleChangeEmail} className="mt-4 space-y-3">
-                          <div className="relative">
-                            <input
+                        <form id="qn-change-email-form" onSubmit={handleChangeEmail} className="mt-4 space-y-3">
+                          <Field label={t('settings.newEmailAddress')} htmlFor="qn-new-email">
+                            <Input
+                              id="qn-new-email"
                               type="email"
                               value={newEmail}
                               onChange={(e) => setNewEmail(e.target.value)}
-                              className="w-full px-4 py-2 text-content bg-white border border-subtle rounded-lg dark:bg-surface-sunken dark:text-white"
                               placeholder={t('settings.newEmailAddress')}
+                              autoComplete="email"
+                              required
                             />
-                          </div>
+                          </Field>
                           <div className="flex justify-start">
                             <Button type="submit" variant="primary" loading={isLoading}>
                               {t('settings.sendConfirmation')}
@@ -918,41 +948,50 @@ export default function SettingsModal() {
                           <h4 className="text-sm font-medium text-content">{t('settings.changePassword')}</h4>
                         </div>
                         <button
+                          type="button"
+                          aria-expanded={showChangePassword}
+                          aria-controls="qn-change-password-form"
                           onClick={() => setShowChangePassword(!showChangePassword)}
-                          className="px-3 py-1.5 text-sm text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-accent-soft rounded-lg transition-colors"
+                          className="px-3 py-1.5 text-sm text-accent-text dark:text-accent-text hover:bg-accent-soft dark:hover:bg-accent-soft rounded-lg transition-colors"
                         >
                           {showChangePassword ? t('common.cancel') : t('settings.change')}
                         </button>
                       </div>
                       {showChangePassword && (
-                        <form onSubmit={handleChangePassword} className="mt-4 space-y-3">
-                          <div className="relative">
-                            <input
+                        <form id="qn-change-password-form" onSubmit={handleChangePassword} className="mt-4 space-y-3">
+                          <Field label={t('settings.currentPassword')} htmlFor="qn-current-password">
+                            <Input
+                              id="qn-current-password"
                               type="password"
                               value={currentPassword}
                               onChange={(e) => setCurrentPassword(e.target.value)}
-                              className="w-full px-4 py-2 text-content bg-white border border-subtle rounded-lg dark:bg-surface-sunken dark:text-white"
                               placeholder={t('settings.currentPassword')}
+                              autoComplete="current-password"
+                              required
                             />
-                          </div>
-                          <div className="relative">
-                            <input
+                          </Field>
+                          <Field label={t('settings.newPassword')} htmlFor="qn-new-password">
+                            <Input
+                              id="qn-new-password"
                               type="password"
                               value={newPassword}
                               onChange={(e) => setNewPassword(e.target.value)}
-                              className="w-full px-4 py-2 text-content bg-white border border-subtle rounded-lg dark:bg-surface-sunken dark:text-white"
                               placeholder={t('settings.newPassword')}
+                              autoComplete="new-password"
+                              required
                             />
-                          </div>
-                          <div className="relative">
-                            <input
+                          </Field>
+                          <Field label={t('settings.confirmNewPassword')} htmlFor="qn-confirm-password">
+                            <Input
+                              id="qn-confirm-password"
                               type="password"
                               value={confirmPassword}
                               onChange={(e) => setConfirmPassword(e.target.value)}
-                              className="w-full px-4 py-2 text-content bg-white border border-subtle rounded-lg dark:bg-surface-sunken dark:text-white"
                               placeholder={t('settings.confirmNewPassword')}
+                              autoComplete="new-password"
+                              required
                             />
-                          </div>
+                          </Field>
                           <div className="flex justify-start">
                             <Button type="submit" variant="primary" loading={isLoading}>
                               {t('settings.updatePassword')}
@@ -962,7 +1001,10 @@ export default function SettingsModal() {
                       )}
                     </div>
                     <button
+                      type="button"
                       onClick={handleLogout}
+                      disabled={isSigningOut}
+                      aria-busy={isSigningOut || undefined}
                       className="flex items-center gap-2 px-4 py-2 text-red-600 transition-colors rounded-lg dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30"
                     >
                       <LogOut className="w-4 h-4" />
@@ -979,6 +1021,9 @@ export default function SettingsModal() {
                           </h4>
                         </div>
                         <button
+                          type="button"
+                          aria-expanded={showDeleteAccount}
+                          aria-controls="qn-delete-account-confirmation"
                           onClick={() => {
                             setShowDeleteAccount(!showDeleteAccount)
                             setDeleteConfirmText('')
@@ -992,7 +1037,7 @@ export default function SettingsModal() {
                         {t('settings.deleteAccountDesc')}
                       </p>
                       {showDeleteAccount && (
-                        <div className="p-4 space-y-4 border-2 border-red-300 rounded-lg dark:border-red-800 bg-red-50 dark:bg-red-900/20">
+                        <div id="qn-delete-account-confirmation" className="p-4 space-y-4 border-2 border-red-300 rounded-lg dark:border-red-800 bg-red-50 dark:bg-red-900/20">
                           <div className="flex items-start gap-3">
                             <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
                             <div>
@@ -1005,10 +1050,11 @@ export default function SettingsModal() {
                             </div>
                           </div>
                           <div>
-                            <label className="block mb-2 text-xs font-medium text-red-700 dark:text-red-300">
+                            <label htmlFor="qn-delete-account-text" className="block mb-2 text-xs font-medium text-red-700 dark:text-red-300">
                               {t('settings.deleteAccountTypeConfirm')}
                             </label>
                             <input
+                              id="qn-delete-account-text"
                               type="text"
                               value={deleteConfirmText}
                               onChange={(e) => setDeleteConfirmText(e.target.value)}
@@ -1019,6 +1065,7 @@ export default function SettingsModal() {
                             />
                           </div>
                           <button
+                            type="button"
                             onClick={handleDeleteAccount}
                             disabled={isDeletingAccount || deleteConfirmText !== 'DELETE'}
                             className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -1043,36 +1090,43 @@ export default function SettingsModal() {
                     </p>
 
                     <div>
-                      <label className="block mb-1 text-sm font-medium text-content-muted">
+                      <label htmlFor="qn-settings-email" className="block mb-1 text-sm font-medium text-content-muted">
                         {t('settings.email')}
                       </label>
                       <div className="relative">
                         <Mail className="absolute w-4 h-4 text-content-subtle -translate-y-1/2 left-3 top-1/2" />
                         <input
+                          id="qn-settings-email"
                           type="email"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
                           className="w-full py-2 pl-10 pr-4 text-content bg-white border border-subtle rounded-lg dark:bg-surface-sunken dark:text-white"
                           placeholder="your@email.com"
+                          autoComplete="email"
+                          required
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label className="block mb-1 text-sm font-medium text-content-muted">
+                      <label htmlFor="qn-settings-password" className="block mb-1 text-sm font-medium text-content-muted">
                         {t('settings.password')}
                       </label>
                       <div className="relative">
                         <Lock className="absolute w-4 h-4 text-content-subtle -translate-y-1/2 left-3 top-1/2" />
                         <input
+                          id="qn-settings-password"
                           type={showPassword ? 'text' : 'password'}
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
                           className="w-full py-2 pl-10 pr-10 text-content bg-white border border-subtle rounded-lg dark:bg-surface-sunken dark:text-white"
                           placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
+                          autoComplete="current-password"
+                          required
                         />
                         <button
                           type="button"
+                          aria-label={showPassword ? t('auth.hidePassword', 'Hide password') : t('auth.showPassword', 'Show password')}
                           onClick={() => setShowPassword(!showPassword)}
                           className="absolute text-content-subtle -translate-y-1/2 right-3 top-1/2 hover:text-content-muted"
                         >
@@ -1106,7 +1160,7 @@ export default function SettingsModal() {
               <div className="space-y-6">
                 <div className="flex items-center justify-between p-4 rounded-lg bg-surface-sunken">
                   <div className="flex items-center gap-3">
-                    <Cloud className="w-5 h-5 text-primary-500" />
+                    <Cloud className="w-5 h-5 text-accent-text" />
                     <div>
                       <p className="font-medium text-content">
                         {t('settings.cloudSync')}
@@ -1142,7 +1196,7 @@ export default function SettingsModal() {
                       aria-label={t('settings.autoSync', 'Automatic sync')}
                       onClick={() => setAutoSync(!autoSync)}
                       className={`relative w-11 h-6 rounded-full transition-colors ${
- autoSync ? 'bg-primary-600' : 'bg-surface-active dark:bg-surface-active'
+ autoSync ? 'bg-accent' : 'bg-surface-active dark:bg-surface-active'
  }`}
                     >
                       <span
@@ -1192,7 +1246,7 @@ export default function SettingsModal() {
                       aria-label={t('settings.syncOnStartup', 'Sync on startup')}
                       onClick={() => setSyncOnStartup(!syncOnStartup)}
                       className={`relative w-11 h-6 rounded-full transition-colors ${
- syncOnStartup ? 'bg-primary-600' : 'bg-surface-active dark:bg-surface-active'
+ syncOnStartup ? 'bg-accent' : 'bg-surface-active dark:bg-surface-active'
  }`}
                     >
                       <span
@@ -1218,7 +1272,7 @@ export default function SettingsModal() {
                       aria-label={t('settings.showSyncNotifications', 'Show sync notifications')}
                       onClick={() => setShowSyncNotifications(!showSyncNotifications)}
                       className={`relative w-11 h-6 rounded-full transition-colors ${
- showSyncNotifications ? 'bg-primary-600' : 'bg-surface-active dark:bg-surface-active'
+ showSyncNotifications ? 'bg-accent' : 'bg-surface-active dark:bg-surface-active'
  }`}
                     >
                       <span
@@ -1353,8 +1407,8 @@ export default function SettingsModal() {
             {activeTab === 'about' && (
               <div className="space-y-6">
                 <div className="flex flex-col items-center gap-3 py-4">
-                  <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-primary-100 dark:bg-accent-soft">
-                    <FileText className="w-8 h-8 text-primary-600 dark:text-primary-400" />
+                  <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-accent-soft">
+                    <FileText className="w-8 h-8 text-accent-text dark:text-accent-text" />
                   </div>
                   <div className="text-center">
                     <h3 className="text-lg font-semibold text-content">QuickNotes</h3>

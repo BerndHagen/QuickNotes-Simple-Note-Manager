@@ -8,6 +8,8 @@ import {
   getStarterData,
   formatDateKey,
   normalizeNoteData,
+  normalizeOptionalAmount,
+  normalizePositiveQuantity,
   parseDateKey,
 } from './noteTypes'
 
@@ -16,6 +18,78 @@ const specializedTypes = Object.values(NOTE_TYPES).filter(
 )
 
 describe('professional note type contracts', () => {
+  it('normalizes shopping quantities and monetary values to safe finite numbers', () => {
+    expect(normalizePositiveQuantity('2.5')).toBe(2.5)
+    expect(normalizePositiveQuantity(0)).toBe(1)
+    expect(normalizePositiveQuantity(-4)).toBe(1)
+    expect(normalizePositiveQuantity('not-a-number')).toBe(1)
+    expect(normalizeOptionalAmount('0')).toBe(0)
+    expect(normalizeOptionalAmount(-1)).toBeNull()
+    expect(normalizeOptionalAmount(Infinity)).toBeNull()
+
+    const shopping = normalizeNoteData(NOTE_TYPES.SHOPPING, {
+      budget: '-20',
+      items: [
+        { id: 'bad', name: 'Bad values', quantity: -3, price: 'invalid' },
+        { id: 'zero', name: 'Free item', quantity: '2', price: 0 },
+      ],
+    })
+
+    expect(shopping.budget).toBeNull()
+    expect(shopping.items[0]).toMatchObject({ quantity: 1, price: null })
+    expect(shopping.items[1]).toMatchObject({ quantity: 2, price: 0 })
+  })
+
+  it('repairs malformed focused-note data before an editor renders it', () => {
+    const todo = normalizeNoteData(NOTE_TYPES.TODO_LIST, {
+      tasks: [{ text: 'Task', priority: 'urgent', subtasks: {} }],
+      filter: 'missing',
+      sortBy: 'missing',
+    })
+    expect(todo.tasks[0]).toMatchObject({ priority: 'none', subtasks: [] })
+    expect(todo).toMatchObject({ filter: 'all', sortBy: 'priority' })
+
+    const project = normalizeNoteData(NOTE_TYPES.PROJECT, {
+      columns: [{ id: 'todo', name: 'To do', tasks: [{ title: 'Task', priority: 'urgent' }] }],
+      milestones: {},
+      team: 'invalid',
+    })
+    expect(project.columns[0].tasks[0].priority).toBe('medium')
+    expect(project.milestones).toEqual([])
+    expect(project.team).toEqual([])
+
+    const meeting = normalizeNoteData(NOTE_TYPES.MEETING, {
+      attendees: {},
+      agenda: [{ topic: 'Review', duration: -5, actualDuration: Infinity }],
+      notes: { invalid: true },
+    })
+    expect(meeting.agenda[0]).toMatchObject({ duration: 10, actualDuration: 0 })
+    expect(meeting.attendees).toEqual([])
+    expect(meeting.notes).toBe('')
+
+    const journal = normalizeNoteData(NOTE_TYPES.JOURNAL, {
+      mood: 99,
+      preferredSection: 'missing',
+      freeWrite: {},
+      gratitude: 'invalid',
+    })
+    expect(journal).toMatchObject({ mood: null, preferredSection: 'morning', freeWrite: '' })
+    expect(journal.gratitude).toEqual(['', '', ''])
+
+    const weekly = normalizeNoteData(NOTE_TYPES.WEEKLY, {
+      days: { monday: { tasks: [{ text: 'Task', timeBlock: 'overnight' }], events: {} } },
+      preferredView: 'missing',
+      weeklyGoals: {},
+    })
+    expect(weekly.days.monday.tasks[0].timeBlock).toBe('morning')
+    expect(weekly.days.monday.events).toEqual([])
+    expect(weekly.preferredView).toBe('week')
+
+    for (const type of specializedTypes) {
+      expect(() => normalizeNoteData(type, 'corrupted')).not.toThrow()
+    }
+  })
+
   it('gives every note type clear positioning, accurate features, and multiple starters', () => {
     Object.values(NOTE_TYPES).forEach((type) => {
       const config = NOTE_TYPE_CONFIG[type]
@@ -121,6 +195,13 @@ describe('professional note type contracts', () => {
 
     const weekly = getDefaultData(NOTE_TYPES.WEEKLY)
     expect(parseDateKey(weekly.weekStart).getDay()).toBe(1)
+  })
+
+  it('recovers predictably from invalid imported calendar dates', () => {
+    const before = formatDateKey()
+    expect(formatDateKey(parseDateKey('not-a-date'))).toBe(before)
+    expect(formatDateKey(parseDateKey('2026-02-31'))).toBe(before)
+    expect(formatDateKey(new Date('invalid'))).toBe(before)
   })
 
   it('migrates legacy weekly, meeting, and shopping data without losing content', () => {

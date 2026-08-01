@@ -1,10 +1,9 @@
 import { useMemo, useState } from 'react'
-import { buttonClasses } from './ui'
-import { Trash2, RotateCcw, X, Clock, AlertTriangle } from 'lucide-react'
+import { AlertTriangle, Clock, RotateCcw, Trash2 } from 'lucide-react'
 import { useNotesStore, useUIStore } from '../store'
 import { formatDate, htmlToPlainText, truncateText } from '../lib/utils'
 import { useTranslation } from '../lib/useTranslation'
-import LegacyDialog from './ui/LegacyDialog'
+import { Button, EmptyState, IconButton, Modal } from './ui'
 import { ConfirmDialog } from './FolderDialogs'
 
 export default function TrashView() {
@@ -13,150 +12,163 @@ export default function TrashView() {
   const { showTrash, setShowTrash } = useUIStore()
   const [deleteTarget, setDeleteTarget] = useState(null)
 
-  const trashedNotes = useMemo(() => {
-    return notes
-      .filter(note => note.deleted)
-      .sort((a, b) => new Date(b.deletedAt) - new Date(a.deletedAt))
-  }, [notes])
+  const trashedNotes = useMemo(
+    () =>
+      notes
+        .filter((note) => note.deleted)
+        .sort((first, second) => new Date(second.deletedAt) - new Date(first.deletedAt)),
+    [notes]
+  )
 
   const getDaysRemaining = (deletedAt) => {
-    const deleteDate = new Date(deletedAt)
-    const expiryDate = new Date(deleteDate.getTime() + 30 * 24 * 60 * 60 * 1000)
-    const now = new Date()
-    const daysRemaining = Math.ceil((expiryDate - now) / (24 * 60 * 60 * 1000))
-    return Math.max(0, daysRemaining)
+    const expiryDate = new Date(new Date(deletedAt).getTime() + 30 * 24 * 60 * 60 * 1000)
+    const daysRemaining = Math.ceil((expiryDate - new Date()) / (24 * 60 * 60 * 1000))
+    return Math.max(0, Number.isFinite(daysRemaining) ? daysRemaining : 0)
+  }
+
+  const closeTrash = () => {
+    setDeleteTarget(null)
+    setShowTrash(false)
   }
 
   const handleRestoreAll = () => {
-    trashedNotes.forEach(note => restoreNote(note.id))
+    trashedNotes.forEach((note) => restoreNote(note.id))
   }
 
   const handleEmptyTrash = () => {
-    trashedNotes.forEach(note => permanentlyDeleteNote(note.id))
+    trashedNotes.forEach((note) => permanentlyDeleteNote(note.id))
   }
 
   const handlePermanentDelete = () => {
     if (deleteTarget?.id) permanentlyDeleteNote(deleteTarget.id)
   }
 
-  if (!showTrash) return null
+  const countLabel = `${trashedNotes.length} ${trashedNotes.length === 1 ? 'note' : 'notes'} · ${t(
+    'trash.autoDelete'
+  )}`
 
   return (
-    <LegacyDialog label="Trash" onClose={() => setShowTrash(false)} align="center">
-      <div 
-        className="bg-surface-raised rounded-2xl shadow-2xl border border-subtle w-full max-w-2xl mx-4 max-h-[85vh] overflow-hidden flex flex-col modal-animate"
-        onClick={(e) => e.stopPropagation()}
+    <>
+      <Modal
+        open={showTrash}
+        onClose={closeTrash}
+        title={t('trash.title')}
+        description={countLabel}
+        icon={Trash2}
+        size="xl"
+        bodyClassName="!overflow-hidden p-0 sm:p-0"
       >
-        <div className="p-5 qn-banner-surface text-white flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Trash2 className="w-6 h-6" />
-            <div>
-              <h2 className="text-lg font-bold">{t('trash.title')}</h2>
-              <p className="text-sm text-white/70">
-                {trashedNotes.length} {trashedNotes.length === 1 ? 'note' : 'notes'} {"\u2022"} {t('trash.autoDelete')}
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={() => setShowTrash(false)}
-            className="p-2 rounded-full hover:bg-white/20 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-        {trashedNotes.length > 0 && (
-          <div className="px-4 py-3 border-b border-subtle flex items-center justify-between bg-surface-sunken">
-            <button
-              onClick={handleRestoreAll}
-              className={buttonClasses({ variant: 'primary' })}
-            >
-              <RotateCcw className="w-4 h-4" />
-              {t('trash.restoreAll')}
-            </button>
-            <button
-              onClick={() => setDeleteTarget({ all: true })}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
-            >
-              <Trash2 className="w-4 h-4" />
-              {t('trash.emptyTrash')}
-            </button>
-          </div>
-        )}
-        <div className="flex-1 overflow-y-auto">
-          {trashedNotes.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-content-muted">
-              <Trash2 className="w-16 h-16 mb-4 opacity-20" />
-              <p className="text-lg font-medium">{t('trash.empty')}</p>
-              <p className="text-sm">{t('trash.emptyDescription')}</p>
-            </div>
-          ) : (
-            <div className="divide-y divide-gray-200 dark:divide-gray-700">
-              {trashedNotes.map((note) => {
-                const daysRemaining = getDaysRemaining(note.deletedAt)
-                const preview = truncateText(htmlToPlainText(note.content), 100)
-                
-                return (
-                  <div
-                    key={note.id}
-                    className="p-4 hover:bg-surface-hover transition-colors"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-content truncate">
-                          {note.title}
-                        </h3>
-                        <p className="text-sm text-content-muted mt-1 line-clamp-2">
-                          {preview || t('notes.noPreview')}
-                        </p>
-                        <div className="flex items-center gap-4 mt-2 text-xs text-content-muted">
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            {t('trash.deleted')} {formatDate(note.deletedAt, language)}
-                          </span>
-                          <span className={`flex items-center gap-1 ${
- daysRemaining <= 7 ? 'text-red-600 dark:text-red-400' : ''
- }`}>
-                            <AlertTriangle className="w-3 h-3" />
-                            {daysRemaining} {t('trash.daysLeft')}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <button
-                          onClick={() => restoreNote(note.id)}
-                          className="p-2 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-emerald-600 rounded-lg transition-colors"
-                          title={t('common.restore')}
-                        >
-                          <RotateCcw className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => setDeleteTarget({ id: note.id, title: note.title })}
-                          className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 rounded-lg transition-colors"
-                          title={t('trash.permanentDelete')}
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
+        <div className="flex h-full min-h-0 flex-col">
+          {trashedNotes.length > 0 && (
+            <div className="flex shrink-0 flex-col gap-2 border-b border-subtle bg-surface-sunken px-5 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+              <Button
+                variant="primary"
+                size="sm"
+                icon={RotateCcw}
+                fullWidth
+                className="sm:w-auto"
+                onClick={handleRestoreAll}
+              >
+                {t('trash.restoreAll')}
+              </Button>
+              <Button
+                variant="danger-ghost"
+                size="sm"
+                icon={Trash2}
+                fullWidth
+                className="sm:w-auto"
+                onClick={() => setDeleteTarget({ all: true })}
+              >
+                {t('trash.emptyTrash')}
+              </Button>
             </div>
           )}
+
+          <div
+            role="region"
+            aria-label={t('trash.title')}
+            tabIndex={0}
+            className="min-h-0 flex-1 overflow-y-auto overscroll-contain outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--qn-focus-ring)]"
+          >
+            {trashedNotes.length === 0 ? (
+              <EmptyState
+                icon={Trash2}
+                title={t('trash.empty')}
+                description={t('trash.emptyDescription')}
+              />
+            ) : (
+              <ul className="divide-y divide-[var(--qn-border)]">
+                {trashedNotes.map((note) => {
+                  const daysRemaining = getDaysRemaining(note.deletedAt)
+                  const preview = truncateText(htmlToPlainText(note.content), 100)
+                  const title = note.title || t('notes.untitled', 'Untitled note')
+                  const headingId = `qn-trashed-note-${note.id}`
+
+                  return (
+                    <li key={note.id} className="p-4 transition-colors hover:bg-surface-hover sm:px-6">
+                      <article aria-labelledby={headingId}>
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                          <div className="min-w-0 flex-1">
+                            <h3 id={headingId} className="truncate text-ui-lg font-semibold text-content">
+                              {title}
+                            </h3>
+                            <p className="mt-1 line-clamp-2 text-ui-md text-content-muted">
+                              {preview || t('notes.noPreview')}
+                            </p>
+                            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1.5 text-ui-xs text-content-muted">
+                              <span className="flex items-center gap-1.5">
+                                <Clock className="h-3.5 w-3.5" aria-hidden="true" />
+                                {t('trash.deleted')} {formatDate(note.deletedAt, language)}
+                              </span>
+                              <span
+                                className={`flex items-center gap-1.5 ${
+                                  daysRemaining <= 7 ? 'font-medium text-danger-text' : ''
+                                }`}
+                              >
+                                <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
+                                {daysRemaining} {t('trash.daysLeft')}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex shrink-0 items-center justify-end gap-2">
+                            <IconButton
+                              icon={RotateCcw}
+                              size="sm"
+                              label={`${t('common.restore')} ${title}`}
+                              onClick={() => restoreNote(note.id)}
+                            />
+                            <IconButton
+                              icon={Trash2}
+                              size="sm"
+                              variant="danger-ghost"
+                              label={`${t('trash.permanentDelete')}: ${title}`}
+                              onClick={() => setDeleteTarget({ id: note.id, title })}
+                            />
+                          </div>
+                        </div>
+                      </article>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </div>
         </div>
-        <ConfirmDialog
-          open={!!deleteTarget}
-          onClose={() => setDeleteTarget(null)}
-          onConfirm={deleteTarget?.all ? handleEmptyTrash : handlePermanentDelete}
-          title={deleteTarget?.all ? t('trash.emptyTrash') : t('trash.permanentDelete')}
-          description={
-            deleteTarget?.all
-              ? t('trash.emptyTrashConfirm')
-              : `${t('trash.permanentDeleteConfirm')} “${deleteTarget?.title || ''}”`
-          }
-          confirmLabel={deleteTarget?.all ? t('trash.emptyTrash') : t('trash.permanentDelete')}
-        />
-      </div>
-    </LegacyDialog>
+      </Modal>
+
+      <ConfirmDialog
+        open={showTrash && !!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={deleteTarget?.all ? handleEmptyTrash : handlePermanentDelete}
+        title={deleteTarget?.all ? t('trash.emptyTrash') : t('trash.permanentDelete')}
+        description={
+          deleteTarget?.all
+            ? t('trash.emptyTrashConfirm')
+            : `${t('trash.permanentDeleteConfirm')} “${deleteTarget?.title || ''}”`
+        }
+        confirmLabel={deleteTarget?.all ? t('trash.emptyTrash') : t('trash.permanentDelete')}
+      />
+    </>
   )
 }

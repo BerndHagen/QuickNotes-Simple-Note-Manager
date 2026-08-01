@@ -21,6 +21,8 @@ import {
   Flame
 } from 'lucide-react'
 import { formatDateKey, generateId, parseDateKey } from './noteTypes'
+import { useLatestValue } from './useLatestValue'
+import { useEditorDataSync } from './useEditorDataSync'
 import FocusedNoteTitle from './FocusedNoteTitle'
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -68,11 +70,17 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle, onTitle
   const [newTaskTime, setNewTaskTime] = useState('morning')
   const [newEvent, setNewEvent] = useState('')
   const [newEventTime, setNewEventTime] = useState('')
+  const onChangeRef = useLatestValue(onChange)
+  const skipChangeRef = useEditorDataSync(data, plannerData, (incoming) => {
+    setPlannerData(incoming)
+    setActiveView(incoming?.preferredView || 'week')
+  })
   const isInitialMount = useRef(true)
   useEffect(() => {
     if (isInitialMount.current) { isInitialMount.current = false; return }
-    onChange?.(plannerData)
-  }, [plannerData])
+    if (skipChangeRef.current) { skipChangeRef.current = false; return }
+    onChangeRef.current?.(plannerData)
+  }, [onChangeRef, plannerData, skipChangeRef])
 
   const update = (field, value) => {
     setPlannerData(prev => ({ ...prev, [field]: value }))
@@ -260,7 +268,10 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle, onTitle
         {views.map((view) => (
           <button
             key={view.id}
-            onClick={() => setActiveView(view.id)}
+            onClick={() => {
+              setActiveView(view.id)
+              update('preferredView', view.id)
+            }}
             aria-pressed={activeView === view.id}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
  activeView === view.id
@@ -304,7 +315,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle, onTitle
                     </span>
                     <span className={`text-lg font-bold ${
  isToday 
- ? 'w-8 h-8 bg-accent text-white rounded-full flex items-center justify-center'
+ ? 'w-8 h-8 bg-accent text-accent-on rounded-full flex items-center justify-center'
                         : 'text-content'
                     }`}>
                       {date.getDate()}
@@ -404,7 +415,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle, onTitle
                     <button
                       onClick={() => addEvent(selectedDay)}
                       aria-label={`Add event to ${selectedDay}`}
-                      className="px-3 py-2 rounded-lg bg-accent hover:bg-accent-hover text-white"
+                      className="px-3 py-2 rounded-lg bg-accent hover:bg-accent-hover text-accent-on"
                     >
                       <Plus className="w-5 h-5" />
                     </button>
@@ -491,7 +502,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle, onTitle
                     <button
                       onClick={() => addTask(selectedDay)}
                       aria-label={`Add task to ${selectedDay}`}
-                      className="px-3 py-2 rounded-lg bg-accent hover:bg-accent-hover text-white"
+                      className="px-3 py-2 rounded-lg bg-accent hover:bg-accent-hover text-accent-on"
                     >
                       <Plus className="w-5 h-5" />
                     </button>

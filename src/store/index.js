@@ -1,14 +1,254 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { createJSONStorage, persist } from 'zustand/middleware'
 import { generateId, repairMojibake } from '../lib/utils'
 import { filterNotes } from '../lib/filterNotes'
-import { db, saveNoteOffline, addToSyncQueue, getPendingSyncItems, removeSyncItem, clearLocalData, SyncStatus } from '../lib/db'
+import {
+  addToSyncQueue,
+  adoptLegacyWorkspaceRecords,
+  db,
+  deleteWorkspaceData,
+  getPendingSyncItems,
+  getWorkspaceCache,
+  getWorkspaceSnapshot,
+  removeSyncItem,
+  replaceWorkspaceCache,
+  saveNoteOffline,
+  saveWorkspaceSnapshot,
+  setActiveWorkspaceOwner,
+  SyncStatus,
+} from '../lib/db'
 import { backend, isBackendConfigured } from '../lib/backend'
 import { endLocalSession } from '../lib/localSession'
-import { limitNoteTitle, normalizeTagName, validateFolderName } from '../lib/dataValidation'
-import { buildFolderIdRemap, remapNoteFolder } from '../lib/syncReconciliation'
+import {
+  limitNoteTitle,
+  MAX_NOTE_TITLE_LENGTH,
+  normalizeTagName,
+  validateFolderName,
+} from '../lib/dataValidation'
+import {
+  buildFolderIdRemap,
+  buildOperationIndex,
+  isRemoteNewer,
+  remapNoteFolder,
+  shouldUploadPendingRecord,
+} from '../lib/syncReconciliation'
+import { prepareWorkspaceImport } from '../lib/workspaceBackup'
 import toast from 'react-hot-toast'
 const WELCOME_TITLE = 'Welcome to QuickNotes'
+
+const emptyWorkspace = () => ({
+  notes: [],
+  folders: [],
+  tags: [],
+  selectedNoteId: null,
+  selectedFolderId: null,
+  selectedTagFilter: null,
+  searchQuery: '',
+  lastSyncTime: null,
+  isNewUser: false,
+})
+
+const selectWorkspaceSnapshot = (state) => ({
+  notes: state.notes,
+  folders: state.folders,
+  tags: state.tags,
+  selectedNoteId: state.selectedNoteId,
+  selectedFolderId: state.selectedFolderId,
+  selectedTagFilter: state.selectedTagFilter,
+  searchQuery: state.searchQuery,
+  lastSyncTime: state.lastSyncTime,
+  isNewUser: state.isNewUser,
+})
+
+const normalizeWorkspaceSnapshot = (snapshot) => {
+  const validRecords = (records) =>
+    Array.isArray(records)
+      ? records.filter((record) => record && typeof record.id === 'string')
+      : []
+  const workspace = {
+    notes: validRecords(snapshot?.notes),
+    folders: validRecords(snapshot?.folders),
+    tags: validRecords(snapshot?.tags),
+    selectedNoteId: snapshot?.selectedNoteId || null,
+    selectedFolderId: snapshot?.selectedFolderId || null,
+    selectedTagFilter: snapshot?.selectedTagFilter || null,
+    searchQuery: typeof snapshot?.searchQuery === 'string' ? snapshot.searchQuery : '',
+    lastSyncTime: snapshot?.lastSyncTime || null,
+    isNewUser: Boolean(snapshot?.isNewUser),
+  }
+  const noteIds = new Set(workspace.notes.map((note) => note.id))
+  const folderIds = new Set(workspace.folders.map((folder) => folder.id))
+  const tagNames = new Set(workspace.tags.map((tag) => tag.name))
+
+  if (!noteIds.has(workspace.selectedNoteId)) workspace.selectedNoteId = null
+  if (!folderIds.has(workspace.selectedFolderId)) workspace.selectedFolderId = null
+  if (!tagNames.has(workspace.selectedTagFilter)) workspace.selectedTagFilter = null
+  return workspace
+}
+
+const workspaceWrites = new Map()
+let workspaceTransitionChain = Promise.resolve()
+let deferredPersistenceFailure = null
+let reportPersistenceFailure = (error, source) => {
+  deferredPersistenceFailure = { error, source }
+}
+let localStorageFailureReported = false
+
+const queueWorkspaceSnapshot = (ownerId, workspace) => {
+  if (!ownerId) return Promise.resolve(null)
+
+  const writeState = workspaceWrites.get(ownerId) || {
+    latestWorkspace: null,
+    promise: null,
+  }
+  writeState.latestWorkspace = workspace
+  workspaceWrites.set(ownerId, writeState)
+
+  if (writeState.promise) return writeState.promise
+
+  writeState.promise = (async () => {
+    let savedSnapshot = null
+    while (writeState.latestWorkspace) {
+      const nextWorkspace = writeState.latestWorkspace
+      writeState.latestWorkspace = null
+      savedSnapshot = await saveWorkspaceSnapshot(ownerId, nextWorkspace)
+    }
+    return savedSnapshot
+  })()
+    .catch((error) => {
+      reportPersistenceFailure(error, 'indexeddb')
+      throw error
+    })
+    .finally(() => {
+      writeState.promise = null
+    })
+  return writeState.promise
+}
+
+const waitForWorkspaceWrites = async (ownerId) => {
+  const pendingWrite = workspaceWrites.get(ownerId)?.promise
+  if (!pendingWrite) return
+  await pendingWrite.catch(() => undefined)
+}
+
+const runWorkspaceTransition = (transition) => {
+  const nextTransition = workspaceTransitionChain
+    .catch(() => undefined)
+    .then(transition)
+  workspaceTransitionChain = nextTransition
+  return nextTransition
+}
+
+const safePersistStorage = createJSONStorage(() => ({
+  getItem: (name) => {
+    try {
+      return localStorage.getItem(name)
+    } catch (error) {
+      reportPersistenceFailure(error, 'localstorage')
+      return null
+    }
+  },
+  setItem: (name, value) => {
+    try {
+      localStorage.setItem(name, value)
+    } catch (error) {
+      if (!localStorageFailureReported) {
+        localStorageFailureReported = true
+        queueMicrotask(() => reportPersistenceFailure(error, 'localstorage'))
+      }
+    }
+  },
+  removeItem: (name) => {
+    try {
+      localStorage.removeItem(name)
+    } catch (error) {
+      reportPersistenceFailure(error, 'localstorage')
+    }
+  },
+}))
+
+const hasWorkspaceContent = (workspace) =>
+  workspace.notes.length > 0 || workspace.folders.length > 0 || workspace.tags.length > 0
+
+const persistCurrentWorkspace = async (get) => {
+  const state = get()
+  if (!state.cacheOwnerId) return true
+
+  try {
+    await queueWorkspaceSnapshot(state.cacheOwnerId, selectWorkspaceSnapshot(state))
+    return true
+  } catch {
+    return false
+  }
+}
+
+const activateWorkspace = async (set, get, user, ownerId, { adoptUnowned = false } = {}) => {
+  if (!ownerId) throw new Error('A workspace owner is required')
+
+  const current = get()
+  if (
+    current.cacheOwnerId === ownerId &&
+    current.hydratedWorkspaceOwnerId === ownerId
+  ) {
+    setActiveWorkspaceOwner(ownerId)
+    set({ user })
+    return true
+  }
+
+  try {
+    if (current.cacheOwnerId && current.cacheOwnerId !== ownerId) {
+      if (current.hydratedWorkspaceOwnerId === current.cacheOwnerId) {
+        const saved = await persistCurrentWorkspace(get)
+        if (!saved) return false
+      } else {
+        const existingCurrentSnapshot = await getWorkspaceSnapshot(current.cacheOwnerId)
+        if (!existingCurrentSnapshot) {
+          const currentWorkspace = normalizeWorkspaceSnapshot(
+            selectWorkspaceSnapshot(current)
+          )
+          const recoverableWorkspace = hasWorkspaceContent(currentWorkspace)
+            ? currentWorkspace
+            : normalizeWorkspaceSnapshot(await getWorkspaceCache())
+          if (hasWorkspaceContent(recoverableWorkspace)) {
+            await queueWorkspaceSnapshot(current.cacheOwnerId, recoverableWorkspace)
+          }
+        }
+      }
+    }
+
+    await waitForWorkspaceWrites(ownerId)
+    const storedSnapshot = await getWorkspaceSnapshot(ownerId)
+    const mayAdoptCurrent =
+      current.cacheOwnerId === ownerId || (!current.cacheOwnerId && adoptUnowned)
+    let workspace = storedSnapshot
+
+    if (!workspace && mayAdoptCurrent) {
+      const currentWorkspace = normalizeWorkspaceSnapshot(selectWorkspaceSnapshot(current))
+      workspace = hasWorkspaceContent(currentWorkspace)
+        ? currentWorkspace
+        : normalizeWorkspaceSnapshot(await getWorkspaceCache())
+    }
+
+    workspace = normalizeWorkspaceSnapshot(workspace)
+    if (mayAdoptCurrent) await adoptLegacyWorkspaceRecords(ownerId)
+
+    setActiveWorkspaceOwner(ownerId)
+    await replaceWorkspaceCache(workspace)
+    set({
+      ...workspace,
+      user,
+      cacheOwnerId: ownerId,
+      hydratedWorkspaceOwnerId: ownerId,
+      sharedNotes: [],
+      pendingShares: [],
+    })
+    await queueWorkspaceSnapshot(ownerId, workspace)
+    return true
+  } catch (error) {
+    reportPersistenceFailure(error, 'indexeddb')
+    return false
+  }
+}
 
 const createStarterContent = () => {
   const welcomeNote = {
@@ -100,6 +340,7 @@ const createStarterContent = () => {
     },
   ]
 
+  const tagCreatedAt = new Date().toISOString()
   const starterTags = [
     { id: generateId(), name: 'welcome', color: '#3b82f6' },
     { id: generateId(), name: 'getting-started', color: '#22c55e' },
@@ -108,7 +349,12 @@ const createStarterContent = () => {
     { id: generateId(), name: 'ideas', color: '#8b5cf6' },
     { id: generateId(), name: 'todo', color: '#06b6d4' },
     { id: generateId(), name: 'personal', color: '#ec4899' },
-  ]
+  ].map((tag) => ({
+    ...tag,
+    createdAt: tagCreatedAt,
+    updatedAt: tagCreatedAt,
+    syncStatus: SyncStatus.PENDING,
+  }))
 
   return { welcomeNote, starterFolders, starterTags }
 }
@@ -133,6 +379,8 @@ export const useNotesStore = create(
       sharedNotes: [],
       pendingShares: [],
       cacheOwnerId: null,
+      hydratedWorkspaceOwnerId: null,
+      persistenceError: null,
       isNewUser: false,
       /** Transient realtime signal — deliberately not persisted. */
       externalUpdate: { noteId: null, token: 0 },
@@ -164,11 +412,12 @@ export const useNotesStore = create(
 
 
       createNote: (note = {}) => {
+        const hasExplicitFolder = Object.prototype.hasOwnProperty.call(note, 'folderId')
         const newNote = {
           id: generateId(),
           title: limitNoteTitle(note.title),
           content: note.content || '',
-          folderId: note.folderId || get().selectedFolderId,
+          folderId: hasExplicitFolder ? note.folderId : get().selectedFolderId,
           tags: note.tags || [],
           starred: false,
           pinned: false,
@@ -191,15 +440,80 @@ export const useNotesStore = create(
         return newNote
       },
 
+      importWorkspaceBackup: async (backup) => runWorkspaceTransition(async () => {
+        const current = get()
+        if (!current.cacheOwnerId || current.hydratedWorkspaceOwnerId !== current.cacheOwnerId) {
+          throw new Error('Open a workspace before importing a backup.')
+        }
+
+        const imported = prepareWorkspaceImport(backup, current, { createId: generateId })
+        const workspace = {
+          ...selectWorkspaceSnapshot(current),
+          notes: [...imported.notes, ...current.notes],
+          folders: [...current.folders, ...imported.folders],
+          tags: [...current.tags, ...imported.tags],
+          selectedNoteId: imported.notes[0]?.id || current.selectedNoteId,
+        }
+        const queueEntries = [
+          ...imported.notes.map((data) => ({ table: 'notes', operation: 'insert', data })),
+          ...imported.folders.map((data) => ({ table: 'folders', operation: 'insert', data })),
+          ...imported.tags.map((data) => ({ table: 'tags', operation: 'insert', data })),
+        ].map((entry) => ({
+          ...entry,
+          ownerId: current.cacheOwnerId,
+          timestamp: new Date().toISOString(),
+        }))
+
+        try {
+          await db.transaction(
+            'rw',
+            db.notes,
+            db.folders,
+            db.tags,
+            db.syncQueue,
+            db.workspaceSnapshots,
+            async () => {
+              if (imported.notes.length > 0) await db.notes.bulkPut(imported.notes)
+              if (imported.folders.length > 0) await db.folders.bulkPut(imported.folders)
+              if (imported.tags.length > 0) await db.tags.bulkPut(imported.tags)
+              if (queueEntries.length > 0) await db.syncQueue.bulkAdd(queueEntries)
+              await db.workspaceSnapshots.put({
+                ...workspace,
+                ownerId: current.cacheOwnerId,
+                updatedAt: new Date().toISOString(),
+              })
+            }
+          )
+        } catch (error) {
+          reportPersistenceFailure(error, 'indexeddb')
+          throw new Error('The backup could not be saved to this browser.', { cause: error })
+        }
+
+        set(workspace)
+        return {
+          notes: imported.notes.length,
+          folders: imported.folders.length,
+          tags: imported.tags.length,
+        }
+      }),
+
       /**
        * Persist an in-progress editor draft in Zustand's synchronous local
        * cache. The regular debounced update still performs IndexedDB/cloud
        * queue work, but a reload cannot discard the most recent keystrokes.
        */
       updateNoteDraft: (id, updates) => {
+        const updatedAt = new Date().toISOString()
         set((state) => ({
           notes: state.notes.map((note) =>
-            note.id === id ? { ...note, ...updates } : note
+            note.id === id
+              ? {
+                  ...note,
+                  ...updates,
+                  updatedAt,
+                  syncStatus: SyncStatus.PENDING,
+                }
+              : note
           ),
           sharedNotes: state.sharedNotes.map((share) =>
             share.notes?.id === id
@@ -210,7 +524,7 @@ export const useNotesStore = create(
       },
 
       updateNote: async (id, updates) => {
-        const { notes, sharedNotes, user } = get()
+        const { sharedNotes } = get()
         const normalizedUpdates =
           Object.prototype.hasOwnProperty.call(updates, 'title')
             ? { ...updates, title: limitNoteTitle(updates.title, '') }
@@ -433,7 +747,7 @@ export const useNotesStore = create(
               addToSyncQueue('notes', 'update', { id: note.id, order: newOrder })
               return updatedNote
             }
-            return { ...note, order: note.order ?? orderedIds.indexOf(note.id) }
+            return note
           })
           
           return { notes: updatedNotes }
@@ -491,11 +805,14 @@ export const useNotesStore = create(
       duplicateNote: (id) => {
         const note = get().notes.find((n) => n.id === id)
         if (!note) return
+        const copySuffix = ' (Copy)'
 
         const duplicate = {
           ...note,
           id: generateId(),
-          title: `${note.title} (Copy)`,
+          title: limitNoteTitle(
+            `${note.title.slice(0, MAX_NOTE_TITLE_LENGTH - copySuffix.length)}${copySuffix}`
+          ),
           starred: false,
           pinned: false,
           createdAt: new Date().toISOString(),
@@ -582,7 +899,12 @@ export const useNotesStore = create(
       },
 
       deleteFolder: (id) => {
-        const affectedNotes = get().notes.filter((n) => n.folderId === id)
+        const folder = get().folders.find((candidate) => candidate.id === id)
+        if (!folder) return
+
+        const affectedNotes = get().notes.filter((note) => note.folderId === id)
+        const affectedChildren = get().folders.filter((candidate) => candidate.parentId === id)
+        const now = new Date().toISOString()
         
         set((state) => ({
           notes: state.notes.map((note) =>
@@ -595,14 +917,41 @@ export const useNotesStore = create(
                 }
               : note
           ),
-          folders: state.folders.filter((folder) => folder.id !== id),
+          folders: state.folders
+            .filter((candidate) => candidate.id !== id)
+            .map((candidate) =>
+              candidate.parentId === id
+                ? {
+                    ...candidate,
+                    parentId: folder.parentId || null,
+                    updatedAt: now,
+                    syncStatus: SyncStatus.PENDING,
+                  }
+                : candidate
+            ),
           selectedFolderId:
             state.selectedFolderId === id ? null : state.selectedFolderId,
         }))
 
         for (const note of affectedNotes) {
-          const updated = { ...note, folderId: null, updatedAt: new Date().toISOString(), syncStatus: SyncStatus.PENDING }
+          const updated = { ...note, folderId: null, updatedAt: now, syncStatus: SyncStatus.PENDING }
           saveNoteOffline(updated)
+          addToSyncQueue('notes', 'update', { id: note.id, folderId: null, updatedAt: now })
+        }
+
+        for (const child of affectedChildren) {
+          const updated = {
+            ...child,
+            parentId: folder.parentId || null,
+            updatedAt: now,
+            syncStatus: SyncStatus.PENDING,
+          }
+          db.folders.put(updated)
+          addToSyncQueue('folders', 'update', {
+            id: child.id,
+            parentId: updated.parentId,
+            updatedAt: now,
+          })
         }
 
         db.folders.delete(id)
@@ -660,19 +1009,27 @@ export const useNotesStore = create(
         }))
 
         if (normalizedUpdates.name && normalizedUpdates.name !== oldTag.name) {
+          const now = new Date().toISOString()
           set((state) => ({
-            notes: state.notes.map((note) => ({
-              ...note,
-              tags: note.tags?.map((t) => t === oldTag.name ? normalizedUpdates.name : t) || [],
-            })),
+            notes: state.notes.map((note) =>
+              note.tags?.includes(oldTag.name)
+                ? {
+                    ...note,
+                    tags: note.tags.map((tagName) =>
+                      tagName === oldTag.name ? normalizedUpdates.name : tagName
+                    ),
+                    updatedAt: now,
+                    syncStatus: SyncStatus.PENDING,
+                  }
+                : note
+            ),
             selectedTagFilter:
               state.selectedTagFilter === oldTag.name ? normalizedUpdates.name : state.selectedTagFilter,
           }))
 
           const affectedNotes = get().notes.filter(n => n.tags?.includes(normalizedUpdates.name))
           for (const note of affectedNotes) {
-            const updated = { ...note, updatedAt: new Date().toISOString(), syncStatus: SyncStatus.PENDING }
-            saveNoteOffline(updated)
+            saveNoteOffline(note)
             addToSyncQueue('notes', 'update', { id: note.id, tags: note.tags })
           }
         }
@@ -690,11 +1047,18 @@ export const useNotesStore = create(
           .filter(n => n.tags?.includes(tag.name))
           .map(n => n.id)
 
+        const now = new Date().toISOString()
         set((state) => ({
-          notes: state.notes.map((note) => ({
-            ...note,
-            tags: note.tags?.filter((t) => t !== tag.name) || [],
-          })),
+          notes: state.notes.map((note) =>
+            note.tags?.includes(tag.name)
+              ? {
+                  ...note,
+                  tags: note.tags.filter((tagName) => tagName !== tag.name),
+                  updatedAt: now,
+                  syncStatus: SyncStatus.PENDING,
+                }
+              : note
+          ),
           tags: state.tags.filter((t) => t.id !== id),
           selectedTagFilter:
             state.selectedTagFilter === tag.name ? null : state.selectedTagFilter,
@@ -703,8 +1067,7 @@ export const useNotesStore = create(
         for (const noteId of affectedNoteIds) {
           const note = get().notes.find(n => n.id === noteId)
           if (note) {
-            const updated = { ...note, updatedAt: new Date().toISOString(), syncStatus: SyncStatus.PENDING }
-            saveNoteOffline(updated)
+            saveNoteOffline(note)
             addToSyncQueue('notes', 'update', { id: noteId, tags: note.tags })
           }
         }
@@ -766,29 +1129,69 @@ export const useNotesStore = create(
           user,
           ...(user?.isLocal ? { cacheOwnerId: 'local' } : {}),
         }),
-      activateCloudUser: async (user, { adoptUnowned = false } = {}) => {
+      activateCloudUser: async (user, options = {}) => {
         if (!user?.id) throw new Error('A valid cloud user is required')
+        return runWorkspaceTransition(
+          () => activateWorkspace(set, get, user, user.id, options)
+        )
+      },
+      activateLocalUser: async (user) => {
+        if (!user?.isLocal) throw new Error('A valid local user is required')
+        return runWorkspaceTransition(
+          () => activateWorkspace(set, get, user, 'local', { adoptUnowned: true })
+        )
+      },
+      persistWorkspace: async () => persistCurrentWorkspace(get),
+      deactivateWorkspace: async ({ persistWorkspace = true } = {}) => {
+        return runWorkspaceTransition(async () => {
+          if (persistWorkspace) {
+            const saved = await persistCurrentWorkspace(get)
+            if (!saved) return false
+          }
 
-        const ownerId = get().cacheOwnerId
-        const mayAdoptLegacyCache = !ownerId && adoptUnowned
-        if (!mayAdoptLegacyCache && ownerId !== user.id) {
-          await clearLocalData()
-          localStorage.removeItem('quicknotes-storage')
+          setActiveWorkspaceOwner(null)
+          await replaceWorkspaceCache(emptyWorkspace())
           set({
-            notes: [],
-            folders: [],
-            tags: [],
-            selectedNoteId: null,
-            selectedFolderId: null,
-            selectedTagFilter: null,
-            searchQuery: '',
+            ...emptyWorkspace(),
+            user: null,
+            cacheOwnerId: null,
+            hydratedWorkspaceOwnerId: null,
             sharedNotes: [],
             pendingShares: [],
-            lastSyncTime: null,
+            isSyncing: false,
           })
-        }
+          return true
+        })
+      },
+      deleteWorkspace: async (ownerId = get().cacheOwnerId, { deactivate = false } = {}) => {
+        if (!ownerId) return false
 
-        set({ user, cacheOwnerId: user.id })
+        return runWorkspaceTransition(async () => {
+          await waitForWorkspaceWrites(ownerId)
+          await deleteWorkspaceData(ownerId)
+          workspaceWrites.delete(ownerId)
+          if (get().cacheOwnerId === ownerId) {
+            const nextOwnerId = deactivate ? null : ownerId
+            setActiveWorkspaceOwner(nextOwnerId)
+            set({
+              ...emptyWorkspace(),
+              ...(deactivate ? { user: null } : {}),
+              cacheOwnerId: nextOwnerId,
+              hydratedWorkspaceOwnerId: nextOwnerId,
+              sharedNotes: [],
+              pendingShares: [],
+              isSyncing: false,
+            })
+            if (!deactivate) {
+              await queueWorkspaceSnapshot(ownerId, emptyWorkspace())
+            }
+          }
+          return true
+        })
+      },
+      clearPersistenceError: () => {
+        localStorageFailureReported = false
+        set({ persistenceError: null })
       },
       setIsAuthChecked: (checked) => set({ isAuthChecked: checked }),
       
@@ -797,6 +1200,11 @@ export const useNotesStore = create(
         // on the device. There is no cloud state to tear down, and the cloud
         // path below would sign out a session this user never had.
         if (!isBackendConfigured() || get().user?.isLocal) {
+          const saved = await persistCurrentWorkspace(get)
+          if (!saved) {
+            toast.error('Your notes could not be saved. Sign-out was cancelled.')
+            return false
+          }
           endLocalSession()
           set({
             user: null,
@@ -808,50 +1216,58 @@ export const useNotesStore = create(
             isSyncing: false,
             cacheOwnerId: 'local',
           })
-          return
+          return true
         }
 
-        if (isBackendConfigured()) {
-          const { user } = get()
-          if (user) {
-            try {
-              const pendingItems = await getPendingSyncItems()
-              for (const item of pendingItems) {
-                if (item.operation === 'delete') {
-                  await backend.from(item.table).delete()
-                    .eq('id', item.data.id)
-                    .eq('user_id', user.id)
-                }
-              }
-            } catch (e) {
-            }
-          }
-          await backend.auth.signOut()
+        const hasPendingState = () => {
+          const { notes, folders, tags } = get()
+          return [...notes, ...folders, ...tags].some(
+            (record) => record.syncStatus === SyncStatus.PENDING
+          )
         }
-        await clearLocalData()
+
+        const pendingBeforeLogout = await getPendingSyncItems()
+        if (pendingBeforeLogout.length > 0 || hasPendingState()) {
+          if (!navigator.onLine) {
+            toast.error('Reconnect and sync your changes before signing out')
+            return false
+          }
+
+          const syncSucceeded = await get().syncWithBackend()
+          const pendingAfterSync = await getPendingSyncItems()
+          if (!syncSucceeded || pendingAfterSync.length > 0 || hasPendingState()) {
+            toast.error('Your changes are not fully synced. Sign-out was cancelled.')
+            return false
+          }
+        }
+
+        const workspaceSaved = await persistCurrentWorkspace(get)
+        if (!workspaceSaved) {
+          toast.error('Your notes could not be saved. Sign-out was cancelled.')
+          return false
+        }
+
+        let signOutError = null
+        try {
+          const result = await backend.auth.signOut()
+          signOutError = result.error
+        } catch (error) {
+          signOutError = error
+        }
+
+        if (signOutError) {
+          toast.error(`Could not sign out: ${signOutError.message || 'Unknown error'}`)
+          return false
+        }
+
         localStorage.removeItem('quicknotes-remember')
-        localStorage.removeItem('quicknotes-storage')
-        set({ 
-          user: null,
-          notes: [],
-          folders: [],
-          tags: [],
-          selectedNoteId: null,
-          selectedFolderId: null,
-          selectedTagFilter: null,
-          searchQuery: '',
-          sharedNotes: [],
-          pendingShares: [],
-          lastSyncTime: null,
-          isSyncing: false,
-          cacheOwnerId: null,
-        })
+        return get().deactivateWorkspace({ persistWorkspace: false })
       },
 
       setSyncing: (syncing) => set({ isSyncing: syncing }),
       setLastSyncTime: (time) => set({ lastSyncTime: time }),
 
-      syncWithBackend: async () => {
+      syncWithBackend: async () => runWorkspaceTransition(async () => {
         const { isSyncing } = get()
         if (isSyncing) return false
         
@@ -891,6 +1307,10 @@ export const useNotesStore = create(
 
         try {
           const pendingSyncItems = await getPendingSyncItems()
+          const folderOperations = buildOperationIndex(pendingSyncItems, 'folders')
+          const tagOperations = buildOperationIndex(pendingSyncItems, 'tags')
+          const noteOperations = buildOperationIndex(pendingSyncItems, 'notes')
+          let conflictCount = 0
           
           const folderDeletions = pendingSyncItems.filter(
             item => item.table === 'folders' && item.operation === 'delete'
@@ -901,7 +1321,6 @@ export const useNotesStore = create(
               .delete()
               .eq('id', item.data.id)
               .eq('user_id', user.id)
-            
             if (error) throw error
             await removeSyncItem(item.id)
           }
@@ -915,7 +1334,6 @@ export const useNotesStore = create(
               .delete()
               .eq('id', item.data.id)
               .eq('user_id', user.id)
-            
             if (error) throw error
             await removeSyncItem(item.id)
           }
@@ -934,8 +1352,38 @@ export const useNotesStore = create(
             localFolders,
             initialRemoteFolders || []
           )
+          const initialRemoteFolderIds = new Set(
+            (initialRemoteFolders || []).map((folder) => folder.id)
+          )
+          const initialRemoteFoldersById = new Map(
+            (initialRemoteFolders || []).map((folder) => [folder.id, folder])
+          )
+          const folderSnapshotTimes = new Map(
+            localFolders.map((folder) => [folder.id, folder.updatedAt])
+          )
 
-          const foldersToUpload = localFolders.filter((folder) => !folderIdRemap.has(folder.id))
+          const foldersToUpload = localFolders.filter(
+            (folder) => {
+              if (
+                folderIdRemap.has(folder.id) ||
+                !shouldUploadPendingRecord(
+                  folder,
+                  initialRemoteFolderIds,
+                  folderOperations,
+                  SyncStatus.PENDING
+                )
+              ) {
+                return false
+              }
+
+              const remoteFolder = initialRemoteFoldersById.get(folder.id)
+              if (remoteFolder && isRemoteNewer(folder.updatedAt, remoteFolder.updated_at)) {
+                conflictCount++
+                return false
+              }
+              return true
+            }
+          )
           
           for (const folder of foldersToUpload) {
             const folderData = {
@@ -964,41 +1412,94 @@ export const useNotesStore = create(
             .eq('user_id', user.id)
           if (refreshedFolderError) throw refreshedFolderError
 
-          const canonicalFolders = (remoteFolders || []).map((folder) => ({
-            id: folder.id,
-            name: folder.name,
-            icon: folder.icon || 'Folder',
-            color: folder.color || '#10b981',
-            parentId: folder.parent_id || null,
-            createdAt: folder.created_at,
-            updatedAt: folder.updated_at || folder.created_at,
-            syncStatus: SyncStatus.SYNCED,
-          }))
+          const latestFolderQueue = await getPendingSyncItems()
+          const deletedFolderIds = new Set([
+            ...folderDeletions.map((item) => item.data.id),
+            ...latestFolderQueue
+              .filter((item) => item.table === 'folders' && item.operation === 'delete')
+              .map((item) => item.data.id),
+          ])
+          const canonicalFolders = (remoteFolders || [])
+            .filter((folder) => !deletedFolderIds.has(folder.id))
+            .map((folder) => ({
+              id: folder.id,
+              name: folder.name,
+              icon: folder.icon || 'Folder',
+              color: folder.color || '#10b981',
+              parentId: folder.parent_id || null,
+              createdAt: folder.created_at,
+              updatedAt: folder.updated_at || folder.created_at,
+              syncStatus: SyncStatus.SYNCED,
+            }))
 
-          set((state) => ({
-            folders: canonicalFolders,
-            notes: state.notes.map((note) => {
-              const remapped = remapNoteFolder(note, folderIdRemap)
-              return remapped === note
-                ? note
-                : { ...remapped, syncStatus: SyncStatus.PENDING }
-            }),
-            selectedFolderId:
-              folderIdRemap.get(state.selectedFolderId) || state.selectedFolderId,
-          }))
-
-          if (folderIdRemap.size > 0) {
-            const remappedNotes = get().notes.filter((note) =>
-              [...folderIdRemap.values()].includes(note.folderId)
+          set((state) => {
+            const canonicalById = new Map(
+              canonicalFolders.map((folder) => [folder.id, folder])
             )
-            await db.transaction('rw', db.folders, db.notes, async () => {
-              await db.folders.bulkDelete([...folderIdRemap.keys()])
-              await db.folders.bulkPut(canonicalFolders)
-              await db.notes.bulkPut(remappedNotes)
-            })
-          } else if (canonicalFolders.length > 0) {
-            await db.folders.bulkPut(canonicalFolders)
-          }
+            const reconciledFolders = []
+
+            for (const currentFolder of state.folders) {
+              if (deletedFolderIds.has(currentFolder.id)) continue
+
+              const remappedId = folderIdRemap.get(currentFolder.id)
+              const canonicalId = remappedId || currentFolder.id
+              const changedDuringSync =
+                currentFolder.syncStatus === SyncStatus.PENDING &&
+                (!folderSnapshotTimes.has(currentFolder.id) ||
+                  folderSnapshotTimes.get(currentFolder.id) !== currentFolder.updatedAt)
+
+              if (changedDuringSync) {
+                reconciledFolders.push(
+                  remappedId ? { ...currentFolder, id: remappedId } : currentFolder
+                )
+                canonicalById.delete(canonicalId)
+                continue
+              }
+
+              const canonicalFolder = canonicalById.get(canonicalId)
+              if (canonicalFolder) {
+                reconciledFolders.push(canonicalFolder)
+                canonicalById.delete(canonicalId)
+              }
+            }
+
+            reconciledFolders.push(...canonicalById.values())
+            const reconciledFolderIds = new Set(
+              reconciledFolders.map((folder) => folder.id)
+            )
+            const remappedSelection =
+              folderIdRemap.get(state.selectedFolderId) || state.selectedFolderId
+
+            return {
+              folders: reconciledFolders,
+              notes: state.notes.map((note) => {
+                const remapped = remapNoteFolder(note, folderIdRemap)
+                return remapped === note
+                  ? note
+                  : { ...remapped, syncStatus: SyncStatus.PENDING }
+              }),
+              selectedFolderId:
+                remappedSelection && reconciledFolderIds.has(remappedSelection)
+                  ? remappedSelection
+                  : null,
+            }
+          })
+
+          const reconciledFolders = get().folders
+          const reconciledFolderIds = new Set(reconciledFolders.map((folder) => folder.id))
+          const persistedFolderIds = await db.folders.toCollection().primaryKeys()
+          const staleFolderIds = persistedFolderIds.filter(
+            (folderId) => !reconciledFolderIds.has(folderId)
+          )
+          const remappedFolderIds = new Set(folderIdRemap.values())
+          const remappedNotes = get().notes.filter((note) =>
+            remappedFolderIds.has(note.folderId)
+          )
+          await db.transaction('rw', db.folders, db.notes, async () => {
+            if (staleFolderIds.length > 0) await db.folders.bulkDelete(staleFolderIds)
+            if (reconciledFolders.length > 0) await db.folders.bulkPut(reconciledFolders)
+            if (remappedNotes.length > 0) await db.notes.bulkPut(remappedNotes)
+          })
 
           const { data: initialRemoteTags, error: tagFetchError } = await backend
             .from('tags')
@@ -1010,6 +1511,12 @@ export const useNotesStore = create(
           const remoteTagNames = new Set((initialRemoteTags || []).map((tag) => tag.name.toLowerCase()))
           const remoteTagIds = new Set((initialRemoteTags || []).map((tag) => tag.id))
           const tagsToUpload = localTags.filter(tag => {
+            if (!shouldUploadPendingRecord(
+              tag,
+              remoteTagIds,
+              tagOperations,
+              SyncStatus.PENDING
+            )) return false
             return remoteTagIds.has(tag.id) || !remoteTagNames.has(tag.name.toLowerCase())
           })
           
@@ -1121,14 +1628,67 @@ export const useNotesStore = create(
             }
           }
 
+          const noteDeletions = pendingSyncItems.filter(
+            item => item.table === 'notes' && item.operation === 'delete'
+          )
+
+          for (const item of noteDeletions) {
+            const { error } = await backend
+              .from('notes')
+              .delete()
+              .eq('id', item.data.id)
+              .eq('user_id', user.id)
+            if (error) throw error
+            await removeSyncItem(item.id)
+          }
+
+          const { data: initialRemoteNotes, error: initialNoteFetchError } = await backend
+            .from('notes')
+            .select('*')
+            .eq('user_id', user.id)
+
+          if (initialNoteFetchError) throw initialNoteFetchError
+
+          const initialRemoteById = new Map(
+            (initialRemoteNotes || []).map((note) => [note.id, note])
+          )
+          const initialRemoteNoteIds = new Set(initialRemoteById.keys())
+          const discardedRemoteDeletionIds = new Set()
           const pendingNotes = get().notes.filter(
-            (n) => n.syncStatus === SyncStatus.PENDING
+            (note) => note.syncStatus === SyncStatus.PENDING
           )
 
           let syncedCount = 0
           let errorCount = 0
-
           for (const note of pendingNotes) {
+            if (!shouldUploadPendingRecord(
+              note,
+              initialRemoteNoteIds,
+              noteOperations,
+              SyncStatus.PENDING
+            )) {
+              discardedRemoteDeletionIds.add(note.id)
+              continue
+            }
+
+            const remoteNote = initialRemoteById.get(note.id)
+            if (remoteNote && isRemoteNewer(note.updatedAt, remoteNote.updated_at)) {
+              const remoteData = toCamelCase(remoteNote)
+              if (note.order !== undefined && note.order !== null && remoteData.order === null) {
+                remoteData.order = note.order
+              }
+              set((state) => ({
+                notes: state.notes.map((current) =>
+                  current.id === note.id && current.updatedAt === note.updatedAt
+                    ? remoteData
+                    : current
+                ),
+              }))
+              await db.notes.put(remoteData)
+              conflictCount++
+              continue
+            }
+
             const { error } = await backend
               .from('notes')
               .upsert(toSnakeCase(note))
@@ -1137,8 +1697,10 @@ export const useNotesStore = create(
             if (!error) {
               syncedCount++
               set((state) => ({
-                notes: state.notes.map((n) =>
-                  n.id === note.id ? { ...n, syncStatus: SyncStatus.SYNCED } : n
+                notes: state.notes.map((current) =>
+                  current.id === note.id && current.updatedAt === note.updatedAt
+                    ? { ...current, syncStatus: SyncStatus.SYNCED }
+                    : current
                 ),
               }))
             } else {
@@ -1146,92 +1708,77 @@ export const useNotesStore = create(
             }
           }
 
-          const noteSyncItems = await getPendingSyncItems()
-          const noteDeletions = noteSyncItems.filter(
-            item => item.table === 'notes' && item.operation === 'delete'
-          )
-          
-          for (const item of noteDeletions) {
-            const { error } = await backend
-              .from('notes')
-              .delete()
-              .eq('id', item.data.id)
-              .eq('user_id', user.id)
-            
-            if (error) throw error
-            await removeSyncItem(item.id)
-          }
-
           const { data: remoteNotes, error: fetchError } = await backend
             .from('notes')
             .select('*')
             .eq('user_id', user.id)
 
-          if (fetchError) {
-            throw fetchError
-          }
+          if (fetchError) throw fetchError
 
-          if (remoteNotes) {
-            set((state) => {
-              const localNotesMap = new Map(state.notes.map((n) => [n.id, n]))
-              const updatedNotes = [...state.notes]
-              let newNotesCount = 0
-              let updatedCount = 0
+          const deletedNoteIds = new Set(noteDeletions.map((item) => item.data.id))
+          const remoteNotesById = new Map(
+            (remoteNotes || [])
+              .filter((note) => !deletedNoteIds.has(note.id))
+              .map((note) => [note.id, note])
+          )
+          const localNoteIdsBeforeReconciliation = get().notes.map((note) => note.id)
 
-              for (const remoteNote of remoteNotes) {
-                const localNote = localNotesMap.get(remoteNote.id)
-                
-                if (!localNote) {
-                  const wasDeleted = noteDeletions.some(d => d.data.id === remoteNote.id)
-                  if (!wasDeleted) {
-                    updatedNotes.push(toCamelCase(remoteNote))
-                    newNotesCount++
-                  }
-                } else {
-                  if (localNote.syncStatus === SyncStatus.PENDING) {
-                    continue
-                  }
-                  
-                  if (localNote.deleted && !remoteNote.deleted) {
-                    continue
-                  }
-                  
-                  const remoteUpdated = new Date(remoteNote.updated_at)
-                  const localUpdated = new Date(localNote.updatedAt)
-                  
-                  const bufferMs = 2000
-                  if (remoteUpdated.getTime() > localUpdated.getTime() + bufferMs) {
-                    const idx = updatedNotes.findIndex(n => n.id === remoteNote.id)
-                    if (idx !== -1) {
-                      const remoteData = toCamelCase(remoteNote)
-                      if (localNote.order !== undefined && localNote.order !== null && remoteData.order === null) {
-                        remoteData.order = localNote.order
-                      }
-                      updatedNotes[idx] = remoteData
-                      updatedCount++
-                    }
-                  } else {
-                  }
-                }
+          set((state) => {
+            const reconciledNotes = []
+
+            for (const localNote of state.notes) {
+              if (
+                deletedNoteIds.has(localNote.id) ||
+                discardedRemoteDeletionIds.has(localNote.id)
+              ) {
+                continue
               }
 
-              return { notes: updatedNotes }
-            })
-          }
+              const remoteNote = remoteNotesById.get(localNote.id)
+              if (localNote.syncStatus === SyncStatus.PENDING) {
+                reconciledNotes.push(localNote)
+                remoteNotesById.delete(localNote.id)
+                continue
+              }
 
-          try {
-            await get().loadSharedNotes()
-          } catch (err) {
-          }
+              if (!remoteNote) continue
+
+              const remoteData = toCamelCase(remoteNote)
+              if (
+                localNote.order !== undefined &&
+                localNote.order !== null &&
+                remoteData.order === null
+              ) {
+                remoteData.order = localNote.order
+              }
+              reconciledNotes.push(remoteData)
+              remoteNotesById.delete(localNote.id)
+            }
+
+            for (const remoteNote of remoteNotesById.values()) {
+              reconciledNotes.push(toCamelCase(remoteNote))
+            }
+
+            return { notes: reconciledNotes }
+          })
+
+          const reconciledNoteIds = new Set(get().notes.map((note) => note.id))
+          const removedNoteIds = localNoteIdsBeforeReconciliation.filter(
+            (id) => !reconciledNoteIds.has(id)
+          )
+          if (removedNoteIds.length > 0) await db.notes.bulkDelete(removedNoteIds)
+          if (get().notes.length > 0) await db.notes.bulkPut(get().notes)
+
+          await get().loadSharedNotes()
 
           if (errorCount > 0) {
             throw new Error(`${errorCount} note${errorCount === 1 ? '' : 's'} could not be uploaded`)
           }
 
-          // Insert/update items are represented by local syncStatus. Remove
-          // their queue records only after every corresponding write succeeds.
-          const remainingItems = await getPendingSyncItems()
-          for (const item of remainingItems) {
+          // Remove only the operation snapshot processed by this run. Writes
+          // created while network requests were in flight belong to the next
+          // run and must remain queued.
+          for (const item of pendingSyncItems) {
             if (item.operation !== 'delete') {
               await removeSyncItem(item.id)
             }
@@ -1244,7 +1791,12 @@ export const useNotesStore = create(
           if (errorCount > 0 && syncToast) {
             toast.error(`Sync partially failed (${errorCount} errors)`, { id: syncToast })
           } else if (showNotifications && syncToast) {
-            toast.success(`Sync successful! ${syncedCount > 0 ? `${syncedCount} changes uploaded.` : 'Everything up to date.'}`, { id: syncToast })
+            const detail = conflictCount > 0
+              ? `${conflictCount} newer cloud change${conflictCount === 1 ? '' : 's'} kept.`
+              : syncedCount > 0
+                ? `${syncedCount} changes uploaded.`
+                : 'Everything up to date.'
+            toast.success(`Sync successful! ${detail}`, { id: syncToast })
           } else if (syncToast) {
             toast.dismiss(syncToast)
           }
@@ -1257,7 +1809,7 @@ export const useNotesStore = create(
         } finally {
           set({ isSyncing: false })
         }
-      },
+      }),
 
       /**
        * Delegates to the shared filter so the store, the note list and
@@ -1480,14 +2032,23 @@ export const useNotesStore = create(
     }),
     {
       name: 'quicknotes-storage',
-      partialize: (state) => ({
-        notes: state.notes,
-        folders: state.folders,
-        tags: state.tags,
-        lastSyncTime: state.lastSyncTime,
-        cacheOwnerId: state.cacheOwnerId,
-      }),
+      storage: safePersistStorage,
+      partialize: (state) => {
+        const metadata = {
+          lastSyncTime: state.lastSyncTime,
+          cacheOwnerId: state.cacheOwnerId,
+        }
+        if (state.hydratedWorkspaceOwnerId) return metadata
+
+        return {
+          ...metadata,
+          notes: state.notes,
+          folders: state.folders,
+          tags: state.tags,
+        }
+      },
       onRehydrateStorage: () => (state) => {
+        setActiveWorkspaceOwner(state?.cacheOwnerId || null)
         // Repair any mojibake (double-encoded UTF-8) in stored notes
         if (state?.notes?.length) {
           let repaired = false
@@ -1508,6 +2069,60 @@ export const useNotesStore = create(
     }
   )
 )
+
+reportPersistenceFailure = (error, source) => {
+  const message = source === 'localstorage'
+    ? 'QuickNotes could not update its browser cache. Large embedded images can exhaust browser storage.'
+    : 'QuickNotes could not save changes on this device. Export important notes before closing the app.'
+  const currentError = useNotesStore.getState().persistenceError
+  if (currentError?.source === source && currentError?.message === message) return
+
+  useNotesStore.setState({
+    persistenceError: {
+      source,
+      message,
+      detail: error?.message || 'Unknown storage error',
+      occurredAt: new Date().toISOString(),
+    },
+  })
+  toast.error(message, { id: 'workspace-persistence-error', duration: 8000 })
+}
+
+if (deferredPersistenceFailure) {
+  const { error, source } = deferredPersistenceFailure
+  deferredPersistenceFailure = null
+  queueMicrotask(() => reportPersistenceFailure(error, source))
+}
+
+useNotesStore.subscribe((state, previousState) => {
+  if (state.cacheOwnerId !== previousState.cacheOwnerId) {
+    setActiveWorkspaceOwner(state.cacheOwnerId)
+  }
+
+  if (
+    !state.cacheOwnerId ||
+    state.hydratedWorkspaceOwnerId !== state.cacheOwnerId
+  ) {
+    return
+  }
+
+  const workspaceChanged =
+    state.notes !== previousState.notes ||
+    state.folders !== previousState.folders ||
+    state.tags !== previousState.tags ||
+    state.selectedNoteId !== previousState.selectedNoteId ||
+    state.selectedFolderId !== previousState.selectedFolderId ||
+    state.selectedTagFilter !== previousState.selectedTagFilter ||
+    state.searchQuery !== previousState.searchQuery ||
+    state.lastSyncTime !== previousState.lastSyncTime ||
+    state.isNewUser !== previousState.isNewUser
+
+  if (!workspaceChanged) return
+  void queueWorkspaceSnapshot(
+    state.cacheOwnerId,
+    selectWorkspaceSnapshot(state)
+  ).catch(() => undefined)
+})
 
 export const useThemeStore = create(
   persist(

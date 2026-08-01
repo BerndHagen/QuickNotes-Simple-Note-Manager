@@ -114,7 +114,7 @@ export default function ResizableImage({ node, updateAttributes, deleteNode, sel
           alt={alt || ''}
           title={title || ''}
           className={`rounded-lg shadow-md transition-all duration-200 ${
- selected ? 'ring-2 ring-primary-500 ring-offset-2' : ''
+ selected ? 'ring-2 ring-accent ring-offset-2' : ''
  } ${isResizing ? 'select-none' : ''}`}
           style={{
             width: width ? `${width}px` : '100%',
@@ -127,11 +127,11 @@ export default function ResizableImage({ node, updateAttributes, deleteNode, sel
         {(showControls || selected) && (
           <>
             <div
-              className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-12 bg-primary-500 rounded-full cursor-ew-resize opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary-600 shadow-lg"
+              className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-12 bg-accent rounded-full cursor-ew-resize opacity-0 group-hover:opacity-100 transition-opacity hover:bg-accent-hover shadow-lg"
               onMouseDown={(e) => handleResizeStart(e, 'left')}
             />
             <div
-              className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-3 h-12 bg-primary-500 rounded-full cursor-ew-resize opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary-600 shadow-lg"
+              className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-3 h-12 bg-accent rounded-full cursor-ew-resize opacity-0 group-hover:opacity-100 transition-opacity hover:bg-accent-hover shadow-lg"
               onMouseDown={(e) => handleResizeStart(e, 'right')}
             />
           </>
@@ -145,7 +145,7 @@ export default function ResizableImage({ node, updateAttributes, deleteNode, sel
                   onClick={() => handleSetWidth(size.width)}
                   className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
  (size.width === null && !width) || width === size.width
- ? 'bg-primary-100 dark:bg-accent-soft text-primary-700 dark:text-primary-300'
+ ? 'bg-accent-soft text-accent-text'
                       : 'hover:bg-surface-hover text-content-muted'
                   }`}
                   title={`Set width to ${size.label}`}
@@ -254,7 +254,7 @@ export default function ResizableImage({ node, updateAttributes, deleteNode, sel
               placeholder="Add caption..."
               value={alt || ''}
               onChange={(e) => updateAttributes({ alt: e.target.value })}
-              className="text-sm text-content-muted bg-transparent border-b border-dashed border-subtle focus:border-primary-500 focus:outline-none text-center px-2 py-1"
+              className="text-sm text-content-muted bg-transparent border-b border-dashed border-subtle focus:border-accent focus:outline-none text-center px-2 py-1"
             />
           </div>
         )}

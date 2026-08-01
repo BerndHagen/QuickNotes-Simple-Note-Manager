@@ -127,13 +127,33 @@ export function Toggle({ checked, onChange, label, description, disabled, id: pr
 
 /** Segmented single-choice control, for a small fixed set of options. */
 export function SegmentedControl({ value, onChange, options, label, size = 'md' }) {
+  const moveSelection = (event, currentIndex) => {
+    if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) {
+      return
+    }
+
+    event.preventDefault()
+    const lastIndex = options.length - 1
+    const nextIndex =
+      event.key === 'Home'
+        ? 0
+        : event.key === 'End'
+          ? lastIndex
+          : event.key === 'ArrowLeft' || event.key === 'ArrowUp'
+            ? (currentIndex - 1 + options.length) % options.length
+            : (currentIndex + 1) % options.length
+
+    onChange(options[nextIndex].value)
+    event.currentTarget.parentElement?.querySelectorAll('[role="radio"]')[nextIndex]?.focus()
+  }
+
   return (
     <div
       role="radiogroup"
       aria-label={label}
       className="inline-flex w-full gap-1 rounded-control border border-subtle bg-surface-sunken p-1"
     >
-      {options.map((option) => {
+      {options.map((option, index) => {
         const selected = option.value === value
         return (
           <button
@@ -141,7 +161,9 @@ export function SegmentedControl({ value, onChange, options, label, size = 'md' 
             type="button"
             role="radio"
             aria-checked={selected}
+            tabIndex={selected ? 0 : -1}
             onClick={() => onChange(option.value)}
+            onKeyDown={(event) => moveSelection(event, index)}
             className={[
               'flex-1 rounded-[calc(var(--qn-radius-control)-2px)] px-2.5 font-medium transition-colors duration-fast',
               size === 'sm' ? 'h-6 text-ui-xs' : 'h-7 text-ui-sm',

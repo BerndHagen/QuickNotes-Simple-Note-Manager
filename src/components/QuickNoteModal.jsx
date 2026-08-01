@@ -1,94 +1,152 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
-import { buttonClasses } from './ui'
+import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { X, Zap, Tag, FolderOpen, Plus } from 'lucide-react'
+import { Check, ChevronDown, FolderOpen, Plus, Tag, Zap } from 'lucide-react'
 import { useNotesStore, useUIStore } from '../store'
-import { createShortcutHandler } from '../lib/utils'
+import { formatShortcut } from '../lib/shortcuts'
 import { useTranslation } from '../lib/useTranslation'
-import LegacyDialog from './ui/LegacyDialog'
 import { escapeHtml } from '../lib/sanitizeHtml'
 import { MAX_NOTE_TITLE_LENGTH, MAX_TAG_NAME_LENGTH } from '../lib/dataValidation'
+import {
+  Button,
+  IconButton,
+  Input,
+  Menu,
+  MenuItem,
+  Modal,
+  TagChip,
+  Textarea,
+  getFocusable,
+  useAnchoredPosition,
+  useEscapeKey,
+} from './ui'
 
-function SmartDropdown({ isOpen, onClose, triggerRef, children, minWidth = 160 }) {
-  const dropdownRef = useRef(null)
-  const [position, setPosition] = useState({ top: 0, left: 0 })
+function TagPopover({ open, onClose, anchorRef, tags, selectedTags, onAddTag, onCreateTag, t }) {
+  const { floatingRef, style } = useAnchoredPosition({
+    anchorRef,
+    open,
+    placement: 'bottom-start',
+  })
+  const inputRef = useRef(null)
+  const [newTagName, setNewTagName] = useState('')
+  const availableTags = tags.filter((tag) => !selectedTags.includes(tag.name))
 
-  useEffect(() => {
-    if (isOpen && triggerRef.current) {
-      const updatePosition = () => {
-        const trigger = triggerRef.current.getBoundingClientRect()
-        const dropdown = dropdownRef.current
-        
-        if (!dropdown) return
-        
-        const dropdownHeight = dropdown.offsetHeight || 200
-        const dropdownWidth = dropdown.offsetWidth || minWidth
-        const viewportHeight = window.innerHeight
-        const viewportWidth = window.innerWidth
-        const padding = 8
+  const closeAndRestoreFocus = useCallback(() => {
+    onClose()
+    requestAnimationFrame(() => anchorRef.current?.focus({ preventScroll: true }))
+  }, [anchorRef, onClose])
 
-        let top = trigger.bottom + 4
-        let left = trigger.left
-
-        if (top + dropdownHeight > viewportHeight - padding) {
-          top = trigger.top - dropdownHeight - 4
-        }
-
-        if (left + dropdownWidth > viewportWidth - padding) {
-          left = viewportWidth - dropdownWidth - padding
-        }
-
-        if (left < padding) {
-          left = padding
-        }
-
-        if (top < padding) {
-          top = trigger.bottom + 4
-        }
-
-        setPosition({ top, left })
-      }
-
-      updatePosition()
-      window.addEventListener('resize', updatePosition)
-      window.addEventListener('scroll', updatePosition, true)
-      
-      return () => {
-        window.removeEventListener('resize', updatePosition)
-        window.removeEventListener('scroll', updatePosition, true)
-      }
-    }
-  }, [isOpen, triggerRef, minWidth])
+  useEscapeKey(open, closeAndRestoreFocus)
 
   useEffect(() => {
-    if (!isOpen) return
-    
-    const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target) &&
-          triggerRef.current && !triggerRef.current.contains(e.target)) {
-        onClose()
+    if (!open) {
+      setNewTagName('')
+      return
+    }
+
+    const frame = requestAnimationFrame(() => inputRef.current?.focus({ preventScroll: true }))
+    const handlePointerDown = (event) => {
+      if (floatingRef.current?.contains(event.target)) return
+      if (anchorRef.current?.contains(event.target)) return
+      onClose()
+    }
+
+    document.addEventListener('mousedown', handlePointerDown)
+    return () => {
+      cancelAnimationFrame(frame)
+      document.removeEventListener('mousedown', handlePointerDown)
+    }
+  }, [anchorRef, floatingRef, onClose, open])
+
+  useEffect(() => {
+    if (!open) return
+    const node = floatingRef.current
+    if (!node) return
+
+    const keepFocusInside = (event) => {
+      if (event.key !== 'Tab') return
+      const focusable = getFocusable(node)
+      if (!focusable.length) return
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
       }
     }
-    
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [isOpen, onClose, triggerRef])
 
-  if (!isOpen) return null
+    node.addEventListener('keydown', keepFocusInside)
+    return () => node.removeEventListener('keydown', keepFocusInside)
+  }, [floatingRef, open])
+
+  if (!open) return null
+
+  const createTag = () => {
+    const name = newTagName.trim()
+    if (!name) return
+    onCreateTag(name)
+    setNewTagName('')
+  }
 
   return createPortal(
     <div
-      ref={dropdownRef}
-      className="fixed bg-surface-raised border border-subtle rounded-lg shadow-xl z-[100]"
-      style={{
-        top: position.top,
-        left: position.left,
-        minWidth: minWidth,
-        maxHeight: 'calc(100vh - 32px)',
-        overflowY: 'auto'
-      }}
+      ref={floatingRef}
+      role="dialog"
+      aria-label={t('quickNote.addTags')}
+      style={{ ...style, width: 280 }}
+      className="z-popover overflow-y-auto overscroll-contain rounded-card border border-subtle bg-surface-raised p-3 shadow-lg animate-menu-in"
     >
-      {children}
+      <div className="mb-3 flex items-center gap-2">
+        <Input
+          ref={inputRef}
+          size="sm"
+          maxLength={MAX_TAG_NAME_LENGTH}
+          value={newTagName}
+          onChange={(event) => setNewTagName(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key !== 'Enter') return
+            event.preventDefault()
+            createTag()
+          }}
+          aria-label={t('quickNote.newTag', 'New tag name')}
+          placeholder={t('quickNote.newTag')}
+        />
+        <IconButton
+          icon={Plus}
+          size="sm"
+          variant="primary"
+          label={t('quickNote.createTag', 'Create tag')}
+          disabled={!newTagName.trim()}
+          onClick={createTag}
+        />
+      </div>
+
+      {availableTags.length > 0 ? (
+        <ul className="max-h-52 space-y-1 overflow-y-auto" aria-label={t('quickNote.availableTags', 'Available tags')}>
+          {availableTags.map((tag) => (
+            <li key={tag.id}>
+              <button
+                type="button"
+                onClick={() => onAddTag(tag.name)}
+                className="flex w-full items-center gap-2 rounded-control px-2.5 py-2 text-left text-ui-md text-content transition-colors hover:bg-surface-hover"
+              >
+                <span
+                  className="h-2.5 w-2.5 shrink-0 rounded-full"
+                  style={{ backgroundColor: tag.color }}
+                  aria-hidden="true"
+                />
+                <span className="truncate">#{tag.name}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="px-1 py-2 text-ui-sm text-content-muted">
+          {t('quickNote.noMoreTags', 'No more tags available')}
+        </p>
+      )}
     </div>,
     document.body
   )
@@ -98,67 +156,36 @@ export default function QuickNoteModal() {
   const { quickNoteOpen, setQuickNoteOpen } = useUIStore()
   const { createNote, folders, tags, createTag } = useNotesStore()
   const { t } = useTranslation()
-  
+
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [selectedFolder, setSelectedFolder] = useState(null)
   const [selectedTags, setSelectedTags] = useState([])
-  const [showFolderDropdown, setShowFolderDropdown] = useState(false)
-  const [showTagDropdown, setShowTagDropdown] = useState(false)
-  const [newTagName, setNewTagName] = useState('')
-  
-  const modalRef = useRef(null)
+  const [folderMenuOpen, setFolderMenuOpen] = useState(false)
+  const [tagPopoverOpen, setTagPopoverOpen] = useState(false)
+
   const titleRef = useRef(null)
   const folderButtonRef = useRef(null)
   const tagButtonRef = useRef(null)
+  const titleId = useId()
+  const contentId = useId()
+  const saveShortcut = formatShortcut({ key: 'Enter', ctrl: true })
 
-  useEffect(() => {
-    const handler = createShortcutHandler({
-      'ctrl+n': () => setQuickNoteOpen(true),
-      'cmd+n': () => setQuickNoteOpen(true),
-      'escape': () => {
-        if (quickNoteOpen) {
-          handleClose()
-        }
-      },
-    })
-
-    document.addEventListener('keydown', handler)
-    return () => document.removeEventListener('keydown', handler)
-  }, [quickNoteOpen])
-
-  useEffect(() => {
-    if (quickNoteOpen && titleRef.current) {
-      titleRef.current.focus()
-    }
-  }, [quickNoteOpen])
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (modalRef.current && !modalRef.current.contains(event.target)) {
-        handleClose()
-      }
-    }
-
-    if (quickNoteOpen) {
-      document.addEventListener('mousedown', handleClickOutside)
-    }
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [quickNoteOpen])
-
-  const handleClose = () => {
-    setQuickNoteOpen(false)
-    resetForm()
-  }
-
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     setTitle('')
     setContent('')
     setSelectedFolder(null)
     setSelectedTags([])
-  }
+    setFolderMenuOpen(false)
+    setTagPopoverOpen(false)
+  }, [])
 
-  const handleSave = () => {
+  const handleClose = useCallback(() => {
+    setQuickNoteOpen(false)
+    resetForm()
+  }, [resetForm, setQuickNoteOpen])
+
+  const handleSave = useCallback(() => {
     if (!title.trim() && !content.trim()) {
       handleClose()
       return
@@ -170,241 +197,233 @@ export default function QuickNoteModal() {
       folderId: selectedFolder,
       tags: selectedTags,
     })
-
     handleClose()
-  }
+  }, [content, createNote, handleClose, selectedFolder, selectedTags, title])
 
-  const handleAddTag = (tagName) => {
-    if (!selectedTags.includes(tagName)) {
-      setSelectedTags([...selectedTags, tagName])
-    }
-    setShowTagDropdown(false)
-  }
+  const handleCreateTag = useCallback(
+    (rawName) => {
+      const name = rawName.trim().toLowerCase()
+      if (!name) return
 
-  const handleRemoveTag = (tagName) => {
-    setSelectedTags(selectedTags.filter((t) => t !== tagName))
-  }
-
-  const handleCreateTag = () => {
-    if (newTagName.trim()) {
-      const name = newTagName.trim().toLowerCase()
-      if (!tags.find((t) => t.name === name)) {
+      if (!tags.some((tag) => tag.name.toLowerCase() === name)) {
         const colors = [
-          '#ef4444', '#f97316', '#f59e0b', '#22c55e', '#06b6d4',
-          '#3b82f6', '#8b5cf6', '#ec4899'
+          '#ef4444',
+          '#f97316',
+          '#f59e0b',
+          '#22c55e',
+          '#06b6d4',
+          '#3b82f6',
+          '#8b5cf6',
+          '#ec4899',
         ]
-        createTag({
-          name,
-          color: colors[Math.floor(Math.random() * colors.length)],
-        })
+        createTag({ name, color: colors[Math.floor(Math.random() * colors.length)] })
       }
-      handleAddTag(name)
-      setNewTagName('')
-    }
-  }
 
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-      handleSave()
-    }
+      setSelectedTags((current) => (current.includes(name) ? current : [...current, name]))
+      setTagPopoverOpen(false)
+    },
+    [createTag, tags]
+  )
+
+  const handleAddTag = useCallback((tagName) => {
+    setSelectedTags((current) =>
+      current.includes(tagName) ? current : [...current, tagName]
+    )
+    setTagPopoverOpen(false)
+  }, [])
+
+  const closeFolderMenu = useCallback(() => setFolderMenuOpen(false), [])
+  const closeTagPopover = useCallback(() => setTagPopoverOpen(false), [])
+
+  const closeFolderMenuOnTab = (event) => {
+    if (event.key !== 'Tab') return
+    event.preventDefault()
+    closeFolderMenu()
+    requestAnimationFrame(() => folderButtonRef.current?.focus({ preventScroll: true }))
   }
 
   if (!quickNoteOpen) return null
 
+  const selectedFolderName = folders.find((folder) => folder.id === selectedFolder)?.name
+
   return (
-    <LegacyDialog label="Quick note" onClose={handleClose} align="top">
+    <Modal
+      open={quickNoteOpen}
+      onClose={handleClose}
+      title={t('quickNote.title')}
+      description={`${t('quickNote.subtitle')} · ${t(
+        'quickNote.saveHint',
+        `${saveShortcut} to save`
+      )}`}
+      icon={Zap}
+      size="xl"
+      initialFocusRef={titleRef}
+      contentClassName="sm:self-start sm:mt-[8dvh]"
+      footer={
+        <>
+          <Button variant="secondary" onClick={handleClose}>
+            {t('common.cancel')}
+          </Button>
+          <Button variant="primary" onClick={handleSave}>
+            {t('common.save')}
+            <kbd className="text-ui-xs opacity-75">{saveShortcut}</kbd>
+          </Button>
+        </>
+      }
+    >
       <div
-        ref={modalRef}
-        className="bg-surface-raised rounded-2xl shadow-2xl border border-subtle w-full max-w-2xl mx-4 overflow-hidden modal-animate"
-        onKeyDown={handleKeyDown}
+        className="space-y-4"
+        onKeyDown={(event) => {
+          if (event.key !== 'Enter' || (!event.ctrlKey && !event.metaKey)) return
+          event.preventDefault()
+          handleSave()
+        }}
       >
-        <div className="flex items-center justify-between p-5 qn-banner-surface text-white">
-          <div className="flex items-center gap-3">
-            <Zap className="w-6 h-6" />
-            <div>
-              <h2 className="text-lg font-bold">{t('quickNote.title')}</h2>
-              <p className="text-sm text-white/70">{t('quickNote.subtitle')} {"\u2022"} {t('quickNote.ctrlEnterToSave')}</p>
-            </div>
-          </div>
-          <button
-            onClick={handleClose}
-            className="p-2 rounded-full hover:bg-white/20 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-        <div className="p-6 space-y-4">
-          <input
+        <div>
+          <label htmlFor={titleId} className="qn-sr-only">
+            {t('quickNote.titleLabel', 'Note title')}
+          </label>
+          <Input
+            id={titleId}
             ref={titleRef}
-            type="text"
             maxLength={MAX_NOTE_TITLE_LENGTH}
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(event) => setTitle(event.target.value)}
             placeholder={t('quickNote.titlePlaceholder')}
-            className="w-full text-xl font-semibold bg-surface-sunken rounded-lg px-4 py-3 border border-subtle outline-none placeholder:text-content-subtle dark:placeholder:text-content-subtle text-content focus:border-primary-500 focus:ring-2 focus:ring-[rgba(16,185,129,0.20)]"
+            className="h-auto px-4 py-3 text-xl font-semibold"
           />
-          <textarea
+        </div>
+
+        <div>
+          <label htmlFor={contentId} className="qn-sr-only">
+            {t('quickNote.contentLabel', 'Note content')}
+          </label>
+          <Textarea
+            id={contentId}
             value={content}
-            onChange={(e) => setContent(e.target.value)}
+            onChange={(event) => setContent(event.target.value)}
             placeholder={t('quickNote.contentPlaceholder')}
-            rows={6}
-            className="w-full bg-surface-sunken rounded-lg p-4 border border-subtle focus:border-primary-500 focus:ring-2 focus:ring-[rgba(16,185,129,0.20)] outline-none resize-none text-content placeholder:text-content-subtle dark:placeholder:text-content-subtle"
+            rows={7}
+            className="min-h-36"
           />
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="relative">
-              <button
-                ref={folderButtonRef}
-                onClick={() => {
-                  setShowFolderDropdown(!showFolderDropdown)
-                  setShowTagDropdown(false)
-                }}
-                className="flex items-center gap-2 px-3 py-2 bg-surface-sunken rounded-lg text-sm text-content-muted hover:bg-surface-sunken dark:hover:bg-surface-active transition-colors border border-subtle "
-              >
-                <FolderOpen className="w-4 h-4" />
-                {selectedFolder
-                  ? folders.find((f) => f.id === selectedFolder)?.name
-                  : t('quickNote.selectFolder')}
-              </button>
+        </div>
 
-              <SmartDropdown
-                isOpen={showFolderDropdown}
-                onClose={() => setShowFolderDropdown(false)}
-                triggerRef={folderButtonRef}
-                minWidth={180}
-              >
-                <div className="py-1">
-                  <button
-                    onClick={() => {
-                      setSelectedFolder(null)
-                      setShowFolderDropdown(false)
-                    }}
-                    className={`w-full px-3 py-2 text-left text-sm hover:bg-surface-hover text-content-muted ${
- !selectedFolder ? 'bg-surface-sunken' : ''
- }`}
-                  >
-                    {t('quickNote.noFolder')}
-                  </button>
-                  {folders.map((folder) => (
-                    <button
-                      key={folder.id}
-                      onClick={() => {
-                        setSelectedFolder(folder.id)
-                        setShowFolderDropdown(false)
-                      }}
-                      className={`w-full px-3 py-2 text-left text-sm hover:bg-surface-hover flex items-center gap-2 text-content-muted ${
- selectedFolder === folder.id ? 'bg-surface-sunken' : ''
- }`}
-                    >
-                      <span>{folder.icon}</span>
-                      {folder.name}
-                    </button>
-                  ))}
-                </div>
-              </SmartDropdown>
-            </div>
-            <div className="relative">
-              <button
-                ref={tagButtonRef}
-                onClick={() => {
-                  setShowTagDropdown(!showTagDropdown)
-                  setShowFolderDropdown(false)
-                }}
-                className="flex items-center gap-2 px-3 py-2 bg-surface-sunken rounded-lg text-sm text-content-muted hover:bg-surface-sunken dark:hover:bg-surface-active transition-colors border border-subtle "
-              >
-                <Tag className="w-4 h-4" />
-                {t('quickNote.addTags')}
-              </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            ref={folderButtonRef}
+            variant="subtle"
+            icon={FolderOpen}
+            iconRight={ChevronDown}
+            aria-haspopup="menu"
+            aria-expanded={folderMenuOpen}
+            onClick={() => {
+              setFolderMenuOpen((open) => !open)
+              setTagPopoverOpen(false)
+            }}
+          >
+            {selectedFolderName || t('quickNote.selectFolder')}
+          </Button>
 
-              <SmartDropdown
-                isOpen={showTagDropdown}
-                onClose={() => setShowTagDropdown(false)}
-                triggerRef={tagButtonRef}
-                minWidth={220}
+          <Menu
+            open={folderMenuOpen}
+            onClose={closeFolderMenu}
+            anchorRef={folderButtonRef}
+            placement="bottom-start"
+            label={t('quickNote.selectFolder')}
+            width={240}
+            className="!z-popover"
+          >
+            <div onKeyDown={closeFolderMenuOnTab}>
+              <MenuItem
+                selected={!selectedFolder}
+                trailing={!selectedFolder ? <Check className="h-4 w-4" aria-hidden="true" /> : null}
+                onClick={() => {
+                  setSelectedFolder(null)
+                  closeFolderMenu()
+                }}
               >
-                <div className="p-2">
-                  <div className="flex items-center gap-2 mb-2">
-                    <input
-                      type="text"
-                      maxLength={MAX_TAG_NAME_LENGTH}
-                      value={newTagName}
-                      onChange={(e) => setNewTagName(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleCreateTag()
-                      }}
-                      placeholder={t('quickNote.newTag')}
-                      className="flex-1 px-2 py-1 text-sm border border-subtle rounded bg-transparent text-content"
-                    />
-                    <button
-                      onClick={handleCreateTag}
-                      className={buttonClasses({ variant: 'primary' })}
-                    >
-                      <Plus className="w-4 h-4" />
-                    </button>
-                  </div>
-                  <div className="max-h-[200px] overflow-y-auto space-y-1">
-                    {tags
-                      .filter((t) => !selectedTags.includes(t.name))
-                      .map((tag) => (
-                        <button
-                          key={tag.id}
-                          onClick={() => handleAddTag(tag.name)}
-                          className="w-full px-2 py-1.5 text-left text-sm hover:bg-surface-hover rounded flex items-center gap-2 text-content-muted"
-                        >
-                          <span
-                            className="w-3 h-3 rounded-full flex-shrink-0"
-                            style={{ backgroundColor: tag.color }}
-                          />
-                          #{tag.name}
-                        </button>
-                      ))}
-                    {tags.filter((t) => !selectedTags.includes(t.name)).length === 0 && (
-                      <p className="text-xs text-content-muted px-2 py-1">
-                        No more tags available
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </SmartDropdown>
-            </div>
-            {selectedTags.map((tagName) => {
-              const tag = tags.find((t) => t.name === tagName)
-              return (
-                <span
-                  key={tagName}
-                  className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium"
-                  style={{
-                    backgroundColor: `${tag?.color || '#6b7280'}20`,
-                    color: tag?.color || '#6b7280',
+                {t('quickNote.noFolder')}
+              </MenuItem>
+              {folders.map((folder) => (
+                <MenuItem
+                  key={folder.id}
+                  selected={selectedFolder === folder.id}
+                  trailing={
+                    selectedFolder === folder.id ? (
+                      <Check className="h-4 w-4" aria-hidden="true" />
+                    ) : null
+                  }
+                  onClick={() => {
+                    setSelectedFolder(folder.id)
+                    closeFolderMenu()
                   }}
                 >
-                  #{tagName}
-                  <button
-                    onClick={() => handleRemoveTag(tagName)}
-                    className="hover:bg-black/10 rounded-full p-0.5"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              )
-            })}
+                  <span className="flex items-center gap-2">
+                    <span aria-hidden="true">{folder.icon}</span>
+                    <span className="truncate">{folder.name}</span>
+                  </span>
+                </MenuItem>
+              ))}
+            </div>
+          </Menu>
+
+          <Button
+            ref={tagButtonRef}
+            variant="subtle"
+            icon={Tag}
+            iconRight={ChevronDown}
+            aria-haspopup="dialog"
+            aria-expanded={tagPopoverOpen}
+            onClick={() => {
+              setTagPopoverOpen((open) => !open)
+              setFolderMenuOpen(false)
+            }}
+          >
+            {selectedTags.length > 0
+              ? `${t('quickNote.addTags')} (${selectedTags.length})`
+              : t('quickNote.addTags')}
+          </Button>
+
+          <TagPopover
+            open={tagPopoverOpen}
+            onClose={closeTagPopover}
+            anchorRef={tagButtonRef}
+            tags={tags}
+            selectedTags={selectedTags}
+            onAddTag={handleAddTag}
+            onCreateTag={handleCreateTag}
+            t={t}
+          />
+        </div>
+
+        {selectedTags.length > 0 && (
+          <div>
+            <p className="mb-2 text-ui-sm text-content-muted">
+              {t('quickNote.selectedTags', 'Selected tags. Activate a tag to remove it.')}
+            </p>
+            <ul className="flex flex-wrap gap-1.5">
+              {selectedTags.map((tagName) => {
+                const tag = tags.find((item) => item.name === tagName)
+                return (
+                  <li key={tagName}>
+                    <TagChip
+                      as="button"
+                      type="button"
+                      name={tagName}
+                      color={tag?.color}
+                      aria-label={t('quickNote.removeTag', `Remove tag ${tagName}`)}
+                      title={t('quickNote.removeTag', `Remove tag ${tagName}`)}
+                      onClick={() =>
+                        setSelectedTags((current) => current.filter((name) => name !== tagName))
+                      }
+                    />
+                  </li>
+                )
+              })}
+            </ul>
           </div>
-        </div>
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-subtle bg-surface-sunken">
-          <button
-            onClick={handleClose}
-            className="px-4 py-2 text-sm text-content-muted hover:bg-surface-sunken dark:hover:bg-surface-sunken rounded-lg transition-colors border border-subtle "
-          >
-            {t('common.cancel')}
-          </button>
-          <button
-            onClick={handleSave}
-            className={buttonClasses({ variant: 'primary' })}
-          >
-            {t('common.save')}
-            <span className="text-xs opacity-75">{"\u2318+\u21B5"}</span>
-          </button>
-        </div>
+        )}
       </div>
-    </LegacyDialog>
+    </Modal>
   )
 }

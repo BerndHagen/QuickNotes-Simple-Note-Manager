@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { Check, FolderPlus, Pencil } from 'lucide-react'
 import { Modal, Button, Field, Input } from './ui'
 import { folderIcons, folderIconNames, folderColors, getFolderIcon } from '../lib/folderIcons'
@@ -7,6 +7,19 @@ import { useTranslation } from '../lib/useTranslation'
 const DEFAULT_COLOR = '#10b981'
 const MAX_NAME_LENGTH = 60
 
+function handleRadioNavigation(event, values, index, onChange) {
+  let nextIndex
+  if (event.key === 'Home') nextIndex = 0
+  else if (event.key === 'End') nextIndex = values.length - 1
+  else if (['ArrowRight', 'ArrowDown'].includes(event.key)) nextIndex = (index + 1) % values.length
+  else if (['ArrowLeft', 'ArrowUp'].includes(event.key)) nextIndex = (index - 1 + values.length) % values.length
+  else return
+
+  event.preventDefault()
+  onChange(values[nextIndex])
+  event.currentTarget.parentElement?.querySelectorAll('[role="radio"]')[nextIndex]?.focus()
+}
+
 function IconGrid({ value, onChange, labelledBy }) {
   return (
     <div
@@ -14,7 +27,7 @@ function IconGrid({ value, onChange, labelledBy }) {
       aria-labelledby={labelledBy}
       className="grid max-h-44 grid-cols-[repeat(auto-fill,minmax(36px,1fr))] gap-1 overflow-y-auto rounded-control border border-subtle bg-surface-sunken p-2"
     >
-      {folderIconNames.map((name) => {
+      {folderIconNames.map((name, index) => {
         const Icon = folderIcons[name]
         const selected = value === name
         return (
@@ -25,7 +38,9 @@ function IconGrid({ value, onChange, labelledBy }) {
             aria-checked={selected}
             aria-label={name}
             title={name}
+            tabIndex={selected ? 0 : -1}
             onClick={() => onChange(name)}
+            onKeyDown={(event) => handleRadioNavigation(event, folderIconNames, index, onChange)}
             className={`flex aspect-square items-center justify-center rounded-control transition-colors duration-fast ${
  selected
  ? 'bg-accent-soft text-accent-text ring-2 ring-[var(--qn-accent)]'
@@ -47,7 +62,7 @@ function ColorGrid({ value, onChange, labelledBy }) {
       aria-labelledby={labelledBy}
       className="grid grid-cols-[repeat(auto-fill,minmax(28px,1fr))] gap-1.5 rounded-control border border-subtle bg-surface-sunken p-2"
     >
-      {folderColors.map((color) => {
+      {folderColors.map((color, index) => {
         const selected = value === color
         return (
           <button
@@ -57,7 +72,9 @@ function ColorGrid({ value, onChange, labelledBy }) {
             aria-checked={selected}
             aria-label={`Colour ${color}`}
             title={color}
+            tabIndex={selected ? 0 : -1}
             onClick={() => onChange(color)}
+            onKeyDown={(event) => handleRadioNavigation(event, folderColors, index, onChange)}
             className={`mx-auto flex h-6 w-6 items-center justify-center rounded-full transition-transform duration-fast hover:scale-110 ${
  selected ? 'ring-2 ring-[var(--qn-text)] ring-offset-2 ring-offset-[var(--qn-surface-sunken)]' : ''
  }`}
@@ -80,6 +97,8 @@ export function FolderDialog({ open, onClose, folder, onSubmit, existingNames = 
   const { t } = useTranslation()
   const isEdit = !!folder
   const nameRef = useRef(null)
+  const iconLabelId = useId()
+  const colorLabelId = useId()
 
   const [name, setName] = useState('')
   const [icon, setIcon] = useState('Folder')
@@ -89,9 +108,9 @@ export function FolderDialog({ open, onClose, folder, onSubmit, existingNames = 
 
   useEffect(() => {
     if (!open) return
-    setName(folder?.name ?? '')
-    setIcon(folder?.icon ?? 'Folder')
-    setColor(folder?.color ?? DEFAULT_COLOR)
+    setName(typeof folder?.name === 'string' ? folder.name : '')
+    setIcon(folderIconNames.includes(folder?.icon) ? folder.icon : 'Folder')
+    setColor(folderColors.includes(folder?.color) ? folder.color : DEFAULT_COLOR)
     setError(null)
     setSubmitting(false)
   }, [open, folder])
@@ -102,10 +121,11 @@ export function FolderDialog({ open, onClose, folder, onSubmit, existingNames = 
     if (trimmed.length > MAX_NAME_LENGTH) {
       return `Folder name must be ${MAX_NAME_LENGTH} characters or fewer`
     }
-    const clash = existingNames.some(
+    const clash = (Array.isArray(existingNames) ? existingNames : []).some(
       (existing) =>
-        existing.toLowerCase() === trimmed.toLowerCase() &&
-        existing.toLowerCase() !== (folder?.name || '').toLowerCase()
+        typeof existing === 'string' &&
+        existing.trim().toLowerCase() === trimmed.toLowerCase() &&
+        existing.trim().toLowerCase() !== String(folder?.name || '').trim().toLowerCase()
     )
     if (clash) return t('folders.nameExists', 'A folder with this name already exists')
     return null
@@ -197,17 +217,17 @@ export function FolderDialog({ open, onClose, folder, onSubmit, existingNames = 
         </Field>
 
         <div className="flex flex-col gap-1.5">
-          <span id="folder-icon-label" className="text-ui-sm font-medium text-content-muted">
+          <span id={iconLabelId} className="text-ui-sm font-medium text-content-muted">
             {t('folders.chooseIcon', 'Icon')}
           </span>
-          <IconGrid value={icon} onChange={setIcon} labelledBy="folder-icon-label" />
+          <IconGrid value={icon} onChange={setIcon} labelledBy={iconLabelId} />
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <span id="folder-color-label" className="text-ui-sm font-medium text-content-muted">
+          <span id={colorLabelId} className="text-ui-sm font-medium text-content-muted">
             {t('folders.chooseColor', 'Colour')}
           </span>
-          <ColorGrid value={color} onChange={setColor} labelledBy="folder-color-label" />
+          <ColorGrid value={color} onChange={setColor} labelledBy={colorLabelId} />
         </div>
 
         {/* Enables Enter-to-submit without a visible duplicate button. */}
@@ -230,19 +250,25 @@ export function ConfirmDialog({
   icon,
 }) {
   const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
   const confirmRef = useRef(null)
 
   useEffect(() => {
-    if (open) setBusy(false)
+    if (open) {
+      setBusy(false)
+      setError('')
+    }
   }, [open])
 
   const handleConfirm = async () => {
     if (busy) return
     setBusy(true)
+    setError('')
     try {
       await onConfirm()
       onClose()
-    } catch {
+    } catch (confirmationError) {
+      setError(confirmationError?.message || 'The action could not be completed. Please try again.')
       setBusy(false)
     }
   }
@@ -250,7 +276,7 @@ export function ConfirmDialog({
   return (
     <Modal
       open={open}
-      onClose={onClose}
+      onClose={busy ? () => {} : onClose}
       title={title}
       description={description}
       icon={icon}
@@ -272,9 +298,12 @@ export function ConfirmDialog({
         </>
       }
     >
-      <p className="text-ui-md text-content-muted">
-        {description ? null : 'This action cannot be undone.'}
-      </p>
+      {!description && <p className="text-ui-md text-content-muted">This action cannot be undone.</p>}
+      {error && (
+        <p role="alert" className="rounded-control border border-danger-border bg-danger-soft px-3 py-2.5 text-ui-md text-danger-text">
+          {error}
+        </p>
+      )}
     </Modal>
   )
 }

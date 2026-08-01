@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   X,
   Settings,
@@ -8,19 +8,18 @@ import {
   Eye,
   EyeOff,
   RotateCcw,
+  AlertCircle,
   SpellCheck as Spellcheck
 } from 'lucide-react'
 import { useUIStore } from '../store'
-import { useTranslation } from '../lib/useTranslation'
 import LegacyDialog from './ui/LegacyDialog'
+const STORAGE_KEY = 'editorSettings'
 const defaultSettings = {
   showRuler: false,
   defaultFontFamily: 'Inter, system-ui, sans-serif',
   defaultFontSize: '16px',
   defaultLineHeight: '1.5',
-  spellCheck: true,
   autoCorrect: false,
-  showLineNumbers: false,
   tabSize: 4,
   showInvisibles: false,
   wordWrap: true,
@@ -60,19 +59,51 @@ const tabSizeOptions = [
   { name: '8 spaces', value: 8 },
 ]
 
+const booleanSettingKeys = [
+  'showRuler',
+  'autoCorrect',
+  'showInvisibles',
+  'wordWrap',
+  'highlightCurrentLine',
+]
+
+export function normalizeEditorSettings(value) {
+  const candidate = value && typeof value === 'object' && !Array.isArray(value) ? value : {}
+  const normalized = { ...defaultSettings }
+  const allowedFonts = new Set(fontOptions.map((option) => option.value))
+  const allowedFontSizes = new Set(fontSizeOptions.map((option) => option.value))
+  const allowedLineHeights = new Set(lineHeightOptions.map((option) => option.value))
+  const allowedTabSizes = new Set(tabSizeOptions.map((option) => option.value))
+
+  if (allowedFonts.has(candidate.defaultFontFamily)) normalized.defaultFontFamily = candidate.defaultFontFamily
+  if (allowedFontSizes.has(candidate.defaultFontSize)) normalized.defaultFontSize = candidate.defaultFontSize
+  if (allowedLineHeights.has(candidate.defaultLineHeight)) normalized.defaultLineHeight = candidate.defaultLineHeight
+  if (allowedTabSizes.has(candidate.tabSize)) normalized.tabSize = candidate.tabSize
+  for (const key of booleanSettingKeys) {
+    if (typeof candidate[key] === 'boolean') normalized[key] = candidate[key]
+  }
+  return normalized
+}
+
+function loadEditorSettings() {
+  try {
+    return normalizeEditorSettings(JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'))
+  } catch {
+    return { ...defaultSettings }
+  }
+}
+
 export default function EditorSettingsModal() {
   const { editorSettingsOpen, setEditorSettingsOpen } = useUIStore()
-  const { t } = useTranslation()
-  const [settings, setSettings] = useState(() => {
-    try {
-      const saved = localStorage.getItem('editorSettings')
-      return saved ? { ...defaultSettings, ...JSON.parse(saved) } : defaultSettings
-    } catch {
-      return defaultSettings
-    }
-  })
+  const [settings, setSettings] = useState(loadEditorSettings)
+  const [persistenceError, setPersistenceError] = useState('')
   useEffect(() => {
-    localStorage.setItem('editorSettings', JSON.stringify(settings))
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
+      setPersistenceError('')
+    } catch {
+      setPersistenceError('Editor preferences could not be saved in this browser. They will apply until this tab is closed.')
+    }
     window.dispatchEvent(new CustomEvent('editorSettingsChanged', { detail: settings }))
   }, [settings])
 
@@ -98,23 +129,32 @@ export default function EditorSettingsModal() {
             </div>
           </div>
           <button
+            type="button"
             onClick={() => setEditorSettingsOpen(false)}
+            aria-label="Close editor settings"
             className="p-2 rounded-full hover:bg-white/20 transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
         <div className="flex-1 p-6 space-y-6 overflow-y-auto">
+          {persistenceError && (
+            <div role="alert" className="flex gap-2 rounded-lg border border-danger-border bg-danger-soft p-3 text-sm text-danger-text">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+              <p>{persistenceError}</p>
+            </div>
+          )}
           <div className="space-y-4">
             <h3 className="flex items-center gap-2 text-sm font-semibold text-content-muted uppercase tracking-wider">
               <Type className="w-4 h-4" />
               Typography
             </h3>
             <div>
-              <label className="block mb-2 text-sm font-medium text-content-muted">
+              <label htmlFor="editor-default-font" className="block mb-2 text-sm font-medium text-content-muted">
                 Default Font Family
               </label>
               <select
+                id="editor-default-font"
                 value={settings.defaultFontFamily}
                 onChange={(e) => handleSettingChange('defaultFontFamily', e.target.value)}
                 className="w-full px-3 py-2 text-content bg-surface-sunken border border-subtle rounded-lg dark:bg-surface-sunken dark:text-white focus:ring-2 focus:ring-emerald-500"
@@ -127,10 +167,11 @@ export default function EditorSettingsModal() {
               </select>
             </div>
             <div>
-              <label className="block mb-2 text-sm font-medium text-content-muted">
+              <label htmlFor="editor-default-font-size" className="block mb-2 text-sm font-medium text-content-muted">
                 Default Font Size
               </label>
               <select
+                id="editor-default-font-size"
                 value={settings.defaultFontSize}
                 onChange={(e) => handleSettingChange('defaultFontSize', e.target.value)}
                 className="w-full px-3 py-2 text-content bg-surface-sunken border border-subtle rounded-lg dark:bg-surface-sunken dark:text-white focus:ring-2 focus:ring-emerald-500"
@@ -141,10 +182,11 @@ export default function EditorSettingsModal() {
               </select>
             </div>
             <div>
-              <label className="block mb-2 text-sm font-medium text-content-muted">
+              <label htmlFor="editor-default-line-height" className="block mb-2 text-sm font-medium text-content-muted">
                 Line Height
               </label>
               <select
+                id="editor-default-line-height"
                 value={settings.defaultLineHeight}
                 onChange={(e) => handleSettingChange('defaultLineHeight', e.target.value)}
                 className="w-full px-3 py-2 text-content bg-surface-sunken border border-subtle rounded-lg dark:bg-surface-sunken dark:text-white focus:ring-2 focus:ring-emerald-500"
@@ -212,10 +254,11 @@ export default function EditorSettingsModal() {
               Editing
             </h3>
             <div>
-              <label className="block mb-2 text-sm font-medium text-content-muted">
+              <label htmlFor="editor-tab-size" className="block mb-2 text-sm font-medium text-content-muted">
                 Tab Size
               </label>
               <select
+                id="editor-tab-size"
                 value={settings.tabSize}
                 onChange={(e) => handleSettingChange('tabSize', parseInt(e.target.value))}
                 className="w-full px-3 py-2 text-content bg-surface-sunken border border-subtle rounded-lg dark:bg-surface-sunken dark:text-white focus:ring-2 focus:ring-emerald-500"
@@ -247,23 +290,24 @@ export default function EditorSettingsModal() {
   )
 }
 export function useEditorSettings() {
-  const [settings, setSettings] = useState(() => {
-    try {
-      const saved = localStorage.getItem('editorSettings')
-      return saved ? { ...defaultSettings, ...JSON.parse(saved) } : defaultSettings
-    } catch {
-      return defaultSettings
-    }
-  })
+  const [settings, setSettings] = useState(loadEditorSettings)
+  const spellCheck = useUIStore((state) => state.spellCheck)
 
   useEffect(() => {
     const handleSettingsChange = (event) => {
-      setSettings(event.detail)
+      setSettings(normalizeEditorSettings(event.detail))
     }
-    
+    const handleStorage = (event) => {
+      if (event.key === STORAGE_KEY) setSettings(loadEditorSettings())
+    }
+
     window.addEventListener('editorSettingsChanged', handleSettingsChange)
-    return () => window.removeEventListener('editorSettingsChanged', handleSettingsChange)
+    window.addEventListener('storage', handleStorage)
+    return () => {
+      window.removeEventListener('editorSettingsChanged', handleSettingsChange)
+      window.removeEventListener('storage', handleStorage)
+    }
   }, [])
 
-  return settings
+  return useMemo(() => ({ ...settings, spellCheck }), [settings, spellCheck])
 }

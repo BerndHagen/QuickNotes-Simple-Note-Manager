@@ -1,35 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import {
-  Sidebar,
-  NotesList,
-  NotesGrid,
-  NoteEditor,
-  ErrorBoundary,
-  QuickNoteModal,
-  SettingsModal,
-  ThemeProvider,
-  ExportModal,
-  ImportModal,
-  ReminderModal,
-  TrashView,
-  VersionHistoryModal,
-  DuplicateDetectionModal,
-  GlobalSearchModal,
-  FocusMode,
-  ArchiveView,
-  ShareNoteModal,
-  SharedNotesView,
-} from './components'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import Sidebar from './components/Sidebar'
+import NotesList from './components/NotesList'
+import NotesGrid from './components/NotesGrid'
+import ErrorBoundary from './components/ErrorBoundary'
+import ReminderModal from './components/ReminderModal'
+import { ThemeProvider } from './components/ThemeProvider'
 import AuthScreen from './components/AuthScreen'
-import PasswordRecoveryScreen from './components/PasswordRecoveryScreen'
-import KeyboardShortcutsModal from './components/KeyboardShortcutsModal'
-import NoteTypesModal from './components/NoteTypesModal'
-import HelpModal from './components/HelpModal'
-import PrivacyModal from './components/PrivacyModal'
-import TermsModal from './components/TermsModal'
-import TagManagerModal from './components/TagManagerModal'
-import TranslateModal from './components/TranslateModal'
-import EditorSettingsModal from './components/EditorSettingsModal'
 import { useNotesStore, useUIStore } from './store'
 import { onConnectionChange } from './lib/utils'
 import { backend, isBackendConfigured } from './lib/backend'
@@ -38,7 +14,30 @@ import { useShareInvitations } from './lib/useCollaboration'
 import { useAppShortcuts } from './lib/shortcuts'
 import { useLayoutMode } from './hooks/useBreakpoint'
 import { PanelLeft, CloudOff } from 'lucide-react'
-import { CanvasWaves, IconButton, Spinner } from './components/ui'
+import { IconButton, Spinner, useEscapeKey, useFocusTrap } from './components/ui'
+
+const NoteEditor = lazy(() => import('./components/NoteEditor'))
+const PasswordRecoveryScreen = lazy(() => import('./components/PasswordRecoveryScreen'))
+const QuickNoteModal = lazy(() => import('./components/QuickNoteModal'))
+const SettingsModal = lazy(() => import('./components/SettingsModal'))
+const ExportModal = lazy(() => import('./components/ExportModal'))
+const ImportModal = lazy(() => import('./components/ImportModal'))
+const TrashView = lazy(() => import('./components/TrashView'))
+const VersionHistoryModal = lazy(() => import('./components/VersionHistoryModal'))
+const DuplicateDetectionModal = lazy(() => import('./components/DuplicateDetectionModal'))
+const GlobalSearchModal = lazy(() => import('./components/GlobalSearchModal'))
+const FocusMode = lazy(() => import('./components/FocusMode'))
+const ArchiveView = lazy(() => import('./components/ArchiveView'))
+const ShareNoteModal = lazy(() => import('./components/ShareNoteModal'))
+const SharedNotesView = lazy(() => import('./components/SharedNotesView'))
+const KeyboardShortcutsModal = lazy(() => import('./components/KeyboardShortcutsModal'))
+const NoteTypesModal = lazy(() => import('./components/NoteTypesModal'))
+const HelpModal = lazy(() => import('./components/HelpModal'))
+const PrivacyModal = lazy(() => import('./components/PrivacyModal'))
+const TermsModal = lazy(() => import('./components/TermsModal'))
+const TagManagerModal = lazy(() => import('./components/TagManagerModal'))
+const TranslateModal = lazy(() => import('./components/TranslateModal'))
+const EditorSettingsModal = lazy(() => import('./components/EditorSettingsModal'))
 
 function AppLoading() {
   return (
@@ -54,6 +53,27 @@ function AppLoading() {
   )
 }
 
+function DeferredSurfaceFallback() {
+  return (
+    <div
+      role="status"
+      className="fixed inset-0 z-dialog flex items-center justify-center bg-[var(--qn-overlay)]"
+    >
+      <div className="rounded-card border border-subtle bg-surface-raised px-5 py-4 shadow-lg">
+        <Spinner label="Loading this view" />
+      </div>
+    </div>
+  )
+}
+
+function EditorLoading() {
+  return (
+    <div className="flex min-h-0 flex-1 items-center justify-center bg-surface-raised">
+      <Spinner label="Loading the editor" />
+    </div>
+  )
+}
+
 export default function App() {
   const {
     notes,
@@ -63,8 +83,9 @@ export default function App() {
     syncWithBackend,
     isOnline,
     user,
-    setUser,
     activateCloudUser,
+    activateLocalUser,
+    deactivateWorkspace,
     setIsAuthChecked,
   } = useNotesStore()
   const {
@@ -85,25 +106,53 @@ export default function App() {
     mobileView,
     setMobileView,
     viewMode,
+    quickNoteOpen,
+    settingsOpen,
+    exportModalOpen,
+    importModalOpen,
+    showTrash,
+    versionHistoryOpen,
+    duplicateModalOpen,
+    globalSearchOpen,
+    archiveViewOpen,
+    shortcutsModalOpen,
+    noteTypesModalOpen,
+    helpModalOpen,
+    privacyModalOpen,
+    termsModalOpen,
+    tagManagerOpen,
+    translateModalOpen,
+    shareModalOpen,
+    sharedNotesViewOpen,
+    editorSettingsOpen,
   } = useUIStore()
 
   const [isLoading, setIsLoading] = useState(true)
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false)
   const { isCompact, isWide, sidebarIsOverlay } = useLayoutMode()
   const sidebarToggleRef = useRef(null)
+  const sidebarRef = useRef(null)
 
   useShareInvitations()
 
   useEffect(() => {
-    useNotesStore.getState().cleanupExpiredTrash()
-  }, [])
+    let disposed = false
 
-  useEffect(() => {
-    if (!isBackendConfigured()) {
-      if (hasLocalSession()) setUser(createLocalUser())
+    const finishSessionCheck = () => {
+      if (disposed) return
       setIsAuthChecked(true)
       setIsLoading(false)
-      return undefined
+    }
+
+    const activateStoredLocalWorkspace = async () => {
+      if (hasLocalSession()) await activateLocalUser(createLocalUser())
+    }
+
+    if (!isBackendConfigured()) {
+      void activateStoredLocalWorkspace().finally(finishSessionCheck)
+      return () => {
+        disposed = true
+      }
     }
 
     const checkSession = async () => {
@@ -113,12 +162,11 @@ export default function App() {
         } = await backend.auth.getSession()
         if (session?.user) await activateCloudUser(session.user, { adoptUnowned: true })
         // A local workspace outlives a reload even on a cloud-capable build.
-        else if (hasLocalSession()) setUser(createLocalUser())
+        else await activateStoredLocalWorkspace()
       } catch {
-        if (hasLocalSession()) setUser(createLocalUser())
+        await activateStoredLocalWorkspace()
       } finally {
-        setIsAuthChecked(true)
-        setIsLoading(false)
+        finishSessionCheck()
       }
     }
 
@@ -136,36 +184,25 @@ export default function App() {
       } else if (event === 'SIGNED_OUT') {
         setIsPasswordRecovery(false)
         setTimeout(() => {
-          void (async () => {
-            const { clearLocalData } = await import('./lib/db')
-            await clearLocalData()
-            localStorage.removeItem('quicknotes-storage')
-            setUser(null)
-            useNotesStore.setState({
-              notes: [],
-              folders: [],
-              tags: [],
-              selectedNoteId: null,
-              selectedFolderId: null,
-              selectedTagFilter: null,
-              searchQuery: '',
-              sharedNotes: [],
-              pendingShares: [],
-              lastSyncTime: null,
-              cacheOwnerId: null,
-            })
-          })()
+          void deactivateWorkspace()
         }, 0)
       }
     })
 
-    return () => subscription?.unsubscribe()
-  }, [activateCloudUser, setIsAuthChecked, setUser])
+    return () => {
+      disposed = true
+      subscription?.unsubscribe()
+    }
+  }, [activateCloudUser, activateLocalUser, deactivateWorkspace, setIsAuthChecked])
+
+  useEffect(() => {
+    if (user) useNotesStore.getState().cleanupExpiredTrash()
+  }, [user])
 
   useEffect(() => {
     return onConnectionChange((online) => {
       setIsOnline(online)
-      if (online && user && !document.hidden) {
+      if (online && user && !user.isLocal && !document.hidden) {
         const lastSync = useNotesStore.getState().lastSyncTime
         const elapsed = lastSync ? Date.now() - new Date(lastSync).getTime() : Infinity
         if (elapsed > 30000) syncWithBackend()
@@ -174,7 +211,7 @@ export default function App() {
   }, [user, setIsOnline, syncWithBackend])
 
   useEffect(() => {
-    if (!isOnline || !user) return undefined
+    if (!isOnline || !user || user.isLocal) return undefined
     let cancelled = false
 
     const loadWorkspace = async () => {
@@ -186,7 +223,6 @@ export default function App() {
       if (
         !cancelled &&
         syncSucceeded &&
-        !user.isLocal &&
         useNotesStore.getState().notes.length === 0 &&
         !localStorage.getItem(`quicknotes-setup-${user.id}`)
       ) {
@@ -203,7 +239,7 @@ export default function App() {
   }, [user, isOnline, syncWithBackend])
 
   useEffect(() => {
-    if (!user || !isOnline) return
+    if (!user || user.isLocal || !isOnline) return
     const { autoSync, syncInterval } = useUIStore.getState()
     if (!autoSync || !syncInterval) return
 
@@ -220,21 +256,40 @@ export default function App() {
 
   useEffect(() => {
     if (!user) return
-    const shareToken = new URLSearchParams(window.location.search).get('share')
-    if (!shareToken) return
-    useUIStore.getState().setSharedNotesViewOpen(true)
-    window.history.replaceState({}, document.title, window.location.pathname)
-  }, [user])
+    const url = new URL(window.location.href)
+    let handledLaunchAction = false
+
+    if (url.searchParams.has('share') && !user.isLocal) {
+      useUIStore.getState().setSharedNotesViewOpen(true)
+      url.searchParams.delete('share')
+      handledLaunchAction = true
+    }
+
+    if (url.searchParams.get('action') === 'new') {
+      setQuickNoteOpen(true)
+      url.searchParams.delete('action')
+      handledLaunchAction = true
+    }
+
+    if (handledLaunchAction) {
+      const search = url.searchParams.toString()
+      window.history.replaceState(
+        {},
+        document.title,
+        `${url.pathname}${search ? `?${search}` : ''}${url.hash}`
+      )
+    }
+  }, [setQuickNoteOpen, user])
 
   useEffect(() => {
-    if (!user || selectedNoteId || notes.length === 0) return
+    if (!user || viewMode === 'grid' || selectedNoteId || notes.length === 0) return
     const firstAvailableNote = notes.find((note) => !note.deleted && !note.archived)
     if (firstAvailableNote) setSelectedNote(firstAvailableNote.id)
-  }, [notes, selectedNoteId, setSelectedNote, user])
+  }, [notes, selectedNoteId, setSelectedNote, user, viewMode])
 
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.visibilityState !== 'visible' || !user || !isOnline) return
+      if (document.visibilityState !== 'visible' || !user || user.isLocal || !isOnline) return
       if (!useUIStore.getState().autoSync) return
       const lastSync = useNotesStore.getState().lastSyncTime
       const elapsed = lastSync ? Date.now() - new Date(lastSync).getTime() : Infinity
@@ -302,6 +357,14 @@ export default function App() {
     sidebarToggleRef.current?.focus()
   }, [sidebarIsOverlay, setSidebarOpen])
 
+  const closeSidebarOverlay = useCallback(() => {
+    if (sidebarIsOverlay) setSidebarOpen(false)
+  }, [setSidebarOpen, sidebarIsOverlay])
+
+  const sidebarOverlayOpen = Boolean(user && sidebarIsOverlay && sidebarOpen)
+  useFocusTrap(sidebarRef, sidebarOverlayOpen)
+  useEscapeKey(sidebarOverlayOpen, closeSidebarOverlay)
+
   if (isLoading) {
     return (
       <ThemeProvider>
@@ -313,8 +376,12 @@ export default function App() {
   if (!user) {
     return (
       <ThemeProvider>
-        <CanvasWaves />
         <AuthScreen />
+        <Suspense fallback={<DeferredSurfaceFallback />}>
+          {helpModalOpen && <HelpModal />}
+          {privacyModalOpen && <PrivacyModal />}
+          {termsModalOpen && <TermsModal />}
+        </Suspense>
       </ThemeProvider>
     )
   }
@@ -322,10 +389,12 @@ export default function App() {
   if (isPasswordRecovery) {
     return (
       <ThemeProvider>
-        <PasswordRecoveryScreen
-          onComplete={() => setIsPasswordRecovery(false)}
-          onCancel={() => backend.auth.signOut()}
-        />
+        <Suspense fallback={<AppLoading />}>
+          <PasswordRecoveryScreen
+            onComplete={() => setIsPasswordRecovery(false)}
+            onCancel={() => backend.auth.signOut()}
+          />
+        </Suspense>
       </ThemeProvider>
     )
   }
@@ -346,7 +415,6 @@ export default function App() {
 
   return (
     <ThemeProvider>
-      <CanvasWaves />
       <div className="qn-workspace-frame flex h-[100dvh] overflow-hidden bg-app text-content">
         <a href="#qn-main" className="qn-skip-link">
           Skip to content
@@ -361,6 +429,7 @@ export default function App() {
         )}
 
         <div
+          ref={sidebarRef}
           id="qn-sidebar"
           /**
            * A closed drawer is translated off-screen but still rendered, so
@@ -372,6 +441,9 @@ export default function App() {
            */
           inert={sidebarIsOverlay && !sidebarOpen ? '' : undefined}
           aria-hidden={sidebarIsOverlay && !sidebarOpen ? 'true' : undefined}
+          role={sidebarOverlayOpen ? 'dialog' : undefined}
+          aria-modal={sidebarOverlayOpen ? 'true' : undefined}
+          aria-label={sidebarOverlayOpen ? 'Navigation' : undefined}
           className={[
             'shrink-0 border-r border-subtle transition-transform duration-base ease-qn-out',
             sidebarIsOverlay
@@ -384,7 +456,13 @@ export default function App() {
           <Sidebar onNavigate={closeSidebarAfterNavigation} />
         </div>
 
-        <div id="qn-main" className="flex min-w-0 flex-1 flex-col">
+        <div
+          id="qn-main"
+          tabIndex={-1}
+          inert={sidebarOverlayOpen ? '' : undefined}
+          aria-hidden={sidebarOverlayOpen ? 'true' : undefined}
+          className="flex min-w-0 flex-1 flex-col outline-none"
+        >
           {viewMode === 'grid' ? (
             <div className="min-h-0 flex-1 overflow-hidden">
               <NotesGrid sidebarToggle={sidebarToggle} />
@@ -406,36 +484,42 @@ export default function App() {
 
               <main className={`min-w-0 flex-1 ${showEditor ? 'flex' : 'hidden'}`}>
                 <ErrorBoundary>
-                  <NoteEditor onBack={() => setMobileView('notes')} showBack={isCompact} />
+                  <Suspense fallback={<EditorLoading />}>
+                    <NoteEditor onBack={() => setMobileView('notes')} showBack={isCompact} />
+                  </Suspense>
                 </ErrorBoundary>
               </main>
             </div>
           )}
         </div>
 
-        <QuickNoteModal />
-        <SettingsModal />
-        <ExportModal />
-        <ImportModal />
         <ReminderModal />
-        <TrashView />
-        <VersionHistoryModal />
-        <DuplicateDetectionModal />
-        <GlobalSearchModal />
-        <ArchiveView />
-        <KeyboardShortcutsModal />
-        <NoteTypesModal onCreated={() => isCompact && setMobileView('editor')} />
-        <HelpModal />
-        <PrivacyModal />
-        <TermsModal />
-        <TagManagerModal />
-        <TranslateModal />
-        <ShareNoteModal />
-        <SharedNotesView />
-        <EditorSettingsModal />
-        {focusModeOpen && <FocusMode />}
+        <Suspense fallback={<DeferredSurfaceFallback />}>
+          {quickNoteOpen && <QuickNoteModal />}
+          {settingsOpen && <SettingsModal />}
+          {exportModalOpen && <ExportModal />}
+          {importModalOpen && <ImportModal />}
+          {showTrash && <TrashView />}
+          {versionHistoryOpen && <VersionHistoryModal />}
+          {duplicateModalOpen && <DuplicateDetectionModal />}
+          {globalSearchOpen && <GlobalSearchModal />}
+          {archiveViewOpen && <ArchiveView />}
+          {shortcutsModalOpen && <KeyboardShortcutsModal />}
+          {noteTypesModalOpen && (
+            <NoteTypesModal onCreated={() => isCompact && setMobileView('editor')} />
+          )}
+          {helpModalOpen && <HelpModal />}
+          {privacyModalOpen && <PrivacyModal />}
+          {termsModalOpen && <TermsModal />}
+          {tagManagerOpen && <TagManagerModal />}
+          {translateModalOpen && <TranslateModal />}
+          {shareModalOpen && <ShareNoteModal />}
+          {sharedNotesViewOpen && <SharedNotesView />}
+          {editorSettingsOpen && <EditorSettingsModal />}
+          {focusModeOpen && <FocusMode />}
+        </Suspense>
 
-        {!isOnline && (
+        {!isOnline && !user.isLocal && (
           <div
             role="status"
             className="qn-safe-bottom fixed bottom-4 left-1/2 z-toast flex -translate-x-1/2 items-center gap-2 rounded-full border border-[var(--qn-warning-border)] bg-warning-soft px-4 py-2 text-ui-md font-medium text-warning-text shadow-md"

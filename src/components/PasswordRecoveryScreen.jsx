@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { buttonClasses } from './ui'
 import { CheckCircle2, Eye, EyeOff, FileText, Lock, RefreshCw } from 'lucide-react'
 import { backend } from '../lib/backend'
@@ -10,30 +10,44 @@ export default function PasswordRecoveryScreen({ onComplete, onCancel }) {
   const [showPassword, setShowPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [errorField, setErrorField] = useState('')
+  const passwordRef = useRef(null)
+  const confirmationRef = useRef(null)
+  const submittingRef = useRef(false)
 
   const handleSubmit = async (event) => {
     event.preventDefault()
+    if (submittingRef.current) return
     const passwordError = validateNewPassword(password)
     if (passwordError) {
       setError(passwordError)
+      setErrorField('password')
+      passwordRef.current?.focus()
       return
     }
     if (password !== confirmation) {
       setError('Passwords do not match')
+      setErrorField('confirmation')
+      confirmationRef.current?.focus()
       return
     }
 
+    submittingRef.current = true
     setIsSubmitting(true)
     setError('')
+    setErrorField('')
     try {
       const { error: updateError } = await backend.auth.updateUser({ password })
       if (updateError) throw updateError
-      onComplete()
     } catch (updateError) {
       setError(getAuthErrorMessage(updateError, 'Your password could not be updated.'))
+      setErrorField('form')
+      return
     } finally {
+      submittingRef.current = false
       setIsSubmitting(false)
     }
+    onComplete?.()
   }
 
   return (
@@ -67,13 +81,17 @@ export default function PasswordRecoveryScreen({ onComplete, onCancel }) {
             <div className="relative">
               <input
                 id="qn-recovery-password"
+                ref={passwordRef}
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(event) => {
                   setPassword(event.target.value)
                   setError('')
+                  setErrorField('')
                 }}
                 autoComplete="new-password"
+                aria-invalid={errorField === 'password'}
+                aria-describedby={`qn-recovery-password-hint${errorField === 'password' ? ' qn-recovery-error' : ''}`}
                 className="h-11 w-full rounded-[10px] border border-strong bg-surface-raised px-3 pr-11 text-ui-lg text-content outline-none focus:border-accent focus:ring-2 focus:ring-[var(--qn-accent-soft)]"
               />
               <button
@@ -82,10 +100,10 @@ export default function PasswordRecoveryScreen({ onComplete, onCancel }) {
                 className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-control text-content-subtle hover:bg-surface-hover hover:text-content"
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {showPassword ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
               </button>
             </div>
-            <p className="mt-1.5 text-ui-xs text-content-subtle">
+            <p id="qn-recovery-password-hint" className="mt-1.5 text-ui-xs text-content-subtle">
               Use at least {MIN_PASSWORD_LENGTH} characters. A memorable passphrase works well.
             </p>
           </div>
@@ -96,19 +114,23 @@ export default function PasswordRecoveryScreen({ onComplete, onCancel }) {
             </label>
             <input
               id="qn-recovery-confirmation"
+              ref={confirmationRef}
               type="password"
               value={confirmation}
               onChange={(event) => {
                 setConfirmation(event.target.value)
                 setError('')
+                setErrorField('')
               }}
               autoComplete="new-password"
+              aria-invalid={errorField === 'confirmation'}
+              aria-describedby={errorField === 'confirmation' ? 'qn-recovery-error' : undefined}
               className="h-11 w-full rounded-[10px] border border-strong bg-surface-raised px-3 text-ui-lg text-content outline-none focus:border-accent focus:ring-2 focus:ring-[var(--qn-accent-soft)]"
             />
           </div>
 
           {error && (
-            <p role="alert" className="rounded-control border border-danger-border bg-danger-soft px-3 py-2.5 text-ui-md text-danger-text">
+            <p id="qn-recovery-error" role="alert" className="rounded-control border border-danger-border bg-danger-soft px-3 py-2.5 text-ui-md text-danger-text">
               {error}
             </p>
           )}
@@ -127,7 +149,7 @@ export default function PasswordRecoveryScreen({ onComplete, onCancel }) {
           </button>
           <button
             type="button"
-            onClick={onCancel}
+            onClick={() => onCancel?.()}
             disabled={isSubmitting}
             className="h-10 w-full rounded-[10px] text-ui-md font-semibold text-content-muted hover:bg-surface-hover hover:text-content disabled:opacity-60"
           >

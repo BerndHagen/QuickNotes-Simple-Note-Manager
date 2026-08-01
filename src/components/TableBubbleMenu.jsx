@@ -60,17 +60,17 @@ function PortalTooltip({ children, title, anchorRef }) {
     }
   }, [visible, anchorRef])
 
-  if (!title) return children
-
   return (
     <>
       <div
-        onMouseEnter={() => setVisible(true)}
+        onMouseEnter={() => title && setVisible(true)}
         onMouseLeave={() => setVisible(false)}
+        onFocus={() => title && setVisible(true)}
+        onBlur={() => setVisible(false)}
       >
         {children}
       </div>
-      {visible && createPortal(
+      {title && visible && createPortal(
         <div
           ref={tooltipRef}
           className="fixed px-2.5 py-1.5 bg-surface-sunken dark:bg-surface-sunken text-white text-xs rounded-lg whitespace-nowrap z-[99999] pointer-events-none shadow-lg"
@@ -96,8 +96,13 @@ function MenuButton({ onClick, isActive, disabled, children, title }) {
   const button = (
     <button
       ref={buttonRef}
+      type="button"
+      aria-label={title}
       onMouseDown={(e) => {
         e.preventDefault()
+        e.stopPropagation()
+      }}
+      onClick={(e) => {
         e.stopPropagation()
         if (!disabled && onClick) onClick()
       }}
@@ -112,24 +117,29 @@ function MenuButton({ onClick, isActive, disabled, children, title }) {
     </button>
   )
 
-  if (!title) return button
-
   return (
     <PortalTooltip title={title} anchorRef={buttonRef}>
       {button}
     </PortalTooltip>
   )
 }
-function DropdownButton({ children, isOpen, onClick, title }) {
+function DropdownButton({ children, isOpen, onClick, title, popupRole = 'menu' }) {
   const buttonRef = useRef(null)
   
   const button = (
     <button
       ref={buttonRef}
+      type="button"
+      aria-label={title}
+      aria-expanded={isOpen}
+      aria-haspopup={popupRole}
       onMouseDown={(e) => {
         e.preventDefault()
         e.stopPropagation()
-        if (onClick) onClick()
+      }}
+      onClick={(e) => {
+        e.stopPropagation()
+        onClick?.()
       }}
       className={`p-1.5 rounded transition-all duration-150 flex items-center gap-1 ${
  isOpen
@@ -142,18 +152,21 @@ function DropdownButton({ children, isOpen, onClick, title }) {
     </button>
   )
   
-  if (!title || isOpen) return button
-  
   return (
-    <PortalTooltip title={title} anchorRef={buttonRef}>
+    <PortalTooltip title={isOpen ? null : title} anchorRef={buttonRef}>
       {button}
     </PortalTooltip>
   )
 }
 function ColorPickerDropdown({ isOpen, onClose, onSelect, currentColor, title, anchorRef }) {
   const [customColor, setCustomColor] = useState(currentColor || '#ffffff')
-  const [position, setPosition] = useState({ top: 0, left: 0, openUp: false })
+  const [position, setPosition] = useState({ top: 0, left: 0 })
   const dropdownRef = useRef(null)
+  const customColorValid = /^#[0-9a-f]{6}$/i.test(customColor)
+
+  useEffect(() => {
+    if (isOpen) setCustomColor(currentColor || '#ffffff')
+  }, [currentColor, isOpen])
   
   useEffect(() => {
     if (isOpen && anchorRef?.current && dropdownRef.current) {
@@ -178,7 +191,7 @@ function ColorPickerDropdown({ isOpen, onClose, onSelect, currentColor, title, a
         top = window.innerHeight - bottomPadding - dropdownRect.height
       }
       
-      setPosition({ top, left, openUp })
+      setPosition({ top, left })
     }
   }, [isOpen, anchorRef])
   
@@ -187,17 +200,25 @@ function ColorPickerDropdown({ isOpen, onClose, onSelect, currentColor, title, a
   return createPortal(
     <div 
       ref={dropdownRef}
-      className="fixed bg-surface-raised rounded-xl shadow-2xl border border-subtle p-3 z-[99999] min-w-[240px]"
+      role="dialog"
+      aria-label={title}
+      className="fixed z-[99999] w-[min(15rem,calc(100vw-1.25rem))] rounded-xl border border-subtle bg-surface-raised p-3 shadow-2xl"
       style={{ top: position.top, left: position.left }}
       onMouseDown={(e) => e.stopPropagation()}
     >
       <p className="text-xs font-medium text-content-muted mb-2">{title}</p>
-      <div className="grid grid-cols-8 gap-1.5">
+      <div className="grid grid-cols-6 gap-1.5 sm:grid-cols-8">
         {cellColors.map((color, index) => (
           <button
             key={index}
+            type="button"
+            aria-label={color || 'No colour'}
+            aria-pressed={currentColor === color}
             onMouseDown={(e) => {
               e.preventDefault()
+            }}
+            onClick={(e) => {
+              e.stopPropagation()
               onSelect(color)
               onClose()
             }}
@@ -227,34 +248,48 @@ function ColorPickerDropdown({ isOpen, onClose, onSelect, currentColor, title, a
         <div className="flex gap-2">
           <input
             type="color"
+            aria-label="Choose custom colour"
             value={customColor}
             onChange={(e) => setCustomColor(e.target.value)}
             className="w-8 h-8 rounded cursor-pointer border border-subtle "
           />
           <input
             type="text"
+            aria-label="Custom colour value"
             value={customColor}
             onChange={(e) => setCustomColor(e.target.value)}
-            className="flex-1 px-2 py-1 text-xs border border-subtle rounded bg-white dark:bg-surface-sunken text-content"
+            aria-invalid={!customColorValid}
+            aria-describedby={!customColorValid ? 'table-custom-colour-error' : undefined}
+            className="min-w-0 flex-1 px-2 py-1 text-xs border border-subtle rounded bg-white dark:bg-surface-sunken text-content"
             placeholder="#ffffff"
           />
           <button
+            type="button"
+            disabled={!customColorValid}
             onMouseDown={(e) => {
               e.preventDefault()
+            }}
+            onClick={(e) => {
+              e.stopPropagation()
               onSelect(customColor)
               onClose()
             }}
-            className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs rounded"
+            className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs rounded disabled:cursor-not-allowed disabled:opacity-50"
           >
             Apply
           </button>
         </div>
+        {!customColorValid && (
+          <p id="table-custom-colour-error" role="alert" className="mt-1.5 text-xs text-danger-text">
+            Enter a six-digit hex colour, such as #10b981.
+          </p>
+        )}
       </div>
     </div>,
     document.body
   )
 }
-function DropdownMenu({ isOpen, onClose, anchorRef, children }) {
+function DropdownMenu({ isOpen, anchorRef, children }) {
   const [position, setPosition] = useState({ top: 0, left: 0 })
   const menuRef = useRef(null)
   
@@ -290,6 +325,7 @@ function DropdownMenu({ isOpen, onClose, anchorRef, children }) {
   return createPortal(
     <div 
       ref={menuRef}
+      role="menu"
       className="fixed bg-surface-raised rounded-xl shadow-2xl border border-subtle py-1 min-w-[160px] z-[99999]"
       style={{ top: position.top, left: position.left }}
       onMouseDown={(e) => e.stopPropagation()}
@@ -323,7 +359,18 @@ export default function TableBubbleMenu({ editor }) {
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+    const handleEscape = (event) => {
+      if (event.key !== 'Escape') return
+      setShowCellColorPicker(false)
+      setShowRowColorPicker(false)
+      setShowColumnMenu(false)
+      setShowRowMenu(false)
+    }
+    document.addEventListener('keydown', handleEscape)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleEscape)
+    }
   }, [])
   const getCurrentCellColor = () => {
     const attrs = editor.getAttributes('tableCell')
@@ -346,7 +393,6 @@ export default function TableBubbleMenu({ editor }) {
     }
     
     if (depth > 0) {
-      const row = $from.node(depth)
       const rowStart = $from.before(depth)
       const rowEnd = $from.after(depth)
       editor.chain().focus().command(({ tr, dispatch }) => {
@@ -365,8 +411,21 @@ export default function TableBubbleMenu({ editor }) {
     }
   }
   const MenuDivider = () => (
-    <div className="w-px h-5 bg-surface-active dark:bg-surface-active mx-1" />
+    <div aria-hidden="true" className="w-px h-5 bg-surface-active dark:bg-surface-active mx-1" />
   )
+  const handleToolbarKeyDown = (event) => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return
+    const buttons = Array.from(event.currentTarget.querySelectorAll('button:not(:disabled)'))
+    const currentIndex = buttons.indexOf(event.target.closest('button'))
+    if (currentIndex < 0 || buttons.length === 0) return
+    event.preventDefault()
+    let nextIndex
+    if (event.key === 'Home') nextIndex = 0
+    else if (event.key === 'End') nextIndex = buttons.length - 1
+    else if (event.key === 'ArrowRight') nextIndex = (currentIndex + 1) % buttons.length
+    else nextIndex = (currentIndex - 1 + buttons.length) % buttons.length
+    buttons[nextIndex].focus()
+  }
 
   return (
     <BubbleMenu
@@ -378,12 +437,18 @@ export default function TableBubbleMenu({ editor }) {
         offset: [0, 8],
         aria: { expanded: false, content: 'describedby' },
       }}
-      shouldShow={({ editor, state }) => {
+      shouldShow={({ editor }) => {
         return editor.isActive('table')
       }}
-      className="bg-surface-raised shadow-xl rounded-xl border border-subtle flex items-center p-1.5 gap-0.5"
+      className="flex max-w-[calc(100vw-1rem)] items-center gap-0.5 overflow-x-auto rounded-xl border border-subtle bg-surface-raised p-1.5 shadow-xl"
     >
-      <div ref={menuRef} className="flex items-center gap-0.5">
+      <div
+        ref={menuRef}
+        role="toolbar"
+        aria-label="Table tools"
+        onKeyDown={handleToolbarKeyDown}
+        className="flex items-center gap-0.5"
+      >
         <div className="relative" ref={columnButtonRef}>
           <DropdownButton 
             isOpen={showColumnMenu} 
@@ -398,12 +463,15 @@ export default function TableBubbleMenu({ editor }) {
           
           <DropdownMenu
             isOpen={showColumnMenu}
-            onClose={() => setShowColumnMenu(false)}
             anchorRef={columnButtonRef}
           >
             <button
+              type="button"
+              role="menuitem"
               onMouseDown={(e) => {
                 e.preventDefault()
+              }}
+              onClick={() => {
                 editor.chain().focus().addColumnBefore().run()
                 setShowColumnMenu(false)
               }}
@@ -413,8 +481,12 @@ export default function TableBubbleMenu({ editor }) {
               {t('editor.addColumnBefore', 'Insert Left')}
             </button>
             <button
+              type="button"
+              role="menuitem"
               onMouseDown={(e) => {
                 e.preventDefault()
+              }}
+              onClick={() => {
                 editor.chain().focus().addColumnAfter().run()
                 setShowColumnMenu(false)
               }}
@@ -425,8 +497,12 @@ export default function TableBubbleMenu({ editor }) {
             </button>
             <div className="h-px bg-surface-sunken dark:bg-surface-sunken my-1" />
             <button
+              type="button"
+              role="menuitem"
               onMouseDown={(e) => {
                 e.preventDefault()
+              }}
+              onClick={() => {
                 editor.chain().focus().deleteColumn().run()
                 setShowColumnMenu(false)
               }}
@@ -451,12 +527,15 @@ export default function TableBubbleMenu({ editor }) {
           
           <DropdownMenu
             isOpen={showRowMenu}
-            onClose={() => setShowRowMenu(false)}
             anchorRef={rowButtonRef}
           >
             <button
+              type="button"
+              role="menuitem"
               onMouseDown={(e) => {
                 e.preventDefault()
+              }}
+              onClick={() => {
                 editor.chain().focus().addRowBefore().run()
                 setShowRowMenu(false)
               }}
@@ -466,8 +545,12 @@ export default function TableBubbleMenu({ editor }) {
               {t('editor.addRowBefore', 'Insert Above')}
             </button>
             <button
+              type="button"
+              role="menuitem"
               onMouseDown={(e) => {
                 e.preventDefault()
+              }}
+              onClick={() => {
                 editor.chain().focus().addRowAfter().run()
                 setShowRowMenu(false)
               }}
@@ -478,8 +561,12 @@ export default function TableBubbleMenu({ editor }) {
             </button>
             <div className="h-px bg-surface-sunken dark:bg-surface-sunken my-1" />
             <button
+              type="button"
+              role="menuitem"
               onMouseDown={(e) => {
                 e.preventDefault()
+              }}
+              onClick={() => {
                 editor.chain().focus().deleteRow().run()
                 setShowRowMenu(false)
               }}
@@ -495,6 +582,7 @@ export default function TableBubbleMenu({ editor }) {
         <div className="relative" ref={cellColorButtonRef}>
           <DropdownButton 
             isOpen={showCellColorPicker} 
+            popupRole="dialog"
             onClick={() => {
               closeAllDropdowns()
               setShowCellColorPicker(!showCellColorPicker)
@@ -516,6 +604,7 @@ export default function TableBubbleMenu({ editor }) {
         <div className="relative" ref={rowColorButtonRef}>
           <DropdownButton 
             isOpen={showRowColorPicker} 
+            popupRole="dialog"
             onClick={() => {
               closeAllDropdowns()
               setShowRowColorPicker(!showRowColorPicker)

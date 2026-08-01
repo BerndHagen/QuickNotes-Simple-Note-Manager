@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { signIn, collectErrors, createNote, expectNoHorizontalOverflow } from './helpers'
+import { CREDENTIALS, signIn, collectErrors, createNote, expectNoHorizontalOverflow } from './helpers'
 
 test.describe('workspace', () => {
   test('signs in and shows the three-pane workspace', async ({ page }) => {
@@ -21,6 +21,60 @@ test.describe('workspace', () => {
       timeout: 30_000,
     })
     await expect(page.getByText(/saved locally/i).first()).toBeVisible()
+  })
+
+  test('closing and reopening a local workspace preserves its notes', async ({ page }) => {
+    test.skip(Boolean(CREDENTIALS.email), 'This journey applies to the local workspace.')
+    await signIn(page)
+    const title = `Preserved local note ${Date.now()}`
+    await createNote(page, title)
+
+    const accountButton = page
+      .getByRole('navigation', { name: 'Workspace' })
+      .getByRole('button')
+      .filter({ hasText: /my workspace/i })
+      .last()
+    await accountButton.click()
+    await page.getByRole('menuitem', { name: /close workspace/i }).click()
+
+    const localEntry = page.getByRole('button', { name: /use a private local workspace/i })
+    if (await localEntry.isVisible().catch(() => false)) await localEntry.click()
+    await page.getByRole('button', { name: /continue to my workspace/i }).click()
+
+    await expect(page.getByRole('button', { name: new RegExp(title, 'i') }).first()).toBeVisible()
+  })
+
+  test('deleting local workspace data is confirmed and remains deleted after reload', async ({ page }) => {
+    test.skip(Boolean(CREDENTIALS.email), 'This journey applies to the local workspace.')
+    await signIn(page)
+    const title = `Delete local data ${Date.now()}`
+    await createNote(page, title)
+
+    await page
+      .getByRole('navigation', { name: 'Workspace' })
+      .getByRole('button')
+      .filter({ hasText: /my workspace/i })
+      .last()
+      .click()
+    await page.getByRole('menuitem', { name: /settings/i }).click()
+    const settings = page.getByRole('dialog', { name: 'Settings' })
+    await settings.getByRole('button', { name: /^Data$/i }).click()
+    await settings.getByRole('button', { name: /^Delete all data$/i }).click()
+
+    const confirmation = page.getByRole('dialog', { name: /^Delete all data$/i })
+    await confirmation.getByRole('button', { name: /^Delete all data$/i }).click()
+    await expect(confirmation).toHaveCount(0)
+    await settings.getByRole('button', { name: /close settings/i }).click()
+    await expect(page.getByRole('button', { name: new RegExp(title, 'i') })).toHaveCount(0)
+
+    await page.reload({ waitUntil: 'domcontentloaded' })
+    await expect(page.getByRole('navigation', { name: 'Workspace' })).toBeVisible()
+    await expect(page.getByRole('button', { name: new RegExp(title, 'i') })).toHaveCount(0)
+  })
+
+  test('opens Quick Note when launched from the installed-app shortcut', async ({ page }) => {
+    await signIn(page, './?action=new')
+    await expect(page.getByRole('dialog', { name: /quick note/i })).toBeVisible()
   })
 
   test('creates, edits and persists a note across a reload', async ({ page }) => {
@@ -83,6 +137,42 @@ test.describe('workspace', () => {
 
     await expect(page.getByRole('dialog')).toHaveCount(0)
     await expect(page.locator('.ProseMirror em, .ProseMirror i')).toHaveCount(1)
+  })
+
+  test('switching to grid view shows the note overview before opening an editor', async ({ page }) => {
+    await signIn(page)
+
+    await page.getByRole('button', { name: 'Grid view' }).click()
+
+    await expect(page.getByRole('button', { name: /open welcome to quicknotes/i })).toBeVisible()
+    await expect(page.getByRole('button', { name: /back to grid/i })).toHaveCount(0)
+
+    await page.getByRole('button', { name: /open welcome to quicknotes/i }).click()
+    await expect(page.getByRole('button', { name: /back to grid/i })).toBeVisible()
+  })
+
+  test('editor toolbar controls activate from the keyboard', async ({ page }) => {
+    await signIn(page)
+    await createNote(page, `Keyboard toolbar ${Date.now()}`)
+
+    const bold = page.getByRole('button', { name: /^bold$/i })
+    await bold.focus()
+    await page.keyboard.press('Enter')
+    await page.keyboard.type('keyboard bold')
+
+    await expect(page.locator('.ProseMirror strong')).toContainText('keyboard bold')
+  })
+
+  test('Tab leaves a plain paragraph when no indent command can run', async ({ page }) => {
+    await signIn(page)
+    await createNote(page, `Tab navigation ${Date.now()}`)
+
+    const body = page.locator('.ProseMirror').first()
+    await body.click()
+    await body.pressSequentially('plain paragraph')
+    await page.keyboard.press('Tab')
+
+    await expect(body).not.toBeFocused()
   })
 
   test('marks a note as a favourite and finds it under Favorites', async ({ page }) => {

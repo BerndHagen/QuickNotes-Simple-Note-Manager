@@ -21,7 +21,10 @@ for (const viewport of VIEWPORTS) {
       }
       await page.getByRole('button', { name: /^settings$/i }).first().click()
 
-      const dialog = page.getByRole('dialog')
+      if (viewport.width < 1024) {
+        await expect(page.getByRole('dialog', { name: 'Navigation' })).toHaveCount(0)
+      }
+      const dialog = page.getByRole('dialog', { name: 'Settings' })
       await expect(dialog).toBeVisible()
 
       const box = await dialog.boundingBox()
@@ -61,6 +64,61 @@ test.describe('compact navigation', () => {
     await nav.getByRole('button', { name: /^favorites/i }).click()
     // Navigating dismisses the drawer so the list is usable again.
     await expect(page.getByRole('searchbox')).toBeVisible()
+  })
+})
+
+test.describe('small-screen settings', () => {
+  test.use({ viewport: { width: 320, height: 640 } })
+
+  test('keeps every settings section and control horizontally reachable', async ({ page }) => {
+    await signIn(page)
+    await page.getByRole('button', { name: /show navigation/i }).first().click()
+    await page.getByRole('button', { name: /^settings$/i }).first().click()
+
+    const dialog = page.getByRole('dialog', { name: 'Settings' })
+    const sections = dialog.getByRole('navigation', { name: 'Settings sections' })
+    const sectionButtons = sections.getByRole('button')
+    const sectionCount = await sectionButtons.count()
+
+    expect(sectionCount).toBeGreaterThan(4)
+
+    for (let sectionIndex = 0; sectionIndex < sectionCount; sectionIndex += 1) {
+      const sectionButton = sectionButtons.nth(sectionIndex)
+      const sectionName = (await sectionButton.innerText()).trim()
+      await sectionButton.click()
+      await expect(sectionButton).toHaveAttribute('aria-current', 'page')
+
+      const pane = dialog.locator('[data-settings-pane]')
+      const paneMetrics = await pane.evaluate((element) => ({
+        clientWidth: element.clientWidth,
+        scrollWidth: element.scrollWidth,
+      }))
+      expect(
+        paneMetrics.scrollWidth,
+        `${sectionName} settings pane hides content beyond its ${paneMetrics.clientWidth}px width`
+      ).toBeLessThanOrEqual(paneMetrics.clientWidth + 1)
+
+      const controls = pane.locator('button, input, select, textarea, a[href]')
+      const controlCount = await controls.count()
+      for (let controlIndex = 0; controlIndex < controlCount; controlIndex += 1) {
+        const control = controls.nth(controlIndex)
+        if (!(await control.isVisible())) continue
+
+        await control.scrollIntoViewIfNeeded()
+        const [controlBox, paneBox] = await Promise.all([control.boundingBox(), pane.boundingBox()])
+        expect(controlBox, `${sectionName} contains a control without a rendered box`).not.toBeNull()
+        expect(paneBox).not.toBeNull()
+        expect(controlBox.x, `${sectionName} contains a control clipped on the left`).toBeGreaterThanOrEqual(
+          paneBox.x - 1
+        )
+        expect(
+          controlBox.x + controlBox.width,
+          `${sectionName} contains a control clipped on the right`
+        ).toBeLessThanOrEqual(paneBox.x + paneBox.width + 1)
+      }
+    }
+
+    await expectNoHorizontalOverflow(page)
   })
 })
 

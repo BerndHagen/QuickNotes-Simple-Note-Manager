@@ -499,7 +499,10 @@ export default function NotesList({ sidebarToggle, onOpenNote }) {
           </button>
           <button
             type="button"
-            onClick={() => setViewMode('grid')}
+            onClick={() => {
+              setSelectedNote(null)
+              setViewMode('grid')
+            }}
             aria-pressed={viewMode === 'grid'}
             aria-label="Grid view"
             title="Grid view"

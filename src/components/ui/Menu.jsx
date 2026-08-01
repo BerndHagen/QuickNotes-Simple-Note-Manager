@@ -95,7 +95,23 @@ export function Menu({
   width,
 }) {
   const { floatingRef, style } = useAnchoredPosition({ anchorRef, open, placement, point })
-  useEscapeKey(open, onClose)
+  const focusBeforeOpenRef = useRef(null)
+
+  useEffect(() => {
+    if (open) focusBeforeOpenRef.current = document.activeElement
+  }, [open])
+
+  const closeFromEscape = useCallback(() => {
+    const focusTarget = anchorRef?.current || focusBeforeOpenRef.current
+    onClose?.()
+    requestAnimationFrame(() => {
+      if (focusTarget instanceof HTMLElement && document.contains(focusTarget)) {
+        focusTarget.focus({ preventScroll: true })
+      }
+    })
+  }, [anchorRef, onClose])
+
+  useEscapeKey(open, closeFromEscape)
 
   useEffect(() => {
     if (!open) return

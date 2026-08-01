@@ -140,7 +140,14 @@ npm run build
 npm run preview
 ```
 
-The build output is written to `dist/`. The `base` path in `vite.config.js` is set to `/QuickNotes-Simple-Note-Manager/` for GitHub Pages deployment.
+The build output is written to `dist/`. Development uses `/`; production builds use
+`/QuickNotes-Simple-Note-Manager/` by default. Set `VITE_BASE_PATH` to deploy the
+same build configuration at another absolute path. For example, a custom-domain
+deployment can use this `.env.production` entry:
+
+```dotenv
+VITE_BASE_PATH=/
+```
 
 ## Project Structure
 
@@ -172,9 +179,13 @@ QuickNotes-Simple-Note-Manager/
 │
 ├── public/
 │   ├── 404.html                          # SPA fallback for GitHub Pages
+│   ├── app-shell.js                      # Route restoration + service-worker registration
 │   ├── manifest.json                     # PWA manifest
 │   ├── sw.js                             # Service worker for offline caching
 │   └── icons/                            # PWA icons
+│
+├── scripts/
+│   └── validate-deployment.mjs            # Built PWA, deep-link, and offline checks
 │
 └── src/
     ├── App.jsx                           # Root application component
@@ -618,13 +629,23 @@ The global stylesheet includes extensive custom styles for:
 
 ### Service Worker (`public/sw.js`)
 
-The service worker implements a **network-first with cache fallback** strategy:
+The service worker installs a complete application shell and applies a strategy
+suited to each request type:
 
-1. Attempts to fetch from the network
-2. On success, caches the response for future offline use
-3. On failure, falls back to the cached version
-4. For navigation requests, falls back to the root page (SPA routing)
-5. Excludes backend API requests from caching
+1. Installation caches `index.html`, every generated JavaScript and CSS chunk from
+   Vite's build manifest, the web app manifest, and all install icons. Features that
+   are loaded on demand therefore remain available without a prior visit.
+2. Navigation is network-first with a bounded timeout and cached-shell fallback.
+3. Same-origin static assets use stale-while-revalidate caching.
+4. API calls, cross-origin resources, partial-content requests, and non-GET requests
+   are never placed in the application cache.
+5. Activation removes only superseded QuickNotes caches, leaving unrelated caches
+   on the same origin untouched.
+
+Each production build injects a digest of Vite's asset manifest into the worker.
+Changing any generated chunk therefore triggers a fresh, complete install. Updated
+workers wait until existing tabs close before activating, which avoids mixing an old
+page with a new bundle.
 
 ### PWA Manifest (`public/manifest.json`)
 
@@ -632,11 +653,14 @@ The app is installable as a PWA with:
 - App name: QuickNotes
 - Theme color and icons
 - `standalone` display mode
-- Start URL pointing to the deployed base path
+- Deployment-relative identity, scope, start URL, icons, and shortcuts
 
 ### SPA Routing on GitHub Pages
 
-`public/404.html` handles GitHub Pages SPA routing by redirecting all 404s back to `index.html` with the original path encoded as a query parameter.
+`public/404.html` handles GitHub Pages SPA routing by redirecting an unknown path to
+the application shell. `public/app-shell.js` restores the original path, query
+string, and fragment before React starts. The configured production base path is
+injected into the fallback at build time.
 
 ## Database Schema
 
@@ -722,8 +746,9 @@ git push origin v2.0.0
 2. Optionally add the repository secrets `VITE_SUPABASE_URL` and
    `VITE_SUPABASE_ANON_KEY` (or `VITE_SUPABASE_PUBLISHABLE_KEY`) — without them the
    deployed app runs in offline-only mode
-3. Update the `base` path in `vite.config.js` to match the fork's repository name
-   (it is set to `/QuickNotes-Simple-Note-Manager/`)
+3. No source edit is required for a normal project-site fork: GitHub Actions derives
+   the base path from `GITHUB_REPOSITORY`. Set `VITE_BASE_PATH=/` when publishing at
+   an origin root, or set it to another absolute path such as `/notes/`.
 
 ## Environment Variables
 
@@ -732,6 +757,7 @@ git push origin v2.0.0
 | `VITE_SUPABASE_URL` | No | Your Supabase project URL (e.g. `https://xxxxx.supabase.co`) |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | No | Preferred Supabase public browser key (safe for frontend, protected by RLS) |
 | `VITE_SUPABASE_ANON_KEY` | No | Legacy fallback for older Supabase projects |
+| `VITE_BASE_PATH` | No | Absolute deployment path; defaults to the repository path for production and `/` for development |
 
 When `VITE_SUPABASE_URL` and one of the two keys are set and point to a valid Supabase instance, the app enables cloud sync, authentication, and sharing features. Without them, QuickNotes runs in local-only mode with full functionality except sync and auth.
 
@@ -854,8 +880,17 @@ type workspaces, responsive layout from 320px to 1920px, and automated WCAG A/AA
 checks via axe-core:
 
 ```bash
+npx playwright install chromium # one-time browser installation
 npm run build      # Playwright serves dist/ via `npm run preview`
 npm run test:e2e
+```
+
+The deployment check builds the application, serves `dist/` with GitHub Pages 404
+semantics, verifies manifest and icon metadata, follows a deep link, installs the
+service worker, clears Chromium's HTTP cache, and reloads offline:
+
+```bash
+npm run test:deployment
 ```
 
 The suite uses the local workspace by default. To exercise the cloud sign-in path

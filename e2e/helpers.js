@@ -36,8 +36,8 @@ const resetKeyboardStart = (page) =>
  * local workspace otherwise — so the suite runs against a Supabase-configured
  * build without needing an account.
  */
-export async function signIn(page) {
-  await page.goto('./', { waitUntil: 'domcontentloaded' })
+export async function signIn(page, entryUrl = './') {
+  await page.goto(entryUrl, { waitUntil: 'domcontentloaded' })
 
   if (CREDENTIALS.email && CREDENTIALS.password) {
     await page.getByLabel(/email/i).first().fill(CREDENTIALS.email)

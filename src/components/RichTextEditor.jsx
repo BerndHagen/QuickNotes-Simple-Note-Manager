@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useMemo, useState, useRef } from 'react'
+import { useEffect, useCallback, useMemo, useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useEditor, EditorContent, BubbleMenu, FloatingMenu } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
@@ -17,7 +17,7 @@ import Color from '@tiptap/extension-color'
 import FontFamily from '@tiptap/extension-font-family'
 import Table from '@tiptap/extension-table'
 import TableRow from '@tiptap/extension-table-row'
-import { Extension, Node, mergeAttributes } from '@tiptap/core'
+import { Extension } from '@tiptap/core'
 import ResizableImageExtension from './ResizableImageExtension'
 import TextBoxExtension from './TextBoxExtension'
 import CustomTableCell from './CustomTableCell'
@@ -52,9 +52,6 @@ import {
   Palette,
   Type,
   Table as TableIcon,
-  Copy,
-  Scissors,
-  Clipboard,
   Trash2,
   ChevronDown,
   Rows,
@@ -77,6 +74,7 @@ import {
 import { debounce } from '../lib/utils'
 import { useUIStore } from '../store'
 import { useEditorSettings } from './EditorSettingsModal'
+import { getFocusable, useEscapeKey } from './ui'
 
 const lowlight = createLowlight(common)
 
@@ -324,7 +322,7 @@ const DropCap = Extension.create({
 export const paperStyles = {
   plain: {
     name: 'Plain',
-    className: '',
+    className: 'paper-plain',
     style: {},
     preview: { backgroundColor: '#ffffff', border: '1px solid #e5e7eb' },
   },
@@ -690,15 +688,12 @@ export default function RichTextEditor({
   isExternalUpdate = false,
   readOnly = false,
 }) {
-  const [showContextMenu, setShowContextMenu] = useState(false)
-  const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 })
   const [currentPaper, setCurrentPaper] = useState(paperType)
-  const contextMenuRef = useRef(null)
+  const [typingEpoch, setTypingEpoch] = useState(0)
   const editorContainerRef = useRef(null)
   const isInternalUpdate = useRef(false)
   const lastKnownContent = useRef(content)
   const lastContentHash = useRef('')
-  const debounceTimerRef = useRef(null)
   const isUserTyping = useRef(false)
   const typingTimeoutRef = useRef(null)
   const lastCursorPosition = useRef({ from: 0, to: 0 })
@@ -726,9 +721,6 @@ export default function RichTextEditor({
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current)
     }
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current)
-    }
     if (editor && !editor.isDestroyed) {
       editor.commands.setContent(content || '', false)
       lastKnownContent.current = content || ''
@@ -746,6 +738,8 @@ export default function RichTextEditor({
     
     typingTimeoutRef.current = setTimeout(() => {
       isUserTyping.current = false
+      isInternalUpdate.current = false
+      setTypingEpoch((value) => value + 1)
     }, 2000)
   }, [])
 
@@ -834,24 +828,21 @@ export default function RichTextEditor({
         'aria-multiline': 'true',
       },
       handleKeyDown: (view, event) => {
-        markUserTyping()
-        
         if (event.key === 'Tab') {
-          event.preventDefault()
-          
+          let command = null
           if (event.shiftKey) {
             if (editor.can().liftListItem('listItem')) {
-              editor.chain().focus().liftListItem('listItem').run()
-            } else if (editor.can().outdent()) {
-              editor.chain().focus().outdent().run()
+              command = () => editor.chain().focus().liftListItem('listItem').run()
             }
           } else {
             if (editor.can().sinkListItem('listItem')) {
-              editor.chain().focus().sinkListItem('listItem').run()
-            } else if (editor.can().indent()) {
-              editor.chain().focus().indent().run()
+              command = () => editor.chain().focus().sinkListItem('listItem').run()
             }
           }
+
+          if (!command) return false
+          event.preventDefault()
+          command()
           return true
         }
         
@@ -931,14 +922,6 @@ export default function RichTextEditor({
       debounce((html) => {
         lastSentContent.current = html
         onChangeRef.current?.(html)
-        if (debounceTimerRef.current) {
-          clearTimeout(debounceTimerRef.current)
-        }
-        debounceTimerRef.current = setTimeout(() => {
-          if (!isUserTyping.current) {
-            isInternalUpdate.current = false
-          }
-        }, 1000)
       }, autoSaveDelay ?? 300),
     [autoSaveDelay]
   )
@@ -954,9 +937,6 @@ export default function RichTextEditor({
 
   useEffect(() => {
     return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current)
-      }
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current)
       }
@@ -1016,41 +996,17 @@ export default function RichTextEditor({
               editor.commands.setTextSelection({ from: safeFrom, to: safeTo })
               lastCursorPosition.current = { from: safeFrom, to: safeTo }
             }
-          } catch (e) {
+          } catch {
+            // The document may have changed again before the deferred cursor restore.
           }
         })
       })
     }
-  }, [content, editor, isExternalUpdate])
-
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (contextMenuRef.current && !contextMenuRef.current.contains(e.target)) {
-        setShowContextMenu(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+  }, [content, editor, isExternalUpdate, typingEpoch])
 
   useEffect(() => {
     setCurrentPaper(paperType)
   }, [paperType])
-
-  useEffect(() => {
-    const handleInsertTranslation = (event) => {
-      if (!readOnly && editor && event.detail?.translatedText) {
-        if (event.detail.mode === 'selection') {
-          editor.chain().focus().insertContent(event.detail.translatedText).run()
-        } else {
-          editor.commands.setContent(event.detail.translatedText)
-        }
-      }
-    }
-    
-    window.addEventListener('insertTranslatedText', handleInsertTranslation)
-    return () => window.removeEventListener('insertTranslatedText', handleInsertTranslation)
-  }, [editor, readOnly])
 
   const handlePaperChange = (type) => {
     setCurrentPaper(type)
@@ -1145,31 +1101,12 @@ export default function RichTextEditor({
         )}
         <div 
           ref={editorContainerRef}
-          className={`relative flex-1 overflow-y-auto bg-white ${paperStyle.className || ''}`}
+          className={`relative flex-1 overflow-y-auto bg-surface-raised ${paperStyle.className || ''}`}
           style={paperStyle.style}
-          onContextMenu={(e) => {
-            if (readOnly) return
-            e.preventDefault()
-            const { clientX, clientY } = e
-            setContextMenuPos({ x: clientX, y: clientY })
-            setShowContextMenu(true)
-          }}
         >
           <EditorContent editor={editor} />
         </div>
       </div>
-
-      {!readOnly && showContextMenu && createPortal(
-        <ContextMenu
-          ref={contextMenuRef}
-          x={contextMenuPos.x}
-          y={contextMenuPos.y}
-          editor={editor}
-          onClose={() => setShowContextMenu(false)}
-          editorBounds={editorContainerRef.current?.getBoundingClientRect()}
-        />,
-        document.body
-      )}
     </div>
   )
 }
@@ -1190,125 +1127,6 @@ function BubbleButton({ onClick, isActive, children, label }) {
     </button>
   )
 }
-
-const ContextMenu = React.forwardRef(({ x, y, editor, onClose, editorBounds }, ref) => {
-  const { t } = useTranslation()
-  const [position, setPosition] = useState({ x, y })
-  const menuRef = useRef(null)
-
-  const menuItems = [
-    { icon: <Copy className="w-4 h-4" />, label: t('common.copy', 'Copy'), shortcut: 'Ctrl+C', action: () => document.execCommand('copy') },
-    { icon: <Scissors className="w-4 h-4" />, label: t('common.cut', 'Cut'), shortcut: 'Ctrl+X', action: () => document.execCommand('cut') },
-    { icon: <Clipboard className="w-4 h-4" />, label: t('common.paste', 'Paste'), shortcut: 'Ctrl+V', action: () => document.execCommand('paste') },
-    { icon: <Clipboard className="w-4 h-4" />, label: 'Paste as Plain Text', shortcut: 'Ctrl+Shift+V', action: async () => {
-      try {
-        const text = await navigator.clipboard.readText()
-        if (text) {
-          editor.chain().focus().insertContent(text).run()
-        }
-      } catch (err) {
-      }
-    }},
-    { type: 'divider' },
-    { icon: <Bold className="w-4 h-4" />, label: t('editor.bold', 'Bold'), shortcut: 'Ctrl+B', action: () => editor.chain().focus().toggleBold().run() },
-    { icon: <Italic className="w-4 h-4" />, label: t('editor.italic', 'Italic'), shortcut: 'Ctrl+I', action: () => editor.chain().focus().toggleItalic().run() },
-    { icon: <UnderlineIcon className="w-4 h-4" />, label: t('editor.underline', 'Underline'), shortcut: 'Ctrl+U', action: () => editor.chain().focus().toggleUnderline().run() },
-    { icon: <Highlighter className="w-4 h-4" />, label: t('editor.highlight', 'Highlight'), action: () => editor.chain().focus().toggleHighlight().run() },
-    { type: 'divider' },
-    { icon: <AlignLeft className="w-4 h-4" />, label: t('editor.alignLeft', 'Align Left'), action: () => editor.chain().focus().setTextAlign('left').run() },
-    { icon: <AlignCenter className="w-4 h-4" />, label: t('editor.alignCenter', 'Center'), action: () => editor.chain().focus().setTextAlign('center').run() },
-    { icon: <AlignRight className="w-4 h-4" />, label: t('editor.alignRight', 'Align Right'), action: () => editor.chain().focus().setTextAlign('right').run() },
-    { type: 'divider' },
-    { icon: <Languages className="w-4 h-4" />, label: 'Translate', action: () => {
-      const { from, to, empty } = editor.state.selection
-      let textToTranslate = ''
-      if (!empty) {
-        textToTranslate = editor.state.doc.textBetween(from, to, ' ')
-      } else {
-        textToTranslate = editor.getText()
-      }
-      useUIStore.getState().openTranslateModal(textToTranslate)
-    }},
-    { icon: <LinkIcon className="w-4 h-4" />, label: t('editor.link', 'Insert Link'), shortcut: 'Ctrl+K', action: () => {
-      useUIStore.getState().setLinkModalOpen(true)
-    }},
-    { icon: <TableIcon className="w-4 h-4" />, label: t('editor.table', 'Insert Table'), action: () => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run() },
-    { type: 'divider' },
-    { icon: <Trash2 className="w-4 h-4" />, label: t('common.delete', 'Delete Selection'), action: () => editor.chain().focus().deleteSelection().run(), danger: true },
-  ]
-
-  const handleAction = (action) => {
-    action()
-    onClose()
-  }
-
-  useEffect(() => {
-    if (menuRef.current && editorBounds) {
-      const menuRect = menuRef.current.getBoundingClientRect()
-      const padding = 8
-      
-      let adjustedX = x
-      let adjustedY = y
-
-      const maxX = editorBounds.right - menuRect.width - padding
-      const minX = editorBounds.left + padding
-      
-      if (adjustedX > maxX) adjustedX = maxX
-      if (adjustedX < minX) adjustedX = minX
-
-      const maxY = editorBounds.bottom - menuRect.height - padding
-      const minY = editorBounds.top + padding
-      
-      if (adjustedY > maxY) adjustedY = maxY
-      if (adjustedY < minY) adjustedY = minY
-
-      if (adjustedX < padding) adjustedX = padding
-      if (adjustedY < padding) adjustedY = padding
-      if (adjustedX + menuRect.width > window.innerWidth - padding) {
-        adjustedX = window.innerWidth - menuRect.width - padding
-      }
-      if (adjustedY + menuRect.height > window.innerHeight - padding) {
-        adjustedY = window.innerHeight - menuRect.height - padding
-      }
-
-      setPosition({ x: adjustedX, y: adjustedY })
-    }
-  }, [x, y, editorBounds])
-
-  return (
-    <div
-      ref={(node) => {
-        menuRef.current = node
-        if (typeof ref === 'function') ref(node)
-        else if (ref) ref.current = node
-      }}
-      className="fixed z-[9999] bg-surface-raised rounded-2xl shadow-xl shadow-black/5 dark:shadow-black/20 border border-subtle py-1.5 min-w-[200px] max-h-[400px] overflow-y-auto backdrop-blur-xl"
-      style={{ left: position.x, top: position.y }}
-    >
-      {menuItems.map((item, index) => (
-        item.type === 'divider' ? (
-          <div key={index} className="my-1.5 mx-3 border-t border-subtle dark:border-subtle" />
-        ) : (
-          <button
-            key={index}
-            onClick={() => handleAction(item.action)}
-            className={`w-full px-4 py-2.5 flex items-center justify-between hover:bg-surface-hover transition-colors ${
- item.danger ? 'text-red-500 dark:text-red-400' : 'text-content-muted'
- }`}
-          >
-            <div className="flex items-center gap-3">
-              <span className="text-content-subtle">{item.icon}</span>
-              <span className="text-sm">{item.label}</span>
-            </div>
-            {item.shortcut && (
-              <span className="text-xs text-content-subtle">{item.shortcut}</span>
-            )}
-          </button>
-        )
-      ))}
-    </div>
-  )
-})
 
 function PortalTooltip({ children, title, shortcut, anchorRef }) {
   const [visible, setVisible] = useState(false)
@@ -1375,9 +1193,16 @@ function PortalTooltip({ children, title, shortcut, anchorRef }) {
   )
 }
 
-function PortalDropdown({ isOpen, anchorRef, children, onClose, align = 'left' }) {
+function PortalDropdown({ isOpen, anchorRef, children, onClose, align = 'left', label = 'Formatting options' }) {
   const [position, setPosition] = useState({ top: 0, left: 0, right: 0 })
   const dropdownRef = useRef(null)
+
+  const closeAndRestoreFocus = useCallback(() => {
+    onClose()
+    requestAnimationFrame(() => anchorRef.current?.querySelector?.('button')?.focus?.() || anchorRef.current?.focus?.())
+  }, [anchorRef, onClose])
+
+  useEscapeKey(isOpen, closeAndRestoreFocus)
   
   useEffect(() => {
     if (isOpen && anchorRef.current) {
@@ -1432,6 +1257,8 @@ function PortalDropdown({ isOpen, anchorRef, children, onClose, align = 'left' }
 
   useEffect(() => {
     if (isOpen) {
+      const dropdown = dropdownRef.current
+      const focusFrame = requestAnimationFrame(() => getFocusable(dropdown)[0]?.focus())
       const handleClickOutside = (e) => {
         if (anchorRef.current && !anchorRef.current.contains(e.target) && 
             dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -1444,13 +1271,30 @@ function PortalDropdown({ isOpen, anchorRef, children, onClose, align = 'left' }
         }
         onClose()
       }
+      const handleKeyDown = (e) => {
+        if (!['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return
+        const controls = getFocusable(dropdownRef.current)
+        if (controls.length === 0) return
+        e.preventDefault()
+        const current = controls.indexOf(document.activeElement)
+        const delta = e.key === 'ArrowDown' || e.key === 'ArrowRight' ? 1 : -1
+        const next = e.key === 'Home'
+          ? 0
+          : e.key === 'End'
+            ? controls.length - 1
+            : (current + delta + controls.length) % controls.length
+        controls[next].focus()
+      }
       
       document.addEventListener('mousedown', handleClickOutside)
       document.addEventListener('scroll', handleScroll, true)
+      dropdown?.addEventListener('keydown', handleKeyDown)
       
       return () => {
+        cancelAnimationFrame(focusFrame)
         document.removeEventListener('mousedown', handleClickOutside)
         document.removeEventListener('scroll', handleScroll, true)
+        dropdown?.removeEventListener('keydown', handleKeyDown)
       }
     }
   }, [isOpen, anchorRef, onClose])
@@ -1460,6 +1304,8 @@ function PortalDropdown({ isOpen, anchorRef, children, onClose, align = 'left' }
   return createPortal(
     <div
       ref={dropdownRef}
+      role="dialog"
+      aria-label={label}
       className="fixed bg-surface-raised rounded-2xl shadow-xl shadow-black/5 dark:shadow-black/20 border border-subtle z-[99999] backdrop-blur-xl"
       style={{ 
         top: position.top, 
@@ -1487,8 +1333,8 @@ function ImageToolbarButton() {
         onMouseDown={(e) => {
           e.preventDefault()
           e.stopPropagation()
-          setImageUploadOpen(true)
         }}
+        onClick={() => setImageUploadOpen(true)}
         className="p-2 text-content-muted transition-all duration-150 rounded-lg hover:bg-surface-hover dark:text-content-subtle hover:text-content dark:hover:text-white"
       >
         <ImageIcon className="w-4 h-4" />
@@ -1510,9 +1356,6 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
   const [showHeadingsPicker, setShowHeadingsPicker] = useState(false)
   const [customColor, setCustomColor] = useState('#000000')
   const [customHighlight, setCustomHighlight] = useState('#fef08a')
-  const [tableRows, setTableRows] = useState(3)
-  const [tableCols, setTableCols] = useState(3)
-  const [showTableSizeGrid, setShowTableSizeGrid] = useState(false)
   const [hoverCell, setHoverCell] = useState({ row: 0, col: 0 })
   const [headings, setHeadings] = useState([])
   
@@ -1534,6 +1377,45 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
   const letterSpacingRef = useRef(null)
   
   const toolbarRef = useRef(null)
+  const rovingButtonRef = useRef(null)
+
+  useEffect(() => {
+    const buttons = getFocusable(toolbarRef.current).filter((element) => element.tagName === 'BUTTON')
+    if (buttons.length === 0) return
+    const current = buttons.includes(rovingButtonRef.current) ? rovingButtonRef.current : buttons[0]
+    rovingButtonRef.current = current
+    buttons.forEach((button) => {
+      button.tabIndex = button === current ? 0 : -1
+    })
+  })
+
+  const handleToolbarFocus = (event) => {
+    if (!(event.target instanceof HTMLButtonElement)) return
+    const buttons = getFocusable(toolbarRef.current).filter((element) => element.tagName === 'BUTTON')
+    rovingButtonRef.current = event.target
+    buttons.forEach((button) => {
+      button.tabIndex = button === event.target ? 0 : -1
+    })
+  }
+
+  const handleToolbarKeyDown = (event) => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return
+    const buttons = getFocusable(toolbarRef.current).filter((element) => element.tagName === 'BUTTON')
+    if (buttons.length === 0) return
+    event.preventDefault()
+
+    const currentIndex = Math.max(0, buttons.indexOf(document.activeElement))
+    const isRtl = document.documentElement.dir === 'rtl'
+    const forwardKey = isRtl ? 'ArrowLeft' : 'ArrowRight'
+    const nextIndex = event.key === 'Home'
+      ? 0
+      : event.key === 'End'
+        ? buttons.length - 1
+        : event.key === forwardKey
+          ? (currentIndex + 1) % buttons.length
+          : (currentIndex - 1 + buttons.length) % buttons.length
+    buttons[nextIndex].focus()
+  }
 
   useEffect(() => {
     if (!editor) return
@@ -1594,7 +1476,6 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
     setShowLineHeightPicker(false)
     setShowPaperPicker(false)
     setShowTableMenu(false)
-    setShowTableSizeGrid(false)
     setShowTableOfContents(false)
     setShowHeadingsPicker(false)
   }, [])
@@ -1642,8 +1523,6 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
     const { selection } = editor.state
     
     if (selection.empty) return
-    
-    const { from, to } = selection
     
     let chain = editor.chain().focus()
     
@@ -1717,10 +1596,20 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
 
   const setLink = useCallback(() => {
     useUIStore.getState().setLinkModalOpen(true)
+  }, [])
+
+  const openTranslation = useCallback(() => {
+    const { from, to, empty } = editor.state.selection
+    const text = empty ? editor.getText() : editor.state.doc.textBetween(from, to, ' ')
+    useUIStore.getState().openTranslateModal(text)
   }, [editor])
 
   const ToolbarButton = ({ onClick, isActive, disabled, children, title, shortcut }) => {
     const buttonRef = useRef(null)
+    const activate = () => {
+      closeAllDropdowns()
+      if (!disabled) onClick?.()
+    }
     
     const button = (
       <button
@@ -1729,9 +1618,8 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
         onMouseDown={(e) => {
           e.preventDefault()
           e.stopPropagation()
-          closeAllDropdowns()
-          if (!disabled && onClick) onClick()
         }}
+        onClick={activate}
         disabled={disabled}
         aria-pressed={isActive || undefined}
         aria-label={title}
@@ -1755,7 +1643,7 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
   }
 
   const ToolbarDivider = () => (
-    <div className="mx-1 h-5 w-px shrink-0 bg-[var(--qn-border-subtle)]" />
+    <div role="separator" aria-orientation="vertical" className="mx-1 h-5 w-px shrink-0 bg-[var(--qn-border-subtle)]" />
   )
 
   const DropdownButton = ({ children, isOpen, onClick, title, disabled }) => {
@@ -1768,11 +1656,13 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
         disabled={disabled}
         aria-label={title}
         aria-expanded={isOpen}
-        aria-haspopup="menu"
+        aria-haspopup="dialog"
         onMouseDown={(e) => {
           e.preventDefault()
           e.stopPropagation()
-          if (!disabled && onClick) onClick()
+        }}
+        onClick={() => {
+          if (!disabled) onClick?.()
         }}
         className={`p-1.5 rounded-lg transition-all duration-150 flex items-center gap-1 ${
  disabled
@@ -1797,7 +1687,14 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
   }
 
   return (
-    <div ref={toolbarRef} className="editor-toolbar flex flex-nowrap items-center gap-0.5 overflow-x-auto border-b border-subtle bg-surface px-2 py-1.5 sm:px-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <div
+      ref={toolbarRef}
+      role="toolbar"
+      aria-label="Text formatting"
+      onFocusCapture={handleToolbarFocus}
+      onKeyDown={handleToolbarKeyDown}
+      className="editor-toolbar flex flex-wrap items-center gap-0.5 border-b border-subtle bg-surface px-2 py-1.5 sm:px-3"
+    >
       <ToolbarButton onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} title="Undo" shortcut="Ctrl+Z">
         <Undo className="w-4 h-4" />
       </ToolbarButton>
@@ -1836,8 +1733,8 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
               return (
                 <button
                   key={font.name}
-                  onMouseDown={(e) => {
-                    e.preventDefault()
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
                     editor.chain().focus().setFontFamily(font.value).run()
                     setShowFontPicker(false)
                   }}
@@ -1866,8 +1763,8 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
               return (
                 <button
                   key={size.name}
-                  onMouseDown={(e) => {
-                    e.preventDefault()
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
                     editor.chain().focus().setFontSize(size.value).run()
                     setShowFontSizePicker(false)
                   }}
@@ -1894,8 +1791,8 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
               return (
                 <button
                   key={lh.name}
-                  onMouseDown={(e) => {
-                    e.preventDefault()
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
                     editor.chain().focus().setLineHeight(lh.value).run()
                     setShowLineHeightPicker(false)
                   }}
@@ -1931,8 +1828,8 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
               return (
                 <button
                   key={level}
-                  onMouseDown={(e) => {
-                    e.preventDefault()
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
                     editor.chain().focus().toggleHeading({ level }).run()
                     setShowHeadingsPicker(false)
                   }}
@@ -1953,8 +1850,8 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
             })}
             <div className="h-px my-1.5 mx-2 bg-surface-sunken" />
             <button
-              onMouseDown={(e) => {
-                e.preventDefault()
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => {
                 editor.chain().focus().setParagraph().run()
                 setShowHeadingsPicker(false)
               }}
@@ -1993,8 +1890,10 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
                 return (
                   <button
                     key={color}
-                    onMouseDown={(e) => {
-                      e.preventDefault()
+                    aria-label={`Set text color to ${color}`}
+                    aria-pressed={isActive}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => {
                       editor.chain().focus().setColor(color).run()
                       setShowColorPicker(false)
                     }}
@@ -2016,8 +1915,8 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
               })}
             </div>
             <button
-              onMouseDown={(e) => {
-                e.preventDefault()
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => {
                 editor.chain().focus().unsetColor().run()
                 setShowColorPicker(false)
               }}
@@ -2030,24 +1929,26 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
               <div className="flex gap-2">
                 <input
                   type="color"
+                  aria-label="Choose custom text color"
                   value={customColor}
                   onChange={(e) => setCustomColor(e.target.value)}
                   className="w-10 h-8 border border-subtle rounded cursor-pointer "
                 />
                 <input
                   type="text"
+                  aria-label="Custom text color value"
                   value={customColor}
                   onChange={(e) => setCustomColor(e.target.value)}
                   className="flex-1 px-2 py-1 text-xs text-content bg-white border border-subtle rounded dark:bg-surface-sunken dark:text-white"
                   placeholder="#000000"
                 />
                 <button
-                  onMouseDown={(e) => {
-                    e.preventDefault()
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
                     editor.chain().focus().setColor(customColor).run()
                     setShowColorPicker(false)
                   }}
-                  className="px-3 py-1 text-xs text-white rounded bg-primary-600 hover:bg-primary-700"
+                  className="px-3 py-1 text-xs text-accent-on rounded bg-accent hover:bg-accent-hover"
                 >
                   Apply
                 </button>
@@ -2069,8 +1970,10 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
                 return (
                   <button
                     key={color}
-                    onMouseDown={(e) => {
-                      e.preventDefault()
+                    aria-label={`Toggle highlight color ${color}`}
+                    aria-pressed={isActive}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => {
                       editor.chain().focus().toggleHighlight({ color }).run()
                       setShowHighlightPicker(false)
                     }}
@@ -2092,8 +1995,8 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
               })}
             </div>
             <button
-              onMouseDown={(e) => {
-                e.preventDefault()
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => {
                 editor.chain().focus().unsetHighlight().run()
                 setShowHighlightPicker(false)
               }}
@@ -2106,24 +2009,26 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
               <div className="flex gap-2">
                 <input
                   type="color"
+                  aria-label="Choose custom highlight color"
                   value={customHighlight}
                   onChange={(e) => setCustomHighlight(e.target.value)}
                   className="w-10 h-8 border border-subtle rounded cursor-pointer "
                 />
                 <input
                   type="text"
+                  aria-label="Custom highlight color value"
                   value={customHighlight}
                   onChange={(e) => setCustomHighlight(e.target.value)}
                   className="flex-1 px-2 py-1 text-xs text-content bg-white border border-subtle rounded dark:bg-surface-sunken dark:text-white"
                   placeholder="#fef08a"
                 />
                 <button
-                  onMouseDown={(e) => {
-                    e.preventDefault()
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
                     editor.chain().focus().toggleHighlight({ color: customHighlight }).run()
                     setShowHighlightPicker(false)
                   }}
-                  className="px-3 py-1 text-xs text-white rounded bg-primary-600 hover:bg-primary-700"
+                  className="px-3 py-1 text-xs text-accent-on rounded bg-accent hover:bg-accent-hover"
                 >
                   Apply
                 </button>
@@ -2210,8 +2115,8 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
               return (
                 <button
                   key={spacing.value}
-                  onMouseDown={(e) => {
-                    e.preventDefault()
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
                     editor.chain().focus().setLetterSpacing(spacing.value).run()
                     setShowLetterSpacing(false)
                   }}
@@ -2251,7 +2156,7 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
         <DropdownButton isOpen={showTableMenu} onClick={() => toggleDropdown(setShowTableMenu, showTableMenu)} title="Table">
           <TableIcon className="w-4 h-4" />
         </DropdownButton>
-        <PortalDropdown isOpen={showTableMenu} anchorRef={tableMenuRef} onClose={() => { setShowTableMenu(false); setShowTableSizeGrid(false) }}>
+        <PortalDropdown isOpen={showTableMenu} anchorRef={tableMenuRef} onClose={() => setShowTableMenu(false)}>
           <div className="py-2 min-w-[220px]">
             {!editor.isActive('table') && (
               <div className="px-3 pb-2">
@@ -2265,16 +2170,18 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
                       <button
                         key={i}
                         onMouseEnter={() => setHoverCell({ row, col })}
-                        onMouseDown={(e) => {
-                          e.preventDefault()
+                        onFocus={() => setHoverCell({ row, col })}
+                        aria-label={`Insert a ${row} by ${col} table`}
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => {
                           editor.chain().focus().insertTable({ rows: row, cols: col, withHeaderRow: true }).run()
                           setShowTableMenu(false)
                           setHoverCell({ row: 0, col: 0 })
                         }}
                         className={`w-5 h-5 rounded-sm border transition-colors ${
- isHovered 
- ? 'bg-primary-100 dark:bg-accent-soft border-primary-400' 
-                            : 'border-subtle  hover:border-subtle'
+                          isHovered
+                            ? 'bg-accent-soft border-accent'
+                            : 'border-subtle hover:border-strong'
                         }`}
                       />
                     )
@@ -2289,26 +2196,26 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
             {editor.isActive('table') && (
               <>
                 <p className="px-3 mb-1 text-xs font-medium text-content-muted">{t('editor.table')}</p>
-                <button onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().addColumnBefore().run(); setShowTableMenu(false) }} className="flex items-center w-full gap-2 px-3 py-2 text-[13px] text-left hover:bg-surface-hover rounded-lg transition-colors text-content-muted">
+                <button onMouseDown={(e) => e.preventDefault()} onClick={() => { editor.chain().focus().addColumnBefore().run(); setShowTableMenu(false) }} className="flex items-center w-full gap-2 px-3 py-2 text-[13px] text-left hover:bg-surface-hover rounded-lg transition-colors text-content-muted">
                   <Columns className="w-4 h-4 text-content-subtle" /> {t('editor.addColumnBefore')}
                 </button>
-                <button onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().addColumnAfter().run(); setShowTableMenu(false) }} className="flex items-center w-full gap-2 px-3 py-2 text-[13px] text-left hover:bg-surface-hover rounded-lg transition-colors text-content-muted">
+                <button onMouseDown={(e) => e.preventDefault()} onClick={() => { editor.chain().focus().addColumnAfter().run(); setShowTableMenu(false) }} className="flex items-center w-full gap-2 px-3 py-2 text-[13px] text-left hover:bg-surface-hover rounded-lg transition-colors text-content-muted">
                   <Columns className="w-4 h-4 text-content-subtle" /> {t('editor.addColumnAfter')}
                 </button>
-                <button onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().addRowBefore().run(); setShowTableMenu(false) }} className="flex items-center w-full gap-2 px-3 py-2 text-[13px] text-left hover:bg-surface-hover rounded-lg transition-colors text-content-muted">
+                <button onMouseDown={(e) => e.preventDefault()} onClick={() => { editor.chain().focus().addRowBefore().run(); setShowTableMenu(false) }} className="flex items-center w-full gap-2 px-3 py-2 text-[13px] text-left hover:bg-surface-hover rounded-lg transition-colors text-content-muted">
                   <Rows className="w-4 h-4 text-content-subtle" /> {t('editor.addRowBefore')}
                 </button>
-                <button onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().addRowAfter().run(); setShowTableMenu(false) }} className="flex items-center w-full gap-2 px-3 py-2 text-[13px] text-left hover:bg-surface-hover rounded-lg transition-colors text-content-muted">
+                <button onMouseDown={(e) => e.preventDefault()} onClick={() => { editor.chain().focus().addRowAfter().run(); setShowTableMenu(false) }} className="flex items-center w-full gap-2 px-3 py-2 text-[13px] text-left hover:bg-surface-hover rounded-lg transition-colors text-content-muted">
                   <Rows className="w-4 h-4 text-content-subtle" /> {t('editor.addRowAfter')}
                 </button>
                 <div className="h-px my-1.5 mx-2 bg-surface-sunken" />
-                <button onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().deleteColumn().run(); setShowTableMenu(false) }} className="flex items-center w-full gap-2 px-3 py-2 text-[13px] text-left text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors">
+                <button onMouseDown={(e) => e.preventDefault()} onClick={() => { editor.chain().focus().deleteColumn().run(); setShowTableMenu(false) }} className="flex items-center w-full gap-2 px-3 py-2 text-[13px] text-left text-danger-text hover:bg-danger-soft rounded-lg transition-colors">
                   <X className="w-4 h-4" /> {t('editor.deleteColumn')}
                 </button>
-                <button onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().deleteRow().run(); setShowTableMenu(false) }} className="flex items-center w-full gap-2 px-3 py-2 text-[13px] text-left text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors">
+                <button onMouseDown={(e) => e.preventDefault()} onClick={() => { editor.chain().focus().deleteRow().run(); setShowTableMenu(false) }} className="flex items-center w-full gap-2 px-3 py-2 text-[13px] text-left text-danger-text hover:bg-danger-soft rounded-lg transition-colors">
                   <X className="w-4 h-4" /> {t('editor.deleteRow')}
                 </button>
-                <button onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().deleteTable().run(); setShowTableMenu(false) }} className="flex items-center w-full gap-2 px-3 py-2 text-[13px] text-left text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors">
+                <button onMouseDown={(e) => e.preventDefault()} onClick={() => { editor.chain().focus().deleteTable().run(); setShowTableMenu(false) }} className="flex items-center w-full gap-2 px-3 py-2 text-[13px] text-left text-danger-text hover:bg-danger-soft rounded-lg transition-colors">
                   <Trash2 className="w-4 h-4" /> {t('editor.deleteTable')}
                 </button>
               </>
@@ -2321,6 +2228,10 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
 
       <ToolbarButton onClick={setLink} isActive={editor.isActive('link')} title="Insert Link (Ctrl+Shift+K)">
         <LinkIcon className="w-4 h-4" />
+      </ToolbarButton>
+
+      <ToolbarButton onClick={openTranslation} title="Translate selected text or note">
+        <Languages className="w-4 h-4" />
       </ToolbarButton>
 
       <ImageToolbarButton />
@@ -2355,8 +2266,8 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
               headings.map((heading, index) => (
                 <button
                   key={heading.id}
-                  onMouseDown={(e) => {
-                    e.preventDefault()
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
                     scrollToHeading(index)
                   }}
                   className="w-full px-3 py-2 text-left text-[13px] hover:bg-surface-hover flex items-center gap-2 rounded-lg transition-colors text-content-muted"
@@ -2388,8 +2299,8 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
             {Object.entries(paperStyles).map(([key, paper]) => (
               <button
                 key={key}
-                onMouseDown={(e) => {
-                  e.preventDefault()
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
                   onPaperChange(key)
                   setShowPaperPicker(false)
                 }}
