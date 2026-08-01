@@ -59,6 +59,8 @@ test.describe('mobile Safari workflows', () => {
     await editor.pressSequentially('A quick note written on a phone.')
 
     const toolbar = page.locator('.editor-toolbar')
+    await expect(toolbar).toBeHidden()
+    await page.getByRole('button', { name: /show formatting tools/i }).tap()
     const toolbarMetrics = await toolbar.evaluate((element) => ({
       height: element.getBoundingClientRect().height,
       clientWidth: element.clientWidth,
@@ -132,6 +134,33 @@ test.describe('mobile Safari workflows', () => {
     await expect.poll(() => page.evaluate(() => document.body.style.overflow)).not.toBe('hidden')
   })
 
+  test('keeps focused-workspace controls touch sized', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 664 })
+    await signIn(page)
+    await page.getByRole('button', { name: 'Choose a focused note type' }).tap()
+    const dialog = page.getByRole('dialog', { name: /create a focused note/i })
+    await dialog.getByRole('button', { name: /^Task List/i }).tap()
+    await dialog.getByText('Daily priorities', { exact: true }).tap()
+    await dialog.getByLabel('Note title').fill('Mobile touch targets')
+    await dialog.getByRole('button', { name: /^Create / }).tap()
+    await page.locator('.note-card', { hasText: 'Mobile touch targets' }).tap()
+
+    const controls = await page.locator('.qn-type-todo button:visible').evaluateAll((buttons) =>
+      buttons.map((button) => {
+        const box = button.getBoundingClientRect()
+        return {
+          name: button.getAttribute('aria-label') || button.textContent?.trim(),
+          width: box.width,
+          height: box.height,
+        }
+      })
+    )
+    for (const control of controls) {
+      expect(control.width, `${control.name} is too narrow for touch`).toBeGreaterThanOrEqual(44)
+      expect(control.height, `${control.name} is too short for touch`).toBeGreaterThanOrEqual(44)
+    }
+  })
+
   test('preserves drafts through rotation and browser history navigation', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 664 })
     await signIn(page)
@@ -142,6 +171,8 @@ test.describe('mobile Safari workflows', () => {
 
     await page.setViewportSize({ width: 664, height: 390 })
     await expect(editor).toContainText('Draft survives WebKit navigation')
+    await expect(page.locator('.editor-toolbar')).toBeHidden()
+    await page.getByRole('button', { name: /show formatting tools/i }).tap()
     const toolbarBox = await page.locator('.editor-toolbar').boundingBox()
     expect(toolbarBox.height).toBeLessThanOrEqual(60)
 

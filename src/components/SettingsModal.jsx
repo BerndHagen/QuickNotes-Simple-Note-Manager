@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { Avatar, Button, Field, Input, SegmentedControl, Toggle } from './ui'
+import { Avatar, Button, Field, Input, SegmentedControl, Switch, Toggle } from './ui'
 import {
   X,
   User,
@@ -405,7 +405,7 @@ export default function SettingsModal() {
             type="button"
             aria-label={`${t('common.close', 'Close')} ${t('settings.title', 'settings')}`}
             onClick={() => setSettingsOpen(false)}
-            className="p-2 rounded-full hover:bg-white/20 text-white transition-colors"
+            className="qn-square-control rounded-full p-2 text-white transition-colors hover:bg-white/20"
           >
             <X className="w-6 h-6" />
           </button>
@@ -419,7 +419,7 @@ export default function SettingsModal() {
                 type="button"
                 aria-current={activeTab === tab.id ? 'page' : undefined}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex min-w-max flex-1 items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs transition-colors sm:w-full sm:min-w-0 sm:justify-start sm:gap-3 sm:px-3 sm:text-[13px] ${
+                className={`qn-touch-target flex min-w-max flex-1 items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs transition-colors sm:w-full sm:min-w-0 sm:justify-start sm:gap-3 sm:px-3 sm:text-[13px] ${
  activeTab === tab.id
  ? 'bg-surface-raised text-emerald-700 dark:text-emerald-300 shadow-sm font-medium'
                     : 'text-content-muted hover:bg-white/80 dark:hover:bg-surface-raised'
@@ -544,22 +544,11 @@ export default function SettingsModal() {
                           </p>
                         </div>
                       </div>
-                      <button
-                        type="button"
-                        role="switch"
-                        aria-checked={confirmBeforeDelete}
-                        aria-label={t('settings.confirmBeforeDelete')}
-                        onClick={() => setConfirmBeforeDelete(!confirmBeforeDelete)}
-                        className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
- confirmBeforeDelete ? 'bg-accent' : 'bg-surface-active dark:bg-surface-active'
- }`}
-                      >
-                        <span
-                          className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white dark:bg-surface-sunken rounded-full shadow transition-transform ${
- confirmBeforeDelete ? 'translate-x-5' : 'translate-x-0'
- }`}
-                        />
-                      </button>
+                      <Switch
+                        checked={confirmBeforeDelete}
+                        label={t('settings.confirmBeforeDelete')}
+                        onChange={setConfirmBeforeDelete}
+                      />
                     </div>
                     <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-surface-sunken">
                       <div className="flex min-w-0 items-center gap-3">
@@ -573,22 +562,11 @@ export default function SettingsModal() {
                           </p>
                         </div>
                       </div>
-                      <button
-                        type="button"
-                        role="switch"
-                        aria-checked={spellCheck}
-                        aria-label={t('settings.spellCheck')}
-                        onClick={() => setSpellCheck(!spellCheck)}
-                        className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
- spellCheck ? 'bg-accent' : 'bg-surface-active dark:bg-surface-active'
- }`}
-                      >
-                        <span
-                          className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white dark:bg-surface-sunken rounded-full shadow transition-transform ${
- spellCheck ? 'translate-x-5' : 'translate-x-0'
- }`}
-                        />
-                      </button>
+                      <Switch
+                        checked={spellCheck}
+                        label={t('settings.spellCheck')}
+                        onChange={setSpellCheck}
+                      />
                     </div>
                     <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-surface-sunken">
                       <div className="flex min-w-0 items-center gap-3">
@@ -602,22 +580,11 @@ export default function SettingsModal() {
                           </p>
                         </div>
                       </div>
-                      <button
-                        type="button"
-                        role="switch"
-                        aria-checked={showNoteStatistics}
-                        aria-label={t('settings.showNoteStatistics')}
-                        onClick={() => setShowNoteStatistics(!showNoteStatistics)}
-                        className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
- showNoteStatistics ? 'bg-accent' : 'bg-surface-active dark:bg-surface-active'
- }`}
-                      >
-                        <span
-                          className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white dark:bg-surface-sunken rounded-full shadow transition-transform ${
- showNoteStatistics ? 'translate-x-5' : 'translate-x-0'
- }`}
-                        />
-                      </button>
+                      <Switch
+                        checked={showNoteStatistics}
+                        label={t('settings.showNoteStatistics')}
+                        onChange={setShowNoteStatistics}
+                      />
                     </div>
                   </div>
                 </div>
@@ -1189,22 +1156,11 @@ export default function SettingsModal() {
                         {t('settings.autoSyncDesc', 'Automatically sync changes in the background')}
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={autoSync}
-                      aria-label={t('settings.autoSync', 'Automatic sync')}
-                      onClick={() => setAutoSync(!autoSync)}
-                      className={`relative w-11 h-6 rounded-full transition-colors ${
- autoSync ? 'bg-accent' : 'bg-surface-active dark:bg-surface-active'
- }`}
-                    >
-                      <span
-                        className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white dark:bg-surface-sunken rounded-full shadow transition-transform ${
- autoSync ? 'translate-x-5' : 'translate-x-0'
- }`}
-                      />
-                    </button>
+                    <Switch
+                      checked={autoSync}
+                      label={t('settings.autoSync', 'Automatic sync')}
+                      onChange={setAutoSync}
+                    />
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-lg bg-surface-sunken">
                     <div>
@@ -1239,22 +1195,11 @@ export default function SettingsModal() {
                         {t('settings.syncOnStartupDesc', 'Sync when app starts')}
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={syncOnStartup}
-                      aria-label={t('settings.syncOnStartup', 'Sync on startup')}
-                      onClick={() => setSyncOnStartup(!syncOnStartup)}
-                      className={`relative w-11 h-6 rounded-full transition-colors ${
- syncOnStartup ? 'bg-accent' : 'bg-surface-active dark:bg-surface-active'
- }`}
-                    >
-                      <span
-                        className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white dark:bg-surface-sunken rounded-full shadow transition-transform ${
- syncOnStartup ? 'translate-x-5' : 'translate-x-0'
- }`}
-                      />
-                    </button>
+                    <Switch
+                      checked={syncOnStartup}
+                      label={t('settings.syncOnStartup', 'Sync on startup')}
+                      onChange={setSyncOnStartup}
+                    />
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-lg bg-surface-sunken">
                     <div>
@@ -1265,22 +1210,11 @@ export default function SettingsModal() {
                         {t('settings.syncNotificationsDesc', 'Show notifications after sync')}
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={showSyncNotifications}
-                      aria-label={t('settings.showSyncNotifications', 'Show sync notifications')}
-                      onClick={() => setShowSyncNotifications(!showSyncNotifications)}
-                      className={`relative w-11 h-6 rounded-full transition-colors ${
- showSyncNotifications ? 'bg-accent' : 'bg-surface-active dark:bg-surface-active'
- }`}
-                    >
-                      <span
-                        className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white dark:bg-surface-sunken rounded-full shadow transition-transform ${
- showSyncNotifications ? 'translate-x-5' : 'translate-x-0'
- }`}
-                      />
-                    </button>
+                    <Switch
+                      checked={showSyncNotifications}
+                      label={t('settings.showSyncNotifications', 'Show sync notifications')}
+                      onChange={setShowSyncNotifications}
+                    />
                   </div>
                 </div>
 

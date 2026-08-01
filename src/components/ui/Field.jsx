@@ -84,6 +84,46 @@ export const Select = forwardRef(function Select({ className = '', children, ...
  * reachable by keyboard and announced correctly; the visual track is
  * decorative.
  */
+export function Switch({
+  checked,
+  onChange,
+  label,
+  disabled,
+  id: providedId,
+  describedBy,
+  className = '',
+}) {
+  const generatedId = useId()
+  const id = providedId || generatedId
+
+  return (
+    <label
+      className={`relative inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center ${className}`}
+    >
+      <input
+        id={id}
+        type="checkbox"
+        role="switch"
+        className="peer sr-only"
+        checked={!!checked}
+        disabled={disabled}
+        aria-label={label}
+        aria-describedby={describedBy}
+        onChange={(event) => onChange?.(event.target.checked)}
+      />
+      <span
+        data-switch-track
+        aria-hidden="true"
+        className="h-5 w-9 rounded-full bg-[var(--qn-border-strong)] transition-colors duration-fast peer-checked:bg-accent peer-disabled:opacity-50 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--qn-focus-ring)]"
+      />
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute left-1.5 top-3.5 h-4 w-4 rounded-full bg-white shadow-xs transition-transform duration-fast ease-qn peer-checked:translate-x-4"
+      />
+    </label>
+  )
+}
+
 export function Toggle({ checked, onChange, label, description, disabled, id: providedId }) {
   const generatedId = useId()
   const id = providedId || generatedId
@@ -101,26 +141,15 @@ export function Toggle({ checked, onChange, label, description, disabled, id: pr
           </p>
         )}
       </div>
-      <label className="relative mt-0.5 inline-flex shrink-0 cursor-pointer items-center">
-        <input
-          id={id}
-          type="checkbox"
-          role="switch"
-          className="peer sr-only"
-          checked={!!checked}
-          disabled={disabled}
-          aria-describedby={description ? descId : undefined}
-          onChange={(e) => onChange?.(e.target.checked)}
-        />
-        <span
-          aria-hidden="true"
-          className="h-5 w-9 rounded-full bg-[var(--qn-border-strong)] transition-colors duration-fast peer-checked:bg-accent peer-disabled:opacity-50 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--qn-focus-ring)]"
-        />
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute left-0.5 h-4 w-4 rounded-full bg-white shadow-xs transition-transform duration-fast ease-qn peer-checked:translate-x-4"
-        />
-      </label>
+      <Switch
+        id={id}
+        checked={checked}
+        disabled={disabled}
+        label={label}
+        describedBy={description ? descId : undefined}
+        onChange={onChange}
+        className="-my-2"
+      />
     </div>
   )
 }
@@ -165,7 +194,7 @@ export function SegmentedControl({ value, onChange, options, label, size = 'md' 
             onClick={() => onChange(option.value)}
             onKeyDown={(event) => moveSelection(event, index)}
             className={[
-              'flex-1 rounded-[calc(var(--qn-radius-control)-2px)] px-2.5 font-medium transition-colors duration-fast',
+              'qn-touch-target flex-1 rounded-[calc(var(--qn-radius-control)-2px)] px-2.5 font-medium transition-colors duration-fast',
               size === 'sm' ? 'h-6 text-ui-xs' : 'h-7 text-ui-sm',
               selected
                 ? 'bg-surface-raised text-content shadow-xs'

@@ -1555,13 +1555,46 @@ body {
   overflow-wrap: anywhere;
 }
 
-/* Touch pointers get comfortable hit areas without inflating every
-   button on desktop. `.qn-inline-target` opts small inline affordances
-   (star toggles inside cards) out of the 44px floor. */
-@media (hover: none) and (pointer: coarse) {
-  button:not(.qn-inline-target),
-  [role='button']:not(.qn-inline-target),
-  [role='menuitem'] {
+/* Touch sizing is opt-in so a compact control never changes shape merely
+   because the device reports a coarse pointer. Shared controls carry one
+   of these semantic classes; intentionally small visuals can sit inside a
+   44px hit target (Switch and folder colours are examples). */
+@media (hover: none), (pointer: coarse), (any-pointer: coarse) {
+  .qn-touch-target {
+    min-height: var(--qn-touch-target);
+  }
+
+  .qn-square-control {
+    width: var(--qn-touch-target);
+    height: var(--qn-touch-target);
+    min-width: var(--qn-touch-target);
+    min-height: var(--qn-touch-target);
+  }
+
+  .qn-format-colour {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  /* Dialogs and focused workspaces still include older one-off controls.
+     Keep their tap floor scoped to touch layouts so legacy markup cannot
+     silently reintroduce tiny targets. Width is also floored, preventing
+     icon and colour buttons from turning into tall ovals. */
+  .qn-dialog button,
+  .qn-legacy-dialog-panel button {
+    min-width: var(--qn-touch-target);
+    min-height: var(--qn-touch-target);
+  }
+
+  .qn-type-editor button {
+    min-width: var(--qn-touch-target) !important;
+    min-height: var(--qn-touch-target) !important;
+  }
+
+  [data-settings-pane] button:not(.qn-inline-target) {
+    min-width: var(--qn-touch-target);
     min-height: var(--qn-touch-target);
   }
 
@@ -1571,11 +1604,12 @@ body {
 
   .editor-toolbar button {
     min-width: var(--qn-touch-target);
+    min-height: var(--qn-touch-target);
   }
 
   .qn-card-action {
-    min-width: 36px;
-    min-height: 36px;
+    min-width: 40px;
+    min-height: 40px;
   }
 
   .qn-nav-row-action {
@@ -1584,12 +1618,13 @@ body {
   }
 
   .qn-note-drag-handle {
-    width: 36px;
+    width: var(--qn-touch-target);
+    height: var(--qn-touch-target);
     opacity: 1;
   }
 
   .qn-note-card--sortable .note-card {
-    padding-left: 2.25rem;
+    padding-left: 3rem;
   }
 
   .qn-image-resize-handle {

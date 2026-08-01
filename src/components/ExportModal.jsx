@@ -678,7 +678,7 @@ export default function ExportModal() {
             type="button"
             aria-label={t('common.close', 'Close export')}
             onClick={() => setExportModalOpen(false)}
-            className="p-2 rounded-full hover:bg-white/20 transition-colors"
+            className="qn-square-control rounded-full p-2 transition-colors hover:bg-white/20"
           >
             <X className="h-5 w-5" aria-hidden="true" />
           </button>

@@ -29,6 +29,7 @@ const NoteCard = forwardRef(function NoteCard(
     onOpenMenu,
     isDragging,
     dragHandle,
+    dragProps,
   },
   ref
 ) {
@@ -58,6 +59,7 @@ const NoteCard = forwardRef(function NoteCard(
       <button
         ref={ref}
         type="button"
+        {...dragProps}
         onClick={onClick}
         onContextMenu={onContextMenu}
         onMouseEnter={onMouseEnter}

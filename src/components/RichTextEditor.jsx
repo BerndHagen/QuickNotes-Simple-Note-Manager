@@ -690,6 +690,7 @@ export default function RichTextEditor({
 }) {
   const [currentPaper, setCurrentPaper] = useState(paperType)
   const [typingEpoch, setTypingEpoch] = useState(0)
+  const [mobileToolbarOpen, setMobileToolbarOpen] = useState(false)
   const editorContainerRef = useRef(null)
   const isInternalUpdate = useRef(false)
   const lastKnownContent = useRef(content)
@@ -713,6 +714,7 @@ export default function RichTextEditor({
   }
 
   useEffect(() => {
+    setMobileToolbarOpen(false)
     isUserTyping.current = false
     isInternalUpdate.current = false
     lastSentContent.current = null
@@ -1020,9 +1022,17 @@ export default function RichTextEditor({
   const paperStyle = paperStyles[currentPaper] || paperStyles.plain
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="relative flex h-full flex-col">
       {!readOnly && (
-        <EditorToolbar editor={editor} currentPaper={currentPaper} onPaperChange={handlePaperChange} content={content} />
+        <div className={`${mobileToolbarOpen ? 'block' : 'hidden'} shrink-0 md:block`}>
+          <EditorToolbar
+            editor={editor}
+            currentPaper={currentPaper}
+            onPaperChange={handlePaperChange}
+            content={content}
+            onMobileClose={() => setMobileToolbarOpen(false)}
+          />
+        </div>
       )}
       
       {!readOnly && <BubbleMenu
@@ -1107,6 +1117,19 @@ export default function RichTextEditor({
           <EditorContent editor={editor} />
         </div>
       </div>
+
+      {!readOnly && !mobileToolbarOpen && (
+        <button
+          type="button"
+          aria-label="Show formatting tools"
+          aria-controls="qn-editor-toolbar"
+          aria-expanded="false"
+          onClick={() => setMobileToolbarOpen(true)}
+          className="qn-square-control absolute bottom-3 right-3 z-popover hidden items-center justify-center rounded-full border border-strong bg-surface-raised text-content shadow-lg transition-colors hover:bg-surface-hover max-md:flex"
+        >
+          <CaseSensitive className="h-5 w-5" aria-hidden="true" />
+        </button>
+      )}
     </div>
   )
 }
@@ -1284,7 +1307,7 @@ function ImageToolbarButton() {
   )
 }
 
-function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
+function EditorToolbar({ editor, currentPaper, onPaperChange, content, onMobileClose }) {
   const { t } = useTranslation()
   const [showColorPicker, setShowColorPicker] = useState(false)
   const [showHighlightPicker, setShowHighlightPicker] = useState(false)
@@ -1630,6 +1653,7 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
 
   return (
     <div
+      id="qn-editor-toolbar"
       ref={toolbarRef}
       role="toolbar"
       aria-label="Text formatting"
@@ -1637,6 +1661,15 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
       onKeyDown={handleToolbarKeyDown}
       className="editor-toolbar flex flex-nowrap items-center gap-0.5 overflow-x-auto overflow-y-hidden overscroll-x-contain border-b border-subtle bg-surface px-2 py-1.5 sm:px-3"
     >
+      <button
+        type="button"
+        onClick={onMobileClose}
+        aria-label="Hide formatting tools"
+        className="qn-square-control flex h-8 w-8 shrink-0 items-center justify-center rounded-control text-content-muted transition-colors hover:bg-surface-hover hover:text-content md:hidden"
+      >
+        <X className="h-4 w-4" aria-hidden="true" />
+      </button>
+      <div role="separator" aria-orientation="vertical" className="qn-toolbar-sep mx-1 w-px shrink-0 bg-[var(--qn-border-subtle)] md:hidden" />
       <ToolbarButton onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} title="Undo" shortcut="Ctrl+Z">
         <Undo className="w-4 h-4" />
       </ToolbarButton>
@@ -1825,8 +1858,8 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
           <Palette className="w-4 h-4" />
         </DropdownButton>
         <PortalDropdown isOpen={showColorPicker} anchorRef={colorPickerRef} onClose={() => setShowColorPicker(false)}>
-          <div className="p-4 min-w-[280px]">
-            <div className="grid grid-cols-8 gap-2">
+          <div className="min-w-[280px] p-3 sm:p-4">
+            <div className="grid grid-cols-6 gap-0.5 sm:grid-cols-8 sm:gap-2">
               {textColors.map((color) => {
                 const isActive = editor.getAttributes('textStyle').color === color
                 return (
@@ -1839,7 +1872,7 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
                       editor.chain().focus().setColor(color).run()
                       setShowColorPicker(false)
                     }}
-                    className={`w-7 h-7 rounded-lg border-2 hover:scale-110 transition-all shadow-sm flex items-center justify-center ${
+                    className={`qn-format-colour h-7 w-7 rounded-lg border-2 hover:scale-110 transition-all shadow-sm flex items-center justify-center ${
  isActive 
  ? 'border-emerald-500 ring-2 ring-emerald-200 dark:ring-emerald-800' 
                         : 'border-subtle  hover:border-emerald-500'
@@ -1862,7 +1895,7 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
                 editor.chain().focus().unsetColor().run()
                 setShowColorPicker(false)
               }}
-              className="w-full mt-3 px-3 py-1.5 text-xs text-content-muted hover:bg-surface-hover rounded-lg border border-subtle transition-colors"
+              className="qn-touch-target mt-3 w-full rounded-lg border border-subtle px-3 py-1.5 text-xs text-content-muted transition-colors hover:bg-surface-hover"
             >
               Reset Color
             </button>
@@ -1874,7 +1907,7 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
                   aria-label="Choose custom text color"
                   value={customColor}
                   onChange={(e) => setCustomColor(e.target.value)}
-                  className="w-10 h-8 border border-subtle rounded cursor-pointer "
+                  className="qn-format-colour h-8 w-10 cursor-pointer rounded border border-subtle"
                 />
                 <input
                   type="text"
@@ -1890,7 +1923,7 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
                     editor.chain().focus().setColor(customColor).run()
                     setShowColorPicker(false)
                   }}
-                  className="px-3 py-1 text-xs text-accent-on rounded bg-accent hover:bg-accent-hover"
+                  className="qn-touch-target rounded bg-accent px-3 py-1 text-xs text-accent-on hover:bg-accent-hover"
                 >
                   Apply
                 </button>
@@ -1905,8 +1938,8 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
           <Highlighter className="w-4 h-4" />
         </DropdownButton>
         <PortalDropdown isOpen={showHighlightPicker} anchorRef={highlightPickerRef} onClose={() => setShowHighlightPicker(false)}>
-          <div className="p-4 min-w-[280px]">
-            <div className="grid grid-cols-8 gap-2">
+          <div className="min-w-[280px] p-3 sm:p-4">
+            <div className="grid grid-cols-6 gap-0.5 sm:grid-cols-8 sm:gap-2">
               {highlightColors.map((color) => {
                 const isActive = editor.isActive('highlight', { color })
                 return (
@@ -1919,7 +1952,7 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
                       editor.chain().focus().toggleHighlight({ color }).run()
                       setShowHighlightPicker(false)
                     }}
-                    className={`w-7 h-7 rounded-lg border-2 hover:scale-110 transition-all shadow-sm flex items-center justify-center ${
+                    className={`qn-format-colour h-7 w-7 rounded-lg border-2 hover:scale-110 transition-all shadow-sm flex items-center justify-center ${
  isActive 
  ? 'border-emerald-500 ring-2 ring-emerald-200 dark:ring-emerald-800' 
                         : 'border-subtle  hover:border-emerald-500'
@@ -1942,7 +1975,7 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
                 editor.chain().focus().unsetHighlight().run()
                 setShowHighlightPicker(false)
               }}
-              className="w-full mt-3 px-3 py-1.5 text-xs text-content-muted hover:bg-surface-hover rounded-lg border border-subtle transition-colors"
+              className="qn-touch-target mt-3 w-full rounded-lg border border-subtle px-3 py-1.5 text-xs text-content-muted transition-colors hover:bg-surface-hover"
             >
               Remove Highlight
             </button>
@@ -1954,7 +1987,7 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
                   aria-label="Choose custom highlight color"
                   value={customHighlight}
                   onChange={(e) => setCustomHighlight(e.target.value)}
-                  className="w-10 h-8 border border-subtle rounded cursor-pointer "
+                  className="qn-format-colour h-8 w-10 cursor-pointer rounded border border-subtle"
                 />
                 <input
                   type="text"
@@ -1970,7 +2003,7 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
                     editor.chain().focus().toggleHighlight({ color: customHighlight }).run()
                     setShowHighlightPicker(false)
                   }}
-                  className="px-3 py-1 text-xs text-accent-on rounded bg-accent hover:bg-accent-hover"
+                  className="qn-touch-target rounded bg-accent px-3 py-1 text-xs text-accent-on hover:bg-accent-hover"
                 >
                   Apply
                 </button>

@@ -7,13 +7,23 @@ const VIEWPORT_PADDING = 8
 export function getVisibleViewport() {
   const visual = window.visualViewport
   if (visual) {
+    // Some iOS/WebKit builds briefly report a visual viewport a few CSS
+    // pixels wider than the layout viewport after the software keyboard or
+    // orientation changes. Clamp to both coordinate systems so a fixed
+    // popover can never be positioned beyond the document's right edge.
+    const layoutWidth = Math.min(document.documentElement.clientWidth, window.innerWidth)
+    const layoutHeight = Math.min(document.documentElement.clientHeight, window.innerHeight)
+    const left = Math.max(0, visual.offsetLeft)
+    const top = Math.max(0, visual.offsetTop)
+    const right = Math.min(visual.offsetLeft + visual.width, layoutWidth)
+    const bottom = Math.min(visual.offsetTop + visual.height, layoutHeight)
     return {
-      left: visual.offsetLeft,
-      top: visual.offsetTop,
-      right: visual.offsetLeft + visual.width,
-      bottom: visual.offsetTop + visual.height,
-      width: visual.width,
-      height: visual.height,
+      left,
+      top,
+      right,
+      bottom,
+      width: Math.max(0, right - left),
+      height: Math.max(0, bottom - top),
     }
   }
 
@@ -47,6 +57,7 @@ export function useAnchoredPosition({ anchorRef, open, placement = 'bottom-start
     // Measure without constraints first, then clamp.
     const fw = floating.offsetWidth
     const fh = floating.scrollHeight
+    const constrainedWidth = Math.min(fw, viewport.width - VIEWPORT_PADDING * 2)
 
     const spaceBelow = viewport.bottom - rect.bottom - offset - VIEWPORT_PADDING
     const spaceAbove = rect.top - viewport.top - offset - VIEWPORT_PADDING
@@ -66,8 +77,8 @@ export function useAnchoredPosition({ anchorRef, open, placement = 'bottom-start
         )
 
     const alignEnd = placement.endsWith('end')
-    let left = alignEnd ? rect.right - fw : rect.left
-    left = Math.min(left, viewport.right - Math.min(fw, viewport.width) - VIEWPORT_PADDING)
+    let left = alignEnd ? rect.right - constrainedWidth : rect.left
+    left = Math.min(left, viewport.right - constrainedWidth - VIEWPORT_PADDING)
     left = Math.max(viewport.left + VIEWPORT_PADDING, left)
 
     setStyle({
@@ -75,6 +86,7 @@ export function useAnchoredPosition({ anchorRef, open, placement = 'bottom-start
       left,
       top,
       maxHeight,
+      width: constrainedWidth,
       maxWidth: viewport.width - VIEWPORT_PADDING * 2,
       visibility: 'visible',
     })
@@ -189,7 +201,7 @@ export function Menu({
       ref={floatingRef}
       role="menu"
       aria-label={label}
-      style={{ ...style, width }}
+      style={{ ...style, ...(width ? { width } : {}) }}
       className={`qn-menu z-dropdown overflow-y-auto overscroll-contain rounded-card border border-subtle bg-surface-raised p-1 shadow-lg animate-menu-in ${className}`}
     >
       {children}
@@ -217,7 +229,7 @@ export function MenuItem({
       aria-current={selected || undefined}
       onClick={onClick}
       className={[
-        'flex w-full items-center gap-2.5 rounded-control px-2.5 py-2 text-left text-ui-md transition-colors duration-fast',
+        'qn-touch-target flex w-full items-center gap-2.5 rounded-control px-2.5 py-2 text-left text-ui-md transition-colors duration-fast',
         'disabled:cursor-not-allowed disabled:opacity-50',
         tone === 'danger'
           ? 'text-danger-text hover:bg-danger-soft'

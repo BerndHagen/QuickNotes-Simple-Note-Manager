@@ -202,12 +202,12 @@ function ColorPickerDropdown({ isOpen, onClose, onSelect, currentColor, title, a
       ref={dropdownRef}
       role="dialog"
       aria-label={title}
-      className="fixed z-[99999] w-[min(15rem,calc(100vw-1.25rem))] rounded-xl border border-subtle bg-surface-raised p-3 shadow-2xl"
+      className="fixed z-[99999] w-[min(18rem,calc(100vw-1.25rem))] rounded-xl border border-subtle bg-surface-raised p-3 shadow-2xl"
       style={{ top: position.top, left: position.left }}
       onMouseDown={(e) => e.stopPropagation()}
     >
       <p className="text-xs font-medium text-content-muted mb-2">{title}</p>
-      <div className="grid grid-cols-6 gap-1.5 sm:grid-cols-8">
+      <div className="grid grid-cols-6 gap-1 sm:grid-cols-8">
         {cellColors.map((color, index) => (
           <button
             key={index}
@@ -222,7 +222,7 @@ function ColorPickerDropdown({ isOpen, onClose, onSelect, currentColor, title, a
               onSelect(color)
               onClose()
             }}
-            className={`w-6 h-6 rounded border-2 hover:scale-110 transition-all flex items-center justify-center ${
+            className={`qn-format-colour h-6 w-6 rounded border-2 hover:scale-110 transition-all flex items-center justify-center ${
  currentColor === color 
  ? 'border-emerald-500 ring-2 ring-emerald-200 dark:ring-emerald-800' 
                 : 'border-subtle  hover:border-emerald-400'
@@ -251,7 +251,7 @@ function ColorPickerDropdown({ isOpen, onClose, onSelect, currentColor, title, a
             aria-label="Choose custom colour"
             value={customColor}
             onChange={(e) => setCustomColor(e.target.value)}
-            className="w-8 h-8 rounded cursor-pointer border border-subtle "
+            className="qn-format-colour h-8 w-8 cursor-pointer rounded border border-subtle"
           />
           <input
             type="text"

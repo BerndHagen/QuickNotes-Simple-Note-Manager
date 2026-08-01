@@ -224,7 +224,7 @@ export default function DuplicateDetectionModal() {
             type="button"
             onClick={handleClose}
             aria-label="Close duplicate detection"
-            className="rounded-full p-2 transition-colors hover:bg-banner-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-banner-text"
+            className="qn-square-control rounded-full p-2 transition-colors hover:bg-banner-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-banner-text"
           >
             <X className="w-5 h-5" aria-hidden="true" />
           </button>

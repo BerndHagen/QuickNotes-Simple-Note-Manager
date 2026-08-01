@@ -144,7 +144,7 @@ export default function NoteLinkPopover({ editor, isOpen, onClose, position }) {
             type="button"
             onClick={onClose}
             aria-label={t('common.close', 'Close')}
-            className="p-1 hover:bg-surface-sunken dark:hover:bg-surface-sunken rounded transition-colors"
+            className="qn-square-control rounded p-1 transition-colors hover:bg-surface-sunken dark:hover:bg-surface-sunken"
           >
             <X className="w-4 h-4 text-content-muted" aria-hidden="true" />
           </button>

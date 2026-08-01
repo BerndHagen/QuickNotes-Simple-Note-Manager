@@ -173,7 +173,7 @@ export default function VoiceInput({ onTranscript, isActive, onToggle }) {
             type="button"
             onClick={() => onToggleRef.current?.(false)}
             aria-label="Close voice input"
-            className="ml-2 rounded p-1 hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:hover:bg-red-800/50"
+            className="qn-square-control ml-2 rounded p-1 hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:hover:bg-red-800/50"
           >
             <span aria-hidden="true">×</span>
           </button>
@@ -202,7 +202,7 @@ export default function VoiceInput({ onTranscript, isActive, onToggle }) {
           type="button"
           onClick={() => onToggleRef.current?.(false)}
           aria-label="Close voice input"
-          className="rounded p-1 transition-colors hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          className="qn-square-control rounded p-1 transition-colors hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           <MicOff className="h-4 w-4 text-content-muted" aria-hidden="true" />
         </button>

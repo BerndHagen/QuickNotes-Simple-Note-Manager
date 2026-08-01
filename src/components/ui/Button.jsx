@@ -31,7 +31,7 @@ const ICON_SIZES = { sm: 'h-3.5 w-3.5', md: 'h-4 w-4', lg: 'h-[18px] w-[18px]' }
  */
 export function buttonClasses({ variant = 'secondary', size = 'md', fullWidth = false } = {}) {
   return [
-    'inline-flex shrink-0 select-none items-center justify-center whitespace-nowrap font-medium',
+    'qn-touch-target inline-flex shrink-0 select-none items-center justify-center whitespace-nowrap font-medium',
     'transition-[background-color,color,box-shadow,filter] duration-fast ease-qn',
     'disabled:cursor-not-allowed',
     VARIANTS[variant] || VARIANTS.secondary,
@@ -68,7 +68,7 @@ const Button = forwardRef(function Button(
       disabled={disabled || loading}
       aria-busy={loading || undefined}
       className={[
-        'inline-flex shrink-0 select-none items-center justify-center whitespace-nowrap font-medium',
+        'qn-touch-target inline-flex shrink-0 select-none items-center justify-center whitespace-nowrap font-medium',
         'transition-[background-color,color,box-shadow,filter] duration-fast ease-qn',
         'disabled:cursor-not-allowed',
         VARIANTS[variant] || VARIANTS.secondary,
@@ -150,7 +150,7 @@ export const IconButton = forwardRef(function IconButton(
       }
       disabled={disabled || loading}
       className={[
-        'inline-flex shrink-0 items-center justify-center transition-colors duration-fast ease-qn',
+        'qn-square-control inline-flex shrink-0 items-center justify-center transition-colors duration-fast ease-qn',
         'disabled:cursor-not-allowed disabled:opacity-50',
         colourClasses,
         ICON_BUTTON_SIZES[size] || ICON_BUTTON_SIZES.md,

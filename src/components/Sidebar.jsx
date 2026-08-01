@@ -38,7 +38,7 @@ function NavItem({ icon: Icon, label, count, selected, onClick, iconColor, trail
         type="button"
         onClick={onClick}
         aria-current={selected ? 'page' : undefined}
-        className={`flex w-full items-center gap-3 rounded-control px-2.5 py-[7px] text-left transition-colors duration-fast ${
+        className={`qn-touch-target flex w-full items-center gap-3 rounded-control px-2.5 py-[7px] text-left transition-colors duration-fast ${
  selected
  ? 'bg-nav-active text-nav-active-text'
             : 'text-nav-muted hover:bg-nav-hover hover:text-nav-text'
@@ -70,7 +70,7 @@ function SectionHeader({ label, expanded, onToggle, action }) {
         type="button"
         onClick={onToggle}
         aria-expanded={expanded}
-        className="flex min-w-0 flex-1 items-center gap-1.5 rounded-control py-1 pr-1 text-ui-xs font-semibold uppercase tracking-[0.08em] text-nav-subtle transition-colors duration-fast hover:text-nav-muted"
+        className="qn-touch-target flex min-w-0 flex-1 items-center gap-1.5 rounded-control py-1 pr-1 text-ui-xs font-semibold uppercase tracking-[0.08em] text-nav-subtle transition-colors duration-fast hover:text-nav-muted"
       >
         <ChevronDown
           className={`h-3 w-3 shrink-0 transition-transform duration-fast ${expanded ? '' : '-rotate-90'}`}
@@ -91,7 +91,7 @@ function NavIconButton({ icon: Icon, label, onClick, className = '' }) {
       onClick={onClick}
       aria-label={label}
       title={label}
-      className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-control text-nav-subtle transition-colors duration-fast hover:bg-nav-hover hover:text-nav-text ${className}`}
+      className={`qn-square-control inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-control text-nav-subtle transition-colors duration-fast hover:bg-nav-hover hover:text-nav-text ${className}`}
     >
       <Icon className="h-3.5 w-3.5" aria-hidden="true" />
     </button>

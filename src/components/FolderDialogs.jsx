@@ -25,7 +25,7 @@ function IconGrid({ value, onChange, labelledBy }) {
     <div
       role="radiogroup"
       aria-labelledby={labelledBy}
-      className="grid max-h-44 grid-cols-[repeat(auto-fill,minmax(36px,1fr))] gap-1 overflow-y-auto rounded-control border border-subtle bg-surface-sunken p-2"
+      className="grid max-h-52 grid-cols-[repeat(auto-fill,minmax(44px,1fr))] gap-1 overflow-y-auto rounded-control border border-subtle bg-surface-sunken p-2"
     >
       {folderIconNames.map((name, index) => {
         const Icon = folderIcons[name]
@@ -41,7 +41,7 @@ function IconGrid({ value, onChange, labelledBy }) {
             tabIndex={selected ? 0 : -1}
             onClick={() => onChange(name)}
             onKeyDown={(event) => handleRadioNavigation(event, folderIconNames, index, onChange)}
-            className={`flex aspect-square items-center justify-center rounded-control transition-colors duration-fast ${
+            className={`qn-square-control flex aspect-square items-center justify-center rounded-control transition-colors duration-fast ${
  selected
  ? 'bg-accent-soft text-accent-text ring-2 ring-[var(--qn-accent)]'
                 : 'text-content-muted hover:bg-surface-hover hover:text-content'
@@ -60,7 +60,7 @@ function ColorGrid({ value, onChange, labelledBy }) {
     <div
       role="radiogroup"
       aria-labelledby={labelledBy}
-      className="grid grid-cols-[repeat(auto-fill,minmax(28px,1fr))] gap-1.5 rounded-control border border-subtle bg-surface-sunken p-2"
+      className="grid grid-cols-[repeat(auto-fill,minmax(44px,1fr))] gap-1 rounded-control border border-subtle bg-surface-sunken p-2"
     >
       {folderColors.map((color, index) => {
         const selected = value === color
@@ -75,12 +75,18 @@ function ColorGrid({ value, onChange, labelledBy }) {
             tabIndex={selected ? 0 : -1}
             onClick={() => onChange(color)}
             onKeyDown={(event) => handleRadioNavigation(event, folderColors, index, onChange)}
-            className={`mx-auto flex h-6 w-6 items-center justify-center rounded-full transition-transform duration-fast hover:scale-110 ${
- selected ? 'ring-2 ring-[var(--qn-text)] ring-offset-2 ring-offset-[var(--qn-surface-sunken)]' : ''
- }`}
-            style={{ backgroundColor: color }}
+            className="qn-folder-colour flex h-11 w-11 items-center justify-center rounded-full transition-transform duration-fast hover:scale-105"
           >
-            {selected && <Check className="h-3 w-3 text-white drop-shadow" aria-hidden="true" />}
+            <span
+              className={`flex h-6 w-6 items-center justify-center rounded-full ${
+                selected
+                  ? 'ring-2 ring-[var(--qn-text)] ring-offset-2 ring-offset-[var(--qn-surface-sunken)]'
+                  : ''
+              }`}
+              style={{ backgroundColor: color }}
+            >
+              {selected && <Check className="h-3 w-3 text-white drop-shadow" aria-hidden="true" />}
+            </span>
           </button>
         )
       })}

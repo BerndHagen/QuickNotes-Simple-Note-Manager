@@ -132,7 +132,7 @@ export default function EditorSettingsModal() {
             type="button"
             onClick={() => setEditorSettingsOpen(false)}
             aria-label="Close editor settings"
-            className="p-2 rounded-full hover:bg-white/20 transition-colors"
+            className="qn-square-control rounded-full p-2 transition-colors hover:bg-white/20"
           >
             <X className="w-5 h-5" aria-hidden="true" />
           </button>

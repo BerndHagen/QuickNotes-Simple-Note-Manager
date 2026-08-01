@@ -113,6 +113,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
   const [folderPickerOpen, setFolderPickerOpen] = useState(false)
   const [newTagName, setNewTagName] = useState('')
   const [showBacklinks, setShowBacklinks] = useState(false)
+  const [noteDetailsExpanded, setNoteDetailsExpanded] = useState(false)
   const [editorRef, setEditorRef] = useState(null)
   const [specializedContextMenu, setSpecializedContextMenu] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -171,6 +172,10 @@ export default function NoteEditor({ onBack, showBack = false }) {
   useEffect(() => {
     if (noteTitle !== undefined) setTitle(noteTitle || '')
   }, [noteId, noteTitle])
+
+  useEffect(() => {
+    setNoteDetailsExpanded(false)
+  }, [noteId])
 
   useEffect(() => {
     const tracker = versionTrackerRef.current
@@ -424,7 +429,11 @@ export default function NoteEditor({ onBack, showBack = false }) {
       {/* Banner header */}
       {!isSpecialized && (
         <header className="qn-note-banner qn-banner-surface m-2 shrink-0 rounded-card px-4 py-3.5 text-banner-text sm:mx-3 sm:px-5 sm:py-4">
-        <div className="qn-note-title-row mb-2 flex items-start gap-1.5">
+        <div
+          className={`qn-note-title-row flex items-start gap-1.5 ${
+            noteDetailsExpanded ? 'mb-2' : 'mb-0 md:mb-2'
+          }`}
+        >
 
           <div className="min-w-0 flex-1">
             <label htmlFor="qn-note-title" className="qn-sr-only">
@@ -456,6 +465,21 @@ export default function NoteEditor({ onBack, showBack = false }) {
             />
           </div>
 
+          <IconButton
+            icon={ChevronDown}
+            label={
+              noteDetailsExpanded
+                ? t('editor.hideDetails', 'Hide note details')
+                : t('editor.showDetails', 'Show note details')
+            }
+            tone="onBanner"
+            active={noteDetailsExpanded}
+            aria-expanded={noteDetailsExpanded}
+            aria-controls="qn-note-details"
+            onClick={() => setNoteDetailsExpanded((expanded) => !expanded)}
+            className={`shrink-0 md:hidden ${noteDetailsExpanded ? 'rotate-180' : ''}`}
+          />
+
           {!isShared && (
             <IconButton
               icon={Pin}
@@ -470,7 +494,12 @@ export default function NoteEditor({ onBack, showBack = false }) {
         </div>
 
         {/* Metadata row */}
-        <div className="qn-note-metadata flex flex-nowrap items-center gap-x-1 gap-y-1 overflow-x-auto overscroll-x-contain text-ui-md text-banner-muted sm:flex-wrap sm:overflow-visible">
+        <div
+          id="qn-note-details"
+          className={`qn-note-metadata flex-nowrap items-center gap-x-1 gap-y-1 overflow-x-auto overscroll-x-contain text-ui-md text-banner-muted sm:flex-wrap sm:overflow-visible md:flex ${
+            noteDetailsExpanded ? 'flex' : 'hidden'
+          }`}
+        >
           <span className="inline-flex items-center gap-1.5 px-1.5 py-0.5">
             <Clock className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             <time dateTime={note.updatedAt}>{formatDate(note.updatedAt, language)}</time>
@@ -483,7 +512,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
             aria-haspopup={isShared ? undefined : 'menu'}
             aria-expanded={isShared ? undefined : folderPickerOpen}
             disabled={isShared}
-            className="inline-flex max-w-[45%] items-center gap-1.5 rounded-control px-1.5 py-0.5 transition-colors duration-fast enabled:hover:bg-banner-hover enabled:hover:text-banner-text disabled:cursor-default"
+            className="qn-touch-target inline-flex max-w-[45%] items-center gap-1.5 rounded-control px-1.5 py-0.5 transition-colors duration-fast enabled:hover:bg-banner-hover enabled:hover:text-banner-text disabled:cursor-default"
           >
             <FolderOpen className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             <span className="truncate">{currentFolder?.name || t('editor.noFolder', 'No folder')}</span>
@@ -497,7 +526,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
             aria-haspopup={isShared ? undefined : 'menu'}
             aria-expanded={isShared ? undefined : tagPickerOpen}
             disabled={isShared}
-            className="inline-flex items-center gap-1.5 rounded-control px-1.5 py-0.5 transition-colors duration-fast enabled:hover:bg-banner-hover enabled:hover:text-banner-text disabled:cursor-default"
+            className="qn-touch-target inline-flex items-center gap-1.5 rounded-control px-1.5 py-0.5 transition-colors duration-fast enabled:hover:bg-banner-hover enabled:hover:text-banner-text disabled:cursor-default"
           >
             <Tag className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             <span>
@@ -544,7 +573,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
             type="button"
             onClick={() => setShowBacklinks((v) => !v)}
             aria-expanded={showBacklinks}
-            className="inline-flex items-center gap-1.5 rounded-control px-1 py-0.5 text-ui-sm text-content-muted transition-colors duration-fast hover:text-content"
+            className="qn-touch-target inline-flex items-center gap-1.5 rounded-control px-1 py-0.5 text-ui-sm text-content-muted transition-colors duration-fast hover:text-content"
           >
             <Link2 className="h-3.5 w-3.5" aria-hidden="true" />
             {backlinks.length} {backlinks.length === 1 ? 'backlink' : 'backlinks'}
@@ -560,7 +589,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
                   <button
                     type="button"
                     onClick={() => useNotesStore.getState().setSelectedNote(bl.id)}
-                    className="flex w-full items-center gap-2 rounded-control px-2 py-1 text-left text-ui-md text-content-muted transition-colors duration-fast hover:bg-surface-hover hover:text-content"
+                    className="qn-touch-target flex w-full items-center gap-2 rounded-control px-2 py-1 text-left text-ui-md text-content-muted transition-colors duration-fast hover:bg-surface-hover hover:text-content"
                   >
                     <FileText className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden="true" />
                     <span className="truncate">{bl.title}</span>

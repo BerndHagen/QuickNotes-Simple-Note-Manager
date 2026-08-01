@@ -653,12 +653,20 @@ export default function BrainstormEditor({ data, onChange, noteTitle, onTitleCha
                   {['#6b7280', '#ef4444', '#f97316', '#f59e0b', '#84cc16', '#22c55e', '#10b981', '#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899'].map((color) => (
                     <button
                       key={color}
+                      type="button"
                       onClick={() => setNewCategoryColor(color)}
                       aria-label={`Use category color ${color}`}
                       aria-pressed={newCategoryColor === color}
-                      className={`w-8 h-8 rounded-full ${newCategoryColor === color ? 'ring-2 ring-offset-2 ring-purple-500' : ''}`}
-                      style={{ backgroundColor: color }}
-                    />
+                      className="qn-square-control flex h-11 w-11 items-center justify-center rounded-full"
+                    >
+                      <span
+                        className={`h-8 w-8 rounded-full ${
+                          newCategoryColor === color ? 'ring-2 ring-purple-500 ring-offset-2' : ''
+                        }`}
+                        style={{ backgroundColor: color }}
+                        aria-hidden="true"
+                      />
+                    </button>
                   ))}
                 </div>
               </div>

@@ -130,7 +130,7 @@ export default function SharedNotesView() {
               type="button"
               onClick={() => setSharedNotesViewOpen(false)}
               aria-label="Close shared notes"
-              className="p-2 hover:bg-white/20 rounded-full transition-colors"
+              className="qn-square-control rounded-full p-2 transition-colors hover:bg-white/20"
             >
               <X className="w-5 h-5" aria-hidden="true" />
             </button>

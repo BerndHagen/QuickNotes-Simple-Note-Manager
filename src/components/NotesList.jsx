@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
+  ArrowDown,
+  ArrowUp,
   Copy,
   Info,
   FileText,
@@ -22,7 +24,8 @@ import {
   DndContext,
   closestCenter,
   KeyboardSensor,
-  PointerSensor,
+  MouseSensor,
+  TouchSensor,
   useSensor,
   useSensors,
 } from '@dnd-kit/core'
@@ -43,8 +46,9 @@ import NotePreviewPopover from './NotePreviewPopover'
 import NoteCard from './NoteCard'
 import { Button, IconButton, Input, Menu, MenuItem, MenuSeparator, MenuLabel, EmptyState } from './ui'
 import { ConfirmDialog } from './FolderDialogs'
+import { useMediaQuery } from '../hooks/useBreakpoint'
 
-function NoteContextMenu({ point, notes: targets, onClose, folders, tags }) {
+function NoteContextMenu({ point, notes: targets, onClose, folders, tags, manualOrder, onMove }) {
   const { toggleStar, togglePin, duplicateNote, deleteNote, moveNote, addTagToNote, removeTagFromNote } =
     useNotesStore()
   const confirmBeforeDelete = useUIStore((s) => s.confirmBeforeDelete)
@@ -135,6 +139,24 @@ function NoteContextMenu({ point, notes: targets, onClose, folders, tags }) {
         <MenuItem icon={Copy} onClick={run(() => targets.forEach((n) => duplicateNote(n.id)))}>
           Duplicate
         </MenuItem>
+        {count === 1 && manualOrder && (
+          <>
+            <MenuItem
+              icon={ArrowUp}
+              disabled={!manualOrder.canMoveUp}
+              onClick={run(() => onMove?.(targets[0].id, -1))}
+            >
+              Move up
+            </MenuItem>
+            <MenuItem
+              icon={ArrowDown}
+              disabled={!manualOrder.canMoveDown}
+              onClick={run(() => onMove?.(targets[0].id, 1))}
+            >
+              Move down
+            </MenuItem>
+          </>
+        )}
         <MenuItem icon={FolderInput} onClick={() => setSubmenu('folder')}>
           Move to folder…
         </MenuItem>
@@ -164,7 +186,7 @@ function NoteContextMenu({ point, notes: targets, onClose, folders, tags }) {
   )
 }
 
-function SortableNoteRow({ note, children }) {
+function SortableNoteRow({ note, children, cardIsDragTarget }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: note.id,
   })
@@ -176,14 +198,16 @@ function SortableNoteRow({ note, children }) {
       className={isDragging ? 'opacity-50' : ''}
     >
       {children(
-        <span
+        <button
+          type="button"
           {...attributes}
           {...listeners}
-          className="qn-note-drag-handle absolute left-0 top-0 z-10 flex h-full w-5 cursor-grab touch-none items-center justify-center text-content-subtle opacity-0 transition-opacity duration-fast hover:opacity-100 focus-visible:opacity-100 active:cursor-grabbing"
+          className="qn-note-drag-handle qn-square-control absolute left-3 top-1/2 z-10 flex h-9 w-7 -translate-y-1/2 cursor-grab touch-none items-center justify-center rounded-control text-content-subtle opacity-0 transition-opacity duration-fast hover:bg-surface-hover hover:opacity-100 focus-visible:opacity-100 active:cursor-grabbing"
           aria-label={`Reorder ${note.title}`}
         >
           <GripVertical className="h-3.5 w-3.5" aria-hidden="true" />
-        </span>
+        </button>,
+        cardIsDragTarget ? { ...attributes, ...listeners } : undefined
       )}
     </div>
   )
@@ -218,9 +242,11 @@ export default function NotesList({ sidebarToggle, onOpenNote }) {
   const [lastClickedId, setLastClickedId] = useState(null)
   const listRef = useRef(null)
   const searchRef = useRef(null)
+  const isCoarsePointer = useMediaQuery('(hover: none), (pointer: coarse), (any-pointer: coarse)')
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   )
 
@@ -308,6 +334,16 @@ export default function NotesList({ sidebarToggle, onOpenNote }) {
     reorderNotes(arrayMove(visibleNotes, oldIndex, newIndex).map((n) => n.id))
   }
 
+  const moveNoteByOffset = useCallback(
+    (noteId, offset) => {
+      const oldIndex = visibleNotes.findIndex((note) => note.id === noteId)
+      const newIndex = oldIndex + offset
+      if (oldIndex === -1 || newIndex < 0 || newIndex >= visibleNotes.length) return
+      reorderNotes(arrayMove(visibleNotes, oldIndex, newIndex).map((note) => note.id))
+    },
+    [visibleNotes, reorderNotes]
+  )
+
   const handleCreateNote = () => {
     createNote({ title: t('notes.newNote'), content: '', folderId: selectedFolderId })
     onOpenNote?.()
@@ -325,7 +361,7 @@ export default function NotesList({ sidebarToggle, onOpenNote }) {
   const isManualSort = currentSort === 'manual'
   let flatIndex = -1
 
-  const renderCard = (note, dragHandle) => {
+  const renderCard = (note, dragHandle, dragProps) => {
     flatIndex += 1
     const index = flatIndex
     return (
@@ -333,6 +369,7 @@ export default function NotesList({ sidebarToggle, onOpenNote }) {
         <NoteCard
           note={note}
           dragHandle={dragHandle}
+          dragProps={dragProps}
           isSelected={selectedNoteId === note.id}
           isMultiSelected={selectedIds.has(note.id)}
           onClick={(e) => handleNoteClick(e, note, index)}
@@ -367,8 +404,8 @@ export default function NotesList({ sidebarToggle, onOpenNote }) {
       <ul className="group/list">
         {group.notes.map((note) =>
           isManualSort ? (
-            <SortableNoteRow key={note.id} note={note}>
-              {(handle) => renderCard(note, handle)}
+            <SortableNoteRow key={note.id} note={note} cardIsDragTarget={!isCoarsePointer}>
+              {(handle, dragProps) => renderCard(note, handle, dragProps)}
             </SortableNoteRow>
           ) : (
             renderCard(note)
@@ -496,7 +533,7 @@ export default function NotesList({ sidebarToggle, onOpenNote }) {
             aria-pressed={viewMode === 'list'}
             aria-label="List view"
             title="List view"
-            className={`flex h-6 w-7 items-center justify-center rounded-[6px] transition-colors duration-fast ${
+            className={`qn-square-control flex h-6 w-7 items-center justify-center rounded-[6px] transition-colors duration-fast ${
  viewMode === 'list'
  ? 'bg-surface-raised text-content shadow-xs'
                 : 'text-content-subtle hover:text-content'
@@ -513,7 +550,7 @@ export default function NotesList({ sidebarToggle, onOpenNote }) {
             aria-pressed={viewMode === 'grid'}
             aria-label="Grid view"
             title="Grid view"
-            className={`flex h-6 w-7 items-center justify-center rounded-[6px] transition-colors duration-fast ${
+            className={`qn-square-control flex h-6 w-7 items-center justify-center rounded-[6px] transition-colors duration-fast ${
  viewMode === 'grid'
  ? 'bg-surface-raised text-content shadow-xs'
                 : 'text-content-subtle hover:text-content'
@@ -530,6 +567,17 @@ export default function NotesList({ sidebarToggle, onOpenNote }) {
           notes={contextMenu.notes}
           folders={folders}
           tags={tags}
+          manualOrder={
+            isManualSort && contextMenu.notes.length === 1
+              ? {
+                  canMoveUp: visibleNotes.findIndex((note) => note.id === contextMenu.notes[0].id) > 0,
+                  canMoveDown:
+                    visibleNotes.findIndex((note) => note.id === contextMenu.notes[0].id) <
+                    visibleNotes.length - 1,
+                }
+              : null
+          }
+          onMove={moveNoteByOffset}
           onClose={() => setContextMenu(null)}
         />
       )}

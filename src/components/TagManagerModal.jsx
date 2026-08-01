@@ -61,6 +61,30 @@ function handleColorKeyDown(event, index, onChange) {
   event.currentTarget.parentElement?.querySelectorAll('[role="radio"]')[nextIndex]?.focus()
 }
 
+function TagColourChoice({ color, selected, index, onChange }) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={selected}
+      aria-label={`Colour ${color}`}
+      title={color}
+      tabIndex={selected ? 0 : -1}
+      onClick={() => onChange(color)}
+      onKeyDown={(event) => handleColorKeyDown(event, index, onChange)}
+      className="qn-square-control flex h-11 w-11 items-center justify-center rounded-full transition-transform hover:scale-105"
+    >
+      <span
+        className={`h-6 w-6 rounded-full ${
+          selected ? 'ring-2 ring-gray-400 ring-offset-2 dark:ring-gray-500' : ''
+        }`}
+        style={{ backgroundColor: color }}
+        aria-hidden="true"
+      />
+    </button>
+  )
+}
+
 export default function TagManagerModal() {
   const { t } = useTranslation()
   const { tagManagerOpen, setTagManagerOpen } = useUIStore()
@@ -170,7 +194,7 @@ export default function TagManagerModal() {
             type="button"
             onClick={() => setTagManagerOpen(false)}
             aria-label={t('common.close', 'Close')}
-            className="p-2 rounded-full hover:bg-white/20 transition-colors"
+            className="qn-square-control rounded-full p-2 transition-colors hover:bg-white/20"
           >
             <X className="w-5 h-5" aria-hidden="true" />
           </button>
@@ -209,20 +233,12 @@ export default function TagManagerModal() {
               </div>
               <div role="radiogroup" aria-label="New tag colour" className="flex flex-wrap gap-1.5 mb-3">
                 {TAG_COLORS.map((color, index) => (
-                  <button
+                  <TagColourChoice
                     key={color}
-                    type="button"
-                    role="radio"
-                    aria-checked={newTagColor === color}
-                    aria-label={`Colour ${color}`}
-                    title={color}
-                    tabIndex={newTagColor === color ? 0 : -1}
-                    onClick={() => setNewTagColor(color)}
-                    onKeyDown={(event) => handleColorKeyDown(event, index, setNewTagColor)}
-                    className={`w-6 h-6 rounded-full transition-transform hover:scale-110 ${
- newTagColor === color ? 'ring-2 ring-offset-2 ring-gray-400 dark:ring-gray-500' : ''
- }`}
-                    style={{ backgroundColor: color }}
+                    color={color}
+                    selected={newTagColor === color}
+                    index={index}
+                    onChange={setNewTagColor}
                   />
                 ))}
               </div>
@@ -285,20 +301,12 @@ export default function TagManagerModal() {
                       </div>
                       <div role="radiogroup" aria-label={`Colour for ${tag.name || 'tag'}`} className="flex flex-wrap gap-1.5 mb-3">
                         {TAG_COLORS.map((color, index) => (
-                          <button
+                          <TagColourChoice
                             key={color}
-                            type="button"
-                            role="radio"
-                            aria-checked={editingColor === color}
-                            aria-label={`Colour ${color}`}
-                            title={color}
-                            tabIndex={editingColor === color ? 0 : -1}
-                            onClick={() => setEditingColor(color)}
-                            onKeyDown={(event) => handleColorKeyDown(event, index, setEditingColor)}
-                            className={`w-6 h-6 rounded-full transition-transform hover:scale-110 ${
- editingColor === color ? 'ring-2 ring-offset-2 ring-gray-400 dark:ring-gray-500' : ''
- }`}
-                            style={{ backgroundColor: color }}
+                            color={color}
+                            selected={editingColor === color}
+                            index={index}
+                            onChange={setEditingColor}
                           />
                         ))}
                       </div>

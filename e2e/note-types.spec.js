@@ -167,4 +167,47 @@ test.describe('focused note types', () => {
 
     expect(errors).toEqual([])
   })
+
+  test('keeps every specialized workspace usable on a phone', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 })
+    const errors = collectErrors(page)
+    await signIn(page)
+
+    for (const definition of focusedTypes) {
+      const dialog = await openPicker(page)
+      await dialog
+        .locator('section[aria-label="Note types"]')
+        .getByRole('button', { name: new RegExp(`^${definition.type}`, 'i') })
+        .click()
+      await dialog.getByText(definition.starter, { exact: true }).click()
+      const mobileTitle = `Mobile ${definition.title}`
+      await dialog.getByLabel('Note title').fill(mobileTitle)
+      await dialog.getByRole('button', { name: /^Create / }).click()
+      await page.locator('.note-card', { hasText: mobileTitle }).click()
+
+      const editor = page.locator(definition.className)
+      await expect(editor).toBeVisible()
+      await expectNoHorizontalOverflow(page)
+
+      const controls = await editor.locator('button:visible').evaluateAll((buttons) =>
+        buttons.map((button) => {
+          const box = button.getBoundingClientRect()
+          return {
+            name: button.getAttribute('aria-label') || button.textContent?.trim(),
+            width: box.width,
+            height: box.height,
+          }
+        })
+      )
+      for (const control of controls) {
+        expect(control.width, `${definition.type}: ${control.name} collapses horizontally`).toBeGreaterThanOrEqual(24)
+        expect(control.height, `${definition.type}: ${control.name} collapses vertically`).toBeGreaterThanOrEqual(24)
+      }
+
+      await page.getByRole('button', { name: /back to notes/i }).click()
+      await expect(page.getByRole('searchbox')).toBeVisible()
+    }
+
+    expect(errors).toEqual([])
+  })
 })
