@@ -644,12 +644,36 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
 .qn-auth-form-panel {
   background-color: var(--qn-surface-base);
   background-image:
+    radial-gradient(
+      88% 42% at 112% -6%,
+      transparent 54%,
+      rgba(5, 150, 105, 0.045) 54.4%,
+      transparent 54.8%,
+      transparent 67%,
+      rgba(5, 150, 105, 0.035) 67.4%,
+      transparent 67.8%,
+      transparent 80%,
+      rgba(5, 150, 105, 0.025) 80.4%,
+      transparent 80.8%
+    ),
     radial-gradient(72% 46% at 100% 0%, rgba(16, 185, 129, 0.065) 0%, transparent 72%),
     radial-gradient(58% 38% at 0% 100%, rgba(8, 61, 49, 0.035) 0%, transparent 76%);
 }
 
 .dark .qn-auth-form-panel {
   background-image:
+    radial-gradient(
+      88% 42% at 112% -6%,
+      transparent 54%,
+      rgba(52, 211, 153, 0.07) 54.4%,
+      transparent 54.8%,
+      transparent 67%,
+      rgba(52, 211, 153, 0.05) 67.4%,
+      transparent 67.8%,
+      transparent 80%,
+      rgba(52, 211, 153, 0.035) 80.4%,
+      transparent 80.8%
+    ),
     radial-gradient(72% 46% at 100% 0%, rgba(16, 185, 129, 0.08) 0%, transparent 72%),
     radial-gradient(58% 38% at 0% 100%, rgba(52, 211, 153, 0.035) 0%, transparent 76%);
 }
@@ -701,10 +725,7 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
       rgba(255, 255, 255, 0.045) 56.35%,
       transparent 56.7%
     ),
-    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
     radial-gradient(80% 90% at 10% 100%, rgba(16, 185, 129, 0.18), transparent 68%);
-  background-size: auto, 48px 48px, 48px 48px, auto;
 }
 
 .qn-auth-hero::after,
@@ -723,6 +744,75 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
 .qn-nav-surface::before,
 .qn-nav-surface::after {
   z-index: -1;
+}
+
+/* A static stack of ruled sheets turns the hero texture into something
+   specific to QuickNotes. It stays behind the headline and product preview,
+   carries no information, and is omitted below wide desktop sizes so compact
+   layouts keep their quieter visual hierarchy. */
+.qn-auth-stationery {
+  position: absolute;
+  z-index: 0;
+  top: 4%;
+  right: -18%;
+  width: clamp(410px, 34vw, 560px);
+  height: min(68vh, 690px);
+  min-height: 540px;
+  pointer-events: none;
+  opacity: 0.5;
+  transform: rotate(7deg);
+  transform-origin: 50% 50%;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.45) 28%, #000 58%);
+  mask-image: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.45) 28%, #000 58%);
+}
+
+.qn-auth-stationery-sheet {
+  position: absolute;
+  inset: 0;
+  display: block;
+  overflow: hidden;
+  border: 1px solid rgba(167, 243, 208, 0.14);
+  border-radius: 28px;
+}
+
+.qn-auth-stationery-sheet-back {
+  background: rgba(14, 116, 144, 0.035);
+  box-shadow: 0 26px 70px rgba(2, 20, 17, 0.16);
+  transform: translate(-38px, 38px) rotate(-3deg);
+}
+
+.qn-auth-stationery-sheet-front {
+  background-color: rgba(3, 43, 33, 0.18);
+  background-image:
+    radial-gradient(circle at 34px 48px, rgba(167, 243, 208, 0.2) 0 2px, transparent 2.5px),
+    linear-gradient(
+      90deg,
+      transparent 0,
+      transparent 76px,
+      rgba(52, 211, 153, 0.17) 76px,
+      rgba(52, 211, 153, 0.17) 77px,
+      transparent 77px
+    ),
+    repeating-linear-gradient(
+      180deg,
+      transparent 0,
+      transparent 34px,
+      rgba(255, 255, 255, 0.075) 34px,
+      rgba(255, 255, 255, 0.075) 35px
+    );
+  background-position: 0 0, 0 0, 0 0;
+  background-size: 100% 92px, auto, auto;
+  box-shadow:
+    0 30px 80px rgba(2, 20, 17, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+@media (min-width: 1536px) {
+  .qn-auth-stationery {
+    right: -15%;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.68) 20%, #000 46%);
+    mask-image: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.68) 20%, #000 46%);
+  }
 }
 
 .qn-auth-preview {

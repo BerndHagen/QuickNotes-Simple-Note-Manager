@@ -792,6 +792,11 @@ export default function AuthScreen() {
 
       <main className="qn-auth-frame relative z-10 grid h-[100dvh] w-full max-w-[1680px] overflow-hidden lg:grid-cols-[minmax(0,1.06fr)_clamp(430px,32vw,660px)] 2xl:h-[min(100dvh-72px,1000px)] 2xl:rounded-[26px]">
         <section className="qn-auth-hero relative hidden overflow-hidden border-r border-white/10 px-10 py-9 text-white lg:flex lg:flex-col xl:px-16 xl:py-11">
+          <div className="qn-auth-stationery hidden xl:block" aria-hidden="true">
+            <span className="qn-auth-stationery-sheet qn-auth-stationery-sheet-back" />
+            <span className="qn-auth-stationery-sheet qn-auth-stationery-sheet-front" />
+          </div>
+
           <div className="relative z-10 mx-auto w-full max-w-[860px]">
             <BrandMark />
           </div>
