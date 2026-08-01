@@ -1,21 +1,32 @@
 import { useState } from 'react'
 import {
+  Archive,
   ArrowLeft,
   ArrowRight,
-  Check,
+  Bell,
   CheckCircle2,
+  Clock3,
   Eye,
   EyeOff,
+  Filter,
   FolderOpen,
   HardDrive,
-  History,
   LayoutGrid,
   Lock,
   Mail,
+  MoreHorizontal,
+  Pin,
+  Plus,
   RefreshCw,
   Search,
+  Send,
   ShieldCheck,
+  Sparkles,
+  Star,
+  Tag,
+  Trash2,
   User,
+  Users,
   WifiOff,
 } from 'lucide-react'
 import { backend, getRedirectUrl, isBackendConfigured } from '../lib/backend'
@@ -73,139 +84,184 @@ function BrandMark({ compact = false }) {
 }
 
 function WorkspacePreview() {
-  const tasks = [
-    'Shape the launch story and release notes',
-    'Review the final interaction details',
-    'Prepare the open-source release checklist',
+  const navigationItems = [
+    { icon: FolderOpen, label: 'All Notes', count: '8', active: true },
+    { icon: Star, label: 'Favorites', count: '1' },
+    { icon: Users, label: 'Shared with me' },
+    { icon: Trash2, label: 'Trash' },
+    { icon: Archive, label: 'Archive' },
+    { icon: Sparkles, label: 'Note types' },
+  ]
+  const noteCards = [
+    {
+      title: 'Welcome to QuickNotes',
+      preview: 'This note is yours to edit or delete. It covers the parts of QuickNotes…',
+      meta: '#welcome  #getting-started',
+      active: true,
+      pinned: true,
+    },
+    { title: 'Meeting notes', preview: '2026-08-01', meta: 'Just now' },
+    { title: 'New project', preview: '25% complete · Backlog: 2, To do: 2', meta: 'Just now' },
   ]
 
   return (
     <div
-      className="qn-auth-preview relative mt-8 w-full overflow-hidden rounded-[22px] border border-white/15 bg-white/95 p-2 shadow-2xl shadow-emerald-950/35"
+      className="qn-auth-preview relative mt-8 w-full overflow-hidden rounded-[20px] border border-white/25 bg-[#eef3f2] p-1.5 shadow-[0_24px_60px_rgba(2,20,17,0.38),0_2px_10px_rgba(2,20,17,0.16)]"
       aria-hidden="true"
     >
-      <div className="flex h-8 items-center gap-1.5 px-2.5">
-        <span className="h-2.5 w-2.5 rounded-full bg-[#ff6b65]" />
-        <span className="h-2.5 w-2.5 rounded-full bg-[#f4bf4f]" />
-        <span className="h-2.5 w-2.5 rounded-full bg-[#62c554]" />
-        <span className="ml-auto flex items-center gap-1 text-[9px] font-semibold text-slate-400">
-          <CheckCircle2 className="h-3 w-3 text-emerald-500" />
-          Saved locally
-        </span>
-      </div>
-
-      <div className="flex h-[318px] overflow-hidden rounded-[15px] border border-slate-200 bg-white">
+      <div className="flex h-[330px] overflow-hidden rounded-[14px] border border-slate-300/80 bg-white">
         {/* Mirrors the real rail: same material class, same brand mark. */}
-        <div className="qn-nav-surface flex w-[132px] shrink-0 flex-col px-2.5 py-3 text-white">
-          <div className="mb-4 flex items-center gap-2 px-1">
-            <span className="flex h-6 w-6 items-center justify-center rounded-[7px] border border-white/10 bg-[linear-gradient(140deg,#0e5341,#05352a)]">
-              <NotepadGlyph className="h-4 w-4" />
+        <div className="qn-nav-surface flex w-[138px] shrink-0 flex-col px-2.5 py-2.5 text-nav-text">
+          <div className="mb-3 flex items-center gap-2 px-1">
+            <span className="flex h-7 w-7 items-center justify-center rounded-[8px] border border-white/10 bg-[linear-gradient(140deg,#0e5341,#05352a)] shadow-sm">
+              <NotepadGlyph className="h-4 w-4 text-white" />
             </span>
-            <span className="text-[10px] font-bold">QuickNotes</span>
+            <span className="min-w-0">
+              <span className="block truncate text-[9px] font-bold leading-3">QuickNotes</span>
+              <span className="block truncate text-[6px] leading-2.5 text-nav-subtle">Note Manager</span>
+            </span>
           </div>
-          <div className="mb-3 flex h-7 items-center gap-2 rounded-[7px] bg-emerald-500/90 px-2 text-[9px] font-bold">
-            <span className="text-sm leading-none">+</span>
-            Quick note
+          <div className="mb-2.5 flex h-7 items-center gap-1.5 rounded-[7px] bg-emerald-600 px-2 text-[8px] font-bold text-white shadow-sm ring-1 ring-white/10">
+            <Plus className="h-3 w-3" />
+            <span className="flex-1">Quick Note</span>
+            <span className="text-[6px] font-semibold text-white/65">Ctrl N</span>
           </div>
-          {[
-            ['All notes', '12'],
-            ['Favorites', '4'],
-            ['Archive', ''],
-          ].map(([label, count], index) => (
+          {navigationItems.map(({ icon: Icon, label, count, active }) => (
             <div
               key={label}
-              className={`mb-0.5 flex h-6 items-center gap-1.5 rounded-[6px] px-1.5 text-[8px] ${
- index === 0 ? 'bg-white/10 text-white' : 'text-white/55'
+              className={`mb-px flex h-[21px] items-center gap-1.5 rounded-[6px] px-1.5 text-[7px] font-medium ${
+ active ? 'bg-white/10 text-nav-text' : 'text-nav-muted'
  }`}
             >
-              {index === 0 ? <FolderOpen className="h-3 w-3" /> : <History className="h-3 w-3" />}
+              <Icon className="h-2.5 w-2.5" />
               <span className="flex-1">{label}</span>
-              {count && <span className="rounded bg-white/10 px-1">{count}</span>}
+              {count && <span className="rounded bg-white/10 px-1 text-[6px]">{count}</span>}
             </div>
           ))}
-          <p className="mb-1 mt-3 px-1.5 text-[7px] font-bold uppercase tracking-[0.14em] text-white/35">
+          <p className="mb-1 mt-2.5 px-1.5 text-[6px] font-bold uppercase tracking-[0.14em] text-nav-subtle">
             Folders
           </p>
-          {['Projects', 'Personal', 'Reading'].map((label) => (
-            <div key={label} className="flex h-5 items-center gap-1.5 px-1.5 text-[8px] text-white/55">
-              <FolderOpen className="h-2.5 w-2.5" />
+          {['Work', 'Personal', 'Ideas'].map((label, index) => (
+            <div key={label} className="flex h-[18px] items-center gap-1.5 px-1.5 text-[7px] text-nav-muted">
+              <FolderOpen className={`h-2.5 w-2.5 ${index === 1 ? 'text-emerald-400' : ''}`} />
               {label}
             </div>
           ))}
-          <div className="mt-auto rounded-[8px] border border-white/10 bg-white/[0.04] p-2">
-            <p className="text-[8px] font-semibold">Open-source workspace</p>
-            <p className="mt-0.5 text-[7px] leading-3 text-white/40">All features included.</p>
+          <div className="mt-auto border-t border-white/10 px-1 pt-2">
+            <p className="text-[7px] font-semibold">My workspace</p>
+            <p className="mt-0.5 flex items-center gap-1 text-[6px] text-nav-subtle">
+              <HardDrive className="h-2 w-2" />
+              Saved on this device
+            </p>
           </div>
         </div>
 
-        <div className="w-[176px] shrink-0 border-r border-slate-200 bg-slate-50 p-2.5">
-          <div className="mb-2 flex items-center">
-            <p className="flex-1 text-[10px] font-bold text-slate-800">All notes</p>
-            <span className="rounded-full bg-slate-200 px-1.5 text-[8px] font-semibold text-slate-500">
-              12
+        <div className="flex w-[184px] shrink-0 flex-col border-r border-slate-200 bg-slate-50">
+          <div className="flex h-9 items-center gap-1.5 px-2.5">
+            <p className="flex-1 text-[10px] font-bold text-slate-800">All Notes</p>
+            <span className="rounded-full bg-slate-200 px-1.5 text-[7px] font-semibold text-slate-500">8</span>
+            <Filter className="h-3 w-3 text-slate-500" />
+            <span className="flex h-5 w-5 items-center justify-center rounded-[6px] bg-emerald-600 text-white">
+              <Plus className="h-3 w-3" />
             </span>
           </div>
-          <div className="mb-3 flex h-7 items-center gap-1.5 rounded-[7px] border border-slate-200 bg-white px-2 text-[8px] text-slate-400">
+          <div className="mx-2.5 mb-2 flex h-7 items-center gap-1.5 rounded-[7px] border border-slate-300 bg-white px-2 text-[7px] text-slate-400 shadow-sm">
             <Search className="h-3 w-3" />
-            Search notes
+            <span className="flex-1">Search notes…</span>
+            <span className="rounded border border-slate-200 bg-slate-50 px-1 text-[5px] text-slate-500">Ctrl F</span>
           </div>
-          {[
-            ['Product launch notes', 'Goals, milestones, and release plan…', true],
-            ['Design critique', 'Decisions and follow-up actions…', false],
-            ['Friday reflections', 'What moved forward this week…', false],
-          ].map(([title, preview, active]) => (
+          <p className="mb-1 px-3 text-[6px] font-semibold text-slate-500">⚑ &nbsp;Pinned</p>
+          <div className="min-h-0 flex-1 overflow-hidden px-2.5">
+            {noteCards.map(({ title, preview, meta, active, pinned }) => (
             <div
               key={title}
-              className={`mb-2 rounded-[9px] border p-2.5 ${
- active
- ? 'border-emerald-300 bg-emerald-50'
-                  : 'border-slate-200 bg-white'
+                className={`mb-1.5 rounded-[8px] border px-2 py-2 ${
+ active ? 'border-emerald-300 bg-emerald-50/60 shadow-[inset_2px_0_0_#6ee7b7]' : 'border-slate-200 bg-white'
               }`}
             >
-              <p className="truncate text-[9px] font-bold text-slate-800">{title}</p>
-              <p className="mt-1 line-clamp-2 text-[7px] leading-3 text-slate-400">{preview}</p>
-              <div className="mt-2 flex items-center gap-1 text-[7px] text-slate-400">
-                Today
-                <span>·</span>
-                <span className={active ? 'text-emerald-600' : ''}>Projects</span>
+                <div className="flex items-center gap-1">
+                  <p className="min-w-0 flex-1 truncate text-[8px] font-bold text-slate-800">{title}</p>
+                  {pinned && <Pin className="h-2.5 w-2.5 text-emerald-600" />}
+                  <Star className={`h-2.5 w-2.5 ${active ? 'fill-amber-500 text-amber-500' : 'text-slate-300'}`} />
+                </div>
+                <p className="mt-1 line-clamp-2 text-[6px] leading-[9px] text-slate-500">{preview}</p>
+                <p className={`mt-1.5 truncate text-[5.5px] ${active ? 'text-emerald-700' : 'text-slate-400'}`}>
+                  {meta}
+                </p>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+          <div className="flex h-6 items-center border-t border-slate-200 px-2.5 text-[6px] text-slate-500">
+            <span className="flex-1">ⓘ &nbsp;8 notes</span>
+            <span className="rounded bg-slate-200 px-1.5 py-0.5">☷</span>
+            <span className="ml-1">▦</span>
+          </div>
         </div>
 
-        <div className="min-w-0 flex-1 bg-white p-2.5">
-          <div className="qn-banner-surface rounded-[10px] px-4 py-3 text-white">
-            <p className="text-[12px] font-bold">Product launch notes</p>
-            <p className="mt-1.5 text-[7px] text-white/55">Today · Projects · #launch</p>
+        <div className="flex min-w-0 flex-1 flex-col bg-white">
+          <div className="flex h-9 shrink-0 items-center border-b border-slate-200 px-3 text-[6px] text-slate-500">
+            <span className="flex flex-1 items-center gap-1 font-semibold text-emerald-700">
+              <HardDrive className="h-2.5 w-2.5" />
+              Saved locally
+            </span>
+            <Search className="mr-2 h-3 w-3" />
+            <Bell className="mr-2 h-3 w-3" />
+            <Send className="mr-2 h-3 w-3" />
+            <span className="flex h-5 w-5 items-center justify-center rounded-[6px] bg-emerald-50 text-emerald-700">
+              <Star className="h-3 w-3 fill-emerald-100" />
+            </span>
+            <MoreHorizontal className="ml-2 h-3 w-3" />
           </div>
-          <div className="my-2 flex h-7 items-center gap-2 border-y border-slate-100 text-[8px] font-semibold text-slate-400">
+
+          <div className="qn-auth-preview-banner relative m-2 mb-1.5 overflow-hidden rounded-[9px] px-3.5 py-2.5 text-white">
+            <div className="flex items-start gap-2">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[12px] font-bold">Welcome to QuickNotes</p>
+                <div className="mt-2 flex items-center gap-2 text-[6px] text-white/70">
+                  <span className="flex items-center gap-1"><Clock3 className="h-2.5 w-2.5" />Just now</span>
+                  <span className="flex items-center gap-1"><FolderOpen className="h-2.5 w-2.5" />No folder</span>
+                  <span className="flex items-center gap-1"><Tag className="h-2.5 w-2.5" />2 tags</span>
+                  <span className="rounded border border-emerald-400/40 bg-emerald-700/60 px-1.5 py-0.5 text-white">#welcome</span>
+                </div>
+              </div>
+              <span className="flex h-6 w-6 items-center justify-center rounded-[6px] bg-white/10">
+                <Pin className="h-3 w-3" />
+              </span>
+            </div>
+          </div>
+
+          <div className="flex h-8 shrink-0 items-center gap-2 border-y border-slate-200 px-3 text-[7px] font-semibold text-slate-500">
             <span>↶</span>
             <span>↷</span>
-            <span className="rounded bg-slate-100 px-2 py-1">Heading</span>
+            <span className="h-4 w-px bg-slate-200" />
+            <span>♢</span>
+            <span className="rounded bg-slate-100 px-1.5 py-1">Normal text</span>
             <b className="text-slate-700">B</b>
             <i className="text-slate-700">I</i>
+            <u className="text-slate-700">U</u>
+            <span className="h-4 w-px bg-slate-200" />
+            <span>☰</span>
             <span>☷</span>
           </div>
-          <div className="px-3 py-2">
-            <p className="text-[13px] font-bold tracking-tight text-slate-800">Launch with clarity</p>
-            <div className="mb-4 mt-2 h-px bg-gradient-to-r from-emerald-400 via-slate-200 to-slate-200" />
-            <p className="mb-3 max-w-[42ch] text-[8px] leading-[14px] text-slate-500">
-              Keep the story focused, the handoff calm, and every important decision easy to find.
+
+          <div className="min-h-0 flex-1 overflow-hidden px-4 py-2.5 text-slate-700">
+            <p className="text-[7px] leading-3 text-slate-600">
+              This note is yours to edit or delete. It covers the parts of QuickNotes that are not obvious from looking at the screen.
             </p>
-            <div className="space-y-2">
-              {tasks.map((task, index) => (
-                <div key={task} className="flex items-start gap-2 text-[8px] leading-3 text-slate-600">
-                  <span
-                    className={`mt-px flex h-3 w-3 shrink-0 items-center justify-center rounded-[3px] ${
- index < 2 ? 'bg-emerald-500 text-white' : 'border border-slate-300'
- }`}
-                  >
-                    {index < 2 && <Check className="h-2 w-2" />}
-                  </span>
-                  {task}
-                </div>
-              ))}
-            </div>
+            <p className="mt-2 text-[13px] font-bold tracking-tight text-slate-800">Finding your way around</p>
+            <p className="mt-1 text-[7px] leading-3 text-slate-600">
+              Three panes, left to right: the rail for navigation, the list of notes, and the editor.
+            </p>
+            <p className="mt-2 text-[11px] font-bold text-slate-800">Folders and tags do different jobs</p>
+            <ul className="mt-1 space-y-1 text-[7px] leading-3 text-slate-600">
+              <li>• A folder is where a note lives.</li>
+              <li>• A tag is something a note is about.</li>
+            </ul>
+          </div>
+
+          <div className="flex h-6 shrink-0 items-center border-t border-slate-200 px-3 text-[6px] text-slate-500">
+            <span>T&nbsp; 453 words &nbsp; #&nbsp; 2,148 chars &nbsp; ◷&nbsp; 3 min read</span>
+            <span className="ml-auto">Saving… &nbsp; ◌</span>
           </div>
         </div>
       </div>

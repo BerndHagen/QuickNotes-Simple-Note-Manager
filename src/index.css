@@ -921,8 +921,48 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
 }
 
 .qn-auth-preview {
-  transform: perspective(1600px) rotateX(0.8deg) rotateY(-0.8deg);
-  transform-origin: 50% 100%;
+  /* Keep the miniature workspace on the pixel grid. The former perspective
+     transform forced browser rasterization and softened its small text and
+     one-pixel textures. */
+  transform: none;
+}
+
+/* The real editor banner uses fixed-radius contours sized for a full editor.
+   This preview-specific material keeps the same palette while scaling those
+   arcs to the miniature, avoiding a blurred downsample of the shared texture. */
+.qn-auth-preview-banner {
+  isolation: isolate;
+  background: linear-gradient(
+    118deg,
+    var(--qn-banner-from) 0%,
+    var(--qn-banner-via) 52%,
+    var(--qn-banner-to) 100%
+  );
+}
+
+.qn-auth-preview-banner::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  pointer-events: none;
+  background-repeat: no-repeat;
+  background-image: radial-gradient(
+    circle at calc(100% - 18px) -24px,
+    transparent 0,
+    transparent 54px,
+    rgba(255, 255, 255, 0.11) 55px,
+    transparent 56px,
+    transparent 78px,
+    rgba(255, 255, 255, 0.085) 79px,
+    transparent 80px,
+    transparent 103px,
+    rgba(255, 255, 255, 0.06) 104px,
+    transparent 105px,
+    transparent 129px,
+    rgba(255, 255, 255, 0.04) 130px,
+    transparent 131px
+  );
 }
 
 /* Short laptop viewports reduce the preview before hiding the feature strip,
