@@ -4,6 +4,24 @@ import { useEscapeKey, getFocusable } from './useFocusTrap'
 
 const VIEWPORT_PADDING = 8
 
+export function getVisibleViewport() {
+  const visual = window.visualViewport
+  if (visual) {
+    return {
+      left: visual.offsetLeft,
+      top: visual.offsetTop,
+      right: visual.offsetLeft + visual.width,
+      bottom: visual.offsetTop + visual.height,
+      width: visual.width,
+      height: visual.height,
+    }
+  }
+
+  const width = document.documentElement.clientWidth
+  const height = document.documentElement.clientHeight
+  return { left: 0, top: 0, right: width, bottom: height, width, height }
+}
+
 /**
  * Positions a floating panel against an anchor rect and keeps it inside
  * the viewport.
@@ -20,8 +38,7 @@ export function useAnchoredPosition({ anchorRef, open, placement = 'bottom-start
     const floating = floatingRef.current
     if (!floating) return
 
-    const vw = document.documentElement.clientWidth
-    const vh = document.documentElement.clientHeight
+    const viewport = getVisibleViewport()
     const rect = point
       ? { top: point.y, bottom: point.y, left: point.x, right: point.x, width: 0, height: 0 }
       : anchorRef?.current?.getBoundingClientRect()
@@ -31,27 +48,34 @@ export function useAnchoredPosition({ anchorRef, open, placement = 'bottom-start
     const fw = floating.offsetWidth
     const fh = floating.scrollHeight
 
-    const spaceBelow = vh - rect.bottom - offset - VIEWPORT_PADDING
-    const spaceAbove = rect.top - offset - VIEWPORT_PADDING
+    const spaceBelow = viewport.bottom - rect.bottom - offset - VIEWPORT_PADDING
+    const spaceAbove = rect.top - viewport.top - offset - VIEWPORT_PADDING
     const preferTop = placement.startsWith('top')
     const openUp = preferTop ? spaceAbove >= Math.min(fh, 200) : fh > spaceBelow && spaceAbove > spaceBelow
 
-    const maxHeight = Math.max(140, openUp ? spaceAbove : spaceBelow)
+    const availableHeight = Math.max(0, openUp ? spaceAbove : spaceBelow)
+    const maxHeight = Math.min(
+      Math.max(80, availableHeight),
+      Math.max(80, viewport.height - VIEWPORT_PADDING * 2)
+    )
     const top = openUp
-      ? Math.max(VIEWPORT_PADDING, rect.top - offset - Math.min(fh, maxHeight))
-      : Math.min(rect.bottom + offset, vh - VIEWPORT_PADDING - Math.min(fh, maxHeight))
+      ? Math.max(viewport.top + VIEWPORT_PADDING, rect.top - offset - Math.min(fh, maxHeight))
+      : Math.min(
+          rect.bottom + offset,
+          viewport.bottom - VIEWPORT_PADDING - Math.min(fh, maxHeight)
+        )
 
     const alignEnd = placement.endsWith('end')
     let left = alignEnd ? rect.right - fw : rect.left
-    left = Math.min(left, vw - fw - VIEWPORT_PADDING)
-    left = Math.max(VIEWPORT_PADDING, left)
+    left = Math.min(left, viewport.right - Math.min(fw, viewport.width) - VIEWPORT_PADDING)
+    left = Math.max(viewport.left + VIEWPORT_PADDING, left)
 
     setStyle({
       position: 'fixed',
       left,
       top,
       maxHeight,
-      maxWidth: vw - VIEWPORT_PADDING * 2,
+      maxWidth: viewport.width - VIEWPORT_PADDING * 2,
       visibility: 'visible',
     })
   }, [anchorRef, offset, placement, point])
@@ -70,9 +94,13 @@ export function useAnchoredPosition({ anchorRef, open, placement = 'bottom-start
     window.addEventListener('resize', handler)
     // `true` → capture, so scrolling any ancestor repositions the panel.
     window.addEventListener('scroll', handler, true)
+    window.visualViewport?.addEventListener('resize', handler)
+    window.visualViewport?.addEventListener('scroll', handler)
     return () => {
       window.removeEventListener('resize', handler)
       window.removeEventListener('scroll', handler, true)
+      window.visualViewport?.removeEventListener('resize', handler)
+      window.visualViewport?.removeEventListener('scroll', handler)
     }
   }, [open, compute])
 
@@ -120,8 +148,8 @@ export function Menu({
       if (anchorRef?.current?.contains(e.target)) return
       onClose?.()
     }
-    document.addEventListener('mousedown', onPointerDown)
-    return () => document.removeEventListener('mousedown', onPointerDown)
+    document.addEventListener('pointerdown', onPointerDown)
+    return () => document.removeEventListener('pointerdown', onPointerDown)
   }, [open, onClose, anchorRef, floatingRef])
 
   useEffect(() => {

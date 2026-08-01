@@ -38,7 +38,7 @@ for (const viewport of VIEWPORTS) {
 }
 
 test.describe('compact navigation', () => {
-  test.use({ viewport: { width: 375, height: 720 } })
+  test.use({ viewport: { width: 375, height: 667 }, hasTouch: true, isMobile: true })
 
   test('shows one pane at a time and navigates between them', async ({ page }) => {
     await signIn(page)
@@ -65,12 +65,25 @@ test.describe('compact navigation', () => {
     // Navigating dismisses the drawer so the list is usable again.
     await expect(page.getByRole('searchbox')).toBeVisible()
   })
+
+  test('exposes note actions without requiring hover or long press', async ({ page }) => {
+    await signIn(page)
+
+    const actions = page.getByRole('button', { name: /more actions for welcome to quicknotes/i })
+    await expect(actions).toBeVisible()
+    const box = await actions.boundingBox()
+    expect(box.width).toBeGreaterThanOrEqual(36)
+    expect(box.height).toBeGreaterThanOrEqual(36)
+
+    await actions.click()
+    await expect(page.getByRole('menu', { name: 'Note actions' })).toBeVisible()
+  })
 })
 
 test.describe('small-screen settings', () => {
-  test.use({ viewport: { width: 320, height: 640 } })
+  test.use({ viewport: { width: 320, height: 568 }, hasTouch: true, isMobile: true })
 
-  test('keeps every settings section and control horizontally reachable', async ({ page }) => {
+  test('keeps every settings section and its final control reachable', async ({ page }) => {
     await signIn(page)
     await page.getByRole('button', { name: /show navigation/i }).first().click()
     await page.getByRole('button', { name: /^settings$/i }).first().click()
@@ -98,11 +111,16 @@ test.describe('small-screen settings', () => {
         `${sectionName} settings pane hides content beyond its ${paneMetrics.clientWidth}px width`
       ).toBeLessThanOrEqual(paneMetrics.clientWidth + 1)
 
-      const controls = pane.locator('button, input, select, textarea, a[href]')
+      const controls = pane.locator('button, input, select, textarea, a[href], p, kbd, h4')
       const controlCount = await controls.count()
+      let firstVisibleControl = null
+      let lastVisibleControl = null
       for (let controlIndex = 0; controlIndex < controlCount; controlIndex += 1) {
         const control = controls.nth(controlIndex)
         if (!(await control.isVisible())) continue
+
+        firstVisibleControl ||= control
+        lastVisibleControl = control
 
         await control.scrollIntoViewIfNeeded()
         const [controlBox, paneBox] = await Promise.all([control.boundingBox(), pane.boundingBox()])
@@ -116,8 +134,218 @@ test.describe('small-screen settings', () => {
           `${sectionName} contains a control clipped on the right`
         ).toBeLessThanOrEqual(paneBox.x + paneBox.width + 1)
       }
+
+      expect(firstVisibleControl, `${sectionName} has no usable content`).not.toBeNull()
+      expect(lastVisibleControl, `${sectionName} has no final content item`).not.toBeNull()
+
+      await firstVisibleControl.scrollIntoViewIfNeeded()
+      const firstBox = await firstVisibleControl.boundingBox()
+      const paneAtStart = await pane.boundingBox()
+      expect(firstBox.y, `${sectionName} first control is clipped above the pane`).toBeGreaterThanOrEqual(
+        paneAtStart.y - 1
+      )
+
+      await lastVisibleControl.scrollIntoViewIfNeeded()
+      const [lastBox, paneAtEnd] = await Promise.all([
+        lastVisibleControl.boundingBox(),
+        pane.boundingBox(),
+      ])
+      expect(lastBox.y + lastBox.height, `${sectionName} final control cannot be reached`).toBeLessThanOrEqual(
+        paneAtEnd.y + paneAtEnd.height + 1
+      )
     }
 
+    await expectNoHorizontalOverflow(page)
+  })
+
+  test('remains scrollable when the viewport shrinks around a focused control', async ({ page }) => {
+    await signIn(page)
+    await page.getByRole('button', { name: /show navigation/i }).first().click()
+    await page.getByRole('button', { name: /^settings$/i }).first().click()
+
+    const dialog = page.getByRole('dialog', { name: 'Settings' })
+    const pane = dialog.locator('[data-settings-pane]')
+    const sort = pane.getByLabel(/default sort order/i)
+    await sort.focus()
+    await page.setViewportSize({ width: 320, height: 360 })
+    await sort.scrollIntoViewIfNeeded()
+
+    const [controlBox, paneBox] = await Promise.all([sort.boundingBox(), pane.boundingBox()])
+    expect(controlBox.y).toBeGreaterThanOrEqual(paneBox.y - 1)
+    expect(controlBox.y + controlBox.height).toBeLessThanOrEqual(paneBox.y + paneBox.height + 1)
+    await expect(sort).toBeFocused()
+  })
+
+  test('handles translated labels and enlarged text without sideways page scrolling', async ({ page }) => {
+    await page.addStyleTag({ content: 'html { font-size: 125%; }' })
+    await signIn(page)
+    await page.getByRole('button', { name: /show navigation/i }).first().click()
+    await page.getByRole('button', { name: /^settings$/i }).first().click()
+
+    const dialog = page.getByRole('dialog', { name: 'Settings' })
+    await dialog.getByRole('button', { name: /Deutsch/i }).click()
+    const pane = dialog.locator('[data-settings-pane]')
+    const metrics = await pane.evaluate((element) => ({
+      clientWidth: element.clientWidth,
+      scrollWidth: element.scrollWidth,
+    }))
+    expect(metrics.scrollWidth).toBeLessThanOrEqual(metrics.clientWidth + 1)
+    await expectNoHorizontalOverflow(page)
+  })
+})
+
+test.describe('mobile editor usability', () => {
+  test.use({ viewport: { width: 320, height: 568 }, hasTouch: true, isMobile: true })
+
+  test.beforeEach(async ({ page }) => {
+    await signIn(page)
+    await page.getByRole('button', { name: /new note/i }).first().click()
+    await expect(page.locator('.editor-toolbar')).toBeVisible()
+  })
+
+  test('keeps the toolbar compact while every command remains reachable', async ({ page }) => {
+    const metrics = await page.locator('.editor-toolbar').evaluate((toolbar) => {
+      const toolbarBox = toolbar.getBoundingClientRect()
+      const results = []
+      for (const button of toolbar.querySelectorAll('button')) {
+        button.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+        const box = button.getBoundingClientRect()
+        results.push({
+          label: button.getAttribute('aria-label'),
+          left: box.left,
+          right: box.right,
+          width: box.width,
+          height: box.height,
+        })
+      }
+      const rows = new Set(
+        [...toolbar.querySelectorAll('button')].map((button) =>
+          Math.round(button.getBoundingClientRect().top)
+        )
+      )
+      return {
+        clientWidth: toolbar.clientWidth,
+        scrollWidth: toolbar.scrollWidth,
+        height: toolbarBox.height,
+        rows: rows.size,
+        results,
+      }
+    })
+
+    expect(metrics.height).toBeLessThanOrEqual(60)
+    expect(metrics.rows).toBe(1)
+    expect(metrics.scrollWidth).toBeGreaterThan(metrics.clientWidth)
+    expect(metrics.results.length).toBeGreaterThan(30)
+    for (const command of metrics.results) {
+      expect(command.label, 'Every toolbar button needs an accessible name').toBeTruthy()
+      expect(command.left, `${command.label} is clipped on the left`).toBeGreaterThanOrEqual(-1)
+      expect(command.right, `${command.label} is clipped on the right`).toBeLessThanOrEqual(321)
+      expect(command.width, `${command.label} is too narrow for touch`).toBeGreaterThanOrEqual(44)
+      expect(command.height, `${command.label} is too short for touch`).toBeGreaterThanOrEqual(44)
+    }
+
+    const editorViewport = page.locator('.ProseMirror').locator('xpath=../..')
+    const editorBox = await editorViewport.boundingBox()
+    expect(editorBox.height).toBeGreaterThanOrEqual(280)
+    await expectNoHorizontalOverflow(page)
+  })
+
+  test('keeps formatting popovers inside the visible viewport', async ({ page }) => {
+    await page.getByRole('button', { name: 'Text Color' }).click()
+    const dropdown = page.getByRole('dialog', { name: 'Formatting options' })
+    await expect(dropdown).toBeVisible()
+
+    const box = await dropdown.boundingBox()
+    expect(box.x).toBeGreaterThanOrEqual(7)
+    expect(box.x + box.width).toBeLessThanOrEqual(313)
+    expect(box.y).toBeGreaterThanOrEqual(7)
+    expect(box.y + box.height).toBeLessThanOrEqual(561)
+  })
+
+  test('retains a usable focused editing region when keyboard space is approximated', async ({ page }) => {
+    const editor = page.locator('.ProseMirror').first()
+    await editor.click()
+    await editor.pressSequentially('Visible while typing')
+    await page.setViewportSize({ width: 320, height: 360 })
+
+    const editorViewport = editor.locator('xpath=../..')
+    const box = await editorViewport.boundingBox()
+    expect(box.y).toBeGreaterThanOrEqual(0)
+    expect(box.y + box.height).toBeLessThanOrEqual(360)
+    expect(box.height).toBeGreaterThanOrEqual(96)
+    await expect(editor).toBeFocused()
+  })
+
+  test('keeps selected-image controls touch accessible and inside the editor', async ({ page }) => {
+    await page.getByRole('button', { name: 'Insert image' }).first().click()
+    const dialog = page.getByRole('dialog', { name: 'Insert image' })
+    await dialog.getByRole('radio', { name: 'Upload file' }).click()
+    await dialog.getByLabel('Choose image file').setInputFiles({
+      name: 'mobile-control.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+        'base64'
+      ),
+    })
+    await expect(dialog.getByText('Preview')).toBeVisible()
+    await dialog.getByRole('button', { name: 'Insert image' }).click()
+
+    const image = page.locator('.ProseMirror img').last()
+    await image.click()
+    const controls = page.locator('.image-menu')
+    await expect(controls).toBeVisible()
+
+    const metrics = await controls.evaluate((element) => {
+      const box = element.getBoundingClientRect()
+      const buttons = [...element.querySelectorAll('button')]
+      buttons.at(-1)?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+      const lastBox = buttons.at(-1)?.getBoundingClientRect()
+      return {
+        left: box.left,
+        right: box.right,
+        buttonCount: buttons.length,
+        clientWidth: element.clientWidth,
+        scrollWidth: element.scrollWidth,
+        lastLeft: lastBox?.left,
+        lastRight: lastBox?.right,
+      }
+    })
+    expect(metrics.left).toBeGreaterThanOrEqual(-1)
+    expect(metrics.right).toBeLessThanOrEqual(321)
+    expect(metrics.buttonCount).toBeGreaterThan(10)
+    expect(metrics.scrollWidth).toBeGreaterThan(metrics.clientWidth)
+    expect(metrics.lastLeft).toBeGreaterThanOrEqual(-1)
+    expect(metrics.lastRight).toBeLessThanOrEqual(321)
+  })
+
+  test('uses browser Back and Forward to switch between notes and the editor', async ({ page }) => {
+    const editor = page.locator('.ProseMirror').first()
+    await editor.click()
+    await editor.pressSequentially('Draft kept across mobile navigation')
+
+    await page.goBack()
+    await expect(page.getByRole('searchbox')).toBeVisible()
+    await page.goForward()
+    await expect(editor).toContainText('Draft kept across mobile navigation')
+  })
+})
+
+test.describe('phone landscape editor', () => {
+  test.use({ viewport: { width: 667, height: 375 }, hasTouch: true, isMobile: true })
+
+  test('preserves meaningful writing height without wrapping the toolbar', async ({ page }) => {
+    await signIn(page)
+    await page.getByRole('button', { name: /new note/i }).first().click()
+
+    const toolbar = page.locator('.editor-toolbar')
+    const editorViewport = page.locator('.ProseMirror').locator('xpath=../..')
+    const [toolbarBox, editorBox] = await Promise.all([
+      toolbar.boundingBox(),
+      editorViewport.boundingBox(),
+    ])
+    expect(toolbarBox.height).toBeLessThanOrEqual(60)
+    expect(editorBox.height).toBeGreaterThanOrEqual(145)
     await expectNoHorizontalOverflow(page)
   })
 })

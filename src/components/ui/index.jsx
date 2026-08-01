@@ -1,7 +1,7 @@
 export { default as Modal } from './Modal'
 export { default as Button, IconButton, buttonClasses } from './Button'
 export { Field, Input, Textarea, Select, Toggle, SegmentedControl } from './Field'
-export { Menu, MenuItem, MenuSeparator, MenuLabel, useAnchoredPosition } from './Menu'
+export { Menu, MenuItem, MenuSeparator, MenuLabel, getVisibleViewport, useAnchoredPosition } from './Menu'
 export { useFocusTrap, useScrollLock, useEscapeKey, getFocusable } from './useFocusTrap'
 export { Badge, CountBadge, TagChip } from './Badge'
 export { default as EmptyState } from './EmptyState'

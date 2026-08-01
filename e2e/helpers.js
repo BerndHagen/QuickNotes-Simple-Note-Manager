@@ -13,9 +13,13 @@ export const CREDENTIALS = {
 }
 
 export const VIEWPORTS = [
-  { name: '320-mobile-s', width: 320, height: 640 },
-  { name: '375-mobile', width: 375, height: 720 },
-  { name: '768-tablet', width: 768, height: 1024 },
+  { name: '320-mobile-s', width: 320, height: 568 },
+  { name: '360-mobile', width: 360, height: 640 },
+  { name: '375-mobile', width: 375, height: 667 },
+  { name: '390-mobile-l', width: 390, height: 844 },
+  { name: '412-android', width: 412, height: 915 },
+  { name: '667-phone-landscape', width: 667, height: 375 },
+  { name: '768-tablet-portrait', width: 768, height: 1024 },
   { name: '1024-laptop', width: 1024, height: 768 },
   { name: '1280-desktop', width: 1280, height: 800 },
   { name: '1440-desktop-l', width: 1440, height: 900 },

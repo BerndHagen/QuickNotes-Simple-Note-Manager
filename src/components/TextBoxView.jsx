@@ -203,7 +203,7 @@ export default function TextBoxView({ node, updateAttributes, deleteNode, select
       aria-pressed={active || undefined}
       onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
-      className={`flex h-6 w-6 items-center justify-center rounded transition-colors duration-fast ${
+      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded transition-colors duration-fast ${
  tone === 'danger'
  ? 'text-danger-text hover:bg-danger-soft'
           : active
@@ -235,7 +235,7 @@ export default function TextBoxView({ node, updateAttributes, deleteNode, select
       {editable && active && (
         <div
           contentEditable={false}
-          className={`absolute left-0 z-30 flex items-center gap-0.5 rounded-control border border-subtle bg-surface-raised p-1 shadow-md ${
+          className={`qn-text-box-toolbar absolute left-0 z-30 flex max-w-[calc(100vw-2rem)] items-center gap-0.5 overflow-x-auto overscroll-x-contain rounded-control border border-subtle bg-surface-raised p-1 shadow-md ${
  controlsBelow ? 'top-full mt-2' : '-top-9'
  }`}
         >

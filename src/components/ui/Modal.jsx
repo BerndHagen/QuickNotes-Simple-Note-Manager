@@ -49,7 +49,7 @@ export default function Modal({
   if (!open) return null
 
   return createPortal(
-    <div className="fixed inset-0 z-dialog flex items-end justify-center sm:items-center sm:p-4">
+    <div className="qn-modal-viewport fixed inset-0 z-dialog flex items-end justify-center sm:items-center sm:p-4">
       <div
         className="absolute inset-0 bg-[var(--qn-overlay)] backdrop-blur-[2px] animate-fade-in"
         onClick={closeOnBackdrop ? onClose : undefined}

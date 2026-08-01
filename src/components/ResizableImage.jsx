@@ -16,9 +16,9 @@ import {
 export default function ResizableImage({ node, updateAttributes, deleteNode, selected }) {
   const [isResizing, setIsResizing] = useState(false)
   const [showControls, setShowControls] = useState(false)
-  const [showMenu, setShowMenu] = useState(false)
   const imageRef = useRef(null)
   const startPos = useRef({ x: 0, y: 0, width: 0 })
+  const resizeCleanupRef = useRef(() => {})
 
   const { src, alt, title, width, flipH, flipV, rotation, align } = node.attrs
   const getTransformStyle = () => {
@@ -50,22 +50,34 @@ export default function ResizableImage({ node, updateAttributes, deleteNode, sel
       direction
     }
 
-    const handleMouseMove = (e) => {
+    e.currentTarget.setPointerCapture?.(e.pointerId)
+
+    const handlePointerMove = (e) => {
       const deltaX = e.clientX - startPos.current.x
       const delta = startPos.current.direction === 'left' ? -deltaX : deltaX
       const newWidth = Math.max(100, Math.min(startPos.current.width + delta, 1200))
       updateAttributes({ width: newWidth })
     }
 
-    const handleMouseUp = () => {
+    resizeCleanupRef.current()
+
+    const cleanup = () => {
+      window.removeEventListener('pointermove', handlePointerMove)
+      window.removeEventListener('pointerup', handlePointerUp)
+      window.removeEventListener('pointercancel', handlePointerUp)
+      resizeCleanupRef.current = () => {}
+    }
+    const handlePointerUp = () => {
       setIsResizing(false)
-      document.removeEventListener('mousemove', handleMouseMove)
-      document.removeEventListener('mouseup', handleMouseUp)
+      cleanup()
     }
 
-    document.addEventListener('mousemove', handleMouseMove)
-    document.addEventListener('mouseup', handleMouseUp)
+    window.addEventListener('pointermove', handlePointerMove)
+    window.addEventListener('pointerup', handlePointerUp)
+    window.addEventListener('pointercancel', handlePointerUp)
+    resizeCleanupRef.current = cleanup
   }, [updateAttributes])
+  useEffect(() => () => resizeCleanupRef.current(), [])
   const presetSizes = [
     { label: 'S', width: 200 },
     { label: 'M', width: 400 },
@@ -90,22 +102,12 @@ export default function ResizableImage({ node, updateAttributes, deleteNode, sel
   const handleCopyUrl = () => {
     navigator.clipboard.writeText(src)
   }
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (showMenu && !e.target.closest('.image-menu')) {
-        setShowMenu(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [showMenu])
-
   return (
     <NodeViewWrapper className="relative my-4">
       <div 
         className={`relative inline-block ${getAlignmentClasses()} group`}
         onMouseEnter={() => setShowControls(true)}
-        onMouseLeave={() => !showMenu && setShowControls(false)}
+        onMouseLeave={() => setShowControls(false)}
         style={{ width: width || 'auto', maxWidth: '100%' }}
       >
         <img
@@ -127,22 +129,26 @@ export default function ResizableImage({ node, updateAttributes, deleteNode, sel
         {(showControls || selected) && (
           <>
             <div
-              className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-12 bg-accent rounded-full cursor-ew-resize opacity-0 group-hover:opacity-100 transition-opacity hover:bg-accent-hover shadow-lg"
-              onMouseDown={(e) => handleResizeStart(e, 'left')}
+              className="qn-image-resize-handle absolute left-0 top-1/2 h-12 w-3 -translate-x-1/2 -translate-y-1/2 touch-none cursor-ew-resize rounded-full bg-accent opacity-0 shadow-lg transition-opacity hover:bg-accent-hover group-hover:opacity-100"
+              onPointerDown={(e) => handleResizeStart(e, 'left')}
+              aria-hidden="true"
             />
             <div
-              className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-3 h-12 bg-accent rounded-full cursor-ew-resize opacity-0 group-hover:opacity-100 transition-opacity hover:bg-accent-hover shadow-lg"
-              onMouseDown={(e) => handleResizeStart(e, 'right')}
+              className="qn-image-resize-handle absolute right-0 top-1/2 h-12 w-3 translate-x-1/2 -translate-y-1/2 touch-none cursor-ew-resize rounded-full bg-accent opacity-0 shadow-lg transition-opacity hover:bg-accent-hover group-hover:opacity-100"
+              onPointerDown={(e) => handleResizeStart(e, 'right')}
+              aria-hidden="true"
             />
           </>
         )}
         {(showControls || selected) && (
-          <div className="absolute -top-12 left-1/2 -translate-x-1/2 flex items-center gap-1 p-1.5 bg-surface-raised rounded-lg shadow-xl border border-subtle opacity-0 group-hover:opacity-100 transition-opacity z-10 image-menu">
+          <div className="image-menu absolute left-0 top-full z-10 mt-2 flex max-w-[calc(100vw-2rem)] items-center gap-1 overflow-x-auto overscroll-x-contain rounded-lg border border-subtle bg-surface-raised p-1.5 opacity-100 shadow-xl transition-opacity sm:-top-12 sm:left-1/2 sm:mt-0 sm:max-w-none sm:-translate-x-1/2 sm:overflow-visible sm:opacity-0 sm:group-hover:opacity-100">
             <div className="flex items-center gap-0.5 px-1 border-r border-subtle">
               {presetSizes.map((size) => (
                 <button
                   key={size.label}
                   onClick={() => handleSetWidth(size.width)}
+                  aria-label={`Set image width to ${size.label}`}
+                  aria-pressed={(size.width === null && !width) || width === size.width}
                   className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
  (size.width === null && !width) || width === size.width
  ? 'bg-accent-soft text-accent-text'
@@ -157,6 +163,7 @@ export default function ResizableImage({ node, updateAttributes, deleteNode, sel
             <div className="flex items-center gap-0.5 px-1 border-r border-subtle">
               <button
                 onClick={handleFlipH}
+                aria-label="Flip image horizontally"
                 className={`p-1.5 rounded transition-colors ${
  flipH ? 'bg-accent-soft text-accent-text' : 'hover:bg-surface-hover text-content-muted'
  }`}
@@ -166,6 +173,7 @@ export default function ResizableImage({ node, updateAttributes, deleteNode, sel
               </button>
               <button
                 onClick={handleFlipV}
+                aria-label="Flip image vertically"
                 className={`p-1.5 rounded transition-colors ${
  flipV ? 'bg-accent-soft text-accent-text' : 'hover:bg-surface-hover text-content-muted'
  }`}
@@ -175,6 +183,7 @@ export default function ResizableImage({ node, updateAttributes, deleteNode, sel
               </button>
               <button
                 onClick={handleRotateCCW}
+                aria-label="Rotate image left"
                 className="p-1.5 rounded hover:bg-surface-hover text-content-muted transition-colors"
                 title="Rotate left"
               >
@@ -182,6 +191,7 @@ export default function ResizableImage({ node, updateAttributes, deleteNode, sel
               </button>
               <button
                 onClick={handleRotateCW}
+                aria-label="Rotate image right"
                 className="p-1.5 rounded hover:bg-surface-hover text-content-muted transition-colors"
                 title="Rotate right"
               >
@@ -191,6 +201,7 @@ export default function ResizableImage({ node, updateAttributes, deleteNode, sel
             <div className="flex items-center gap-0.5 px-1 border-r border-subtle">
               <button
                 onClick={() => handleAlign('left')}
+                aria-label="Align image left"
                 className={`p-1.5 rounded transition-colors ${
  align === 'left' ? 'bg-accent-soft text-accent-text' : 'hover:bg-surface-hover text-content-muted'
  }`}
@@ -200,6 +211,7 @@ export default function ResizableImage({ node, updateAttributes, deleteNode, sel
               </button>
               <button
                 onClick={() => handleAlign('center')}
+                aria-label="Align image center"
                 className={`p-1.5 rounded transition-colors ${
  align === 'center' || !align ? 'bg-accent-soft text-accent-text' : 'hover:bg-surface-hover text-content-muted'
  }`}
@@ -209,6 +221,7 @@ export default function ResizableImage({ node, updateAttributes, deleteNode, sel
               </button>
               <button
                 onClick={() => handleAlign('right')}
+                aria-label="Align image right"
                 className={`p-1.5 rounded transition-colors ${
  align === 'right' ? 'bg-accent-soft text-accent-text' : 'hover:bg-surface-hover text-content-muted'
  }`}
@@ -220,6 +233,7 @@ export default function ResizableImage({ node, updateAttributes, deleteNode, sel
             <div className="flex items-center gap-0.5 px-1">
               <button
                 onClick={handleDownload}
+                aria-label="Download image"
                 className="p-1.5 rounded hover:bg-surface-hover text-content-muted transition-colors"
                 title="Download image"
               >
@@ -227,6 +241,7 @@ export default function ResizableImage({ node, updateAttributes, deleteNode, sel
               </button>
               <button
                 onClick={handleCopyUrl}
+                aria-label="Copy image URL"
                 className="p-1.5 rounded hover:bg-surface-hover text-content-muted transition-colors"
                 title="Copy image URL"
               >
@@ -234,6 +249,7 @@ export default function ResizableImage({ node, updateAttributes, deleteNode, sel
               </button>
               <button
                 onClick={deleteNode}
+                aria-label="Delete image"
                 className="p-1.5 rounded hover:bg-red-100 dark:hover:bg-red-900/50 text-red-500 transition-colors"
                 title="Delete image"
               >

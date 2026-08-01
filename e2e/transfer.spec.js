@@ -126,7 +126,7 @@ test('export all excludes notes in Trash from the actual downloads', async ({ pa
   await createNote(page, keepTitle)
   await createNote(page, trashTitle)
 
-  await page.getByRole('button', { name: /more actions/i }).click()
+  await page.getByRole('button', { name: /^more actions$/i }).click()
   await page.getByRole('menuitem', { name: /move to trash/i }).click()
   const confirmation = page.getByRole('dialog')
   if (await confirmation.isVisible().catch(() => false)) {

@@ -132,8 +132,40 @@ export default function App() {
   const { isCompact, isWide, sidebarIsOverlay } = useLayoutMode()
   const sidebarToggleRef = useRef(null)
   const sidebarRef = useRef(null)
+  const mobileHistoryReadyRef = useRef(false)
 
   useShareInvitations()
+
+  useEffect(() => {
+    if (!user || !isCompact) {
+      mobileHistoryReadyRef.current = false
+      return undefined
+    }
+
+    const state = window.history.state || {}
+    if (!state.qnMobileView) {
+      window.history.replaceState({ ...state, qnMobileView: 'notes' }, document.title)
+    }
+    mobileHistoryReadyRef.current = true
+
+    const handlePopState = (event) => {
+      setMobileView(event.state?.qnMobileView === 'editor' ? 'editor' : 'notes')
+    }
+    window.addEventListener('popstate', handlePopState)
+    return () => {
+      mobileHistoryReadyRef.current = false
+      window.removeEventListener('popstate', handlePopState)
+    }
+  }, [isCompact, setMobileView, user])
+
+  useEffect(() => {
+    if (!mobileHistoryReadyRef.current || mobileView !== 'editor') return
+    if (window.history.state?.qnMobileView === 'editor') return
+    window.history.pushState(
+      { ...(window.history.state || {}), qnMobileView: 'editor' },
+      document.title
+    )
+  }, [mobileView])
 
   useEffect(() => {
     let disposed = false
@@ -361,6 +393,14 @@ export default function App() {
     if (sidebarIsOverlay) setSidebarOpen(false)
   }, [setSidebarOpen, sidebarIsOverlay])
 
+  const returnToMobileNotes = useCallback(() => {
+    if (isCompact && window.history.state?.qnMobileView === 'editor') {
+      window.history.back()
+      return
+    }
+    setMobileView('notes')
+  }, [isCompact, setMobileView])
+
   const sidebarOverlayOpen = Boolean(user && sidebarIsOverlay && sidebarOpen)
   useFocusTrap(sidebarRef, sidebarOverlayOpen)
   useEscapeKey(sidebarOverlayOpen, closeSidebarOverlay)
@@ -445,7 +485,7 @@ export default function App() {
           aria-modal={sidebarOverlayOpen ? 'true' : undefined}
           aria-label={sidebarOverlayOpen ? 'Navigation' : undefined}
           className={[
-            'shrink-0 border-r border-subtle transition-transform duration-base ease-qn-out',
+            'qn-sidebar-frame shrink-0 border-r border-subtle transition-transform duration-base ease-qn-out',
             sidebarIsOverlay
               ? `fixed inset-y-0 left-0 z-drawer w-[min(84vw,var(--qn-sidebar-width))] shadow-lg ${
                   sidebarOpen ? 'translate-x-0' : '-translate-x-full'
@@ -485,7 +525,7 @@ export default function App() {
               <main className={`min-w-0 flex-1 ${showEditor ? 'flex' : 'hidden'}`}>
                 <ErrorBoundary>
                   <Suspense fallback={<EditorLoading />}>
-                    <NoteEditor onBack={() => setMobileView('notes')} showBack={isCompact} />
+                    <NoteEditor onBack={returnToMobileNotes} showBack={isCompact} />
                   </Suspense>
                 </ErrorBoundary>
               </main>

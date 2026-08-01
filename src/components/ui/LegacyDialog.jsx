@@ -31,7 +31,7 @@ export default function LegacyDialog({
   return createPortal(
     <div
       className={[
-        'fixed inset-0 z-dialog flex justify-center overflow-y-auto overscroll-contain p-3 sm:p-4',
+        'qn-legacy-dialog-viewport fixed inset-0 z-dialog flex justify-center overflow-y-auto overscroll-contain p-3 sm:p-4',
         align === 'top' ? 'items-start pt-[10vh]' : 'items-center',
         className,
       ].join(' ')}

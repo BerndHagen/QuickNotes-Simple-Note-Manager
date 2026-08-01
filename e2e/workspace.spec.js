@@ -190,7 +190,7 @@ test.describe('workspace', () => {
     const title = `Trash me ${Date.now()}`
     await createNote(page, title)
 
-    await page.getByRole('button', { name: /more actions/i }).click()
+    await page.getByRole('button', { name: /^more actions$/i }).click()
     await page.getByRole('menuitem', { name: /move to trash/i }).click()
 
     const confirm = page.getByRole('dialog')

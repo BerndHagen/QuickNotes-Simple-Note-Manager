@@ -390,7 +390,7 @@ export default function SettingsModal() {
 
   return (
     <LegacyDialog label="Settings" onClose={() => setSettingsOpen(false)} align="center">
-      <div className="bg-surface-raised rounded-2xl shadow-2xl border border-subtle w-full max-w-3xl mx-4 h-[80vh] overflow-hidden flex flex-col modal-animate">
+      <div className="flex h-[calc(100dvh-1.5rem)] max-h-[92dvh] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-subtle bg-surface-raised shadow-2xl modal-animate sm:mx-4 sm:h-[80dvh] sm:rounded-2xl">
         <div className="flex items-center justify-between px-4 py-4 sm:px-6 sm:py-5 qn-banner-surface">
           <div className="text-white">
             <h2 className="text-xl font-bold flex items-center gap-2">
@@ -412,14 +412,14 @@ export default function SettingsModal() {
         </div>
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden sm:flex-row">
         <div className="shrink-0 border-b border-subtle bg-surface-sunken p-2 sm:w-48 sm:border-b-0 sm:border-r sm:p-4">
-          <nav aria-label="Settings sections" className="grid grid-cols-3 gap-1 sm:block sm:space-y-1">
+          <nav aria-label="Settings sections" className="flex max-w-full gap-1 overflow-x-auto overscroll-x-contain sm:block sm:space-y-1 sm:overflow-visible">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 type="button"
                 aria-current={activeTab === tab.id ? 'page' : undefined}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex min-w-0 w-full items-center justify-center gap-1.5 rounded-xl px-2 py-2 text-xs transition-colors sm:justify-start sm:gap-3 sm:px-3 sm:text-[13px] ${
+                className={`flex min-w-max flex-1 items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs transition-colors sm:w-full sm:min-w-0 sm:justify-start sm:gap-3 sm:px-3 sm:text-[13px] ${
  activeTab === tab.id
  ? 'bg-surface-raised text-emerald-700 dark:text-emerald-300 shadow-sm font-medium'
                     : 'text-content-muted hover:bg-white/80 dark:hover:bg-surface-raised'
@@ -431,13 +431,13 @@ export default function SettingsModal() {
             ))}
           </nav>
         </div>
-        <div data-settings-content className="flex min-w-0 flex-1 flex-col">
+        <div data-settings-content className="flex min-h-0 min-w-0 flex-1 flex-col">
           <div className="flex items-center justify-between border-b border-subtle bg-surface-sunken px-4 py-3 dark:bg-surface-raised sm:px-6">
             <h3 className="text-[10px] font-bold text-content-muted uppercase tracking-[0.12em]">
               {tabs.find((t) => t.id === activeTab)?.label}
             </h3>
           </div>
-          <div data-settings-pane className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6">
+          <div data-settings-pane tabIndex="0" aria-label="Settings options" className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain p-4 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--qn-focus-ring)] sm:p-6">
             {activeTab === 'general' && (
               <div className="space-y-6">
                 <div>

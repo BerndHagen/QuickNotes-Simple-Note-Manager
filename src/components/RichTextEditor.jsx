@@ -74,7 +74,7 @@ import {
 import { debounce } from '../lib/utils'
 import { useUIStore } from '../store'
 import { useEditorSettings } from './EditorSettingsModal'
-import { getFocusable, useEscapeKey } from './ui'
+import { getFocusable, useAnchoredPosition, useEscapeKey } from './ui'
 
 const lowlight = createLowlight(common)
 
@@ -1194,8 +1194,12 @@ function PortalTooltip({ children, title, shortcut, anchorRef }) {
 }
 
 function PortalDropdown({ isOpen, anchorRef, children, onClose, align = 'left', label = 'Formatting options' }) {
-  const [position, setPosition] = useState({ top: 0, left: 0, right: 0 })
-  const dropdownRef = useRef(null)
+  const { floatingRef: dropdownRef, style } = useAnchoredPosition({
+    anchorRef,
+    open: isOpen,
+    placement: align === 'right' ? 'bottom-end' : 'bottom-start',
+    offset: 4,
+  })
 
   const closeAndRestoreFocus = useCallback(() => {
     onClose()
@@ -1205,57 +1209,6 @@ function PortalDropdown({ isOpen, anchorRef, children, onClose, align = 'left', 
   useEscapeKey(isOpen, closeAndRestoreFocus)
   
   useEffect(() => {
-    if (isOpen && anchorRef.current) {
-      const rect = anchorRef.current.getBoundingClientRect()
-      let top = rect.bottom + 4
-      let left = rect.left
-      let right = window.innerWidth - rect.right
-      
-      setPosition({ top, left, right })
-      
-      requestAnimationFrame(() => {
-        if (dropdownRef.current) {
-          const dropdownRect = dropdownRef.current.getBoundingClientRect()
-          const padding = 10
-          const bottomPadding = 60
-          
-          let adjustedTop = top
-          let adjustedLeft = left
-          let adjustedRight = right
-          
-          if (top + dropdownRect.height > window.innerHeight - bottomPadding) {
-            const spaceAbove = rect.top - padding
-            const spaceBelow = window.innerHeight - rect.bottom - bottomPadding
-            
-            if (spaceAbove > spaceBelow && spaceAbove >= dropdownRect.height) {
-              adjustedTop = rect.top - dropdownRect.height - 4
-            } else {
-              adjustedTop = window.innerHeight - bottomPadding - dropdownRect.height
-              if (adjustedTop < padding) adjustedTop = padding
-            }
-          }
-          
-          if (align === 'right') {
-            if (adjustedRight + dropdownRect.width > window.innerWidth - padding) {
-              adjustedRight = window.innerWidth - dropdownRect.width - padding
-            }
-            if (adjustedRight < padding) adjustedRight = padding
-          } else {
-            if (adjustedLeft + dropdownRect.width > window.innerWidth - padding) {
-              adjustedLeft = window.innerWidth - dropdownRect.width - padding
-            }
-            if (adjustedLeft < padding) adjustedLeft = padding
-          }
-          
-          if (adjustedTop !== top || adjustedLeft !== left || adjustedRight !== right) {
-            setPosition({ top: adjustedTop, left: adjustedLeft, right: adjustedRight })
-          }
-        }
-      })
-    }
-  }, [isOpen, anchorRef, align])
-
-  useEffect(() => {
     if (isOpen) {
       const dropdown = dropdownRef.current
       const focusFrame = requestAnimationFrame(() => getFocusable(dropdown)[0]?.focus())
@@ -1264,12 +1217,6 @@ function PortalDropdown({ isOpen, anchorRef, children, onClose, align = 'left', 
             dropdownRef.current && !dropdownRef.current.contains(e.target)) {
           onClose()
         }
-      }
-      const handleScroll = (e) => {
-        if (dropdownRef.current && dropdownRef.current.contains(e.target)) {
-          return
-        }
-        onClose()
       }
       const handleKeyDown = (e) => {
         if (!['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return
@@ -1286,18 +1233,16 @@ function PortalDropdown({ isOpen, anchorRef, children, onClose, align = 'left', 
         controls[next].focus()
       }
       
-      document.addEventListener('mousedown', handleClickOutside)
-      document.addEventListener('scroll', handleScroll, true)
+      document.addEventListener('pointerdown', handleClickOutside)
       dropdown?.addEventListener('keydown', handleKeyDown)
       
       return () => {
         cancelAnimationFrame(focusFrame)
-        document.removeEventListener('mousedown', handleClickOutside)
-        document.removeEventListener('scroll', handleScroll, true)
+        document.removeEventListener('pointerdown', handleClickOutside)
         dropdown?.removeEventListener('keydown', handleKeyDown)
       }
     }
-  }, [isOpen, anchorRef, onClose])
+  }, [isOpen, anchorRef, dropdownRef, onClose])
 
   if (!isOpen) return null
 
@@ -1306,12 +1251,8 @@ function PortalDropdown({ isOpen, anchorRef, children, onClose, align = 'left', 
       ref={dropdownRef}
       role="dialog"
       aria-label={label}
-      className="fixed bg-surface-raised rounded-2xl shadow-xl shadow-black/5 dark:shadow-black/20 border border-subtle z-[99999] backdrop-blur-xl"
-      style={{ 
-        top: position.top, 
-        left: align === 'right' ? 'auto' : position.left,
-        right: align === 'right' ? position.right : 'auto',
-      }}
+      className="fixed z-[99999] overflow-y-auto overscroll-contain rounded-2xl border border-subtle bg-surface-raised shadow-xl shadow-black/5 backdrop-blur-xl dark:shadow-black/20"
+      style={style}
       onMouseDown={(e) => e.stopPropagation()}
     >
       {children}
@@ -1415,6 +1356,7 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
           ? (currentIndex + 1) % buttons.length
           : (currentIndex - 1 + buttons.length) % buttons.length
     buttons[nextIndex].focus()
+    buttons[nextIndex].scrollIntoView({ block: 'nearest', inline: 'nearest' })
   }
 
   useEffect(() => {
@@ -1693,7 +1635,7 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
       aria-label="Text formatting"
       onFocusCapture={handleToolbarFocus}
       onKeyDown={handleToolbarKeyDown}
-      className="editor-toolbar flex flex-wrap items-center gap-0.5 border-b border-subtle bg-surface px-2 py-1.5 sm:px-3"
+      className="editor-toolbar flex flex-nowrap items-center gap-0.5 overflow-x-auto overflow-y-hidden overscroll-x-contain border-b border-subtle bg-surface px-2 py-1.5 sm:px-3"
     >
       <ToolbarButton onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} title="Undo" shortcut="Ctrl+Z">
         <Undo className="w-4 h-4" />
@@ -2178,7 +2120,7 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content }) {
                           setShowTableMenu(false)
                           setHoverCell({ row: 0, col: 0 })
                         }}
-                        className={`w-5 h-5 rounded-sm border transition-colors ${
+                        className={`h-6 w-6 rounded-sm border transition-colors ${
                           isHovered
                             ? 'bg-accent-soft border-accent'
                             : 'border-subtle hover:border-strong'

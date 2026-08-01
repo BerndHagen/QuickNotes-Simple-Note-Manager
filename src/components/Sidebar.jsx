@@ -344,7 +344,7 @@ export default function Sidebar({ onNavigate }) {
                           icon={Pencil}
                           label={`${t('common.edit', 'Edit')} ${folder.name}`}
                           onClick={go(() => setFolderDialog({ folder }))}
-                          className="absolute right-1.5 bg-[rgba(8,61,49,0.92)] opacity-0 backdrop-blur-sm focus-visible:opacity-100 group-hover:opacity-100"
+                          className="qn-nav-row-action absolute right-1.5 bg-[rgba(8,61,49,0.92)] opacity-0 backdrop-blur-sm focus-visible:opacity-100 group-hover:opacity-100"
                         />
                       }
                     />

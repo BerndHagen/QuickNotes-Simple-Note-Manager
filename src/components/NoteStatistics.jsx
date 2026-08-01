@@ -75,7 +75,7 @@ export default function NoteStatistics({ note }) {
      save state stays pinned so it is never scrolled out of reach. The track
      takes focus so it can also be scrolled with the arrow keys. */
   return (
-    <footer className="qn-safe-bottom flex shrink-0 items-center gap-3 border-t border-subtle bg-surface px-3 py-2 sm:px-5">
+    <footer className="qn-note-statistics qn-safe-bottom flex shrink-0 items-center gap-3 border-t border-subtle bg-surface px-3 py-2 sm:px-5">
       {isSpecialized ? (
         <span className="min-w-0 flex-1 text-ui-sm text-content-subtle">
           Structured workspace

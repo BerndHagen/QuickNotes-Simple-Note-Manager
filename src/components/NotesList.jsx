@@ -179,7 +179,7 @@ function SortableNoteRow({ note, children }) {
         <span
           {...attributes}
           {...listeners}
-          className="absolute left-0 top-0 z-10 flex h-full w-5 cursor-grab items-center justify-center text-content-subtle opacity-0 transition-opacity duration-fast hover:opacity-100 focus-visible:opacity-100 active:cursor-grabbing"
+          className="qn-note-drag-handle absolute left-0 top-0 z-10 flex h-full w-5 cursor-grab touch-none items-center justify-center text-content-subtle opacity-0 transition-opacity duration-fast hover:opacity-100 focus-visible:opacity-100 active:cursor-grabbing"
           aria-label={`Reorder ${note.title}`}
         >
           <GripVertical className="h-3.5 w-3.5" aria-hidden="true" />
@@ -343,6 +343,13 @@ export default function NotesList({ sidebarToggle, onOpenNote }) {
                 ? visibleNotes.filter((n) => selectedIds.has(n.id))
                 : [note]
             setContextMenu({ point: { x: e.clientX, y: e.clientY }, notes: targets })
+          }}
+          onOpenMenu={(point) => {
+            const targets =
+              selectedIds.size > 1 && selectedIds.has(note.id)
+                ? visibleNotes.filter((item) => selectedIds.has(item.id))
+                : [note]
+            setContextMenu({ point, notes: targets })
           }}
         />
       </NotePreviewPopover>

@@ -1433,6 +1433,35 @@ body {
   overscroll-behavior-y: none;
 }
 
+.qn-workspace-frame {
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+}
+
+.qn-modal-viewport {
+  padding-right: env(safe-area-inset-right);
+  padding-left: env(safe-area-inset-left);
+}
+
+.qn-legacy-dialog-viewport {
+  padding-top: max(0.75rem, env(safe-area-inset-top));
+  padding-right: max(0.75rem, env(safe-area-inset-right));
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  padding-left: max(0.75rem, env(safe-area-inset-left));
+}
+
+@media (max-width: 1023px) {
+  .qn-sidebar-frame {
+    top: env(safe-area-inset-top);
+    right: auto;
+    bottom: env(safe-area-inset-bottom);
+    left: env(safe-area-inset-left);
+  }
+}
+
 @media (max-width: 767px) {
   * {
     -webkit-tap-highlight-color: transparent;
@@ -1450,6 +1479,57 @@ body {
     overflow-wrap: anywhere;
     padding: 1rem !important;
     font-size: 16px;
+  }
+
+  .qn-note-banner {
+    padding: 0.75rem !important;
+  }
+
+  .qn-note-metadata {
+    scrollbar-width: none;
+  }
+
+  .qn-note-metadata::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media (max-width: 767px) and (max-height: 500px) {
+  .qn-editor-chrome {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  .qn-note-banner {
+    margin: 0.25rem !important;
+    padding: 0.5rem 0.75rem !important;
+  }
+
+  .qn-note-title-row {
+    margin-bottom: 0.125rem !important;
+  }
+
+  .qn-note-statistics {
+    padding-top: 0 !important;
+    padding-bottom: env(safe-area-inset-bottom) !important;
+  }
+}
+
+@media (min-width: 500px) and (max-width: 767px) and (max-height: 500px) {
+  .qn-note-banner {
+    display: grid;
+    grid-template-columns: minmax(12rem, 1fr) minmax(0, auto);
+    align-items: center;
+    column-gap: 0.75rem;
+  }
+
+  .qn-note-title-row {
+    min-width: 0;
+    margin-bottom: 0 !important;
+  }
+
+  .qn-note-metadata {
+    max-width: 55vw;
   }
 }
 
@@ -1488,6 +1568,34 @@ body {
   .note-card:hover {
     transform: none;
   }
+
+  .editor-toolbar button {
+    min-width: var(--qn-touch-target);
+  }
+
+  .qn-card-action {
+    min-width: 36px;
+    min-height: 36px;
+  }
+
+  .qn-nav-row-action {
+    min-width: 36px;
+    opacity: 1;
+  }
+
+  .qn-note-drag-handle {
+    width: 36px;
+    opacity: 1;
+  }
+
+  .qn-note-card--sortable .note-card {
+    padding-left: 2.25rem;
+  }
+
+  .qn-image-resize-handle {
+    width: 24px;
+    opacity: 1;
+  }
 }
 
 @supports (padding: env(safe-area-inset-bottom)) {
@@ -1498,7 +1606,19 @@ body {
 
 /* Shared interface details */
 
-/* Wrapped editor toolbar keeps every formatting action reachable. */
+/* One compact horizontal strip keeps every formatting action reachable
+   without taking the writing area away from short screens. */
+.editor-toolbar {
+  min-height: 44px;
+  scroll-padding-inline: 0.5rem;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+
+.editor-toolbar > * {
+  flex-shrink: 0;
+}
+
 .editor-toolbar > .qn-toolbar-sep {
   align-self: stretch;
 }

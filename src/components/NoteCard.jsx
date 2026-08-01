@@ -1,5 +1,5 @@
 import { forwardRef, useMemo } from 'react'
-import { Pin, Star } from 'lucide-react'
+import { MoreHorizontal, Pin, Star } from 'lucide-react'
 import { useNotesStore, useUIStore } from '../store'
 import { useTranslation } from '../lib/useTranslation'
 import { formatNoteDate, htmlToPlainText, truncateText, getNoteTypePreview } from '../lib/utils'
@@ -26,6 +26,7 @@ const NoteCard = forwardRef(function NoteCard(
     onContextMenu,
     onMouseEnter,
     onMouseLeave,
+    onOpenMenu,
     isDragging,
     dragHandle,
   },
@@ -52,7 +53,7 @@ const NoteCard = forwardRef(function NoteCard(
   const extraTags = (note.tags?.length || 0) - visibleTags.length
 
   return (
-    <li className="relative px-3 py-1">
+    <li className={`group relative px-3 py-1 ${dragHandle ? 'qn-note-card--sortable' : ''}`}>
       {dragHandle}
       <button
         ref={ref}
@@ -78,7 +79,7 @@ const NoteCard = forwardRef(function NoteCard(
             title reserves that width rather than running underneath them. */}
         <div className="flex items-start gap-2">
           <h3
-            className={`min-w-0 flex-1 truncate pr-11 font-semibold text-content ${
+            className={`min-w-0 flex-1 truncate pr-16 font-semibold text-content ${
  compactMode ? 'text-ui-md' : 'text-title-xs'
  }`}
           >
@@ -149,7 +150,7 @@ const NoteCard = forwardRef(function NoteCard(
             note.starred ? `Remove ${note.title} from favourites` : `Add ${note.title} to favourites`
           }
           aria-pressed={!!note.starred}
-          className={`qn-inline-target flex h-6 w-6 items-center justify-center rounded-control transition-colors duration-fast hover:bg-surface-active ${
+          className={`qn-card-action qn-inline-target flex h-6 w-6 items-center justify-center rounded-control transition-colors duration-fast hover:bg-surface-active ${
             note.starred ? 'text-warning' : 'text-content-subtle opacity-60 hover:opacity-100'
           }`}
         >
@@ -157,6 +158,18 @@ const NoteCard = forwardRef(function NoteCard(
             className={`h-3.5 w-3.5 ${note.starred ? 'fill-current text-warning' : ''}`}
             aria-hidden="true"
           />
+          </button>
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation()
+            const rect = event.currentTarget.getBoundingClientRect()
+            onOpenMenu?.({ x: rect.right, y: rect.bottom })
+          }}
+          aria-label={`More actions for ${note.title || 'Untitled note'}`}
+          className="qn-card-action qn-inline-target flex h-6 w-6 items-center justify-center rounded-control text-content-subtle opacity-100 transition-colors duration-fast hover:bg-surface-active hover:text-content sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
+        >
+          <MoreHorizontal className="h-3.5 w-3.5" aria-hidden="true" />
         </button>
       </div>
     </li>

@@ -328,7 +328,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
     <div className="editor-paper flex h-full w-full min-w-0 flex-col bg-surface">
       {/* Window chrome: sync state and note-level actions sit on the light
           strip above the coloured banner. */}
-      <div className="flex shrink-0 items-center gap-1 border-b border-subtle bg-surface px-2 py-1.5 sm:px-3">
+      <div className="qn-editor-chrome flex shrink-0 items-center gap-1 border-b border-subtle bg-surface px-2 py-1.5 sm:px-3">
         {showBack && (
           <IconButton
             icon={ArrowLeft}
@@ -423,8 +423,8 @@ export default function NoteEditor({ onBack, showBack = false }) {
 
       {/* Banner header */}
       {!isSpecialized && (
-        <header className="qn-banner-surface m-2 shrink-0 rounded-card px-4 py-3.5 text-banner-text sm:mx-3 sm:px-5 sm:py-4">
-        <div className="mb-2 flex items-start gap-1.5">
+        <header className="qn-note-banner qn-banner-surface m-2 shrink-0 rounded-card px-4 py-3.5 text-banner-text sm:mx-3 sm:px-5 sm:py-4">
+        <div className="qn-note-title-row mb-2 flex items-start gap-1.5">
 
           <div className="min-w-0 flex-1">
             <label htmlFor="qn-note-title" className="qn-sr-only">
@@ -470,7 +470,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
         </div>
 
         {/* Metadata row */}
-        <div className="flex flex-wrap items-center gap-x-1 gap-y-1 text-ui-md text-banner-muted">
+        <div className="qn-note-metadata flex flex-nowrap items-center gap-x-1 gap-y-1 overflow-x-auto overscroll-x-contain text-ui-md text-banner-muted sm:flex-wrap sm:overflow-visible">
           <span className="inline-flex items-center gap-1.5 px-1.5 py-0.5">
             <Clock className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             <time dateTime={note.updatedAt}>{formatDate(note.updatedAt, language)}</time>
@@ -509,7 +509,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
           </button>
 
           {note.tags?.length > 0 && (
-            <ul className="flex min-w-0 flex-wrap items-center gap-1">
+            <ul className="flex min-w-max flex-nowrap items-center gap-1 sm:min-w-0 sm:flex-wrap">
               {note.tags.map((tagName) => (
                 <li key={tagName} className="min-w-0">
                   <TagChip
