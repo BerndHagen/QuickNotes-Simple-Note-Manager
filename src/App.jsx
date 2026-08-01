@@ -38,7 +38,7 @@ import { useShareInvitations } from './lib/useCollaboration'
 import { useAppShortcuts } from './lib/shortcuts'
 import { useLayoutMode } from './hooks/useBreakpoint'
 import { PanelLeft, CloudOff } from 'lucide-react'
-import { IconButton, Spinner } from './components/ui'
+import { CanvasWaves, IconButton, Spinner } from './components/ui'
 
 function AppLoading() {
   return (
@@ -313,6 +313,7 @@ export default function App() {
   if (!user) {
     return (
       <ThemeProvider>
+        <CanvasWaves />
         <AuthScreen />
       </ThemeProvider>
     )
@@ -345,6 +346,7 @@ export default function App() {
 
   return (
     <ThemeProvider>
+      <CanvasWaves />
       <div className="qn-workspace-frame flex h-[100dvh] overflow-hidden bg-app text-content">
         <a href="#qn-main" className="qn-skip-link">
           Skip to content

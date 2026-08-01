@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Avatar, Field, SegmentedControl, Toggle } from './ui'
+import { Avatar, Button, Field, Input, SegmentedControl, Toggle } from './ui'
 import {
   X,
   User,
@@ -748,7 +748,7 @@ export default function SettingsModal() {
                         {t('settings.displayNameHint', 'Shown in the sidebar and on notes you share.')}
                       </p>
                       <div className="flex gap-2">
-                        <input
+                        <Input
                           type="text"
                           value={displayName}
                           maxLength={60}
@@ -756,16 +756,11 @@ export default function SettingsModal() {
                           onKeyDown={(e) => { if (e.key === 'Enter') handleSaveName() }}
                           placeholder="My workspace"
                           aria-label={t('settings.displayName', 'Display name')}
-                          className="flex-1 px-3 py-2 text-sm border rounded-lg outline-none border-strong bg-surface-raised text-content focus:border-accent"
+                          className="flex-1"
                         />
-                        <button
-                          type="button"
-                          onClick={handleSaveName}
-                          disabled={savingName}
-                          className="px-4 py-2 text-sm text-white transition-colors rounded-lg bg-accent hover:bg-accent-hover disabled:opacity-50"
-                        >
-                          {savingName ? t('settings.saving') : t('common.save')}
-                        </button>
+                        <Button variant="primary" onClick={handleSaveName} loading={savingName}>
+                          {t('common.save')}
+                        </Button>
                       </div>
                     </div>
 
@@ -869,7 +864,7 @@ export default function SettingsModal() {
                         {t('settings.displayNameHint', 'Shown in the sidebar and on notes you share.')}
                       </p>
                       <div className="flex gap-2">
-                        <input
+                        <Input
                           type="text"
                           value={displayName}
                           maxLength={60}
@@ -877,16 +872,11 @@ export default function SettingsModal() {
                           onKeyDown={(e) => { if (e.key === 'Enter') handleSaveName() }}
                           placeholder={t('settings.displayName', 'Display name')}
                           aria-label={t('settings.displayName', 'Display name')}
-                          className="flex-1 px-3 py-2 text-sm border rounded-lg outline-none border-strong bg-surface-raised text-content focus:border-accent"
+                          className="flex-1"
                         />
-                        <button
-                          type="button"
-                          onClick={handleSaveName}
-                          disabled={savingName}
-                          className="px-4 py-2 text-sm text-white transition-colors rounded-lg bg-accent hover:bg-accent-hover disabled:opacity-50"
-                        >
-                          {savingName ? t('settings.saving') : t('common.save')}
-                        </button>
+                        <Button variant="primary" onClick={handleSaveName} loading={savingName}>
+                          {t('common.save')}
+                        </Button>
                       </div>
                     </div>
                     <div className="p-4 border border-subtle rounded-lg ">

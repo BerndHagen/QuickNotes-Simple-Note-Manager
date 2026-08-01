@@ -24,7 +24,7 @@ import { useNotesStore, useThemeStore, useUIStore } from '../store'
 import { useTranslation } from '../lib/useTranslation'
 import { getFolderIcon } from '../lib/folderIcons'
 import { isBackendConfigured } from '../lib/backend'
-import { Avatar, Menu, MenuItem, MenuSeparator, NotepadGlyph, TagChip } from './ui'
+import { Avatar, Button, Menu, MenuItem, MenuSeparator, NotepadGlyph, TagChip } from './ui'
 import { FolderDialog, ConfirmDialog } from './FolderDialogs'
 
 /**
@@ -217,15 +217,19 @@ export default function Sidebar({ onNavigate }) {
 
       {/* Quick note */}
       <div className="shrink-0 px-4 pb-4">
-        <button
-          type="button"
+        {/* The rail's primary action. Built from the shared Button so it picks
+            up the accent tokens; the ring gives it an edge against the rail,
+            which is itself dark green. */}
+        <Button
+          variant="primary"
+          fullWidth
+          icon={Plus}
           onClick={go(() => setQuickNoteOpen(true))}
-          className="flex h-10 w-full items-center gap-2 rounded-[10px] bg-[#10b981] px-3.5 text-ui-lg font-semibold text-[#04241c] shadow-sm transition-[filter] duration-fast hover:brightness-105"
+          className="h-10 justify-start rounded-[10px] px-3.5 text-ui-lg ring-1 ring-white/15"
         >
-          <Plus className="h-4 w-4 shrink-0" aria-hidden="true" />
           <span className="flex-1 text-left">{t('sidebar.quickNote')}</span>
-          <kbd className="shrink-0 font-sans text-ui-xs font-semibold text-[#04241c]/70">Ctrl + N</kbd>
-        </button>
+          <kbd className="shrink-0 font-sans text-ui-xs font-medium text-white/70">Ctrl + N</kbd>
+        </Button>
       </div>
 
       {/* Scrollable navigation */}
