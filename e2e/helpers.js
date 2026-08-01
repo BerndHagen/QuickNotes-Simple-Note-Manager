@@ -55,13 +55,22 @@ export async function signIn(page, entryUrl = './') {
   // On a cloud-capable build the local workspace is one step behind the
   // sign-in form; without a backend the entry button is shown directly.
   const enterLocal = page.getByRole('button', { name: /use a private local workspace/i })
+  const localWorkspace = page.getByRole('button', {
+    name: /(?:create|continue to my) local workspace/i,
+  })
+  const workspace = page.locator('#qn-main')
+
+  await expect(enterLocal.or(localWorkspace).or(workspace)).toBeVisible({ timeout: 30_000 })
+  if (await workspace.isVisible().catch(() => false)) {
+    await resetKeyboardStart(page)
+    return
+  }
   if (await enterLocal.isVisible().catch(() => false)) await enterLocal.click()
 
-  await page
-    .getByRole('button', { name: /(?:create|continue to my) local workspace/i })
-    .click()
+  await expect(localWorkspace.or(workspace)).toBeVisible({ timeout: 30_000 })
+  if (!(await workspace.isVisible().catch(() => false))) await localWorkspace.click()
 
-  await expect(page.locator('#qn-main')).toBeVisible({ timeout: 30_000 })
+  await expect(workspace).toBeVisible({ timeout: 30_000 })
   await resetKeyboardStart(page)
 }
 

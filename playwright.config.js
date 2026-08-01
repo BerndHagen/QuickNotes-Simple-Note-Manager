@@ -16,7 +16,16 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    {
+      name: 'chromium',
+      testIgnore: /mobile-webkit\.spec\.js/,
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'mobile-webkit',
+      testMatch: /mobile-webkit\.spec\.js/,
+      use: { ...devices['iPhone 13'] },
+    },
   ],
   // Serves the production build from `dist/`, so run `npm run build` first.
   // An already-running server on PORT is reused.

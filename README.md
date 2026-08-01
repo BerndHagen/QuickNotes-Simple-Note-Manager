@@ -880,7 +880,7 @@ type workspaces, responsive layout from 320px to 1920px, and automated WCAG A/AA
 checks via axe-core:
 
 ```bash
-npx playwright install chromium # one-time browser installation
+npx playwright install chromium webkit # one-time browser installation
 npm run build      # Playwright serves dist/ via `npm run preview`
 npm run test:e2e
 ```

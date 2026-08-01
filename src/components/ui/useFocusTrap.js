@@ -29,6 +29,14 @@ export const getFocusable = (root) => {
   })
 }
 
+const canReceiveRestoredFocus = (element) => {
+  if (!element || typeof element.focus !== 'function' || !document.contains(element)) return false
+  if (!element.matches?.(FOCUSABLE)) return false
+  if (element.closest('[inert], [hidden], [aria-hidden="true"]')) return false
+  const style = element.ownerDocument?.defaultView?.getComputedStyle?.(element)
+  return !style || (style.display !== 'none' && style.visibility !== 'hidden')
+}
+
 /**
  * Traps Tab/Shift+Tab inside `ref`, moves initial focus into it, and
  * restores focus to whatever was focused before it opened.
@@ -87,10 +95,14 @@ export function useFocusTrap(ref, active, { initialFocusRef } = {}) {
     return () => {
       cancelAnimationFrame(focusFrame)
       node.removeEventListener('keydown', handleKeyDown)
-      const toRestore = previouslyFocused.current
-      if (toRestore && typeof toRestore.focus === 'function' && document.contains(toRestore)) {
-        toRestore.focus({ preventScroll: true })
-      }
+      const previous = previouslyFocused.current
+      const fallback = document.querySelector('[data-dialog-return-focus]')
+      const toRestore = canReceiveRestoredFocus(previous)
+        ? previous
+        : canReceiveRestoredFocus(fallback)
+          ? fallback
+          : null
+      toRestore?.focus({ preventScroll: true })
     }
   }, [active, ref, initialFocusRef])
 }

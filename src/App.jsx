@@ -16,6 +16,43 @@ import { useLayoutMode } from './hooks/useBreakpoint'
 import { PanelLeft, CloudOff } from 'lucide-react'
 import { IconButton, Spinner, useEscapeKey, useFocusTrap } from './components/ui'
 
+const MOBILE_HISTORY_SURFACE_KEYS = [
+  'focusModeOpen',
+  'editorSettingsOpen',
+  'htmlEditorOpen',
+  'imageUploadOpen',
+  'linkModalOpen',
+  'findReplaceOpen',
+  'sharedNotesViewOpen',
+  'shareModalOpen',
+  'translateModalOpen',
+  'tagManagerOpen',
+  'termsModalOpen',
+  'privacyModalOpen',
+  'helpModalOpen',
+  'noteTypesModalOpen',
+  'shortcutsModalOpen',
+  'archiveViewOpen',
+  'globalSearchOpen',
+  'duplicateModalOpen',
+  'versionHistoryOpen',
+  'showTrash',
+  'reminderModalOpen',
+  'importModalOpen',
+  'exportModalOpen',
+  'settingsOpen',
+  'quickNoteOpen',
+]
+
+const selectMobileHistorySurface = (state) =>
+  MOBILE_HISTORY_SURFACE_KEYS.find((key) => state[key]) || null
+
+const restoreMobileHistorySurface = (surface) => {
+  const nextState = Object.fromEntries(MOBILE_HISTORY_SURFACE_KEYS.map((key) => [key, false]))
+  if (MOBILE_HISTORY_SURFACE_KEYS.includes(surface)) nextState[surface] = true
+  useUIStore.setState(nextState)
+}
+
 const NoteEditor = lazy(() => import('./components/NoteEditor'))
 const PasswordRecoveryScreen = lazy(() => import('./components/PasswordRecoveryScreen'))
 const QuickNoteModal = lazy(() => import('./components/QuickNoteModal'))
@@ -126,6 +163,7 @@ export default function App() {
     sharedNotesViewOpen,
     editorSettingsOpen,
   } = useUIStore()
+  const modalHistorySurface = useUIStore(selectMobileHistorySurface)
 
   const [isLoading, setIsLoading] = useState(true)
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false)
@@ -133,30 +171,64 @@ export default function App() {
   const sidebarToggleRef = useRef(null)
   const sidebarRef = useRef(null)
   const mobileHistoryReadyRef = useRef(false)
+  const sidebarOverlayOpen = Boolean(user && sidebarIsOverlay && sidebarOpen)
+  const mobileHistorySurface = modalHistorySurface || (sidebarOverlayOpen ? 'sidebar' : null)
 
   useShareInvitations()
 
   useEffect(() => {
-    if (!user || !isCompact) {
+    if (!user || !sidebarIsOverlay) {
       mobileHistoryReadyRef.current = false
       return undefined
     }
 
-    const state = window.history.state || {}
-    if (!state.qnMobileView) {
-      window.history.replaceState({ ...state, qnMobileView: 'notes' }, document.title)
-    }
-    mobileHistoryReadyRef.current = true
-
     const handlePopState = (event) => {
-      setMobileView(event.state?.qnMobileView === 'editor' ? 'editor' : 'notes')
+      if (isCompact) {
+        setMobileView(event.state?.qnMobileView === 'editor' ? 'editor' : 'notes')
+      }
+      const surface = event.state?.qnMobileSurface || null
+      restoreMobileHistorySurface(surface)
+      setSidebarOpen(surface === 'sidebar')
     }
     window.addEventListener('popstate', handlePopState)
+
+    // The persisted desktop sidebar starts open. Let the responsive sidebar
+    // effect close it before history tracking begins, so loading on a phone
+    // never creates a phantom drawer entry.
+    const readyFrame = requestAnimationFrame(() => {
+      const state = window.history.state || {}
+      const nextState = { ...state }
+      delete nextState.qnMobileSurface
+      if (isCompact && !nextState.qnMobileView) nextState.qnMobileView = 'notes'
+      window.history.replaceState(nextState, document.title)
+      if (isCompact) {
+        setMobileView(nextState.qnMobileView === 'editor' ? 'editor' : 'notes')
+      }
+      mobileHistoryReadyRef.current = true
+    })
+
     return () => {
+      cancelAnimationFrame(readyFrame)
       mobileHistoryReadyRef.current = false
       window.removeEventListener('popstate', handlePopState)
     }
-  }, [isCompact, setMobileView, user])
+  }, [isCompact, setMobileView, setSidebarOpen, sidebarIsOverlay, user])
+
+  useEffect(() => {
+    if (!mobileHistoryReadyRef.current) return
+    const state = window.history.state || {}
+    const currentSurface = state.qnMobileSurface || null
+    if (currentSurface === mobileHistorySurface) return
+
+    if (mobileHistorySurface) {
+      const nextState = { ...state, qnMobileSurface: mobileHistorySurface }
+      if (currentSurface) window.history.replaceState(nextState, document.title)
+      else window.history.pushState(nextState, document.title)
+      return
+    }
+
+    if (currentSurface) window.history.back()
+  }, [mobileHistorySurface])
 
   useEffect(() => {
     if (!mobileHistoryReadyRef.current || mobileView !== 'editor') return
@@ -401,7 +473,6 @@ export default function App() {
     setMobileView('notes')
   }, [isCompact, setMobileView])
 
-  const sidebarOverlayOpen = Boolean(user && sidebarIsOverlay && sidebarOpen)
   useFocusTrap(sidebarRef, sidebarOverlayOpen)
   useEscapeKey(sidebarOverlayOpen, closeSidebarOverlay)
 
@@ -449,6 +520,7 @@ export default function App() {
       label={sidebarOpen ? 'Hide navigation' : 'Show navigation'}
       aria-expanded={sidebarOpen}
       aria-controls="qn-sidebar"
+      data-dialog-return-focus
       onClick={toggleSidebar}
     />
   )

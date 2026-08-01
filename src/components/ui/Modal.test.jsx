@@ -121,6 +121,29 @@ describe('Modal', () => {
     await waitFor(() => expect(trigger).toHaveFocus())
   })
 
+  it('uses the visible return target when the original trigger becomes inert', async () => {
+    const hiddenRegion = document.createElement('div')
+    const trigger = document.createElement('button')
+    const fallback = document.createElement('button')
+    fallback.setAttribute('data-dialog-return-focus', '')
+    hiddenRegion.appendChild(trigger)
+    document.body.append(hiddenRegion, fallback)
+    trigger.focus()
+
+    const { unmount } = render(
+      <Modal open onClose={() => {}} title="T">
+        <input aria-label="field" />
+      </Modal>
+    )
+    await waitFor(() => expect(screen.getByLabelText('field')).toHaveFocus())
+    hiddenRegion.setAttribute('inert', '')
+    unmount()
+
+    await waitFor(() => expect(fallback).toHaveFocus())
+    hiddenRegion.remove()
+    fallback.remove()
+  })
+
   it('locks background scrolling while open', async () => {
     const { unmount } = renderModal()
     expect(document.body.style.overflow).toBe('hidden')
