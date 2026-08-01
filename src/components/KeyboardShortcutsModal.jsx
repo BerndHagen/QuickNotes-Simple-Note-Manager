@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { AlertCircle, Keyboard, Lock, RotateCcw, Save } from 'lucide-react'
 import { useUIStore } from '../store'
 import { useTranslation } from '../lib/useTranslation'
+import { useMediaQuery } from '../hooks/useBreakpoint'
 import {
   DEFAULT_SHORTCUTS,
   formatShortcut,
@@ -60,6 +61,7 @@ const sameBinding = (a, b) =>
 export default function KeyboardShortcutsModal() {
   const { shortcutsModalOpen, setShortcutsModalOpen } = useUIStore()
   const { t } = useTranslation()
+  const hasTouchInput = useMediaQuery('(hover: none), (pointer: coarse), (any-pointer: coarse)')
 
   const [shortcuts, setShortcuts] = useState(() => loadShortcuts())
   const [recording, setRecording] = useState(null)
@@ -170,7 +172,7 @@ export default function KeyboardShortcutsModal() {
       open={shortcutsModalOpen}
       onClose={() => setShortcutsModalOpen(false)}
       title={t('sidebar.shortcuts', 'Keyboard shortcuts')}
-      description="Workspace shortcuts are customisable. Editor shortcuts come from the editor itself and cannot be rebound."
+      description="View and customise shortcuts for this device."
       icon={Keyboard}
       size="xl"
       initialFocusRef={firstFieldRef}
@@ -190,15 +192,18 @@ export default function KeyboardShortcutsModal() {
           >
             Reset all
           </Button>
-          <Button variant="ghost" onClick={() => setShortcutsModalOpen(false)}>
-            {t('common.close', 'Close')}
-          </Button>
           <Button variant="primary" icon={Save} disabled={!dirty} onClick={handleSave}>
             {saved ? 'Saved' : 'Save changes'}
           </Button>
         </>
       }
     >
+      {hasTouchInput && (
+        <div className="mb-4 rounded-card border border-[var(--qn-info-border)] bg-info-soft p-3 text-ui-md leading-relaxed text-info-text">
+          Keyboard shortcuts work when a hardware keyboard is connected. Apple devices use the Command key where Windows and Linux use Ctrl.
+        </div>
+      )}
+
       {conflict && (
         <div
           role="alert"
@@ -257,12 +262,12 @@ export default function KeyboardShortcutsModal() {
                 return (
                   <li
                     key={action}
-                    className="flex items-center justify-between gap-3 bg-surface-raised px-3 py-2"
+                    className="flex flex-col items-stretch gap-2 bg-surface-raised px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3"
                   >
-                    <span className="min-w-0 flex-1 truncate text-ui-md text-content">
+                    <span className="min-w-0 flex-1 text-ui-md text-content">
                       {shortcut.description}
                     </span>
-                    <span className="flex shrink-0 items-center gap-1.5">
+                    <span className="flex shrink-0 items-center justify-end gap-1.5">
                       {modified && (
                         <IconButton
                           icon={RotateCcw}

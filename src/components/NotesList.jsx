@@ -246,7 +246,10 @@ export default function NotesList({ sidebarToggle, onOpenNote }) {
 
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 8 } }),
+    // The touch listener only lives on the dedicated handle, whose
+    // `touch-action: none` leaves list scrolling unaffected. Activating by
+    // movement is immediate and avoids an undiscoverable long press on iOS.
+    useSensor(TouchSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   )
 
@@ -370,6 +373,18 @@ export default function NotesList({ sidebarToggle, onOpenNote }) {
           note={note}
           dragHandle={dragHandle}
           dragProps={dragProps}
+          reorderControls={
+            isManualSort && isCoarsePointer
+              ? {
+                  position: index + 1,
+                  total: visibleNotes.length,
+                  canMoveUp: index > 0,
+                  canMoveDown: index < visibleNotes.length - 1,
+                  onMoveUp: () => moveNoteByOffset(note.id, -1),
+                  onMoveDown: () => moveNoteByOffset(note.id, 1),
+                }
+              : undefined
+          }
           isSelected={selectedNoteId === note.id}
           isMultiSelected={selectedIds.has(note.id)}
           onClick={(e) => handleNoteClick(e, note, index)}
@@ -463,11 +478,7 @@ export default function NotesList({ sidebarToggle, onOpenNote }) {
               }}
               className="absolute right-1 top-1/2 -translate-y-1/2"
             />
-          ) : (
-            <kbd className="pointer-events-none absolute right-2.5 top-1/2 hidden -translate-y-1/2 rounded border border-subtle bg-surface-sunken px-1.5 py-0.5 text-ui-xs font-medium text-content-muted sm:inline-flex">
-              Ctrl F
-            </kbd>
-          )}
+          ) : null}
         </div>
       </div>
 
@@ -477,6 +488,17 @@ export default function NotesList({ sidebarToggle, onOpenNote }) {
           <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}>
             Clear
           </Button>
+        </div>
+      )}
+
+      {isManualSort && isCoarsePointer && visibleNotes.length > 1 && (
+        <div
+          id="qn-manual-order-help"
+          role="status"
+          className="flex shrink-0 items-center gap-2 border-y border-subtle bg-surface-sunken px-3 py-2 text-ui-sm text-content-muted"
+        >
+          <GripVertical className="h-4 w-4 shrink-0" aria-hidden="true" />
+          Drag a handle, or use the arrow buttons for precise ordering.
         </div>
       )}
 

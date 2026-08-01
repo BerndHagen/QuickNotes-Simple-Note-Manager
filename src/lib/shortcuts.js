@@ -89,29 +89,30 @@ export const saveShortcuts = (shortcuts) => {
 }
 
 const isApple = () =>
-  typeof navigator !== 'undefined' && /mac|iphone|ipad/i.test(navigator.platform || navigator.userAgent)
+  typeof navigator !== 'undefined' &&
+  /mac|iphone|ipad/i.test(`${navigator.platform || ''} ${navigator.userAgent || ''}`)
 
 export const formatShortcut = (shortcut) => {
   if (!shortcut?.key) return '—'
   const apple = isApple()
   const parts = []
-  if (shortcut.ctrl) parts.push(apple ? '⌘' : 'Ctrl')
-  if (shortcut.alt) parts.push(apple ? '⌥' : 'Alt')
-  if (shortcut.shift) parts.push(apple ? '⇧' : 'Shift')
+  if (shortcut.ctrl) parts.push(apple ? 'Command' : 'Ctrl')
+  if (shortcut.alt) parts.push(apple ? 'Option' : 'Alt')
+  if (shortcut.shift) parts.push('Shift')
 
   const named = {
     ' ': 'Space',
     Escape: 'Esc',
     Delete: 'Del',
-    ArrowUp: '↑',
-    ArrowDown: '↓',
-    ArrowLeft: '←',
-    ArrowRight: '→',
+    ArrowUp: 'Up',
+    ArrowDown: 'Down',
+    ArrowLeft: 'Left',
+    ArrowRight: 'Right',
     '\\': '\\',
   }
   const key = named[shortcut.key] || (shortcut.key.length === 1 ? shortcut.key.toUpperCase() : shortcut.key)
   parts.push(key)
-  return parts.join(apple ? '' : ' + ')
+  return parts.join(' + ')
 }
 
 export const matchesShortcut = (event, shortcut) => {

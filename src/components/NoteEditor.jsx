@@ -14,6 +14,7 @@ import {
   FolderOpen,
   History,
   Image as ImageIcon,
+  Info,
   Link2,
   Mic,
   MoreVertical,
@@ -53,6 +54,7 @@ import { IconButton, Input, Menu, MenuItem, MenuSeparator, EmptyState, TagChip }
 import { ConfirmDialog } from './FolderDialogs'
 import { SyncStatusPill } from './SyncStatus'
 import { isBackendConfigured } from '../lib/backend'
+import { BREAKPOINTS, useMediaQuery } from '../hooks/useBreakpoint'
 import toast from 'react-hot-toast'
 
 import {
@@ -64,6 +66,7 @@ import {
 
 export default function NoteEditor({ onBack, showBack = false }) {
   const { t, language } = useTranslation()
+  const isCompact = useMediaQuery(BREAKPOINTS.compact)
   const {
     folders,
     tags,
@@ -341,13 +344,44 @@ export default function NoteEditor({ onBack, showBack = false }) {
             onClick={onBack}
           />
         )}
-        <SyncStatusPill className="mr-auto" />
+        {isCompact && (
+          <div className="min-w-0 flex-1 md:hidden">
+            <label htmlFor="qn-mobile-note-title" className="qn-sr-only">
+              {t('editor.noteTitle', 'Note title')}
+            </label>
+            <input
+              id="qn-mobile-note-title"
+              type="text"
+              maxLength={MAX_NOTE_TITLE_LENGTH}
+              value={title}
+              onChange={handleTitleChange}
+              onFocus={() => setIsEditingTitle(true)}
+              onBlur={() => {
+                debouncedTitleUpdate.flush()
+                setIsEditingTitle(false)
+              }}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault()
+                  event.currentTarget.blur()
+                }
+              }}
+              readOnly={isReadOnly}
+              placeholder={t('editor.untitled', 'Untitled note')}
+              className={`h-11 w-full truncate rounded-control border-0 bg-transparent px-2 text-base font-semibold text-content outline-none transition-colors placeholder:text-content-subtle ${
+                isEditingTitle ? 'bg-surface-sunken' : 'hover:bg-surface-hover'
+              } ${isReadOnly ? 'cursor-default' : 'cursor-text'}`}
+            />
+          </div>
+        )}
+        <SyncStatusPill className="mr-auto hidden md:flex" />
         {!isSpecialized && (
           <IconButton
             icon={Search}
             label={t('editor.findReplace', 'Find & replace')}
             active={findReplaceOpen}
             onClick={() => setFindReplaceOpen(!findReplaceOpen)}
+            className="hidden md:inline-flex"
           />
         )}
         {isSpecialized && !isShared && (
@@ -414,6 +448,22 @@ export default function NoteEditor({ onBack, showBack = false }) {
             active={note.starred}
             aria-pressed={!!note.starred}
             onClick={() => toggleStar(note.id)}
+            className="hidden md:inline-flex"
+          />
+        )}
+        {!isSpecialized && (
+          <IconButton
+            icon={Info}
+            label={
+              noteDetailsExpanded
+                ? t('editor.hideDetails', 'Hide note details')
+                : t('editor.showDetails', 'Show note details')
+            }
+            active={noteDetailsExpanded}
+            aria-expanded={noteDetailsExpanded}
+            aria-controls="qn-note-details"
+            onClick={() => setNoteDetailsExpanded((expanded) => !expanded)}
+            className="md:hidden"
           />
         )}
         <IconButton
@@ -428,9 +478,11 @@ export default function NoteEditor({ onBack, showBack = false }) {
 
       {/* Banner header */}
       {!isSpecialized && (
-        <header className="qn-note-banner qn-banner-surface m-2 shrink-0 rounded-card px-4 py-3.5 text-banner-text sm:mx-3 sm:px-5 sm:py-4">
+        <header className={`qn-note-banner qn-banner-surface m-2 shrink-0 rounded-card px-4 py-3.5 text-banner-text sm:mx-3 sm:px-5 sm:py-4 ${
+          noteDetailsExpanded ? 'block' : 'hidden md:block'
+        }`}>
         <div
-          className={`qn-note-title-row flex items-start gap-1.5 ${
+          className={`qn-note-title-row hidden items-start gap-1.5 md:flex ${
             noteDetailsExpanded ? 'mb-2' : 'mb-0 md:mb-2'
           }`}
         >
@@ -439,46 +491,33 @@ export default function NoteEditor({ onBack, showBack = false }) {
             <label htmlFor="qn-note-title" className="qn-sr-only">
               {t('editor.noteTitle', 'Note title')}
             </label>
-            <input
-              id="qn-note-title"
-              ref={titleInputRef}
-              type="text"
-              maxLength={MAX_NOTE_TITLE_LENGTH}
-              value={title}
-              onChange={handleTitleChange}
-              onFocus={() => setIsEditingTitle(true)}
-              onBlur={() => {
-                debouncedTitleUpdate.flush()
-                setIsEditingTitle(false)
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault()
-                  e.currentTarget.blur()
-                }
-              }}
-              readOnly={isReadOnly}
-              placeholder={t('editor.untitled', 'Untitled note')}
-              className={`w-full truncate rounded-control bg-transparent px-2 py-1 text-title-md font-semibold text-banner-text outline-none transition-colors duration-fast placeholder:text-banner-muted sm:text-title-lg ${
- isEditingTitle ? 'bg-banner-hover' : 'hover:bg-banner-hover'
- } ${isReadOnly ? 'cursor-default' : 'cursor-text'}`}
-            />
+            {!isCompact && (
+              <input
+                id="qn-note-title"
+                ref={titleInputRef}
+                type="text"
+                maxLength={MAX_NOTE_TITLE_LENGTH}
+                value={title}
+                onChange={handleTitleChange}
+                onFocus={() => setIsEditingTitle(true)}
+                onBlur={() => {
+                  debouncedTitleUpdate.flush()
+                  setIsEditingTitle(false)
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    e.currentTarget.blur()
+                  }
+                }}
+                readOnly={isReadOnly}
+                placeholder={t('editor.untitled', 'Untitled note')}
+                className={`w-full truncate rounded-control bg-transparent px-2 py-1 text-title-md font-semibold text-banner-text outline-none transition-colors duration-fast placeholder:text-banner-muted sm:text-title-lg ${
+                  isEditingTitle ? 'bg-banner-hover' : 'hover:bg-banner-hover'
+                } ${isReadOnly ? 'cursor-default' : 'cursor-text'}`}
+              />
+            )}
           </div>
-
-          <IconButton
-            icon={ChevronDown}
-            label={
-              noteDetailsExpanded
-                ? t('editor.hideDetails', 'Hide note details')
-                : t('editor.showDetails', 'Show note details')
-            }
-            tone="onBanner"
-            active={noteDetailsExpanded}
-            aria-expanded={noteDetailsExpanded}
-            aria-controls="qn-note-details"
-            onClick={() => setNoteDetailsExpanded((expanded) => !expanded)}
-            className={`shrink-0 md:hidden ${noteDetailsExpanded ? 'rotate-180' : ''}`}
-          />
 
           {!isShared && (
             <IconButton
@@ -667,6 +706,53 @@ export default function NoteEditor({ onBack, showBack = false }) {
         label={t('editor.moreActions', 'Note actions')}
         width={230}
       >
+        {!isSpecialized && (
+          <MenuItem
+            icon={Search}
+            onClick={() => {
+              setFindReplaceOpen(true)
+              setMenuOpen(false)
+            }}
+          >
+            {t('editor.findReplace', 'Find & replace')}
+          </MenuItem>
+        )}
+        {!isShared && (
+          <MenuItem
+            icon={Star}
+            onClick={() => {
+              toggleStar(note.id)
+              setMenuOpen(false)
+            }}
+          >
+            {note.starred
+              ? t('editor.unfavourite', 'Remove from favourites')
+              : t('editor.favourite', 'Add to favourites')}
+          </MenuItem>
+        )}
+        {!isShared && (
+          <MenuItem
+            icon={Pin}
+            onClick={() => {
+              togglePin(note.id)
+              setMenuOpen(false)
+            }}
+          >
+            {note.pinned ? t('editor.unpin', 'Unpin note') : t('editor.pin', 'Pin note')}
+          </MenuItem>
+        )}
+        {!isShared && (
+          <MenuItem
+            icon={Tag}
+            onClick={() => {
+              setMenuOpen(false)
+              setTagPickerOpen(true)
+            }}
+          >
+            {t('editor.tags', 'Tags')}
+          </MenuItem>
+        )}
+        <MenuSeparator />
         {!isShared && (
           <MenuItem icon={Copy} onClick={() => { duplicateNote(note.id); setMenuOpen(false) }}>
             {t('editor.duplicate', 'Duplicate note')}
@@ -741,7 +827,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
       <Menu
         open={folderPickerOpen}
         onClose={() => setFolderPickerOpen(false)}
-        anchorRef={folderButtonRef}
+        anchorRef={folderButtonRef.current?.offsetParent ? folderButtonRef : menuButtonRef}
         label={t('editor.moveToFolder', 'Move to folder')}
         width={220}
       >
@@ -771,7 +857,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
       <Menu
         open={tagPickerOpen}
         onClose={() => setTagPickerOpen(false)}
-        anchorRef={tagButtonRef}
+        anchorRef={tagButtonRef.current?.offsetParent ? tagButtonRef : menuButtonRef}
         label={t('editor.tags', 'Tags')}
         width={250}
         className="p-2"

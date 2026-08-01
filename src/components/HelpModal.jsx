@@ -86,13 +86,13 @@ export default function HelpModal() {
       description="Tips and instructions for QuickNotes"
       icon={HelpCircle}
       size="xl"
-      bodyClassName="!overflow-hidden p-0 sm:p-0"
+      bodyClassName="p-0 sm:p-0"
     >
       <div
         role="region"
         aria-label={t('help.title')}
         tabIndex={0}
-        className="h-full overflow-y-auto overscroll-contain px-5 py-5 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--qn-focus-ring)] sm:px-6"
+        className="px-5 py-5 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--qn-focus-ring)] sm:px-6"
       >
         <div className="space-y-3">
           {sections.map((section) => {

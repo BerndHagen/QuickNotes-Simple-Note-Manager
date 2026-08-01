@@ -150,7 +150,7 @@ export const IconButton = forwardRef(function IconButton(
       }
       disabled={disabled || loading}
       className={[
-        'qn-square-control inline-flex shrink-0 items-center justify-center transition-colors duration-fast ease-qn',
+        'qn-square-control inline-flex aspect-square shrink-0 self-center items-center justify-center transition-colors duration-fast ease-qn',
         'disabled:cursor-not-allowed disabled:opacity-50',
         colourClasses,
         ICON_BUTTON_SIZES[size] || ICON_BUTTON_SIZES.md,

@@ -286,10 +286,10 @@ export default function ImportModal() {
   return (
     <LegacyDialog label="Import notes" onClose={handleClose} align="center">
       <div 
-        className="w-full min-w-0 max-w-lg overflow-hidden rounded-2xl border border-subtle bg-surface-raised shadow-2xl modal-animate"
+        className="flex max-h-full w-full min-w-0 max-w-lg flex-col overflow-hidden rounded-2xl border border-subtle bg-surface-raised shadow-2xl modal-animate"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-4 text-white qn-banner-surface sm:p-5">
+        <div className="flex shrink-0 items-center justify-between p-4 text-white qn-banner-surface sm:p-5">
           <div className="flex items-center gap-3">
             <Upload className="h-6 w-6" aria-hidden="true" />
             <div>
@@ -306,7 +306,7 @@ export default function ImportModal() {
             <X className="h-5 w-5" aria-hidden="true" />
           </button>
         </div>
-        <div className="min-w-0 p-4 sm:p-6">
+        <div className="min-h-0 min-w-0 overflow-y-auto overscroll-contain p-4 sm:p-6">
         {results.length > 0 ? (
           <div className="space-y-3">
             <p className="mb-4 text-sm text-content" role="status">{t('importModal.importComplete')}</p>

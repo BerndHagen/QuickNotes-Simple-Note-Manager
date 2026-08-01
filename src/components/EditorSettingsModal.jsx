@@ -119,8 +119,8 @@ export default function EditorSettingsModal() {
 
   return (
     <LegacyDialog label="Editor settings" onClose={() => setEditorSettingsOpen(false)} align="center">
-      <div className="bg-surface-raised rounded-2xl shadow-2xl border border-subtle w-full max-w-md mx-4 max-h-[85vh] overflow-hidden flex flex-col modal-animate">
-        <div className="flex items-center justify-between p-5 qn-banner-surface text-white">
+      <div className="flex max-h-full min-h-0 w-full max-w-md flex-col overflow-hidden rounded-2xl border border-subtle bg-surface-raised shadow-2xl modal-animate sm:mx-4">
+        <div className="flex shrink-0 items-center justify-between p-5 qn-banner-surface text-white">
           <div className="flex items-center gap-3">
             <Settings className="w-6 h-6" />
             <div>
@@ -137,7 +137,7 @@ export default function EditorSettingsModal() {
             <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
-        <div className="flex-1 p-6 space-y-6 overflow-y-auto">
+        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain p-4 sm:p-6">
           {persistenceError && (
             <div role="alert" className="flex gap-2 rounded-lg border border-danger-border bg-danger-soft p-3 text-sm text-danger-text">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
@@ -270,7 +270,7 @@ export default function EditorSettingsModal() {
             </div>
           </div>
         </div>
-        <div className="flex items-center justify-between px-6 py-4 border-t border-subtle bg-surface-sunken">
+        <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-subtle bg-surface-sunken px-4 py-3 sm:px-6 sm:py-4">
           <button
             onClick={handleResetDefaults}
             className="flex items-center gap-2 px-4 py-2 text-sm text-content-muted transition-colors rounded-lg dark:text-content-subtle hover:bg-surface-sunken dark:hover:bg-surface-sunken"

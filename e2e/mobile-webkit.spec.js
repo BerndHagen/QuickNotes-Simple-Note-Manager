@@ -8,6 +8,37 @@ const openSettings = async (page) => {
 }
 
 test.describe('mobile Safari workflows', () => {
+  test('keeps shared controls square and uses readable Apple shortcut names', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 568 })
+    await signIn(page)
+
+    const newNoteBox = await page.getByRole('button', { name: /^new note$/i }).boundingBox()
+    expect(newNoteBox.width).toBe(44)
+    expect(newNoteBox.height).toBe(44)
+
+    const settings = await openSettings(page)
+    const tabs = settings.getByRole('navigation', { name: 'Settings sections' }).getByRole('button')
+    for (const tab of await tabs.all()) {
+      const label = (await tab.textContent()).trim()
+      const clipped = await tab.locator('span').evaluate(
+        (element) => element.scrollWidth > element.clientWidth + 1
+      )
+      expect(clipped, `${label} is visually shortened`).toBe(false)
+    }
+    await settings.getByRole('button', { name: /close settings/i }).tap()
+
+    await page.getByRole('button', { name: /show navigation/i }).first().tap()
+    await page.getByRole('dialog', { name: 'Navigation' })
+      .getByRole('button', { name: /keyboard shortcuts/i })
+      .tap()
+    const shortcuts = page.getByRole('dialog', { name: /shortcuts/i })
+    const newNoteShortcut = shortcuts.getByRole('button', {
+      name: /change shortcut for new quick note/i,
+    })
+    await expect(newNoteShortcut).toContainText(/Command \+ N/i)
+    await expect(shortcuts).not.toContainText(/[⌘⌥⇧]/)
+  })
+
   test('keeps long settings usable through viewport and orientation changes', async ({ page }) => {
     const errors = collectErrors(page)
     await page.setViewportSize({ width: 320, height: 568 })
@@ -47,6 +78,30 @@ test.describe('mobile Safari workflows', () => {
     expect(errors).toEqual([])
   })
 
+  test('scrolls Help and Support through the shared dialog body', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 568 })
+    await signIn(page)
+    await page.getByRole('button', { name: /show navigation/i }).first().tap()
+    await page.getByRole('dialog', { name: 'Navigation' })
+      .getByRole('button', { name: /help.*support/i })
+      .tap()
+
+    const dialog = page.getByRole('dialog', { name: /help/i })
+    const body = dialog.locator('[data-dialog-body]')
+    const metrics = await body.evaluate((element) => ({
+      clientHeight: element.clientHeight,
+      scrollHeight: element.scrollHeight,
+      overflowY: getComputedStyle(element).overflowY,
+    }))
+    expect(metrics.overflowY).toBe('auto')
+    expect(metrics.scrollHeight).toBeGreaterThan(metrics.clientHeight)
+    await body.evaluate((element) => element.scrollTo(0, element.scrollHeight))
+    await expect
+      .poll(() => body.evaluate((element) => element.scrollTop + element.clientHeight))
+      .toBeGreaterThanOrEqual(metrics.scrollHeight - 1)
+    await expect(dialog.getByText(/QuickNotes v/i)).toBeVisible()
+  })
+
   test('supports fast touch editing without losing tools or writing space', async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 568 })
     await signIn(page)
@@ -57,6 +112,14 @@ test.describe('mobile Safari workflows', () => {
     await title.fill('WebKit mobile note')
     await editor.tap()
     await editor.pressSequentially('A quick note written on a phone.')
+
+    await page.getByRole('button', { name: /more actions/i }).tap()
+    const actions = page.getByRole('menu', { name: /more actions/i })
+    const actionsBox = await actions.boundingBox()
+    expect(actionsBox.x).toBeGreaterThanOrEqual(7)
+    expect(actionsBox.x + actionsBox.width).toBeLessThanOrEqual(313)
+    expect(actionsBox.y + actionsBox.height).toBeLessThanOrEqual(561)
+    await page.keyboard.press('Escape')
 
     const toolbar = page.locator('.editor-toolbar')
     await expect(toolbar).toBeHidden()

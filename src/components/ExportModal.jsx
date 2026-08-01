@@ -663,10 +663,10 @@ export default function ExportModal() {
   return (
     <LegacyDialog label="Export notes" onClose={() => setExportModalOpen(false)} align="center">
       <div 
-        className="w-full min-w-0 max-w-md overflow-hidden rounded-2xl border border-subtle bg-surface-raised shadow-2xl modal-animate"
+        className="flex max-h-full w-full min-w-0 max-w-md flex-col overflow-hidden rounded-2xl border border-subtle bg-surface-raised shadow-2xl modal-animate"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-4 text-white qn-banner-surface sm:p-5">
+        <div className="flex shrink-0 items-center justify-between p-4 text-white qn-banner-surface sm:p-5">
           <div className="flex items-center gap-3">
             <Download className="h-6 w-6" aria-hidden="true" />
             <div>
@@ -683,7 +683,7 @@ export default function ExportModal() {
             <X className="h-5 w-5" aria-hidden="true" />
           </button>
         </div>
-        <div className="min-w-0 p-4 sm:p-6">
+        <div className="min-h-0 min-w-0 overflow-y-auto overscroll-contain p-4 sm:p-6">
         {note && (
           <div className="mb-4 p-3 bg-surface-sunken rounded-lg">
             <p className="text-sm font-medium text-content truncate">{note.title}</p>

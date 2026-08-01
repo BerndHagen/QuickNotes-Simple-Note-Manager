@@ -211,7 +211,7 @@ export default function DuplicateDetectionModal() {
       onClose={handleClose}
       align="center"
     >
-      <div className="bg-surface-raised rounded-2xl shadow-2xl border border-subtle w-full max-w-3xl mx-4 max-h-[85vh] overflow-hidden flex flex-col modal-animate">
+      <div className="flex max-h-full min-h-0 w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-subtle bg-surface-raised shadow-2xl modal-animate sm:mx-4">
         <div className="qn-banner-surface flex shrink-0 items-center justify-between p-5 text-banner-text">
           <div className="flex items-center gap-3">
             <Copy className="w-6 h-6" />
@@ -229,7 +229,7 @@ export default function DuplicateDetectionModal() {
             <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6">
           {isAnalyzing ? (
             <div className="flex flex-col items-center justify-center py-12" role="status">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mb-4" aria-hidden="true" />

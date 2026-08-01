@@ -403,10 +403,10 @@ export default function GlobalSearchModal() {
             <p className="text-ui-md">{t('search.startTyping')}</p>
             <div className="mt-4 flex flex-wrap justify-center gap-4 text-ui-xs">
               <span>
-                <kbd className="kbd">↑↓</kbd> {t('search.navigate')}
+                <kbd className="kbd">Up / Down</kbd> {t('search.navigate')}
               </span>
               <span>
-                <kbd className="kbd">↵</kbd> {t('search.open')}
+                <kbd className="kbd">Enter</kbd> {t('search.open')}
               </span>
               <span>
                 <kbd className="kbd">Esc</kbd> {t('search.close')}

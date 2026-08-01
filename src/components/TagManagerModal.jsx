@@ -179,10 +179,10 @@ export default function TagManagerModal() {
   return (
     <LegacyDialog label="Manage tags" onClose={() => setTagManagerOpen(false)} align="center">
       <div 
-        className="bg-surface-raised rounded-2xl shadow-2xl border border-subtle w-full max-w-lg max-h-[85vh] overflow-hidden flex flex-col modal-animate"
+        className="flex max-h-full min-h-0 w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-subtle bg-surface-raised shadow-2xl modal-animate"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-5 qn-banner-surface text-white">
+        <div className="flex shrink-0 items-center justify-between p-5 qn-banner-surface text-white">
           <div className="flex items-center gap-3">
             <Tag className="w-6 h-6" />
             <div>
@@ -199,7 +199,7 @@ export default function TagManagerModal() {
             <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6">
           {!showNewTag && (
             <button
               type="button"

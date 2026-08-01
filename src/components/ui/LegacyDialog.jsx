@@ -52,7 +52,7 @@ export default function LegacyDialog({
           'qn-legacy-dialog-panel',
           // Never taller than the viewport, and always able to scroll
           // its own content so footer actions stay reachable.
-          'relative my-auto flex max-h-[92dvh] w-full min-w-0 flex-col outline-none',
+          'relative my-auto flex max-h-[92dvh] w-full min-w-0 flex-col overflow-y-auto overscroll-contain outline-none',
           // Wrapped panels size themselves with `max-w-*`; a flex column's
           // default `stretch` would pin such a child to the left edge.
           'items-center',

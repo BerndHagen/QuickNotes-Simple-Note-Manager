@@ -24,6 +24,7 @@ import { useNotesStore, useThemeStore, useUIStore } from '../store'
 import { useTranslation } from '../lib/useTranslation'
 import { getFolderIcon } from '../lib/folderIcons'
 import { isBackendConfigured } from '../lib/backend'
+import { formatShortcut, loadShortcuts } from '../lib/shortcuts'
 import { Avatar, Button, Menu, MenuItem, MenuSeparator, NotepadGlyph, TagChip } from './ui'
 import { FolderDialog, ConfirmDialog } from './FolderDialogs'
 
@@ -100,6 +101,7 @@ function NavIconButton({ icon: Icon, label, onClick, className = '' }) {
 
 export default function Sidebar({ onNavigate }) {
   const { t } = useTranslation()
+  const newNoteShortcut = formatShortcut(loadShortcuts().newNote)
   const {
     folders,
     tags,
@@ -229,7 +231,7 @@ export default function Sidebar({ onNavigate }) {
           className="h-10 justify-start rounded-[10px] px-3.5 text-ui-lg ring-1 ring-white/15"
         >
           <span className="flex-1 text-left">{t('sidebar.quickNote')}</span>
-          <kbd className="shrink-0 font-sans text-ui-xs font-medium text-white/70">Ctrl + N</kbd>
+          <kbd className="shrink-0 font-sans text-ui-xs font-medium text-white/70">{newNoteShortcut}</kbd>
         </Button>
       </div>
 

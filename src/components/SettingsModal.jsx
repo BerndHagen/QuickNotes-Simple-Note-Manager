@@ -77,6 +77,7 @@ export default function SettingsModal() {
     setCompactMode,
     autoSaveDelay,
     setAutoSaveDelay,
+    setShortcutsModalOpen,
   } = useUIStore()
   const {
     notes,
@@ -419,14 +420,14 @@ export default function SettingsModal() {
                 type="button"
                 aria-current={activeTab === tab.id ? 'page' : undefined}
                 onClick={() => setActiveTab(tab.id)}
-                className={`qn-touch-target flex min-w-max flex-1 items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs transition-colors sm:w-full sm:min-w-0 sm:justify-start sm:gap-3 sm:px-3 sm:text-[13px] ${
+                className={`qn-touch-target flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 text-xs transition-colors sm:w-full sm:min-w-0 sm:justify-start sm:gap-3 sm:px-3 sm:text-[13px] ${
  activeTab === tab.id
  ? 'bg-surface-raised text-emerald-700 dark:text-emerald-300 shadow-sm font-medium'
                     : 'text-content-muted hover:bg-white/80 dark:hover:bg-surface-raised'
                 }`}
               >
                 <tab.icon className={`h-4 w-4 shrink-0 ${activeTab === tab.id ? 'text-emerald-500 dark:text-emerald-400' : 'text-content-subtle'}`} />
-                <span className="min-w-0 truncate">{tab.label}</span>
+                <span>{tab.label}</span>
               </button>
             ))}
           </nav>
@@ -1307,34 +1308,28 @@ export default function SettingsModal() {
                 <p className="mb-4 text-sm text-content-muted">
                   {t('settings.shortcutsDescription')}
                 </p>
-                <div className="space-y-2">
-                  {[
-                    { keys: ['Ctrl', 'N'], action: t('settings.shortcutOpenQuickNote') },
-                    { keys: ['Ctrl', 'S'], action: t('settings.shortcutSaveNote') },
-                    { keys: ['Ctrl', 'F'], action: t('settings.shortcutFocusSearch') },
-                    { keys: ['Ctrl', 'B'], action: t('settings.shortcutBoldText') },
-                    { keys: ['Ctrl', 'I'], action: t('settings.shortcutItalicText') },
-                    { keys: ['Ctrl', 'K'], action: t('settings.shortcutInsertLink') },
-                    { keys: ['Ctrl', 'Z'], action: t('settings.shortcutUndo') },
-                    { keys: ['Ctrl', 'Shift', 'Z'], action: t('settings.shortcutRedo') },
-                    { keys: ['Esc'], action: t('settings.shortcutCloseModal') },
-                  ].map((shortcut, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center justify-between py-2 border-b border-subtle dark:border-subtle"
-                    >
-                      <span className="text-sm text-content">
-                        {shortcut.action}
-                      </span>
-                      <div className="flex gap-1">
-                        {shortcut.keys.map((key, j) => (
-                          <kbd key={j} className="kbd">
-                            {key}
-                          </kbd>
-                        ))}
-                      </div>
+                <div className="rounded-card border border-subtle bg-surface-sunken p-4">
+                  <div className="flex items-start gap-3">
+                    <Keyboard className="mt-0.5 h-5 w-5 shrink-0 text-accent-text" aria-hidden="true" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-content">
+                        {t('sidebar.keyboardShortcuts', 'Keyboard shortcuts')}
+                      </p>
+                      <p className="mt-1 text-sm leading-relaxed text-content-muted">
+                        View the shortcuts that actually apply to this device, and customise workspace actions in one place.
+                      </p>
                     </div>
-                  ))}
+                  </div>
+                  <Button
+                    variant="secondary"
+                    className="mt-4"
+                    onClick={() => {
+                      setSettingsOpen(false)
+                      setShortcutsModalOpen(true)
+                    }}
+                  >
+                    Manage keyboard shortcuts
+                  </Button>
                 </div>
               </div>
             )}

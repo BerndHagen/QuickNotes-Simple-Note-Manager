@@ -57,7 +57,25 @@ test.describe('mobile content-first editing', () => {
     expect(
       editorBox.height / 664,
       `Only ${Math.round((editorBox.height / 664) * 100)}% of the screen is available for writing`
-    ).toBeGreaterThanOrEqual(0.65)
+    ).toBeGreaterThanOrEqual(0.72)
+
+    await expect(page.locator('.qn-note-banner')).toBeHidden()
+    await expect(page.locator('#qn-mobile-note-title')).toBeVisible()
+
+    await page.getByRole('button', { name: /more actions/i }).click()
+    const actions = page.getByRole('menu', { name: /more actions/i })
+    await expect(actions.getByRole('menuitem', { name: /find.*replace/i })).toBeVisible()
+    await expect(actions.getByRole('menuitem', { name: /favourites/i })).toBeVisible()
+    await expect(actions.getByRole('menuitem', { name: /^pin note$/i })).toBeVisible()
+    const tagsAction = actions.getByRole('menuitem', { name: /^tags$/i })
+    await expect(tagsAction).toBeVisible()
+    await tagsAction.click()
+    const tagsMenu = page.getByRole('menu', { name: /^tags$/i })
+    await expect(tagsMenu).toBeVisible()
+    const tagsMenuBox = await tagsMenu.boundingBox()
+    expect(tagsMenuBox.x).toBeGreaterThanOrEqual(7)
+    expect(tagsMenuBox.x + tagsMenuBox.width).toBeLessThanOrEqual(383)
+    await page.keyboard.press('Escape')
 
     const detailsToggle = page.getByRole('button', { name: /show note details/i })
     await expect(detailsToggle).toBeVisible()
@@ -158,7 +176,7 @@ test.describe('mobile note reordering', () => {
       .toBe(true)
   })
 
-  test('offers move actions when a drag gesture is inconvenient', async ({ page }) => {
+  test('shows direct move controls when a drag gesture is inconvenient', async ({ page }) => {
     await signIn(page)
     await createMovableNotes(page)
     const before = (await page.locator('.note-card h3').allTextContents()).filter((title) =>
@@ -166,8 +184,8 @@ test.describe('mobile note reordering', () => {
     )
     const firstTitle = before[0]
 
-    await page.getByRole('button', { name: `More actions for ${firstTitle}` }).click()
-    await page.getByRole('menuitem', { name: 'Move down' }).click()
+    await expect(page.getByText(/drag a handle.*arrow buttons/i)).toBeVisible()
+    await page.getByRole('button', { name: `Move ${firstTitle} down` }).click()
     await expect
       .poll(async () => {
         const titles = await page.locator('.note-card h3').allTextContents()

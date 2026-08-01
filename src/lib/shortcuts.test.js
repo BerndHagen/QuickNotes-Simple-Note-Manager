@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import {
   DEFAULT_SHORTCUTS,
   isCustomisable,
@@ -19,6 +19,7 @@ const keyEvent = (key, mods = {}) => ({
 
 describe('shortcuts', () => {
   beforeEach(() => localStorage.clear())
+  afterEach(() => vi.restoreAllMocks())
 
   // Ctrl+N is documented in the welcome note, the settings screen and the
   // shortcuts dialog, so it has to be bound.
@@ -59,6 +60,14 @@ describe('shortcuts', () => {
     expect(matchesShortcut(keyEvent('k', { ctrl: true }), binding)).toBe(true)
     expect(matchesShortcut(keyEvent('k', { meta: true }), binding)).toBe(true)
     expect(matchesShortcut(keyEvent('k'), binding)).toBe(false)
+  })
+
+  it('uses readable Apple key names when an iPhone user agent is emulated', () => {
+    vi.spyOn(window.navigator, 'platform', 'get').mockReturnValue('Win32')
+    vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue('Mobile Safari iPhone')
+
+    expect(formatShortcut({ key: 'n', ctrl: true, shift: true })).toBe('Command + Shift + N')
+
   })
 
   it('does not match when an extra modifier is held', () => {

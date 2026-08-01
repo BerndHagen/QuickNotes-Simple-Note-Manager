@@ -72,6 +72,7 @@ import {
   Settings
 } from 'lucide-react'
 import { debounce } from '../lib/utils'
+import { formatShortcut } from '../lib/shortcuts'
 import { useUIStore } from '../store'
 import { useEditorSettings } from './EditorSettingsModal'
 import { getFocusable, useAnchoredPosition, useEscapeKey } from './ui'
@@ -1309,6 +1310,8 @@ function ImageToolbarButton() {
 
 function EditorToolbar({ editor, currentPaper, onPaperChange, content, onMobileClose }) {
   const { t } = useTranslation()
+  const shortcut = (key, modifiers = {}) =>
+    formatShortcut({ key, ctrl: true, ...modifiers })
   const [showColorPicker, setShowColorPicker] = useState(false)
   const [showHighlightPicker, setShowHighlightPicker] = useState(false)
   const [showFontPicker, setShowFontPicker] = useState(false)
@@ -1670,10 +1673,10 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content, onMobileC
         <X className="h-4 w-4" aria-hidden="true" />
       </button>
       <div role="separator" aria-orientation="vertical" className="qn-toolbar-sep mx-1 w-px shrink-0 bg-[var(--qn-border-subtle)] md:hidden" />
-      <ToolbarButton onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} title="Undo" shortcut="Ctrl+Z">
+      <ToolbarButton onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} title="Undo" shortcut={shortcut('z')}>
         <Undo className="w-4 h-4" />
       </ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} title="Redo" shortcut="Ctrl+Y">
+      <ToolbarButton onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} title="Redo" shortcut={shortcut('y')}>
         <Redo className="w-4 h-4" />
       </ToolbarButton>
 
@@ -1819,7 +1822,7 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content, onMobileC
                     level === 4 ? 'text-sm' : 
                     level === 5 ? 'text-xs' : 'text-xs'
                   }`}>H{level}</span>
-                  <span className="text-[11px] text-content-subtle dark:text-content-muted font-medium">Ctrl+Alt+{level}</span>
+                  <span className="text-[11px] text-content-subtle dark:text-content-muted font-medium">{shortcut(String(level), { alt: true })}</span>
                 </button>
               )
             })}
@@ -1840,16 +1843,16 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content, onMobileC
 
       <ToolbarDivider />
 
-      <ToolbarButton onClick={() => editor.chain().focus().toggleBold().run()} isActive={editor.isActive('bold')} title="Bold" shortcut="Ctrl+B">
+      <ToolbarButton onClick={() => editor.chain().focus().toggleBold().run()} isActive={editor.isActive('bold')} title="Bold" shortcut={shortcut('b')}>
         <Bold className="w-4 h-4" />
       </ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().toggleItalic().run()} isActive={editor.isActive('italic')} title="Italic" shortcut="Ctrl+I">
+      <ToolbarButton onClick={() => editor.chain().focus().toggleItalic().run()} isActive={editor.isActive('italic')} title="Italic" shortcut={shortcut('i')}>
         <Italic className="w-4 h-4" />
       </ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().toggleUnderline().run()} isActive={editor.isActive('underline')} title="Underline" shortcut="Ctrl+U">
+      <ToolbarButton onClick={() => editor.chain().focus().toggleUnderline().run()} isActive={editor.isActive('underline')} title="Underline" shortcut={shortcut('u')}>
         <UnderlineIcon className="w-4 h-4" />
       </ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().toggleStrike().run()} isActive={editor.isActive('strike')} title="Strikethrough" shortcut="Ctrl+Shift+S">
+      <ToolbarButton onClick={() => editor.chain().focus().toggleStrike().run()} isActive={editor.isActive('strike')} title="Strikethrough" shortcut={shortcut('s', { shift: true })}>
         <Strikethrough className="w-4 h-4" />
       </ToolbarButton>
 
@@ -2201,7 +2204,7 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content, onMobileC
 
       <ToolbarDivider />
 
-      <ToolbarButton onClick={setLink} isActive={editor.isActive('link')} title="Insert Link (Ctrl+Shift+K)">
+      <ToolbarButton onClick={setLink} isActive={editor.isActive('link')} title={`Insert Link (${shortcut('k', { shift: true })})`}>
         <LinkIcon className="w-4 h-4" />
       </ToolbarButton>
 

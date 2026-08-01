@@ -1555,6 +1555,16 @@ body {
   overflow-wrap: anywhere;
 }
 
+/* A control described as square must stay square in every layout. This is
+   deliberately independent of input-media detection: mobile Safari and
+   installed web apps do not always report pointer capabilities consistently. */
+.qn-square-control,
+.qn-folder-colour {
+  aspect-ratio: 1 / 1;
+  flex: none;
+  align-self: center;
+}
+
 /* Touch sizing is opt-in so a compact control never changes shape merely
    because the device reports a coarse pointer. Shared controls carry one
    of these semantic classes; intentionally small visuals can sit inside a
@@ -1569,6 +1579,8 @@ body {
     height: var(--qn-touch-target);
     min-width: var(--qn-touch-target);
     min-height: var(--qn-touch-target);
+    max-width: var(--qn-touch-target);
+    max-height: var(--qn-touch-target);
   }
 
   .qn-format-colour {

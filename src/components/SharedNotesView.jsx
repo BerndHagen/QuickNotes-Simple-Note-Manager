@@ -103,8 +103,8 @@ export default function SharedNotesView() {
 
   return (
     <LegacyDialog label="Shared notes" onClose={() => setSharedNotesViewOpen(false)} align="center">
-      <div className="bg-surface-raised rounded-2xl shadow-2xl border border-subtle max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col modal-animate">
-        <div className="flex items-center justify-between p-5 qn-banner-surface text-white">
+      <div className="flex max-h-full min-h-0 w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-subtle bg-surface-raised shadow-2xl modal-animate">
+        <div className="flex shrink-0 items-center justify-between p-5 qn-banner-surface text-white">
           <div className="flex items-center gap-3">
             <Users className="w-6 h-6" />
             <div>
@@ -180,7 +180,7 @@ export default function SharedNotesView() {
             </button>
           </div>
         </div>
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6">
           {isLoading && <p role="status" className="qn-sr-only">Refreshing shared notes</p>}
           {error && (
             <p role="alert" className="mb-4 rounded-lg border border-danger-border bg-danger-soft px-3 py-2.5 text-sm text-danger-text">
@@ -355,7 +355,7 @@ export default function SharedNotesView() {
             </div>
           )}
         </div>
-        <div className="p-4 bg-surface-sunken border-t border-subtle">
+        <div className="shrink-0 border-t border-subtle bg-surface-sunken p-4">
           <div className="text-xs text-content-muted flex items-center gap-2">
             <Users className="w-4 h-4" />
             <span>

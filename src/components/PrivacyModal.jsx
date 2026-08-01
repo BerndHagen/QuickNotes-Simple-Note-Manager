@@ -25,13 +25,13 @@ export default function PrivacyModal() {
       description="How we handle your data"
       icon={Shield}
       size="xl"
-      bodyClassName="!overflow-hidden p-0 sm:p-0"
+      bodyClassName="p-0 sm:p-0"
     >
       <article
         role="region"
         aria-label={t('privacy.title')}
         tabIndex={0}
-        className="h-full overflow-y-auto overscroll-contain px-5 py-5 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--qn-focus-ring)] sm:px-6"
+        className="px-5 py-5 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--qn-focus-ring)] sm:px-6"
       >
         <p className="mb-6 text-ui-sm text-content-muted">
           {t('privacy.lastUpdated')}: August 1, 2026
