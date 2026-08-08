@@ -11,10 +11,8 @@ permissions:
   contents: write
 
 jobs:
-  # ──────────────────────────────────────────────────────────────
-  # Job 1: "latest" release — updated on every push to main
-  # Always overwrites the same "latest" tag and release
-  # ──────────────────────────────────────────────────────────────
+  # The rolling preview is updated in place on every push to main. It is a
+  # transparent build ledger, not a substitute for curated stable notes.
   latest:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -34,6 +32,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Validate curated release notes
+        run: npm run validate:release-notes
+
       - name: Build
         run: npm run build
         env:
@@ -46,145 +47,93 @@ jobs:
           cd dist
           zip -r ../quicknotes-latest.zip .
 
-      - name: Generate latest release notes
-        id: notes
+      - name: Prepare latest-build notes
+        shell: bash
+        env:
+          REPOSITORY: ${{ github.repository }}
         run: |
-          RELEASE_DATE=$(date -u +"%d-%m-%Y at %I:%M %p UTC")
-          COMMIT_SHA=$(git rev-parse --short HEAD)
-          COMMIT_MSG=$(git log -1 --format="%s")
-          
-          # Get the last versioned tag for commit range
-          LATEST_TAG=$(git tag -l 'v*.*.*' --sort=-v:refname | head -n 1)
-          
+          set -euo pipefail
+
+          RELEASE_DATE=$(date -u +"%d %B %Y at %H:%M UTC")
+          COMMIT_SHA=$(git rev-parse HEAD)
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          LATEST_TAG=$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n 1)
+
           if [ -n "$LATEST_TAG" ]; then
             RANGE="${LATEST_TAG}..HEAD"
-            COMMIT_COUNT=$(git rev-list --count "$RANGE" 2>/dev/null || echo "0")
-            SINCE_TEXT="**${COMMIT_COUNT} commit(s)** since last versioned release \`${LATEST_TAG}\`"
+            COMMIT_COUNT=$(git rev-list --count "$RANGE")
+            BASELINE="\`${LATEST_TAG}\`"
           else
-            COMMIT_COUNT=$(git rev-list --count HEAD 2>/dev/null || echo "0")
-            SINCE_TEXT="**${COMMIT_COUNT} commit(s)** total"
+            RANGE=""
+            COMMIT_COUNT=$(git rev-list --count HEAD)
+            BASELINE="No stable tag is available yet"
           fi
-          
-          # Collect recent changes (last 15 commits or since last tag)
-          ITEMS_FILE=$(mktemp)
-          
-          if [ -n "$RANGE" ]; then
-            HASHES=$(git log "$RANGE" --no-merges --format="%H" 2>/dev/null)
+
+          cat > latest-release-notes.md <<EOF
+          This rolling preview contains the newest verified QuickNotes build from the \`main\` branch. It is intended for early access and testing; users who prefer a fixed milestone should choose the latest stable release.
+
+          > This release is updated in place whenever \`main\` changes. Its ZIP, source commit, and notes always describe the same build.
+
+          ### Build Information
+
+          - **Updated**: ${RELEASE_DATE}
+          - **Source commit**: [\`${SHORT_SHA}\`](https://github.com/${REPOSITORY}/commit/${COMMIT_SHA})
+          - **Stable baseline**: ${BASELINE}
+          - **Included changes**: ${COMMIT_COUNT} commit(s) since that baseline
+
+          ### Changes Since the Stable Release
+
+          EOF
+
+          if [ "$COMMIT_COUNT" -eq 0 ]; then
+            echo "- **No unreleased changes**: this preview currently matches the stable release." >> latest-release-notes.md
           else
-            HASHES=$(git log --no-merges -15 --format="%H" 2>/dev/null)
-          fi
-          
-          while read -r HASH; do
-            [ -z "$HASH" ] && continue
-            SUBJECT=$(git log -1 "$HASH" --format="%s")
-            BODY=$(git log -1 "$HASH" --format="%b")
-            
-            case "$SUBJECT" in
-              feat:*|feat\(*|add:*|add\(*|new:*|new\(*)
-                CAT="FEAT" ;;
-              fix:*|fix\(*|bug:*|bug\(*|patch:*|patch\(*|hotfix:*|hotfix\(*)
-                CAT="FIX" ;;
-              ci:*|ci\(*|build:*|build\(*|chore:*|chore\(*|refactor:*|refactor\(*|style:*|style\(*|docs:*|docs\(*)
-                CAT="MAINT" ;;
-              *)
-                CAT="OTHER" ;;
-            esac
-            
-            # Wrapped bullets continue on indented lines; join them back
-            # together before stripping the marker.
-            BULLETS=$(echo "$BODY" | awk '
-              /^[[:space:]]*[-*•][[:space:]]+/ { if (buf != "") print buf; buf = $0; next }
-              /^[[:space:]]*$/ { if (buf != "") { print buf; buf = "" } next }
-              { if (buf != "") { sub(/^[[:space:]]+/, "", $0); buf = buf " " $0 } }
-              END { if (buf != "") print buf }
-            ' | sed 's/^[[:space:]]*[-*•][[:space:]]*//' || true)
-            
-            if [ -n "$BULLETS" ]; then
-              while IFS= read -r item; do
-                [ -n "$item" ] && echo "${CAT}|${item}" >> "$ITEMS_FILE"
-              done <<< "$BULLETS"
+            if [ -n "$RANGE" ]; then
+              HASHES=$(git log "$RANGE" --no-merges --format='%H' --reverse)
             else
-              CLEAN=$(echo "$SUBJECT" | sed -E 's/^(feat|add|new|fix|bug|patch|hotfix|ci|build|chore|refactor|style|docs)(\([^)]*\))?[: ]*//')
-              [ -n "$CLEAN" ] && echo "${CAT}|${CLEAN}" >> "$ITEMS_FILE"
+              HASHES=$(git log --no-merges -20 --format='%H' --reverse)
             fi
-          done <<< "$HASHES"
-          
-          FEATURES=""
-          FIXES=""
-          MAINTENANCE=""
-          OTHER=""
-          
-          if [ -f "$ITEMS_FILE" ]; then
-            while IFS='|' read -r category text; do
-              [ -z "$text" ] && continue
-              text="$(echo "${text:0:1}" | tr '[:lower:]' '[:upper:]')${text:1}"
-              case "$category" in
-                FEAT) FEATURES="${FEATURES}\n• \u2800${text}" ;;
-                FIX) FIXES="${FIXES}\n• \u2800${text}" ;;
-                MAINT) MAINTENANCE="${MAINTENANCE}\n• \u2800${text}" ;;
-                OTHER) OTHER="${OTHER}\n• \u2800${text}" ;;
-              esac
-            done < "$ITEMS_FILE"
+
+            while read -r HASH; do
+              [ -z "$HASH" ] && continue
+              SUBJECT=$(git log -1 "$HASH" --format='%s')
+              CLEAN_SUBJECT=$(printf '%s' "$SUBJECT" | sed -E 's/^(feat|fix|docs|style|refactor|test|ci|build|chore|perf)(\([^)]*\))?:[[:space:]]*//')
+              FIRST_CHAR=$(printf '%s' "$CLEAN_SUBJECT" | cut -c1 | tr '[:lower:]' '[:upper:]')
+              REST=$(printf '%s' "$CLEAN_SUBJECT" | cut -c2-)
+              CLEAN_SUBJECT="${FIRST_CHAR}${REST}"
+              HASH_SHORT=$(git rev-parse --short "$HASH")
+              printf -- '- **%s**: [`%s`](https://github.com/%s/commit/%s)\n' "$CLEAN_SUBJECT" "$HASH_SHORT" "$REPOSITORY" "$HASH" >> latest-release-notes.md
+            done <<< "$HASHES"
           fi
-          
-          rm -f "$ITEMS_FILE"
-          
-          {
-            echo "body<<EOFMARKER"
-            echo "> **⚠️ This is a rolling release that always contains the latest build from \`main\`.**"
-            echo "> It is automatically updated on every push. For stable versions, use a [versioned release](https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/releases)."
-            echo ""
-            echo "**Last updated:** ${RELEASE_DATE}"
-            echo "**Commit:** \`${COMMIT_SHA}\` — ${COMMIT_MSG}"
-            echo "**Changes:** ${SINCE_TEXT}"
-            echo ""
-            
-            if [ -n "$FEATURES" ]; then
-              echo "**New Features & Improvements**"
-              echo -e "$FEATURES"
-              echo ""
-            fi
-            
-            if [ -n "$FIXES" ]; then
-              echo "**Bug Fixes**"
-              echo -e "$FIXES"
-              echo ""
-            fi
-            
-            if [ -n "$MAINTENANCE" ]; then
-              echo "**Maintenance**"
-              echo -e "$MAINTENANCE"
-              echo ""
-            fi
-            
-            if [ -n "$OTHER" ]; then
-              echo "**Other Changes**"
-              echo -e "$OTHER"
-              echo ""
-            fi
-            
-            echo "**Note:** If you encounter any bugs or issues, please don't hesitate to open an [issue](https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/issues). For any questions or to start a discussion, feel free to initiate a [discussion](https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/discussions) on the GitHub repository."
-            echo "EOFMARKER"
-          } >> $GITHUB_OUTPUT
 
-      - name: Delete existing latest release
-        run: gh release delete latest --yes --cleanup-tag 2>/dev/null || true
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          cat >> latest-release-notes.md <<EOF
 
-      - name: Create latest release
+          ### Availability
+
+          - **Preview archive**: \`quicknotes-latest.zip\` is rebuilt from the source commit shown above.
+          - **Stable downloads**: use the [versioned releases](https://github.com/${REPOSITORY}/releases) for permanent, curated milestones.
+          - **Hosted application**: the same \`main\` build is published to [GitHub Pages](https://berndhagen.github.io/QuickNotes-Simple-Note-Manager/).
+
+          **Note:** If you encounter a problem, please open an [issue](https://github.com/${REPOSITORY}/issues). For questions and product discussion, use [GitHub Discussions](https://github.com/${REPOSITORY}/discussions).
+          EOF
+
+      - name: Move rolling tag to this build
+        run: |
+          git tag -f latest "$GITHUB_SHA"
+          git push origin refs/tags/latest --force
+
+      - name: Update latest-build release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
-          name: "QuickNotes - Simple Note Manager (Latest Build)"
-          body: ${{ steps.notes.outputs.body }}
+          name: QuickNotes - Simple Note Manager - Latest Build
+          body_path: latest-release-notes.md
           prerelease: true
           files: quicknotes-latest.zip
+          overwrite_files: true
 
-  # ──────────────────────────────────────────────────────────────
-  # Job 2: Versioned release — only when a tag like v1.0.0 is pushed
-  # These releases are permanent and represent stable milestones
-  # ──────────────────────────────────────────────────────────────
+  # Stable tags are permanent product milestones. Their notes must be written
+  # and reviewed in docs/releases before the tag is pushed.
   versioned:
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
@@ -203,6 +152,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Validate curated release notes
+        run: npm run validate:release-notes
+
       - name: Build
         run: npm run build
         env:
@@ -210,152 +162,35 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
 
-      - name: Extract version
+      - name: Prepare version metadata and curated notes
         id: version
+        shell: bash
         run: |
+          set -euo pipefail
           TAG="${GITHUB_REF#refs/tags/}"
-          echo "tag=$TAG" >> $GITHUB_OUTPUT
-          echo "Version tag: $TAG"
+          VERSION="${TAG#v}"
+          VERSION="${VERSION%-quicknotes}"
+          NOTES_PATH="docs/releases/${TAG}.md"
+
+          if [ ! -s "$NOTES_PATH" ]; then
+            echo "::error::Missing curated release notes at ${NOTES_PATH}. Copy docs/releases/TEMPLATE.md, organize the changes by product area, and commit it before tagging."
+            exit 1
+          fi
+
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "notes_path=$NOTES_PATH" >> "$GITHUB_OUTPUT"
 
       - name: Create ZIP archive
         run: |
           cd dist
           zip -r ../quicknotes-${{ steps.version.outputs.tag }}.zip .
 
-      - name: Generate versioned release notes
-        id: notes
-        run: |
-          RELEASE_DATE=$(date -u +"%d-%m-%Y at %I:%M %p UTC")
-          CURRENT_TAG="${GITHUB_REF#refs/tags/}"
-          
-          # Find previous versioned tag (exclude "latest" and current tag)
-          PREV_TAG=$(git tag -l 'v*.*.*' --sort=-v:refname | grep -v "^${CURRENT_TAG}$" | head -n 1)
-          
-          if [ -n "$PREV_TAG" ]; then
-            RANGE="${PREV_TAG}..${CURRENT_TAG}"
-          else
-            RANGE=""
-          fi
-          
-          ITEMS_FILE=$(mktemp)
-          
-          if [ -n "$RANGE" ]; then
-            HASHES=$(git log "$RANGE" --no-merges --format="%H" 2>/dev/null)
-          else
-            HASHES=$(git log --no-merges -20 --format="%H" 2>/dev/null)
-          fi
-          
-          while read -r HASH; do
-            [ -z "$HASH" ] && continue
-            SUBJECT=$(git log -1 "$HASH" --format="%s")
-            BODY=$(git log -1 "$HASH" --format="%b")
-            
-            case "$SUBJECT" in
-              feat:*|feat\(*|add:*|add\(*|new:*|new\(*)
-                CAT="FEAT" ;;
-              fix:*|fix\(*|bug:*|bug\(*|patch:*|patch\(*|hotfix:*|hotfix\(*)
-                CAT="FIX" ;;
-              ci:*|ci\(*|build:*|build\(*|chore:*|chore\(*|refactor:*|refactor\(*|style:*|style\(*|docs:*|docs\(*)
-                CAT="MAINT" ;;
-              *)
-                CAT="OTHER" ;;
-            esac
-            
-            # Wrapped bullets continue on indented lines; join them back
-            # together before stripping the marker.
-            BULLETS=$(echo "$BODY" | awk '
-              /^[[:space:]]*[-*•][[:space:]]+/ { if (buf != "") print buf; buf = $0; next }
-              /^[[:space:]]*$/ { if (buf != "") { print buf; buf = "" } next }
-              { if (buf != "") { sub(/^[[:space:]]+/, "", $0); buf = buf " " $0 } }
-              END { if (buf != "") print buf }
-            ' | sed 's/^[[:space:]]*[-*•][[:space:]]*//' || true)
-            
-            if [ -n "$BULLETS" ]; then
-              while IFS= read -r item; do
-                [ -n "$item" ] && echo "${CAT}|${item}" >> "$ITEMS_FILE"
-              done <<< "$BULLETS"
-            else
-              CLEAN=$(echo "$SUBJECT" | sed -E 's/^(feat|add|new|fix|bug|patch|hotfix|ci|build|chore|refactor|style|docs)(\([^)]*\))?[: ]*//')
-              [ -n "$CLEAN" ] && echo "${CAT}|${CLEAN}" >> "$ITEMS_FILE"
-            fi
-          done <<< "$HASHES"
-          
-          FEATURES=""
-          FIXES=""
-          MAINTENANCE=""
-          OTHER=""
-          
-          if [ -f "$ITEMS_FILE" ]; then
-            while IFS='|' read -r category text; do
-              [ -z "$text" ] && continue
-              text="$(echo "${text:0:1}" | tr '[:lower:]' '[:upper:]')${text:1}"
-              case "$category" in
-                FEAT) FEATURES="${FEATURES}\n• \u2800${text}" ;;
-                FIX) FIXES="${FIXES}\n• \u2800${text}" ;;
-                MAINT) MAINTENANCE="${MAINTENANCE}\n• \u2800${text}" ;;
-                OTHER) OTHER="${OTHER}\n• \u2800${text}" ;;
-              esac
-            done < "$ITEMS_FILE"
-          fi
-          
-          rm -f "$ITEMS_FILE"
-          
-          FEAT_COUNT=$(echo -e "$FEATURES" | grep -c "•" || true)
-          FIX_COUNT=$(echo -e "$FIXES" | grep -c "•" || true)
-          
-          SUMMARY="Release of QuickNotes with"
-          PARTS=""
-          if [ "$FEAT_COUNT" -gt 0 ]; then
-            PARTS="${PARTS} ${FEAT_COUNT} new feature(s),"
-          fi
-          if [ "$FIX_COUNT" -gt 0 ]; then
-            PARTS="${PARTS} ${FIX_COUNT} bug fix(es),"
-          fi
-          if [ -n "$PARTS" ]; then
-            PARTS=$(echo "$PARTS" | sed 's/,$//')
-            SUMMARY="${SUMMARY}${PARTS}."
-          else
-            SUMMARY="Maintenance release of QuickNotes with internal improvements and updates."
-          fi
-          
-          {
-            echo "body<<EOFMARKER"
-            echo "**Release: ${RELEASE_DATE}**"
-            echo "${SUMMARY}"
-            echo ""
-            
-            if [ -n "$FEATURES" ]; then
-              echo "**New Features & Improvements**"
-              echo -e "$FEATURES"
-              echo ""
-            fi
-            
-            if [ -n "$FIXES" ]; then
-              echo "**Bug Fixes**"
-              echo -e "$FIXES"
-              echo ""
-            fi
-            
-            if [ -n "$MAINTENANCE" ]; then
-              echo "**Maintenance**"
-              echo -e "$MAINTENANCE"
-              echo ""
-            fi
-            
-            if [ -n "$OTHER" ]; then
-              echo "**Other Changes**"
-              echo -e "$OTHER"
-              echo ""
-            fi
-            
-            echo "**Note:** If you encounter any bugs or issues, please don't hesitate to open an [issue](https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/issues). For any questions or to start a discussion, feel free to initiate a [discussion](https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/discussions) on the GitHub repository."
-            echo "EOFMARKER"
-          } >> $GITHUB_OUTPUT
-
       - name: Create versioned release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
-          name: QuickNotes - Simple Note Manager ${{ steps.version.outputs.tag }}
-          body: ${{ steps.notes.outputs.body }}
+          name: QuickNotes - Simple Note Manager ${{ steps.version.outputs.version }}
+          body_path: ${{ steps.version.outputs.notes_path }}
           files: quicknotes-${{ steps.version.outputs.tag }}.zip
+          overwrite_files: true

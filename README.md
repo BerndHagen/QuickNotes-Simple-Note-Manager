@@ -719,22 +719,29 @@ note type, and structured note data. Direct updates remain owner-only.
 ### Release Workflow (`.github/workflows/release.yml`)
 
 The workflow has two jobs, both of which check out the repository, install Node.js
-20, and run `npm ci` + `npm run build` before packaging `dist/` as a ZIP:
+22, and run `npm ci` + `npm run build` before packaging `dist/` as a ZIP:
 
 | Job | Trigger | Result |
 |-----|---------|--------|
-| `latest` | Every push to `main` | Replaces the rolling `latest` pre-release, `QuickNotes - Simple Note Manager (Latest Build)`, with the current build |
-| `versioned` | A pushed tag matching `v*.*.*` | Creates a permanent release named `QuickNotes - Simple Note Manager <tag>` |
+| `latest` | Every push to `main` | Updates the rolling `latest` prerelease with a verified ZIP, build metadata, and a linked ledger of changes since the latest stable tag |
+| `versioned` | A pushed tag matching `v*.*.*` | Creates a permanent release from the matching curated file in `docs/releases/` |
 
-Release notes are generated from the commit range since the previous versioned tag
-and grouped into features, fixes, maintenance, and other changes based on
-Conventional-Commit prefixes.
+Stable release notes follow the product-area structure documented in
+[`docs/releases/README.md`](docs/releases/README.md). The workflow deliberately
+fails when a tag has no matching note file, preventing raw commit messages or
+automatic change counts from being published as product communication.
 
-To publish a version, bump `version` in `package.json`, then tag and push:
+To publish a version, bump the package and in-app version labels, copy
+`docs/releases/TEMPLATE.md` to the matching tag name, write and review the
+notes, then commit, verify, tag, and push:
 
 ```bash
-git tag v2.0.0
-git push origin v2.0.0
+cp docs/releases/TEMPLATE.md docs/releases/v2.3.0.md
+git add package.json package-lock.json src/components docs/releases/v2.3.0.md
+git commit -m "chore: release 2.3.0"
+git push origin main
+git tag -a v2.3.0 -m "QuickNotes - Simple Note Manager 2.3.0"
+git push origin v2.3.0
 ```
 
 ### GitHub Pages Deployment
