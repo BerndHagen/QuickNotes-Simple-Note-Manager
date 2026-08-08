@@ -95,6 +95,44 @@ test.describe('workspace', () => {
     await expect(page.getByLabel('Note content').getByText('Persisted body text')).toBeVisible()
   })
 
+  test('an inserted note link opens the exact target note without a new browser tab', async ({ page, context }) => {
+    await signIn(page)
+    await createNote(page, 'Medio')
+    await createNote(page, 'Sonaris')
+
+    await page.getByRole('button', { name: /^more actions$/i }).click()
+    await page.getByRole('menuitem', { name: /insert note link/i }).click()
+
+    const noteSearch = page.getByRole('combobox', { name: /search notes/i })
+    await noteSearch.fill('Medio')
+    await page.getByRole('option', { name: /Medio/i }).click()
+
+    const internalLink = page.locator('.ProseMirror a.note-link', { hasText: 'Medio' })
+    await expect(internalLink).toHaveAttribute('data-note-id', /.+/)
+    await expect(internalLink).toHaveAttribute('href', /^#note\//)
+
+    const pageCountBeforeClick = context.pages().length
+    await internalLink.click()
+
+    await expect(page.getByLabel('Note title')).toHaveValue('Medio')
+    expect(context.pages()).toHaveLength(pageCountBeforeClick)
+  })
+
+  test('right-clicking note text opens the QuickNotes editor menu', async ({ page }) => {
+    await signIn(page)
+    await createNote(page, `Editor menu ${Date.now()}`)
+    const editor = page.locator('.ProseMirror').first()
+    await editor.fill('QuickNotes context menu')
+
+    await editor.click({ button: 'right' })
+
+    const menu = page.getByRole('menu', { name: 'Editor actions' })
+    await expect(menu).toBeVisible()
+    await expect(menu.getByRole('menuitem', { name: /^Undo/ })).toBeVisible()
+    await expect(menu.getByRole('menuitem', { name: /^Paste/ })).toBeVisible()
+    await expect(menu.getByRole('menuitem', { name: /^Select all/ })).toBeVisible()
+  })
+
   test('filters the list by search query and clears it', async ({ page }) => {
     await signIn(page)
     const unique = `Zebra${Date.now()}`

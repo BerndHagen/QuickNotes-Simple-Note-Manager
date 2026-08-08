@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { expectNoHorizontalOverflow, signIn } from './helpers'
+import { createNote, expectNoHorizontalOverflow, signIn } from './helpers'
 
 const openNavigation = async (page) => {
   await page.getByRole('button', { name: /show navigation/i }).first().tap()
@@ -61,6 +61,9 @@ test.describe('mobile UX regressions', () => {
 
     const settings = page.getByRole('dialog', { name: 'Settings' })
     const tabs = settings.getByRole('navigation', { name: 'Settings sections' }).getByRole('button')
+    const activeTab = settings.getByRole('navigation', { name: 'Settings sections' }).locator('[aria-current="page"]')
+    await expect(activeTab).toHaveClass(/bg-accent/)
+    await expect(settings.locator('[data-language-flag]')).toHaveCount(9)
     for (const tab of await tabs.all()) {
       const label = (await tab.textContent()).trim()
       expect(label).not.toMatch(/^[A-Z]\.$/)
@@ -80,5 +83,28 @@ test.describe('mobile UX regressions', () => {
     await expect(newNoteShortcut).toContainText(/(?:Command|Ctrl) \+ N/i)
     await expect(shortcutDialog).not.toContainText(/[⌘⌥⇧]/)
     await expectNoHorizontalOverflow(page)
+  })
+
+  test('renders grid view as two real card columns on a phone', async ({ page }) => {
+    await signIn(page)
+    await createNote(page, 'Mobile grid Alpha')
+    await page.getByRole('button', { name: /back to notes/i }).tap()
+    await page.getByRole('button', { name: /grid view/i }).tap()
+
+    const grid = page.locator('[data-note-grid]')
+    await expect(grid).toBeVisible()
+    const layout = await grid.evaluate((element) => ({
+      columns: getComputedStyle(element).gridTemplateColumns.split(' ').length,
+      cards: [...element.children].slice(0, 2).map((card) => {
+        const rect = card.getBoundingClientRect()
+        return { left: rect.left, top: rect.top, width: rect.width }
+      }),
+    }))
+
+    expect(layout.columns).toBe(2)
+    expect(layout.cards).toHaveLength(2)
+    expect(layout.cards[0].top).toBe(layout.cards[1].top)
+    expect(layout.cards[0].left).not.toBe(layout.cards[1].left)
+    expect(layout.cards[0].width).toBeLessThan(160)
   })
 })

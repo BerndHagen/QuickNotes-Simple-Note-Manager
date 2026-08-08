@@ -89,7 +89,10 @@ export default function NoteLinkPopover({ editor, isOpen, onClose, position, cur
     if (!editor) return
 
     const link = document.createElement('a')
-    link.href = '#'
+    // Keep a meaningful, app-owned destination in the saved HTML. TipTap is
+    // configured not to open links itself; QuickNotes handles this anchor and
+    // resolves the exact immutable note id from data-note-id.
+    link.href = `#note/${encodeURIComponent(String(note.id))}`
     link.className = 'note-link'
     link.dataset.noteId = String(note.id)
     link.textContent = String(note.title || t('notes.untitled', 'Untitled note'))
@@ -134,19 +137,19 @@ export default function NoteLinkPopover({ editor, isOpen, onClose, position, cur
         return { left: clampedX, top: clampedY }
       })()}
     >
-      <div className="p-3 border-b border-subtle bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20">
+      <div className="qn-banner-surface border-b border-white/15 p-3 text-banner-text">
         <div className="flex items-center justify-between mb-2">
-          <h3 id={titleId} className="text-sm font-semibold text-content flex items-center gap-2">
-            <Link2 className="w-4 h-4 text-emerald-600" aria-hidden="true" />
+          <h3 id={titleId} className="flex items-center gap-2 text-sm font-semibold text-banner-text">
+            <Link2 className="h-4 w-4 text-white/90" aria-hidden="true" />
             {t('noteLink.title')}
           </h3>
           <button
             type="button"
             onClick={onClose}
             aria-label={t('common.close', 'Close')}
-            className="qn-square-control rounded p-1 transition-colors hover:bg-surface-sunken dark:hover:bg-surface-sunken"
+            className="qn-square-control rounded p-1 text-white/85 transition-colors hover:bg-white/15 hover:text-white"
           >
-            <X className="w-4 h-4 text-content-muted" aria-hidden="true" />
+            <X className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
         <div className="relative">
@@ -234,15 +237,16 @@ export default function NoteLinkPopover({ editor, isOpen, onClose, position, cur
 }
 
 export function useNoteLinkHandler() {
-  const { notes, setSelectedNote } = useNotesStore()
-
   useEffect(() => {
     const handleClick = (e) => {
       const link = e.target.closest?.('a.note-link')
       if (link) {
         e.preventDefault()
-        const noteId = link.dataset.noteId
+        e.stopPropagation()
+        const hrefMatch = link.getAttribute('href')?.match(/^#note\/(.+)$/)
+        const noteId = link.dataset.noteId || (hrefMatch ? decodeURIComponent(hrefMatch[1]) : '')
         if (noteId) {
+          const { notes, setSelectedNote } = useNotesStore.getState()
           const note = notes.find(n => n.id === noteId && !n.deleted)
           if (note) {
             setSelectedNote(noteId)
@@ -253,9 +257,11 @@ export function useNoteLinkHandler() {
       }
     }
 
-    document.addEventListener('click', handleClick)
-    return () => document.removeEventListener('click', handleClick)
-  }, [notes, setSelectedNote])
+    // Capture before TipTap/browser link handling. This guarantees an internal
+    // note link never creates a tab and cannot fall through to href navigation.
+    document.addEventListener('click', handleClick, true)
+    return () => document.removeEventListener('click', handleClick, true)
+  }, [])
 }
 
 export function useBacklinks(noteId) {

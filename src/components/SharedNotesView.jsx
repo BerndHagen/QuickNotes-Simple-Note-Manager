@@ -253,7 +253,7 @@ export default function SharedNotesView() {
               <div className="space-y-3">
                 {acceptedShares.map((share) => {
                   const note = share.notes
-                  const ownerName = String(share.owner_name || 'Another QuickNotes user')
+                  const ownerName = String(share.owner_name || '').replace(/^@/, '')
                   const preview = plainText(note.content).slice(0, 150)
                   return (
                     <article key={share.id} className="rounded-card border border-subtle bg-surface-raised p-4 transition-colors hover:bg-surface-hover">
@@ -269,9 +269,9 @@ export default function SharedNotesView() {
                           </div>
                           <div className="mb-2 flex min-w-0 items-center gap-2 text-ui-sm text-content-muted">
                             <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent-soft font-semibold text-accent-text">
-                              {ownerName.charAt(0).toLocaleUpperCase() || 'Q'}
+                              {ownerName.charAt(0).toLocaleUpperCase() || '@'}
                             </span>
-                            <span className="truncate" title={ownerName}>Owner: {ownerName}</span>
+                            <span className="truncate" title={`@${ownerName}`}>Owner: @{ownerName}</span>
                           </div>
                           {preview && <p className="line-clamp-2 text-ui-md text-content-muted">{preview}</p>}
                         </div>
@@ -311,7 +311,7 @@ export default function SharedNotesView() {
               />
             ) : pendingInvitations.map((share) => {
               const note = share.notes || share
-              const ownerName = String(share.owner_name || share.shared_by || 'A QuickNotes user')
+              const ownerName = String(share.owner_name || share.shared_by || '').replace(/^@/, '')
               return (
                 <article key={share.id} className="rounded-card border border-warning-border bg-warning-soft p-4">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -321,7 +321,7 @@ export default function SharedNotesView() {
                         <h3 className="truncate font-medium text-content">New share: {String(note.title || 'Untitled note')}</h3>
                       </div>
                       <p className="mb-2 text-ui-md text-content-muted">
-                        <span className="font-medium text-content">{ownerName}</span> wants to share this note with you.
+                        <span className="font-medium text-content">@{ownerName}</span> wants to share this note with you.
                       </p>
                       <Badge>{share.permission === 'edit' ? 'Can edit' : 'Read only'}</Badge>
                     </div>

@@ -1900,7 +1900,7 @@ export const useNotesStore = create(
             permission: acceptedShare.permission,
             created_at: acceptedShare.created_at,
             owner_id: share.shared_by || invitation?.owner_id || share.notes?.user_id,
-            owner_name: invitation?.owner_name || invitation?.shared_by || 'Another QuickNotes user',
+            owner_name: invitation?.owner_name || invitation?.shared_by || '',
             notes: share.notes ? {
               id: share.notes.id,
               title: share.notes.title,

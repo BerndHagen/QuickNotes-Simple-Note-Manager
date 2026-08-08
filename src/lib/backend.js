@@ -116,6 +116,24 @@ export const createShareLink = async (noteId, email, permission = 'view') => {
   return data
 }
 
+export const getMyUsername = async () => {
+  if (!isBackendConfigured()) return ''
+
+  const { data, error } = await backend.rpc('get_my_username')
+  if (error) throw error
+  return typeof data === 'string' ? data : ''
+}
+
+export const updateMyUsername = async (username) => {
+  if (!isBackendConfigured()) throw new Error('Backend not configured')
+
+  const { data, error } = await backend.rpc('update_my_username', {
+    p_username: String(username || '').trim().toLowerCase(),
+  })
+  if (error) throw error
+  return data
+}
+
 export const acceptShare = async (shareId) => {
   if (!isBackendConfigured()) throw new Error('Backend not configured')
   
@@ -170,8 +188,9 @@ export const getSharedNotes = async (userId) => {
   
   const { data: sharedRows, error: rpcError } = await backend.rpc('get_shared_notes')
 
-  if (!rpcError) {
-    return (sharedRows || []).map((share) => ({
+  if (rpcError) throw rpcError
+
+  return (sharedRows || []).map((share) => ({
       id: share.id,
       note_id: share.note_id,
       permission: share.permission,
@@ -194,24 +213,6 @@ export const getSharedNotes = async (userId) => {
         created_at: share.note_created_at,
         updated_at: share.note_updated_at,
       },
-    }))
-  }
-
-  // Compatibility path for projects that have not applied the provenance RPC
-  // migration yet. RLS still determines whether the joined note is visible.
-  const { data: acceptedShares, error: acceptedError } = await backend
-    .from('accepted_shares')
-    .select('*, notes(id, title, content, user_id, folder_id, tags, starred, pinned, deleted, archived, note_type, note_data, created_at, updated_at)')
-    .eq('user_id', userId)
-
-  if (acceptedError) throw acceptedError
-  
-  return (acceptedShares || [])
-    .filter((share) => share?.notes && !share.notes.deleted)
-    .map((share) => ({
-      ...share,
-      owner_id: share.notes.user_id,
-      owner_name: 'Another QuickNotes user',
     }))
 }
 

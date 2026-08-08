@@ -95,7 +95,7 @@ describe('internal note links', () => {
     await user.click(screen.getByRole('option'))
 
     const inserted = editor.testChain.insertContent.mock.calls[0][0]
-    expect(inserted).toContain('href="#"')
+    expect(inserted).toContain('href="#note/note-2"')
     expect(inserted).toContain('data-note-id="note-2"')
     expect(inserted).not.toContain('<img')
     expect(sanitizeNoteHtml(inserted)).toContain('data-note-id="note-2"')
@@ -130,7 +130,7 @@ describe('internal note links', () => {
     useNotesStore.setState({
       notes: [
         { id: 'target', title: 'Target', content: '' },
-        { id: 'source', title: 'Source', content: '<p><a href="#" class="note-link" data-note-id="target">Target</a></p>' },
+        { id: 'source', title: 'Source', content: '<p><a href="#note/target" class="note-link" data-note-id="target">Target</a></p>' },
       ],
       setSelectedNote,
     })
@@ -139,7 +139,7 @@ describe('internal note links', () => {
       const backlinks = useBacklinks('target')
       return (
         <>
-          <a href="#" className="note-link" data-note-id="target">Open target</a>
+          <a href="#note/target" className="note-link" data-note-id="target">Open target</a>
           <output aria-label="Backlinks">{backlinks.map((note) => note.id).join(',')}</output>
         </>
       )
@@ -160,7 +160,7 @@ describe('internal note links', () => {
     })
     function LinkHarness() {
       useNoteLinkHandler()
-      return <a href="#" className="note-link" data-note-id="target">Open target</a>
+      return <a href="#note/target" className="note-link" data-note-id="target">Open target</a>
     }
     render(<LinkHarness />)
 
@@ -364,14 +364,14 @@ describe('shared notes', () => {
         {
           id: 'accepted-1',
           note_id: 'n1',
-          owner_name: 'Alex Rivera',
+          owner_name: 'alex-rivera',
           permission: 'edit',
           notes: { id: 'n1', title: 'Launch plan', content: '<p>Milestones</p>', updatedAt: '2026-08-08' },
         },
         {
           id: 'accepted-2',
           note_id: 'n2',
-          owner_name: 'Morgan Lee',
+          owner_name: 'morgan-lee',
           permission: 'view',
           notes: { id: 'n2', title: 'Budget', content: '<p>Forecast</p>', updatedAt: '2026-08-07' },
         },
@@ -385,10 +385,10 @@ describe('shared notes', () => {
     useUIStore.setState({ sharedNotesViewOpen: true })
     render(<SharedNotesView />)
 
-    expect(screen.getByText('Owner: Alex Rivera')).toBeInTheDocument()
-    expect(screen.getByText('Owner: Morgan Lee')).toBeInTheDocument()
+    expect(screen.getByText('Owner: @alex-rivera')).toBeInTheDocument()
+    expect(screen.getByText('Owner: @morgan-lee')).toBeInTheDocument()
 
-    await user.type(screen.getByRole('searchbox', { name: 'Search shared notes' }), 'Morgan')
+    await user.type(screen.getByRole('searchbox', { name: 'Search shared notes' }), 'morgan')
     expect(screen.queryByText('Launch plan')).not.toBeInTheDocument()
     expect(screen.getByText('Budget')).toBeInTheDocument()
 
@@ -403,7 +403,7 @@ describe('shared notes', () => {
     let rejectAccept
     const acceptShare = vi.fn(() => new Promise((_, reject) => { rejectAccept = reject }))
     useNotesStore.setState({
-      pendingShares: [{ id: 'share-1', shared_by: 'alex@example.com', permission: 'view', notes: { id: 'n1', title: 'Plan' } }],
+      pendingShares: [{ id: 'share-1', shared_by: 'alex-rivera', permission: 'view', notes: { id: 'n1', title: 'Plan' } }],
       loadSharedNotes: vi.fn().mockResolvedValue(undefined),
       acceptShare,
       declineShare: vi.fn(),

@@ -1,5 +1,5 @@
-import { useRef, useState } from 'react'
-import { Avatar, Button, Field, Input, SegmentedControl, Switch, Toggle } from './ui'
+import { useEffect, useRef, useState } from 'react'
+import { Avatar, Button, Field, Input, LanguageFlag, SegmentedControl, Switch, Toggle } from './ui'
 import {
   X,
   User,
@@ -32,7 +32,14 @@ import {
   HardDrive
 } from 'lucide-react'
 import { useUIStore, useNotesStore, useThemeStore } from '../store'
-import { backend, isBackendConfigured, getRedirectUrl, deleteUserAccount } from '../lib/backend'
+import {
+  backend,
+  deleteUserAccount,
+  getMyUsername,
+  getRedirectUrl,
+  isBackendConfigured,
+  updateMyUsername,
+} from '../lib/backend'
 import { getAuthErrorMessage, validateNewPassword } from '../lib/authValidation'
 import { setLocalDisplayName } from '../lib/localSession'
 import { createWorkspaceBackup } from '../lib/workspaceBackup'
@@ -108,7 +115,9 @@ export default function SettingsModal() {
   const [displayName, setDisplayName] = useState(
     () => user?.user_metadata?.first_name || user?.user_metadata?.full_name || ''
   )
+  const [username, setUsername] = useState('')
   const [savingName, setSavingName] = useState(false)
+  const [savingUsername, setSavingUsername] = useState(false)
   const [showChangeEmail, setShowChangeEmail] = useState(false)
   const [showChangePassword, setShowChangePassword] = useState(false)
   const [showDeleteAccount, setShowDeleteAccount] = useState(false)
@@ -119,6 +128,24 @@ export default function SettingsModal() {
   const avatarUrlRef = useRef(null)
 
   const cloudEnabled = isBackendConfigured()
+
+  useEffect(() => {
+    if (!settingsOpen || !cloudEnabled || !user || user.isLocal) return
+    let active = true
+
+    getMyUsername()
+      .then((value) => {
+        if (active) setUsername(value)
+      })
+      .catch((error) => {
+        if (active) toast.error(error?.message || 'Username could not be loaded')
+      })
+
+    return () => {
+      active = false
+    }
+  }, [cloudEnabled, settingsOpen, user])
+
   const tabs = [
     { id: 'general', label: t('settings.general'), icon: Monitor },
     { id: 'account', label: t('settings.account'), icon: User },
@@ -322,6 +349,25 @@ export default function SettingsModal() {
     }
   }
 
+  const handleSaveUsername = async () => {
+    const normalized = username.trim().toLowerCase()
+    if (!/^[a-z0-9][a-z0-9._-]{1,30}[a-z0-9]$/.test(normalized)) {
+      toast.error('Use 3-32 lowercase letters, numbers, dots, underscores, or hyphens')
+      return
+    }
+
+    setSavingUsername(true)
+    try {
+      const savedUsername = await updateMyUsername(normalized)
+      setUsername(savedUsername)
+      toast.success('Username updated')
+    } catch (error) {
+      toast.error(error?.message || 'Username could not be updated')
+    } finally {
+      setSavingUsername(false)
+    }
+  }
+
   const handleDeleteAccount = async () => {
     if (deleteConfirmText !== 'DELETE') {
       toast.error(t('settings.toastTypeDeleteToConfirm'))
@@ -422,11 +468,11 @@ export default function SettingsModal() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`qn-touch-target flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 text-xs transition-colors sm:w-full sm:min-w-0 sm:justify-start sm:gap-3 sm:px-3 sm:text-[13px] ${
  activeTab === tab.id
- ? 'bg-surface-raised text-emerald-700 dark:text-emerald-300 shadow-sm font-medium'
+ ? 'bg-accent text-accent-on shadow-md ring-1 ring-[var(--qn-accent-hover)] font-semibold'
                     : 'text-content-muted hover:bg-white/80 dark:hover:bg-surface-raised'
                 }`}
               >
-                <tab.icon className={`h-4 w-4 shrink-0 ${activeTab === tab.id ? 'text-emerald-500 dark:text-emerald-400' : 'text-content-subtle'}`} />
+                <tab.icon className={`h-4 w-4 shrink-0 ${activeTab === tab.id ? 'text-accent-on' : 'text-content-subtle'}`} />
                 <span>{tab.label}</span>
               </button>
             ))}
@@ -487,13 +533,7 @@ export default function SettingsModal() {
                         }`}
                         dir={lang.dir}
                       >
-                        <span
-                          aria-hidden="true"
-                          dir="ltr"
-                          className="inline-flex h-7 min-w-9 items-center justify-center rounded-control border border-subtle bg-surface-sunken px-1.5 text-ui-xs font-bold uppercase tracking-wide text-content-muted"
-                        >
-                          {lang.code}
-                        </span>
+                        <LanguageFlag code={lang.code} className="h-6 w-8" />
                         <span className="text-xs font-medium text-content dark:text-content-subtle">{lang.nativeName}</span>
                       </button>
                     ))}
@@ -539,7 +579,7 @@ export default function SettingsModal() {
                     {t('settings.editorPreferences')}
                   </h4>
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-surface-sunken">
+                    <div className="flex items-center justify-between gap-3 rounded-lg border border-subtle bg-surface-raised p-3 shadow-xs">
                       <div className="flex min-w-0 items-center gap-3">
                         <Shield className="h-4 w-4 shrink-0 text-content-muted" />
                         <div className="min-w-0">
@@ -557,7 +597,7 @@ export default function SettingsModal() {
                         onChange={setConfirmBeforeDelete}
                       />
                     </div>
-                    <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-surface-sunken">
+                    <div className="flex items-center justify-between gap-3 rounded-lg border border-subtle bg-surface-raised p-3 shadow-xs">
                       <div className="flex min-w-0 items-center gap-3">
                         <SpellCheck className="h-4 w-4 shrink-0 text-content-muted" />
                         <div className="min-w-0">
@@ -575,7 +615,7 @@ export default function SettingsModal() {
                         onChange={setSpellCheck}
                       />
                     </div>
-                    <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-surface-sunken">
+                    <div className="flex items-center justify-between gap-3 rounded-lg border border-subtle bg-surface-raised p-3 shadow-xs">
                       <div className="flex min-w-0 items-center gap-3">
                         <BarChart3 className="h-4 w-4 shrink-0 text-content-muted" />
                         <div className="min-w-0">
@@ -601,7 +641,7 @@ export default function SettingsModal() {
                   <h4 className="mb-3 text-sm font-medium text-content">
                     {t('settings.noteListDisplay', 'Note list display')}
                   </h4>
-                  <div className="space-y-4 rounded-card border border-subtle bg-surface-sunken p-4">
+                  <div className="space-y-4 rounded-card border border-subtle bg-surface-raised p-4 shadow-xs">
                     <Field
                       label={t('settings.notePreviewLines')}
                       hint={t('settings.notePreviewLinesDesc')}
@@ -854,6 +894,38 @@ export default function SettingsModal() {
                       <p id="qn-avatar-url-hint" className="mt-2 text-xs text-content-muted">
                         {t('settings.profilePictureHint')}
                       </p>
+                    </div>
+                    <div className="rounded-lg border border-subtle bg-surface-raised p-4 shadow-xs">
+                      <h4 className="mb-1 text-sm font-medium text-content">
+                        Username
+                      </h4>
+                      <p className="mb-3 text-xs text-content-muted">
+                        Your stable public identity on shared notes. Usernames are unique and never expose your email.
+                      </p>
+                      <div className="flex gap-2">
+                        <div className="relative min-w-0 flex-1">
+                          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-content-muted" aria-hidden="true">
+                            @
+                          </span>
+                          <Input
+                            type="text"
+                            value={username}
+                            minLength={3}
+                            maxLength={32}
+                            autoCapitalize="none"
+                            autoCorrect="off"
+                            spellCheck={false}
+                            onChange={(event) => setUsername(event.target.value.toLowerCase())}
+                            onKeyDown={(event) => { if (event.key === 'Enter') handleSaveUsername() }}
+                            placeholder="username"
+                            aria-label="Username"
+                            className="pl-8"
+                          />
+                        </div>
+                        <Button variant="primary" onClick={handleSaveUsername} loading={savingUsername}>
+                          {t('common.save')}
+                        </Button>
+                      </div>
                     </div>
                     <div className="p-4 border border-subtle rounded-lg">
                       <h4 className="mb-1 text-sm font-medium text-content">
@@ -1132,7 +1204,7 @@ export default function SettingsModal() {
             )}
             {activeTab === 'sync' && (
               <div className="space-y-6">
-                <div className="flex items-center justify-between p-4 rounded-lg bg-surface-sunken">
+                <div className="flex items-center justify-between rounded-lg border border-subtle bg-surface-raised p-4 shadow-xs">
                   <div className="flex items-center gap-3">
                     <Cloud className="w-5 h-5 text-accent-text" />
                     <div>
@@ -1154,7 +1226,7 @@ export default function SettingsModal() {
                   <h4 className="text-sm font-medium text-content">
                     {t('settings.syncSettings', 'Sync Settings')}
                   </h4>
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-surface-sunken">
+                  <div className="flex items-center justify-between rounded-lg border border-subtle bg-surface-raised p-3 shadow-xs">
                     <div>
                       <p className="text-sm font-medium text-content">
                         {t('settings.autoSync', 'Auto Sync')}
@@ -1169,7 +1241,7 @@ export default function SettingsModal() {
                       onChange={setAutoSync}
                     />
                   </div>
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-surface-sunken">
+                  <div className="flex items-center justify-between rounded-lg border border-subtle bg-surface-raised p-3 shadow-xs">
                     <div>
                       <p className="text-sm font-medium text-content">
                         {t('settings.syncInterval', 'Sync Interval')}
@@ -1193,7 +1265,7 @@ export default function SettingsModal() {
                       <option value={60}>1 {t('settings.hour', 'hour')}</option>
                     </select>
                   </div>
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-surface-sunken">
+                  <div className="flex items-center justify-between rounded-lg border border-subtle bg-surface-raised p-3 shadow-xs">
                     <div>
                       <p className="text-sm font-medium text-content">
                         {t('settings.syncOnStartup', 'Sync on Startup')}
@@ -1208,7 +1280,7 @@ export default function SettingsModal() {
                       onChange={setSyncOnStartup}
                     />
                   </div>
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-surface-sunken">
+                  <div className="flex items-center justify-between rounded-lg border border-subtle bg-surface-raised p-3 shadow-xs">
                     <div>
                       <p className="text-sm font-medium text-content">
                         {t('settings.syncNotifications', 'Sync Notifications')}
@@ -1314,7 +1386,7 @@ export default function SettingsModal() {
                 <p className="mb-4 text-sm text-content-muted">
                   {t('settings.shortcutsDescription')}
                 </p>
-                <div className="rounded-card border border-subtle bg-surface-sunken p-4">
+                <div className="rounded-card border border-subtle bg-surface-raised p-4 shadow-xs">
                   <div className="flex items-start gap-3">
                     <Keyboard className="mt-0.5 h-5 w-5 shrink-0 text-accent-text" aria-hidden="true" />
                     <div className="min-w-0 flex-1">

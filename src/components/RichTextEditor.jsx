@@ -70,16 +70,45 @@ import {
   Outdent,
   Sparkles,
   Type as TypeIcon,
-  Settings
+  Settings,
+  Scissors,
+  Copy,
+  ClipboardPaste,
+  MousePointer2,
 } from 'lucide-react'
 import { debounce } from '../lib/utils'
 import { formatShortcut } from '../lib/shortcuts'
 import { useUIStore } from '../store'
 import { useEditorSettings } from './EditorSettingsModal'
 import { DEFAULT_EDITOR_FONT, EDITOR_FONT_FAMILIES } from '../lib/editorFonts'
-import { getFocusable, useAnchoredPosition, useEscapeKey } from './ui'
+import toast from 'react-hot-toast'
+import {
+  getFocusable,
+  Menu,
+  MenuItem,
+  MenuSeparator,
+  useAnchoredPosition,
+  useEscapeKey,
+} from './ui'
 
 const lowlight = createLowlight(common)
+
+const NoteAwareLink = Link.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      'data-note-id': {
+        default: null,
+        parseHTML: (element) => element.getAttribute('data-note-id'),
+        renderHTML: (attributes) => (
+          attributes['data-note-id']
+            ? { 'data-note-id': attributes['data-note-id'] }
+            : {}
+        ),
+      },
+    }
+  },
+})
 
 const FontSize = Extension.create({
   name: 'fontSize',
@@ -633,6 +662,7 @@ export default function RichTextEditor({
   const [currentPaper, setCurrentPaper] = useState(paperType)
   const [typingEpoch, setTypingEpoch] = useState(0)
   const [mobileToolbarOpen, setMobileToolbarOpen] = useState(false)
+  const [editorMenuPoint, setEditorMenuPoint] = useState(null)
   const editorContainerRef = useRef(null)
   const isInternalUpdate = useRef(false)
   const lastKnownContent = useRef(content)
@@ -696,10 +726,15 @@ export default function RichTextEditor({
       Placeholder.configure({
         placeholder: placeholder || 'Start writing...',
       }),
-      Link.configure({
-        openOnClick: true,
+      NoteAwareLink.configure({
+        // QuickNotes owns navigation for internal note links. Ordinary links
+        // are opened through the dedicated link UI, never TipTap's implicit
+        // click handler (which can create an unexpected browser tab).
+        openOnClick: false,
         HTMLAttributes: {
           class: 'text-emerald-600 underline cursor-pointer',
+          target: null,
+          rel: null,
         },
       }),
       Highlight.configure({
@@ -964,6 +999,56 @@ export default function RichTextEditor({
   }
 
   const paperStyle = paperStyles[currentPaper] || paperStyles.plain
+  const hasSelection = !editor.state.selection.empty
+
+  const closeEditorMenu = () => setEditorMenuPoint(null)
+
+  const writeClipboardText = async (text) => {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text)
+      return
+    }
+
+    const textarea = document.createElement('textarea')
+    textarea.value = text
+    textarea.setAttribute('readonly', '')
+    textarea.style.position = 'fixed'
+    textarea.style.opacity = '0'
+    document.body.appendChild(textarea)
+    textarea.select()
+    const copied = document.execCommand('copy')
+    textarea.remove()
+    if (!copied) throw new Error('Clipboard write failed')
+  }
+
+  const copySelection = async ({ cut = false } = {}) => {
+    const { from, to } = editor.state.selection
+    if (from === to) return
+    const text = editor.state.doc.textBetween(from, to, '\n')
+    try {
+      await writeClipboardText(text)
+      if (cut && !readOnly) editor.chain().focus().deleteSelection().run()
+    } catch {
+      toast.error('Clipboard access was blocked by the browser')
+    }
+  }
+
+  const pasteClipboard = async () => {
+    try {
+      const text = await navigator.clipboard?.readText?.()
+      if (typeof text !== 'string') throw new Error('Clipboard read unavailable')
+      const { from, to } = editor.state.selection
+      editor.view.dispatch(editor.state.tr.insertText(text, from, to))
+      editor.view.focus()
+    } catch {
+      toast.error('Clipboard access was blocked. Use the Paste toolbar action or keyboard shortcut.')
+    }
+  }
+
+  const runEditorMenuAction = async (action) => {
+    closeEditorMenu()
+    await action()
+  }
 
   return (
     <div className="relative flex h-full flex-col">
@@ -1056,6 +1141,12 @@ export default function RichTextEditor({
         )}
         <div 
           ref={editorContainerRef}
+          onContextMenu={(event) => {
+            if (!event.target.closest?.('.ProseMirror')) return
+            event.preventDefault()
+            event.stopPropagation()
+            setEditorMenuPoint({ x: event.clientX, y: event.clientY })
+          }}
           className={`relative flex-1 overflow-y-auto bg-surface-raised ${paperStyle.className || ''}`}
           style={paperStyle.style}
         >
@@ -1075,6 +1166,64 @@ export default function RichTextEditor({
           <CaseSensitive className="h-5 w-5" aria-hidden="true" />
         </button>
       )}
+
+      <Menu
+        open={Boolean(editorMenuPoint)}
+        point={editorMenuPoint}
+        onClose={closeEditorMenu}
+        label="Editor actions"
+        width={220}
+      >
+        <MenuItem
+          icon={Undo}
+          shortcut={formatShortcut({ key: 'z', ctrl: true })}
+          disabled={readOnly || !editor.can().undo()}
+          onClick={() => runEditorMenuAction(() => editor.chain().focus().undo().run())}
+        >
+          Undo
+        </MenuItem>
+        <MenuItem
+          icon={Redo}
+          shortcut={formatShortcut({ key: 'y', ctrl: true })}
+          disabled={readOnly || !editor.can().redo()}
+          onClick={() => runEditorMenuAction(() => editor.chain().focus().redo().run())}
+        >
+          Redo
+        </MenuItem>
+        <MenuSeparator />
+        <MenuItem
+          icon={Scissors}
+          shortcut={formatShortcut({ key: 'x', ctrl: true })}
+          disabled={readOnly || !hasSelection}
+          onClick={() => runEditorMenuAction(() => copySelection({ cut: true }))}
+        >
+          Cut
+        </MenuItem>
+        <MenuItem
+          icon={Copy}
+          shortcut={formatShortcut({ key: 'c', ctrl: true })}
+          disabled={!hasSelection}
+          onClick={() => runEditorMenuAction(copySelection)}
+        >
+          Copy
+        </MenuItem>
+        <MenuItem
+          icon={ClipboardPaste}
+          shortcut={formatShortcut({ key: 'v', ctrl: true })}
+          disabled={readOnly || !navigator.clipboard?.readText}
+          onClick={() => runEditorMenuAction(pasteClipboard)}
+        >
+          Paste
+        </MenuItem>
+        <MenuSeparator />
+        <MenuItem
+          icon={MousePointer2}
+          shortcut={formatShortcut({ key: 'a', ctrl: true })}
+          onClick={() => runEditorMenuAction(() => editor.chain().focus().selectAll().run())}
+        >
+          Select all
+        </MenuItem>
+      </Menu>
     </div>
   )
 }
