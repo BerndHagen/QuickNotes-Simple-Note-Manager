@@ -189,7 +189,7 @@ export default function Sidebar({ onNavigate }) {
         ? t('settings.themeDark')
         : t('settings.themeSystem')
 
-  const displayName = user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'Account'
+  const accountName = user?.username || user?.user_metadata?.username || 'Account'
   const accountDetail = user?.isLocal ? t('auth.localWorkspace', 'Saved on this device') : user?.email
   const isAllNotes = !selectedFolderId && !selectedTagFilter
   const cloudEnabled = isBackendConfigured()
@@ -440,7 +440,7 @@ export default function Sidebar({ onNavigate }) {
         >
           <Avatar user={user} size="md" />
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-ui-lg font-semibold text-nav-text">{displayName}</span>
+            <span className="block truncate text-ui-lg font-semibold text-nav-text">{accountName}</span>
             <span className="block truncate text-ui-sm text-nav-subtle">{accountDetail}</span>
           </span>
           <ChevronDown className="h-3.5 w-3.5 shrink-0 text-nav-subtle" aria-hidden="true" />

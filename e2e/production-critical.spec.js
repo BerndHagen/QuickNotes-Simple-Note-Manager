@@ -9,6 +9,27 @@ const capture = async (page, testInfo, name) => {
 }
 
 test.describe('production-critical UX contracts', () => {
+  test('registration uses one exact username and rejects case-insensitive duplicates before account creation', async ({ page }, testInfo) => {
+    await page.goto('./', { waitUntil: 'domcontentloaded' })
+    const registerTab = page.getByRole('button', { name: 'Create account', exact: true }).first()
+    test.skip(!(await registerTab.isVisible().catch(() => false)), 'Cloud registration is not configured.')
+
+    await registerTab.click()
+    const username = page.getByLabel('Username')
+    await username.fill('vAMPYRUSnOCTIS')
+    await page.getByLabel('Email address').fill('username-contract@example.invalid')
+    await page.getByLabel('Password', { exact: true }).fill('A-professional-test-passphrase-2026!')
+    await page.getByLabel('Confirm password').fill('A-professional-test-passphrase-2026!')
+    await page.getByLabel(/I agree to the/i).check()
+    await page.getByRole('button', { name: 'Create account', exact: true }).last().click()
+
+    await expect(page.getByText('That username is already in use')).toBeVisible()
+    await expect(username).toBeFocused()
+    await expect(page.getByLabel('First name')).toHaveCount(0)
+    await expect(page.getByLabel('Last name')).toHaveCount(0)
+    await capture(page, testInfo, 'single-username-registration.png')
+  })
+
   test('an inserted note link selects its exact immutable target without changing the URL', async ({ page, context }, testInfo) => {
     await signIn(page)
     await createNote(page, 'Medio')
@@ -82,5 +103,48 @@ test.describe('production-critical UX contracts', () => {
     expect(listGeometry[0].left).toBe(listGeometry[1].left)
     expect(listGeometry[0].top).not.toBe(listGeometry[1].top)
     expect(listGeometry[0].width).toBeGreaterThan(300)
+  })
+
+  test('editor canvas uses the QuickNotes menu and offers the complete font catalogue', async ({ page }, testInfo) => {
+    await signIn(page)
+    await createNote(page, 'Editor contract')
+
+    const canvas = page.locator('[data-editor-canvas]')
+    const nativeMenuPrevented = await canvas.evaluate((element) => {
+      const rect = element.getBoundingClientRect()
+      const event = new MouseEvent('contextmenu', {
+        bubbles: true,
+        cancelable: true,
+        clientX: rect.left + rect.width / 2,
+        clientY: rect.bottom - 24,
+      })
+      return !element.dispatchEvent(event)
+    })
+
+    expect(nativeMenuPrevented).toBe(true)
+    await expect(page.getByRole('menu', { name: 'Editor actions' })).toBeVisible()
+    await capture(page, testInfo, 'editor-context-menu.png')
+    await page.keyboard.press('Escape')
+
+    await page.getByRole('button', { name: 'Font', exact: true }).click()
+    const fontDialog = page.getByRole('dialog', { name: 'Font families' })
+    await expect(fontDialog).toBeVisible()
+    await expect(fontDialog.locator('button')).toHaveCount(39)
+    await capture(page, testInfo, 'font-catalogue.png')
+  })
+
+  test('Export Note is a standard solid action button, not a textured banner', async ({ page }, testInfo) => {
+    await signIn(page)
+    await createNote(page, 'Export contract')
+    await page.getByRole('button', { name: /^more actions$/i }).click()
+    await page.getByRole('menuitem', { name: /^export$/i }).click()
+
+    const dialog = page.getByRole('dialog', { name: 'Export notes' })
+    const exportButton = dialog.getByRole('button', { name: /export note/i })
+    await expect(exportButton).toBeVisible()
+    await expect(exportButton).not.toHaveClass(/qn-banner-surface/)
+    await expect(dialog.locator('.qn-banner-surface')).toHaveCount(1)
+    expect(await exportButton.evaluate((element) => getComputedStyle(element).backgroundImage)).toBe('none')
+    await capture(page, testInfo, 'export-solid-action.png')
   })
 })

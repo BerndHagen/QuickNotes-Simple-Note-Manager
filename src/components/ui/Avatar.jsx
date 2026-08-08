@@ -21,11 +21,7 @@ export default function Avatar({ user, size = 'md', className = '' }) {
   // A new URL deserves a fresh attempt.
   useEffect(() => setFailed(false), [url])
 
-  const name =
-    user?.user_metadata?.first_name ||
-    user?.user_metadata?.full_name ||
-    user?.email ||
-    ''
+  const name = user?.username || user?.user_metadata?.username || user?.email || ''
   const initials = name.trim().charAt(0).toUpperCase() || 'Q'
   const showImage = url && !failed
 

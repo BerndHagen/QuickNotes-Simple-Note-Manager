@@ -39,8 +39,7 @@ test.describe('authentication entry', () => {
 
     await registerTab.click()
 
-    await expect(page.getByLabel('First name')).toHaveAttribute('placeholder', 'Jane')
-    await expect(page.getByLabel('Last name')).toHaveAttribute('placeholder', 'Doe')
+    await expect(page.getByLabel('Username')).toHaveAttribute('placeholder', 'VampyrusNoctis')
     await expect(page.getByLabel('Email address')).toHaveAttribute('placeholder', 'you@example.com')
     await expect(page.getByLabel('Confirm password')).toHaveAttribute(
       'placeholder',
@@ -49,9 +48,9 @@ test.describe('authentication entry', () => {
 
     await page.getByRole('button', { name: 'Create account', exact: true }).last().click()
 
-    const firstName = page.getByLabel('First name')
-    await expect(firstName).toBeFocused()
-    await expect(firstName).toHaveAttribute('aria-invalid', 'true')
-    await expect(page.getByRole('alert').first()).toContainText('First name is required')
+    const username = page.getByLabel('Username')
+    await expect(username).toBeFocused()
+    await expect(username).toHaveAttribute('aria-invalid', 'true')
+    await expect(page.getByRole('alert').first()).toContainText('Username is required')
   })
 })

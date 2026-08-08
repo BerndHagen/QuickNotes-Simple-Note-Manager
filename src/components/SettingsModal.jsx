@@ -41,9 +41,10 @@ import {
   updateMyUsername,
 } from '../lib/backend'
 import { getAuthErrorMessage, validateNewPassword } from '../lib/authValidation'
-import { setLocalDisplayName } from '../lib/localSession'
+import { setLocalWorkspaceName } from '../lib/localSession'
 import { createWorkspaceBackup } from '../lib/workspaceBackup'
 import { normalizeWebUrl } from '../lib/webUrls'
+import { normalizeUsername, validateUsername } from '../lib/usernames'
 import { useTranslation, LANGUAGES } from '../lib/useTranslation'
 import toast from 'react-hot-toast'
 import LegacyDialog from './ui/LegacyDialog'
@@ -112,11 +113,9 @@ export default function SettingsModal() {
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [displayName, setDisplayName] = useState(
-    () => user?.user_metadata?.first_name || user?.user_metadata?.full_name || ''
-  )
-  const [username, setUsername] = useState('')
-  const [savingName, setSavingName] = useState(false)
+  const [workspaceName, setWorkspaceName] = useState(() => user?.isLocal ? user?.username || '' : '')
+  const [username, setUsername] = useState(() => user?.username || '')
+  const [savingWorkspaceName, setSavingWorkspaceName] = useState(false)
   const [savingUsername, setSavingUsername] = useState(false)
   const [showChangeEmail, setShowChangeEmail] = useState(false)
   const [showChangePassword, setShowChangePassword] = useState(false)
@@ -135,7 +134,10 @@ export default function SettingsModal() {
 
     getMyUsername()
       .then((value) => {
-        if (active) setUsername(value)
+        if (active) {
+          setUsername(value)
+          if (value && user?.username !== value) setUser({ ...user, username: value })
+        }
       })
       .catch((error) => {
         if (active) toast.error(error?.message || 'Username could not be loaded')
@@ -144,7 +146,7 @@ export default function SettingsModal() {
     return () => {
       active = false
     }
-  }, [cloudEnabled, settingsOpen, user])
+  }, [cloudEnabled, setUser, settingsOpen, user])
 
   const tabs = [
     { id: 'general', label: t('settings.general'), icon: Monitor },
@@ -189,66 +191,25 @@ export default function SettingsModal() {
     }
   }
 
-  const handleSignUp = async (e) => {
-    e.preventDefault()
-    if (!isBackendConfigured()) {
-      toast.error(t('settings.backendNotConfigured'))
-      return
-    }
-
-    const passwordError = validateNewPassword(password)
-    if (passwordError) {
-      toast.error(passwordError)
-      return
-    }
-
-    setIsLoading(true)
-    try {
-      const { error } = await backend.auth.signUp({
-        email: email.trim().toLowerCase(),
-        password,
-        options: {
-          emailRedirectTo: getRedirectUrl()
-        }
-      })
-
-      if (error) throw error
-
-      toast.success(t('settings.toastRegistrationSuccess'))
-    } catch (error) {
-      toast.error(getAuthErrorMessage(error))
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleSaveName = async () => {
-    const name = displayName.trim()
+  const handleSaveWorkspaceName = async () => {
+    const name = workspaceName.trim()
     if (!name) {
-      toast.error(t('settings.nameRequired', 'Enter a display name'))
+      toast.error('Enter a workspace name')
       return
     }
     if (name.length > 60) {
       toast.error(t('settings.nameTooLong', 'Use 60 characters or fewer'))
       return
     }
-    setSavingName(true)
+    setSavingWorkspaceName(true)
     try {
-      // A local workspace has no account to write to, so the name lives in the
-      // store and is persisted with the rest of the local session.
-      if (user?.isLocal || !isBackendConfigured()) {
-        setLocalDisplayName(name)
-        setUser({ ...user, user_metadata: { ...(user?.user_metadata || {}), first_name: name, full_name: name } })
-      } else {
-        const { error } = await backend.auth.updateUser({ data: { first_name: name, full_name: name } })
-        if (error) throw error
-        setUser({ ...user, user_metadata: { ...(user?.user_metadata || {}), first_name: name, full_name: name } })
-      }
-      toast.success(t('settings.nameUpdated', 'Display name updated'))
+      setLocalWorkspaceName(name)
+      setUser({ ...user, username: name })
+      toast.success('Workspace name updated')
     } catch (error) {
       toast.error(getAuthErrorMessage(error))
     } finally {
-      setSavingName(false)
+      setSavingWorkspaceName(false)
     }
   }
 
@@ -350,16 +311,18 @@ export default function SettingsModal() {
   }
 
   const handleSaveUsername = async () => {
-    const normalized = username.trim().toLowerCase()
-    if (!/^[a-z0-9][a-z0-9._-]{1,30}[a-z0-9]$/.test(normalized)) {
-      toast.error('Use 3-32 lowercase letters, numbers, dots, underscores, or hyphens')
+    const requestedUsername = normalizeUsername(username)
+    const usernameError = validateUsername(requestedUsername)
+    if (usernameError) {
+      toast.error(usernameError)
       return
     }
 
     setSavingUsername(true)
     try {
-      const savedUsername = await updateMyUsername(normalized)
+      const savedUsername = await updateMyUsername(requestedUsername)
       setUsername(savedUsername)
+      setUser({ ...user, username: savedUsername })
       toast.success('Username updated')
     } catch (error) {
       toast.error(error?.message || 'Username could not be updated')
@@ -761,7 +724,7 @@ export default function SettingsModal() {
                       </span>
                       <div>
                         <p className="font-semibold text-content">
-                          {user?.user_metadata?.first_name || 'My workspace'}
+                          {user?.username || 'My workspace'}
                         </p>
                         <p className="mt-0.5 text-sm text-emerald-800 dark:text-emerald-200">
                           Saved privately on this device
@@ -771,23 +734,23 @@ export default function SettingsModal() {
 
                     <div className="rounded-xl border border-subtle p-4">
                       <h4 className="mb-1 text-sm font-semibold text-content">
-                        {t('settings.displayName', 'Display name')}
+                        Workspace name
                       </h4>
                       <p className="mb-3 text-xs text-content-muted">
-                        {t('settings.displayNameHint', 'Shown in the sidebar and on notes you share.')}
+                        Shown in the sidebar for this local browser workspace.
                       </p>
                       <div className="flex gap-2">
                         <Input
                           type="text"
-                          value={displayName}
+                          value={workspaceName}
                           maxLength={60}
-                          onChange={(e) => setDisplayName(e.target.value)}
-                          onKeyDown={(e) => { if (e.key === 'Enter') handleSaveName() }}
+                          onChange={(e) => setWorkspaceName(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === 'Enter') handleSaveWorkspaceName() }}
                           placeholder="My workspace"
-                          aria-label={t('settings.displayName', 'Display name')}
+                          aria-label="Workspace name"
                           className="flex-1"
                         />
-                        <Button variant="primary" onClick={handleSaveName} loading={savingName}>
+                        <Button variant="primary" onClick={handleSaveWorkspaceName} loading={savingWorkspaceName}>
                           {t('common.save')}
                         </Button>
                       </div>
@@ -824,10 +787,11 @@ export default function SettingsModal() {
                   <div className="space-y-6">
                     <div className="flex items-center gap-4 p-4 rounded-lg bg-surface-sunken">
                       <Avatar user={user} size="xl" />
-                      <div className="flex-1">
-                        <p className="font-medium text-content">
-                          {user.email}
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-semibold text-content">
+                          @{username || user.username || 'Account'}
                         </p>
+                        <p className="truncate text-sm text-content-muted">{user.email}</p>
                         <p className="text-sm text-content-muted">
                           {t('settings.memberSince')}{' '}
                           {new Date(user.created_at).toLocaleDateString('en-US')}
@@ -900,7 +864,7 @@ export default function SettingsModal() {
                         Username
                       </h4>
                       <p className="mb-3 text-xs text-content-muted">
-                        Your stable public identity on shared notes. Usernames are unique and never expose your email.
+                        Your only public identity in QuickNotes. This exact username appears in the sidebar, invitations, and shared notes.
                       </p>
                       <div className="flex gap-2">
                         <div className="relative min-w-0 flex-1">
@@ -912,10 +876,10 @@ export default function SettingsModal() {
                             value={username}
                             minLength={3}
                             maxLength={32}
-                            autoCapitalize="none"
+                            autoCapitalize="off"
                             autoCorrect="off"
                             spellCheck={false}
-                            onChange={(event) => setUsername(event.target.value.toLowerCase())}
+                            onChange={(event) => setUsername(event.target.value)}
                             onKeyDown={(event) => { if (event.key === 'Enter') handleSaveUsername() }}
                             placeholder="username"
                             aria-label="Username"
@@ -923,29 +887,6 @@ export default function SettingsModal() {
                           />
                         </div>
                         <Button variant="primary" onClick={handleSaveUsername} loading={savingUsername}>
-                          {t('common.save')}
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="p-4 border border-subtle rounded-lg">
-                      <h4 className="mb-1 text-sm font-medium text-content">
-                        {t('settings.displayName', 'Display name')}
-                      </h4>
-                      <p className="mb-3 text-xs text-content-muted">
-                        {t('settings.displayNameHint', 'Shown in the sidebar and on notes you share.')}
-                      </p>
-                      <div className="flex gap-2">
-                        <Input
-                          type="text"
-                          value={displayName}
-                          maxLength={60}
-                          onChange={(e) => setDisplayName(e.target.value)}
-                          onKeyDown={(e) => { if (e.key === 'Enter') handleSaveName() }}
-                          placeholder={t('settings.displayName', 'Display name')}
-                          aria-label={t('settings.displayName', 'Display name')}
-                          className="flex-1"
-                        />
-                        <Button variant="primary" onClick={handleSaveName} loading={savingName}>
                           {t('common.save')}
                         </Button>
                       </div>
@@ -1185,18 +1126,10 @@ export default function SettingsModal() {
                       </div>
                     </div>
 
-                    <div className="flex gap-3">
-                      <Button type="submit" variant="primary" loading={isLoading} className="flex-1">
+                    <div>
+                      <Button type="submit" variant="primary" loading={isLoading} fullWidth>
                         {t('settings.signIn')}
                       </Button>
-                      <button
-                        type="button"
-                        onClick={handleSignUp}
-                        disabled={isLoading}
-                        className="flex-1 px-4 py-2 text-content transition-colors border border-subtle rounded-lg hover:bg-surface-hover disabled:opacity-50"
-                      >
-                        {t('settings.register')}
-                      </button>
                     </div>
                   </form>
                 )}

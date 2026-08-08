@@ -131,6 +131,22 @@ test.describe('workspace', () => {
     await expect(menu.getByRole('menuitem', { name: /^Undo/ })).toBeVisible()
     await expect(menu.getByRole('menuitem', { name: /^Paste/ })).toBeVisible()
     await expect(menu.getByRole('menuitem', { name: /^Select all/ })).toBeVisible()
+
+    await page.keyboard.press('Escape')
+    const canvas = page.locator('[data-editor-canvas]')
+    const nativeMenuPrevented = await canvas.evaluate((element) => {
+      const rect = element.getBoundingClientRect()
+      const event = new MouseEvent('contextmenu', {
+        bubbles: true,
+        cancelable: true,
+        clientX: rect.left + rect.width / 2,
+        clientY: rect.bottom - 20,
+      })
+      return !element.dispatchEvent(event)
+    })
+
+    expect(nativeMenuPrevented).toBe(true)
+    await expect(menu).toBeVisible()
   })
 
   test('filters the list by search query and clears it', async ({ page }) => {

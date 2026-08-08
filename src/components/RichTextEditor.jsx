@@ -80,7 +80,7 @@ import { debounce } from '../lib/utils'
 import { formatShortcut } from '../lib/shortcuts'
 import { useUIStore } from '../store'
 import { useEditorSettings } from './EditorSettingsModal'
-import { DEFAULT_EDITOR_FONT, EDITOR_FONT_FAMILIES } from '../lib/editorFonts'
+import { DEFAULT_EDITOR_FONT, EDITOR_FONT_GROUPS } from '../lib/editorFonts'
 import toast from 'react-hot-toast'
 import {
   getFocusable,
@@ -487,7 +487,7 @@ export const paperStyles = {
   },
 }
 
-const fontFamilies = EDITOR_FONT_FAMILIES
+const fontGroups = EDITOR_FONT_GROUPS
 
 const fontSizes = [
   { name: '10', value: '10px' },
@@ -1141,8 +1141,8 @@ export default function RichTextEditor({
         )}
         <div 
           ref={editorContainerRef}
+          data-editor-canvas
           onContextMenu={(event) => {
-            if (!event.target.closest?.('.ProseMirror')) return
             event.preventDefault()
             event.stopPropagation()
             setEditorMenuPoint({ x: event.clientX, y: event.clientY })
@@ -1797,28 +1797,42 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content, onMobileC
         <DropdownButton isOpen={showFontPicker} onClick={() => toggleDropdown(setShowFontPicker, showFontPicker)} title="Font">
           <Type className="w-4 h-4" />
         </DropdownButton>
-        <PortalDropdown isOpen={showFontPicker} anchorRef={fontPickerRef} onClose={() => setShowFontPicker(false)}>
-          <div className="py-1.5 w-[200px] max-h-[300px] overflow-y-auto">
-            {fontFamilies.map((font) => {
-              const currentFont = editor.getAttributes('textStyle').fontFamily
-              const isActive = currentFont === font.value
-              return (
-                <button
-                  key={font.name}
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => {
-                    editor.chain().focus().setFontFamily(font.value).run()
-                    setShowFontPicker(false)
-                  }}
-                  className={`w-full px-3 py-1.5 text-[13px] text-left hover:bg-surface-hover truncate rounded-lg transition-colors ${
- isActive ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 font-medium' : 'text-content-muted'
- }`}
-                  style={{ fontFamily: font.value }}
-                >
-                  {font.name}
-                </button>
-              )
-            })}
+        <PortalDropdown
+          isOpen={showFontPicker}
+          anchorRef={fontPickerRef}
+          onClose={() => setShowFontPicker(false)}
+          label="Font families"
+        >
+          <div className="max-h-[min(26rem,70vh)] w-[240px] overflow-y-auto py-1.5">
+            {fontGroups.map((group) => (
+              <div key={group.name}>
+                <p className="sticky top-0 z-10 bg-surface-raised px-3 pb-1 pt-2 text-[10px] font-bold uppercase tracking-wide text-content-subtle">
+                  {group.name}
+                </p>
+                {group.fonts.map((font) => {
+                  const currentFont = editor.getAttributes('textStyle').fontFamily
+                  const isActive = currentFont === font.value
+                  return (
+                    <button
+                      key={font.name}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => {
+                        editor.chain().focus().setFontFamily(font.value).run()
+                        setShowFontPicker(false)
+                      }}
+                      className={`w-full truncate rounded-lg px-3 py-1.5 text-left text-[13px] transition-colors hover:bg-surface-hover ${
+                        isActive
+                          ? 'bg-accent-soft font-medium text-accent-text'
+                          : 'text-content-muted'
+                      }`}
+                      style={{ fontFamily: font.value }}
+                    >
+                      {font.name}
+                    </button>
+                  )
+                })}
+              </div>
+            ))}
           </div>
         </PortalDropdown>
       </div>

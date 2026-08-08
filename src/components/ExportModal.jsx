@@ -5,6 +5,7 @@ import { useTranslation } from '../lib/useTranslation'
 import { hasSpecializedEditor } from './editors'
 import toast from 'react-hot-toast'
 import LegacyDialog from './ui/LegacyDialog'
+import Button from './ui/Button'
 import { escapeHtml, sanitizeNoteHtml } from '../lib/sanitizeHtml'
 import { htmlToMarkdown, htmlToPlainText } from '../lib/noteTransfer'
 
@@ -737,35 +738,23 @@ export default function ExportModal() {
             </button>
           ))}
         </div>
-        <button
-          type="button"
+        <Button
           onClick={handleExport}
           disabled={isExporting || (exportAll ? liveNotes.length === 0 : !note || note.deleted)}
-          className={`w-full py-3 rounded-lg font-medium transition-all flex items-center justify-center gap-2 ${
- exportSuccess
-              ? 'bg-accent text-accent-on'
-              : isExporting
-              ? 'bg-gray-400 text-white cursor-wait'
-              : 'qn-banner-surface hover:from-emerald-700 hover:to-teal-700 text-white'
-          }`}
+          loading={isExporting}
+          variant="primary"
+          size="lg"
+          fullWidth
+          icon={exportSuccess ? Check : Download}
         >
           {exportSuccess ? (
-            <>
-              <Check className="h-5 w-5" aria-hidden="true" />
-              {t('exportModal.exported')}
-            </>
+            t('exportModal.exported')
           ) : isExporting ? (
-            <>
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" aria-hidden="true" />
-              {t('exportModal.exporting')}
-            </>
+            t('exportModal.exporting')
           ) : (
-            <>
-              <Download className="h-5 w-5" aria-hidden="true" />
-              {exportAll ? t('exportModal.exportAllNotes') : t('exportModal.exportNote')}
-            </>
+            exportAll ? t('exportModal.exportAllNotes') : t('exportModal.exportNote')
           )}
-        </button>
+        </Button>
         </div>
       </div>
     </LegacyDialog>

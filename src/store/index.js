@@ -1140,9 +1140,18 @@ export const useNotesStore = create(
         }),
       activateCloudUser: async (user, options = {}) => {
         if (!user?.id) throw new Error('A valid cloud user is required')
-        return runWorkspaceTransition(
-          () => activateWorkspace(set, get, user, user.id, options)
-        )
+        return runWorkspaceTransition(async () => {
+          let username = user?.user_metadata?.username || ''
+          try {
+            const { data, error } = await backend.rpc('get_my_username')
+            if (error) throw error
+            if (typeof data === 'string') username = data
+          } catch {
+            // A failed profile read must not lock users out of their notes. The
+            // UI shows a neutral account label until the identity can reload.
+          }
+          return activateWorkspace(set, get, { ...user, username }, user.id, options)
+        })
       },
       activateLocalUser: async (user) => {
         if (!user?.isLocal) throw new Error('A valid local user is required')

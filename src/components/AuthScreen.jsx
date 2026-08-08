@@ -29,13 +29,14 @@ import {
   Users,
   WifiOff,
 } from 'lucide-react'
-import { backend, getRedirectUrl, isBackendConfigured } from '../lib/backend'
+import { backend, getRedirectUrl, isBackendConfigured, usernameIsAvailable } from '../lib/backend'
 import {
   getAuthErrorMessage,
   MIN_PASSWORD_LENGTH,
   validateNewPassword,
 } from '../lib/authValidation'
 import { createLocalUser, endLocalSession, startLocalSession } from '../lib/localSession'
+import { normalizeUsername, validateUsername } from '../lib/usernames'
 import { buttonClasses, NotepadGlyph } from './ui'
 import { useNotesStore, useUIStore } from '../store'
 
@@ -336,8 +337,7 @@ export default function AuthScreen() {
     email: '',
     password: '',
     confirmPassword: '',
-    firstName: '',
-    lastName: '',
+    username: '',
     agreeToTerms: false,
   })
 
@@ -368,8 +368,8 @@ export default function AuthScreen() {
     }
 
     if (mode === 'register') {
-      if (!formData.firstName.trim()) nextErrors.firstName = 'First name is required'
-      if (!formData.lastName.trim()) nextErrors.lastName = 'Last name is required'
+      const usernameError = validateUsername(formData.username)
+      if (usernameError) nextErrors.username = usernameError
       if (!formData.confirmPassword) nextErrors.confirmPassword = 'Confirm your password'
       else if (formData.password !== formData.confirmPassword) {
         nextErrors.confirmPassword = 'Passwords do not match'
@@ -384,8 +384,7 @@ export default function AuthScreen() {
         ['password', 'qn-auth-password'],
       ],
       register: [
-        ['firstName', 'qn-auth-first-name'],
-        ['lastName', 'qn-auth-last-name'],
+        ['username', 'qn-auth-username'],
         ['email', 'qn-auth-register-email'],
         ['password', 'qn-auth-register-password'],
         ['confirmPassword', 'qn-auth-confirm-password'],
@@ -411,13 +410,25 @@ export default function AuthScreen() {
 
     try {
       if (mode === 'register') {
+        const requestedUsername = normalizeUsername(formData.username)
+        let usernameAvailable
+        try {
+          usernameAvailable = await usernameIsAvailable(requestedUsername)
+        } catch {
+          setErrors({ form: 'Username availability could not be checked. Please try again.' })
+          return
+        }
+        if (!usernameAvailable) {
+          setErrors({ username: 'That username is already in use' })
+          requestAnimationFrame(() => document.getElementById('qn-auth-username')?.focus())
+          return
+        }
         const { error } = await backend.auth.signUp({
           email: formData.email,
           password: formData.password,
           options: {
             data: {
-              first_name: formData.firstName.trim(),
-              last_name: formData.lastName.trim(),
+              username: requestedUsername,
             },
             emailRedirectTo: getRedirectUrl(),
           },
@@ -657,30 +668,23 @@ export default function AuthScreen() {
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-        <div className="grid grid-cols-2 gap-3">
-          <AuthField
-            id="qn-auth-first-name"
-            label="First name"
-            icon={User}
-            type="text"
-            value={formData.firstName}
-            onChange={(event) => handleInputChange('firstName', event.target.value)}
-            placeholder="Jane"
-            autoComplete="given-name"
-            error={errors.firstName}
-          />
-          <AuthField
-            id="qn-auth-last-name"
-            label="Last name"
-            icon={User}
-            type="text"
-            value={formData.lastName}
-            onChange={(event) => handleInputChange('lastName', event.target.value)}
-            placeholder="Doe"
-            autoComplete="family-name"
-            error={errors.lastName}
-          />
-        </div>
+        <AuthField
+          id="qn-auth-username"
+          label="Username"
+          icon={User}
+          type="text"
+          value={formData.username}
+          onChange={(event) => handleInputChange('username', event.target.value)}
+          placeholder="VampyrusNoctis"
+          autoComplete="username"
+          autoCapitalize="off"
+          autoCorrect="off"
+          spellCheck={false}
+          error={errors.username}
+        />
+        <p className="-mt-2 text-ui-xs text-content-subtle">
+          This is your only public identity in QuickNotes and appears on shared notes.
+        </p>
         <AuthField
           id="qn-auth-register-email"
           label="Email address"

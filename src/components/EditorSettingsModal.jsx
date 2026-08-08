@@ -13,7 +13,11 @@ import {
 } from 'lucide-react'
 import { useUIStore } from '../store'
 import LegacyDialog from './ui/LegacyDialog'
-import { DEFAULT_EDITOR_FONT, EDITOR_FONT_FAMILIES } from '../lib/editorFonts'
+import {
+  DEFAULT_EDITOR_FONT,
+  EDITOR_FONT_FAMILIES,
+  EDITOR_FONT_GROUPS,
+} from '../lib/editorFonts'
 const STORAGE_KEY = 'editorSettings'
 const defaultSettings = {
   showRuler: false,
@@ -150,10 +154,14 @@ export default function EditorSettingsModal() {
                 onChange={(e) => handleSettingChange('defaultFontFamily', e.target.value)}
                 className="w-full px-3 py-2 text-content bg-surface-sunken border border-subtle rounded-lg dark:bg-surface-sunken dark:text-white focus:ring-2 focus:ring-emerald-500"
               >
-                {fontOptions.map(font => (
-                  <option key={font.value} value={font.value} style={{ fontFamily: font.value }}>
-                    {font.name}
-                  </option>
+                {EDITOR_FONT_GROUPS.map((group) => (
+                  <optgroup key={group.name} label={group.name}>
+                    {group.fonts.map((font) => (
+                      <option key={font.value} value={font.value} style={{ fontFamily: font.value }}>
+                        {font.name}
+                      </option>
+                    ))}
+                  </optgroup>
                 ))}
               </select>
             </div>

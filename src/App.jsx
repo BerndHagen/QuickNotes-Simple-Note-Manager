@@ -304,6 +304,12 @@ export default function App() {
   }, [user])
 
   useEffect(() => {
+    const preventNativeContextMenu = (event) => event.preventDefault()
+    document.addEventListener('contextmenu', preventNativeContextMenu, true)
+    return () => document.removeEventListener('contextmenu', preventNativeContextMenu, true)
+  }, [])
+
+  useEffect(() => {
     return onConnectionChange((online) => {
       setIsOnline(online)
       if (online && user && !user.isLocal && !document.hidden) {

@@ -124,11 +124,21 @@ export const getMyUsername = async () => {
   return typeof data === 'string' ? data : ''
 }
 
+export const usernameIsAvailable = async (username) => {
+  if (!isBackendConfigured()) return true
+
+  const { data, error } = await backend.rpc('username_is_available', {
+    p_username: String(username || '').trim(),
+  })
+  if (error) throw error
+  return data === true
+}
+
 export const updateMyUsername = async (username) => {
   if (!isBackendConfigured()) throw new Error('Backend not configured')
 
   const { data, error } = await backend.rpc('update_my_username', {
-    p_username: String(username || '').trim().toLowerCase(),
+    p_username: String(username || '').trim(),
   })
   if (error) throw error
   return data
