@@ -10,7 +10,6 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/releases"><img src="https://img.shields.io/github/v/release/BerndHagen/QuickNotes-Simple-Note-Manager?include_prereleases&style=flat-square&color=CD853F" alt="Latest Release"></a>&nbsp;&nbsp;
   <a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-GPL--3.0-blue?style=flat-square" alt="License"></a>&nbsp;&nbsp;
   <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react" alt="React Version">&nbsp;&nbsp;
   <img src="https://img.shields.io/badge/Vite-8-646CFF?style=flat-square&logo=vite" alt="Vite Version">&nbsp;&nbsp;
@@ -96,7 +95,6 @@ You can try QuickNotes [**here**](https://berndhagen.github.io/QuickNotes-Simple
     - [Stored Procedures](#stored-procedures)
     - [Triggers](#triggers)
 13. [GitHub Actions & Deployment](#github-actions--deployment)
-    - [Release Workflow](#release-workflow-githubworkflowsreleaseyml)
     - [GitHub Pages Deployment](#github-pages-deployment)
 14. [Environment Variables](#environment-variables)
     - [Setup](#setup)
@@ -156,8 +154,7 @@ QuickNotes-Simple-Note-Manager/
 ├── .env.example                          # Supabase environment variable template
 ├── .github/
 │   └── workflows/
-│       ├── deploy.yml                    # GitHub Actions: build + publish to Pages
-│       └── release.yml                   # GitHub Actions: rolling + versioned releases
+│       └── deploy.yml                    # GitHub Actions: build + publish to Pages
 ├── index.html                            # HTML entry point
 ├── package.json                          # Dependencies and scripts
 ├── postcss.config.js                     # PostCSS configuration (Tailwind)
@@ -715,34 +712,6 @@ note type, and structured note data. Direct updates remain owner-only.
 | `create_note_version()` | Auto-create a version on document or structured-data changes (max 30) |
 
 ## GitHub Actions & Deployment
-
-### Release Workflow (`.github/workflows/release.yml`)
-
-The workflow has two jobs, both of which check out the repository, install Node.js
-22, and run `npm ci` + `npm run build` before packaging `dist/` as a ZIP:
-
-| Job | Trigger | Result |
-|-----|---------|--------|
-| `latest` | Every push to `main` | Updates the rolling `latest` prerelease with a verified ZIP, build metadata, and a linked ledger of changes since the latest stable tag |
-| `versioned` | A pushed tag matching `v*.*.*` | Creates a permanent release from the matching curated file in `docs/releases/` |
-
-Stable release notes follow the product-area structure documented in
-[`docs/releases/README.md`](docs/releases/README.md). The workflow deliberately
-fails when a tag has no matching note file, preventing raw commit messages or
-automatic change counts from being published as product communication.
-
-To publish a version, bump the package and in-app version labels, copy
-`docs/releases/TEMPLATE.md` to the matching tag name, write and review the
-notes, then commit, verify, tag, and push:
-
-```bash
-cp docs/releases/TEMPLATE.md docs/releases/v2.3.0.md
-git add package.json package-lock.json src/components docs/releases/v2.3.0.md
-git commit -m "chore: release 2.3.0"
-git push origin main
-git tag -a v2.3.0 -m "QuickNotes - Simple Note Manager 2.3.0"
-git push origin v2.3.0
-```
 
 ### GitHub Pages Deployment
 
