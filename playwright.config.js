@@ -8,6 +8,10 @@ export default defineConfig({
   testDir: './e2e',
   timeout: 60_000,
   expect: { timeout: 10_000 },
+  // GitHub's headless Chromium process can occasionally terminate before a
+  // page is created. One CI-only retry starts a fresh worker/browser while
+  // preserving every assertion and the first-attempt trace.
+  retries: process.env.CI ? 1 : 0,
   fullyParallel: false,
   workers: 1,
   reporter: [['list']],
