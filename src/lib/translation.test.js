@@ -75,6 +75,23 @@ describe('translation service', () => {
         target: 'de',
         fetchImpl: vi.fn(async () => ({ ok: false, status: 429 })),
       })
-    ).rejects.toThrow(/busy/i)
+    ).rejects.toThrow(/limit/i)
+  })
+
+  it('recognizes quota exhaustion returned inside a successful HTTP response', async () => {
+    await expect(
+      translateText('Hello', {
+        source: 'en',
+        target: 'de',
+        fetchImpl: vi.fn(async () => ({
+          ok: true,
+          status: 200,
+          json: async () => ({
+            responseStatus: 403,
+            responseDetails: 'MYMEMORY WARNING: YOU USED ALL AVAILABLE FREE TRANSLATIONS FOR TODAY',
+          }),
+        })),
+      })
+    ).rejects.toThrow(/daily allowance/i)
   })
 })

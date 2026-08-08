@@ -13,6 +13,8 @@ import {
   FileText,
   ArrowLeft,
   MoreHorizontal,
+  List,
+  LayoutGrid,
 } from 'lucide-react'
 import { useNotesStore, useUIStore } from '../store'
 import { formatDate, htmlToPlainText, truncateText, getNoteTypePreview } from '../lib/utils'
@@ -142,22 +144,23 @@ function GridNoteCard({ note, isSelected, onClick, onOpenMenu }) {
         aria-current={isSelected ? 'true' : undefined}
         className="absolute inset-0 z-0 rounded-card outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--qn-focus-ring)]"
       />
-      {note.pinned && (
-        <Pin
-          className="pointer-events-none absolute -right-1 -top-1 z-10 h-4 w-4 fill-accent text-accent-text"
-          aria-label="Pinned"
-        />
-      )}
       <div className="pointer-events-none relative z-10 mb-2 flex items-start justify-between gap-2">
         <h3 className="line-clamp-2 flex-1 font-semibold text-content">
           {note.title}
         </h3>
         <div className="pointer-events-auto -mr-1 -mt-1 flex items-center">
+          {note.pinned && (
+            <span className="inline-flex h-control-sm w-control-sm items-center justify-center text-accent-text">
+              <Pin className="h-3.5 w-3.5 fill-current" aria-hidden="true" />
+              <span className="qn-sr-only">Pinned</span>
+            </span>
+          )}
           <IconButton
             icon={Star}
             size="sm"
             label={note.starred ? 'Remove from favorites' : 'Add to favorites'}
             active={note.starred}
+            iconClassName={note.starred ? 'fill-current' : ''}
             onClick={() => toggleStar(note.id)}
             className={note.starred ? '' : 'opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100'}
           />
@@ -217,7 +220,7 @@ export default function NotesGrid({ sidebarToggle }) {
     deleteNote,
   } = useNotesStore()
 
-  const { currentSort, setCurrentSort, sidebarOpen } = useUIStore()
+  const { currentSort, setCurrentSort, sidebarOpen, viewMode, setViewMode } = useUIStore()
   const { t } = useTranslation()
 
   const [showingEditor, setShowingEditor] = useState(false)
@@ -367,8 +370,43 @@ export default function NotesGrid({ sidebarToggle }) {
           </div>
         )}
       </div>
-      <div className="flex-shrink-0 px-6 py-3 text-[11px] text-center text-content-subtle border-t border-subtle dark:text-content-muted font-semibold">
-        {filteredNotes.length} {filteredNotes.length === 1 ? t('notes.note') : t('notes.notes')}
+      <div className="qn-safe-bottom flex shrink-0 items-center justify-between gap-2 border-t border-subtle px-4 py-2 sm:px-6">
+        <span className="text-ui-sm font-medium text-content-subtle">
+          {filteredNotes.length} {filteredNotes.length === 1 ? t('notes.note') : t('notes.notes')}
+        </span>
+        <div
+          role="group"
+          aria-label="View mode"
+          className="flex items-center gap-0.5 rounded-control bg-surface-sunken p-0.5"
+        >
+          <button
+            type="button"
+            onClick={() => setViewMode('list')}
+            aria-pressed={viewMode === 'list'}
+            aria-label="List view"
+            title="List view"
+            className={`qn-square-control flex h-6 w-7 items-center justify-center rounded-[6px] transition-colors duration-fast ${
+              viewMode === 'list'
+                ? 'bg-surface-raised text-content shadow-xs'
+                : 'text-content-subtle hover:text-content'
+            }`}
+          >
+            <List className="h-3.5 w-3.5" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            aria-pressed={viewMode === 'grid'}
+            aria-label="Grid view"
+            title="Grid view"
+            className={`qn-square-control flex h-6 w-7 items-center justify-center rounded-[6px] transition-colors duration-fast ${
+              viewMode === 'grid'
+                ? 'bg-surface-raised text-content shadow-xs'
+                : 'text-content-subtle hover:text-content'
+            }`}
+          >
+            <LayoutGrid className="h-3.5 w-3.5" aria-hidden="true" />
+          </button>
+        </div>
       </div>
       {contextMenu && (
         <NoteContextMenu

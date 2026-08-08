@@ -92,9 +92,9 @@ const Button = forwardRef(function Button(
 export default Button
 
 const ICON_BUTTON_SIZES = {
-  sm: 'h-control-sm w-control-sm rounded-control',
-  md: 'h-control-md w-control-md rounded-control',
-  lg: 'h-control-lg w-control-lg rounded-control',
+  sm: 'qn-icon-button--sm h-control-sm w-control-sm rounded-control',
+  md: 'qn-icon-button--md h-control-md w-control-md rounded-control',
+  lg: 'qn-icon-button--lg h-control-lg w-control-lg rounded-control',
 }
 
 /**
@@ -120,6 +120,7 @@ export const IconButton = forwardRef(function IconButton(
     variant = 'ghost',
     size = 'md',
     active = false,
+    iconClassName = '',
     loading = false,
     disabled = false,
     className = '',
@@ -150,7 +151,7 @@ export const IconButton = forwardRef(function IconButton(
       }
       disabled={disabled || loading}
       className={[
-        'qn-square-control inline-flex aspect-square shrink-0 self-center items-center justify-center transition-colors duration-fast ease-qn',
+        'qn-icon-button qn-square-control inline-flex aspect-square shrink-0 self-center items-center justify-center transition-colors duration-fast ease-qn',
         'disabled:cursor-not-allowed disabled:opacity-50',
         colourClasses,
         ICON_BUTTON_SIZES[size] || ICON_BUTTON_SIZES.md,
@@ -161,7 +162,7 @@ export const IconButton = forwardRef(function IconButton(
       {loading ? (
         <Loader2 className={`${iconClass} animate-spin`} aria-hidden="true" />
       ) : (
-        <Icon className={iconClass} aria-hidden="true" />
+        <Icon className={`${iconClass} ${iconClassName}`} aria-hidden="true" />
       )}
     </button>
   )

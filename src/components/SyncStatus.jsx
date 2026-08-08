@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react'
 import { Check, CloudOff, HardDrive, Loader2, RefreshCw, AlertTriangle } from 'lucide-react'
 import { useNotesStore } from '../store'
 import { useTranslation } from '../lib/useTranslation'
@@ -89,23 +88,15 @@ export function SyncStatusPill({ className = '' }) {
 }
 
 /**
- * "Saved" / "Saving…" indicator for the editor status bar.
- *
- * Shows `Saving…` while a write is in flight and settles to `Saved`
- * with the timestamp, mirroring what the note list already knows.
+ * Per-note durability status. `syncStatus: pending` means IndexedDB already
+ * has the change and the cloud has not acknowledged it; it must never be
+ * presented as an indefinite local "Saving…" operation.
  */
 export function SaveStatus({ note, className = '' }) {
   const { t } = useTranslation()
   const isLocalWorkspace = useNotesStore((state) => Boolean(state.user?.isLocal))
-  const [justSaved, setJustSaved] = useState(false)
+  const sync = useSyncStatus()
   const pending = note?.syncStatus === 'pending'
-
-  useEffect(() => {
-    if (pending) return
-    setJustSaved(true)
-    const timer = setTimeout(() => setJustSaved(false), 2000)
-    return () => clearTimeout(timer)
-  }, [pending, note?.updatedAt])
 
   if (!note) return null
 
@@ -118,21 +109,35 @@ export function SaveStatus({ note, className = '' }) {
     )
   }
 
+  let Icon = Check
+  let tone = 'text-success-text'
+  let spin = false
+  let label = t('sync.synced', 'Synchronized')
+
+  if (pending && sync.state === 'syncing') {
+    Icon = Loader2
+    tone = 'text-accent-text'
+    spin = true
+    label = t('sync.syncing', 'Synchronizing…')
+  } else if (pending && sync.state === 'offline') {
+    Icon = CloudOff
+    tone = 'text-content-muted'
+    label = t('editor.savedOffline', 'Saved locally · Offline')
+  } else if (pending && sync.state === 'error') {
+    Icon = AlertTriangle
+    tone = 'text-danger-text'
+    label = t('editor.savedSyncFailed', 'Saved locally · Sync failed')
+  } else if (pending) {
+    Icon = RefreshCw
+    tone = 'text-warning-text'
+    label = t('editor.waitingToSync', 'Saved locally · Waiting to sync')
+  }
+
   return (
-    <span
-      className={`inline-flex items-center gap-1.5 text-ui-sm ${
- pending ? 'text-content-muted' : 'text-success-text'
- } ${className}`}
-    >
-      {pending ? (
-        <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
-      ) : (
-        <Check className="h-3.5 w-3.5" aria-hidden="true" />
-      )}
-      <span aria-live="polite">
-        {pending ? t('editor.saving', 'Saving…') : t('editor.saved', 'Saved')}
-      </span>
-      {!pending && !justSaved && (
+    <span className={`inline-flex items-center gap-1.5 text-ui-sm ${tone} ${className}`}>
+      <Icon className={`h-3.5 w-3.5 ${spin ? 'animate-spin' : ''}`} aria-hidden="true" />
+      <span aria-live="polite">{label}</span>
+      {!pending && (
         <span className="hidden text-content-subtle sm:inline">
           · {formatSyncTime(note.updatedAt)}
         </span>

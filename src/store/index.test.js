@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { clearLocalData, getPendingSyncItems, SyncStatus } from '../lib/db'
+import { clearLocalData, db, getPendingSyncItems, SyncStatus } from '../lib/db'
 import { MAX_NOTE_TITLE_LENGTH } from '../lib/dataValidation'
 import { useNotesStore } from './index'
 
@@ -142,6 +142,52 @@ describe('notes store data invariants', () => {
     await waitForQueuedWrite(
       (item) => item.table === 'notes' && item.operation === 'update' && item.data.id === 'tagged'
     )
+  })
+
+  it('queues repeated soft deletion once and keeps the local tombstone timestamps consistent', async () => {
+    resetStore({
+      user: null,
+      notes: [
+        {
+          id: 'delete-once',
+          title: 'Delete once',
+          content: '',
+          tags: [],
+          deleted: false,
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+          syncStatus: SyncStatus.SYNCED,
+        },
+      ],
+    })
+
+    useNotesStore.getState().deleteNote('delete-once')
+    useNotesStore.getState().deleteNote('delete-once')
+
+    await vi.waitFor(async () => {
+      const queued = (await getPendingSyncItems()).filter((item) => item.data?.id === 'delete-once')
+      expect(queued).toHaveLength(1)
+      expect(queued[0].operation).toBe('update')
+    })
+    const stateNote = useNotesStore.getState().notes[0]
+    const cachedNote = await db.notes.get('delete-once')
+    expect(stateNote).toMatchObject({ deleted: true, syncStatus: SyncStatus.PENDING })
+    expect(cachedNote.deletedAt).toBe(stateNote.deletedAt)
+    expect(cachedNote.updatedAt).toBe(stateNote.updatedAt)
+  })
+
+  it('replaces a cloud insert with an idempotent delete when an offline note is removed', async () => {
+    resetStore({ user: null })
+    const created = useNotesStore.getState().createNote({ title: 'Never uploaded' })
+    useNotesStore.getState().permanentlyDeleteNote(created.id)
+
+    await vi.waitFor(async () => {
+      const queued = (await getPendingSyncItems()).filter((item) => item.data?.id === created.id)
+      expect(queued).toHaveLength(1)
+      expect(queued[0].operation).toBe('delete')
+    })
+    expect(useNotesStore.getState().notes).toEqual([])
+    expect(await db.notes.get(created.id)).toBeUndefined()
   })
 
   it('reparents children and unfiles notes when deleting a folder', async () => {

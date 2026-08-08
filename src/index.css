@@ -22,12 +22,12 @@
   }
 
   ::selection {
-    background-color: rgba(16, 185, 129, 0.15);
+    background-color: rgba(16, 185, 129, 0.28);
     color: inherit;
   }
 
   .dark ::selection {
-    background-color: rgba(16, 185, 129, 0.25);
+    background-color: rgba(52, 211, 153, 0.36);
   }
 }
 
@@ -319,47 +319,52 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
   color: #9ca3af;
 }
 
-/* Show invisible characters — paragraph marks */
-.ProseMirror.show-invisibles > p::after,
-.ProseMirror.show-invisibles > blockquote p::after,
-.ProseMirror.show-invisibles > div p::after,
-.ProseMirror.show-invisibles > li p::after {
-  content: '¶' !important;
-  color: #c9cdd4 !important;
-  font-size: 0.7em;
-  opacity: 0.7;
+/* Invisible-character markers are ProseMirror decorations, not document
+   content. They follow exact spaces, tabs, breaks, and block boundaries
+   without changing editing, selection, copied text, or stored HTML. */
+.ProseMirror.show-invisibles .qn-invisible-character {
+  position: relative;
+}
+
+.ProseMirror.show-invisibles .qn-invisible-character::after {
+  position: absolute;
+  inset-inline-start: 50%;
+  top: 50%;
+  color: var(--qn-text-subtle);
+  font-size: 0.72em;
+  line-height: 1;
+  opacity: 0.72;
   pointer-events: none;
-  margin-left: 1px;
+  transform: translate(-50%, -44%);
 }
-.dark .ProseMirror.show-invisibles > p::after,
-.dark .ProseMirror.show-invisibles > blockquote p::after,
-.dark .ProseMirror.show-invisibles > div p::after,
-.dark .ProseMirror.show-invisibles > li p::after {
-  color: #4b5563 !important;
+
+.ProseMirror.show-invisibles .qn-invisible-space::after {
+  content: '\00b7';
 }
-/* Show invisible characters — spaces as dots */
-.ProseMirror.show-invisibles {
-  word-spacing: 0.15em;
+
+.ProseMirror.show-invisibles .qn-invisible-tab::after {
+  content: '\2192';
+  inset-inline-start: 0.35em;
+  transform: translateY(-48%);
 }
-.ProseMirror.show-invisibles > p,
-.ProseMirror.show-invisibles > blockquote p,
-.ProseMirror.show-invisibles > div p,
-.ProseMirror.show-invisibles > li p,
-.ProseMirror.show-invisibles > h1,
-.ProseMirror.show-invisibles > h2,
-.ProseMirror.show-invisibles > h3 {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='16'%3E%3Ccircle cx='2' cy='10' r='0.7' fill='%23c9cdd4'/%3E%3C/svg%3E");
-  background-repeat: repeat;
-  background-size: auto;
+
+.qn-invisible-marker {
+  display: inline;
+  margin-inline-start: 0.08em;
+  color: var(--qn-text-subtle);
+  font-size: 0.72em;
+  line-height: 1;
+  opacity: 0.72;
+  pointer-events: none;
+  user-select: none;
 }
-.dark .ProseMirror.show-invisibles > p,
-.dark .ProseMirror.show-invisibles > blockquote p,
-.dark .ProseMirror.show-invisibles > div p,
-.dark .ProseMirror.show-invisibles > li p,
-.dark .ProseMirror.show-invisibles > h1,
-.dark .ProseMirror.show-invisibles > h2,
-.dark .ProseMirror.show-invisibles > h3 {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='16'%3E%3Ccircle cx='2' cy='10' r='0.7' fill='%234b5563'/%3E%3C/svg%3E");
+
+.qn-invisible-hard-break {
+  margin-inline: 0.08em;
+}
+
+.qn-editor-tooltip-arrow {
+  border-top-color: var(--qn-text);
 }
 
 /* Highlight current line */
@@ -1565,6 +1570,34 @@ body {
   align-self: center;
 }
 
+/* IconButton owns an exact square in both physical and logical dimensions.
+   Keeping all four constraints together avoids the unequal inline/block size
+   that real iOS Safari can produce when utility and touch rules cascade. */
+.qn-icon-button {
+  --qn-icon-button-size: var(--qn-control-md);
+  box-sizing: border-box;
+  width: var(--qn-icon-button-size);
+  height: var(--qn-icon-button-size);
+  min-width: var(--qn-icon-button-size);
+  min-height: var(--qn-icon-button-size);
+  max-width: var(--qn-icon-button-size);
+  max-height: var(--qn-icon-button-size);
+  inline-size: var(--qn-icon-button-size);
+  block-size: var(--qn-icon-button-size);
+  min-inline-size: var(--qn-icon-button-size);
+  min-block-size: var(--qn-icon-button-size);
+  max-inline-size: var(--qn-icon-button-size);
+  max-block-size: var(--qn-icon-button-size);
+}
+
+.qn-icon-button--sm {
+  --qn-icon-button-size: var(--qn-control-sm);
+}
+
+.qn-icon-button--lg {
+  --qn-icon-button-size: var(--qn-control-lg);
+}
+
 /* Touch sizing is opt-in so a compact control never changes shape merely
    because the device reports a coarse pointer. Shared controls carry one
    of these semantic classes; intentionally small visuals can sit inside a
@@ -1581,6 +1614,10 @@ body {
     min-height: var(--qn-touch-target);
     max-width: var(--qn-touch-target);
     max-height: var(--qn-touch-target);
+  }
+
+  .qn-icon-button {
+    --qn-icon-button-size: var(--qn-touch-target);
   }
 
   .qn-format-colour {
@@ -1653,8 +1690,9 @@ body {
 
 /* Shared interface details */
 
-/* One compact horizontal strip keeps every formatting action reachable
-   without taking the writing area away from short screens. */
+/* Phones retain one compact, horizontally scrollable strip so tools do not
+   consume the writing area. Pointer-sized layouts wrap the complete toolset
+   instead, keeping every command visible without a horizontal scrollbar. */
 .editor-toolbar {
   min-height: 44px;
   scroll-padding-inline: 0.5rem;

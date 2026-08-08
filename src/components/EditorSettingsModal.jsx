@@ -13,10 +13,11 @@ import {
 } from 'lucide-react'
 import { useUIStore } from '../store'
 import LegacyDialog from './ui/LegacyDialog'
+import { DEFAULT_EDITOR_FONT, EDITOR_FONT_FAMILIES } from '../lib/editorFonts'
 const STORAGE_KEY = 'editorSettings'
 const defaultSettings = {
   showRuler: false,
-  defaultFontFamily: 'Inter, system-ui, sans-serif',
+  defaultFontFamily: DEFAULT_EDITOR_FONT,
   defaultFontSize: '16px',
   defaultLineHeight: '1.5',
   autoCorrect: false,
@@ -25,17 +26,7 @@ const defaultSettings = {
   wordWrap: true,
   highlightCurrentLine: false,
 }
-const fontOptions = [
-  { name: 'Default (Inter)', value: 'Inter, system-ui, sans-serif' },
-  { name: 'Arial', value: 'Arial, Helvetica, sans-serif' },
-  { name: 'Times New Roman', value: 'Times New Roman, serif' },
-  { name: 'Georgia', value: 'Georgia, serif' },
-  { name: 'Verdana', value: 'Verdana, sans-serif' },
-  { name: 'Courier New', value: 'Courier New, monospace' },
-  { name: 'Calibri', value: 'Calibri, sans-serif' },
-  { name: 'Roboto', value: 'Roboto, sans-serif' },
-  { name: 'Open Sans', value: 'Open Sans, sans-serif' },
-]
+const fontOptions = EDITOR_FONT_FAMILIES
 
 const fontSizeOptions = [
   { name: '12px', value: '12px' },

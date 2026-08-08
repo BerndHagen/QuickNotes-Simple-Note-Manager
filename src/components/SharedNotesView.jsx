@@ -1,23 +1,36 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { X, Users, ExternalLink, LogOut, RefreshCw, Mail, CheckCircle, XCircle, Clock } from 'lucide-react'
-import { useNotesStore } from '../store'
-import { useUIStore } from '../store'
-import LegacyDialog from './ui/LegacyDialog'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  CheckCircle,
+  Clock,
+  ExternalLink,
+  LogOut,
+  Mail,
+  RefreshCw,
+  Search,
+  Users,
+  XCircle,
+} from 'lucide-react'
+import { useNotesStore, useUIStore } from '../store'
+import { Badge, Button, EmptyState, IconButton, Input, Modal, Select } from './ui'
 import { ConfirmDialog } from './FolderDialogs'
+
+const plainText = (content = '') => String(content).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
 
 export default function SharedNotesView() {
   const { sharedNotesViewOpen, setSharedNotesViewOpen } = useUIStore()
-  const { 
-    sharedNotes, 
-    pendingShares, 
-    loadSharedNotes, 
-    acceptShare, 
-    declineShare, 
+  const {
+    sharedNotes,
+    pendingShares,
+    loadSharedNotes,
+    acceptShare,
+    declineShare,
     leaveSharedNote,
-    setSelectedNoteId 
+    setSelectedNoteId,
   } = useNotesStore()
   const [isLoading, setIsLoading] = useState(false)
   const [activeTab, setActiveTab] = useState('accepted')
+  const [query, setQuery] = useState('')
+  const [permissionFilter, setPermissionFilter] = useState('all')
   const [confirmation, setConfirmation] = useState(null)
   const [busyShareId, setBusyShareId] = useState(null)
   const [error, setError] = useState('')
@@ -25,9 +38,30 @@ export default function SharedNotesView() {
   const pendingTabRef = useRef(null)
   const busyShareRef = useRef(null)
 
-  const acceptedShares = Array.isArray(sharedNotes)
-    ? sharedNotes.filter((share) => share?.notes?.id)
-    : []
+  const acceptedShares = useMemo(() => {
+    const normalizedQuery = query.trim().toLocaleLowerCase()
+    return (Array.isArray(sharedNotes) ? sharedNotes : [])
+      .filter((share) => share?.notes?.id && !share.notes.deleted)
+      .filter((share) => permissionFilter === 'all' || share.permission === permissionFilter)
+      .filter((share) => {
+        if (!normalizedQuery) return true
+        const searchable = [
+          share.notes.title,
+          plainText(share.notes.content),
+          share.owner_name,
+        ].join(' ').toLocaleLowerCase()
+        return searchable.includes(normalizedQuery)
+      })
+      .sort((left, right) =>
+        String(right.notes.updatedAt || right.notes.updated_at || '').localeCompare(
+          String(left.notes.updatedAt || left.notes.updated_at || '')
+        )
+      )
+  }, [permissionFilter, query, sharedNotes])
+
+  const acceptedCount = Array.isArray(sharedNotes)
+    ? sharedNotes.filter((share) => share?.notes?.id && !share.notes.deleted).length
+    : 0
   const pendingInvitations = Array.isArray(pendingShares)
     ? pendingShares.filter((share) => share?.id && (share?.notes || share)?.id)
     : []
@@ -99,44 +133,18 @@ export default function SharedNotesView() {
     nextTabRef.current?.focus()
   }
 
-  if (!sharedNotesViewOpen) return null
-
   return (
-    <LegacyDialog label="Shared notes" onClose={() => setSharedNotesViewOpen(false)} align="center">
-      <div className="flex max-h-full min-h-0 w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-subtle bg-surface-raised shadow-2xl modal-animate">
-        <div className="flex shrink-0 items-center justify-between p-5 qn-banner-surface text-white">
-          <div className="flex items-center gap-3">
-            <Users className="w-6 h-6" />
-            <div>
-              <h2 className="text-lg font-bold">Shared Notes</h2>
-              <p className="text-sm text-white/70">Notes shared with you</p>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleRefresh}
-              disabled={isLoading}
-              aria-label="Refresh shared notes"
-              aria-busy={isLoading || undefined}
-              className="p-2 hover:bg-white/20 rounded-full transition-colors disabled:opacity-50"
-              title="Refresh shared notes"
-            >
-              <RefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} aria-hidden="true" />
-            </button>
-            
-            <button
-              type="button"
-              onClick={() => setSharedNotesViewOpen(false)}
-              aria-label="Close shared notes"
-              className="qn-square-control rounded-full p-2 transition-colors hover:bg-white/20"
-            >
-              <X className="w-5 h-5" aria-hidden="true" />
-            </button>
-          </div>
-        </div>
-        <div className="border-b border-subtle px-6">
+    <>
+      <Modal
+        open={sharedNotesViewOpen}
+        onClose={() => setSharedNotesViewOpen(false)}
+        title="Shared notes"
+        description="Notes other QuickNotes users have shared with you"
+        icon={Users}
+        size="2xl"
+        bodyClassName="flex flex-col"
+      >
+        <div className="mb-4 flex items-center justify-between gap-3 border-b border-subtle">
           <div role="tablist" aria-label="Shared note status" className="flex gap-4">
             <button
               ref={acceptedTabRef}
@@ -148,15 +156,14 @@ export default function SharedNotesView() {
               tabIndex={activeTab === 'accepted' ? 0 : -1}
               onClick={() => setActiveTab('accepted')}
               onKeyDown={handleTabKeyDown}
-              className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors ${
- activeTab === 'accepted'
- ? 'border-purple-600 text-purple-600 dark:text-purple-400'
-                  : 'border-transparent text-content-muted hover:text-content dark:text-content-subtle dark:hover:text-content-subtle'
+              className={`border-b-2 px-1 py-3 text-ui-md font-medium transition-colors ${
+                activeTab === 'accepted'
+                  ? 'border-accent text-accent-text'
+                  : 'border-transparent text-content-muted hover:text-content'
               }`}
             >
-              Accepted ({acceptedShares.length})
+              Accepted ({acceptedCount})
             </button>
-            
             <button
               ref={pendingTabRef}
               type="button"
@@ -167,219 +174,201 @@ export default function SharedNotesView() {
               tabIndex={activeTab === 'pending' ? 0 : -1}
               onClick={() => setActiveTab('pending')}
               onKeyDown={handleTabKeyDown}
-              className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors relative ${
- activeTab === 'pending'
- ? 'border-orange-600 text-orange-600 dark:text-orange-400'
-                  : 'border-transparent text-content-muted hover:text-content dark:text-content-subtle dark:hover:text-content-subtle'
+              className={`relative border-b-2 px-1 py-3 text-ui-md font-medium transition-colors ${
+                activeTab === 'pending'
+                  ? 'border-accent text-accent-text'
+                  : 'border-transparent text-content-muted hover:text-content'
               }`}
             >
               Pending ({pendingInvitations.length})
               {pendingInvitations.length > 0 && (
-                <span aria-hidden="true" className="absolute -top-1 -right-1 w-2 h-2 bg-orange-500 rounded-full"></span>
+                <span aria-hidden="true" className="absolute right-0 top-2 h-2 w-2 rounded-full bg-warning" />
               )}
             </button>
           </div>
+          <IconButton
+            icon={RefreshCw}
+            iconClassName={isLoading ? 'animate-spin' : ''}
+            label="Refresh shared notes"
+            size="sm"
+            disabled={isLoading}
+            aria-busy={isLoading || undefined}
+            onClick={() => handleRefresh()}
+          />
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6">
-          {isLoading && <p role="status" className="qn-sr-only">Refreshing shared notes</p>}
-          {error && (
-            <p role="alert" className="mb-4 rounded-lg border border-danger-border bg-danger-soft px-3 py-2.5 text-sm text-danger-text">
-              {error}
-            </p>
-          )}
-          {activeTab === 'accepted' && (
-            <div
-              id="shared-notes-accepted-panel"
-              role="tabpanel"
-              aria-labelledby="shared-notes-accepted-tab"
-              className="space-y-3"
-            >
-              {acceptedShares.length === 0 ? (
-                <div className="text-center py-12">
-                  <Users className="w-12 h-12 text-content-subtle dark:text-content-muted mx-auto mb-4" />
-                  <p className="text-content-muted mb-2">
-                    No shared notes
-                  </p>
-                  <p className="text-sm text-content-subtle">
-                    When someone shares a note with you, it will appear here
-                  </p>
-                </div>
-              ) : (
-                acceptedShares.map((share) => {
+
+        {isLoading && <p role="status" className="qn-sr-only">Refreshing shared notes</p>}
+        {error && (
+          <p role="alert" className="mb-4 rounded-control border border-danger-border bg-danger-soft px-3 py-2.5 text-ui-md text-danger-text">
+            {error}
+          </p>
+        )}
+
+        {activeTab === 'accepted' && (
+          <div
+            id="shared-notes-accepted-panel"
+            role="tabpanel"
+            aria-labelledby="shared-notes-accepted-tab"
+          >
+            {acceptedCount > 0 && (
+              <div className="mb-4 grid gap-2 sm:grid-cols-[minmax(0,1fr)_11rem]">
+                <label className="relative block">
+                  <span className="qn-sr-only">Search shared notes</span>
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-content-subtle" aria-hidden="true" />
+                  <Input
+                    type="search"
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    placeholder="Search title, content, or owner"
+                    aria-label="Search shared notes"
+                    className="pl-9"
+                  />
+                </label>
+                <Select
+                  value={permissionFilter}
+                  onChange={(event) => setPermissionFilter(event.target.value)}
+                  aria-label="Filter shared notes by permission"
+                >
+                  <option value="all">All permissions</option>
+                  <option value="edit">Can edit</option>
+                  <option value="view">Read only</option>
+                </Select>
+              </div>
+            )}
+
+            {acceptedCount === 0 ? (
+              <EmptyState
+                icon={Users}
+                title="No shared notes"
+                description="When someone shares a note with you, it will appear here."
+              />
+            ) : acceptedShares.length === 0 ? (
+              <EmptyState
+                icon={Search}
+                title="No matching shared notes"
+                description="Try a different search or permission filter."
+                size="sm"
+              />
+            ) : (
+              <div className="space-y-3">
+                {acceptedShares.map((share) => {
                   const note = share.notes
-                  if (!note) return null
-                  
+                  const ownerName = String(share.owner_name || 'Another QuickNotes user')
+                  const preview = plainText(note.content).slice(0, 150)
                   return (
-                    <div
-                      key={share.id}
-                      className="p-4 border border-subtle rounded-lg hover:bg-surface-hover transition-colors"
-                    >
-                      <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-start sm:justify-between">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h3 className="font-medium text-content truncate">
+                    <article key={share.id} className="rounded-card border border-subtle bg-surface-raised p-4 transition-colors hover:bg-surface-hover">
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0 flex-1">
+                          <div className="mb-2 flex min-w-0 flex-wrap items-center gap-2">
+                            <h3 className="min-w-0 flex-1 truncate font-medium text-content" title={String(note.title || 'Untitled note')}>
                               {String(note.title || 'Untitled note')}
                             </h3>
-                            <span className="px-2 py-0.5 text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded">
-                              {share.permission === 'edit' ? 'Can Edit' : 'Read Only'}
-                            </span>
+                            <Badge tone={share.permission === 'edit' ? 'accent' : 'neutral'}>
+                              {share.permission === 'edit' ? 'Can edit' : 'Read only'}
+                            </Badge>
                           </div>
-                          
-                          {note.content && (
-                            <p className="text-sm text-content-muted line-clamp-2">
-                              {String(note.content || '').replace(/<[^>]*>/g, '').substring(0, 150)}
-                            </p>
-                          )}
+                          <div className="mb-2 flex min-w-0 items-center gap-2 text-ui-sm text-content-muted">
+                            <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent-soft font-semibold text-accent-text">
+                              {ownerName.charAt(0).toLocaleUpperCase() || 'Q'}
+                            </span>
+                            <span className="truncate" title={ownerName}>Owner: {ownerName}</span>
+                          </div>
+                          {preview && <p className="line-clamp-2 text-ui-md text-content-muted">{preview}</p>}
                         </div>
-                        
-                        <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-auto">
-                          <button
-                            type="button"
-                            onClick={() => note.id && handleOpenNote(note.id)}
-                            disabled={!note.id}
-                            className="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            <ExternalLink className="w-4 h-4" />
+                        <div className="flex shrink-0 items-center justify-end gap-2">
+                          <Button variant="primary" size="sm" icon={ExternalLink} onClick={() => handleOpenNote(note.id)}>
                             Open
-                          </button>
-                          
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setConfirmation({
-                                kind: 'leave',
-                                id: note.id,
-                                title: String(note.title || 'Untitled note'),
-                              })
-                            }
-                            className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors"
-                            aria-label={`Leave ${String(note.title || 'shared note')}`}
-                            title="Leave shared note"
-                          >
-                            <LogOut className="w-4 h-4 text-red-600 dark:text-red-400" />
-                          </button>
+                          </Button>
+                          <IconButton
+                            icon={LogOut}
+                            label={`Leave ${String(note.title || 'shared note')}`}
+                            variant="danger-ghost"
+                            size="sm"
+                            onClick={() => setConfirmation({ kind: 'leave', id: note.id, title: String(note.title || 'Untitled note') })}
+                          />
                         </div>
                       </div>
-                    </div>
+                    </article>
                   )
-                })
-              )}
-            </div>
-          )}
-          {activeTab === 'pending' && (
-            <div
-              id="shared-notes-pending-panel"
-              role="tabpanel"
-              aria-labelledby="shared-notes-pending-tab"
-              className="space-y-3"
-            >
-              {pendingInvitations.length === 0 ? (
-                <div className="text-center py-12">
-                  <Clock className="w-12 h-12 text-content-subtle dark:text-content-muted mx-auto mb-4" />
-                  <p className="text-content-muted mb-2">
-                    No pending shares
-                  </p>
-                  <p className="text-sm text-content-subtle">
-                    Share requests will appear here
-                  </p>
-                </div>
-              ) : (
-                pendingInvitations.map((share) => {
-                  const note = share.notes || share
-                  if (!note || !note.id) {
-                    return null
-                  }
-                  
-                  return (
-                    <div
-                      key={share.id}
-                      className="p-4 border-2 border-orange-200 dark:border-orange-900/50 bg-orange-50 dark:bg-orange-900/20 rounded-lg"
-                    >
-                      <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-start sm:justify-between">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Mail className="w-4 h-4 text-orange-600 dark:text-orange-400" />
-                            <h3 className="font-medium text-content truncate">
-                              New share: {String(note.title || 'Untitled note')}
-                            </h3>
-                          </div>
-                          
-                          <div className="text-sm text-content-muted mb-2">
-                            <span className="font-medium">{String(share.shared_by || 'A collaborator')}</span> wants to share this note with you
-                          </div>
-                          
-                          <div className="flex items-center gap-2 text-sm">
-                            <span className="px-2 py-0.5 bg-surface-raised text-content-muted rounded border border-subtle ">
-                              {share.permission === 'edit' ? 'Edit Permission' : 'Read Only'}
-                            </span>
-                          </div>
-                        </div>
-                        
-                        <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-auto">
-                          <button
-                            type="button"
-                            onClick={() => handleAccept(share.id)}
-                            disabled={!!busyShareId}
-                            aria-busy={busyShareId === share.id || undefined}
-                            className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2 disabled:cursor-wait disabled:opacity-60"
-                          >
-                            {busyShareId === share.id ? (
-                              <RefreshCw className="w-4 h-4 animate-spin" aria-hidden="true" />
-                            ) : (
-                              <CheckCircle className="w-4 h-4" aria-hidden="true" />
-                            )}
-                            {busyShareId === share.id ? 'Accepting…' : 'Accept'}
-                          </button>
-                          
-                          <button
-                            type="button"
-                            disabled={!!busyShareId}
-                            onClick={() =>
-                              setConfirmation({
-                                kind: 'decline',
-                                id: share.id,
-                                title: String(note.title || 'Untitled note'),
-                              })
-                            }
-                            className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2 disabled:cursor-not-allowed disabled:opacity-60"
-                          >
-                            <XCircle className="w-4 h-4" />
-                            Decline
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })
-              )}
-            </div>
-          )}
-        </div>
-        <div className="shrink-0 border-t border-subtle bg-surface-sunken p-4">
-          <div className="text-xs text-content-muted flex items-center gap-2">
-            <Users className="w-4 h-4" />
-            <span>
-              Note edits sync while collaborators work. Refresh this list to check for new invitations.
-            </span>
+                })}
+              </div>
+            )}
           </div>
+        )}
+
+        {activeTab === 'pending' && (
+          <div
+            id="shared-notes-pending-panel"
+            role="tabpanel"
+            aria-labelledby="shared-notes-pending-tab"
+            className="space-y-3"
+          >
+            {pendingInvitations.length === 0 ? (
+              <EmptyState
+                icon={Clock}
+                title="No pending shares"
+                description="New share invitations will appear here."
+              />
+            ) : pendingInvitations.map((share) => {
+              const note = share.notes || share
+              const ownerName = String(share.owner_name || share.shared_by || 'A QuickNotes user')
+              return (
+                <article key={share.id} className="rounded-card border border-warning-border bg-warning-soft p-4">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-2 flex items-center gap-2">
+                        <Mail className="h-4 w-4 shrink-0 text-warning-text" aria-hidden="true" />
+                        <h3 className="truncate font-medium text-content">New share: {String(note.title || 'Untitled note')}</h3>
+                      </div>
+                      <p className="mb-2 text-ui-md text-content-muted">
+                        <span className="font-medium text-content">{ownerName}</span> wants to share this note with you.
+                      </p>
+                      <Badge>{share.permission === 'edit' ? 'Can edit' : 'Read only'}</Badge>
+                    </div>
+                    <div className="flex shrink-0 items-center justify-end gap-2">
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        icon={CheckCircle}
+                        loading={busyShareId === share.id}
+                        disabled={!!busyShareId}
+                        onClick={() => handleAccept(share.id)}
+                      >
+                        {busyShareId === share.id ? 'Accepting…' : 'Accept'}
+                      </Button>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        icon={XCircle}
+                        disabled={!!busyShareId}
+                        onClick={() => setConfirmation({ kind: 'decline', id: share.id, title: String(note.title || 'Untitled note') })}
+                      >
+                        Decline
+                      </Button>
+                    </div>
+                  </div>
+                </article>
+              )
+            })}
+          </div>
+        )}
+
+        <div className="mt-4 flex items-start gap-2 rounded-control bg-surface-sunken px-3 py-2.5 text-ui-sm text-content-muted">
+          <Users className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+          <span>Edits sync between collaborators. Notes in the owner’s Trash stay unavailable until restored.</span>
         </div>
-        <ConfirmDialog
-          open={!!confirmation}
-          onClose={() => setConfirmation(null)}
-          onConfirm={() =>
-            confirmation?.kind === 'leave'
-              ? handleLeave(confirmation.id)
-              : handleDecline(confirmation.id)
-          }
-          title={confirmation?.kind === 'leave' ? 'Leave shared note?' : 'Decline invitation?'}
-          description={
-            confirmation?.kind === 'leave'
-              ? `You will lose access to “${confirmation.title}”.`
-              : `The invitation to “${confirmation?.title || 'this note'}” will be declined.`
-          }
-          confirmLabel={confirmation?.kind === 'leave' ? 'Leave note' : 'Decline'}
-        />
-      </div>
-    </LegacyDialog>
+      </Modal>
+
+      <ConfirmDialog
+        open={!!confirmation}
+        onClose={() => setConfirmation(null)}
+        onConfirm={() => confirmation?.kind === 'leave' ? handleLeave(confirmation.id) : handleDecline(confirmation.id)}
+        title={confirmation?.kind === 'leave' ? 'Leave shared note?' : 'Decline invitation?'}
+        description={confirmation?.kind === 'leave'
+          ? `You will lose access to “${confirmation.title}”.`
+          : `The invitation to “${confirmation?.title || 'this note'}” will be declined.`}
+        confirmLabel={confirmation?.kind === 'leave' ? 'Leave note' : 'Decline'}
+      />
+    </>
   )
 }

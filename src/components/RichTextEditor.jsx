@@ -20,6 +20,7 @@ import TableRow from '@tiptap/extension-table-row'
 import { Extension } from '@tiptap/core'
 import ResizableImageExtension from './ResizableImageExtension'
 import TextBoxExtension from './TextBoxExtension'
+import InvisibleCharactersExtension from './InvisibleCharactersExtension'
 import CustomTableCell from './CustomTableCell'
 import CustomTableHeader from './CustomTableHeader'
 import TableBubbleMenu from './TableBubbleMenu'
@@ -75,6 +76,7 @@ import { debounce } from '../lib/utils'
 import { formatShortcut } from '../lib/shortcuts'
 import { useUIStore } from '../store'
 import { useEditorSettings } from './EditorSettingsModal'
+import { DEFAULT_EDITOR_FONT, EDITOR_FONT_FAMILIES } from '../lib/editorFonts'
 import { getFocusable, useAnchoredPosition, useEscapeKey } from './ui'
 
 const lowlight = createLowlight(common)
@@ -456,68 +458,7 @@ export const paperStyles = {
   },
 }
 
-const fontFamilies = [
-  { name: 'Default', value: 'Inter, system-ui, sans-serif' },
-  { name: 'Akzidenz-Grotesk', value: 'Akzidenz-Grotesk, sans-serif' },
-  { name: 'Arial', value: 'Arial, Helvetica, sans-serif' },
-  { name: 'Avenir', value: 'Avenir, sans-serif' },
-  { name: 'Baskerville', value: 'Baskerville, serif' },
-  { name: 'Bodoni', value: 'Bodoni, serif' },
-  { name: 'Book Antiqua', value: 'Book Antiqua, serif' },
-  { name: 'Brandon Grotesque', value: 'Brandon Grotesque, sans-serif' },
-  { name: 'Brush Script MT', value: 'Brush Script MT, cursive' },
-  { name: 'Calibri', value: 'Calibri, sans-serif' },
-  { name: 'Cambria', value: 'Cambria, serif' },
-  { name: 'Chiller', value: 'Chiller, cursive' },
-  { name: 'Comic Sans MS', value: 'Comic Sans MS, cursive' },
-  { name: 'Copperplate', value: 'Copperplate, serif' },
-  { name: 'Courier New', value: 'Courier New, monospace' },
-  { name: 'Crimson Text', value: 'Crimson Text, serif' },
-  { name: 'Didot', value: 'Didot, serif' },
-  { name: 'DIN', value: 'DIN, sans-serif' },
-  { name: 'Fira Code', value: 'Fira Code, monospace' },
-  { name: 'Fira Sans', value: 'Fira Sans, sans-serif' },
-  { name: 'Franklin Gothic', value: 'Franklin Gothic, sans-serif' },
-  { name: 'Futura', value: 'Futura, sans-serif' },
-  { name: 'Garamond', value: 'Garamond, serif' },
-  { name: 'Georgia', value: 'Georgia, serif' },
-  { name: 'Gill Sans', value: 'Gill Sans, sans-serif' },
-  { name: 'Helvetica', value: 'Helvetica, sans-serif' },
-  { name: 'Impact', value: 'Impact, sans-serif' },
-  { name: 'Inconsolata', value: 'Inconsolata, monospace' },
-  { name: 'JetBrains Mono', value: 'JetBrains Mono, monospace' },
-  { name: 'Lato', value: 'Lato, sans-serif' },
-  { name: 'Libre Baskerville', value: 'Libre Baskerville, serif' },
-  { name: 'Lucida Console', value: 'Lucida Console, monospace' },
-  { name: 'Lucida Handwriting', value: 'Lucida Handwriting, cursive' },
-  { name: 'Lucida Sans Unicode', value: 'Lucida Sans Unicode, sans-serif' },
-  { name: 'Merriweather', value: 'Merriweather, serif' },
-  { name: 'Montserrat', value: 'Montserrat, sans-serif' },
-  { name: 'MS Sans Serif', value: 'MS Sans Serif, sans-serif' },
-  { name: 'MS Serif', value: 'MS Serif, serif' },
-  { name: 'Nunito', value: 'Nunito, sans-serif' },
-  { name: 'Open Sans', value: 'Open Sans, sans-serif' },
-  { name: 'Oswald', value: 'Oswald, sans-serif' },
-  { name: 'Palatino Linotype', value: 'Palatino Linotype, serif' },
-  { name: 'Papyrus', value: 'Papyrus, fantasy' },
-  { name: 'Playfair Display', value: 'Playfair Display, serif' },
-  { name: 'Poppins', value: 'Poppins, sans-serif' },
-  { name: 'Proxima Nova', value: 'Proxima Nova, sans-serif' },
-  { name: 'PT Sans', value: 'PT Sans, sans-serif' },
-  { name: 'PT Serif', value: 'PT Serif, serif' },
-  { name: 'Roboto', value: 'Roboto, sans-serif' },
-  { name: 'Rockwell', value: 'Rockwell, serif' },
-  { name: 'Segoe Print', value: 'Segoe Print, sans-serif' },
-  { name: 'Segoe Script', value: 'Segoe Script, cursive' },
-  { name: 'Segoe UI', value: 'Segoe UI, sans-serif' },
-  { name: 'Source Sans Pro', value: 'Source Sans Pro, sans-serif' },
-  { name: 'Space Mono', value: 'Space Mono, monospace' },
-  { name: 'Times New Roman', value: 'Times New Roman, serif' },
-  { name: 'Trebuchet MS', value: 'Trebuchet MS, sans-serif' },
-  { name: 'Ubuntu', value: 'Ubuntu, sans-serif' },
-  { name: 'Univers', value: 'Univers, sans-serif' },
-  { name: 'Verdana', value: 'Verdana, sans-serif' },
-]
+const fontFamilies = EDITOR_FONT_FAMILIES
 
 const fontSizes = [
   { name: '10', value: '10px' },
@@ -803,6 +744,7 @@ export default function RichTextEditor({
         allowBase64: true,
       }),
       TextBoxExtension,
+      InvisibleCharactersExtension,
     ],
     content: content || '',
     onUpdate: ({ editor }) => {
@@ -885,7 +827,7 @@ export default function RichTextEditor({
     const el = editor.view.dom
     if (!el) return
 
-    el.style.fontFamily = editorSettings.defaultFontFamily || 'Inter, system-ui, sans-serif'
+    el.style.fontFamily = editorSettings.defaultFontFamily || DEFAULT_EDITOR_FONT
     el.style.fontSize = editorSettings.defaultFontSize || '16px'
     el.style.lineHeight = editorSettings.defaultLineHeight || '1.5'
     el.style.tabSize = editorSettings.tabSize || 4
@@ -906,6 +848,7 @@ export default function RichTextEditor({
     } else {
       el.classList.remove('show-invisibles')
     }
+    editor.commands.setInvisibleCharacters?.(editorSettings.showInvisibles)
 
     if (editorSettings.highlightCurrentLine) {
       el.classList.add('highlight-current-line')
@@ -1075,6 +1018,7 @@ export default function RichTextEditor({
       {!readOnly && <FloatingMenu
         editor={editor}
         tippyOptions={{ duration: 100, aria: { expanded: false, content: 'describedby' } }}
+        shouldShow={({ state }) => state.selection.empty && state.doc.textContent.length === 0}
         className="bg-surface-raised shadow-xl rounded-lg border border-subtle flex items-center p-1 gap-0.5"
       >
         <BubbleButton label="Heading 1" onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}>
@@ -1188,13 +1132,16 @@ function PortalTooltip({ children, title, shortcut, anchorRef }) {
       <div
         onMouseEnter={() => setVisible(true)}
         onMouseLeave={() => setVisible(false)}
+        onFocus={() => setVisible(true)}
+        onBlur={() => setVisible(false)}
       >
         {children}
       </div>
       {visible && createPortal(
         <div
           ref={tooltipRef}
-          className="fixed px-2.5 py-1.5 bg-surface-sunken dark:bg-surface-sunken text-white text-xs rounded-lg whitespace-nowrap z-[99999] pointer-events-none shadow-lg"
+          role="tooltip"
+          className="qn-editor-tooltip fixed z-[99999] whitespace-nowrap rounded-lg border border-strong bg-[var(--qn-text)] px-2.5 py-1.5 text-xs text-content-inverted shadow-lg pointer-events-none"
           style={{ 
             top: position.top, 
             left: position.left,
@@ -1207,9 +1154,7 @@ function PortalTooltip({ children, title, shortcut, anchorRef }) {
               {shortcut}
             </span>
           )}
-          <div 
-            className="absolute -mt-1 -translate-x-1/2 border-4 border-transparent top-full left-1/2 border-t-gray-900 dark:border-t-gray-700" 
-          />
+          <div className="qn-editor-tooltip-arrow absolute left-1/2 top-full -mt-px -translate-x-1/2 border-4 border-transparent" />
         </div>,
         document.body
       )}
@@ -1275,7 +1220,7 @@ function PortalDropdown({ isOpen, anchorRef, children, onClose, align = 'left', 
       ref={dropdownRef}
       role="dialog"
       aria-label={label}
-      className="fixed z-[99999] overflow-y-auto overscroll-contain rounded-2xl border border-subtle bg-surface-raised shadow-xl shadow-black/5 backdrop-blur-xl dark:shadow-black/20"
+      className="fixed z-[99999] overflow-y-auto overscroll-contain rounded-2xl border border-subtle bg-surface-raised p-1 shadow-xl shadow-black/5 backdrop-blur-xl dark:shadow-black/20"
       style={style}
       onMouseDown={(e) => e.stopPropagation()}
     >
@@ -1662,7 +1607,7 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content, onMobileC
       aria-label="Text formatting"
       onFocusCapture={handleToolbarFocus}
       onKeyDown={handleToolbarKeyDown}
-      className="editor-toolbar flex flex-nowrap items-center gap-0.5 overflow-x-auto overflow-y-hidden overscroll-x-contain border-b border-subtle bg-surface px-2 py-1.5 sm:px-3"
+      className="editor-toolbar flex flex-nowrap items-center gap-0.5 overflow-x-auto overflow-y-hidden overscroll-x-contain border-b border-subtle bg-surface px-2 py-1.5 sm:px-3 md:flex-wrap md:overflow-visible md:overscroll-auto"
     >
       <button
         type="button"
@@ -2277,12 +2222,14 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content, onMobileC
             {Object.entries(paperStyles).map(([key, paper]) => (
               <button
                 key={key}
+                type="button"
+                aria-pressed={currentPaper === key}
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
                   onPaperChange(key)
                   setShowPaperPicker(false)
                 }}
-                className={`w-full px-3 py-2 text-left text-[13px] hover:bg-surface-hover flex items-center gap-3 rounded-lg transition-colors ${
+                className={`qn-focus-inset w-full px-3 py-2 text-left text-[13px] hover:bg-surface-hover flex items-center gap-3 rounded-lg transition-colors ${
  currentPaper === key ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 font-medium' : 'text-content-muted'
  }`}
               >

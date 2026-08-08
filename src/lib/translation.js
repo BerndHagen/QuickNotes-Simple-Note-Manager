@@ -80,7 +80,7 @@ async function translateSegment(segment, source, target, { signal, fetchImpl }) 
   if (!response.ok) {
     throw new TranslationError(
       response.status === 429
-        ? 'The translation service is busy. Wait a moment and try again.'
+        ? 'MyMemory\'s request or daily limit has been reached. Wait and try again later.'
         : 'The translation service is temporarily unavailable. Try again later.'
     )
   }
@@ -95,10 +95,22 @@ async function translateSegment(segment, source, target, { signal, fetchImpl }) 
   }
 
   const translated = payload?.responseData?.translatedText
-  if (Number(payload?.responseStatus) !== 200 || typeof translated !== 'string' || !translated.trim()) {
+  const responseStatus = Number(payload?.responseStatus)
+  const responseDetails = typeof payload?.responseDetails === 'string'
+    ? payload.responseDetails.trim()
+    : ''
+  if (
+    [403, 429].includes(responseStatus)
+    || /(?:quota|limit|available free translations)/iu.test(responseDetails)
+  ) {
     throw new TranslationError(
-      typeof payload?.responseDetails === 'string' && payload.responseDetails.trim()
-        ? payload.responseDetails
+      'MyMemory\'s anonymous daily allowance has been reached. Try again later.'
+    )
+  }
+  if (responseStatus !== 200 || typeof translated !== 'string' || !translated.trim()) {
+    throw new TranslationError(
+      responseDetails
+        ? responseDetails
         : 'The text could not be translated with this language pair.'
     )
   }

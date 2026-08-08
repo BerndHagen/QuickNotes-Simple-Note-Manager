@@ -101,6 +101,30 @@ describe('internal note links', () => {
     expect(sanitizeNoteHtml(inserted)).toContain('data-note-id="note-2"')
   })
 
+  it('does not offer the current note or notes in trash as link targets', () => {
+    useNotesStore.setState({
+      notes: [
+        { id: 'current', title: 'Current', content: '', updatedAt: '2026-01-03' },
+        { id: 'deleted', title: 'Deleted', content: '', deleted: true, updatedAt: '2026-01-02' },
+        { id: 'target', title: 'Target', content: '', updatedAt: '2026-01-01' },
+      ],
+    })
+
+    render(
+      <NoteLinkPopover
+        editor={createEditor()}
+        isOpen
+        currentNoteId="current"
+        onClose={() => {}}
+        position={{ x: 0, y: 0 }}
+      />
+    )
+
+    expect(screen.getByRole('option', { name: /Target/ })).toBeInTheDocument()
+    expect(screen.queryByRole('option', { name: /Current/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('option', { name: /Deleted/ })).not.toBeInTheDocument()
+  })
+
   it('navigates safe internal links without changing the URL and resolves their backlinks', () => {
     const setSelectedNote = vi.fn()
     useNotesStore.setState({
@@ -126,6 +150,22 @@ describe('internal note links', () => {
     expect(screen.getByRole('link', { name: 'Open target' }).dispatchEvent(click)).toBe(false)
     expect(setSelectedNote).toHaveBeenCalledWith('target')
     expect(screen.getByLabelText('Backlinks')).toHaveTextContent('source')
+  })
+
+  it('treats links to trashed notes as unavailable', () => {
+    const setSelectedNote = vi.fn()
+    useNotesStore.setState({
+      notes: [{ id: 'target', title: 'Target', content: '', deleted: true }],
+      setSelectedNote,
+    })
+    function LinkHarness() {
+      useNoteLinkHandler()
+      return <a href="#" className="note-link" data-note-id="target">Open target</a>
+    }
+    render(<LinkHarness />)
+
+    fireEvent.click(screen.getByRole('link', { name: 'Open target' }))
+    expect(setSelectedNote).not.toHaveBeenCalled()
   })
 })
 
@@ -164,7 +204,7 @@ describe('editor preferences and shortcuts', () => {
       wordWrap: 'yes',
       showRuler: true,
     })).toMatchObject({
-      defaultFontFamily: 'Inter, system-ui, sans-serif',
+      defaultFontFamily: 'ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
       defaultFontSize: '16px',
       defaultLineHeight: '1.5',
       tabSize: 4,
@@ -275,6 +315,27 @@ describe('creation and destructive workflows', () => {
     expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ name: 'Inbox' }))
   })
 
+  it('filters the folder icon library without changing the selected icon', async () => {
+    const user = userEvent.setup()
+    render(
+      <FolderDialog
+        open
+        onClose={() => {}}
+        onSubmit={() => {}}
+      />
+    )
+
+    const selectedIcon = screen.getByRole('radio', { name: 'Folder' })
+    expect(selectedIcon).toHaveAttribute('aria-checked', 'true')
+
+    await user.type(screen.getByRole('searchbox', { name: 'Search folder icons' }), 'anchor')
+    expect(screen.getByRole('radio', { name: 'Anchor' })).toBeInTheDocument()
+    expect(screen.queryByRole('radio', { name: 'Folder' })).not.toBeInTheDocument()
+
+    await user.clear(screen.getByRole('searchbox', { name: 'Search folder icons' }))
+    expect(screen.getByRole('radio', { name: 'Folder' })).toHaveAttribute('aria-checked', 'true')
+  })
+
   it('keeps tag input intact when creation fails and ignores malformed stored tags', async () => {
     const user = userEvent.setup()
     const createTag = vi.fn(() => {
@@ -296,6 +357,47 @@ describe('creation and destructive workflows', () => {
 })
 
 describe('shared notes', () => {
+  it('shows owner provenance and filters accepted shares by owner and permission', async () => {
+    const user = userEvent.setup()
+    useNotesStore.setState({
+      sharedNotes: [
+        {
+          id: 'accepted-1',
+          note_id: 'n1',
+          owner_name: 'Alex Rivera',
+          permission: 'edit',
+          notes: { id: 'n1', title: 'Launch plan', content: '<p>Milestones</p>', updatedAt: '2026-08-08' },
+        },
+        {
+          id: 'accepted-2',
+          note_id: 'n2',
+          owner_name: 'Morgan Lee',
+          permission: 'view',
+          notes: { id: 'n2', title: 'Budget', content: '<p>Forecast</p>', updatedAt: '2026-08-07' },
+        },
+      ],
+      loadSharedNotes: vi.fn().mockResolvedValue(undefined),
+      acceptShare: vi.fn(),
+      declineShare: vi.fn(),
+      leaveSharedNote: vi.fn(),
+      setSelectedNoteId: vi.fn(),
+    })
+    useUIStore.setState({ sharedNotesViewOpen: true })
+    render(<SharedNotesView />)
+
+    expect(screen.getByText('Owner: Alex Rivera')).toBeInTheDocument()
+    expect(screen.getByText('Owner: Morgan Lee')).toBeInTheDocument()
+
+    await user.type(screen.getByRole('searchbox', { name: 'Search shared notes' }), 'Morgan')
+    expect(screen.queryByText('Launch plan')).not.toBeInTheDocument()
+    expect(screen.getByText('Budget')).toBeInTheDocument()
+
+    await user.clear(screen.getByRole('searchbox', { name: 'Search shared notes' }))
+    await user.selectOptions(screen.getByLabelText('Filter shared notes by permission'), 'edit')
+    expect(screen.getByText('Launch plan')).toBeInTheDocument()
+    expect(screen.queryByText('Budget')).not.toBeInTheDocument()
+  })
+
   it('prevents duplicate accepts and presents a failed invitation action', async () => {
     const user = userEvent.setup()
     let rejectAccept

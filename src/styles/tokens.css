@@ -42,8 +42,8 @@
   --qn-surface-base: #ffffff;
   --qn-surface-raised: #ffffff;
   --qn-surface-sunken: #f3f4f6;
-  --qn-surface-hover: rgba(15, 23, 42, 0.04);
-  --qn-surface-active: rgba(15, 23, 42, 0.07);
+  --qn-surface-hover: rgba(15, 23, 42, 0.07);
+  --qn-surface-active: rgba(15, 23, 42, 0.11);
   --qn-overlay: rgba(15, 23, 42, 0.45);
 
   /* --- Navigation rail --------------------------------------
@@ -207,8 +207,8 @@
   --qn-surface-base: #0e131a;
   --qn-surface-raised: #161c25;
   --qn-surface-sunken: #0a0e13;
-  --qn-surface-hover: rgba(255, 255, 255, 0.05);
-  --qn-surface-active: rgba(255, 255, 255, 0.09);
+  --qn-surface-hover: rgba(255, 255, 255, 0.08);
+  --qn-surface-active: rgba(255, 255, 255, 0.13);
   --qn-overlay: rgba(2, 6, 12, 0.65);
 
   --qn-border-subtle: #1e2630;

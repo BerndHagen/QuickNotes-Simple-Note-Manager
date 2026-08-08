@@ -414,6 +414,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
               icon={Pin}
               label={note.pinned ? t('editor.unpin', 'Unpin note') : t('editor.pin', 'Pin note')}
               active={note.pinned}
+              iconClassName={note.pinned ? 'fill-current' : ''}
               aria-pressed={!!note.pinned}
               onClick={() => togglePin(note.id)}
               className="hidden sm:inline-flex"
@@ -446,6 +447,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
                 : t('editor.favourite', 'Add to favourites')
             }
             active={note.starred}
+            iconClassName={note.starred ? 'fill-current' : ''}
             aria-pressed={!!note.starred}
             onClick={() => toggleStar(note.id)}
             className="hidden md:inline-flex"
@@ -525,6 +527,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
               label={note.pinned ? t('editor.unpin', 'Unpin note') : t('editor.pin', 'Pin note')}
               tone="onBanner"
               active={note.pinned}
+              iconClassName={note.pinned ? 'fill-current' : ''}
               aria-pressed={!!note.pinned}
               onClick={() => togglePin(note.id)}
               className="mt-1 hidden md:inline-flex"
@@ -923,6 +926,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
           isOpen={noteLinkPopoverOpen}
           onClose={() => setNoteLinkPopoverOpen(false)}
           position={noteLinkPosition}
+          currentNoteId={note.id}
         />
       )}
 

@@ -1,14 +1,14 @@
 
 export const LANGUAGES = [
-  { code: 'en', name: 'English', nativeName: 'English', flag: '\u{1F1EC}\u{1F1E7}', countryCode: 'GB', dir: 'ltr' },
-  { code: 'de', name: 'German', nativeName: 'Deutsch', flag: '\u{1F1E9}\u{1F1EA}', countryCode: 'DE', dir: 'ltr' },
-  { code: 'es', name: 'Spanish', nativeName: 'Espa\u00F1ol', flag: '\u{1F1EA}\u{1F1F8}', countryCode: 'ES', dir: 'ltr' },
-  { code: 'fr', name: 'French', nativeName: 'Fran\u00E7ais', flag: '\u{1F1EB}\u{1F1F7}', countryCode: 'FR', dir: 'ltr' },
-  { code: 'pt', name: 'Portuguese', nativeName: 'Portugu\u00EAs', flag: '\u{1F1E7}\u{1F1F7}', countryCode: 'BR', dir: 'ltr' },
-  { code: 'zh', name: 'Chinese', nativeName: '\u4E2D\u6587', flag: '\u{1F1E8}\u{1F1F3}', countryCode: 'CN', dir: 'ltr' },
-  { code: 'hi', name: 'Hindi', nativeName: '\u0939\u093F\u0928\u094D\u0926\u0940', flag: '\u{1F1EE}\u{1F1F3}', countryCode: 'IN', dir: 'ltr' },
-  { code: 'ar', name: 'Arabic', nativeName: '\u0627\u0644\u0639\u0631\u0628\u064A\u0629', flag: '\u{1F1F8}\u{1F1E6}', countryCode: 'SA', dir: 'rtl' },
-  { code: 'ru', name: 'Russian', nativeName: '\u0420\u0443\u0441\u0441\u043A\u0438\u0439', flag: '\u{1F1F7}\u{1F1FA}', countryCode: 'RU', dir: 'ltr' },
+  { code: 'en', name: 'English', nativeName: 'English', dir: 'ltr' },
+  { code: 'de', name: 'German', nativeName: 'Deutsch', dir: 'ltr' },
+  { code: 'es', name: 'Spanish', nativeName: 'Espa\u00F1ol', dir: 'ltr' },
+  { code: 'fr', name: 'French', nativeName: 'Fran\u00E7ais', dir: 'ltr' },
+  { code: 'pt', name: 'Portuguese', nativeName: 'Portugu\u00EAs', dir: 'ltr' },
+  { code: 'zh', name: 'Chinese', nativeName: '\u4E2D\u6587', dir: 'ltr' },
+  { code: 'hi', name: 'Hindi', nativeName: '\u0939\u093F\u0928\u094D\u0926\u0940', dir: 'ltr' },
+  { code: 'ar', name: 'Arabic', nativeName: '\u0627\u0644\u0639\u0631\u0628\u064A\u0629', dir: 'rtl' },
+  { code: 'ru', name: 'Russian', nativeName: '\u0420\u0443\u0441\u0441\u043A\u0438\u0439', dir: 'ltr' },
 ]
 export const translations = {
   en: {

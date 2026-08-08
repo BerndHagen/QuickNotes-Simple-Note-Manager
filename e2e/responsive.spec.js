@@ -366,4 +366,94 @@ test.describe('large desktop', () => {
     // Text should stay readable rather than running the full 1920px.
     expect(box.width).toBeLessThan(1400)
   })
+
+  test('keeps the layout selector available after switching to the expanded grid', async ({ page }) => {
+    await signIn(page)
+    await page.getByRole('button', { name: 'Grid view' }).click()
+
+    const selector = page.getByRole('group', { name: 'View mode' })
+    await expect(selector).toBeVisible()
+    await expect(selector.getByRole('button', { name: 'Grid view' })).toHaveAttribute('aria-pressed', 'true')
+
+    await selector.getByRole('button', { name: 'List view' }).click()
+    await expect(page.getByRole('searchbox')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'List view' })).toHaveAttribute('aria-pressed', 'true')
+  })
+})
+
+test.describe('desktop editor tools', () => {
+  test.use({ viewport: { width: 1280, height: 800 } })
+
+  test('shows every formatting tool without horizontal scrolling', async ({ page }) => {
+    await signIn(page)
+    await page.getByRole('button', { name: /new note/i }).first().click()
+
+    const toolbar = page.locator('.editor-toolbar')
+    await expect(toolbar).toBeVisible()
+    const metrics = await toolbar.evaluate((element) => {
+      const toolbarBox = element.getBoundingClientRect()
+      const tools = [...element.querySelectorAll('button')]
+        .filter((button) => button.offsetParent !== null)
+        .map((button) => {
+          const box = button.getBoundingClientRect()
+          return { left: box.left, right: box.right }
+        })
+      const style = getComputedStyle(element)
+      return {
+        clientWidth: element.clientWidth,
+        scrollWidth: element.scrollWidth,
+        overflowX: style.overflowX,
+        allToolsInside: tools.every(
+          ({ left, right }) => left >= toolbarBox.left - 1 && right <= toolbarBox.right + 1
+        ),
+      }
+    })
+
+    expect(metrics.overflowX).toBe('visible')
+    expect(metrics.scrollWidth).toBeLessThanOrEqual(metrics.clientWidth + 1)
+    expect(metrics.allToolsInside).toBe(true)
+  })
+
+  test('renders readable tooltips and distinct paper focus, selection, and hover states', async ({ page }) => {
+    await signIn(page)
+    await page.getByRole('button', { name: /new note/i }).first().click()
+
+    const bold = page.getByRole('button', { name: 'Bold' })
+    await bold.hover()
+    const tooltip = page.getByRole('tooltip', { name: /Bold/ })
+    await expect(tooltip).toContainText('Bold')
+    const contrast = await tooltip.evaluate((element) => {
+      const parse = (value) => value.match(/[\d.]+/g).slice(0, 3).map(Number)
+      const luminance = (rgb) => {
+        const channels = rgb.map((value) => {
+          const normalized = value / 255
+          return normalized <= 0.03928
+            ? normalized / 12.92
+            : ((normalized + 0.055) / 1.055) ** 2.4
+        })
+        return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2]
+      }
+      const style = getComputedStyle(element)
+      const foreground = luminance(parse(style.color))
+      const background = luminance(parse(style.backgroundColor))
+      return (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05)
+    })
+    expect(contrast).toBeGreaterThanOrEqual(4.5)
+
+    await page.getByRole('button', { name: 'Paper Style' }).click()
+    const paperMenu = page.getByRole('dialog', { name: 'Formatting options' })
+    const plain = paperMenu.getByRole('button', { name: 'Plain' })
+    await expect(plain).toBeFocused()
+    await expect(plain).toHaveAttribute('aria-pressed', 'true')
+    const inset = await Promise.all([paperMenu.boundingBox(), plain.boundingBox()])
+    expect(inset[1].x).toBeGreaterThan(inset[0].x)
+    expect(inset[1].x + inset[1].width).toBeLessThan(inset[0].x + inset[0].width)
+
+    const lined = paperMenu.getByRole('button', { name: 'Lined', exact: true })
+    const backgroundBefore = await lined.evaluate((element) => getComputedStyle(element).backgroundColor)
+    await lined.hover()
+    await expect.poll(
+      () => lined.evaluate((element) => getComputedStyle(element).backgroundColor)
+    ).not.toBe(backgroundBefore)
+  })
 })

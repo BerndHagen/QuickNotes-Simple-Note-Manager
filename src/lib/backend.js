@@ -168,6 +168,37 @@ export const getSharedNotes = async (userId) => {
     if (!userId) return []
   }
   
+  const { data: sharedRows, error: rpcError } = await backend.rpc('get_shared_notes')
+
+  if (!rpcError) {
+    return (sharedRows || []).map((share) => ({
+      id: share.id,
+      note_id: share.note_id,
+      permission: share.permission,
+      created_at: share.created_at,
+      owner_id: share.owner_id,
+      owner_name: share.owner_name,
+      notes: {
+        id: share.note_id,
+        title: share.note_title,
+        content: share.note_content,
+        user_id: share.owner_id,
+        folder_id: share.note_folder_id,
+        tags: share.note_tags || [],
+        starred: share.note_starred,
+        pinned: share.note_pinned,
+        deleted: false,
+        archived: share.note_archived,
+        note_type: share.note_type,
+        note_data: share.note_data,
+        created_at: share.note_created_at,
+        updated_at: share.note_updated_at,
+      },
+    }))
+  }
+
+  // Compatibility path for projects that have not applied the provenance RPC
+  // migration yet. RLS still determines whether the joined note is visible.
   const { data: acceptedShares, error: acceptedError } = await backend
     .from('accepted_shares')
     .select('*, notes(id, title, content, user_id, folder_id, tags, starred, pinned, deleted, archived, note_type, note_data, created_at, updated_at)')
@@ -175,7 +206,13 @@ export const getSharedNotes = async (userId) => {
 
   if (acceptedError) throw acceptedError
   
-  return acceptedShares || []
+  return (acceptedShares || [])
+    .filter((share) => share?.notes && !share.notes.deleted)
+    .map((share) => ({
+      ...share,
+      owner_id: share.notes.user_id,
+      owner_name: 'Another QuickNotes user',
+    }))
 }
 
 export const getPendingShares = async (userId) => {

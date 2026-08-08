@@ -1,5 +1,5 @@
-import { useEffect, useId, useRef, useState } from 'react'
-import { Check, FolderPlus, Pencil } from 'lucide-react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
+import { Check, FolderPlus, Pencil, Search } from 'lucide-react'
 import { Modal, Button, Field, Input } from './ui'
 import { folderIcons, folderIconNames, folderColors, getFolderIcon } from '../lib/folderIcons'
 import { useTranslation } from '../lib/useTranslation'
@@ -21,36 +21,66 @@ function handleRadioNavigation(event, values, index, onChange) {
 }
 
 function IconGrid({ value, onChange, labelledBy }) {
+  const [query, setQuery] = useState('')
+  const visibleIcons = useMemo(() => {
+    const normalized = query.trim().toLowerCase()
+    if (!normalized) return folderIconNames
+    return folderIconNames.filter((name) => name.toLowerCase().includes(normalized))
+  }, [query])
+  const selectedIsVisible = visibleIcons.includes(value)
+
   return (
-    <div
-      role="radiogroup"
-      aria-labelledby={labelledBy}
-      className="grid max-h-52 grid-cols-[repeat(auto-fill,minmax(44px,1fr))] gap-1 overflow-y-auto rounded-control border border-subtle bg-surface-sunken p-2"
-    >
-      {folderIconNames.map((name, index) => {
-        const Icon = folderIcons[name]
-        const selected = value === name
-        return (
-          <button
-            key={name}
-            type="button"
-            role="radio"
-            aria-checked={selected}
-            aria-label={name}
-            title={name}
-            tabIndex={selected ? 0 : -1}
-            onClick={() => onChange(name)}
-            onKeyDown={(event) => handleRadioNavigation(event, folderIconNames, index, onChange)}
-            className={`qn-square-control flex aspect-square items-center justify-center rounded-control transition-colors duration-fast ${
+    <div className="space-y-2">
+      <div className="relative">
+        <Search
+          className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-content-subtle"
+          aria-hidden="true"
+        />
+        <Input
+          type="search"
+          size="sm"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          aria-label="Search folder icons"
+          placeholder="Search icons"
+          className="pl-8"
+        />
+      </div>
+      <div
+        role="radiogroup"
+        aria-labelledby={labelledBy}
+        className="grid max-h-52 grid-cols-[repeat(auto-fill,minmax(44px,1fr))] gap-1 overflow-y-auto rounded-control border border-subtle bg-surface-sunken p-2"
+      >
+        {visibleIcons.map((name, index) => {
+          const Icon = folderIcons[name]
+          const selected = value === name
+          return (
+            <button
+              key={name}
+              type="button"
+              role="radio"
+              aria-checked={selected}
+              aria-label={name}
+              title={name}
+              tabIndex={selected || (!selectedIsVisible && index === 0) ? 0 : -1}
+              onClick={() => onChange(name)}
+              onKeyDown={(event) => handleRadioNavigation(event, visibleIcons, index, onChange)}
+              className={`qn-square-control flex aspect-square items-center justify-center rounded-control transition-colors duration-fast ${
  selected
  ? 'bg-accent-soft text-accent-text ring-2 ring-[var(--qn-accent)]'
-                : 'text-content-muted hover:bg-surface-hover hover:text-content'
-            }`}
-          >
-            <Icon className="h-4 w-4" aria-hidden="true" />
-          </button>
-        )
-      })}
+                  : 'text-content-muted hover:bg-surface-hover hover:text-content'
+              }`}
+            >
+              <Icon className="h-4 w-4" aria-hidden="true" />
+            </button>
+          )
+        })}
+        {visibleIcons.length === 0 && (
+          <p className="col-span-full px-2 py-4 text-center text-ui-sm text-content-muted">
+            No matching icons
+          </p>
+        )}
+      </div>
     </div>
   )
 }

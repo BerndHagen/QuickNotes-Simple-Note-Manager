@@ -73,7 +73,8 @@ function PortalTooltip({ children, title, anchorRef }) {
       {title && visible && createPortal(
         <div
           ref={tooltipRef}
-          className="fixed px-2.5 py-1.5 bg-surface-sunken dark:bg-surface-sunken text-white text-xs rounded-lg whitespace-nowrap z-[99999] pointer-events-none shadow-lg"
+          role="tooltip"
+          className="qn-editor-tooltip fixed z-[99999] whitespace-nowrap rounded-lg border border-strong bg-[var(--qn-text)] px-2.5 py-1.5 text-xs text-content-inverted shadow-lg pointer-events-none"
           style={{ 
             top: position.top, 
             left: position.left,
@@ -81,9 +82,7 @@ function PortalTooltip({ children, title, anchorRef }) {
           }}
         >
           <span>{title}</span>
-          <div 
-            className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900 dark:border-t-gray-700" 
-          />
+          <div className="qn-editor-tooltip-arrow absolute left-1/2 top-full -mt-px -translate-x-1/2 border-4 border-transparent" />
         </div>,
         document.body
       )}

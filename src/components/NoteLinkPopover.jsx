@@ -4,7 +4,7 @@ import { useNotesStore } from '../store'
 import { useTranslation } from '../lib/useTranslation'
 import toast from 'react-hot-toast'
 
-export default function NoteLinkPopover({ editor, isOpen, onClose, position }) {
+export default function NoteLinkPopover({ editor, isOpen, onClose, position, currentNoteId }) {
   const { notes } = useNotesStore()
   const { t } = useTranslation()
   const [searchQuery, setSearchQuery] = useState('')
@@ -19,7 +19,7 @@ export default function NoteLinkPopover({ editor, isOpen, onClose, position }) {
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase()
       const filtered = notes
-        .filter(note => note?.id && !note.deleted)
+        .filter(note => note?.id && note.id !== currentNoteId && !note.deleted)
         .filter(note => 
           String(note.title || '').toLowerCase().includes(query) ||
           String(note.content || '').toLowerCase().includes(query)
@@ -29,13 +29,13 @@ export default function NoteLinkPopover({ editor, isOpen, onClose, position }) {
       setSelectedIndex(0)
     } else {
       const recent = notes
-        .filter(note => note?.id && !note.deleted)
+        .filter(note => note?.id && note.id !== currentNoteId && !note.deleted)
         .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
         .slice(0, 5)
       setFilteredNotes(recent)
       setSelectedIndex(0)
     }
-  }, [searchQuery, notes])
+  }, [currentNoteId, searchQuery, notes])
 
   useEffect(() => {
     if (isOpen && inputRef.current) {
@@ -243,7 +243,7 @@ export function useNoteLinkHandler() {
         e.preventDefault()
         const noteId = link.dataset.noteId
         if (noteId) {
-          const note = notes.find(n => n.id === noteId)
+          const note = notes.find(n => n.id === noteId && !n.deleted)
           if (note) {
             setSelectedNote(noteId)
           } else {

@@ -12,9 +12,22 @@ test.describe('mobile Safari workflows', () => {
     await page.setViewportSize({ width: 320, height: 568 })
     await signIn(page)
 
-    const newNoteBox = await page.getByRole('button', { name: /^new note$/i }).boundingBox()
+    const newNoteButton = page.getByRole('button', { name: /^new note$/i })
+    const newNoteBox = await newNoteButton.boundingBox()
     expect(newNoteBox.width).toBe(44)
     expect(newNoteBox.height).toBe(44)
+    const newNoteSizing = await newNoteButton.evaluate((button) => {
+      const style = getComputedStyle(button)
+      return {
+        inlineSize: style.inlineSize,
+        blockSize: style.blockSize,
+        minInlineSize: style.minInlineSize,
+        minBlockSize: style.minBlockSize,
+        maxInlineSize: style.maxInlineSize,
+        maxBlockSize: style.maxBlockSize,
+      }
+    })
+    expect(new Set(Object.values(newNoteSizing))).toEqual(new Set(['44px']))
 
     const settings = await openSettings(page)
     const tabs = settings.getByRole('navigation', { name: 'Settings sections' }).getByRole('button')

@@ -362,10 +362,14 @@ export default function TranslateModal() {
           </p>
         )}
 
-        <p className="flex items-center gap-1.5 text-ui-xs text-content-subtle">
-          <Globe2 className="h-3.5 w-3.5" aria-hidden="true" />
-          Translation quality varies by language and context. Review the result before using it.
-        </p>
+        <div className="flex items-start gap-1.5 text-ui-xs leading-relaxed text-content-subtle">
+          <Globe2 className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          <p>
+            Translation quality varies by language and context. MyMemory documents a shared
+            5,000-character daily allowance for anonymous traffic, so availability can vary.
+            Review the result before using it.
+          </p>
+        </div>
       </div>
     </Modal>
   )

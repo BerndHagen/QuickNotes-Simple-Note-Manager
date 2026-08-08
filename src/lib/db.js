@@ -40,17 +40,47 @@ export const saveNoteOffline = async (note) => {
   return await db.notes.put({
     ...note,
     syncStatus: SyncStatus.PENDING,
-    updatedAt: new Date().toISOString(),
+    updatedAt: note.updatedAt || new Date().toISOString(),
   })
 }
 
 export const addToSyncQueue = async (table, operation, data) => {
-  return await db.syncQueue.add({
-    ownerId: activeWorkspaceOwnerId,
-    table,
-    operation,
-    data,
-    timestamp: new Date().toISOString(),
+  const ownerId = activeWorkspaceOwnerId
+  const recordId = data?.id
+
+  return await db.transaction('rw', db.syncQueue, async () => {
+    if (!recordId) {
+      return db.syncQueue.add({ ownerId, table, operation, data, timestamp: new Date().toISOString() })
+    }
+
+    const existing = await db.syncQueue
+      .filter(
+        (item) =>
+          item.ownerId === ownerId &&
+          item.table === table &&
+          item.data?.id === recordId
+      )
+      .toArray()
+    const insert = existing.find((item) => item.operation === 'insert')
+    const deletion = existing.find((item) => item.operation === 'delete')
+
+    // Sync uploads the current full record. An insert marker already covers
+    // later edits. A delete supersedes every earlier operation, including an
+    // insert: keeping the tombstone makes an upload/delete race idempotent.
+    if (operation === 'update' && insert) return insert.id
+    if (operation === 'update' && deletion) return deletion.id
+
+    if (existing.length > 0) {
+      await db.syncQueue.bulkDelete(existing.map((item) => item.id))
+    }
+
+    return db.syncQueue.add({
+      ownerId,
+      table,
+      operation,
+      data,
+      timestamp: new Date().toISOString(),
+    })
   })
 }
 

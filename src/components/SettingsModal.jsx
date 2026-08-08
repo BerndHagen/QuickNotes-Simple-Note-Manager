@@ -487,7 +487,13 @@ export default function SettingsModal() {
                         }`}
                         dir={lang.dir}
                       >
-                        <span aria-hidden="true" className="text-xl leading-6">{lang.flag}</span>
+                        <span
+                          aria-hidden="true"
+                          dir="ltr"
+                          className="inline-flex h-7 min-w-9 items-center justify-center rounded-control border border-subtle bg-surface-sunken px-1.5 text-ui-xs font-bold uppercase tracking-wide text-content-muted"
+                        >
+                          {lang.code}
+                        </span>
                         <span className="text-xs font-medium text-content dark:text-content-subtle">{lang.nativeName}</span>
                       </button>
                     ))}

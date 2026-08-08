@@ -571,14 +571,18 @@ export const useNotesStore = create(
       },
 
       deleteNote: (id) => {
+        const currentNote = get().notes.find((note) => note.id === id)
+        if (!currentNote || currentNote.deleted) return
+        const deletedAt = new Date().toISOString()
+
         set((state) => ({
           notes: state.notes.map((note) =>
             note.id === id
               ? {
                   ...note,
                   deleted: true,
-                  deletedAt: new Date().toISOString(),
-                  updatedAt: new Date().toISOString(),
+                  deletedAt,
+                  updatedAt: deletedAt,
                   syncStatus: SyncStatus.PENDING,
                 }
               : note
@@ -591,8 +595,8 @@ export const useNotesStore = create(
 
         const note = get().notes.find((n) => n.id === id)
         if (note) {
-          saveNoteOffline({ ...note, deleted: true, deletedAt: new Date().toISOString() })
-          addToSyncQueue('notes', 'update', { id, deleted: true })
+          saveNoteOffline(note)
+          addToSyncQueue('notes', 'update', { id, deleted: true, deletedAt, updatedAt: deletedAt })
 
           if (isBackendConfigured()) {
             const { user } = get()
@@ -605,6 +609,10 @@ export const useNotesStore = create(
       },
 
       restoreNote: (id) => {
+        const currentNote = get().notes.find((note) => note.id === id)
+        if (!currentNote || !currentNote.deleted) return
+        const restoredAt = new Date().toISOString()
+
         set((state) => ({
           notes: state.notes.map((note) =>
             note.id === id
@@ -612,7 +620,7 @@ export const useNotesStore = create(
                   ...note,
                   deleted: false,
                   deletedAt: null,
-                  updatedAt: new Date().toISOString(),
+                  updatedAt: restoredAt,
                   syncStatus: SyncStatus.PENDING,
                 }
               : note
@@ -621,8 +629,8 @@ export const useNotesStore = create(
 
         const note = get().notes.find((n) => n.id === id)
         if (note) {
-          saveNoteOffline({ ...note, deleted: false, deletedAt: null })
-          addToSyncQueue('notes', 'update', { id, deleted: false })
+          saveNoteOffline(note)
+          addToSyncQueue('notes', 'update', { id, deleted: false, deletedAt: null, updatedAt: restoredAt })
 
           if (isBackendConfigured()) {
             const { user } = get()
@@ -635,6 +643,7 @@ export const useNotesStore = create(
       },
 
       permanentlyDeleteNote: (id) => {
+        if (!get().notes.some((note) => note.id === id)) return
         set((state) => ({
           notes: state.notes.filter((note) => note.id !== id),
           selectedNoteId:
@@ -1880,6 +1889,7 @@ export const useNotesStore = create(
 
       acceptShare: async (shareId) => {
         try {
+          const invitation = get().pendingShares.find((share) => share.id === shareId)
           const { acceptShare } = await import('../lib/backend')
           const { share, acceptedShare } = await acceptShare(shareId)
           
@@ -1889,6 +1899,8 @@ export const useNotesStore = create(
             note_id: acceptedShare.note_id,
             permission: acceptedShare.permission,
             created_at: acceptedShare.created_at,
+            owner_id: share.shared_by || invitation?.owner_id || share.notes?.user_id,
+            owner_name: invitation?.owner_name || invitation?.shared_by || 'Another QuickNotes user',
             notes: share.notes ? {
               id: share.notes.id,
               title: share.notes.title,
