@@ -35,6 +35,12 @@ jobs:
       - name: Validate curated release notes
         run: npm run validate:release-notes
 
+      - name: Lint
+        run: npm run lint
+
+      - name: Run unit tests
+        run: npm test -- --run
+
       - name: Build
         run: npm run build
         env:
@@ -69,6 +75,12 @@ jobs:
             BASELINE="No stable tag is available yet"
           fi
 
+          if [ "$COMMIT_COUNT" -eq 1 ]; then
+            CHANGE_COUNT="1 commit"
+          else
+            CHANGE_COUNT="${COMMIT_COUNT} commits"
+          fi
+
           cat > latest-release-notes.md <<EOF
           This rolling preview contains the newest verified QuickNotes build from the \`main\` branch. It is intended for early access and testing; users who prefer a fixed milestone should choose the latest stable release.
 
@@ -79,7 +91,7 @@ jobs:
           - **Updated**: ${RELEASE_DATE}
           - **Source commit**: [\`${SHORT_SHA}\`](https://github.com/${REPOSITORY}/commit/${COMMIT_SHA})
           - **Stable baseline**: ${BASELINE}
-          - **Included changes**: ${COMMIT_COUNT} commit(s) since that baseline
+          - **Included changes**: ${CHANGE_COUNT} since that baseline
 
           ### Changes Since the Stable Release
 
@@ -154,6 +166,12 @@ jobs:
 
       - name: Validate curated release notes
         run: npm run validate:release-notes
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Run unit tests
+        run: npm test -- --run
 
       - name: Build
         run: npm run build
