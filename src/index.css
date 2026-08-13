@@ -1699,13 +1699,10 @@ body {
 
 .editor-paper {
   background-color: var(--qn-surface-base);
-  background-image:
-    radial-gradient(ellipse at 50% 0%, rgba(16, 185, 129, 0.035) 0%, transparent 50%);
 }
 
 .dark .editor-paper {
-  background-image:
-    radial-gradient(ellipse at 50% 0%, rgba(16, 185, 129, 0.03) 0%, transparent 50%);
+  background-image: none;
 }
 
 /* The signed-in product stays edge-to-edge, while its internal surfaces still
@@ -1718,8 +1715,7 @@ body {
 }
 
 .qn-note-list-header {
-  background:
-    linear-gradient(180deg, var(--qn-surface-brand-tint) 0%, var(--qn-surface-panel) 100%);
+  background: var(--qn-surface-panel);
 }
 
 .qn-note-list-scroll > ul {
@@ -1736,18 +1732,31 @@ body {
 
 .qn-document-header {
   position: relative;
-  background:
-    radial-gradient(circle at 92% -120%, var(--qn-surface-brand-tint-strong) 0 34%, transparent 35%),
-    linear-gradient(105deg, var(--qn-surface-brand-tint) 0%, var(--qn-surface-base) 72%);
+  border-color: var(--qn-banner-border) !important;
+  background: var(--qn-banner);
+  color: var(--qn-banner-text);
 }
 
 .qn-document-header::before {
-  content: '';
-  position: absolute;
-  inset-block: 0;
-  inset-inline-start: 0;
-  width: 3px;
-  background: var(--qn-accent);
+  display: none;
+}
+
+.qn-document-header #qn-note-title {
+  color: var(--qn-banner-text);
+}
+
+.qn-document-header #qn-note-title::placeholder,
+.qn-document-header .qn-note-metadata {
+  color: var(--qn-banner-text-muted);
+}
+
+.qn-document-header :where(button, .qn-icon-button) {
+  color: var(--qn-banner-text-muted);
+}
+
+.qn-document-header :where(button, .qn-icon-button):enabled:hover {
+  background: var(--qn-banner-hover) !important;
+  color: var(--qn-banner-text) !important;
 }
 
 /* ============================================================
@@ -1827,9 +1836,9 @@ body {
 /* ============================================================
    Focused note workspaces
    ------------------------------------------------------------
-   Specialized note types are working surfaces, not dashboards. Their
-   headers therefore use neutral hierarchy and reserve green for active
-   controls, selection, progress, and semantic state.
+   Specialized note types are working surfaces, not dashboards. Their flat
+   rail-green headers create one stable application landmark without adding
+   decorative texture to the work area.
    ============================================================ */
 .qn-type-editor {
   background: var(--qn-surface-base);
@@ -1838,11 +1847,10 @@ body {
 .qn-type-hero {
   position: relative;
   padding: 14px 18px !important;
-  border-color: var(--qn-border-subtle) !important;
-  background:
-    radial-gradient(circle at 90% -180%, var(--qn-surface-brand-tint-strong) 0 38%, transparent 39%),
-    linear-gradient(108deg, var(--qn-surface-brand-tint) 0%, var(--qn-surface-raised) 76%) !important;
-  box-shadow: inset 3px 0 0 var(--qn-accent);
+  border-color: var(--qn-banner-border) !important;
+  background: var(--qn-banner) !important;
+  color: var(--qn-banner-text);
+  box-shadow: none;
 }
 
 .qn-type-hero::after {
@@ -1852,7 +1860,19 @@ body {
 .qn-type-hero input.qn-focused-title {
   border-color: transparent !important;
   background: transparent !important;
+  color: var(--qn-banner-text) !important;
   box-shadow: none !important;
+}
+
+.qn-type-hero input.qn-focused-title::placeholder,
+.qn-type-hero .qn-focused-type-label {
+  color: var(--qn-banner-text-muted) !important;
+}
+
+.qn-type-hero .qn-focused-type-icon {
+  border-color: var(--qn-banner-border);
+  background: var(--qn-banner-hover);
+  color: var(--qn-banner-text);
 }
 
 .qn-type-hero :where(input, textarea, select):not(.qn-focused-title) {
@@ -1886,9 +1906,9 @@ body {
   margin-top: 12px;
   margin-left: 48px;
   padding: 3px;
-  border: 1px solid var(--qn-border-subtle);
+  border: 1px solid var(--qn-banner-border);
   border-radius: var(--qn-radius-md);
-  background: color-mix(in srgb, var(--qn-surface-sunken) 82%, transparent);
+  background: rgba(255, 255, 255, 0.07);
 }
 
 .qn-workspace-metric {
@@ -1897,7 +1917,7 @@ body {
   align-items: baseline;
   gap: 6px;
   padding: 3px 10px;
-  border-right: 1px solid var(--qn-border-subtle);
+  border-right: 1px solid var(--qn-banner-border);
 }
 
 .qn-workspace-metric:last-child {
@@ -1917,8 +1937,12 @@ body {
   order: 2;
   font-size: 11px;
   line-height: 16px;
-  color: var(--qn-text-muted);
+  color: var(--qn-banner-text-muted);
   white-space: nowrap;
+}
+
+.qn-type-hero .qn-workspace-metric-value {
+  color: var(--qn-banner-text) !important;
 }
 
 .qn-type-tabs {
@@ -1967,9 +1991,7 @@ body {
 }
 
 .qn-workspace-canvas {
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--qn-surface-brand-tint) 52%, transparent), transparent 180px),
-    var(--qn-surface-sunken);
+  background: var(--qn-surface-sunken);
 }
 
 .qn-domain-card {

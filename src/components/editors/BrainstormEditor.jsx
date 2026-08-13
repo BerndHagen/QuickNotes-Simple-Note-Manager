@@ -24,7 +24,8 @@ import {
   Tag,
   Sparkles,
   Shuffle,
-  Copy
+  Copy,
+  ChevronDown,
 } from 'lucide-react'
 import { generateId } from './noteTypes'
 import { useLatestValue } from './useLatestValue'
@@ -40,6 +41,37 @@ const DEFAULT_CATEGORIES = [
   { id: 'research', name: 'Research', color: '#8b5cf6' },
   { id: 'marketing', name: 'Marketing', color: '#f59e0b' },
 ]
+
+function IdeaCategorySelect({ idea, categories, onChange, className = '' }) {
+  const category = categories.find((candidate) => candidate.id === idea.category)
+
+  return (
+    <label
+      className={`qn-idea-card-category inline-flex h-7 max-w-[12rem] items-center gap-1.5 rounded-full border border-subtle bg-surface-sunken px-2 text-ui-xs font-medium text-content-muted ${className}`}
+      style={{
+        backgroundColor: `color-mix(in srgb, ${category?.color || '#6b7280'} 10%, var(--qn-surface-sunken))`,
+      }}
+    >
+      <span
+        className="h-1.5 w-1.5 shrink-0 rounded-full"
+        style={{ backgroundColor: category?.color || '#6b7280' }}
+        aria-hidden="true"
+      />
+      <select
+        aria-label={`Category for ${idea.text}`}
+        value={idea.category}
+        onClick={(event) => event.stopPropagation()}
+        onChange={(event) => onChange(event.target.value)}
+        className="min-w-0 flex-1 cursor-pointer appearance-none truncate border-0 bg-transparent py-0 pl-0 pr-3 font-medium text-content outline-none"
+      >
+        {categories.map((candidate) => (
+          <option key={candidate.id} value={candidate.id}>{candidate.name}</option>
+        ))}
+      </select>
+      <ChevronDown className="pointer-events-none -ml-3 h-3 w-3 shrink-0" aria-hidden="true" />
+    </label>
+  )
+}
 
 export default function BrainstormEditor({ data, onChange, noteTitle, onTitleChange, readOnly }) {
   const [brainstormData, setBrainstormData] = useState({
@@ -259,13 +291,6 @@ export default function BrainstormEditor({ data, onChange, noteTitle, onTitleCha
               </button>
             )
           })}
-          <button
-            onClick={() => setShowAddCategory(true)}
-            aria-label="Add idea category"
-            className="p-1 rounded-full text-content-muted hover:bg-surface-sunken dark:hover:bg-surface-sunken"
-          >
-            <Plus className="w-4 h-4" />
-          </button>
         </div>
         <Select
           aria-label="Filter ideas by category"
@@ -280,6 +305,15 @@ export default function BrainstormEditor({ data, onChange, noteTitle, onTitleCha
             </option>
           ))}
         </Select>
+        <Button
+          variant="secondary"
+          size="sm"
+          icon={Tag}
+          onClick={() => setShowAddCategory(true)}
+          className="qn-idea-manage-categories"
+        >
+          Categories
+        </Button>
         <div className="qn-idea-filter-tools flex items-center gap-2">
           <Select aria-label="Sort ideas" value={brainstormData.sortBy} onChange={(e) => update('sortBy', e.target.value)} className="w-auto min-w-36 bg-surface-raised">
             <option value="newest">Newest First</option>
@@ -323,12 +357,12 @@ export default function BrainstormEditor({ data, onChange, noteTitle, onTitleCha
                   } ${idea.starred ? 'ring-2 ring-[var(--qn-warning-border)]' : ''}`}
                   style={{ '--qn-item-accent': category?.color || 'var(--qn-accent)' }}
                 >
-                  <div
-                    className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full border border-subtle bg-surface-sunken px-2 py-0.5 text-ui-xs font-medium text-content-muted"
-                  >
-                    <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: category?.color }} aria-hidden="true" />
-                    {category?.name}
-                  </div>
+                  <IdeaCategorySelect
+                    idea={idea}
+                    categories={brainstormData.categories}
+                    onChange={(categoryId) => updateIdea(idea.id, { category: categoryId })}
+                    className="absolute left-3 top-3"
+                  />
                   <button
                     onClick={(e) => { e.stopPropagation(); toggleStar(idea.id) }}
                     aria-label={idea.starred ? `Unstar ${idea.text}` : `Star ${idea.text}`}
@@ -429,18 +463,6 @@ export default function BrainstormEditor({ data, onChange, noteTitle, onTitleCha
                   </div>
                   {isExpanded && (
                     <div className="mt-4 pt-4 border-t border-subtle" onClick={(e) => e.stopPropagation()}>
-                      <div className="mb-3">
-                        <label className="text-xs text-content-muted mb-1 block">Category</label>
-                        <Select
-                          value={idea.category}
-                          onChange={(e) => updateIdea(idea.id, { category: e.target.value })}
-                          className="bg-surface-raised"
-                        >
-                          {brainstormData.categories.map((cat) => (
-                            <option key={cat.id} value={cat.id}>{cat.name}</option>
-                          ))}
-                        </Select>
-                      </div>
                       <div>
                         <label className="text-xs text-content-muted mb-1 block">Notes</label>
                         <Textarea
@@ -496,12 +518,12 @@ export default function BrainstormEditor({ data, onChange, noteTitle, onTitleCha
                     </div>
                     <div className="flex-1">
                       <div className="flex items-start gap-2">
-                        <span
-                          className="px-2 py-0.5 rounded-full text-xs flex-shrink-0"
-                          style={{ backgroundColor: category?.color + '20', color: category?.color }}
-                        >
-                          {category?.name}
-                        </span>
+                        <IdeaCategorySelect
+                          idea={idea}
+                          categories={brainstormData.categories}
+                          onChange={(categoryId) => updateIdea(idea.id, { category: categoryId })}
+                          className="shrink-0"
+                        />
                         {editingIdea === idea.id ? (
                           <div className="flex-1 flex gap-2">
                             <input
@@ -572,19 +594,7 @@ export default function BrainstormEditor({ data, onChange, noteTitle, onTitleCha
                     </div>
                   </div>
                   {isExpanded && (
-                    <div className="mt-4 ml-14 pt-4 border-t border-subtle grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-xs text-content-muted mb-1 block">Category</label>
-                        <Select
-                          value={idea.category}
-                          onChange={(e) => updateIdea(idea.id, { category: e.target.value })}
-                          className="bg-surface-raised"
-                        >
-                          {brainstormData.categories.map((cat) => (
-                            <option key={cat.id} value={cat.id}>{cat.name}</option>
-                          ))}
-                        </Select>
-                      </div>
+                    <div className="mt-4 ml-14 border-t border-subtle pt-4">
                       <div>
                         <label className="text-xs text-content-muted mb-1 block">Notes</label>
                         <Textarea

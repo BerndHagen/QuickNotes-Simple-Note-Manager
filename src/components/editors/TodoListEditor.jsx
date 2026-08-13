@@ -228,7 +228,7 @@ export default function TodoListEditor({ data, onChange, noteTitle, onTitleChang
               onChange={onTitleChange}
               readOnly={readOnly}
             />
-            <p className="ml-12 mt-1 text-ui-md text-content-muted">
+            <p className="ml-12 mt-1 text-ui-md text-banner-muted">
               {stats.active} tasks remaining {"\u2022"} {stats.completed} completed
             </p>
           </div>

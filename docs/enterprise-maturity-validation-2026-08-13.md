@@ -8,7 +8,14 @@ Scope: all 156 JavaScript/JSX/CSS source files, all 103 component/style files, e
 
 QuickNotes entered this pass with strong functionality, navigation, editing, search, persistence, accessibility coverage, and a recognizable dark-green identity. Its weakest quality was inconsistent visual containment: the shell could feel unfinished because large areas were near-white, note-list cards had lost their distinct rounded treatment, Idea Board objects were visually under-defined, and older structured workspace internals used a mixture of dashboard statistics, raw palette utilities, bespoke popovers, and inconsistent empty states.
 
-The resulting product is materially calmer and more credible without being gray or generic. Navigation remains the strongest branded surface. Working areas now use a layered green-neutral surface system, compact headers, restrained semantic status, predictable cards/panels, and content-first hierarchy. Rounded cards remain where they make a note, idea, task, project item, or setting read as one object; they are not used to frame every line or tab.
+The resulting product is materially calmer and more credible without being gray or generic. Navigation and flat application headers share one controlled deep-green brand surface. Working areas use a texture-free, layered green-neutral surface system, compact headers, restrained semantic status, predictable cards/panels, and content-first hierarchy. Rounded cards remain where they make a note, idea, task, project item, or setting read as one object; they are not used to frame every line or tab.
+
+## Post-audit feedback refinement
+
+- Decorative contour and radial treatments are now reserved for authentication and onboarding. Signed-in document headers, focused-workspace headers, dialog banners, editor paper, and workspace canvases are flat surfaces.
+- Application banners use the navigation rail's deep green, including Settings, search, transfer, tag-management, and editor headers.
+- Structured notes expose a visible **Tags** button in the top action bar instead of relying on an icon alone.
+- Every Idea Board card exposes its category as a direct dropdown in both grid and list views. Category management is a labelled **Categories** action rather than an isolated plus icon.
 
 ## Research baseline
 
@@ -31,7 +38,7 @@ The audit did not equate “read every file” with changing every file. Every s
 | --- | --- | --- |
 | Shell and navigation | `App`, `Sidebar`, auth/recovery, breakpoints, themes | Edge-to-edge signed-in shell retained; expressive framed presentation remains only in authentication/marketing contexts. |
 | Note navigation | `NotesList`, `NoteCard`, `NotesGrid`, sort/filter/context menu | Rounded list cards restored, selected edge made precise, grid elevation restrained, empty grid standardized. |
-| Document work | `NoteEditor`, `RichTextEditor`, editor extensions, toolbars/popovers | Content remains primary; header receives restrained brand tint; broad `transition-all` use removed; editor behavior preserved. |
+| Document work | `NoteEditor`, `RichTextEditor`, editor extensions, toolbars/popovers | Content remains primary; the document header uses the flat rail-green application banner; broad `transition-all` use removed; editor behavior preserved. |
 | Structured workspaces | task, project, meeting, journal, idea, shopping, weekly editors | Every default view and secondary tab rendered and inspected; shared metrics, panels, cards, empty states, responsive fixes, and interaction parity applied. |
 | Shared UI | button, field, menu, modal, empty state, badge, avatar, spinner | Reused instead of adding more one-off controls; semantic states and control geometry retained. |
 | Secondary workflows | settings, global search, archive/trash, sharing, import/export, type picker, dialogs | Rendered or regression-covered; expressive search/settings hierarchy preserved; transition and selection behavior normalized where touched. |
@@ -48,7 +55,7 @@ No release-blocking visual or interaction defect remained after verification.
 ### P1 — resolved
 
 - **Idea cards lacked convincing object boundaries.** New ideas now render as raised, one-pixel bordered cards with a restrained category edge, predictable header/body/footer structure, clear vote/star state, and contained edit/duplicate/delete actions.
-- **Working areas looked too white and unfinished.** A semantic green-neutral surface ladder now separates application canvas, panes, working canvas, panels, raised cards, and brand-tinted headers in both themes.
+- **Working areas looked too white and unfinished.** A semantic green-neutral surface ladder now separates application canvas, panes, working canvas, panels, raised cards, and flat rail-green application headers in both themes.
 - **Mobile task labels collapsed beside actions.** Mobile task cards now use a two-row grid: completion/content first, secondary actions below. A browser assertion requires useful text width and verifies the action row position.
 - **Meeting navigation could hide the summary action.** Tabs now scroll inside their own region while the labelled summary action remains persistently visible; it becomes icon-only at constrained widths without losing its accessible name.
 
@@ -73,7 +80,7 @@ No release-blocking visual or interaction defect remained after verification.
 - Authentication remains more expressive and retains its branded presentation frame; that context is product presentation, not the work surface.
 - The document editor toolbar, readable content measure, global search, keyboard workflow, persistence architecture, and local-first language were already strong and were not redesigned for novelty.
 - Cards remain for real objects. The implementation avoids both extremes: neither every region nor no region is a card.
-- Semantic priority/category colors remain because they carry information. Large colored Kanban boundaries and decorative green hero blocks do not.
+- Semantic priority/category colors remain because they carry information. Large colored Kanban boundaries and decorative texture do not; the flat application header is the deliberate brand anchor.
 
 ## Verification matrix
 
@@ -85,7 +92,7 @@ The final gate covers:
 - desktop editor, grid, global search, settings, and dark-theme inspection;
 - responsive automation from 320 through 1920 px and mobile WebKit;
 - axe WCAG A/AA audits on the shell, auth, light/dark editor, specialized workspaces, dialogs, and expanded controls;
-- dedicated regression assertions for mobile task readability, bordered/contained Idea cards, meeting toolbar visibility, and direct keyboard Kanban movement;
+- dedicated regression assertions for mobile task readability, bordered/contained Idea cards, direct Idea category editing, visible structured-note Tags, meeting toolbar visibility, and direct keyboard Kanban movement;
 - unit/integration, lint, production build, deployment validation, and diff hygiene.
 
 Final pass evidence:

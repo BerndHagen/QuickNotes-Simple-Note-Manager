@@ -50,7 +50,7 @@ import { insertTextIntoActiveField } from '../lib/textFieldInsertion'
 import { useRealtimeCollaboration } from '../lib/useCollaboration'
 import { getFolderIcon } from '../lib/folderIcons'
 import { MAX_NOTE_TITLE_LENGTH, MAX_TAG_NAME_LENGTH } from '../lib/dataValidation'
-import { IconButton, Input, Menu, MenuItem, MenuSeparator, EmptyState, TagChip } from './ui'
+import { Button, IconButton, Input, Menu, MenuItem, MenuSeparator, EmptyState, TagChip } from './ui'
 import { ConfirmDialog } from './FolderDialogs'
 import { SyncStatusPill } from './SyncStatus'
 import { isBackendConfigured } from '../lib/backend'
@@ -401,16 +401,23 @@ export default function NoteEditor({ onBack, showBack = false }) {
               onClick={() => setFolderPickerOpen((value) => !value)}
               className="hidden sm:inline-flex"
             />
-            <IconButton
+            <Button
               ref={tagButtonRef}
               icon={Tag}
-              label={t('editor.tags', 'Tags')}
-              active={tagPickerOpen || note.tags?.length > 0}
+              variant="secondary"
+              size="sm"
               aria-haspopup="menu"
               aria-expanded={tagPickerOpen}
               onClick={() => setTagPickerOpen((value) => !value)}
-              className="hidden sm:inline-flex"
-            />
+              className={`hidden capitalize sm:inline-flex ${
+                tagPickerOpen || note.tags?.length > 0
+                  ? 'border-[var(--qn-accent-border)] bg-accent-soft text-accent-text'
+                  : ''
+              }`}
+            >
+              {t('editor.tags', 'Tags')}
+              {note.tags?.length > 0 ? ` (${note.tags.length})` : ''}
+            </Button>
             <IconButton
               icon={Pin}
               label={note.pinned ? t('editor.unpin', 'Unpin note') : t('editor.pin', 'Pin note')}
@@ -584,7 +591,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
               {note.tags.map((tagName) => (
                 <li key={tagName} className="min-w-0">
                   <TagChip
-                    surface="surface"
+                    surface="dark"
                     name={tagName}
                     color={tags.find((tag) => tag.name === tagName)?.color || '#6b7280'}
                     className="max-w-[16ch]"

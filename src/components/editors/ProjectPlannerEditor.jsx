@@ -214,7 +214,7 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitl
               onChange={onTitleChange}
               readOnly={readOnly}
             />
-            <p className="ml-12 mt-1 text-ui-md text-content-muted">
+            <p className="ml-12 mt-1 text-ui-md text-banner-muted">
               {stats.totalTasks} tasks {"\u2022"} {stats.progress}% complete
             </p>
           </div>

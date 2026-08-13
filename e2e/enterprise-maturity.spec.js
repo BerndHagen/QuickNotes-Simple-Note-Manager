@@ -57,6 +57,14 @@ test.describe('enterprise UI maturity regressions', () => {
     await ideaInput.press('Enter')
     const card = editor.locator('.qn-idea-card').filter({ hasText: 'Prioritize customer interview findings' })
     await expect(card).toBeVisible()
+    await expect(page.getByRole('button', { name: /^Tags(?: \(\d+\))?$/ })).toBeVisible()
+
+    const category = card.getByRole('combobox', {
+      name: 'Category for Prioritize customer interview findings',
+    })
+    await expect(category).toBeVisible()
+    await category.selectOption('solution')
+    await expect(category).toHaveValue('solution')
 
     const cardBox = await card.boundingBox()
     expect(cardBox.width).toBeGreaterThanOrEqual(230)

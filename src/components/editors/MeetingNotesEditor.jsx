@@ -236,16 +236,16 @@ ${meetingData.notes}
               onChange={onTitleChange}
               readOnly={readOnly}
             />
-            <p className="ml-12 mt-1 text-ui-md text-content-muted">
+            <p className="ml-12 mt-1 text-ui-md text-banner-muted">
               {meetingData.date} {"\u2022"} {stats.attendees} attendees {"\u2022"} {stats.agendaItems} agenda items
             </p>
           </div>
           <div className="flex items-center gap-3">
             <div className="text-center">
-              <div className="font-mono text-title-lg font-semibold tabular-nums text-content">
+              <div className="font-mono text-title-lg font-semibold tabular-nums text-banner-text">
                 {formatTime(timerSeconds)}
               </div>
-              <div className="text-xs text-content-muted">
+              <div className="text-xs text-banner-muted">
                 {currentAgendaItem ? 'Active Timer' : 'Meeting Timer'}
               </div>
             </div>
@@ -253,14 +253,14 @@ ${meetingData.notes}
               <button
                 onClick={() => timerRunning ? setTimerRunning(false) : setTimerRunning(true)}
                 aria-label={timerRunning ? 'Pause meeting timer' : 'Start meeting timer'}
-                className="qn-square-control flex h-9 w-9 items-center justify-center rounded-control text-content-muted transition-colors hover:bg-surface-active hover:text-content"
+                className="qn-square-control flex h-9 w-9 items-center justify-center rounded-control text-banner-muted transition-colors hover:bg-banner-hover hover:text-banner-text"
               >
                 {timerRunning ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
               </button>
               <button
                 onClick={() => { setTimerSeconds(0); setTimerRunning(false); setCurrentAgendaItem(null) }}
                 aria-label="Reset meeting timer"
-                className="qn-square-control flex h-9 w-9 items-center justify-center rounded-control text-content-muted transition-colors hover:bg-surface-active hover:text-content"
+                className="qn-square-control flex h-9 w-9 items-center justify-center rounded-control text-banner-muted transition-colors hover:bg-banner-hover hover:text-banner-text"
               >
                 <RotateCcw className="w-4 h-4" />
               </button>

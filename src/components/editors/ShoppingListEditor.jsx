@@ -135,7 +135,7 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
               onChange={onTitleChange}
               readOnly={readOnly}
             />
-            <p className="text-content-muted mt-1">
+            <p className="mt-1 text-banner-muted">
               {checkedCount} of {totalCount} items checked
             </p>
           </div>

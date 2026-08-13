@@ -101,10 +101,9 @@
   --qn-accent-soft-hover: var(--qn-brand-100);
   --qn-accent-border: var(--qn-brand-200);
 
-  /* Editor banner — deep muted green with a soft contour texture.
-     Kept dark and low-saturation to match the reference; a brighter
-     emerald reads as a different product. */
-  --qn-banner: #0d4a36;
+  /* Application banners use the navigation rail's flat deep green. The
+     decorative stationery treatment is reserved for authentication. */
+  --qn-banner: var(--qn-nav-bg);
   --qn-banner-from: #11563f;
   --qn-banner-via: #0d4835;
   --qn-banner-to: #093528;
@@ -233,7 +232,7 @@
   --qn-accent-soft-hover: rgba(16, 185, 129, 0.2);
   --qn-accent-border: rgba(16, 185, 129, 0.3);
 
-  --qn-banner: #0d2b20;
+  --qn-banner: var(--qn-nav-bg);
   --qn-banner-accent: #113b2b;
   --qn-banner-text: #eef4f1;
   --qn-banner-text-muted: rgba(238, 244, 241, 0.6);
@@ -285,49 +284,15 @@
   outline-offset: -1px;
 }
 
-/* Editor banner base gradient. */
+/* Signed-in application banners stay quiet and match the navigation rail. */
 .qn-banner-surface {
   position: relative;
   isolation: isolate;
-  background: linear-gradient(
-    118deg,
-    var(--qn-banner-from) 0%,
-    var(--qn-banner-via) 52%,
-    var(--qn-banner-to) 100%
-  );
+  background: var(--qn-banner);
 }
 
-/* Fixed-radius contour arcs stay circular across editor widths. */
 .qn-banner-surface::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background-repeat: no-repeat;
-  background-image: radial-gradient(
-    circle at calc(100% - 54px) -46px,
-    transparent 0,
-    transparent 178px,
-    rgba(255, 255, 255, 0.10) 180px,
-    transparent 182px,
-    transparent 246px,
-    rgba(255, 255, 255, 0.085) 248px,
-    transparent 250px,
-    transparent 318px,
-    rgba(255, 255, 255, 0.07) 320px,
-    transparent 322px,
-    transparent 394px,
-    rgba(255, 255, 255, 0.055) 396px,
-    transparent 398px,
-    transparent 474px,
-    rgba(255, 255, 255, 0.04) 476px,
-    transparent 478px
-  );
-}
-
-.dark .qn-banner-surface::after {
-  opacity: 0.7;
+  display: none;
 }
 
 .qn-skip-link {
