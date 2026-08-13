@@ -37,6 +37,41 @@ for (const viewport of VIEWPORTS) {
   })
 }
 
+test.describe('desktop application boundary', () => {
+  test.use({ viewport: { width: 1440, height: 900 } })
+
+  test('uses the browser viewport instead of a decorative inner window', async ({ page }) => {
+    await signIn(page)
+
+    const boundary = await page.locator('.qn-workspace-frame').evaluate((element) => {
+      const box = element.getBoundingClientRect()
+      const style = getComputedStyle(element)
+      return {
+        x: box.x,
+        y: box.y,
+        width: box.width,
+        height: box.height,
+        borderRadius: style.borderRadius,
+        boxShadow: style.boxShadow,
+      }
+    })
+
+    expect(boundary).toEqual({
+      x: 0,
+      y: 0,
+      width: 1440,
+      height: 900,
+      borderRadius: '0px',
+      boxShadow: 'none',
+    })
+
+    const sidebar = await page.locator('#qn-sidebar').boundingBox()
+    expect(sidebar.x).toBe(0)
+    expect(sidebar.y).toBe(0)
+    expect(sidebar.height).toBe(900)
+  })
+})
+
 test.describe('compact navigation', () => {
   test.use({ viewport: { width: 375, height: 667 }, hasTouch: true, isMobile: true })
 

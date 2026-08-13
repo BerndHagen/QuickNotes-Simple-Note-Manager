@@ -79,8 +79,6 @@ import '@fontsource/work-sans/latin-400.css'
 import '@fontsource/work-sans/latin-700.css'
 import './index.css'
 
-// The body owns the shared canvas behind both authentication and workspace layouts.
-document.body.classList.add('qn-canvas')
 import { Toaster } from 'react-hot-toast'
 
 ReactDOM.createRoot(document.getElementById('root')).render(

@@ -14,12 +14,13 @@ import { formatDateKey, generateId, parseDateKey } from './noteTypes'
 import { useLatestValue } from './useLatestValue'
 import { useEditorDataSync } from './useEditorDataSync'
 import FocusedNoteTitle from './FocusedNoteTitle'
+import WorkspaceMetrics from './WorkspaceMetrics'
 import Modal from '../ui/Modal'
 const COLUMN_COLORS = {
-  backlog: { bg: 'bg-surface-sunken', border: 'border-subtle ', text: 'text-content-muted' },
-  todo: { bg: 'bg-blue-50 dark:bg-blue-900/20', border: 'border-blue-300 dark:border-blue-700', text: 'text-blue-600' },
-  inProgress: { bg: 'bg-amber-50 dark:bg-amber-900/20', border: 'border-amber-300 dark:border-amber-700', text: 'text-amber-800 dark:text-amber-300' },
-  done: { bg: 'bg-green-50 dark:bg-green-900/20', border: 'border-green-300 dark:border-green-700', text: 'text-green-600' },
+  backlog: { indicator: 'bg-content-subtle' },
+  todo: { indicator: 'bg-info' },
+  inProgress: { indicator: 'bg-warning' },
+  done: { indicator: 'bg-success' },
 }
 
 const PRIORITIES = {
@@ -181,9 +182,9 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitl
 
   return (
     <div className="qn-type-editor qn-type-project flex flex-col h-full bg-surface-sunken">
-      <div className="qn-type-hero flex-shrink-0 p-4 border-b border-subtle bg-[#e5eaf0] dark:bg-surface-raised">
-        <div className="flex items-center justify-between mb-4">
-          <div>
+      <header className="qn-type-hero qn-workspace-header flex-shrink-0 border-b border-subtle">
+        <div className="flex items-center justify-between gap-4">
+          <div className="min-w-0">
             <FocusedNoteTitle
               icon={Target}
               typeLabel="Project workspace"
@@ -192,48 +193,20 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitl
               onChange={onTitleChange}
               readOnly={readOnly}
             />
-            <p className="text-content-muted text-sm mt-1">
+            <p className="ml-12 mt-1 text-ui-md text-content-muted">
               {stats.totalTasks} tasks {"\u2022"} {stats.progress}% complete
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="relative w-14 h-14">
-              <svg className="transform -rotate-90 w-14 h-14">
-                <circle cx="28" cy="28" r="24" stroke="rgba(0,0,0,0.1)" strokeWidth="6" fill="none" />
-                <circle
-                  cx="28" cy="28" r="24"
-                  stroke="#10b981"
-                  strokeWidth="6"
-                  fill="none"
-                  strokeDasharray={`${stats.progress * 1.5} 150`}
-                  strokeLinecap="round"
-                />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-content font-bold text-xs">{stats.progress}%</span>
-              </div>
-            </div>
-          </div>
         </div>
-        <div className="grid grid-cols-4 gap-2">
-          <div className="bg-white dark:bg-surface-sunken rounded-lg p-2 text-center border border-subtle ">
-            <div className="text-xl font-bold text-content">{stats.totalTasks}</div>
-            <div className="text-xs text-content-muted">Total</div>
-          </div>
-          <div className="bg-white dark:bg-surface-sunken rounded-lg p-2 text-center border border-subtle ">
-            <div className="text-xl font-bold text-content">{stats.inProgressTasks}</div>
-            <div className="text-xs text-content-muted">In Progress</div>
-          </div>
-          <div className="bg-white dark:bg-surface-sunken rounded-lg p-2 text-center border border-subtle ">
-            <div className="text-xl font-bold text-content">{stats.doneTasks}</div>
-            <div className="text-xs text-content-muted">Done</div>
-          </div>
-          <div className="bg-white dark:bg-surface-sunken rounded-lg p-2 text-center border border-subtle ">
-            <div className="text-xl font-bold text-red-500 dark:text-red-400">{stats.overdueTasks}</div>
-            <div className="text-xs text-content-muted">Overdue</div>
-          </div>
-        </div>
-      </div>
+        <WorkspaceMetrics
+          items={[
+            { label: 'Total', value: stats.totalTasks },
+            { label: 'In progress', value: stats.inProgressTasks },
+            { label: 'Done', value: stats.doneTasks },
+            { label: 'Overdue', value: stats.overdueTasks, tone: stats.overdueTasks ? 'danger' : 'neutral' },
+          ]}
+        />
+      </header>
       <div className="qn-type-tabs flex-shrink-0 flex gap-1 p-2 border-b border-subtle bg-surface-raised">
         {[
           { id: 'board', label: 'Kanban Board', icon: BarChart3 },
@@ -262,31 +235,33 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitl
               {columns.map((column) => {
                 const colors = COLUMN_COLORS[column.id] || COLUMN_COLORS.backlog
                 return (
-                  <div
+                  <section
                     key={column.id}
                     onDragOver={(e) => handleDragOver(e, column.id)}
                     onDragLeave={handleDragLeave}
                     onDrop={(e) => handleDrop(e, column.id)}
-                    className={`w-72 flex flex-col rounded-xl border-2 ${colors.border} ${
- dragOverColumn === column.id ? 'ring-2 ring-purple-500' : ''
+                    className={`w-72 flex flex-col overflow-hidden rounded-card border border-subtle bg-surface-raised ${
+ dragOverColumn === column.id ? 'ring-2 ring-accent ring-offset-2 ring-offset-[var(--qn-surface-sunken)]' : ''
  }`}
+                    aria-label={`${column.name}, ${column.tasks.length} tasks`}
                   >
-                    <div className={`flex items-center justify-between p-3 rounded-t-lg ${colors.bg}`}>
+                    <div className="flex items-center justify-between border-b border-subtle bg-surface-sunken px-3 py-2.5">
                       <div className="flex items-center gap-2">
-                        <span className={`font-semibold ${colors.text}`}>{column.name}</span>
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-white dark:bg-surface-sunken text-content-muted">
+                        <span className={`h-2 w-2 rounded-full ${colors.indicator}`} aria-hidden="true" />
+                        <span className="text-ui-lg font-semibold text-content">{column.name}</span>
+                        <span className="min-w-5 text-center text-ui-xs tabular-nums text-content-subtle">
                           {column.tasks.length}
                         </span>
                       </div>
                       <button
                         onClick={() => setShowAddTask(column.id)}
                         aria-label={`Add task to ${column.name}`}
-                        className="p-1 rounded hover:bg-white/50 dark:hover:bg-surface-sunken transition-colors"
+                        className="qn-square-control flex h-8 w-8 items-center justify-center rounded-control text-content-muted transition-colors hover:bg-surface-active hover:text-content"
                       >
                         <Plus className="w-4 h-4 text-content-muted" />
                       </button>
                     </div>
-                    <div className="flex-1 overflow-y-auto p-2 space-y-2 bg-surface-raised">
+                    <div className="flex-1 overflow-y-auto space-y-2 bg-surface-raised p-2">
                       {showAddTask === column.id && (
                         <div className="p-3 rounded-lg border-2 border-dashed border-accent-border bg-accent-soft">
                           <input
@@ -335,7 +310,7 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitl
                         </div>
                       )}
                     </div>
-                  </div>
+                  </section>
                 )
               })}
             </div>

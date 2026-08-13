@@ -23,6 +23,7 @@ import { formatDateKey, generateId, parseDateKey } from './noteTypes'
 import { useLatestValue } from './useLatestValue'
 import { useEditorDataSync } from './useEditorDataSync'
 import FocusedNoteTitle from './FocusedNoteTitle'
+import WorkspaceMetrics from './WorkspaceMetrics'
 
 export default function MeetingNotesEditor({ data, onChange, noteTitle, onTitleChange, readOnly }) {
   const [meetingData, setMeetingData] = useState({
@@ -224,9 +225,9 @@ ${meetingData.notes}
 
   return (
     <div className="qn-type-editor qn-type-meeting flex flex-col h-full bg-surface-raised">
-      <div className="qn-type-hero flex-shrink-0 p-4 border-b border-subtle bg-[#e5eaf0] dark:bg-surface-raised">
-        <div className="flex items-center justify-between mb-4">
-          <div>
+      <header className="qn-type-hero qn-workspace-header flex-shrink-0 border-b border-subtle">
+        <div className="flex items-center justify-between gap-4">
+          <div className="min-w-0">
             <FocusedNoteTitle
               icon={Users}
               typeLabel="Meeting workspace"
@@ -235,56 +236,46 @@ ${meetingData.notes}
               onChange={onTitleChange}
               readOnly={readOnly}
             />
-            <p className="text-content-muted text-sm mt-1">
+            <p className="ml-12 mt-1 text-ui-md text-content-muted">
               {meetingData.date} {"\u2022"} {stats.attendees} attendees {"\u2022"} {stats.agendaItems} agenda items
             </p>
           </div>
           <div className="flex items-center gap-3">
             <div className="text-center">
-              <div className="text-3xl font-mono font-bold text-content">
+              <div className="font-mono text-title-lg font-semibold tabular-nums text-content">
                 {formatTime(timerSeconds)}
               </div>
               <div className="text-xs text-content-muted">
                 {currentAgendaItem ? 'Active Timer' : 'Meeting Timer'}
               </div>
             </div>
-            <div className="flex flex-col gap-1">
+            <div className="flex gap-1">
               <button
                 onClick={() => timerRunning ? setTimerRunning(false) : setTimerRunning(true)}
                 aria-label={timerRunning ? 'Pause meeting timer' : 'Start meeting timer'}
-                className="p-2 rounded-lg bg-surface-sunken dark:bg-surface-sunken hover:bg-surface-active dark:hover:bg-surface-active text-content-muted"
+                className="qn-square-control flex h-9 w-9 items-center justify-center rounded-control text-content-muted transition-colors hover:bg-surface-active hover:text-content"
               >
                 {timerRunning ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
               </button>
               <button
                 onClick={() => { setTimerSeconds(0); setTimerRunning(false); setCurrentAgendaItem(null) }}
                 aria-label="Reset meeting timer"
-                className="p-2 rounded-lg bg-surface-sunken dark:bg-surface-sunken hover:bg-surface-active dark:hover:bg-surface-active text-content-muted"
+                className="qn-square-control flex h-9 w-9 items-center justify-center rounded-control text-content-muted transition-colors hover:bg-surface-active hover:text-content"
               >
                 <RotateCcw className="w-4 h-4" />
               </button>
             </div>
           </div>
         </div>
-        <div className="grid grid-cols-4 gap-2">
-          <div className="bg-white dark:bg-surface-sunken rounded-lg p-2 text-center border border-subtle ">
-            <div className="text-xl font-bold text-content">{stats.present}/{stats.attendees}</div>
-            <div className="text-xs text-content-muted">Present</div>
-          </div>
-          <div className="bg-white dark:bg-surface-sunken rounded-lg p-2 text-center border border-subtle ">
-            <div className="text-xl font-bold text-content">{stats.completedAgenda}/{stats.agendaItems}</div>
-            <div className="text-xs text-content-muted">Agenda Done</div>
-          </div>
-          <div className="bg-white dark:bg-surface-sunken rounded-lg p-2 text-center border border-subtle ">
-            <div className="text-xl font-bold text-content">{stats.actionItems}</div>
-            <div className="text-xs text-content-muted">Actions</div>
-          </div>
-          <div className="bg-white dark:bg-surface-sunken rounded-lg p-2 text-center border border-subtle ">
-            <div className="text-xl font-bold text-content">{stats.decisions}</div>
-            <div className="text-xs text-content-muted">Decisions</div>
-          </div>
-        </div>
-      </div>
+        <WorkspaceMetrics
+          items={[
+            { label: 'Present', value: `${stats.present}/${stats.attendees}` },
+            { label: 'Agenda done', value: `${stats.completedAgenda}/${stats.agendaItems}` },
+            { label: 'Actions', value: stats.actionItems },
+            { label: 'Decisions', value: stats.decisions },
+          ]}
+        />
+      </header>
       <div className="qn-type-tabs flex-shrink-0 flex gap-1 p-2 border-b border-subtle bg-surface-sunken overflow-x-auto">
         {sections.map(section => (
           <button

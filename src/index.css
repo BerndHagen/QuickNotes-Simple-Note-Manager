@@ -15,6 +15,8 @@
 
   body {
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    margin: 0;
+    background: var(--qn-surface-app);
   }
 
   * {
@@ -547,7 +549,7 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
   border-top-color: #374151;
 }
 
-/* Note-card hover accent preserves the card's border geometry. */
+/* Note-list rows stay quiet until selected. */
 .note-card {
   transition:
     background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
@@ -556,13 +558,15 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
 }
 
 .note-card:hover {
-  background-color: rgba(16, 185, 129, 0.03);
-  box-shadow: inset 3px 0 0 rgba(16, 185, 129, 0.3);
+  background-color: var(--qn-surface-hover);
 }
 
 .dark .note-card:hover {
-  background-color: rgba(16, 185, 129, 0.04);
-  box-shadow: inset 3px 0 0 rgba(16, 185, 129, 0.35);
+  background-color: var(--qn-surface-hover);
+}
+
+.note-card[aria-current='true'] {
+  box-shadow: inset 3px 0 0 var(--qn-accent);
 }
 
 @keyframes auth-form-in {
@@ -1005,21 +1009,6 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
 @media (min-width: 1024px) and (max-height: 760px) {
   .qn-auth-preview {
     display: none;
-  }
-}
-
-@media (min-width: 1280px) and (min-height: 700px) {
-  /* Inset desktop frame and surrounding canvas. */
-  .dark body {
-    background: linear-gradient(135deg, #12171c, #0d1116 55%, #151b21);
-  }
-
-  .qn-workspace-frame {
-    height: calc(100dvh - 24px);
-    margin: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    border-radius: 16px;
-    box-shadow: 0 28px 80px rgba(2, 20, 17, 0.34), 0 4px 16px rgba(2, 20, 17, 0.2);
   }
 }
 
@@ -1506,7 +1495,7 @@ body {
   }
 
   .qn-note-banner {
-    margin: 0.25rem !important;
+    margin: 0 !important;
     padding: 0.5rem 0.75rem !important;
   }
 
@@ -1795,41 +1784,122 @@ body {
 /* ============================================================
    Focused note workspaces
    ------------------------------------------------------------
-   Specialized note types share the same visual grammar as the main
-   document editor: a calm, high-contrast hero, compact tool rail, and
-   paper-like working surface. Each type keeps a restrained accent
-   without turning the product into a collection of unrelated themes.
+   Specialized note types are working surfaces, not dashboards. Their
+   headers therefore use neutral hierarchy and reserve green for active
+   controls, selection, progress, and semantic state.
    ============================================================ */
-/* One product accent unifies every specialized workspace hero. */
-.qn-type-todo,
-.qn-type-project,
-.qn-type-meeting,
-.qn-type-journal,
-.qn-type-brainstorm,
-.qn-type-shopping,
-.qn-type-weekly {
-  --qn-type-accent: #168966;
-}
-
 .qn-type-editor {
-  background:
-    radial-gradient(circle at 50% -15%, color-mix(in srgb, var(--qn-type-accent) 5%, transparent), transparent 38%),
-    var(--qn-surface);
+  background: var(--qn-surface-base);
 }
 
 .qn-type-hero {
   position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  padding: clamp(1.1rem, 2vw, 1.65rem) !important;
-  border-color: rgba(255, 255, 255, 0.12) !important;
-  background:
-    radial-gradient(circle at 22% -40%, color-mix(in srgb, var(--qn-type-accent) 72%, white) 0%, transparent 45%),
-    linear-gradient(132deg, color-mix(in srgb, var(--qn-type-accent) 72%, #062f2b) 0%, #073e38 62%, #06332f 100%) !important;
-  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+  padding: 14px 18px !important;
+  border-color: var(--qn-border-subtle) !important;
+  background: var(--qn-surface-raised) !important;
+  box-shadow: none;
 }
 
-.qn-type-hero::after,
+.qn-type-hero::after {
+  display: none;
+}
+
+.qn-type-hero input.qn-focused-title {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.qn-type-hero :where(input, textarea, select):not(.qn-focused-title) {
+  color: var(--qn-text);
+}
+
+.qn-type-hero :where(input, textarea)::placeholder {
+  color: var(--qn-text-subtle);
+}
+
+.qn-type-editor :where(input, textarea, select)[class*='border']:not(.qn-focused-title) {
+  border-width: 1px !important;
+  border-radius: var(--qn-radius-control) !important;
+}
+
+.qn-workspace-metrics {
+  display: flex;
+  align-items: center;
+  margin-top: 12px;
+  margin-left: 48px;
+}
+
+.qn-workspace-metric {
+  display: flex;
+  min-width: 96px;
+  align-items: baseline;
+  gap: 6px;
+  margin-right: 16px;
+  padding-right: 16px;
+  border-right: 1px solid var(--qn-border-subtle);
+}
+
+.qn-workspace-metric:last-child {
+  margin-right: 0;
+  padding-right: 0;
+  border-right: 0;
+}
+
+.qn-workspace-metric-value {
+  order: 1;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 20px;
+  font-variant-numeric: tabular-nums;
+}
+
+.qn-workspace-metric-label {
+  order: 2;
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--qn-text-muted);
+  white-space: nowrap;
+}
+
+.qn-type-tabs {
+  position: relative;
+  z-index: 4;
+  border-color: var(--qn-border-subtle) !important;
+  background: var(--qn-surface-raised) !important;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.qn-type-tabs button {
+  min-height: 2.25rem;
+}
+
+.qn-type-tabs > button[aria-pressed] {
+  border-radius: 0 !important;
+}
+
+.qn-type-tabs > button[aria-pressed='true'] {
+  background: transparent !important;
+  color: var(--qn-accent-text) !important;
+  box-shadow: inset 0 -2px 0 var(--qn-accent);
+}
+
+.qn-task-row:first-child {
+  border-top: 1px solid var(--qn-border-subtle);
+}
+
+/* The type picker is an onboarding surface and may remain more expressive. */
+.qn-type-picker-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 15% -40%, color-mix(in srgb, var(--picker-accent) 82%, white) 0%, transparent 43%),
+    linear-gradient(132deg, color-mix(in srgb, var(--picker-accent) 68%, #062f2b), #073e38 72%, #06332f);
+}
+
 .qn-type-picker-hero::after {
   content: '';
   position: absolute;
@@ -1850,97 +1920,9 @@ body {
   pointer-events: none;
 }
 
-/* Centralized hero contrast rules cover semantic tokens and legacy palette
-   utilities used by specialized workspace content. */
-.qn-type-hero h1,
-.qn-type-hero .text-content,
-.qn-type-hero .text-gray-900,
-.qn-type-hero .text-gray-700 {
-  color: #fff !important;
-}
-
-.qn-type-hero .text-content-muted,
-.qn-type-hero .text-content-subtle,
-.qn-type-hero .text-gray-500,
-.qn-type-hero .text-gray-400 {
-  color: rgba(255, 255, 255, 0.76) !important;
-}
-
-/* Status colours need to lift off a dark green rather than sink into it. */
-.qn-type-hero .text-red-500,
-.qn-type-hero .text-danger-text {
-  color: #fca5a5 !important;
-}
-
-.qn-type-hero .text-amber-500,
-.qn-type-hero .text-warning-text {
-  color: #fcd34d !important;
-}
-
-.qn-type-hero .text-emerald-600,
-.qn-type-hero .text-success-text {
-  color: #6ee7b7 !important;
-}
-
-.qn-type-hero .bg-surface-raised,
-.qn-type-hero .bg-surface-sunken,
-.qn-type-hero .bg-white,
-.qn-type-hero .dark\:bg-gray-700 {
-  border-color: rgba(255, 255, 255, 0.18) !important;
-  background: rgba(255, 255, 255, 0.1) !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(8px);
-}
-
-.qn-type-hero input {
-  border-color: rgba(255, 255, 255, 0.2) !important;
-  background: rgba(255, 255, 255, 0.1) !important;
-  color: #fff !important;
-  backdrop-filter: blur(8px);
-}
-
-.qn-type-hero input::placeholder {
-  color: rgba(255, 255, 255, 0.55) !important;
-}
-
-.qn-type-hero input.qn-focused-title {
-  border-color: transparent !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  backdrop-filter: none;
-}
-
-.qn-type-hero button {
-  outline-offset: 2px;
-}
-
-.qn-type-hero button:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.9);
-}
-
-.qn-type-tabs {
-  position: relative;
-  z-index: 4;
-  border-color: var(--qn-border-subtle) !important;
-  background: color-mix(in srgb, var(--qn-surface-raised) 94%, transparent) !important;
-  box-shadow: 0 4px 14px -14px rgba(15, 23, 42, 0.7);
-  backdrop-filter: blur(12px);
-}
-
-.qn-type-tabs button {
-  min-height: 2.25rem;
-}
-
-.qn-type-picker-hero {
-  isolation: isolate;
-  background:
-    radial-gradient(circle at 15% -40%, color-mix(in srgb, var(--picker-accent) 82%, white) 0%, transparent 43%),
-    linear-gradient(132deg, color-mix(in srgb, var(--picker-accent) 68%, #062f2b), #073e38 72%, #06332f);
-}
-
 @media (max-width: 640px) {
   .qn-type-hero {
-    padding: 1rem !important;
+    padding: 12px !important;
   }
 
   .qn-type-hero > .flex:first-child {
@@ -1949,19 +1931,24 @@ body {
     gap: 0.85rem;
   }
 
-  .qn-type-hero .grid-cols-4 {
+  .qn-workspace-metrics {
+    display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px 12px;
+    margin-top: 10px;
+    margin-left: 0;
+  }
+
+  .qn-workspace-metric {
+    min-width: 0;
+    margin-right: 0;
+    padding-right: 0;
+    border-right: 0;
   }
 
   .qn-type-hero .text-3xl {
-    font-size: 1.35rem;
-    line-height: 1.65rem;
-  }
-
-  .qn-type-hero .w-16.h-16,
-  .qn-type-hero .w-14.h-14 {
-    transform: scale(0.86);
-    transform-origin: right top;
+    font-size: 1.25rem;
+    line-height: 1.5rem;
   }
 
   .qn-type-tabs {

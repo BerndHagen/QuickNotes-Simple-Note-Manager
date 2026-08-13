@@ -25,6 +25,7 @@ import { formatDateKey, generateId, parseDateKey } from './noteTypes'
 import { useLatestValue } from './useLatestValue'
 import { useEditorDataSync } from './useEditorDataSync'
 import FocusedNoteTitle from './FocusedNoteTitle'
+import WorkspaceMetrics from './WorkspaceMetrics'
 import { ConfirmDialog } from '../FolderDialogs'
 const PRIORITIES = {
   high: { label: 'High', color: '#ef4444', bgColor: '#fef2f2', icon: '\u{1F534}' },
@@ -228,9 +229,9 @@ export default function TodoListEditor({ data, onChange, noteTitle, onTitleChang
   return (
     <>
       <div className="qn-type-editor qn-type-todo flex flex-col h-full bg-surface-raised">
-      <div className="qn-type-hero flex-shrink-0 p-4 border-b border-subtle bg-[#e5eaf0] dark:bg-surface-raised">
-        <div className="flex items-center justify-between mb-4">
-          <div>
+      <header className="qn-type-hero qn-workspace-header flex-shrink-0 border-b border-subtle">
+        <div className="flex items-center justify-between gap-4">
+          <div className="min-w-0">
             <FocusedNoteTitle
               icon={CheckCircle2}
               typeLabel="Task workspace"
@@ -239,53 +240,20 @@ export default function TodoListEditor({ data, onChange, noteTitle, onTitleChang
               onChange={onTitleChange}
               readOnly={readOnly}
             />
-            <p className="text-content-muted text-sm mt-1">
+            <p className="ml-12 mt-1 text-ui-md text-content-muted">
               {stats.active} tasks remaining {"\u2022"} {stats.completed} completed
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="relative w-16 h-16">
-              <svg className="transform -rotate-90 w-16 h-16">
-                <circle
-                  cx="32" cy="32" r="28"
-                  stroke="rgba(0,0,0,0.1)"
-                  strokeWidth="8"
-                  fill="none"
-                />
-                <circle
-                  cx="32" cy="32" r="28"
-                  stroke="#10b981"
-                  strokeWidth="8"
-                  fill="none"
-                  strokeDasharray={`${stats.progress * 1.76} 176`}
-                  strokeLinecap="round"
-                />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-content font-bold text-sm">{stats.progress}%</span>
-              </div>
-            </div>
-          </div>
         </div>
-        <div className="grid grid-cols-4 gap-2">
-          <div className="bg-white dark:bg-surface-sunken rounded-lg p-2 text-center border border-subtle ">
-            <div className="text-2xl font-bold text-content">{stats.total}</div>
-            <div className="text-xs text-content-muted">Total</div>
-          </div>
-          <div className="bg-white dark:bg-surface-sunken rounded-lg p-2 text-center border border-subtle ">
-            <div className="text-2xl font-bold text-content">{stats.active}</div>
-            <div className="text-xs text-content-muted">Active</div>
-          </div>
-          <div className="bg-white dark:bg-surface-sunken rounded-lg p-2 text-center border border-subtle ">
-            <div className="text-2xl font-bold text-content">{stats.completed}</div>
-            <div className="text-xs text-content-muted">Done</div>
-          </div>
-          <div className="bg-white dark:bg-surface-sunken rounded-lg p-2 text-center border border-subtle ">
-            <div className="text-2xl font-bold text-red-500 dark:text-red-400">{stats.overdue}</div>
-            <div className="text-xs text-content-muted">Overdue</div>
-          </div>
-        </div>
-      </div>
+        <WorkspaceMetrics
+          items={[
+            { label: 'Total', value: stats.total },
+            { label: 'Active', value: stats.active },
+            { label: 'Done', value: stats.completed },
+            { label: 'Overdue', value: stats.overdue, tone: stats.overdue ? 'danger' : 'neutral' },
+          ]}
+        />
+      </header>
       <div className="qn-type-tabs flex-shrink-0 p-3 border-b border-subtle flex items-center gap-2 bg-surface-sunken">
         <div className="relative" ref={filterRef}>
           <button
@@ -377,7 +345,7 @@ export default function TodoListEditor({ data, onChange, noteTitle, onTitleChang
             onChange={(e) => setNewTaskText(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && addTask()}
             placeholder="Add a new task..."
-            className="flex-1 px-4 py-3 rounded-xl bg-surface-sunken border-2 border-subtle focus:border-emerald-500 focus:bg-white dark:focus:bg-surface-sunken outline-none text-content placeholder:text-content-subtle transition-all"
+            className="flex-1 rounded-control border border-strong bg-surface-raised px-3 py-2.5 text-content outline-none transition-[border-color,box-shadow] placeholder:text-content-subtle focus:border-accent focus:ring-2 focus:ring-[var(--qn-accent-soft)]"
           />
           <button
             onClick={addTask}
@@ -389,7 +357,7 @@ export default function TodoListEditor({ data, onChange, noteTitle, onTitleChang
           </button>
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto p-4 space-y-2">
+      <div className="qn-task-list flex-1 overflow-y-auto px-4">
         {filteredTasks.length === 0 ? (
           <div className="text-center py-12">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-surface-sunken flex items-center justify-center">
@@ -491,17 +459,17 @@ function TaskItem({
 
   return (
     <div
-      className={`group rounded-xl border-2 transition-all ${
- task.completed 
- ? 'bg-surface-sunken border-subtle opacity-60' 
-          : 'bg-surface-raised border-subtle hover:border-emerald-300 dark:hover:border-emerald-700'
+      className={`qn-task-row group border-b border-subtle transition-colors ${
+ task.completed
+ ? 'text-content-subtle'
+          : 'hover:bg-surface-hover'
       }`}
     >
       <div className="flex items-center gap-3 p-3">
         <button
           onClick={onToggle}
           aria-label={task.completed ? `Mark ${task.text} incomplete` : `Complete ${task.text}`}
-          className="flex-shrink-0 transition-transform hover:scale-110"
+          className="qn-square-control flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-control transition-colors hover:bg-surface-active"
         >
           {task.completed ? (
             <CheckCircle2 className="w-6 h-6 text-emerald-500" />
@@ -605,7 +573,7 @@ function TaskItem({
             type="button"
             tabIndex={-1}
             aria-hidden="true"
-            className={`p-1.5 rounded-lg transition-all hover:scale-110 ${
+            className={`p-1.5 rounded-control transition-colors ${
  task.dueDate 
  ? isOverdue 
                   ? 'bg-red-100 dark:bg-red-900/30 text-red-500 hover:bg-red-200 dark:hover:bg-red-900/50'

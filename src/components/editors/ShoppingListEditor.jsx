@@ -238,7 +238,7 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
           <div className="flex gap-2">
             <button
               onClick={() => setShowSettings(!showSettings)}
-              className="text-sm text-content-muted hover:text-emerald-500"
+              className="text-sm text-content-muted hover:text-accent-text"
             >
               Settings
             </button>
@@ -247,7 +247,7 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
             <button
               onClick={uncheckAll}
               disabled={checkedCount === 0}
-              className="text-sm text-content-muted hover:text-emerald-500"
+              className="text-sm text-content-muted hover:text-accent-text"
             >
               Uncheck All
             </button>

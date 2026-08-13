@@ -344,7 +344,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
             onClick={onBack}
           />
         )}
-        {isCompact && (
+        {isCompact && !isSpecialized && (
           <div className="min-w-0 flex-1 md:hidden">
             <label htmlFor="qn-mobile-note-title" className="qn-sr-only">
               {t('editor.noteTitle', 'Note title')}
@@ -374,6 +374,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
             />
           </div>
         )}
+        {isCompact && isSpecialized && <div className="flex-1" aria-hidden="true" />}
         <SyncStatusPill className="mr-auto hidden md:flex" />
         {!isSpecialized && (
           <IconButton
@@ -478,9 +479,9 @@ export default function NoteEditor({ onBack, showBack = false }) {
         />
       </div>
 
-      {/* Banner header */}
+      {/* Document header */}
       {!isSpecialized && (
-        <header className={`qn-note-banner qn-banner-surface m-2 shrink-0 rounded-card px-4 py-3.5 text-banner-text sm:mx-3 sm:px-5 sm:py-4 ${
+        <header className={`qn-note-banner shrink-0 border-b border-subtle bg-surface px-3 py-2.5 text-content sm:px-4 sm:py-3 ${
           noteDetailsExpanded ? 'block' : 'hidden md:block'
         }`}>
         <div
@@ -514,8 +515,8 @@ export default function NoteEditor({ onBack, showBack = false }) {
                 }}
                 readOnly={isReadOnly}
                 placeholder={t('editor.untitled', 'Untitled note')}
-                className={`w-full truncate rounded-control bg-transparent px-2 py-1 text-title-md font-semibold text-banner-text outline-none transition-colors duration-fast placeholder:text-banner-muted sm:text-title-lg ${
-                  isEditingTitle ? 'bg-banner-hover' : 'hover:bg-banner-hover'
+                className={`w-full truncate rounded-control bg-transparent px-1.5 py-1 text-title-md font-semibold text-content outline-none transition-colors duration-fast placeholder:text-content-subtle sm:text-title-lg ${
+                  isEditingTitle ? 'bg-surface-sunken' : 'hover:bg-surface-hover'
                 } ${isReadOnly ? 'cursor-default' : 'cursor-text'}`}
               />
             )}
@@ -525,7 +526,6 @@ export default function NoteEditor({ onBack, showBack = false }) {
             <IconButton
               icon={Pin}
               label={note.pinned ? t('editor.unpin', 'Unpin note') : t('editor.pin', 'Pin note')}
-              tone="onBanner"
               active={note.pinned}
               iconClassName={note.pinned ? 'fill-current' : ''}
               aria-pressed={!!note.pinned}
@@ -538,7 +538,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
         {/* Metadata row */}
         <div
           id="qn-note-details"
-          className={`qn-note-metadata flex-nowrap items-center gap-x-1 gap-y-1 overflow-x-auto overscroll-x-contain text-ui-md text-banner-muted sm:flex-wrap sm:overflow-visible md:flex ${
+          className={`qn-note-metadata flex-nowrap items-center gap-x-1 gap-y-1 overflow-x-auto overscroll-x-contain text-ui-md text-content-muted sm:flex-wrap sm:overflow-visible md:flex ${
             noteDetailsExpanded ? 'flex' : 'hidden'
           }`}
         >
@@ -554,7 +554,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
             aria-haspopup={isShared ? undefined : 'menu'}
             aria-expanded={isShared ? undefined : folderPickerOpen}
             disabled={isShared}
-            className="qn-touch-target inline-flex max-w-[45%] items-center gap-1.5 rounded-control px-1.5 py-0.5 transition-colors duration-fast enabled:hover:bg-banner-hover enabled:hover:text-banner-text disabled:cursor-default"
+            className="qn-touch-target inline-flex max-w-[45%] items-center gap-1.5 rounded-control px-1.5 py-0.5 transition-colors duration-fast enabled:hover:bg-surface-hover enabled:hover:text-content disabled:cursor-default"
           >
             <FolderOpen className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             <span className="truncate">{currentFolder?.name || t('editor.noFolder', 'No folder')}</span>
@@ -568,7 +568,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
             aria-haspopup={isShared ? undefined : 'menu'}
             aria-expanded={isShared ? undefined : tagPickerOpen}
             disabled={isShared}
-            className="qn-touch-target inline-flex items-center gap-1.5 rounded-control px-1.5 py-0.5 transition-colors duration-fast enabled:hover:bg-banner-hover enabled:hover:text-banner-text disabled:cursor-default"
+            className="qn-touch-target inline-flex items-center gap-1.5 rounded-control px-1.5 py-0.5 transition-colors duration-fast enabled:hover:bg-surface-hover enabled:hover:text-content disabled:cursor-default"
           >
             <Tag className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             <span>
@@ -584,7 +584,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
               {note.tags.map((tagName) => (
                 <li key={tagName} className="min-w-0">
                   <TagChip
-                    surface="dark"
+                    surface="surface"
                     name={tagName}
                     color={tags.find((tag) => tag.name === tagName)?.color || '#6b7280'}
                     className="max-w-[16ch]"

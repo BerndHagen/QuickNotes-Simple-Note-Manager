@@ -13,13 +13,13 @@ export default function FocusedNoteTitle({
 
   return (
     <div className="flex min-w-0 items-center gap-3">
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] border border-white/15 bg-white/10 text-white">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-control border border-accent-border bg-accent-soft text-accent-text">
         <Icon className="h-5 w-5" aria-hidden="true" />
       </span>
       <div className="min-w-0 flex-1">
         <label
           htmlFor={id}
-          className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-white/60"
+          className="block text-ui-2xs font-semibold uppercase tracking-[0.12em] text-content-subtle"
         >
           {typeLabel}
         </label>
@@ -31,7 +31,7 @@ export default function FocusedNoteTitle({
           onChange={onChange}
           readOnly={readOnly}
           placeholder={fallback}
-          className="qn-focused-title mt-0.5 w-full truncate border-0 bg-transparent p-0 text-2xl font-bold leading-tight text-white outline-none placeholder:text-white/55 focus:ring-0"
+          className="qn-focused-title mt-0.5 w-full truncate border-0 bg-transparent p-0 text-title-lg font-semibold leading-tight text-content outline-none placeholder:text-content-subtle focus:ring-0"
         />
       </div>
     </div>
