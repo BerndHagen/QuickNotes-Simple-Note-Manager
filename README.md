@@ -29,6 +29,8 @@ You can try QuickNotes [**here**](https://berndhagen.github.io/QuickNotes-Simple
 - **Tables:** Insert and edit tables with a bubble menu for row/column operations, cell merging, header toggling, and cell background colors
 - **Task Lists:** Interactive checklists with checkbox toggling
 - **Image Support:** Upload and embed resizable images directly in notes with drag handles
+- **Document Objects:** Add editable text boxes and shapes with direct resize, free rotation, exact dimensions, flips, alignment, and color presets
+- **Simplified Editor Ribbon:** Common writing and insert actions stay visible while specialist formatting is available through an explicit More mode
 - **Folders & Tags:** Organize notes into folders and assign color-coded tags via the Tag Manager
 - **Favorites & Pins:** Star or pin important notes for quick access
 - **Global Search:** Full-text search across all notes by title, content, and tags
@@ -499,8 +501,13 @@ The editor is built on **TipTap** (ProseMirror wrapper) with the following exten
 | `CodeBlockLowlight` | Syntax-highlighted code blocks |
 | `Placeholder` | Placeholder text when editor is empty |
 | `Subscript` + `Superscript` | Sub/superscript text |
+| `TextBoxExtension` (custom) | Editable text boxes with resize, wrapping and free positioning |
+| `ShapeExtension` (custom) | Editable document shapes with persistent geometry and transforms |
 
 ### Custom TipTap Extensions
+
+- **`TextBoxExtension.js`** — Adds movable, resizable text boxes with in-flow, wrapped, and free-position modes.
+- **`ShapeExtension.js`** — Adds editable rectangle, rounded rectangle, ellipse, diamond, and arrow objects with drag resize, exact dimensions, rotation, flips, alignment, and color presets.
 
 - **`ResizableImageExtension.js`** — Extends the Image node to support drag-to-resize with handles. Renders via `ResizableImage.jsx`.
 - **`CustomTableCell.js`** — Extends TableCell with a `backgroundColor` attribute for per-cell coloring.

@@ -71,7 +71,7 @@ export default function ArchiveView() {
               onChange={(event) => setSearchQuery(event.target.value)}
               aria-label={t('archive.searchPlaceholder')}
               placeholder={t('archive.searchPlaceholder')}
-              className="bg-surface-sunken pl-9"
+              className="bg-surface-raised pl-9"
             />
           </div>
         </div>
@@ -109,7 +109,7 @@ export default function ArchiveView() {
                   <li key={note.id}>
                     <article
                       aria-labelledby={headingId}
-                      className="rounded-card border border-subtle bg-surface-sunken p-4 transition-colors hover:bg-surface-hover"
+                      className="rounded-card border border-subtle bg-surface-raised p-4 shadow-xs transition-[border-color,box-shadow] hover:border-strong hover:shadow-sm"
                     >
                       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                         <div className="min-w-0 flex-1">

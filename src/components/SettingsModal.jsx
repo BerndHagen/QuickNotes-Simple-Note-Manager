@@ -400,7 +400,7 @@ export default function SettingsModal() {
 
   return (
     <LegacyDialog label="Settings" onClose={() => setSettingsOpen(false)} align="center">
-      <div className="flex h-[calc(100dvh-1.5rem)] max-h-[92dvh] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-subtle bg-surface-raised shadow-2xl modal-animate sm:mx-4 sm:h-[80dvh] sm:rounded-2xl">
+      <div className="qn-settings-shell flex h-[calc(100dvh-1.5rem)] max-h-[92dvh] w-full max-w-3xl flex-col overflow-hidden rounded-dialog border border-subtle bg-surface-raised shadow-dialog modal-animate sm:mx-4 sm:h-[80dvh]">
         <div className="flex items-center justify-between px-4 py-4 sm:px-6 sm:py-5 qn-banner-surface">
           <div className="text-white">
             <h2 className="text-xl font-bold flex items-center gap-2">
@@ -421,7 +421,7 @@ export default function SettingsModal() {
           </button>
         </div>
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden sm:flex-row">
-        <div className="shrink-0 border-b border-subtle bg-surface-sunken p-2 sm:w-48 sm:border-b-0 sm:border-r sm:p-4">
+        <div className="shrink-0 border-b border-subtle bg-surface p-2 sm:w-48 sm:border-b-0 sm:border-r sm:p-4">
           <nav aria-label="Settings sections" className="flex max-w-full gap-1 overflow-x-auto overscroll-x-contain sm:block sm:space-y-1 sm:overflow-visible">
             {tabs.map((tab) => (
               <button
@@ -442,12 +442,12 @@ export default function SettingsModal() {
           </nav>
         </div>
         <div data-settings-content className="flex min-h-0 min-w-0 flex-1 flex-col">
-          <div className="flex items-center justify-between border-b border-subtle bg-surface-sunken px-4 py-3 dark:bg-surface-raised sm:px-6">
+          <div className="flex items-center justify-between border-b border-subtle bg-surface-raised px-4 py-3 sm:px-6">
             <h3 className="text-[10px] font-bold text-content-muted uppercase tracking-[0.12em]">
               {tabs.find((t) => t.id === activeTab)?.label}
             </h3>
           </div>
-          <div data-settings-pane tabIndex="0" aria-label="Settings options" className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain p-4 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--qn-focus-ring)] sm:p-6">
+          <div data-settings-pane tabIndex="0" aria-label="Settings options" className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain bg-surface p-4 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--qn-focus-ring)] sm:p-6">
             {activeTab === 'general' && (
               <div className="space-y-6">
                 <div>

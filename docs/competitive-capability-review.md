@@ -1,6 +1,6 @@
 # Competitive capability review
 
-Reviewed 2026-08-08 against current official product documentation. The goal is
+Reviewed 2026-08-13 against current official product documentation. The goal is
 not to combine every specialist feature from every notes product. It is to keep
 QuickNotes complete for its core job without adding shallow, unsafe, or
 unfinished parity features.
@@ -46,6 +46,35 @@ attachments).
 | Semantic / generative AI and meeting transcription | Can accelerate search, summaries and meeting capture; current Notion, Evernote, OneNote and Apple Notes documentation describes AI or transcription features. | Ongoing service cost, privacy/consent requirements, data residency, reliability and vendor dependency. | Reject as a default dependency. Translation remains an explicit opt-in external action. |
 | Native widgets and platform-only integrations | Faster capture on supported operating systems. | Requires separate native applications and creates platform inconsistency. | Retain the cross-platform PWA and quick-capture path instead. |
 
+## 2026-08-13 focused follow-up
+
+The editor and workspace changes in this pass were selected against current
+official product guidance:
+
+- Word for the web makes its simplified, single-line ribbon the default and
+  expands to the classic ribbon when the user needs less-common commands.
+  QuickNotes now keeps everyday writing, lists, tables, links, images, text
+  boxes and shapes visible, with specialist typography, alignment, source and
+  page controls behind an explicit **More / Simplify** switch.
+- Word exposes direct drag sizing, exact width and height, free rotation,
+  Shift-constrained 15-degree rotation, 90-degree commands and horizontal or
+  vertical flips. OneNote also treats shapes as useful note objects. QuickNotes
+  now persists that practical subset directly in note HTML for rectangles,
+  rounded rectangles, ellipses, diamonds and arrows with editable text,
+  alignment and restrained colour presets.
+- Notion's board view confirms Kanban as a status-based workspace pattern.
+  QuickNotes already had a full Project Board with columns, drag-and-drop,
+  milestones, assignees and keyboard status movement; it was a discovery gap,
+  not a missing capability. The rail now names **Workspaces & Kanban** directly.
+- Notion Forms is a response-collection system connected to databases, public
+  links and permissions. That is a different product model from document
+  shapes and would require a durable response schema, access policy and abuse
+  controls, so a cosmetic in-note form builder was deliberately not added.
+- Evernote concentrates many content types in an Insert menu and supports
+  tasks, tables, links, a table of contents, attachments and audio. QuickNotes
+  already covers the note-native core; generic attachments remain deferred
+  until storage quotas, validation, offline caching and deletion are complete.
+
 ## Product conclusion
 
 QuickNotes should not claim to contain “everything” from every competitor; no
@@ -63,3 +92,7 @@ backend flows are designed and tested.
 - Obsidian: [backlinks](https://obsidian.md/help/plugins/backlinks), [graph view](https://obsidian.md/help/plugins/graph), and [Canvas](https://obsidian.md/help/plugins/canvas)
 - Apple Notes: [macOS Notes guide](https://support.apple.com/guide/notes/welcome/mac)
 - Google Keep: [product workflow](https://support.google.com/keep/answer/2888240) and [sharing](https://support.google.com/keep/answer/6101196)
+- Microsoft Word: [simplified ribbon](https://support.microsoft.com/en-US/Word/using-the-simplified-ribbon-in-word-for-the-web), [drawing and sizing](https://support.microsoft.com/en-US/Word/add-a-drawing-to-a-document), and [rotate or flip objects](https://support.microsoft.com/en-us/office/rotate-or-flip-a-text-box-shape-wordart-or-picture-in-word-8e55a7a0-274b-455b-a8aa-4aacd437c527)
+- Microsoft OneNote: [drawing and shapes](https://support.microsoft.com/en-us/onenote/onenote-help-and-learning/draw-and-sketch-notes-in-onenote)
+- Notion: [board views](https://www.notion.com/help/boards) and [forms](https://www.notion.com/en-gb/help/forms)
+- Evernote: [editor and insert options](https://help.evernote.com/hc/en-us/articles/360022954093-Note-editor-and-editing-toolbar-overview)

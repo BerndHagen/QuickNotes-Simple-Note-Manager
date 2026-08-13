@@ -137,6 +137,7 @@ test.describe('mobile Safari workflows', () => {
     const toolbar = page.locator('.editor-toolbar')
     await expect(toolbar).toBeHidden()
     await page.getByRole('button', { name: /show formatting tools/i }).tap()
+    await page.getByRole('button', { name: /show more formatting tools/i }).tap()
     const toolbarMetrics = await toolbar.evaluate((element) => ({
       height: element.getBoundingClientRect().height,
       clientWidth: element.clientWidth,

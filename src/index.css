@@ -1447,6 +1447,20 @@ body {
   padding-left: max(0.75rem, env(safe-area-inset-left));
 }
 
+/* Legacy workflows now inherit the same window geometry and elevation as the
+   shared Modal shell. Their internal content can differ, but the window itself
+   no longer feels like a separate product. */
+.qn-legacy-dialog-panel > * {
+  border-radius: var(--qn-radius-dialog) !important;
+  border-color: var(--qn-border-subtle) !important;
+  background: var(--qn-surface-raised);
+  box-shadow: var(--qn-shadow-dialog) !important;
+}
+
+.qn-settings-shell :where(input, textarea, select, button[class*='rounded-lg'], button[class*='rounded-xl']) {
+  border-radius: var(--qn-radius-control) !important;
+}
+
 @media (max-width: 1023px) {
   .qn-sidebar-frame {
     top: env(safe-area-inset-top);
@@ -1820,6 +1834,120 @@ body {
   margin-top: 0;
 }
 
+/* ============================================================
+   Document shapes
+   ------------------------------------------------------------
+   Shape geometry and transforms live in the TipTap node. The outer wrapper
+   preserves document flow while the inner object rotates and flips without
+   moving neighbouring paragraphs.
+   ============================================================ */
+.qn-shape {
+  box-sizing: border-box;
+  max-width: 100%;
+  margin-block: 18px;
+}
+
+.qn-shape__object,
+.qn-shape__surface {
+  width: 100%;
+  height: 100%;
+}
+
+.qn-shape__object {
+  transform-origin: center;
+}
+
+.qn-shape__surface {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-sizing: border-box;
+  border: 1.5px solid var(--qn-accent-border);
+  border-radius: var(--qn-radius-control);
+  background: var(--qn-accent-soft);
+  color: var(--qn-accent-text);
+  box-shadow: var(--qn-shadow-xs);
+  transition:
+    border-color var(--qn-duration-fast) var(--qn-ease),
+    box-shadow var(--qn-duration-fast) var(--qn-ease);
+}
+
+.qn-shape[data-fill='info'] .qn-shape__surface {
+  border-color: var(--qn-info-border);
+  background: var(--qn-info-soft);
+  color: var(--qn-info-text);
+}
+
+.qn-shape[data-fill='warning'] .qn-shape__surface {
+  border-color: var(--qn-warning-border);
+  background: var(--qn-warning-soft);
+  color: var(--qn-warning-text);
+}
+
+.qn-shape[data-fill='neutral'] .qn-shape__surface {
+  border-color: var(--qn-border-strong);
+  background: var(--qn-surface-sunken);
+  color: var(--qn-text);
+}
+
+.qn-shape[data-shape='rectangle'] .qn-shape__surface {
+  border-radius: 0;
+}
+
+.qn-shape[data-shape='ellipse'] .qn-shape__surface {
+  border-radius: 50%;
+}
+
+.qn-shape[data-shape='diamond'] .qn-shape__surface {
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  border: 0;
+  border-radius: 0;
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, currentColor 30%, transparent);
+}
+
+.qn-shape[data-shape='arrow'] .qn-shape__surface {
+  clip-path: polygon(0 18%, 68% 18%, 68% 0, 100% 50%, 68% 100%, 68% 82%, 0 82%);
+  border: 0;
+  border-radius: 0;
+  padding-right: 14%;
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, currentColor 30%, transparent);
+}
+
+.qn-shape__content {
+  width: min(78%, 28rem);
+  padding: 10px;
+  text-align: center;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.qn-shape__content:focus {
+  outline: none;
+}
+
+.qn-shape--selected .qn-shape__surface {
+  border-color: var(--qn-accent);
+  box-shadow: 0 0 0 3px var(--qn-accent-soft), var(--qn-shadow-sm);
+}
+
+.qn-shape__rotation-line {
+  height: 20px !important;
+}
+
+@media (max-width: 767px) {
+  .qn-shape {
+    width: min(100%, var(--qn-shape-width, 240px)) !important;
+  }
+
+  .qn-shape-toolbar {
+    bottom: auto;
+    top: 100%;
+    margin-top: 12px;
+    margin-bottom: 0;
+  }
+}
+
 /* Boxes must not overflow a narrow editor. */
 @media (max-width: 767px) {
   .qn-text-box {
@@ -2149,34 +2277,18 @@ body {
   transform: translateY(-1px);
 }
 
-/* The type picker is an onboarding surface and may remain more expressive. */
+/* The type picker uses the same flat rail green as every other workspace
+   landmark. Decorative texture belongs on authentication/marketing surfaces,
+   not inside the working application. */
 .qn-type-picker-hero {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  background:
-    radial-gradient(circle at 15% -40%, color-mix(in srgb, var(--picker-accent) 82%, white) 0%, transparent 43%),
-    linear-gradient(132deg, color-mix(in srgb, var(--picker-accent) 68%, #062f2b), #073e38 72%, #06332f);
+  background: var(--qn-banner);
 }
 
 .qn-type-picker-hero::after {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  width: 58%;
-  aspect-ratio: 1.6;
-  right: -9%;
-  bottom: -85%;
-  border-radius: 50%;
-  opacity: 0.24;
-  background:
-    repeating-radial-gradient(
-      ellipse at center,
-      transparent 0 11px,
-      rgba(255, 255, 255, 0.18) 12px 13px
-    );
-  transform: rotate(-8deg);
-  pointer-events: none;
+  display: none;
 }
 
 @media (max-width: 640px) {

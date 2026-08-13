@@ -248,8 +248,14 @@ export const truncateText = (text, maxLength = 100) => {
 export const htmlToPlainText = (html) => {
   if (!html) return ''
   const tmp = document.createElement('div')
-  tmp.innerHTML = html
-  return tmp.textContent || tmp.innerText || ''
+  // textContent does not insert separators between adjacent block elements,
+  // which produced previews such as "screen.Finding" and "aroundThree".
+  // Add semantic boundaries before parsing, then normalize editor whitespace.
+  tmp.innerHTML = String(html).replace(
+    /<(br\s*\/?|\/(?:p|div|h[1-6]|li|blockquote|pre|tr))\s*>/gi,
+    ' '
+  )
+  return (tmp.textContent || tmp.innerText || '').replace(/\s+/g, ' ').trim()
 }
 
 /**

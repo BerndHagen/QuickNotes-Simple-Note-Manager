@@ -7,13 +7,13 @@ import {
   Copy,
   FolderOpen,
   Keyboard,
+  Kanban,
   LogOut,
   Monitor,
   Moon,
   Pencil,
   Plus,
   Settings,
-  Sparkles,
   Star,
   Sun,
   Trash2,
@@ -287,8 +287,8 @@ export default function Sidebar({ onNavigate }) {
           </li>
           <li>
             <NavItem
-              icon={Sparkles}
-              label={t('sidebar.noteTypes', 'Note types')}
+              icon={Kanban}
+              label={t('sidebar.noteTypes', 'Workspaces & Kanban')}
               onClick={go(() => setNoteTypesModalOpen(true))}
             />
           </li>

@@ -50,6 +50,7 @@ test.describe('accessibility', () => {
       'Dark Lined',
     ]
 
+    await page.getByRole('button', { name: /show more formatting tools/i }).click()
     for (const paperStyle of paperStyles) {
       await page.getByRole('button', { name: 'Paper Style' }).click()
       await page

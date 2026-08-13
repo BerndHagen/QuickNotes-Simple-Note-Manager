@@ -91,7 +91,7 @@ function WorkspacePreview() {
     { icon: Users, label: 'Shared with me' },
     { icon: Trash2, label: 'Trash' },
     { icon: Archive, label: 'Archive' },
-    { icon: Sparkles, label: 'Note types' },
+    { icon: Sparkles, label: 'Workspaces' },
   ]
   const noteCards = [
     {

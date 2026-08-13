@@ -79,16 +79,26 @@ const NoteCard = forwardRef(function NoteCard(
             isDragging ? 'opacity-50' : '',
           ].join(' ')}
         >
-          {/* The pin indicator and the star control share one corner, so the
-              title reserves that width rather than running underneath them. */}
-          <div className="flex items-start gap-2">
+          <div className="flex min-w-0 items-center gap-1.5 pr-14">
             <h3
-              className={`min-w-0 flex-1 truncate pr-16 font-semibold text-content ${
+              className={`min-w-0 truncate font-semibold text-content ${
                 compactMode ? 'text-ui-md' : 'text-title-xs'
               }`}
             >
               {note.title || 'Untitled note'}
             </h3>
+            {note.pinned && (
+              <span className="flex shrink-0 items-center text-accent" title="Pinned">
+                <Pin className="h-3 w-3 fill-current" aria-hidden="true" />
+                <span className="qn-sr-only">Pinned</span>
+              </span>
+            )}
+            {note.starred && (
+              <span className="flex shrink-0 items-center text-warning" title="Favourite">
+                <Star className="h-3 w-3 fill-current" aria-hidden="true" />
+                <span className="qn-sr-only">Favourite</span>
+              </span>
+            )}
           </div>
 
           {notePreviewLines > 0 && (
@@ -132,18 +142,12 @@ const NoteCard = forwardRef(function NoteCard(
           </div>
         </button>
 
-        {/* The star sits outside the card button: nesting interactive elements is
-            invalid HTML and breaks screen-reader navigation. The pin rides along
-            so the two never land on the same pixels. */}
+        {/* Interactive actions remain siblings of the card button for valid HTML.
+            They enter and leave as one group, so an orphan icon never floats in
+            the title corner. Persistent state is shown beside the title above. */}
         <div
-          className={`absolute right-0.5 flex items-center gap-1 ${compactMode ? 'top-1' : 'top-2'}`}
+          className={`absolute right-1 flex items-center gap-0.5 rounded-control border border-subtle bg-surface-raised/95 p-0.5 opacity-100 shadow-xs transition-opacity duration-fast sm:pointer-events-none sm:opacity-0 sm:group-hover:pointer-events-auto sm:group-hover:opacity-100 sm:group-focus-within:pointer-events-auto sm:group-focus-within:opacity-100 ${compactMode ? 'top-1' : 'top-2'}`}
         >
-          {note.pinned && (
-            <>
-              <Pin className="h-3 w-3 shrink-0 fill-current text-accent" aria-hidden="true" />
-              <span className="qn-sr-only">Pinned</span>
-            </>
-          )}
           <button
             type="button"
             onClick={(e) => {
@@ -157,7 +161,7 @@ const NoteCard = forwardRef(function NoteCard(
             }
             aria-pressed={!!note.starred}
             className={`qn-card-action qn-inline-target flex h-6 w-6 items-center justify-center rounded-control transition-colors duration-fast hover:bg-surface-active ${
-              note.starred ? 'text-warning' : 'text-content-subtle opacity-60 hover:opacity-100'
+              note.starred ? 'text-warning' : 'text-content-subtle hover:text-content'
             }`}
           >
             <Star
@@ -173,7 +177,7 @@ const NoteCard = forwardRef(function NoteCard(
               onOpenMenu?.({ x: rect.right, y: rect.bottom })
             }}
             aria-label={`More actions for ${note.title || 'Untitled note'}`}
-            className="qn-card-action qn-inline-target flex h-6 w-6 items-center justify-center rounded-control text-content-subtle opacity-100 transition-colors duration-fast hover:bg-surface-active hover:text-content sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
+            className="qn-card-action qn-inline-target flex h-6 w-6 items-center justify-center rounded-control text-content-subtle transition-colors duration-fast hover:bg-surface-active hover:text-content"
           >
             <MoreHorizontal className="h-3.5 w-3.5" aria-hidden="true" />
           </button>

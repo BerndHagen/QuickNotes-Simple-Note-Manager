@@ -91,6 +91,7 @@ test.describe('editor dialogs on a small screen', () => {
         value: { writeText: () => Promise.reject(new Error('denied')) },
       })
     })
+    await page.getByRole('button', { name: /show more formatting tools/i }).click()
     await page.getByRole('button', { name: 'Edit HTML Source' }).click()
 
     const dialog = page.getByRole('dialog', { name: 'HTML editor' })
@@ -99,5 +100,57 @@ test.describe('editor dialogs on a small screen', () => {
     await expect(dialog.getByRole('alert')).toContainText('Clipboard access was blocked')
     await expect(dialog.getByRole('textbox', { name: 'HTML source' })).toBeFocused()
     await expectDialogQuality(page, dialog)
+  })
+})
+
+test.describe('editor productivity objects', () => {
+  test.beforeEach(async ({ page }) => {
+    await signIn(page)
+    await page.getByRole('heading', { name: 'Welcome to QuickNotes' }).click()
+    await expect(page.locator('.editor-toolbar')).toBeVisible()
+  })
+
+  test('uses a simplified ribbon until the writer asks for specialist tools', async ({ page }) => {
+    const toolbar = page.locator('.editor-toolbar')
+    await expect(toolbar.getByRole('button', { name: 'Bold' })).toBeVisible()
+    await expect(toolbar.getByRole('button', { name: 'Insert shape' })).toBeVisible()
+    await expect(toolbar.getByRole('button', { name: 'Strikethrough' })).toBeHidden()
+    await expect(toolbar.getByRole('button', { name: 'Edit HTML Source' })).toBeHidden()
+
+    await toolbar.getByRole('button', { name: /show more formatting tools/i }).click()
+    await expect(toolbar.getByRole('button', { name: 'Strikethrough' })).toBeVisible()
+    await expect(toolbar.getByRole('button', { name: 'Edit HTML Source' })).toBeVisible()
+    await expect(toolbar.getByRole('button', { name: /use simplified toolbar/i })).toBeVisible()
+  })
+
+  test('inserts a shape with direct and exact transformation controls', async ({ page }) => {
+    await page.getByRole('button', { name: 'Insert shape' }).click()
+    const shape = page.locator('.qn-shape').last()
+    await expect(shape).toBeVisible()
+    await shape.locator('.qn-shape__surface').click()
+    await expect(shape.getByRole('toolbar', { name: 'Shape formatting' })).toBeVisible()
+
+    const width = page.getByRole('spinbutton', { name: 'Shape width' })
+    const height = page.getByRole('spinbutton', { name: 'Shape height' })
+    await expect(width).toBeVisible()
+    await width.fill('320')
+    await height.fill('150')
+    await page.getByRole('button', { name: 'Rotate right 90 degrees' }).click()
+    const flipHorizontal = page.getByRole('button', { name: 'Flip horizontally' })
+    await expect(flipHorizontal).toHaveAttribute('aria-pressed', 'false')
+    await flipHorizontal.click()
+
+    await expect(shape).toHaveAttribute('data-width', '320')
+    await expect(shape).toHaveAttribute('data-height', '150')
+    await expect(shape).toHaveAttribute('data-rotation', '90')
+    await expect(shape).toHaveAttribute('data-flip-h', 'true')
+    await expect(flipHorizontal).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.getByRole('spinbutton', { name: 'Shape rotation in degrees' })).toHaveValue('90')
+
+    const toolbarBox = await shape.locator('.qn-shape-toolbar').boundingBox()
+    const rotationHandleBox = await shape
+      .getByRole('button', { name: /drag to rotate shape/i })
+      .boundingBox()
+    expect(rotationHandleBox.y).toBeGreaterThanOrEqual(toolbarBox.y + toolbarBox.height)
   })
 })

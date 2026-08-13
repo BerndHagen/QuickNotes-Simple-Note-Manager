@@ -240,6 +240,7 @@ test.describe('mobile editor usability', () => {
   })
 
   test('keeps the toolbar compact while every command remains reachable', async ({ page }) => {
+    await page.getByRole('button', { name: /show more formatting tools/i }).click()
     const metrics = await page.locator('.editor-toolbar').evaluate((toolbar) => {
       const toolbarBox = toolbar.getBoundingClientRect()
       const results = []
@@ -287,6 +288,7 @@ test.describe('mobile editor usability', () => {
   })
 
   test('keeps formatting popovers inside the visible viewport', async ({ page }) => {
+    await page.getByRole('button', { name: /show more formatting tools/i }).click()
     await page.getByRole('button', { name: 'Text Color' }).click()
     const dropdown = page.getByRole('dialog', { name: 'Formatting options' })
     await expect(dropdown).toBeVisible()
@@ -425,6 +427,7 @@ test.describe('desktop editor tools', () => {
 
     const toolbar = page.locator('.editor-toolbar')
     await expect(toolbar).toBeVisible()
+    await toolbar.getByRole('button', { name: /show more formatting tools/i }).click()
     const metrics = await toolbar.evaluate((element) => {
       const toolbarBox = element.getBoundingClientRect()
       const tools = [...element.querySelectorAll('button')]
@@ -475,6 +478,7 @@ test.describe('desktop editor tools', () => {
     })
     expect(contrast).toBeGreaterThanOrEqual(4.5)
 
+    await page.getByRole('button', { name: /show more formatting tools/i }).click()
     await page.getByRole('button', { name: 'Paper Style' }).click()
     const paperMenu = page.getByRole('dialog', { name: 'Formatting options' })
     const plain = paperMenu.getByRole('button', { name: 'Plain' })

@@ -73,6 +73,9 @@ describe('text helpers', () => {
 
   it('strips markup down to readable text', () => {
     expect(htmlToPlainText('<p>Hello <strong>world</strong></p>')).toBe('Hello world')
+    expect(htmlToPlainText('<p>First sentence.</p><h2>Next section</h2><ul><li>One</li><li>Two</li></ul>')).toBe(
+      'First sentence. Next section One Two'
+    )
     expect(htmlToPlainText('')).toBe('')
   })
 })

@@ -109,6 +109,12 @@ export default {
       },
 
       borderRadius: {
+        // Legacy screens still use Tailwind's large-radius names. Resolve all
+        // substantial product surfaces through the same semantic geometry so
+        // fields, cards, popovers and windows do not drift apart.
+        lg: 'var(--qn-radius-control)',
+        xl: 'var(--qn-radius-card)',
+        '2xl': 'var(--qn-radius-dialog)',
         control: 'var(--qn-radius-control)',
         card: 'var(--qn-radius-card)',
         dialog: 'var(--qn-radius-dialog)',

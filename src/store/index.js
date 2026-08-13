@@ -268,7 +268,7 @@ const createStarterContent = () => {
 <p>If you are unsure which to use, start with tags. They are easier to change your mind about later.</p>
 
 <h2>Beyond plain documents</h2>
-<p>Under <strong>Note types</strong> in the rail there are structured workspaces, each with its own fields rather than a blank page: a task list with priorities and due dates, a project board with columns and milestones, a meeting workspace for agenda, decisions and action items, a daily journal, an idea board, a shopping list, and a weekly planner.</p>
+<p>Under <strong>Workspaces &amp; Kanban</strong> in the rail there are structured workspaces, each with its own fields rather than a blank page: a task list with priorities and due dates, a Kanban project board with columns and milestones, a meeting workspace for agenda, decisions and action items, a daily journal, an idea board, a shopping list, and a weekly planner.</p>
 <p>They behave like ordinary notes \u2014 searchable, taggable, exportable \u2014 so it is worth trying one before writing a plan by hand.</p>
 
 <h2>Shortcuts worth remembering</h2>
@@ -294,7 +294,7 @@ const createStarterContent = () => {
 <ul data-type="taskList">
   <li data-type="taskItem" data-checked="false"><label><input type="checkbox"><span></span></label><div><p>Write one real note \u2014 anything you would otherwise leave in a browser tab</p></div></li>
   <li data-type="taskItem" data-checked="false"><label><input type="checkbox"><span></span></label><div><p>Rename the starter folders, or delete the ones you will not use</p></div></li>
-  <li data-type="taskItem" data-checked="false"><label><input type="checkbox"><span></span></label><div><p>Create a task list from Note types and add three things you owe someone</p></div></li>
+  <li data-type="taskItem" data-checked="false"><label><input type="checkbox"><span></span></label><div><p>Create a task list from Workspaces &amp; Kanban and add three things you owe someone</p></div></li>
   <li data-type="taskItem" data-checked="false"><label><input type="checkbox"><span></span></label><div><p>Press Ctrl+K and search for a word you just typed</p></div></li>
   <li data-type="taskItem" data-checked="false"><label><input type="checkbox"><span></span></label><div><p>Decide whether this note stays or goes</p></div></li>
 </ul>`,

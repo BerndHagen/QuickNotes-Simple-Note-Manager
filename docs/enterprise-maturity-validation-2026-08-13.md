@@ -17,6 +17,28 @@ The resulting product is materially calmer and more credible without being gray 
 - Structured notes expose a visible **Tags** button in the top action bar instead of relying on an icon alone.
 - Every Idea Board card exposes its category as a direct dropdown in both grid and list views. Category management is a labelled **Categories** action rather than an isolated plus icon.
 
+## Continuation pass
+
+- Pinned and favourite state now sits directly beside each note title. The
+  favourite shortcut and context-menu trigger appear together as one contained
+  hover/focus action group, while remaining permanently available on touch.
+- Kanban was already implemented as the Project Board workspace; the sidebar
+  now exposes it directly as **Workspaces & Kanban** and the starter/help copy
+  uses the same name.
+- The rich-text editor now defaults to a calm, single-line core toolbar.
+  Specialist typography, alignment, page and source controls remain available
+  through an explicit **More / Simplify** mode rather than competing with daily
+  writing actions.
+- Notes can contain editable rectangles, rounded rectangles, ellipses,
+  diamonds and arrows. Shape HTML persists text, exact dimensions, free
+  rotation, 15-degree snapping, 90-degree rotation, flips, alignment and colour.
+- Fields, substantial cards, popovers and application windows now resolve to
+  one 12 px product radius. Settings, Archive, Trash and legacy dialogs share
+  the same shell geometry, elevation and surface hierarchy.
+- Plain-text previews preserve semantic spacing between document blocks, so
+  Archive, Trash, search and note-card excerpts no longer concatenate headings
+  and paragraphs.
+
 ## Research baseline
 
 The implementation was checked against primary design-system guidance rather than copied from another product:
@@ -25,7 +47,9 @@ The implementation was checked against primary design-system guidance rather tha
 - [Atlassian design tokens](https://atlassian.design/foundations/tokens/design-tokens/) recommends selecting tokens by semantic meaning. New application, panel, brand-tint, state, border, motion, and elevation decisions flow through semantic tokens.
 - [Atlassian drag-and-drop guidance](https://atlassian.design/components/pragmatic-drag-and-drop/design-guidelines) calls for clear drag affordances and alternative actions. Kanban tasks now have a dedicated handle plus directly focusable previous/next status actions and a live announcement.
 - [Fluent 2 card guidance](https://fluent2.microsoft.design/components/web/react/core/card/usage) treats a card as one predictable object with structured content and actions. Idea and note cards now follow that model.
-- [Fluent 2 toolbar guidance](https://fluent2.microsoft.design/components/web/react/core/toolbar/usage) emphasizes logical action groups, accessible names, and overflow discipline. Existing editor toolbar grouping was preserved, while icon controls and overflow-prone workspace rails were normalized.
+- [Fluent 2 toolbar guidance](https://fluent2.microsoft.design/components/web/react/core/toolbar/usage) emphasizes logical action groups, accessible names, and overflow discipline. The editor retains logical groups while the default presentation now prioritizes daily commands.
+- [Word simplified ribbon guidance](https://support.microsoft.com/en-US/Word/using-the-simplified-ribbon-in-word-for-the-web) validates a one-line default with an explicit route to less-common commands.
+- [Word object guidance](https://support.microsoft.com/en-us/office/rotate-or-flip-a-text-box-shape-wordart-or-picture-in-word-8e55a7a0-274b-455b-a8aa-4aacd437c527) documents direct rotation, 15-degree snapping, exact angles and flips; the note-native shape subset follows those interactions.
 - [Carbon empty-state guidance](https://carbondesignsystem.com/patterns/empty-states-pattern/) recommends stating what is missing and providing the relevant next action. Bare blank regions in tasks, meetings, projects, goals, shopping, grids, and ideas now use a shared explanatory empty state.
 - [Carbon tile guidance](https://carbondesignsystem.com/components/tile/usage/) supports visible containment when several related values/actions form one object. This validated restoring rounded note cards while keeping tool rails and tabs flatter.
 - [GOV.UK responsive spacing](https://design-system.service.gov.uk/styles/spacing/) and [layout](https://design-system.service.gov.uk/styles/layout/) informed the responsive spacing scale and readable editor measure.
@@ -38,7 +62,7 @@ The audit did not equate “read every file” with changing every file. Every s
 | --- | --- | --- |
 | Shell and navigation | `App`, `Sidebar`, auth/recovery, breakpoints, themes | Edge-to-edge signed-in shell retained; expressive framed presentation remains only in authentication/marketing contexts. |
 | Note navigation | `NotesList`, `NoteCard`, `NotesGrid`, sort/filter/context menu | Rounded list cards restored, selected edge made precise, grid elevation restrained, empty grid standardized. |
-| Document work | `NoteEditor`, `RichTextEditor`, editor extensions, toolbars/popovers | Content remains primary; the document header uses the flat rail-green application banner; broad `transition-all` use removed; editor behavior preserved. |
+| Document work | `NoteEditor`, `RichTextEditor`, editor extensions, toolbars/popovers | Content remains primary; the document header uses the flat rail-green application banner; daily tools stay visible, specialist tools expand on demand, and editable transformed shapes persist in note HTML. |
 | Structured workspaces | task, project, meeting, journal, idea, shopping, weekly editors | Every default view and secondary tab rendered and inspected; shared metrics, panels, cards, empty states, responsive fixes, and interaction parity applied. |
 | Shared UI | button, field, menu, modal, empty state, badge, avatar, spinner | Reused instead of adding more one-off controls; semantic states and control geometry retained. |
 | Secondary workflows | settings, global search, archive/trash, sharing, import/export, type picker, dialogs | Rendered or regression-covered; expressive search/settings hierarchy preserved; transition and selection behavior normalized where touched. |
@@ -78,7 +102,7 @@ No release-blocking visual or interaction defect remained after verification.
 
 - The dark-green rail remains. It is the clearest QuickNotes identity and has strong hierarchy and contrast.
 - Authentication remains more expressive and retains its branded presentation frame; that context is product presentation, not the work surface.
-- The document editor toolbar, readable content measure, global search, keyboard workflow, persistence architecture, and local-first language were already strong and were not redesigned for novelty.
+- The readable content measure, global search, keyboard workflow, persistence architecture, and local-first language remain intact. Toolbar density changed only by prioritizing commands; no editor capability was removed.
 - Cards remain for real objects. The implementation avoids both extremes: neither every region nor no region is a card.
 - Semantic priority/category colors remain because they carry information. Large colored Kanban boundaries and decorative texture do not; the flat application header is the deliberate brand anchor.
 
@@ -97,8 +121,8 @@ The final gate covers:
 
 Final pass evidence:
 
-- 47 unit/integration files, 227 tests passed;
-- 105/105 Playwright tests passed across Chromium and mobile WebKit;
+- 48 unit/integration files, 228 tests passed;
+- 109 Playwright scenarios passed across Chromium and mobile WebKit;
 - 7/7 production deployment checks passed;
 - lint, production build, screenshot regeneration, and diff hygiene passed.
 

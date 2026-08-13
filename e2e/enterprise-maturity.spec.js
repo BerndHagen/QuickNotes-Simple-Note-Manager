@@ -18,6 +18,47 @@ async function createFocusedWorkspace(page, { type, starter, title, className, m
 }
 
 test.describe('enterprise UI maturity regressions', () => {
+  test('keeps pin and favourite state beside the title and reveals card actions as one unit', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await signIn(page)
+
+    const card = page.locator('.note-card').filter({ hasText: 'Welcome to QuickNotes' })
+    const cardFrame = card.locator('..')
+    const actionGroup = cardFrame.locator('.qn-card-action').first().locator('..')
+
+    await expect(card.getByTitle('Pinned')).toBeVisible()
+    await expect(card.getByTitle('Favourite')).toBeVisible()
+    await expect(actionGroup).toHaveCSS('opacity', '0')
+    await expect(actionGroup).toHaveCSS('pointer-events', 'none')
+
+    await card.hover()
+    await expect(actionGroup).toHaveCSS('opacity', '1')
+    await expect(actionGroup).toHaveCSS('pointer-events', 'auto')
+    await expect(cardFrame.getByRole('button', { name: /more actions for welcome to quicknotes/i })).toBeVisible()
+  })
+
+  test('uses one product radius for fields, note cards and application windows', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await signIn(page)
+
+    const search = page.getByRole('searchbox', { name: /search notes/i })
+    const card = page.locator('.note-card').first()
+    const [searchRadius, cardRadius] = await Promise.all([
+      search.evaluate((element) => getComputedStyle(element).borderRadius),
+      card.evaluate((element) => getComputedStyle(element).borderRadius),
+    ])
+    expect(searchRadius).toBe('12px')
+    expect(cardRadius).toBe(searchRadius)
+
+    await page.getByRole('button', { name: /^settings$/i }).first().click()
+    const settings = page.getByRole('dialog', { name: 'Settings' })
+    await expect(settings).toBeVisible()
+    const windowRadius = await settings.locator('.qn-settings-shell').evaluate(
+      (element) => getComputedStyle(element).borderRadius
+    )
+    expect(windowRadius).toBe(searchRadius)
+  })
+
   test('keeps mobile task copy readable and places secondary actions on their own row', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 })
     const errors = collectErrors(page)

@@ -56,11 +56,11 @@ export default function TrashView() {
         description={countLabel}
         icon={Trash2}
         size="xl"
-        bodyClassName="!overflow-hidden p-0 sm:p-0"
+        bodyClassName="!overflow-hidden bg-surface p-0 sm:p-0"
       >
         <div className="flex h-full min-h-0 flex-col">
           {trashedNotes.length > 0 && (
-            <div className="flex shrink-0 flex-col gap-2 border-b border-subtle bg-surface-sunken px-5 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+            <div className="flex shrink-0 flex-col gap-2 border-b border-subtle bg-surface-raised px-5 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
               <Button
                 variant="primary"
                 size="sm"
@@ -97,7 +97,7 @@ export default function TrashView() {
                 description={t('trash.emptyDescription')}
               />
             ) : (
-              <ul className="divide-y divide-[var(--qn-border)]">
+              <ul className="space-y-2 p-3 sm:p-4">
                 {trashedNotes.map((note) => {
                   const daysRemaining = getDaysRemaining(note.deletedAt)
                   const preview = truncateText(htmlToPlainText(note.content), 100)
@@ -105,7 +105,7 @@ export default function TrashView() {
                   const headingId = `qn-trashed-note-${note.id}`
 
                   return (
-                    <li key={note.id} className="p-4 transition-colors hover:bg-surface-hover sm:px-6">
+                    <li key={note.id} className="rounded-card border border-subtle bg-surface-raised p-4 shadow-xs transition-[border-color,box-shadow] hover:border-strong hover:shadow-sm">
                       <article aria-labelledby={headingId}>
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                           <div className="min-w-0 flex-1">

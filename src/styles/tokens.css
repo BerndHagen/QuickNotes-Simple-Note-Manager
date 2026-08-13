@@ -143,9 +143,10 @@
   --qn-radius-2xl: 20px;
   --qn-radius-full: 9999px;
   /* semantic */
-  --qn-radius-control: var(--qn-radius-md);
+  /* One product radius for fields, cards and windows. Pills stay fully round. */
+  --qn-radius-control: var(--qn-radius-lg);
   --qn-radius-card: var(--qn-radius-lg);
-  --qn-radius-dialog: var(--qn-radius-xl);
+  --qn-radius-dialog: var(--qn-radius-lg);
 
   /* --- Elevation -------------------------------------------- */
   --qn-shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.05);
