@@ -8,6 +8,7 @@ const clamp = (value, minimum = 0, maximum = MAX_INDENT) =>
   Math.min(maximum, Math.max(minimum, Math.round(Number(value) || 0)))
 
 const parseNumber = (value) => clamp(parseFloat(value) || 0)
+const parseSpacing = (value) => clamp(parseFloat(value) || 0, 0, 160)
 
 const parseTabStops = (value) => {
   if (!value) return []
@@ -93,6 +94,20 @@ const ParagraphLayoutExtension = Extension.create({
             ? { 'data-tab-stops': JSON.stringify(tabStops) }
             : {},
         },
+        spaceBefore: {
+          default: 0,
+          parseHTML: (element) => parseSpacing(element.getAttribute('data-space-before') || element.style.marginTop),
+          renderHTML: ({ spaceBefore }) => spaceBefore
+            ? { 'data-space-before': spaceBefore, style: `margin-top:${spaceBefore}px` }
+            : {},
+        },
+        spaceAfter: {
+          default: 0,
+          parseHTML: (element) => parseSpacing(element.getAttribute('data-space-after') || element.style.marginBottom),
+          renderHTML: ({ spaceAfter }) => spaceAfter
+            ? { 'data-space-after': spaceAfter, style: `margin-bottom:${spaceAfter}px` }
+            : {},
+        },
       },
     }]
   },
@@ -116,6 +131,12 @@ const ParagraphLayoutExtension = Extension.create({
             : {}),
           ...(attributes.tabStops !== undefined
             ? { tabStops: [...new Set(attributes.tabStops.map((stop) => clamp(stop, 8, 2000)))].sort((a, b) => a - b) }
+            : {}),
+          ...(attributes.spaceBefore !== undefined
+            ? { spaceBefore: parseSpacing(attributes.spaceBefore) }
+            : {}),
+          ...(attributes.spaceAfter !== undefined
+            ? { spaceAfter: parseSpacing(attributes.spaceAfter) }
             : {}),
         })),
     }

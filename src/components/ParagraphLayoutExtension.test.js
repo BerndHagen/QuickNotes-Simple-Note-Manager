@@ -5,6 +5,7 @@ import TaskList from '@tiptap/extension-task-list'
 import ParagraphLayoutExtension from './ParagraphLayoutExtension'
 import TabStopExtension from './TabStopExtension'
 import StyledTaskItem from './StyledTaskItem'
+import CalloutExtension from './CalloutExtension'
 
 const editors = []
 const createEditor = (options) => {
@@ -31,12 +32,14 @@ describe('document layout extensions', () => {
     expect(editor.getAttributes('paragraph').leftIndent).toBe(120)
 
     editor.commands.decreaseParagraphIndent()
-    editor.commands.setParagraphLayout({ rightIndent: 24, firstLineIndent: -16, tabStops: [240, 96, 240] })
+    editor.commands.setParagraphLayout({ rightIndent: 24, firstLineIndent: -16, tabStops: [240, 96, 240], spaceBefore: 8, spaceAfter: 16 })
     expect(editor.getAttributes('paragraph')).toMatchObject({
       leftIndent: 80,
       rightIndent: 24,
       firstLineIndent: -16,
       tabStops: [96, 240],
+      spaceBefore: 8,
+      spaceAfter: 16,
     })
 
     const html = editor.getHTML()
@@ -44,6 +47,8 @@ describe('document layout extensions', () => {
     expect(html).toContain('data-right-indent="24"')
     expect(html).toContain('data-first-line-indent="-16"')
     expect(html).toContain('data-tab-stops="[96,240]"')
+    expect(html).toContain('data-space-before="8"')
+    expect(html).toContain('data-space-after="16"')
 
     const restored = createEditor({
       extensions: [StarterKit, ParagraphLayoutExtension, TabStopExtension],
@@ -55,6 +60,8 @@ describe('document layout extensions', () => {
       rightIndent: 24,
       firstLineIndent: -16,
       tabStops: [96, 240],
+      spaceBefore: 8,
+      spaceAfter: 16,
     })
   })
 
@@ -83,7 +90,13 @@ describe('document layout extensions', () => {
           type: 'taskList',
           content: [{
             type: 'taskItem',
-            attrs: { checked: false, checkboxStyle: 'circle' },
+            attrs: {
+              checked: true,
+              checkboxStyle: 'circle',
+              checkboxColor: 'purple',
+              checkboxSize: 'large',
+              checkedStyle: 'fade',
+            },
             content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Review' }] }],
           }],
         }],
@@ -91,11 +104,56 @@ describe('document layout extensions', () => {
     })
     const html = editor.getHTML()
     expect(html).toContain('data-checkbox-style="circle"')
+    expect(html).toContain('data-checkbox-color="purple"')
+    expect(html).toContain('data-checkbox-size="large"')
+    expect(html).toContain('data-checked-style="fade"')
 
     const restored = createEditor({
       extensions: [StarterKit, TaskList, StyledTaskItem.configure({ nested: true })],
       content: html,
     })
-    expect(restored.getJSON().content[0].content[0].attrs.checkboxStyle).toBe('circle')
+    expect(restored.getJSON().content[0].content[0].attrs).toMatchObject({
+      checked: true,
+      checkboxStyle: 'circle',
+      checkboxColor: 'purple',
+      checkboxSize: 'large',
+      checkedStyle: 'fade',
+    })
+
+    restored.commands.setTextSelection(3)
+    restored.commands.updateAttributes('taskItem', {
+      checkboxStyle: 'square',
+      checkboxColor: 'amber',
+      checkboxSize: 'compact',
+      checkedStyle: 'keep',
+    })
+    const liveItem = restored.view.dom.querySelector('li[data-type="taskItem"]')
+    expect(liveItem.dataset).toMatchObject({
+      checkboxStyle: 'square',
+      checkboxColor: 'amber',
+      checkboxSize: 'compact',
+      checkedStyle: 'keep',
+    })
+  })
+
+  it('creates semantic callouts and retains their tone', () => {
+    const editor = createEditor({
+      extensions: [StarterKit, CalloutExtension],
+      content: '<p>Verify the deployment window.</p>',
+    })
+
+    editor.commands.setTextSelection(4)
+    expect(editor.commands.toggleCallout({ tone: 'warning' })).toBe(true)
+    expect(editor.isActive('callout', { tone: 'warning' })).toBe(true)
+    expect(editor.commands.setCalloutTone('important')).toBe(true)
+
+    const html = editor.getHTML()
+    expect(html).toContain('<aside')
+    expect(html).toContain('data-type="callout"')
+    expect(html).toContain('data-tone="important"')
+
+    const restored = createEditor({ extensions: [StarterKit, CalloutExtension], content: html })
+    restored.commands.setTextSelection(4)
+    expect(restored.isActive('callout', { tone: 'important' })).toBe(true)
   })
 })

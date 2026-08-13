@@ -203,6 +203,9 @@ describe('editor preferences and shortcuts', () => {
       tabSize: 999,
       wordWrap: 'yes',
       showRuler: true,
+      documentWidth: 'wide',
+      ribbonDensity: 'compact',
+      defaultCheckboxStyle: 'circle',
     })).toMatchObject({
       defaultFontFamily: 'ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
       defaultFontSize: '16px',
@@ -210,6 +213,9 @@ describe('editor preferences and shortcuts', () => {
       tabSize: 4,
       wordWrap: true,
       showRuler: true,
+      documentWidth: 'wide',
+      ribbonDensity: 'compact',
+      defaultCheckboxStyle: 'circle',
     })
   })
 

@@ -2639,3 +2639,279 @@ body {
     overscroll-behavior-inline: contain;
   }
 }
+
+/* ============================================================
+   Editor workbench
+   ------------------------------------------------------------
+   The note is a deliberate document surface inside a calm workspace. The
+   surrounding field establishes depth and keeps long lines from expanding to
+   the full application width on large monitors.
+   ============================================================ */
+.editor-ribbon {
+  container-type: inline-size;
+  background: var(--qn-surface-panel);
+}
+
+.qn-ribbon-tabs {
+  background: color-mix(in srgb, var(--qn-surface-panel) 90%, var(--qn-surface-raised));
+}
+
+.qn-ribbon-tab[aria-selected='true'] {
+  background: var(--qn-surface-raised);
+}
+
+.editor-toolbar {
+  gap: 0.375rem;
+  padding-block: 0.375rem;
+  background: color-mix(in srgb, var(--qn-surface-panel) 72%, var(--qn-surface-raised));
+}
+
+.qn-ribbon-group {
+  align-items: flex-start;
+  min-height: 52px;
+  padding: 0.35rem 0.55rem 1.05rem;
+  border: 1px solid var(--qn-border-subtle);
+  border-radius: var(--qn-radius-card);
+  background: var(--qn-surface-raised);
+  box-shadow: var(--qn-shadow-xs);
+}
+
+.qn-ribbon-group:last-child {
+  border-right: 1px solid var(--qn-border-subtle);
+}
+
+.editor-ribbon[data-density='compact'] .editor-toolbar {
+  min-height: 49px;
+  padding-block: 0.25rem;
+}
+
+.editor-ribbon[data-density='compact'] .qn-ribbon-group {
+  min-height: 43px;
+  padding: 0.2rem 0.35rem 0.85rem;
+}
+
+.editor-ribbon[data-group-labels='hidden'] .qn-ribbon-group {
+  min-height: 40px;
+  padding-bottom: 0.35rem;
+}
+
+.editor-ribbon[data-group-labels='hidden'] .qn-ribbon-group-label {
+  display: none;
+}
+
+.qn-editor-workbench {
+  padding: 24px clamp(18px, 3vw, 44px) 44px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--qn-surface-panel) 88%, transparent), transparent 140px),
+    var(--qn-surface-base);
+  scrollbar-color: var(--qn-border-strong) transparent;
+}
+
+.qn-editor-page {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: calc(100% - 1px);
+  margin: 0 auto;
+  border: 1px solid var(--qn-border-subtle);
+  border-radius: var(--qn-radius-card);
+  background-color: var(--qn-surface-raised);
+  box-shadow: var(--qn-shadow-sm);
+  transition: max-width var(--qn-duration-base) var(--qn-ease), box-shadow var(--qn-duration-fast) var(--qn-ease);
+}
+
+.qn-editor-page[data-document-width='focused'] { max-width: 720px; }
+.qn-editor-page[data-document-width='standard'] { max-width: 880px; }
+.qn-editor-page[data-document-width='wide'] { max-width: 1120px; }
+.qn-editor-page[data-document-width='full'] { max-width: none; }
+
+.qn-editor-page:focus-within {
+  box-shadow: var(--qn-shadow-md);
+}
+
+.qn-editor-page .ProseMirror {
+  box-sizing: border-box;
+  min-height: max(420px, calc(100vh - 310px));
+  padding: clamp(30px, 5vw, 68px) clamp(28px, 6vw, 76px) 96px;
+}
+
+/* Semantic callouts provide structured emphasis without relying on floating
+   shapes. Their tone remains readable in both colour and icon/label form. */
+.ProseMirror .qn-callout {
+  --callout-accent: var(--qn-info-text);
+  --callout-border: var(--qn-info-border);
+  --callout-bg: var(--qn-info-soft);
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.5rem minmax(0, 1fr);
+  gap: 0.75rem;
+  margin-block: 1rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--callout-border);
+  border-left-width: 3px;
+  border-radius: var(--qn-radius-card);
+  background: var(--callout-bg);
+  color: var(--qn-text);
+}
+
+.ProseMirror .qn-callout::before {
+  content: 'i';
+  display: grid;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-top: 0.15rem;
+  place-items: center;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  color: var(--callout-accent);
+  font-size: 0.72rem;
+  font-weight: 800;
+  font-style: normal;
+  line-height: 1;
+}
+
+.ProseMirror .qn-callout[data-tone='tip'] {
+  --callout-accent: var(--qn-success-text);
+  --callout-border: var(--qn-success-border);
+  --callout-bg: var(--qn-success-soft);
+}
+
+.ProseMirror .qn-callout[data-tone='tip']::before { content: '\2605'; border: 0; font-size: 1rem; }
+.ProseMirror .qn-callout[data-tone='warning'] {
+  --callout-accent: var(--qn-warning-text);
+  --callout-border: var(--qn-warning-border);
+  --callout-bg: var(--qn-warning-soft);
+}
+.ProseMirror .qn-callout[data-tone='warning']::before { content: '!'; border-radius: 3px; }
+.ProseMirror .qn-callout[data-tone='important'] {
+  --callout-accent: var(--qn-danger-text);
+  --callout-border: var(--qn-danger-border);
+  --callout-bg: var(--qn-danger-soft);
+}
+.ProseMirror .qn-callout[data-tone='important']::before { content: '!'; }
+.ProseMirror .qn-callout__content > :first-child { margin-top: 0; }
+.ProseMirror .qn-callout__content > :last-child { margin-bottom: 0; }
+
+/* Checklist appearance is stored per item. Completion treatment is equally
+   explicit: checking a box never irreversibly rewrites or deletes its text. */
+.ProseMirror ul[data-type='taskList'] li[data-checkbox-color='blue'] { --qn-check-accent: #2563eb; }
+.ProseMirror ul[data-type='taskList'] li[data-checkbox-color='purple'] { --qn-check-accent: #7c3aed; }
+.ProseMirror ul[data-type='taskList'] li[data-checkbox-color='amber'] { --qn-check-accent: #d97706; }
+.ProseMirror ul[data-type='taskList'] li[data-checkbox-color='rose'] { --qn-check-accent: #e11d48; }
+.ProseMirror ul[data-type='taskList'] li[data-checkbox-color='slate'] { --qn-check-accent: #475569; }
+.ProseMirror ul[data-type='taskList'] li[data-checkbox-color='accent'],
+.ProseMirror ul[data-type='taskList'] li:not([data-checkbox-color]) { --qn-check-accent: var(--qn-accent); }
+
+.ProseMirror ul[data-type='taskList'] li input[type='checkbox']:checked {
+  border-color: var(--qn-check-accent);
+  background: var(--qn-check-accent);
+}
+
+.ProseMirror ul[data-type='taskList'] li[data-checkbox-size='compact'] input[type='checkbox'] {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.ProseMirror ul[data-type='taskList'] li[data-checkbox-size='large'] input[type='checkbox'] {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.ProseMirror ul[data-type='taskList'] li[data-checked='true'][data-checked-style='strike'] > div {
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  color: var(--qn-text-muted);
+}
+
+.ProseMirror ul[data-type='taskList'] li[data-checked='true'][data-checked-style='fade'] > div {
+  opacity: 0.55;
+}
+
+.ProseMirror ul[data-type='taskList'] li[data-checked='true'][data-checked-style='keep'] > div {
+  color: inherit;
+  text-decoration: none;
+  opacity: 1;
+}
+
+.ProseMirror ul[data-type='taskList'] li:focus-within {
+  border-radius: var(--qn-radius-control);
+  background: color-mix(in srgb, var(--qn-accent-soft) 42%, transparent);
+}
+
+.qn-check-option[aria-pressed='true'],
+.qn-check-colour[aria-pressed='true'] {
+  border-color: var(--qn-accent);
+  box-shadow: 0 0 0 2px var(--qn-accent-soft);
+}
+
+.qn-check-colour {
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 2px solid var(--qn-surface-raised);
+  border-radius: 999px;
+  background: var(--qn-accent);
+}
+.qn-check-colour--blue { background: #2563eb; }
+.qn-check-colour--purple { background: #7c3aed; }
+.qn-check-colour--amber { background: #d97706; }
+.qn-check-colour--rose { background: #e11d48; }
+.qn-check-colour--slate { background: #475569; }
+
+@media (max-width: 767px) {
+  .editor-toolbar {
+    height: 52px;
+    min-height: 52px;
+    gap: 0.125rem;
+    padding-block: 2px;
+  }
+
+  .qn-editor-workbench {
+    padding: 0;
+    background: var(--qn-surface-raised);
+  }
+
+  .qn-editor-page {
+    height: 100%;
+    min-height: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .qn-editor-page .ProseMirror {
+    height: 100%;
+    min-height: 0;
+    padding: 20px 18px 80px;
+  }
+
+  .qn-ribbon-group {
+    box-sizing: border-box;
+    height: 48px;
+    min-height: 48px;
+    align-items: center;
+    padding: 1px 0.25rem;
+    border-radius: var(--qn-radius-control);
+  }
+
+  .qn-ribbon-group-label {
+    display: none;
+  }
+}
+
+/* A three-pane workspace can leave the editor narrower than the browser.
+   Compact group chrome at that component boundary while preserving every
+   command and the user's chosen ribbon density at roomier widths. */
+@container (max-width: 760px) {
+  .editor-toolbar {
+    gap: 0.125rem;
+    padding-inline: 0.25rem;
+  }
+
+  .qn-ribbon-group {
+    min-height: 40px;
+    padding: 0.25rem;
+  }
+
+  .qn-ribbon-group-label {
+    display: none;
+  }
+}

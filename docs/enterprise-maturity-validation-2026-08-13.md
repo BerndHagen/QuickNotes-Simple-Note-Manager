@@ -1,8 +1,8 @@
 # QuickNotes enterprise maturity validation
 
-Date: 2026-08-13
+Date: 2026-08-13; continuation verified 2026-08-14
 
-Scope: all 156 JavaScript/JSX/CSS source files, all 103 component/style files, every primary workspace, secondary workspace tabs, shared overlays, light/dark themes, desktop/mobile layouts, and the repository screenshot set.
+Scope: all 167 JavaScript/JSX/CSS source files, all 114 component/style files, every primary workspace, secondary workspace tabs, shared overlays, light/dark themes, desktop/mobile layouts, and the repository screenshot set.
 
 ## Executive assessment
 
@@ -38,7 +38,18 @@ The resulting product is materially calmer and more credible without being gray 
 - Paragraph indentation is repeatable rather than a one-shot margin. The
   interactive ruler persists first-line, left and right indents plus draggable
   tab stops; Tab inserts a durable advance to the next stop. Nested checklists
-  support square, rounded and circular checkbox treatments.
+  support per-item shape, colour, size, completion treatment, add-above/below,
+  and remove-only-this-checkbox actions. A custom task-item node view keeps
+  those durable attributes synchronized with the live DOM instead of waiting
+  for a reload.
+- The ruler is once again an explicit view preference; selecting Layout no
+  longer forces it on. Paragraphs and headings now retain independent spacing
+  before and after, while focused/standard/wide/full note widths and compact or
+  comfortable ribbon spacing are persistent workbench choices.
+- The editor canvas is now a centered document surface on a restrained working
+  field. Searchable slash commands, semantic callouts, local date/time insertion,
+  and visible clipboard/find/list groups add depth without returning to one
+  continuously dense command strip.
 - Fields, substantial cards, popovers and application windows now resolve to
   one 12 px product radius. Settings, Archive, Trash and legacy dialogs share
   the same shell geometry, elevation and surface hierarchy. Standard and
@@ -67,7 +78,7 @@ The implementation was checked against primary design-system guidance rather tha
 
 ## File-level audit method
 
-The audit did not equate “read every file” with changing every file. Every source/style file was inventoried and included in lint and pattern analysis. The 103 UI/style files were grouped by responsibility and evaluated as systems:
+The audit did not equate “read every file” with changing every file. Every source/style file was inventoried and included in lint and pattern analysis. The 114 UI/style files were grouped by responsibility and evaluated as systems:
 
 | Area | Files/components reviewed | Result |
 | --- | --- | --- |
@@ -132,14 +143,14 @@ The final gate covers:
 
 Final pass evidence:
 
-- 48 unit/integration files, 228 tests passed;
-- 111 Playwright scenarios passed across Chromium and mobile WebKit;
+- 50 unit/integration files, 233 tests passed;
+- 117 Playwright scenarios passed across Chromium and mobile WebKit;
 - 7/7 production deployment checks passed;
 - lint, production build, screenshot regeneration, and diff hygiene passed.
 
 ## Remaining constraints
 
-- The separately loaded rich-text editor bundle remains about 701 kB minified. Reducing it further requires a deliberate editor capability/dependency project, not visual churn.
+- The separately loaded rich-text editor bundle remains about 766 kB minified. Reducing it further requires a deliberate editor capability/dependency project, not visual churn.
 - The project is JavaScript and does not configure a static typecheck. Runtime validation and broad automated coverage remain the present safeguards.
 - Some hard-coded values intentionally remain in user-selectable color palettes, editor color swatches, language flags, and note-type/category data.
 - Local/offline workflows and mocked collaboration are covered; this pass does not claim a live multi-account Supabase field test.

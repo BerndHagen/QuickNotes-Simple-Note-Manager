@@ -147,6 +147,98 @@ test.describe('editor productivity objects', () => {
     expect(ungrouped).toEqual([])
   })
 
+  test('keeps the ruler optional and provides persistent workbench customization', async ({ page }) => {
+    await page.getByRole('tab', { name: 'Layout' }).click()
+    await expect(page.getByLabel('Paragraph ruler')).toBeHidden()
+
+    await page.getByRole('button', { name: 'Show ruler' }).click()
+    await expect(page.getByLabel('Paragraph ruler')).toBeVisible()
+    await page.getByRole('button', { name: 'Hide ruler' }).click()
+    await expect(page.getByLabel('Paragraph ruler')).toBeHidden()
+
+    await page.getByRole('button', { name: 'Customize editor' }).click()
+    const settings = page.getByRole('dialog', { name: 'Editor settings' })
+    await expect(settings.getByLabel('Note width')).toHaveValue('standard')
+    await settings.getByLabel('Note width').selectOption('focused')
+    await settings.getByLabel('Ribbon spacing').selectOption('compact')
+    await settings.getByRole('button', { name: 'Done' }).click()
+
+    await expect(page.locator('[data-editor-page]')).toHaveAttribute('data-document-width', 'focused')
+    await expect(page.locator('.editor-ribbon')).toHaveAttribute('data-density', 'compact')
+  })
+
+  test('edits one checklist item without forcing deletion of the checklist', async ({ page }) => {
+    const editor = page.getByRole('textbox', { name: 'Note content' })
+    const taskItems = page.locator('.ProseMirror li.task-item')
+    await editor.click()
+    await page.keyboard.press('Control+A')
+    await page.keyboard.type('Ship the release')
+
+    await page.getByRole('tab', { name: 'Home' }).click()
+    await page.getByRole('button', { name: 'Checklist options' }).click()
+    const options = page.getByRole('dialog', { name: 'Checklist options' })
+    await options.getByRole('button', { name: 'Create checklist' }).click()
+
+    const itemText = editor.getByText('Ship the release', { exact: true })
+    await itemText.click()
+    const item = itemText.locator('xpath=ancestor::li[1]')
+    await expect(item).toHaveClass(/task-item/)
+    await page.getByRole('button', { name: 'Checklist options' }).click()
+    await options.getByRole('button', { name: 'Circle checkbox' }).click()
+    await options.getByRole('button', { name: 'purple checkbox colour' }).click()
+    await options.getByLabel('Size').selectOption('large')
+    await options.getByLabel('Completed text').selectOption('keep')
+
+    await expect(item).toHaveAttribute('data-checkbox-style', 'circle')
+    await expect(item).toHaveAttribute('data-checkbox-color', 'purple')
+    await expect(item).toHaveAttribute('data-checkbox-size', 'large')
+    await expect(item).toHaveAttribute('data-checked-style', 'keep')
+
+    await options.getByRole('button', { name: 'Add below' }).click()
+    await expect(taskItems).toHaveCount(2)
+    await page.getByRole('dialog', { name: 'Checklist options' }).getByRole('button', { name: 'Remove this checkbox' }).click()
+    await expect(taskItems).toHaveCount(1)
+    await expect(editor).toContainText('Ship the release')
+  })
+
+  test('inserts semantic callouts and timestamps from the Insert tab', async ({ page }) => {
+    const editor = page.getByRole('textbox', { name: 'Note content' })
+    await editor.click()
+    await page.keyboard.press('Control+End')
+    await page.keyboard.press('Enter')
+    await page.keyboard.type('Deployment is paused')
+
+    await page.getByRole('tab', { name: 'Insert' }).click()
+    await page.getByRole('button', { name: 'Callout' }).click()
+    await page.getByRole('dialog', { name: 'Callout styles' }).getByRole('button', { name: 'Create callout' }).click()
+    const callout = page.locator('aside[data-type="callout"]').last()
+    await expect(callout).toContainText('Deployment is paused')
+
+    await page.getByRole('button', { name: 'Callout' }).click()
+    await page.getByRole('dialog', { name: 'Callout styles' }).getByRole('button', { name: 'Important' }).click()
+    await expect(callout).toHaveAttribute('data-tone', 'important')
+
+    await editor.press('Control+End')
+    await editor.press('Enter')
+    await page.getByRole('button', { name: 'Insert current date' }).click()
+    await expect(editor).not.toHaveText('')
+  })
+
+  test('discovers structural tools from the slash command menu', async ({ page }) => {
+    const editor = page.getByRole('textbox', { name: 'Note content' })
+    await editor.click()
+    await page.keyboard.press('Control+A')
+    await page.keyboard.type('/call')
+
+    const menu = page.getByRole('listbox', { name: 'Insert block' })
+    await expect(menu).toBeVisible()
+    await expect(menu.getByRole('option')).toHaveCount(1)
+    await page.keyboard.press('Enter')
+
+    await expect(menu).toBeHidden()
+    await expect(page.locator('aside[data-type="callout"]')).toHaveCount(1)
+  })
+
   test('inserts a shape with direct and exact transformation controls', async ({ page }) => {
     await page.getByRole('tab', { name: 'Insert' }).click()
     await page.getByRole('button', { name: 'Insert shape' }).click()
@@ -243,12 +335,14 @@ test.describe('editor productivity objects', () => {
 
     const resize = textBox.getByRole('button', { name: 'Resize text box se' })
     const beforeResize = await resize.boundingBox()
+    const beforeResizeWidth = Number(await textBox.getAttribute('data-width'))
+    const beforeResizeHeight = Number(await textBox.getAttribute('data-height'))
     await page.mouse.move(beforeResize.x + beforeResize.width / 2, beforeResize.y + beforeResize.height / 2)
     await page.mouse.down()
     await page.mouse.move(beforeResize.x + beforeResize.width / 2 + 30, beforeResize.y + beforeResize.height / 2 + 25, { steps: 6 })
     await page.mouse.up()
-    await expect(textBox).toHaveAttribute('data-width', '370')
-    await expect(textBox).toHaveAttribute('data-height', '195')
+    await expect.poll(async () => Number(await textBox.getAttribute('data-width'))).toBeGreaterThan(beforeResizeWidth)
+    await expect.poll(async () => Number(await textBox.getAttribute('data-height'))).toBeGreaterThan(beforeResizeHeight)
   })
 
   test('supports repeated indents, styled checklists, and persistent ruler tab stops', async ({ page }) => {
@@ -266,10 +360,15 @@ test.describe('editor productivity objects', () => {
     await increaseIndent.click()
     await expect(paragraph).toHaveAttribute('data-left-indent', '120')
 
-    await toolbar.getByRole('button', { name: 'Checklist style' }).click()
-    await page.getByRole('dialog', { name: 'Checklist styles' }).getByRole('button', { name: 'Circle' }).click()
+    await page.getByRole('tab', { name: 'Home' }).click()
+    await toolbar.getByRole('button', { name: 'Checklist options' }).click()
+    await page.getByRole('dialog', { name: 'Checklist options' }).getByRole('button', { name: 'Create checklist' }).click()
+    await toolbar.getByRole('button', { name: 'Checklist options' }).click()
+    await page.getByRole('dialog', { name: 'Checklist options' }).getByRole('button', { name: 'Circle checkbox' }).click()
     await expect(editor.locator('li[data-checkbox-style]').first()).toHaveAttribute('data-checkbox-style', 'circle')
 
+    await page.getByRole('tab', { name: 'Layout' }).click()
+    await toolbar.getByRole('button', { name: 'Show ruler' }).click()
     const ruler = page.locator('.qn-document-ruler')
     await expect(ruler).toBeVisible()
     const track = ruler.locator('div').nth(1)

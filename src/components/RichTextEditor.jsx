@@ -17,6 +17,7 @@ import FontFamily from '@tiptap/extension-font-family'
 import Table from '@tiptap/extension-table'
 import TableRow from '@tiptap/extension-table-row'
 import { Extension } from '@tiptap/core'
+import { TextSelection } from '@tiptap/pm/state'
 import ResizableImageExtension from './ResizableImageExtension'
 import TextBoxExtension from './TextBoxExtension'
 import ShapeExtension from './ShapeExtension'
@@ -24,6 +25,7 @@ import ShapeGeometry, { SHAPE_GROUPS } from './ShapeGeometry'
 import ParagraphLayoutExtension from './ParagraphLayoutExtension'
 import TabStopExtension from './TabStopExtension'
 import StyledTaskItem from './StyledTaskItem'
+import CalloutExtension from './CalloutExtension'
 import InvisibleCharactersExtension from './InvisibleCharactersExtension'
 import CustomTableCell from './CustomTableCell'
 import CustomTableHeader from './CustomTableHeader'
@@ -80,11 +82,23 @@ import {
   ClipboardPaste,
   MousePointer2,
   Shapes,
+  Search,
+  Calendar,
+  Clock,
+  Info,
+  Lightbulb,
+  AlertTriangle,
+  ShieldAlert,
+  Ruler,
+  Plus,
+  Check,
+  ListPlus,
+  SlidersHorizontal,
 } from 'lucide-react'
 import { debounce } from '../lib/utils'
 import { formatShortcut } from '../lib/shortcuts'
 import { useUIStore } from '../store'
-import { useEditorSettings } from './EditorSettingsModal'
+import { updateEditorSettings, useEditorSettings } from './EditorSettingsModal'
 import { DEFAULT_EDITOR_FONT, EDITOR_FONT_GROUPS } from '../lib/editorFonts'
 import toast from 'react-hot-toast'
 import {
@@ -97,6 +111,16 @@ import {
 } from './ui'
 
 const lowlight = createLowlight(common)
+
+const toggleStructuralCallout = (editor, tone = 'info') => {
+  let chain = editor.chain().focus()
+  if (editor.isActive('taskItem') && editor.can().liftListItem('taskItem')) {
+    chain = chain.liftListItem('taskItem')
+  } else if (editor.isActive('listItem') && editor.can().liftListItem('listItem')) {
+    chain = chain.liftListItem('listItem')
+  }
+  return chain.toggleCallout({ tone }).run()
+}
 
 const NoteAwareLink = Link.extend({
   addAttributes() {
@@ -625,6 +649,100 @@ function DocumentRuler({ editor, containerRef }) {
   )
 }
 
+function SlashCommandMenu({ editor, editorSettings, menu, onClose }) {
+  const [activeIndex, setActiveIndex] = useState(0)
+  const activeIndexRef = useRef(0)
+  const optionsRef = useRef([])
+
+  const allOptions = useMemo(() => [
+    { label: 'Text', hint: 'Plain paragraph', keywords: 'paragraph normal', icon: AlignLeft, run: () => editor.chain().focus().setParagraph().run() },
+    { label: 'Heading 1', hint: 'Large section heading', keywords: 'title h1', icon: Heading1, run: () => editor.chain().focus().setHeading({ level: 1 }).run() },
+    { label: 'Heading 2', hint: 'Medium section heading', keywords: 'subtitle h2', icon: Heading2, run: () => editor.chain().focus().setHeading({ level: 2 }).run() },
+    { label: 'Checklist', hint: 'Track actionable items', keywords: 'task todo checkbox', icon: CheckSquare, run: () => editor.chain().focus().toggleTaskList().updateAttributes('taskItem', { checkboxStyle: editorSettings.defaultCheckboxStyle, checkboxColor: editorSettings.defaultCheckboxColor, checkboxSize: editorSettings.defaultCheckboxSize, checkedStyle: editorSettings.defaultCheckedStyle }).run() },
+    { label: 'Bullet list', hint: 'Create an unordered list', keywords: 'bullets list', icon: List, run: () => editor.chain().focus().toggleBulletList().run() },
+    { label: 'Numbered list', hint: 'Create an ordered list', keywords: 'ordered list steps', icon: ListOrdered, run: () => editor.chain().focus().toggleOrderedList().run() },
+    { label: 'Callout', hint: 'Emphasize a tip or warning', keywords: 'info alert box', icon: Info, run: () => toggleStructuralCallout(editor, 'info') },
+    { label: 'Quote', hint: 'Set apart quoted text', keywords: 'blockquote citation', icon: Quote, run: () => editor.chain().focus().toggleBlockquote().run() },
+    { label: 'Code block', hint: 'Monospaced code with highlighting', keywords: 'pre developer', icon: FileCode, run: () => editor.chain().focus().toggleCodeBlock().run() },
+    { label: 'Divider', hint: 'Separate sections', keywords: 'line horizontal rule', icon: Minus, run: () => editor.chain().focus().setHorizontalRule().run() },
+    { label: 'Table', hint: 'Insert a 3 by 3 table', keywords: 'grid cells', icon: TableIcon, run: () => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run() },
+    { label: 'Current date', hint: 'Insert today’s local date', keywords: 'today timestamp', icon: Calendar, run: () => editor.chain().focus().insertContent(new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(new Date())).run() },
+  ], [editor, editorSettings])
+
+  const visibleOptions = useMemo(() => {
+    if (!menu) return []
+    const query = menu.query.toLowerCase()
+    return allOptions.filter((option) => `${option.label} ${option.keywords}`.toLowerCase().includes(query)).slice(0, 8)
+  }, [allOptions, menu])
+
+  useEffect(() => {
+    optionsRef.current = visibleOptions
+    if (activeIndex >= visibleOptions.length) {
+      activeIndexRef.current = 0
+      setActiveIndex(0)
+    }
+  }, [activeIndex, visibleOptions])
+
+  const selectOption = useCallback((option) => {
+    if (!menu || !option) return
+    editor.chain().focus().deleteRange({ from: menu.from, to: menu.to }).run()
+    option.run()
+    onClose()
+  }, [editor, menu, onClose])
+
+  useEffect(() => {
+    if (!editor || !menu) return undefined
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        event.stopPropagation()
+        onClose()
+        return
+      }
+      if (!['ArrowDown', 'ArrowUp', 'Enter'].includes(event.key)) return
+      event.preventDefault()
+      event.stopPropagation()
+      const options = optionsRef.current
+      if (options.length === 0) return
+      if (event.key === 'Enter') {
+        selectOption(options[activeIndexRef.current])
+        return
+      }
+      const direction = event.key === 'ArrowDown' ? 1 : -1
+      const next = (activeIndexRef.current + direction + options.length) % options.length
+      activeIndexRef.current = next
+      setActiveIndex(next)
+    }
+    editor.view.dom.addEventListener('keydown', handleKeyDown, true)
+    return () => {
+      editor.view.dom.removeEventListener('keydown', handleKeyDown, true)
+    }
+  }, [editor, menu, onClose, selectOption])
+
+  if (!menu) return null
+
+  return createPortal(
+    <div role="listbox" aria-label="Insert block" className="qn-slash-menu fixed z-[99999] w-[min(20rem,calc(100vw-1rem))] overflow-hidden rounded-dialog border border-subtle bg-surface-raised p-1.5 shadow-xl" style={{ left: Math.max(8, menu.left), top: Math.max(8, menu.top) }}>
+      <div className="flex items-center justify-between px-2.5 py-1.5">
+        <span className="text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">Insert block</span>
+        <span className="text-ui-xs text-content-subtle">↑↓ · Enter</span>
+      </div>
+      <div className="max-h-80 overflow-y-auto">
+        {visibleOptions.length ? visibleOptions.map((option, index) => {
+          const Icon = option.icon
+          return (
+            <button key={option.label} type="button" role="option" aria-selected={index === activeIndex} onMouseDown={(event) => event.preventDefault()} onMouseEnter={() => { activeIndexRef.current = index; setActiveIndex(index) }} onClick={() => selectOption(option)} className={`flex w-full items-center gap-3 rounded-control px-2.5 py-2 text-left transition-colors ${index === activeIndex ? 'bg-accent-soft text-content' : 'text-content-muted hover:bg-surface-hover hover:text-content'}`}>
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-control border border-subtle bg-surface-raised"><Icon className="h-4 w-4" /></span>
+              <span className="min-w-0"><span className="block text-ui-sm font-semibold">{option.label}</span><span className="block truncate text-ui-xs text-content-subtle">{option.hint}</span></span>
+            </button>
+          )
+        }) : <p className="px-3 py-4 text-ui-sm text-content-muted">No matching blocks</p>}
+      </div>
+    </div>,
+    document.body
+  )
+}
+
 function ObjectDrawingLayer({ editor, tool, containerRef, onFinish }) {
   const [gesture, setGesture] = useState(null)
   const [bounds, setBounds] = useState(null)
@@ -758,6 +876,7 @@ export default function RichTextEditor({
   const [typingEpoch, setTypingEpoch] = useState(0)
   const [mobileToolbarOpen, setMobileToolbarOpen] = useState(false)
   const [editorMenuPoint, setEditorMenuPoint] = useState(null)
+  const [slashMenu, setSlashMenu] = useState(null)
   const [activeRibbonTab, setActiveRibbonTab] = useState('home')
   const [drawTool, setDrawTool] = useState(null)
   const editorContainerRef = useRef(null)
@@ -771,7 +890,38 @@ export default function RichTextEditor({
   const onChangeRef = useRef(onChange)
   const onDraftChangeRef = useRef(onDraftChange)
   const editorSettings = useEditorSettings()
+  const hasAppliedDefaultTab = useRef(false)
   const finishObjectDrawing = useCallback(() => setDrawTool(null), [])
+  const syncSlashMenu = useCallback((currentEditor) => {
+    requestAnimationFrame(() => {
+      if (!currentEditor || currentEditor.isDestroyed) return
+      const { selection } = currentEditor.state
+      if (!selection.empty || !selection.$from.parent.isTextblock) {
+        setSlashMenu(null)
+        return
+      }
+      const text = selection.$from.parent.textBetween(0, selection.$from.parentOffset, undefined, '\ufffc')
+      const match = text.match(/^\/([\w -]*)$/)
+      if (!match) {
+        setSlashMenu(null)
+        return
+      }
+      const coords = currentEditor.view.coordsAtPos(selection.from)
+      setSlashMenu({
+        query: match[1].trim(),
+        from: selection.from - match[0].length,
+        to: selection.from,
+        left: Math.min(coords.left, window.innerWidth - 330),
+        top: Math.min(coords.bottom + 8, window.innerHeight - 390),
+      })
+    })
+  }, [])
+
+  useEffect(() => {
+    if (hasAppliedDefaultTab.current) return
+    hasAppliedDefaultTab.current = true
+    setActiveRibbonTab(editorSettings.defaultRibbonTab || 'home')
+  }, [editorSettings.defaultRibbonTab])
 
   useEffect(() => {
     onChangeRef.current = onChange
@@ -786,6 +936,7 @@ export default function RichTextEditor({
   useEffect(() => {
     setMobileToolbarOpen(false)
     setDrawTool(null)
+    setSlashMenu(null)
     isUserTyping.current = false
     isInternalUpdate.current = false
     lastSentContent.current = null
@@ -878,6 +1029,7 @@ export default function RichTextEditor({
         inline: false,
         allowBase64: true,
       }),
+      CalloutExtension,
       TextBoxExtension,
       ShapeExtension,
       InvisibleCharactersExtension,
@@ -893,16 +1045,18 @@ export default function RichTextEditor({
         to: editor.state.selection.to
       }
       debouncedOnChange(editor.getHTML())
+      syncSlashMenu(editor)
     },
     onSelectionUpdate: ({ editor }) => {
       lastCursorPosition.current = {
         from: editor.state.selection.from,
         to: editor.state.selection.to
       }
+      syncSlashMenu(editor)
     },
     editorProps: {
       attributes: {
-        class: 'prose prose-lg dark:prose-invert max-w-none focus:outline-none min-h-[300px] px-4 py-2',
+        class: 'prose prose-lg dark:prose-invert max-w-none focus:outline-none px-4 py-2',
         spellcheck: useUIStore.getState().spellCheck ? 'true' : 'false',
         role: 'textbox',
         'aria-label': 'Note content',
@@ -1194,7 +1348,7 @@ export default function RichTextEditor({
   }
 
   return (
-    <div className="relative flex h-full flex-col">
+    <div className="relative flex h-full min-h-0 flex-col">
       {!readOnly && (
         <div className={`${mobileToolbarOpen ? 'block' : 'hidden'} shrink-0 md:block`}>
           <EditorToolbar
@@ -1206,6 +1360,10 @@ export default function RichTextEditor({
             activeTab={activeRibbonTab}
             onTabChange={setActiveRibbonTab}
             onStartDrawing={setDrawTool}
+            editorSettings={editorSettings}
+            onCut={() => copySelection({ cut: true })}
+            onCopy={() => copySelection()}
+            onPaste={pasteClipboard}
           />
         </div>
       )}
@@ -1274,23 +1432,31 @@ export default function RichTextEditor({
 
       {!readOnly && <TableBubbleMenu editor={editor} />}
 
-      {(editorSettings.showRuler || activeRibbonTab === 'layout') && (
+      {!readOnly && <SlashCommandMenu editor={editor} editorSettings={editorSettings} menu={slashMenu} onClose={() => setSlashMenu(null)} />}
+
+      {editorSettings.showRuler && (
         <DocumentRuler editor={editor} containerRef={editorContainerRef} />
       )}
 
-      <div className="flex flex-1 overflow-hidden">
-        <div 
-          ref={editorContainerRef}
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        <div
           data-editor-canvas
           onContextMenu={(event) => {
             event.preventDefault()
             event.stopPropagation()
             setEditorMenuPoint({ x: event.clientX, y: event.clientY })
           }}
-          className={`relative flex-1 overflow-y-auto bg-surface-raised ${paperStyle.className || ''}`}
-          style={paperStyle.style}
+          className="qn-editor-workbench relative flex-1 overflow-y-auto"
         >
-          <EditorContent editor={editor} />
+          <div
+            ref={editorContainerRef}
+            data-editor-page
+            data-document-width={editorSettings.documentWidth}
+            className={`qn-editor-page relative ${paperStyle.className || ''}`}
+            style={paperStyle.style}
+          >
+            <EditorContent editor={editor} />
+          </div>
         </div>
       </div>
 
@@ -1560,6 +1726,10 @@ function EditorToolbar({
   activeTab,
   onTabChange,
   onStartDrawing,
+  editorSettings,
+  onCut,
+  onCopy,
+  onPaste,
 }) {
   const { t } = useTranslation()
   const shortcut = (key, modifiers = {}) =>
@@ -1575,6 +1745,8 @@ function EditorToolbar({
   const [showHeadingsPicker, setShowHeadingsPicker] = useState(false)
   const [showShapePicker, setShowShapePicker] = useState(false)
   const [showChecklistMenu, setShowChecklistMenu] = useState(false)
+  const [showCalloutMenu, setShowCalloutMenu] = useState(false)
+  const [showParagraphSpacing, setShowParagraphSpacing] = useState(false)
   const [customColor, setCustomColor] = useState('#000000')
   const [customHighlight, setCustomHighlight] = useState('#fef08a')
   const [hoverCell, setHoverCell] = useState({ row: 0, col: 0 })
@@ -1596,6 +1768,8 @@ function EditorToolbar({
   const headingsRef = useRef(null)
   const shapePickerRef = useRef(null)
   const checklistRef = useRef(null)
+  const calloutRef = useRef(null)
+  const paragraphSpacingRef = useRef(null)
 
   const letterSpacingRef = useRef(null)
   
@@ -1706,6 +1880,8 @@ function EditorToolbar({
     setShowHeadingsPicker(false)
     setShowShapePicker(false)
     setShowChecklistMenu(false)
+    setShowCalloutMenu(false)
+    setShowParagraphSpacing(false)
   }, [])
 
   useEffect(() => {
@@ -1832,6 +2008,63 @@ function EditorToolbar({
     useUIStore.getState().openTranslateModal(text)
   }, [editor])
 
+  const taskItemContext = useCallback(() => {
+    const { $from } = editor.state.selection
+    for (let depth = $from.depth; depth > 0; depth -= 1) {
+      if ($from.node(depth).type.name === 'taskItem') {
+        return { node: $from.node(depth), pos: $from.before(depth) }
+      }
+    }
+    return null
+  }, [editor])
+
+  const updateTaskItem = useCallback((attributes) => {
+    const context = taskItemContext()
+    if (!context) return false
+    const transaction = editor.state.tr.setNodeMarkup(
+      context.pos,
+      undefined,
+      { ...context.node.attrs, ...attributes }
+    )
+    editor.view.dispatch(transaction)
+    editor.view.focus()
+    return true
+  }, [editor, taskItemContext])
+
+  const createChecklist = useCallback(() => {
+    const chain = editor.chain().focus()
+    if (editor.isActive('taskList')) {
+      chain.toggleTaskList().run()
+      return
+    }
+    chain
+      .toggleTaskList()
+      .updateAttributes('taskItem', {
+        checkboxStyle: editorSettings.defaultCheckboxStyle,
+        checkboxColor: editorSettings.defaultCheckboxColor,
+        checkboxSize: editorSettings.defaultCheckboxSize,
+        checkedStyle: editorSettings.defaultCheckedStyle,
+      })
+      .run()
+  }, [editor, editorSettings])
+
+  const addTaskItem = useCallback((placement) => {
+    const context = taskItemContext()
+    if (!context) return
+    const target = placement === 'above' ? context.pos + 1 : context.pos + context.node.nodeSize - 1
+    const selection = TextSelection.near(editor.state.doc.resolve(target), placement === 'above' ? 1 : -1)
+    editor.view.dispatch(editor.state.tr.setSelection(selection))
+    editor.chain().focus().splitListItem('taskItem').run()
+  }, [editor, taskItemContext])
+
+  const insertDateOrTime = useCallback((kind) => {
+    const now = new Date()
+    const value = kind === 'date'
+      ? new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(now)
+      : new Intl.DateTimeFormat(undefined, { timeStyle: 'short' }).format(now)
+    editor.chain().focus().insertContent(value).run()
+  }, [editor])
+
   const ToolbarButton = ({ onClick, isActive, disabled, children, title, shortcut }) => {
     const buttonRef = useRef(null)
     const activate = () => {
@@ -1915,8 +2148,12 @@ function EditorToolbar({
   }
 
   return (
-    <div className="editor-ribbon border-b border-subtle bg-surface-raised">
-      <div className="flex min-h-9 items-center border-b border-subtle px-2 sm:px-3">
+    <div
+      className="editor-ribbon border-b border-subtle"
+      data-density={editorSettings.ribbonDensity}
+      data-group-labels={editorSettings.showRibbonGroupLabels ? 'visible' : 'hidden'}
+    >
+      <div className="qn-ribbon-tabs flex min-h-10 items-center border-b border-subtle px-2 sm:px-3">
         <button
           type="button"
           onClick={onMobileClose}
@@ -1925,7 +2162,7 @@ function EditorToolbar({
         >
           <X className="h-4 w-4" aria-hidden="true" />
         </button>
-        <div role="tablist" aria-label="Editor ribbon" className="flex min-w-0 items-stretch overflow-x-auto">
+        <div role="tablist" aria-label="Editor ribbon" className="flex min-w-0 flex-1 items-stretch overflow-x-auto">
           {[
             ['home', 'Home'],
             ['insert', 'Insert'],
@@ -1958,7 +2195,7 @@ function EditorToolbar({
                 closeAllDropdowns()
                 onTabChange(value)
               }}
-              className={`relative h-9 shrink-0 px-3 text-ui-sm font-semibold transition-colors ${
+              className={`qn-ribbon-tab relative h-10 shrink-0 px-3 text-ui-sm font-semibold transition-colors ${
                 activeTab === value
                   ? 'text-accent-text after:absolute after:inset-x-2 after:bottom-0 after:h-0.5 after:rounded-full after:bg-accent'
                   : 'text-content-muted hover:bg-surface-hover hover:text-content'
@@ -1968,6 +2205,15 @@ function EditorToolbar({
             </button>
           ))}
         </div>
+        <button
+          type="button"
+          aria-label="Customize editor"
+          title="Customize editor"
+          onClick={() => useUIStore.getState().setEditorSettingsOpen(true)}
+          className="qn-square-control ml-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-control text-content-muted transition-colors hover:bg-surface-hover hover:text-content"
+        >
+          <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+        </button>
       </div>
       <div
         id="qn-editor-ribbon-panel"
@@ -1993,26 +2239,42 @@ function EditorToolbar({
       </ToolbarButton>
       </div>
 
-      <div className={ribbonGroupClass('format')}>
-      <span className="qn-ribbon-group-label">Typography</span>
-      <ToolbarDivider />
+      <div className={ribbonGroupClass('tools')}>
+      <span className="qn-ribbon-group-label">Clipboard</span>
+      <ToolbarButton onClick={onCut} disabled={editor.state.selection.empty} title="Cut" shortcut={shortcut('x')}>
+        <Scissors className="h-4 w-4" />
+      </ToolbarButton>
+      <ToolbarButton onClick={onCopy} disabled={editor.state.selection.empty} title="Copy" shortcut={shortcut('c')}>
+        <Copy className="h-4 w-4" />
+      </ToolbarButton>
+      <ToolbarButton onClick={onPaste} title="Paste" shortcut={shortcut('v')}>
+        <ClipboardPaste className="h-4 w-4" />
+      </ToolbarButton>
+      </div>
 
+      <div className={ribbonGroupClass('format')}>
+      <span className="qn-ribbon-group-label">Format tools</span>
       <ToolbarButton
         onClick={formatPainterActive ? () => { setFormatPainterActive(false); setCopiedFormat(null) } : copyFormat}
         isActive={formatPainterActive}
-        title={formatPainterActive ? "Cancel Format Painter (Esc)" : "Format Painter - Copy formatting"}
+        title={formatPainterActive ? 'Cancel format painter' : 'Format painter'}
       >
-        <Paintbrush className={`w-4 h-4 ${formatPainterActive ? 'text-emerald-600 animate-pulse' : ''}`} />
+        <Paintbrush className={`h-4 w-4 ${formatPainterActive ? 'text-emerald-600 animate-pulse' : ''}`} />
       </ToolbarButton>
-
-      <ToolbarButton 
-        onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()}
-        title="Clear Formatting"
-      >
-        <RemoveFormatting className="w-4 h-4" />
+      <ToolbarButton onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()} title="Clear formatting">
+        <RemoveFormatting className="h-4 w-4" />
       </ToolbarButton>
+      </div>
 
-      <ToolbarDivider />
+      <div className={ribbonGroupClass('tools')}>
+      <span className="qn-ribbon-group-label">Find</span>
+      <ToolbarButton onClick={() => useUIStore.getState().setFindReplaceOpen(true)} title="Find and replace" shortcut={shortcut('f')}>
+        <Search className="h-4 w-4" />
+      </ToolbarButton>
+      </div>
+
+      <div className={ribbonGroupClass('format')}>
+      <span className="qn-ribbon-group-label">Typography</span>
 
       <div className="relative" ref={fontPickerRef}>
         <DropdownButton isOpen={showFontPicker} onClick={() => toggleDropdown(setShowFontPicker, showFontPicker)} title="Font">
@@ -2380,7 +2642,7 @@ function EditorToolbar({
       </ToolbarButton>
       </div>
 
-      <div className={ribbonGroupClass('layout')}>
+      <div className={ribbonGroupClass('home')} style={{ order: -1 }}>
       <span className="qn-ribbon-group-label">Lists</span>
       <ToolbarButton onClick={() => editor.chain().focus().toggleBulletList().run()} isActive={editor.isActive('bulletList')} title="Bullet List">
         <List className="w-4 h-4" />
@@ -2389,45 +2651,80 @@ function EditorToolbar({
         <ListOrdered className="w-4 h-4" />
       </ToolbarButton>
       <div className="relative" ref={checklistRef}>
-        <DropdownButton isOpen={showChecklistMenu} onClick={() => toggleDropdown(setShowChecklistMenu, showChecklistMenu)} title="Checklist style">
+        <DropdownButton isOpen={showChecklistMenu} onClick={() => toggleDropdown(setShowChecklistMenu, showChecklistMenu)} title="Checklist options">
           <CheckSquare className="w-4 h-4" />
         </DropdownButton>
-        <PortalDropdown isOpen={showChecklistMenu} anchorRef={checklistRef} onClose={() => setShowChecklistMenu(false)} label="Checklist styles">
-          <div className="w-56 p-2">
+        <PortalDropdown isOpen={showChecklistMenu} anchorRef={checklistRef} onClose={() => setShowChecklistMenu(false)} label="Checklist options">
+          <div className="w-[min(22rem,calc(100vw-1rem))] p-2">
             <button
               type="button"
               onMouseDown={(event) => event.preventDefault()}
               onClick={() => {
-                editor.chain().focus().toggleTaskList().run()
+                createChecklist()
                 setShowChecklistMenu(false)
               }}
               className="flex w-full items-center gap-3 rounded-control px-3 py-2 text-left text-ui-md font-medium text-content hover:bg-surface-hover"
             >
               <CheckSquare className="h-4 w-4" /> {editor.isActive('taskList') ? 'Turn off checklist' : 'Create checklist'}
             </button>
+            {editor.isActive('taskItem') && (
+              <>
+                <div className="my-1 h-px bg-[var(--qn-border-subtle)]" />
+                <p className="px-3 py-1 text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">Current item</p>
+                <div className="grid grid-cols-2 gap-1">
+                  <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => updateTaskItem({ checked: !taskItemContext()?.node.attrs.checked })} className="flex items-center gap-2 rounded-control px-3 py-2 text-left text-ui-sm text-content-muted hover:bg-surface-hover hover:text-content">
+                    <Check className="h-4 w-4" /> Toggle complete
+                  </button>
+                  <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => addTaskItem('above')} className="flex items-center gap-2 rounded-control px-3 py-2 text-left text-ui-sm text-content-muted hover:bg-surface-hover hover:text-content">
+                    <ListPlus className="h-4 w-4" /> Add above
+                  </button>
+                  <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => addTaskItem('below')} className="flex items-center gap-2 rounded-control px-3 py-2 text-left text-ui-sm text-content-muted hover:bg-surface-hover hover:text-content">
+                    <Plus className="h-4 w-4" /> Add below
+                  </button>
+                  <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => editor.chain().focus().liftListItem('taskItem').run()} className="flex items-center gap-2 rounded-control px-3 py-2 text-left text-ui-sm text-content-muted hover:bg-surface-hover hover:text-content">
+                    <AlignLeft className="h-4 w-4" /> Remove this checkbox
+                  </button>
+                </div>
+              </>
+            )}
             <div className="my-1 h-px bg-[var(--qn-border-subtle)]" />
-            <p className="px-3 py-1 text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">Checkbox appearance</p>
-            {[
-              ['square', 'Square'],
-              ['rounded', 'Rounded'],
-              ['circle', 'Circle'],
-            ].map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                aria-pressed={editor.isActive('taskItem', { checkboxStyle: value })}
-                onMouseDown={(event) => event.preventDefault()}
-                onClick={() => {
-                  const chain = editor.chain().focus()
-                  if (!editor.isActive('taskList')) chain.toggleTaskList()
-                  chain.updateAttributes('taskItem', { checkboxStyle: value }).run()
-                  setShowChecklistMenu(false)
-                }}
-                className="flex w-full items-center gap-3 rounded-control px-3 py-2 text-left text-ui-md text-content-muted hover:bg-surface-hover hover:text-content"
-              >
-                <span className={`qn-check-style-preview qn-check-style-preview--${value}`} /> {label}
-              </button>
-            ))}
+            <div className="grid gap-3 p-2 sm:grid-cols-2">
+              <fieldset className="sm:col-span-2">
+                <legend className="mb-1 text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">Shape</legend>
+                <div className="flex gap-1">
+                  {[['square', 'Square'], ['rounded', 'Rounded'], ['circle', 'Circle']].map(([value, label]) => (
+                    <button key={value} type="button" aria-label={`${label} checkbox`} aria-pressed={editor.isActive('taskItem', { checkboxStyle: value })} title={label} onMouseDown={(event) => event.preventDefault()} onClick={() => updateTaskItem({ checkboxStyle: value })} className="qn-check-option flex h-9 flex-1 items-center justify-center rounded-control border border-subtle hover:bg-surface-hover">
+                      <span className={`qn-check-style-preview qn-check-style-preview--${value}`} />
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
+              <fieldset className="sm:col-span-2">
+                <legend className="mb-1 text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">Checked colour</legend>
+                <div className="flex gap-1">
+                  {['accent', 'blue', 'purple', 'amber', 'rose', 'slate'].map((value) => (
+                    <button key={value} type="button" aria-label={`${value} checkbox colour`} aria-pressed={editor.isActive('taskItem', { checkboxColor: value })} title={value} onMouseDown={(event) => event.preventDefault()} onClick={() => updateTaskItem({ checkboxColor: value })} className={`qn-check-colour qn-check-colour--${value}`} />
+                  ))}
+                </div>
+              </fieldset>
+              <div>
+                <label htmlFor="checklist-size" className="mb-1 block text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">Size</label>
+                <select id="checklist-size" value={editor.getAttributes('taskItem').checkboxSize || editorSettings.defaultCheckboxSize} onChange={(event) => updateTaskItem({ checkboxSize: event.target.value })} className="w-full rounded-control border border-subtle bg-surface-raised px-2 py-1.5 text-ui-sm text-content">
+                  <option value="compact">Compact</option>
+                  <option value="standard">Standard</option>
+                  <option value="large">Large</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="checklist-completed-style" className="mb-1 block text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">Completed text</label>
+                <select id="checklist-completed-style" value={editor.getAttributes('taskItem').checkedStyle || editorSettings.defaultCheckedStyle} onChange={(event) => updateTaskItem({ checkedStyle: event.target.value })} className="w-full rounded-control border border-subtle bg-surface-raised px-2 py-1.5 text-ui-sm text-content">
+                  <option value="strike">Strike through</option>
+                  <option value="fade">Fade</option>
+                  <option value="keep">Keep unchanged</option>
+                </select>
+              </div>
+            </div>
+            {!editor.isActive('taskItem') && <p className="px-3 pb-2 text-ui-xs leading-relaxed text-content-subtle">Create a checklist or place the cursor in an item to edit its appearance and structure.</p>}
           </div>
         </PortalDropdown>
       </div>
@@ -2504,6 +2801,37 @@ function EditorToolbar({
       >
         <Sparkles className="w-4 h-4" />
       </ToolbarButton>
+
+      <div className="relative" ref={paragraphSpacingRef}>
+        <DropdownButton isOpen={showParagraphSpacing} onClick={() => toggleDropdown(setShowParagraphSpacing, showParagraphSpacing)} title="Paragraph spacing">
+          <MoveVertical className="h-4 w-4" />
+        </DropdownButton>
+        <PortalDropdown isOpen={showParagraphSpacing} anchorRef={paragraphSpacingRef} onClose={() => setShowParagraphSpacing(false)} label="Paragraph spacing">
+          <div className="w-64 p-3">
+            <p className="mb-2 text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">Paragraph spacing</p>
+            <div className="grid grid-cols-2 gap-2">
+              <label className="text-ui-xs font-medium text-content-muted">
+                Before
+                <input type="number" min="0" max="160" step="4" value={editor.getAttributes(editor.isActive('heading') ? 'heading' : 'paragraph').spaceBefore || 0} onChange={(event) => editor.chain().focus().setParagraphLayout({ spaceBefore: Number(event.target.value) }).run()} className="mt-1 w-full rounded-control border border-subtle bg-surface-raised px-2 py-1.5 text-ui-sm text-content" />
+              </label>
+              <label className="text-ui-xs font-medium text-content-muted">
+                After
+                <input type="number" min="0" max="160" step="4" value={editor.getAttributes(editor.isActive('heading') ? 'heading' : 'paragraph').spaceAfter || 0} onChange={(event) => editor.chain().focus().setParagraphLayout({ spaceAfter: Number(event.target.value) }).run()} className="mt-1 w-full rounded-control border border-subtle bg-surface-raised px-2 py-1.5 text-ui-sm text-content" />
+              </label>
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-1">
+              {[
+                ['Compact', 0, 4],
+                ['Normal', 0, 12],
+                ['Relaxed', 8, 16],
+                ['Section', 20, 8],
+              ].map(([label, before, after]) => (
+                <button key={label} type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => editor.chain().focus().setParagraphLayout({ spaceBefore: before, spaceAfter: after }).run()} className="rounded-control px-2 py-1.5 text-left text-ui-sm text-content-muted hover:bg-surface-hover hover:text-content">{label}</button>
+              ))}
+            </div>
+          </div>
+        </PortalDropdown>
+      </div>
       </div>
 
       <div className={ribbonGroupClass('insert')}>
@@ -2519,6 +2847,29 @@ function EditorToolbar({
       <ToolbarButton onClick={() => editor.chain().focus().setHorizontalRule().run()} title="Horizontal Line">
         <Minus className="w-4 h-4" />
       </ToolbarButton>
+      <div className="relative" ref={calloutRef}>
+        <DropdownButton isOpen={showCalloutMenu} onClick={() => toggleDropdown(setShowCalloutMenu, showCalloutMenu)} title="Callout">
+          <Info className="h-4 w-4" />
+        </DropdownButton>
+        <PortalDropdown isOpen={showCalloutMenu} anchorRef={calloutRef} onClose={() => setShowCalloutMenu(false)} label="Callout styles">
+          <div className="w-60 p-2">
+            <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => { toggleStructuralCallout(editor, 'info'); setShowCalloutMenu(false) }} className="flex w-full items-center gap-3 rounded-control px-3 py-2 text-left text-ui-md font-medium text-content hover:bg-surface-hover">
+              <Info className="h-4 w-4" /> {editor.isActive('callout') ? 'Turn into paragraph' : 'Create callout'}
+            </button>
+            {editor.isActive('callout') && <div className="my-1 h-px bg-[var(--qn-border-subtle)]" />}
+            {editor.isActive('callout') && [
+              ['info', 'Information', Info],
+              ['tip', 'Tip', Lightbulb],
+              ['warning', 'Warning', AlertTriangle],
+              ['important', 'Important', ShieldAlert],
+            ].map(([tone, label, Icon]) => (
+              <button key={tone} type="button" aria-pressed={editor.isActive('callout', { tone })} onMouseDown={(event) => event.preventDefault()} onClick={() => editor.chain().focus().setCalloutTone(tone).run()} className="flex w-full items-center gap-3 rounded-control px-3 py-2 text-left text-ui-sm text-content-muted hover:bg-surface-hover hover:text-content">
+                <Icon className="h-4 w-4" /> {label}
+              </button>
+            ))}
+          </div>
+        </PortalDropdown>
+      </div>
       </div>
 
       <div className={ribbonGroupClass('insert')}>
@@ -2667,6 +3018,12 @@ function EditorToolbar({
 
       <div className={ribbonGroupClass('insert')}>
       <span className="qn-ribbon-group-label">References</span>
+      <ToolbarButton onClick={() => insertDateOrTime('date')} title="Insert current date">
+        <Calendar className="h-4 w-4" />
+      </ToolbarButton>
+      <ToolbarButton onClick={() => insertDateOrTime('time')} title="Insert current time">
+        <Clock className="h-4 w-4" />
+      </ToolbarButton>
       <div className="relative" ref={tocRef}>
         <DropdownButton 
           isOpen={showTableOfContents} 
@@ -2716,6 +3073,9 @@ function EditorToolbar({
 
       <div className={ribbonGroupClass('layout')}>
       <span className="qn-ribbon-group-label">Page</span>
+      <ToolbarButton onClick={() => updateEditorSettings({ showRuler: !editorSettings.showRuler })} isActive={editorSettings.showRuler} title={editorSettings.showRuler ? 'Hide ruler' : 'Show ruler'}>
+        <Ruler className="h-4 w-4" />
+      </ToolbarButton>
       <div className="relative" ref={paperPickerRef}>
         <DropdownButton isOpen={showPaperPicker} onClick={() => toggleDropdown(setShowPaperPicker, showPaperPicker)} title="Paper Style">
           <span className="text-xs font-medium">{paperStyles[currentPaper]?.name || 'Plain'}</span>
@@ -2741,6 +3101,18 @@ function EditorToolbar({
                   style={paper.preview || paper.style}
                 />
                 <span className="truncate">{paper.name}</span>
+              </button>
+            ))}
+            <div className="my-1 h-px bg-[var(--qn-border-subtle)]" />
+            <p className="px-3 py-1 text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">Note width</p>
+            {[
+              ['focused', 'Focused'],
+              ['standard', 'Standard'],
+              ['wide', 'Wide'],
+              ['full', 'Full width'],
+            ].map(([value, label]) => (
+              <button key={value} type="button" aria-pressed={editorSettings.documentWidth === value} onMouseDown={(event) => event.preventDefault()} onClick={() => updateEditorSettings({ documentWidth: value })} className={`flex w-full items-center justify-between rounded-control px-3 py-2 text-left text-ui-sm hover:bg-surface-hover ${editorSettings.documentWidth === value ? 'font-medium text-accent-text' : 'text-content-muted'}`}>
+                {label} {editorSettings.documentWidth === value && <Check className="h-4 w-4" />}
               </button>
             ))}
           </div>

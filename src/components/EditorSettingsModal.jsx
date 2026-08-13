@@ -4,6 +4,8 @@ import {
   Ruler,
   Type,
   AlignLeft,
+  ListChecks,
+  PanelTop,
   Eye,
   EyeOff,
   RotateCcw,
@@ -19,8 +21,13 @@ import {
   EDITOR_FONT_GROUPS,
 } from '../lib/editorFonts'
 const STORAGE_KEY = 'editorSettings'
+let volatileEditorSettings = null
 const defaultSettings = {
   showRuler: false,
+  documentWidth: 'standard',
+  ribbonDensity: 'comfortable',
+  defaultRibbonTab: 'home',
+  showRibbonGroupLabels: true,
   defaultFontFamily: DEFAULT_EDITOR_FONT,
   defaultFontSize: '16px',
   defaultLineHeight: '1.5',
@@ -29,6 +36,10 @@ const defaultSettings = {
   showInvisibles: false,
   wordWrap: true,
   highlightCurrentLine: false,
+  defaultCheckboxStyle: 'rounded',
+  defaultCheckboxColor: 'accent',
+  defaultCheckboxSize: 'standard',
+  defaultCheckedStyle: 'strike',
 }
 const fontOptions = EDITOR_FONT_FAMILIES
 
@@ -56,11 +67,22 @@ const tabSizeOptions = [
 
 const booleanSettingKeys = [
   'showRuler',
+  'showRibbonGroupLabels',
   'autoCorrect',
   'showInvisibles',
   'wordWrap',
   'highlightCurrentLine',
 ]
+
+const enumSettings = {
+  documentWidth: new Set(['focused', 'standard', 'wide', 'full']),
+  ribbonDensity: new Set(['comfortable', 'compact']),
+  defaultRibbonTab: new Set(['home', 'insert', 'format', 'layout', 'tools']),
+  defaultCheckboxStyle: new Set(['square', 'rounded', 'circle']),
+  defaultCheckboxColor: new Set(['accent', 'blue', 'purple', 'amber', 'rose', 'slate']),
+  defaultCheckboxSize: new Set(['compact', 'standard', 'large']),
+  defaultCheckedStyle: new Set(['strike', 'fade', 'keep']),
+}
 
 export function normalizeEditorSettings(value) {
   const candidate = value && typeof value === 'object' && !Array.isArray(value) ? value : {}
@@ -74,13 +96,31 @@ export function normalizeEditorSettings(value) {
   if (allowedFontSizes.has(candidate.defaultFontSize)) normalized.defaultFontSize = candidate.defaultFontSize
   if (allowedLineHeights.has(candidate.defaultLineHeight)) normalized.defaultLineHeight = candidate.defaultLineHeight
   if (allowedTabSizes.has(candidate.tabSize)) normalized.tabSize = candidate.tabSize
+  for (const [key, values] of Object.entries(enumSettings)) {
+    if (values.has(candidate[key])) normalized[key] = candidate[key]
+  }
   for (const key of booleanSettingKeys) {
     if (typeof candidate[key] === 'boolean') normalized[key] = candidate[key]
   }
   return normalized
 }
 
+export function updateEditorSettings(patch) {
+  const next = normalizeEditorSettings({ ...loadEditorSettings(), ...patch })
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+    volatileEditorSettings = null
+  } catch {
+    // The open settings dialog reports persistence failures. Inline editor
+    // controls still apply the preference for the lifetime of this tab.
+    volatileEditorSettings = next
+  }
+  window.dispatchEvent(new CustomEvent('editorSettingsChanged', { detail: next }))
+  return next
+}
+
 function loadEditorSettings() {
+  if (volatileEditorSettings) return normalizeEditorSettings(volatileEditorSettings)
   try {
     return normalizeEditorSettings(JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'))
   } catch {
@@ -95,8 +135,10 @@ export default function EditorSettingsModal() {
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
+      volatileEditorSettings = null
       setPersistenceError('')
     } catch {
+      volatileEditorSettings = settings
       setPersistenceError('Editor preferences could not be saved in this browser. They will apply until this tab is closed.')
     }
     window.dispatchEvent(new CustomEvent('editorSettingsChanged', { detail: settings }))
@@ -114,7 +156,7 @@ export default function EditorSettingsModal() {
 
   return (
     <LegacyDialog label="Editor settings" onClose={() => setEditorSettingsOpen(false)} align="center">
-      <div className="flex max-h-full min-h-0 w-full max-w-md flex-col overflow-hidden rounded-dialog border border-subtle bg-surface-raised shadow-dialog modal-animate sm:mx-4">
+      <div className="flex max-h-full min-h-0 w-full max-w-3xl flex-col overflow-hidden rounded-dialog border border-subtle bg-surface-raised shadow-dialog modal-animate sm:mx-4">
         <DialogHeader
           title="Editor Settings"
           description="Customize your editing experience"
@@ -129,6 +171,76 @@ export default function EditorSettingsModal() {
               <p>{persistenceError}</p>
             </div>
           )}
+          <div className="space-y-4">
+            <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-content-muted">
+              <PanelTop className="h-4 w-4" />
+              Workbench
+            </h3>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label htmlFor="editor-document-width" className="mb-2 block text-sm font-medium text-content-muted">
+                  Note width
+                </label>
+                <select
+                  id="editor-document-width"
+                  value={settings.documentWidth}
+                  onChange={(e) => handleSettingChange('documentWidth', e.target.value)}
+                  className="w-full rounded-control border border-subtle bg-surface-sunken px-3 py-2 text-content focus:ring-2 focus:ring-emerald-500"
+                >
+                  <option value="focused">Focused · 720 px</option>
+                  <option value="standard">Standard · 880 px</option>
+                  <option value="wide">Wide · 1120 px</option>
+                  <option value="full">Full width</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="editor-default-ribbon-tab" className="mb-2 block text-sm font-medium text-content-muted">
+                  Tab shown when editor opens
+                </label>
+                <select
+                  id="editor-default-ribbon-tab"
+                  value={settings.defaultRibbonTab}
+                  onChange={(e) => handleSettingChange('defaultRibbonTab', e.target.value)}
+                  className="w-full rounded-control border border-subtle bg-surface-sunken px-3 py-2 text-content focus:ring-2 focus:ring-emerald-500"
+                >
+                  <option value="home">Home</option>
+                  <option value="insert">Insert</option>
+                  <option value="format">Format</option>
+                  <option value="layout">Layout</option>
+                  <option value="tools">Tools</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="editor-ribbon-density" className="mb-2 block text-sm font-medium text-content-muted">
+                  Ribbon spacing
+                </label>
+                <select
+                  id="editor-ribbon-density"
+                  value={settings.ribbonDensity}
+                  onChange={(e) => handleSettingChange('ribbonDensity', e.target.value)}
+                  className="w-full rounded-control border border-subtle bg-surface-sunken px-3 py-2 text-content focus:ring-2 focus:ring-emerald-500"
+                >
+                  <option value="comfortable">Comfortable</option>
+                  <option value="compact">Compact</option>
+                </select>
+              </div>
+              <label className="flex cursor-pointer items-center justify-between rounded-control border border-subtle p-3 transition-colors hover:bg-surface-sunken">
+                <div className="flex items-center gap-3">
+                  <PanelTop className="h-5 w-5 text-content-muted" />
+                  <div>
+                    <p className="font-medium text-content">Group labels</p>
+                    <p className="text-xs text-content-muted">Keep command groups named</p>
+                  </div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={settings.showRibbonGroupLabels}
+                  onChange={(e) => handleSettingChange('showRibbonGroupLabels', e.target.checked)}
+                  className="h-5 w-5 rounded text-emerald-600 focus:ring-emerald-500"
+                />
+              </label>
+            </div>
+          </div>
           <div className="space-y-4">
             <h3 className="flex items-center gap-2 text-sm font-semibold text-content-muted uppercase tracking-wider">
               <Type className="w-4 h-4" />
@@ -184,6 +296,50 @@ export default function EditorSettingsModal() {
                   <option key={lh.value} value={lh.value}>{lh.name}</option>
                 ))}
               </select>
+            </div>
+          </div>
+          <div className="space-y-4">
+            <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-content-muted">
+              <ListChecks className="h-4 w-4" />
+              New checklists
+            </h3>
+            <p className="text-sm text-content-muted">These defaults apply to newly created checklist items. Existing items keep their own appearance.</p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label htmlFor="editor-checkbox-shape" className="mb-2 block text-sm font-medium text-content-muted">Shape</label>
+                <select id="editor-checkbox-shape" value={settings.defaultCheckboxStyle} onChange={(e) => handleSettingChange('defaultCheckboxStyle', e.target.value)} className="w-full rounded-control border border-subtle bg-surface-sunken px-3 py-2 text-content focus:ring-2 focus:ring-emerald-500">
+                  <option value="square">Square</option>
+                  <option value="rounded">Rounded</option>
+                  <option value="circle">Circle</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="editor-checkbox-colour" className="mb-2 block text-sm font-medium text-content-muted">Checked colour</label>
+                <select id="editor-checkbox-colour" value={settings.defaultCheckboxColor} onChange={(e) => handleSettingChange('defaultCheckboxColor', e.target.value)} className="w-full rounded-control border border-subtle bg-surface-sunken px-3 py-2 text-content focus:ring-2 focus:ring-emerald-500">
+                  <option value="accent">QuickNotes green</option>
+                  <option value="blue">Blue</option>
+                  <option value="purple">Purple</option>
+                  <option value="amber">Amber</option>
+                  <option value="rose">Rose</option>
+                  <option value="slate">Slate</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="editor-checkbox-size" className="mb-2 block text-sm font-medium text-content-muted">Size</label>
+                <select id="editor-checkbox-size" value={settings.defaultCheckboxSize} onChange={(e) => handleSettingChange('defaultCheckboxSize', e.target.value)} className="w-full rounded-control border border-subtle bg-surface-sunken px-3 py-2 text-content focus:ring-2 focus:ring-emerald-500">
+                  <option value="compact">Compact</option>
+                  <option value="standard">Standard</option>
+                  <option value="large">Large</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="editor-checked-treatment" className="mb-2 block text-sm font-medium text-content-muted">Completed text</label>
+                <select id="editor-checked-treatment" value={settings.defaultCheckedStyle} onChange={(e) => handleSettingChange('defaultCheckedStyle', e.target.value)} className="w-full rounded-control border border-subtle bg-surface-sunken px-3 py-2 text-content focus:ring-2 focus:ring-emerald-500">
+                  <option value="strike">Strike through</option>
+                  <option value="fade">Fade</option>
+                  <option value="keep">Keep unchanged</option>
+                </select>
+              </div>
             </div>
           </div>
           <div className="space-y-4">
@@ -257,6 +413,18 @@ export default function EditorSettingsModal() {
                 ))}
               </select>
             </div>
+            <label className="flex cursor-pointer items-center justify-between rounded-control border border-subtle p-3 transition-colors hover:bg-surface-sunken">
+              <div>
+                <p className="font-medium text-content">Browser auto-correction</p>
+                <p className="text-xs text-content-muted">Allow supported browsers to correct typing mistakes</p>
+              </div>
+              <input
+                type="checkbox"
+                checked={settings.autoCorrect}
+                onChange={(e) => handleSettingChange('autoCorrect', e.target.checked)}
+                className="h-5 w-5 rounded text-emerald-600 focus:ring-emerald-500"
+              />
+            </label>
           </div>
         </div>
         <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-subtle bg-surface-sunken px-4 py-3 sm:px-6 sm:py-4">
@@ -287,7 +455,10 @@ export function useEditorSettings() {
       setSettings(normalizeEditorSettings(event.detail))
     }
     const handleStorage = (event) => {
-      if (event.key === STORAGE_KEY) setSettings(loadEditorSettings())
+      if (event.key === STORAGE_KEY) {
+        volatileEditorSettings = null
+        setSettings(loadEditorSettings())
+      }
     }
 
     window.addEventListener('editorSettingsChanged', handleSettingsChange)

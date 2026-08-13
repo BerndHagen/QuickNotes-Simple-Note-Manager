@@ -54,8 +54,7 @@ official product guidance:
 - Word organizes commands into predictable ribbon tabs and named groups, and
   permits users to customize that hierarchy. QuickNotes now uses one stable
   five-tab ribbon (Home, Insert, Format, Layout, and Tools). Every command is
-  contained by a named group; narrow panes scroll only the active tab, while
-  every tab fits without horizontal scrolling in the desktop editor.
+  contained by a named group, and narrow panes scroll only the active tab.
 - Word creates text boxes by dragging to the requested size and moves them from
   their border. QuickNotes now uses the same direct-manipulation contract for
   text boxes and twelve genuine SVG shapes: choose an object, drag on the page
@@ -85,6 +84,39 @@ official product guidance:
   already covers the note-native core; generic attachments remain deferred
   until storage quotas, validation, offline caching and deletion are complete.
 
+## Editor workbench follow-up
+
+The second editor pass addressed the gap between feature presence and feature
+control. These decisions were validated against the live QuickNotes document
+model rather than implemented as visual imitations.
+
+| Observed mature-editor pattern | QuickNotes decision in this pass |
+| --- | --- |
+| Office lets users show or collapse the ribbon and personalize tabs/groups; Evernote also offers note-width choices. | Added one visible **Customize editor** entry point plus persistent note width, ribbon density, default tab, group-label, ruler, typography, tab, and new-checklist defaults. |
+| Word treats the ruler as a view choice, and exposes exact before/after paragraph spacing alongside indents. | Layout now has an explicit ruler toggle; merely opening Layout no longer changes the view. Paragraph spacing before/after is stored with each paragraph or heading. |
+| Evernote distinguishes checkboxes from checklist behavior, and Notion exposes actions on the current block instead of requiring whole-list replacement. | The checklist menu now edits the current item: toggle completion, add above/below, remove only that checkbox, choose square/rounded/circle geometry, six checked colours, three sizes, and strike/fade/unchanged completed text. New-item defaults are separate from existing-item data. |
+| Notion and Evernote expose searchable slash insertion; Notion includes callouts and block conversion. | Typing `/` on an otherwise empty line opens a keyboard-operable, searchable insert menu for text, headings, lists, checklist, callout, quote, code, divider, table, and date. Insert also contains semantic callouts and date/time commands. |
+| Evernote offers selectable note width and keeps the document distinct from navigation chrome. | The editor now renders a centered document surface on a quiet workbench instead of an undifferentiated white debug area. Focused, standard, wide, and full-width modes are durable preferences. |
+
+The browser test exposed and fixed an important integration defect: TipTap's
+stock task-item node view only repaints its `checked` attribute. QuickNotes now
+owns the node-view update path, so custom checkbox attributes update the live
+DOM immediately as well as saved HTML. This prevents the misleading state where
+settings appeared selected in a menu but did not visually affect the note until
+reload.
+
+### Capabilities deliberately not faked
+
+- Arbitrary drag-reordering of every ProseMirror block remains deferred until
+  pointer, keyboard, nested-list, table, object, undo, and collaborative
+  transaction behavior can share one reliable model.
+- Comments, suggestions, assignments, and track changes remain collaboration
+  features requiring permissions, identity, notifications, and version-aware
+  persistence—not toolbar buttons alone.
+- Equations, generic attachments, PDF previews, audio transcription, drawing,
+  and OCR remain separate lifecycle/privacy projects. A label that opens an
+  incomplete dialog would reduce trust rather than increase editor maturity.
+
 ## Product conclusion
 
 QuickNotes should not claim to contain “everything” from every competitor; no
@@ -106,5 +138,11 @@ backend flows are designed and tested.
 - Microsoft OneNote: [drawing and shapes](https://support.microsoft.com/en-us/onenote/onenote-help-and-learning/draw-and-sketch-notes-in-onenote)
 - Notion: [board views](https://www.notion.com/help/boards) and [forms](https://www.notion.com/en-gb/help/forms)
 - Evernote: [editor and insert options](https://help.evernote.com/hc/en-us/articles/360022954093-Note-editor-and-editing-toolbar-overview)
+- Evernote: [editor width, floating formatting, slash commands, draggable blocks and collapsible sections](https://help.evernote.com/hc/en-us/articles/360022954093-Note-editor-and-editing-toolbar-overview)
 - Evernote: [sidebar and navbar customization](https://help.evernote.com/hc/en-us/articles/221189627-Sidebar-and-Navbar-Overview)
+- Notion: [writing, block actions, slash commands, callouts and toggle lists](https://www.notion.com/help/writing-and-editing-basics)
 - Microsoft Word: [wrap text and move objects](https://support.microsoft.com/en-us/word/wrap-text-and-move-pictures-in-word)
+- Microsoft Word: [paragraph indentation and before/after spacing](https://support.microsoft.com/en-US/Word/adjust-indents-and-spacing-in-word)
+- Microsoft Office: [ribbon visibility and customization](https://support.microsoft.com/en-US/Office/foundations-experiences/customize-the-ribbon-in-office)
+- Microsoft OneNote: [free-positioned notes, formatting, search and follow-up tags](https://support.microsoft.com/en-us/onenote/take-and-format-notes)
+- Apple Notes: [editable tables, text conversion and row/column movement](https://support.apple.com/guide/notes/add-a-table-apd0a136b9cc/mac)

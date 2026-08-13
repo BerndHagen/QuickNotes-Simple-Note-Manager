@@ -27,11 +27,13 @@ You can try QuickNotes [**here**](https://berndhagen.github.io/QuickNotes-Simple
 - **Rich Text Editor:** Full WYSIWYG editor powered by TipTap with headings, bold, italic, underline, strikethrough, text alignment, font colors, highlights, and more
 - **Code Blocks:** Syntax highlighting for many programming languages via Lowlight
 - **Tables:** Insert and edit tables with a bubble menu for row/column operations, cell merging, header toggling, and cell background colors
-- **Task Lists:** Interactive, nestable checklists with square, rounded, and circular checkbox styles
+- **Task Lists:** Interactive, nestable checklists with per-item shape, colour, size, completion treatment, add/remove-item actions, and persistent defaults for new lists
 - **Image Support:** Upload and embed resizable images directly in notes with drag handles
 - **Document Objects:** Drag to draw editable text boxes and twelve SVG shapes at an exact page position, then move, resize from eight handles, rotate, flip, wrap, recolor, and size them precisely
-- **Task-based Editor Ribbon:** Home, Insert, Format, Layout, and Tools tabs keep every command in a named group without duplicating or hiding tools in a changing More menu
-- **Paragraph Layout:** Repeatable multilevel indentation, a working ruler with first-line/left/right indent markers, custom tab stops, and durable Tab-key advances
+- **Task-based Editor Ribbon:** Home, Insert, Format, Layout, and Tools tabs keep commands in named groups, with persistent density, group-label, default-tab, and note-width preferences
+- **Structured Writing:** Searchable slash commands, semantic callouts, local date/time insertion, and a contextual checklist editor keep advanced blocks discoverable without crowding every tab
+- **Paragraph Layout:** Repeatable multilevel indentation, before/after spacing, an optional ruler with first-line/left/right indent markers, custom tab stops, and durable Tab-key advances
+- **Document Workbench:** A centered, elevated note surface with focused, standard, wide, and full-width modes separates the document from application chrome
 - **Folders & Tags:** Organize notes into folders and assign color-coded tags via the Tag Manager
 - **Favorites & Pins:** Star or pin important notes for quick access
 - **Global Search:** Full-text search across all notes by title, content, and tags
@@ -502,6 +504,7 @@ The editor is built on **TipTap** (ProseMirror wrapper) with the following exten
 | `Image` (custom) | Resizable images with drag handles (`ResizableImageExtension.js`) |
 | `Table`, `TableRow`, `TableCell`, `TableHeader` (custom) | Tables with cell colors (`CustomTableCell.js`, `CustomTableHeader.js`) |
 | `TaskList` + `StyledTaskItem` | Nested interactive checkboxes with selectable geometry |
+| `CalloutExtension` (custom) | Semantic information, tip, warning, and important blocks |
 | `CodeBlockLowlight` | Syntax-highlighted code blocks |
 | `Placeholder` | Placeholder text when editor is empty |
 | `Subscript` + `Superscript` | Sub/superscript text |
@@ -512,8 +515,9 @@ The editor is built on **TipTap** (ProseMirror wrapper) with the following exten
 
 - **`TextBoxExtension.js`** — Adds drag-created, freely movable text boxes with eight resize handles, exact geometry, wrapping, fill, border, and text-alignment controls.
 - **`ShapeExtension.js`** — Adds twelve editable SVG objects with drag creation, eight-handle resize, exact geometry, rotation, flips, wrapping, keyboard movement, and color presets.
-- **`ParagraphLayoutExtension.js` + `TabStopExtension.js`** — Persist repeatable indents, ruler markers, custom stops, and inline Tab-key advances in note HTML.
-- **`StyledTaskItem.js`** — Persists square, rounded, or circular checkbox presentation without replacing task semantics.
+- **`ParagraphLayoutExtension.js` + `TabStopExtension.js`** — Persist repeatable indents, paragraph spacing, ruler markers, custom stops, and inline Tab-key advances in note HTML.
+- **`StyledTaskItem.js`** — Persists per-item checkbox shape, colour, size, checked-text behavior, and accessible interaction without replacing task semantics.
+- **`CalloutExtension.js`** — Stores editable callout tone as semantic note HTML instead of a decorative floating shape.
 
 - **`ResizableImageExtension.js`** — Extends the Image node to support drag-to-resize with handles. Renders via `ResizableImage.jsx`.
 - **`CustomTableCell.js`** — Extends TableCell with a `backgroundColor` attribute for per-cell coloring.
