@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { X, FileText, FileCode, File, Download, Check } from 'lucide-react'
+import { FileText, FileCode, File, Download, Check } from 'lucide-react'
 import { useNotesStore, useUIStore } from '../store'
 import { useTranslation } from '../lib/useTranslation'
 import { hasSpecializedEditor } from './editors'
 import toast from 'react-hot-toast'
 import LegacyDialog from './ui/LegacyDialog'
+import DialogHeader from './ui/DialogHeader'
 import Button from './ui/Button'
 import { escapeHtml, sanitizeNoteHtml } from '../lib/sanitizeHtml'
 import { htmlToMarkdown, htmlToPlainText } from '../lib/noteTransfer'
@@ -664,26 +665,16 @@ export default function ExportModal() {
   return (
     <LegacyDialog label="Export notes" onClose={() => setExportModalOpen(false)} align="center">
       <div 
-        className="flex max-h-full w-full min-w-0 max-w-md flex-col overflow-hidden rounded-2xl border border-subtle bg-surface-raised shadow-2xl modal-animate"
+        className="flex max-h-full w-full min-w-0 max-w-md flex-col overflow-hidden rounded-dialog border border-subtle bg-surface-raised shadow-dialog modal-animate"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex shrink-0 items-center justify-between p-4 text-white qn-banner-surface sm:p-5">
-          <div className="flex items-center gap-3">
-            <Download className="h-6 w-6" aria-hidden="true" />
-            <div>
-              <h2 className="text-lg font-bold">{t('exportModal.title')}</h2>
-              <p className="text-sm text-white">{t('exportModal.subtitle')}</p>
-            </div>
-          </div>
-          <button
-            type="button"
-            aria-label={t('common.close', 'Close export')}
-            onClick={() => setExportModalOpen(false)}
-            className="qn-square-control rounded-full p-2 transition-colors hover:bg-white/20"
-          >
-            <X className="h-5 w-5" aria-hidden="true" />
-          </button>
-        </div>
+        <DialogHeader
+          title={t('exportModal.title')}
+          description={t('exportModal.subtitle')}
+          icon={Download}
+          onClose={() => setExportModalOpen(false)}
+          closeLabel={t('common.close', 'Close export')}
+        />
         <div className="min-h-0 min-w-0 overflow-y-auto overscroll-contain p-4 sm:p-6">
         {note && (
           <div className="mb-4 p-3 bg-surface-sunken rounded-lg">

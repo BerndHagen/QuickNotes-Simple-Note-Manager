@@ -24,10 +24,11 @@ describe('Modal', () => {
     expect(dialog).toHaveAccessibleDescription('This cannot be undone')
   })
 
-  it('uses the shared green banner architecture', () => {
+  it('uses the shared neutral dialog header architecture', () => {
     renderModal({ description: 'Consistent dialog header' })
     const banner = screen.getByRole('dialog').querySelector('[data-dialog-banner]')
-    expect(banner).toHaveClass('qn-banner-surface')
+    expect(banner).toHaveClass('qn-dialog-header')
+    expect(banner).not.toHaveClass('qn-banner-surface')
     expect(banner).toContainElement(screen.getByRole('heading', { name: 'Delete folder' }))
   })
 

@@ -591,7 +591,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
               {note.tags.map((tagName) => (
                 <li key={tagName} className="min-w-0">
                   <TagChip
-                    surface="dark"
+                    surface="surface"
                     name={tagName}
                     color={tags.find((tag) => tag.name === tagName)?.color || '#6b7280'}
                     className="max-w-[16ch]"

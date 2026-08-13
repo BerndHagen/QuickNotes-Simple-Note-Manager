@@ -70,9 +70,14 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
 }
 
 /* Scrollbars */
+html {
+  scrollbar-color: var(--qn-border-strong) transparent;
+  scrollbar-width: thin;
+}
+
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
@@ -80,34 +85,33 @@ input[type="datetime-local"]:not([class*="opacity-0"]):focus {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.08);
+  min-height: 36px;
+  border: 2px solid transparent;
+  background: var(--qn-border-strong);
+  background-clip: padding-box;
   border-radius: 100px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.15);
+  background: var(--qn-text-subtle);
+  background-clip: padding-box;
 }
 
 .dark ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--qn-border-strong);
+  background-clip: padding-box;
 }
 
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--qn-text-subtle);
+  background-clip: padding-box;
 }
 
-/* Only show scrollbar on hover for a cleaner look */
+/* Compact scroll regions keep a visible thumb. Invisible hover-only tracks made
+   independent panes look broken on light surfaces. */
 .scroll-thin {
   scrollbar-width: thin;
-  scrollbar-color: transparent transparent;
-}
-
-.scroll-thin:hover {
-  scrollbar-color: rgba(0, 0, 0, 0.08) transparent;
-}
-
-.dark .scroll-thin:hover {
-  scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+  scrollbar-color: var(--qn-border-strong) transparent;
 }
 
 /* Legacy dropdown labels on dark surfaces */
@@ -1711,6 +1715,15 @@ body {
   align-self: stretch;
 }
 
+.qn-toolbar-overflow-group .qn-toolbar-overflow-label {
+  display: block !important;
+  white-space: nowrap;
+}
+
+.qn-toolbar-overflow-group > [role='separator'] {
+  align-self: center;
+}
+
 .editor-paper {
   background-color: var(--qn-surface-base);
 }
@@ -1746,9 +1759,9 @@ body {
 
 .qn-document-header {
   position: relative;
-  border-color: var(--qn-banner-border) !important;
-  background: var(--qn-banner);
-  color: var(--qn-banner-text);
+  border-color: var(--qn-border-subtle) !important;
+  background: var(--qn-surface-raised);
+  color: var(--qn-text);
 }
 
 .qn-document-header::before {
@@ -1756,21 +1769,21 @@ body {
 }
 
 .qn-document-header #qn-note-title {
-  color: var(--qn-banner-text);
+  color: var(--qn-text);
 }
 
 .qn-document-header #qn-note-title::placeholder,
 .qn-document-header .qn-note-metadata {
-  color: var(--qn-banner-text-muted);
+  color: var(--qn-text-muted);
 }
 
 .qn-document-header :where(button, .qn-icon-button) {
-  color: var(--qn-banner-text-muted);
+  color: var(--qn-text-muted);
 }
 
 .qn-document-header :where(button, .qn-icon-button):enabled:hover {
-  background: var(--qn-banner-hover) !important;
-  color: var(--qn-banner-text) !important;
+  background: var(--qn-surface-hover) !important;
+  color: var(--qn-text) !important;
 }
 
 /* ============================================================
@@ -1845,6 +1858,7 @@ body {
   box-sizing: border-box;
   max-width: 100%;
   margin-block: 18px;
+  clear: none;
 }
 
 .qn-shape__object,
@@ -1855,80 +1869,131 @@ body {
 
 .qn-shape__object {
   transform-origin: center;
+  transition: outline-color var(--qn-duration-fast) var(--qn-ease),
+    filter var(--qn-duration-fast) var(--qn-ease);
 }
 
 .qn-shape__surface {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
   box-sizing: border-box;
-  border: 1.5px solid var(--qn-accent-border);
-  border-radius: var(--qn-radius-control);
-  background: var(--qn-accent-soft);
-  color: var(--qn-accent-text);
-  box-shadow: var(--qn-shadow-xs);
-  transition:
-    border-color var(--qn-duration-fast) var(--qn-ease),
-    box-shadow var(--qn-duration-fast) var(--qn-ease);
+  color: var(--shape-text, var(--qn-accent-text));
+  filter: drop-shadow(0 1px 1px rgba(15, 23, 42, 0.08));
+  --shape-fill: var(--qn-accent-soft);
+  --shape-stroke: var(--qn-accent-border);
 }
 
 .qn-shape[data-fill='info'] .qn-shape__surface {
-  border-color: var(--qn-info-border);
-  background: var(--qn-info-soft);
-  color: var(--qn-info-text);
+  --shape-fill: var(--qn-info-soft);
+  --shape-stroke: var(--qn-info-border);
+  --shape-text: var(--qn-info-text);
 }
 
 .qn-shape[data-fill='warning'] .qn-shape__surface {
-  border-color: var(--qn-warning-border);
-  background: var(--qn-warning-soft);
-  color: var(--qn-warning-text);
+  --shape-fill: var(--qn-warning-soft);
+  --shape-stroke: var(--qn-warning-border);
+  --shape-text: var(--qn-warning-text);
 }
 
 .qn-shape[data-fill='neutral'] .qn-shape__surface {
-  border-color: var(--qn-border-strong);
-  background: var(--qn-surface-sunken);
-  color: var(--qn-text);
+  --shape-fill: var(--qn-surface-raised);
+  --shape-stroke: var(--qn-border-strong);
+  --shape-text: var(--qn-text);
 }
 
-.qn-shape[data-shape='rectangle'] .qn-shape__surface {
-  border-radius: 0;
+.qn-shape__geometry {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
 }
 
-.qn-shape[data-shape='ellipse'] .qn-shape__surface {
-  border-radius: 50%;
+.qn-shape__geometry-path {
+  fill: var(--shape-fill, var(--qn-accent-soft));
+  stroke: var(--shape-stroke, var(--qn-accent-border));
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+  stroke-linejoin: round;
 }
 
-.qn-shape[data-shape='diamond'] .qn-shape__surface {
-  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
-  border: 0;
-  border-radius: 0;
-  box-shadow: inset 0 0 0 2px color-mix(in srgb, currentColor 30%, transparent);
+.qn-shape-gallery-item {
+  position: relative;
+  --shape-fill: var(--qn-surface-raised);
+  --shape-stroke: var(--qn-text-muted);
 }
 
-.qn-shape[data-shape='arrow'] .qn-shape__surface {
-  clip-path: polygon(0 18%, 68% 18%, 68% 0, 100% 50%, 68% 100%, 68% 82%, 0 82%);
-  border: 0;
-  border-radius: 0;
-  padding-right: 14%;
-  box-shadow: inset 0 0 0 2px color-mix(in srgb, currentColor 30%, transparent);
+.qn-shape-gallery-item .qn-shape__geometry {
+  position: static;
 }
 
 .qn-shape__content {
+  position: relative;
+  z-index: 1;
   width: min(78%, 28rem);
+  max-height: 78%;
   padding: 10px;
   text-align: center;
   line-height: 1.35;
+  overflow: auto;
   overflow-wrap: anywhere;
+}
+
+.qn-shape[data-shape='diamond'] .qn-shape__content,
+.qn-shape[data-shape='triangle'] .qn-shape__content,
+.qn-shape[data-shape='star'] .qn-shape__content {
+  width: 54%;
+  max-height: 52%;
+}
+
+.qn-shape[data-shape='arrow'] .qn-shape__content,
+.qn-shape[data-shape^='arrow-'] .qn-shape__content {
+  width: 52%;
+  max-height: 48%;
+}
+
+.qn-shape[data-shape='callout'] .qn-shape__content {
+  max-height: 62%;
+  margin-bottom: 14%;
 }
 
 .qn-shape__content:focus {
   outline: none;
 }
 
-.qn-shape--selected .qn-shape__surface {
-  border-color: var(--qn-accent);
-  box-shadow: 0 0 0 3px var(--qn-accent-soft), var(--qn-shadow-sm);
+.qn-shape--selected .qn-shape__object {
+  outline: 1.5px solid var(--qn-accent);
+  outline-offset: 4px;
+  filter: drop-shadow(0 3px 8px rgba(15, 23, 42, 0.14));
+}
+
+.qn-shape--moving {
+  cursor: move;
+  user-select: none;
+}
+
+.qn-shape-swatch--accent {
+  --shape-fill: var(--qn-accent-soft);
+  color: var(--qn-accent-text);
+}
+
+.qn-shape-swatch--info {
+  --shape-fill: var(--qn-info-soft);
+  color: var(--qn-info-text);
+}
+
+.qn-shape-swatch--warning {
+  --shape-fill: var(--qn-warning-soft);
+  color: var(--qn-warning-text);
+}
+
+.qn-shape-swatch--neutral {
+  --shape-fill: var(--qn-surface-raised);
+  color: var(--qn-text-muted);
 }
 
 .qn-shape__rotation-line {
@@ -1940,11 +2005,10 @@ body {
     width: min(100%, var(--qn-shape-width, 240px)) !important;
   }
 
-  .qn-shape-toolbar {
-    bottom: auto;
-    top: 100%;
-    margin-top: 12px;
-    margin-bottom: 0;
+  .qn-shape[data-wrap='left'],
+  .qn-shape[data-wrap='right'] {
+    float: none !important;
+    margin: 12px auto !important;
   }
 }
 
@@ -1964,9 +2028,8 @@ body {
 /* ============================================================
    Focused note workspaces
    ------------------------------------------------------------
-   Specialized note types are working surfaces, not dashboards. Their flat
-   rail-green headers create one stable application landmark without adding
-   decorative texture to the work area.
+   Specialized note types are working surfaces, not dashboards. They reuse the
+   neutral document header; the navigation rail remains the brand landmark.
    ============================================================ */
 .qn-type-editor {
   background: var(--qn-surface-base);
@@ -1975,9 +2038,9 @@ body {
 .qn-type-hero {
   position: relative;
   padding: 14px 18px !important;
-  border-color: var(--qn-banner-border) !important;
-  background: var(--qn-banner) !important;
-  color: var(--qn-banner-text);
+  border-color: var(--qn-border-subtle) !important;
+  background: var(--qn-surface-raised) !important;
+  color: var(--qn-text);
   box-shadow: none;
 }
 
@@ -1988,19 +2051,19 @@ body {
 .qn-type-hero input.qn-focused-title {
   border-color: transparent !important;
   background: transparent !important;
-  color: var(--qn-banner-text) !important;
+  color: var(--qn-text) !important;
   box-shadow: none !important;
 }
 
 .qn-type-hero input.qn-focused-title::placeholder,
 .qn-type-hero .qn-focused-type-label {
-  color: var(--qn-banner-text-muted) !important;
+  color: var(--qn-text-muted) !important;
 }
 
 .qn-type-hero .qn-focused-type-icon {
-  border-color: var(--qn-banner-border);
-  background: var(--qn-banner-hover);
-  color: var(--qn-banner-text);
+  border-color: var(--qn-accent-border);
+  background: var(--qn-accent-soft);
+  color: var(--qn-accent-text);
 }
 
 .qn-type-hero :where(input, textarea, select):not(.qn-focused-title) {
@@ -2034,9 +2097,9 @@ body {
   margin-top: 12px;
   margin-left: 48px;
   padding: 3px;
-  border: 1px solid var(--qn-banner-border);
+  border: 1px solid var(--qn-border-subtle);
   border-radius: var(--qn-radius-md);
-  background: rgba(255, 255, 255, 0.07);
+  background: var(--qn-surface-base);
 }
 
 .qn-workspace-metric {
@@ -2045,7 +2108,7 @@ body {
   align-items: baseline;
   gap: 6px;
   padding: 3px 10px;
-  border-right: 1px solid var(--qn-banner-border);
+  border-right: 1px solid var(--qn-border-subtle);
 }
 
 .qn-workspace-metric:last-child {
@@ -2065,12 +2128,12 @@ body {
   order: 2;
   font-size: 11px;
   line-height: 16px;
-  color: var(--qn-banner-text-muted);
+  color: var(--qn-text-muted);
   white-space: nowrap;
 }
 
 .qn-type-hero .qn-workspace-metric-value {
-  color: var(--qn-banner-text) !important;
+  color: var(--qn-text) !important;
 }
 
 .qn-type-tabs {
@@ -2277,14 +2340,13 @@ body {
   transform: translateY(-1px);
 }
 
-/* The type picker uses the same flat rail green as every other workspace
-   landmark. Decorative texture belongs on authentication/marketing surfaces,
-   not inside the working application. */
+/* Backward-compatible hook for any cached picker markup. New picker headers
+   use the shared neutral dialog hierarchy. */
 .qn-type-picker-hero {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  background: var(--qn-banner);
+  background: var(--qn-surface-raised);
 }
 
 .qn-type-picker-hero::after {

@@ -214,8 +214,8 @@ test.describe('mobile Safari workflows', () => {
   test('keeps focused-workspace controls touch sized', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 664 })
     await signIn(page)
-    await page.getByRole('button', { name: 'Choose a focused note type' }).tap()
-    const dialog = page.getByRole('dialog', { name: /create a focused note/i })
+    await page.getByRole('button', { name: 'Create workspace' }).tap()
+    const dialog = page.getByRole('dialog', { name: /new workspace/i })
     await dialog.getByRole('button', { name: /^Task List/i }).tap()
     await dialog.getByText('Daily priorities', { exact: true }).tap()
     await dialog.getByLabel('Note title').fill('Mobile touch targets')

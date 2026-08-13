@@ -125,10 +125,18 @@ test.describe('editor productivity objects', () => {
 
   test('inserts a shape with direct and exact transformation controls', async ({ page }) => {
     await page.getByRole('button', { name: 'Insert shape' }).click()
+    const gallery = page.getByRole('dialog', { name: 'Insert a shape' })
+    await expect(gallery.getByRole('button', { name: 'Insert diamond' })).toBeVisible()
+    await expect(gallery.getByRole('button', { name: 'Insert right arrow' })).toBeVisible()
+    await gallery.getByRole('button', { name: 'Insert diamond' }).click()
     const shape = page.locator('.qn-shape').last()
     await expect(shape).toBeVisible()
     await shape.locator('.qn-shape__surface').click()
-    await expect(shape.getByRole('toolbar', { name: 'Shape formatting' })).toBeVisible()
+    const shapeToolbar = page.getByRole('toolbar', { name: 'Shape formatting' })
+    await expect(shapeToolbar).toBeVisible()
+    await expect(shape.locator('.qn-shape__geometry polygon')).toBeVisible()
+
+    await shapeToolbar.getByRole('button', { name: 'Size and rotation' }).click()
 
     const width = page.getByRole('spinbutton', { name: 'Shape width' })
     const height = page.getByRole('spinbutton', { name: 'Shape height' })
@@ -147,10 +155,35 @@ test.describe('editor productivity objects', () => {
     await expect(flipHorizontal).toHaveAttribute('aria-pressed', 'true')
     await expect(page.getByRole('spinbutton', { name: 'Shape rotation in degrees' })).toHaveValue('90')
 
-    const toolbarBox = await shape.locator('.qn-shape-toolbar').boundingBox()
-    const rotationHandleBox = await shape
-      .getByRole('button', { name: /drag to rotate shape/i })
-      .boundingBox()
-    expect(rotationHandleBox.y).toBeGreaterThanOrEqual(toolbarBox.y + toolbarBox.height)
+    const toolbarBox = await shapeToolbar.boundingBox()
+    expect(toolbarBox.x).toBeGreaterThanOrEqual(8)
+    expect(toolbarBox.y).toBeGreaterThanOrEqual(8)
+    expect(toolbarBox.x + toolbarBox.width).toBeLessThanOrEqual(page.viewportSize().width - 8)
+    expect(toolbarBox.y + toolbarBox.height).toBeLessThanOrEqual(page.viewportSize().height - 8)
+  })
+
+  test('moves a shape freely and exposes Word-style wrapping choices', async ({ page }) => {
+    await page.getByRole('button', { name: 'Insert shape' }).click()
+    await page.getByRole('dialog', { name: 'Insert a shape' })
+      .getByRole('button', { name: 'Insert right arrow' })
+      .click()
+
+    const shape = page.locator('.qn-shape').last()
+    await shape.locator('.qn-shape__surface').click()
+    await page.getByRole('button', { name: 'Layout options' }).click()
+    const layout = page.getByRole('dialog', { name: 'Shape layout options' })
+    await expect(layout.getByRole('button', { name: /Free position/ })).toBeVisible()
+    await layout.getByRole('button', { name: /Free position/ }).click()
+
+    const moveHandle = shape.getByRole('button', { name: 'Drag to move shape' })
+    const before = await moveHandle.boundingBox()
+    await page.mouse.move(before.x + before.width / 2, before.y + before.height / 2)
+    await page.mouse.down()
+    await page.mouse.move(before.x + before.width / 2 + 64, before.y + before.height / 2 + 36, { steps: 5 })
+    await page.mouse.up()
+
+    await expect(shape).toHaveAttribute('data-wrap', 'free')
+    await expect.poll(async () => Number(await shape.getAttribute('data-x'))).toBeGreaterThan(40)
+    await expect.poll(async () => Number(await shape.getAttribute('data-y'))).toBeGreaterThan(20)
   })
 })

@@ -59,7 +59,7 @@ describe('ShareNoteModal', () => {
 
     const dialog = screen.getByRole('dialog', { name: 'Share note' })
     expect(dialog).toHaveAccessibleDescription('Project brief')
-    expect(dialog.querySelector('[data-dialog-banner]')).toHaveClass('qn-banner-surface')
+    expect(dialog.querySelector('[data-dialog-banner]')).toHaveClass('qn-dialog-header')
     await screen.findByText('No invitations yet')
     expect(screen.getByLabelText(/Email address/i)).toBeInTheDocument()
 

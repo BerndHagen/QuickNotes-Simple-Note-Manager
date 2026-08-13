@@ -69,8 +69,8 @@ const focusedTypes = [
 ]
 
 async function openPicker(page) {
-  await page.getByRole('button', { name: 'Choose a focused note type' }).click()
-  const dialog = page.getByRole('dialog', { name: /create a focused note/i })
+  await page.getByRole('button', { name: 'Create workspace' }).click()
+  const dialog = page.getByRole('dialog', { name: /new workspace/i })
   await expect(dialog).toBeVisible()
   return dialog
 }
@@ -83,7 +83,7 @@ test.describe('focused note types', () => {
     await signIn(page)
     const dialog = await openPicker(page)
 
-    await expect(dialog.getByLabel('Search note types')).toBeVisible()
+    await expect(dialog.getByLabel('Search workspace types')).toBeVisible()
     await expect(dialog.getByText('Choose a starting point')).toBeVisible()
     await expect(dialog.getByRole('button', { name: /^Create document/ })).toBeVisible()
     await expectNoHorizontalOverflow(page)
@@ -101,7 +101,7 @@ test.describe('focused note types', () => {
 
     for (const definition of focusedTypes) {
       const dialog = await openPicker(page)
-      const typeList = dialog.locator('section[aria-label="Note types"]')
+      const typeList = dialog.locator('section[aria-label="Workspace types"]')
       await typeList.getByRole('button', { name: new RegExp(`^${definition.type}`, 'i') }).click()
       await dialog.getByText(definition.starter, { exact: true }).click()
       await dialog.getByLabel('Note title').fill(definition.title)
@@ -181,7 +181,7 @@ test.describe('focused note types', () => {
     for (const definition of focusedTypes) {
       const dialog = await openPicker(page)
       await dialog
-        .locator('section[aria-label="Note types"]')
+        .locator('section[aria-label="Workspace types"]')
         .getByRole('button', { name: new RegExp(`^${definition.type}`, 'i') })
         .click()
       await dialog.getByText(definition.starter, { exact: true }).click()

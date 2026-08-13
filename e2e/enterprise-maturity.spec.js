@@ -2,10 +2,10 @@ import { test, expect } from '@playwright/test'
 import { collectErrors, expectNoHorizontalOverflow, signIn } from './helpers'
 
 async function createFocusedWorkspace(page, { type, starter, title, className, mobile = false }) {
-  await page.getByRole('button', { name: 'Choose a focused note type' }).click()
-  const dialog = page.getByRole('dialog', { name: /create a focused note/i })
+  await page.getByRole('button', { name: 'Create workspace' }).click()
+  const dialog = page.getByRole('dialog', { name: /new workspace/i })
   await dialog
-    .locator('section[aria-label="Note types"]')
+    .locator('section[aria-label="Workspace types"]')
     .getByRole('button', { name: new RegExp(`^${type}`, 'i') })
     .click()
   await dialog.getByText(starter, { exact: true }).click()

@@ -85,12 +85,12 @@ export default function NoteTypesModal({ onCreated }) {
     <Modal
       open={noteTypesModalOpen}
       onClose={close}
-      title="Create a focused note"
-      description="Choose the workspace that matches the work—not just a decorative template."
+      title="New workspace"
+      description="Choose a purpose-built workspace, then decide how you want to begin."
       icon={Sparkles}
       size="3xl"
       initialFocusRef={searchRef}
-      bodyClassName="p-0 sm:p-0"
+      bodyClassName="p-0 sm:p-0 lg:overflow-hidden"
       contentClassName="sm:h-[min(820px,88dvh)]"
       footer={
         <>
@@ -109,12 +109,15 @@ export default function NoteTypesModal({ onCreated }) {
     >
       <div className="grid min-h-0 lg:h-full lg:grid-cols-[minmax(300px,0.88fr)_minmax(380px,1.12fr)]">
         <section
-          aria-label="Note types"
-          className="min-h-0 border-b border-subtle bg-surface-sunken lg:border-b-0 lg:border-r"
+          aria-label="Workspace types"
+          className="min-h-0 border-b border-subtle bg-surface-raised lg:flex lg:flex-col lg:border-b-0 lg:border-r"
         >
-          <div className="sticky top-0 z-10 border-b border-subtle bg-surface-sunken p-4 backdrop-blur sm:p-5">
+          <div className="shrink-0 border-b border-subtle bg-surface-raised p-4 sm:p-5">
+            <p className="mb-3 text-ui-xs font-semibold uppercase tracking-[0.14em] text-content-subtle">
+              1 · Choose a workspace
+            </p>
             <label htmlFor="qn-type-search" className="qn-sr-only">
-              Search note types
+              Search workspace types
             </label>
             <div className="relative">
               <Search
@@ -146,7 +149,7 @@ export default function NoteTypesModal({ onCreated }) {
                     className={[
                       'shrink-0 rounded-full border px-3 py-1.5 text-ui-sm font-medium transition-colors',
                       active
-                        ? 'border-accent bg-accent-soft text-accent-text'
+                        ? 'border-[var(--qn-text)] bg-[var(--qn-text)] text-white'
                         : 'border-subtle bg-surface-raised text-content-muted hover:border-strong hover:text-content',
                     ].join(' ')}
                   >
@@ -157,10 +160,10 @@ export default function NoteTypesModal({ onCreated }) {
             </div>
           </div>
 
-          <div className="space-y-2 p-3 sm:p-4 lg:max-h-full lg:overflow-y-auto">
+          <div className="flex gap-2 overflow-x-auto p-3 sm:p-4 lg:min-h-0 lg:flex-1 lg:block lg:space-y-2 lg:overflow-x-hidden lg:overflow-y-auto">
             {filteredTypes.length === 0 ? (
               <div className="rounded-card border border-dashed border-strong bg-surface-raised px-5 py-10 text-center">
-                <p className="text-ui-lg font-medium text-content">No matching note type</p>
+                  <p className="text-ui-lg font-medium text-content">No matching workspace</p>
                 <p className="mt-1 text-ui-md text-content-muted">
                   Try a broader goal or choose another category.
                 </p>
@@ -176,12 +179,13 @@ export default function NoteTypesModal({ onCreated }) {
                     aria-pressed={active}
                     onClick={() => selectType(type.id)}
                     className={[
-                      'group flex w-full items-start gap-3 rounded-card border p-3.5 text-left transition-[background-color,border-color,box-shadow] duration-fast',
+                      'group relative flex w-[min(82vw,20rem)] shrink-0 items-start gap-3 rounded-card border p-3.5 text-left transition-[background-color,border-color,box-shadow] duration-fast lg:w-full',
                       active
-                        ? 'border-accent bg-surface-raised shadow-sm ring-1 ring-[var(--qn-accent-soft)]'
-                        : 'border-transparent bg-transparent hover:border-subtle hover:bg-surface-raised',
+                        ? 'border-strong bg-surface-raised shadow-sm'
+                        : 'border-transparent bg-transparent hover:border-subtle hover:bg-surface-hover',
                     ].join(' ')}
                   >
+                    {active && <span className="absolute inset-y-3 left-0 w-[3px] rounded-r-full bg-accent" aria-hidden="true" />}
                     <span
                       className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px]"
                       style={{ backgroundColor: `${type.color}18`, color: type.color }}
@@ -214,33 +218,30 @@ export default function NoteTypesModal({ onCreated }) {
           </div>
         </section>
 
-        <section aria-label={`${config.name} setup`} className="min-h-0 bg-surface-raised">
-          <div className="h-full overflow-y-auto">
-            <div
-              className="qn-type-picker-hero relative overflow-hidden px-5 py-6 text-white sm:px-7"
-              style={{ '--picker-accent': config.color }}
-            >
-              <div className="relative z-[1] flex items-start gap-4">
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[12px] border border-white/20 bg-white/10 shadow-sm">
+        <section aria-label={`${config.name} setup`} className="min-h-0 bg-surface-raised lg:overflow-y-auto">
+            <div className="border-b border-subtle px-5 py-5 sm:px-7 sm:py-6">
+              <p className="mb-3 text-ui-xs font-semibold uppercase tracking-[0.14em] text-content-subtle">
+                2 · Configure the workspace
+              </p>
+              <div className="flex items-start gap-4">
+                <span
+                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-card border shadow-xs"
+                  style={{ backgroundColor: `${config.color}12`, borderColor: `${config.color}35`, color: config.color }}
+                >
                   <config.icon className="h-6 w-6" aria-hidden="true" />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-ui-xs font-semibold uppercase tracking-[0.16em] text-white/65">
-                    {config.category} workspace
+                  <p className="text-ui-xs font-semibold uppercase tracking-[0.14em] text-content-subtle">
+                    {config.category}
                   </p>
-                  <h3 className="mt-1 text-title-md font-semibold">{config.name}</h3>
-                  <p className="mt-1 max-w-xl text-ui-md leading-relaxed text-white/75">
-                    {config.bestFor}
-                  </p>
+                  <h3 className="mt-1 text-title-md font-semibold text-content">{config.name}</h3>
+                  <p className="mt-1 max-w-xl text-ui-md leading-relaxed text-content-muted">{config.bestFor}</p>
                 </div>
               </div>
-
-              <div className="relative z-[1] mt-5 flex flex-wrap gap-2">
+              <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1.5 border-t border-subtle pt-4">
                 {config.features.map((feature) => (
-                  <span
-                    key={feature}
-                    className="rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-ui-sm text-white/85"
-                  >
+                  <span key={feature} className="inline-flex items-center gap-1.5 text-ui-sm text-content-muted">
+                    <Check className="h-3.5 w-3.5 text-accent-text" aria-hidden="true" />
                     {feature}
                   </span>
                 ))}
@@ -287,7 +288,7 @@ export default function NoteTypesModal({ onCreated }) {
                         className={[
                           'relative cursor-pointer rounded-card border p-3.5 transition-[background-color,border-color,box-shadow] duration-fast',
                           active
-                            ? 'border-accent bg-accent-soft shadow-xs'
+                            ? 'border-strong bg-surface-raised shadow-sm ring-1 ring-[var(--qn-border-strong)]'
                             : 'border-subtle bg-surface-raised hover:border-strong hover:bg-surface-hover',
                         ].join(' ')}
                       >
@@ -326,7 +327,7 @@ export default function NoteTypesModal({ onCreated }) {
                 </div>
               </fieldset>
 
-              <div className="rounded-card border border-subtle bg-surface-sunken p-4">
+              <div className="rounded-card border border-subtle bg-surface-raised p-4 shadow-xs">
                 <div className="flex items-center gap-2 text-ui-md font-semibold text-content">
                   <Sparkles className="h-4 w-4 text-accent-text" aria-hidden="true" />
                   Built as a real workspace
@@ -338,7 +339,6 @@ export default function NoteTypesModal({ onCreated }) {
                 </p>
               </div>
             </div>
-          </div>
         </section>
       </div>
     </Modal>

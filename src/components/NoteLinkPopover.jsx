@@ -137,17 +137,17 @@ export default function NoteLinkPopover({ editor, isOpen, onClose, position, cur
         return { left: clampedX, top: clampedY }
       })()}
     >
-      <div className="qn-banner-surface border-b border-white/15 p-3 text-banner-text">
+      <div className="qn-dialog-header border-b border-subtle bg-surface-raised p-3 text-content">
         <div className="flex items-center justify-between mb-2">
-          <h3 id={titleId} className="flex items-center gap-2 text-sm font-semibold text-banner-text">
-            <Link2 className="h-4 w-4 text-white/90" aria-hidden="true" />
+          <h3 id={titleId} className="flex items-center gap-2 text-sm font-semibold text-content">
+            <Link2 className="h-4 w-4 text-accent-text" aria-hidden="true" />
             {t('noteLink.title')}
           </h3>
           <button
             type="button"
             onClick={onClose}
             aria-label={t('common.close', 'Close')}
-            className="qn-square-control rounded p-1 text-white/85 transition-colors hover:bg-white/15 hover:text-white"
+            className="qn-square-control rounded-control p-1 text-content-muted transition-colors hover:bg-surface-hover hover:text-content"
           >
             <X className="h-4 w-4" aria-hidden="true" />
           </button>

@@ -30,7 +30,8 @@ describe('ExportModal visual hierarchy', () => {
     const dialog = screen.getByRole('dialog', { name: 'Export notes' })
     const exportButton = screen.getByRole('button', { name: 'Export Note' })
 
-    expect(dialog.querySelectorAll('.qn-banner-surface')).toHaveLength(1)
+    expect(dialog.querySelectorAll('.qn-banner-surface')).toHaveLength(0)
+    expect(dialog.querySelector('.qn-dialog-header')).toBeInTheDocument()
     expect(exportButton).not.toHaveClass('qn-banner-surface')
     expect(exportButton).toHaveClass('bg-accent')
   })

@@ -188,13 +188,13 @@ export default function VoiceInput({ onTranscript, isActive, onToggle }) {
       aria-label="Voice input"
       className="fixed bottom-4 left-4 right-4 z-50 overflow-hidden rounded-xl border border-subtle bg-surface-raised shadow-2xl sm:bottom-8 sm:left-auto sm:right-8 sm:w-[320px]"
     >
-      <div className="qn-banner-surface flex items-center justify-between border-b border-white/15 px-4 py-3 text-banner-text">
+      <div className="qn-dialog-header flex items-center justify-between border-b border-subtle bg-surface-raised px-4 py-3 text-content">
         <div className="flex items-center gap-2" role="status" aria-live="polite">
           <span
             className={`h-3 w-3 rounded-full ${isListening ? 'animate-pulse bg-red-500' : 'bg-gray-400'}`}
             aria-hidden="true"
           />
-          <span className="text-sm font-medium text-banner-text">
+          <span className="text-sm font-medium text-content">
             {isListening ? 'Recording…' : 'Voice input paused'}
           </span>
         </div>
@@ -202,7 +202,7 @@ export default function VoiceInput({ onTranscript, isActive, onToggle }) {
           type="button"
           onClick={() => onToggleRef.current?.(false)}
           aria-label="Close voice input"
-          className="qn-square-control rounded p-1 text-white/85 transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+          className="qn-square-control rounded-control p-1 text-content-muted transition-colors hover:bg-surface-hover hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           <MicOff className="h-4 w-4" aria-hidden="true" />
         </button>

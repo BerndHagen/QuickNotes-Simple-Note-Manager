@@ -31,7 +31,7 @@ export default function LegacyDialog({
   return createPortal(
     <div
       className={[
-        'qn-legacy-dialog-viewport fixed inset-0 z-dialog flex justify-center overflow-y-auto overscroll-contain p-3 sm:p-4',
+        'qn-legacy-dialog-viewport fixed inset-0 z-dialog flex justify-center overflow-hidden p-3 sm:p-4',
         align === 'top' ? 'items-start pt-[10vh]' : 'items-center',
         className,
       ].join(' ')}
@@ -50,9 +50,9 @@ export default function LegacyDialog({
         data-dialog-body
         className={[
           'qn-legacy-dialog-panel',
-          // Never taller than the viewport, and always able to scroll
-          // its own content so footer actions stay reachable.
-          'relative my-auto flex max-h-[92dvh] w-full min-w-0 flex-col overflow-y-auto overscroll-contain outline-none',
+          // Legacy panels contain a single explicit scrolling region. The
+          // overlay and semantic panel must not become competing scroll owners.
+          'relative my-auto flex max-h-[92dvh] w-full min-w-0 flex-col overflow-hidden outline-none',
           // Wrapped panels size themselves with `max-w-*`; a flex column's
           // default `stretch` would pin such a child to the left edge.
           'items-center',

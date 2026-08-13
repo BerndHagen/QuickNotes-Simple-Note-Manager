@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
-  X,
   Settings,
   Ruler,
   Type,
@@ -13,6 +12,7 @@ import {
 } from 'lucide-react'
 import { useUIStore } from '../store'
 import LegacyDialog from './ui/LegacyDialog'
+import DialogHeader from './ui/DialogHeader'
 import {
   DEFAULT_EDITOR_FONT,
   EDITOR_FONT_FAMILIES,
@@ -114,24 +114,14 @@ export default function EditorSettingsModal() {
 
   return (
     <LegacyDialog label="Editor settings" onClose={() => setEditorSettingsOpen(false)} align="center">
-      <div className="flex max-h-full min-h-0 w-full max-w-md flex-col overflow-hidden rounded-2xl border border-subtle bg-surface-raised shadow-2xl modal-animate sm:mx-4">
-        <div className="flex shrink-0 items-center justify-between p-5 qn-banner-surface text-white">
-          <div className="flex items-center gap-3">
-            <Settings className="w-6 h-6" />
-            <div>
-              <h2 className="text-lg font-bold">Editor Settings</h2>
-              <p className="text-sm text-white/70">Customize your editing experience</p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => setEditorSettingsOpen(false)}
-            aria-label="Close editor settings"
-            className="qn-square-control rounded-full p-2 transition-colors hover:bg-white/20"
-          >
-            <X className="w-5 h-5" aria-hidden="true" />
-          </button>
-        </div>
+      <div className="flex max-h-full min-h-0 w-full max-w-md flex-col overflow-hidden rounded-dialog border border-subtle bg-surface-raised shadow-dialog modal-animate sm:mx-4">
+        <DialogHeader
+          title="Editor Settings"
+          description="Customize your editing experience"
+          icon={Settings}
+          onClose={() => setEditorSettingsOpen(false)}
+          closeLabel="Close editor settings"
+        />
         <div className="min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain p-4 sm:p-6">
           {persistenceError && (
             <div role="alert" className="flex gap-2 rounded-lg border border-danger-border bg-danger-soft p-3 text-sm text-danger-text">

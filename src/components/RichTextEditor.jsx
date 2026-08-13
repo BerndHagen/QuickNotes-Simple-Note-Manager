@@ -21,6 +21,7 @@ import { Extension } from '@tiptap/core'
 import ResizableImageExtension from './ResizableImageExtension'
 import TextBoxExtension from './TextBoxExtension'
 import ShapeExtension from './ShapeExtension'
+import ShapeGeometry, { SHAPE_GROUPS } from './ShapeGeometry'
 import InvisibleCharactersExtension from './InvisibleCharactersExtension'
 import CustomTableCell from './CustomTableCell'
 import CustomTableHeader from './CustomTableHeader'
@@ -1419,7 +1420,9 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content, onMobileC
   const [showTableMenu, setShowTableMenu] = useState(false)
   const [showTableOfContents, setShowTableOfContents] = useState(false)
   const [showHeadingsPicker, setShowHeadingsPicker] = useState(false)
+  const [showShapePicker, setShowShapePicker] = useState(false)
   const [toolbarExpanded, setToolbarExpanded] = useState(false)
+  const [toolbarTier, setToolbarTier] = useState(0)
   const [customColor, setCustomColor] = useState('#000000')
   const [customHighlight, setCustomHighlight] = useState('#fef08a')
   const [hoverCell, setHoverCell] = useState({ row: 0, col: 0 })
@@ -1439,11 +1442,31 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content, onMobileC
   const tableMenuRef = useRef(null)
   const tocRef = useRef(null)
   const headingsRef = useRef(null)
+  const shapePickerRef = useRef(null)
 
   const letterSpacingRef = useRef(null)
   
   const toolbarRef = useRef(null)
   const rovingButtonRef = useRef(null)
+
+  useEffect(() => {
+    const toolbar = toolbarRef.current
+    if (!toolbar || typeof ResizeObserver === 'undefined') return undefined
+    const updateTier = (width) => {
+      const nextTier = width >= 1680 ? 3 : width >= 1080 ? 2 : width >= 860 ? 1 : 0
+      setToolbarTier((current) => current === nextTier ? current : nextTier)
+    }
+    updateTier(toolbar.getBoundingClientRect().width)
+    const observer = new ResizeObserver(([entry]) => updateTier(entry.contentRect.width))
+    observer.observe(toolbar)
+    return () => observer.disconnect()
+  }, [])
+
+  const advancedGroupClass = (minimumTier) => {
+    if (toolbarTier >= minimumTier) return 'contents'
+    if (!toolbarExpanded) return 'hidden'
+    return 'qn-toolbar-overflow-group flex min-h-9 shrink-0 items-center gap-0.5 rounded-control border border-subtle bg-surface-raised px-1.5 py-0.5'
+  }
 
   useEffect(() => {
     const buttons = getFocusable(toolbarRef.current).filter((element) => element.tagName === 'BUTTON')
@@ -1545,6 +1568,7 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content, onMobileC
     setShowTableMenu(false)
     setShowTableOfContents(false)
     setShowHeadingsPicker(false)
+    setShowShapePicker(false)
   }, [])
 
   useEffect(() => {
@@ -1761,8 +1785,10 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content, onMobileC
       aria-label="Text formatting"
       onFocusCapture={handleToolbarFocus}
       onKeyDown={handleToolbarKeyDown}
-      className={`editor-toolbar flex flex-nowrap items-center gap-0.5 overflow-x-auto overflow-y-hidden overscroll-x-contain border-b border-subtle bg-surface px-2 py-1.5 sm:px-3 ${
-        toolbarExpanded ? 'md:flex-wrap md:overflow-visible md:overscroll-auto' : 'md:flex-nowrap'
+      className={`editor-toolbar flex items-center gap-0.5 overscroll-x-contain border-b border-subtle bg-surface-raised px-2 py-1 sm:px-3 md:py-1.5 ${
+        toolbarExpanded
+          ? 'flex-nowrap overflow-x-auto overflow-y-hidden md:flex-wrap md:overflow-visible md:overscroll-auto'
+          : 'flex-nowrap overflow-x-auto overflow-y-hidden'
       }`}
     >
       <button
@@ -1781,7 +1807,8 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content, onMobileC
         <Redo className="w-4 h-4" />
       </ToolbarButton>
 
-      <div className={toolbarExpanded ? 'contents' : 'hidden'}>
+      <div className={advancedGroupClass(3)}>
+      <span className="qn-toolbar-overflow-label hidden px-1.5 text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">Typography</span>
       <ToolbarDivider />
 
       <ToolbarButton
@@ -1969,13 +1996,15 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content, onMobileC
       <ToolbarButton onClick={() => editor.chain().focus().toggleUnderline().run()} isActive={editor.isActive('underline')} title="Underline" shortcut={shortcut('u')}>
         <UnderlineIcon className="w-4 h-4" />
       </ToolbarButton>
-      <div className={toolbarExpanded ? 'contents' : 'hidden'}>
+      <div className={advancedGroupClass(1)}>
+      <span className="qn-toolbar-overflow-label hidden px-1.5 text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">Text</span>
       <ToolbarButton onClick={() => editor.chain().focus().toggleStrike().run()} isActive={editor.isActive('strike')} title="Strikethrough" shortcut={shortcut('s', { shift: true })}>
         <Strikethrough className="w-4 h-4" />
       </ToolbarButton>
       </div>
 
-      <div className={toolbarExpanded ? 'contents' : 'hidden'}>
+      <div className={advancedGroupClass(3)}>
+      <span className="qn-toolbar-overflow-label hidden px-1.5 text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">Colour & effects</span>
       <div className="relative" ref={colorPickerRef}>
         <DropdownButton isOpen={showColorPicker} onClick={() => toggleDropdown(setShowColorPicker, showColorPicker)} title="Text Color">
           <Palette className="w-4 h-4" />
@@ -2147,7 +2176,8 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content, onMobileC
       </ToolbarButton>
       </div>
 
-      <div className={toolbarExpanded ? 'contents' : 'hidden'}>
+      <div className={advancedGroupClass(2)}>
+      <span className="qn-toolbar-overflow-label hidden px-1.5 text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">Paragraph</span>
       <ToolbarDivider />
 
       <ToolbarButton onClick={() => editor.chain().focus().setTextAlign('left').run()} isActive={editor.isActive({ textAlign: 'left' })} title="Align Left">
@@ -2176,7 +2206,8 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content, onMobileC
         <CheckSquare className="w-4 h-4" />
       </ToolbarButton>
 
-      <div className={toolbarExpanded ? 'contents' : 'hidden'}>
+      <div className={advancedGroupClass(2)}>
+      <span className="qn-toolbar-overflow-label hidden px-1.5 text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">Indent</span>
       <ToolbarButton
         onClick={() => {
           if (editor.can().sinkListItem('listItem')) {
@@ -2205,7 +2236,8 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content, onMobileC
       </ToolbarButton>
       </div>
 
-      <div className={toolbarExpanded ? 'contents' : 'hidden'}>
+      <div className={advancedGroupClass(3)}>
+      <span className="qn-toolbar-overflow-label hidden px-1.5 text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">Text layout</span>
       <ToolbarDivider />
 
       <div className="relative" ref={letterSpacingRef}>
@@ -2245,7 +2277,8 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content, onMobileC
       </ToolbarButton>
       </div>
 
-      <div className={toolbarExpanded ? 'contents' : 'hidden'}>
+      <div className={advancedGroupClass(2)}>
+      <span className="qn-toolbar-overflow-label hidden px-1.5 text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">Blocks</span>
       <ToolbarDivider />
 
       <ToolbarButton onClick={() => editor.chain().focus().toggleBlockquote().run()} isActive={editor.isActive('blockquote')} title="Quote">
@@ -2337,7 +2370,8 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content, onMobileC
         <LinkIcon className="w-4 h-4" />
       </ToolbarButton>
 
-      <div className={toolbarExpanded ? 'contents' : 'hidden'}>
+      <div className={advancedGroupClass(1)}>
+      <span className="qn-toolbar-overflow-label hidden px-1.5 text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">Tools & automation</span>
       <ToolbarButton onClick={openTranslation} title="Translate selected text or note">
         <Languages className="w-4 h-4" />
       </ToolbarButton>
@@ -2353,15 +2387,53 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content, onMobileC
         <Square className="w-4 h-4" />
       </ToolbarButton>
 
-      <ToolbarButton
-        onClick={() => editor.chain().focus().insertShape().run()}
-        isActive={editor.isActive('shape')}
-        title="Insert shape"
-      >
-        <Shapes className="h-4 w-4" />
-      </ToolbarButton>
+      <div className="relative" ref={shapePickerRef}>
+        <DropdownButton
+          isOpen={showShapePicker}
+          onClick={() => toggleDropdown(setShowShapePicker, showShapePicker)}
+          title="Insert shape"
+        >
+          <Shapes className="h-4 w-4" />
+        </DropdownButton>
+        <PortalDropdown
+          isOpen={showShapePicker}
+          anchorRef={shapePickerRef}
+          onClose={() => setShowShapePicker(false)}
+          align="right"
+          label="Insert a shape"
+        >
+          <div className="w-[min(22rem,calc(100vw-1rem))] p-3">
+            {SHAPE_GROUPS.map((group) => (
+              <div key={group.label} className="mb-3 last:mb-0">
+                <p className="mb-1.5 text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">
+                  {group.label}
+                </p>
+                <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-6">
+                  {group.options.map((shape) => (
+                    <button
+                      key={shape.value}
+                      type="button"
+                      aria-label={`Insert ${shape.label.toLowerCase()}`}
+                      title={shape.label}
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => {
+                        editor.chain().focus().insertShape({ shapeType: shape.value }).run()
+                        setShowShapePicker(false)
+                      }}
+                      className="qn-shape-gallery-item flex aspect-square items-center justify-center rounded-control border border-subtle p-2 transition-colors hover:border-strong hover:bg-surface-hover"
+                    >
+                      <ShapeGeometry shapeType={shape.value} className="h-full w-full" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </PortalDropdown>
+      </div>
 
-      <div className={toolbarExpanded ? 'contents' : 'hidden'}>
+      <div className={advancedGroupClass(3)}>
+      <span className="qn-toolbar-overflow-label hidden px-1.5 text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">Data & presets</span>
       <div className="relative" ref={tocRef}>
         <DropdownButton 
           isOpen={showTableOfContents} 
@@ -2408,7 +2480,7 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content, onMobileC
         </PortalDropdown>
       </div>
 
-      <div className="relative ml-auto" ref={paperPickerRef}>
+      <div className="relative" ref={paperPickerRef}>
         <DropdownButton isOpen={showPaperPicker} onClick={() => toggleDropdown(setShowPaperPicker, showPaperPicker)} title="Paper Style">
           <span className="text-xs font-medium">{paperStyles[currentPaper]?.name || 'Plain'}</span>
         </DropdownButton>
@@ -2454,7 +2526,7 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content, onMobileC
       </ToolbarButton>
       </div>
 
-      <button
+      {toolbarTier < 3 && <button
         type="button"
         aria-expanded={toolbarExpanded}
         aria-controls="qn-editor-toolbar"
@@ -2465,15 +2537,15 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content, onMobileC
           closeAllDropdowns()
           setToolbarExpanded((value) => !value)
         }}
-        className={`ml-auto flex h-8 shrink-0 items-center gap-1.5 rounded-control px-2.5 text-ui-sm font-semibold transition-colors ${
+        className={`${toolbarExpanded ? 'ml-1' : 'ml-auto'} flex h-9 shrink-0 items-center gap-1.5 rounded-control px-2.5 text-ui-sm font-semibold leading-none transition-colors ${
           toolbarExpanded
             ? 'bg-accent-soft text-accent-text'
             : 'border border-subtle bg-surface-raised text-content-muted hover:bg-surface-hover hover:text-content'
         }`}
       >
         <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden="true" />
-        <span>{toolbarExpanded ? 'Simplify' : 'More'}</span>
-      </button>
+        <span>{toolbarExpanded ? 'Less' : 'More'}</span>
+      </button>}
     </div>
   )
 }

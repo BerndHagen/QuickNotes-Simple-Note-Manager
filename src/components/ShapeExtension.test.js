@@ -21,6 +21,9 @@ describe('ShapeExtension', () => {
       height: 140,
       rotation: 45,
       flipH: true,
+      wrap: 'free',
+      x: 72,
+      y: 36,
       align: 'right',
       fill: 'info',
       label: 'Decision',
@@ -33,6 +36,10 @@ describe('ShapeExtension', () => {
     expect(html).toContain('data-height="140"')
     expect(html).toContain('data-rotation="45"')
     expect(html).toContain('data-flip-h="true"')
+    expect(html).toContain('data-wrap="free"')
+    expect(html).toContain('data-x="72"')
+    expect(html).toContain('data-y="36"')
+    expect(html).toContain('<polygon')
     expect(html).toContain('data-align="right"')
     expect(html).toContain('data-fill="info"')
     expect(html).toContain('Decision')
@@ -47,6 +54,9 @@ describe('ShapeExtension', () => {
         rotation: 45,
         flipH: true,
         flipV: false,
+        wrap: 'free',
+        x: 72,
+        y: 36,
         align: 'right',
         fill: 'info',
       },

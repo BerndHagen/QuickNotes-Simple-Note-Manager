@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
-import { X, AlertTriangle, Copy, FileText, Trash2, ExternalLink } from 'lucide-react'
+import { AlertTriangle, Copy, FileText, Trash2, ExternalLink } from 'lucide-react'
 import { useNotesStore, useUIStore } from '../store'
 import toast from 'react-hot-toast'
 import LegacyDialog from './ui/LegacyDialog'
+import DialogHeader from './ui/DialogHeader'
 import { ConfirmDialog } from './FolderDialogs'
 
 const normalizeText = (value) => String(value ?? '').toLowerCase().replace(/\s+/g, ' ').trim()
@@ -211,24 +212,14 @@ export default function DuplicateDetectionModal() {
       onClose={handleClose}
       align="center"
     >
-      <div className="flex max-h-full min-h-0 w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-subtle bg-surface-raised shadow-2xl modal-animate sm:mx-4">
-        <div className="qn-banner-surface flex shrink-0 items-center justify-between p-5 text-banner-text">
-          <div className="flex items-center gap-3">
-            <Copy className="w-6 h-6" />
-            <div>
-              <h2 className="text-lg font-bold">Duplicate Detection</h2>
-              <p className="text-sm text-banner-muted">Review similar notes before moving anything to Trash</p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={handleClose}
-            aria-label="Close duplicate detection"
-            className="qn-square-control rounded-full p-2 transition-colors hover:bg-banner-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-banner-text"
-          >
-            <X className="w-5 h-5" aria-hidden="true" />
-          </button>
-        </div>
+      <div className="flex max-h-full min-h-0 w-full max-w-3xl flex-col overflow-hidden rounded-dialog border border-subtle bg-surface-raised shadow-dialog modal-animate sm:mx-4">
+        <DialogHeader
+          title="Duplicate Detection"
+          description="Review similar notes before moving anything to Trash"
+          icon={Copy}
+          onClose={handleClose}
+          closeLabel="Close duplicate detection"
+        />
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6">
           {isAnalyzing ? (
             <div className="flex flex-col items-center justify-center py-12" role="status">

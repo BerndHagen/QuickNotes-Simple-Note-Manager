@@ -27,14 +27,17 @@ async function openLocalWorkspace(page) {
 }
 
 async function save(page, name) {
-  await page.screenshot({ path: path.join(outputDir, name), fullPage: true })
+  // Playwright's default caret-hiding pass briefly disturbs ProseMirror node
+  // views while a screenshot is rasterised. Keep the real editor state so
+  // contextual object controls are captured exactly as users see them.
+  await page.screenshot({ path: path.join(outputDir, name), fullPage: true, caret: 'initial' })
 }
 
 async function createFocused(page, type, starter, title, className) {
-  await page.getByRole('button', { name: 'Choose a focused note type' }).click()
-  const dialog = page.getByRole('dialog', { name: /create a focused note/i })
+  await page.getByRole('button', { name: 'Create workspace' }).click()
+  const dialog = page.getByRole('dialog', { name: /new workspace/i })
   await dialog
-    .locator('section[aria-label="Note types"]')
+    .locator('section[aria-label="Workspace types"]')
     .getByRole('button', { name: new RegExp(`^${type}`, 'i') })
     .click()
   await dialog.getByText(starter, { exact: true }).click()
@@ -75,9 +78,33 @@ async function captureFocused(name, type, starter, title, className) {
   await context.close()
 }
 
+async function captureWorkspaceAndShapes() {
+  const context = await browser.newContext({ viewport })
+  const page = await context.newPage()
+  await openLocalWorkspace(page)
+
+  await page.getByRole('button', { name: 'Create workspace' }).click()
+  await page.getByRole('dialog', { name: /new workspace/i }).waitFor({ state: 'visible' })
+  await save(page, 'screenshot-workspaces.png')
+  await page.keyboard.press('Escape')
+
+  await page.getByRole('heading', { name: 'Welcome to QuickNotes' }).click()
+  await page.getByRole('button', { name: 'Insert shape' }).click()
+  await page.getByRole('dialog', { name: 'Insert a shape' })
+    .getByRole('button', { name: 'Insert right arrow' })
+    .click()
+  const shape = page.locator('.qn-shape').last()
+  await shape.locator('.qn-shape__surface').click()
+  await page.getByRole('button', { name: 'Layout options' }).click()
+  await page.getByRole('dialog', { name: 'Shape layout options' }).waitFor({ state: 'visible' })
+  await save(page, 'screenshot-shapes.png')
+  await context.close()
+}
+
 try {
   await captureStartup()
   await captureEditorAndSearch()
+  await captureWorkspaceAndShapes()
   await captureFocused(
     'screenshot-tasks.png',
     'Task List',
@@ -103,4 +130,4 @@ try {
   await browser.close()
 }
 
-console.log(`Updated six repository screenshots in ${outputDir}`)
+console.log(`Updated eight repository screenshots in ${outputDir}`)

@@ -224,7 +224,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle, onTitle
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
-              <span className="font-medium text-banner-text">{weekLabel}</span>
+              <span className="font-medium text-content">{weekLabel}</span>
               <button
                 onClick={() => navigateWeek(1)}
                 aria-label="Next week"

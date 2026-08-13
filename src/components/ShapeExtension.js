@@ -1,6 +1,7 @@
 import { Node, mergeAttributes } from '@tiptap/core'
 import { ReactNodeViewRenderer } from '@tiptap/react'
 import ShapeView from './ShapeView'
+import { getShapeDomSpec } from './ShapeGeometry'
 
 const numberAttribute = (name, fallback) => ({
   default: fallback,
@@ -34,6 +35,13 @@ export const ShapeExtension = Node.create({
       width: numberAttribute('data-width', 240),
       height: numberAttribute('data-height', 112),
       rotation: numberAttribute('data-rotation', 0),
+      wrap: {
+        default: 'inline',
+        parseHTML: (element) => element.getAttribute('data-wrap') || 'inline',
+        renderHTML: (attributes) => ({ 'data-wrap': attributes.wrap || 'inline' }),
+      },
+      x: numberAttribute('data-x', 0),
+      y: numberAttribute('data-y', 0),
       flipH: {
         default: false,
         parseHTML: (element) => element.getAttribute('data-flip-h') === 'true',
@@ -68,14 +76,24 @@ export const ShapeExtension = Node.create({
     const scaleX = HTMLAttributes['data-flip-h'] === 'true' ? -1 : 1
     const scaleY = HTMLAttributes['data-flip-v'] === 'true' ? -1 : 1
     const align = HTMLAttributes['data-align'] || 'center'
+    const wrap = HTMLAttributes['data-wrap'] || 'inline'
+    const x = HTMLAttributes['data-x'] ?? 0
+    const y = HTMLAttributes['data-y'] ?? 0
     const margin = align === 'left' ? '12px auto 12px 0' : align === 'right' ? '12px 0 12px auto' : '12px auto'
+    const layout = wrap === 'left'
+      ? 'float:left;margin:4px 16px 12px 0'
+      : wrap === 'right'
+        ? 'float:right;margin:4px 0 12px 16px'
+        : wrap === 'free'
+          ? `position:relative;left:${x}px;top:${y}px;z-index:2;margin:${margin};margin-bottom:${Math.max(18, Number(y) + 18)}px`
+          : `margin:${margin}`
 
     return [
       'div',
       mergeAttributes(HTMLAttributes, {
         'data-type': 'shape',
         class: 'qn-shape',
-        style: `width:${width}px;height:${height}px;margin:${margin}`,
+        style: `width:${width}px;height:${height}px;${layout}`,
       }),
       [
         'div',
@@ -86,6 +104,18 @@ export const ShapeExtension = Node.create({
         [
           'div',
           { class: 'qn-shape__surface' },
+          [
+            'svg',
+            {
+              class: 'qn-shape__geometry',
+              viewBox: '0 0 100 100',
+              preserveAspectRatio: 'none',
+              'aria-hidden': 'true',
+              focusable: 'false',
+              xmlns: 'http://www.w3.org/2000/svg',
+            },
+            getShapeDomSpec(HTMLAttributes['data-shape']),
+          ],
           [
             'div',
             { class: 'qn-shape__content', style: `transform:scale(${scaleX},${scaleY})` },
@@ -103,7 +133,7 @@ export const ShapeExtension = Node.create({
         ({ commands }) =>
           commands.insertContent({
             type: this.name,
-            attrs: { shapeType: 'rounded', width: 240, height: 112, ...attrs },
+            attrs: { shapeType: 'rounded', width: 240, height: 112, wrap: 'inline', x: 0, y: 0, ...attrs },
             content: [{ type: 'text', text: attrs.label || 'Add text' }],
           }),
       updateShape:

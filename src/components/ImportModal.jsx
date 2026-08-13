@@ -14,6 +14,7 @@ import { MAX_NOTE_TITLE_LENGTH, MAX_TAG_NAME_LENGTH } from '../lib/dataValidatio
 import { markdownToHtml } from '../lib/noteTransfer'
 import { parseWorkspaceBackup } from '../lib/workspaceBackup'
 import LegacyDialog from './ui/LegacyDialog'
+import DialogHeader from './ui/DialogHeader'
 
 const MAX_IMPORT_FILE_SIZE = 10 * 1024 * 1024
 const MAX_TOTAL_IMPORT_SIZE = 25 * 1024 * 1024
@@ -286,26 +287,16 @@ export default function ImportModal() {
   return (
     <LegacyDialog label="Import notes" onClose={handleClose} align="center">
       <div 
-        className="flex max-h-full w-full min-w-0 max-w-lg flex-col overflow-hidden rounded-2xl border border-subtle bg-surface-raised shadow-2xl modal-animate"
+        className="flex max-h-full w-full min-w-0 max-w-lg flex-col overflow-hidden rounded-dialog border border-subtle bg-surface-raised shadow-dialog modal-animate"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex shrink-0 items-center justify-between p-4 text-white qn-banner-surface sm:p-5">
-          <div className="flex items-center gap-3">
-            <Upload className="h-6 w-6" aria-hidden="true" />
-            <div>
-              <h2 className="text-lg font-bold">{t('importModal.title')}</h2>
-              <p className="text-sm text-white">{t('importModal.subtitle')}</p>
-            </div>
-          </div>
-          <button
-            type="button"
-            aria-label={t('common.close', 'Close import')}
-            onClick={handleClose}
-            className="qn-square-control rounded-full p-2 transition-colors hover:bg-white/20"
-          >
-            <X className="h-5 w-5" aria-hidden="true" />
-          </button>
-        </div>
+        <DialogHeader
+          title={t('importModal.title')}
+          description={t('importModal.subtitle')}
+          icon={Upload}
+          onClose={handleClose}
+          closeLabel={t('common.close', 'Close import')}
+        />
         <div className="min-h-0 min-w-0 overflow-y-auto overscroll-contain p-4 sm:p-6">
         {results.length > 0 ? (
           <div className="space-y-3">

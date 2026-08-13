@@ -288,7 +288,7 @@ export default function Sidebar({ onNavigate }) {
           <li>
             <NavItem
               icon={Kanban}
-              label={t('sidebar.noteTypes', 'Workspaces & Kanban')}
+              label={t('sidebar.noteTypes', 'Workspaces')}
               onClick={go(() => setNoteTypesModalOpen(true))}
             />
           </li>

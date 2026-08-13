@@ -944,4 +944,12 @@ If you'd like a preview of QuickNotes before trying it out, the screenshots belo
     <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/screenshot-search.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/screenshot-search.png" alt="QuickNotes Global Search" width="450"></a></td>
     <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/screenshot-board.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/screenshot-board.png" alt="QuickNotes Project Board" width="450"></a></td>
   </tr>
+  <tr>
+    <th>QuickNotes - Workspaces</th>
+    <th>QuickNotes - Document Shapes</th>
+  </tr>
+  <tr>
+    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/screenshot-workspaces.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/screenshot-workspaces.png" alt="QuickNotes Workspace Picker" width="450"></a></td>
+    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/screenshot-shapes.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/screenshot-shapes.png" alt="QuickNotes Document Shapes" width="450"></a></td>
+  </tr>
 </table>

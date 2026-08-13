@@ -182,7 +182,7 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
-              <span className="font-medium text-banner-text">{dateDisplay}</span>
+              <span className="font-medium text-content">{dateDisplay}</span>
               <button
                 onClick={() => changeDate(1)}
                 disabled={isToday}

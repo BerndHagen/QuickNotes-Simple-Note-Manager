@@ -495,4 +495,28 @@ test.describe('desktop editor tools', () => {
       () => lined.evaluate((element) => getComputedStyle(element).backgroundColor)
     ).not.toBe(backgroundBefore)
   })
+
+  test('promotes complete tool groups without duplicating them in More', async ({ page }) => {
+    await page.setViewportSize({ width: 1920, height: 900 })
+    await signIn(page)
+    await page.getByRole('heading', { name: 'Welcome to QuickNotes' }).click()
+
+    const toolbar = page.locator('.editor-toolbar')
+    await expect(toolbar.getByRole('button', { name: 'Strikethrough' })).toBeVisible()
+    await expect(toolbar.getByRole('button', { name: 'Align Left' })).toBeVisible()
+    await expect(toolbar.getByRole('button', { name: 'Paper Style' })).toBeHidden()
+    await toolbar.getByRole('button', { name: /show more formatting tools/i }).click()
+    await expect(toolbar.getByText('Data & presets', { exact: true })).toBeVisible()
+    await expect(toolbar.getByText('Tools & automation', { exact: true })).toBeHidden()
+    await expect(toolbar.getByRole('button', { name: 'Paper Style' })).toBeVisible()
+
+    await page.setViewportSize({ width: 2560, height: 1080 })
+    await expect(toolbar.getByRole('button', { name: /formatting tools/i })).toBeHidden()
+    await expect(toolbar.getByRole('button', { name: 'Paper Style' })).toBeVisible()
+    const metrics = await toolbar.evaluate((element) => ({
+      clientWidth: element.clientWidth,
+      scrollWidth: element.scrollWidth,
+    }))
+    expect(metrics.scrollWidth).toBeLessThanOrEqual(metrics.clientWidth + 1)
+  })
 })

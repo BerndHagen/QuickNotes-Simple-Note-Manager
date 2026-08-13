@@ -442,7 +442,7 @@ export default function NotesList({ sidebarToggle, onOpenNote }) {
           <SortDropdown currentSort={currentSort} onSortChange={setCurrentSort} />
           <IconButton
             icon={Sparkles}
-            label="Choose a focused note type"
+            label="Create workspace"
             onClick={() => setNoteTypesModalOpen(true)}
           />
           <IconButton

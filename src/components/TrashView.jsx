@@ -56,7 +56,7 @@ export default function TrashView() {
         description={countLabel}
         icon={Trash2}
         size="xl"
-        bodyClassName="!overflow-hidden bg-surface p-0 sm:p-0"
+        bodyClassName="!overflow-hidden bg-surface-raised p-0 sm:p-0"
       >
         <div className="flex h-full min-h-0 flex-col">
           {trashedNotes.length > 0 && (

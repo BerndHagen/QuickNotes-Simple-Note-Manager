@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { Avatar, Button, Field, Input, LanguageFlag, SegmentedControl, Switch, Toggle } from './ui'
+import { Avatar, Button, DialogHeader, Field, Input, LanguageFlag, SegmentedControl, Switch, Toggle } from './ui'
 import {
-  X,
   User,
   Mail,
   Lock,
@@ -401,27 +400,15 @@ export default function SettingsModal() {
   return (
     <LegacyDialog label="Settings" onClose={() => setSettingsOpen(false)} align="center">
       <div className="qn-settings-shell flex h-[calc(100dvh-1.5rem)] max-h-[92dvh] w-full max-w-3xl flex-col overflow-hidden rounded-dialog border border-subtle bg-surface-raised shadow-dialog modal-animate sm:mx-4 sm:h-[80dvh]">
-        <div className="flex items-center justify-between px-4 py-4 sm:px-6 sm:py-5 qn-banner-surface">
-          <div className="text-white">
-            <h2 className="text-xl font-bold flex items-center gap-2">
-              <Settings className="w-6 h-6" />
-              {t('settings.title')}
-            </h2>
-            <p className="text-white/80 text-sm mt-0.5">
-              {t('settings.customizeWorkspace')}
-            </p>
-          </div>
-          <button
-            type="button"
-            aria-label={`${t('common.close', 'Close')} ${t('settings.title', 'settings')}`}
-            onClick={() => setSettingsOpen(false)}
-            className="qn-square-control rounded-full p-2 text-white transition-colors hover:bg-white/20"
-          >
-            <X className="w-6 h-6" />
-          </button>
-        </div>
+        <DialogHeader
+          title={t('settings.title')}
+          description={t('settings.customizeWorkspace')}
+          icon={Settings}
+          onClose={() => setSettingsOpen(false)}
+          closeLabel={`${t('common.close', 'Close')} ${t('settings.title', 'settings')}`}
+        />
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden sm:flex-row">
-        <div className="shrink-0 border-b border-subtle bg-surface p-2 sm:w-48 sm:border-b-0 sm:border-r sm:p-4">
+        <div className="shrink-0 border-b border-subtle bg-surface-raised p-2 sm:w-48 sm:border-b-0 sm:border-r sm:p-4">
           <nav aria-label="Settings sections" className="flex max-w-full gap-1 overflow-x-auto overscroll-x-contain sm:block sm:space-y-1 sm:overflow-visible">
             {tabs.map((tab) => (
               <button
@@ -431,11 +418,11 @@ export default function SettingsModal() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`qn-touch-target flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 text-xs transition-colors sm:w-full sm:min-w-0 sm:justify-start sm:gap-3 sm:px-3 sm:text-[13px] ${
  activeTab === tab.id
- ? 'bg-accent text-accent-on shadow-md ring-1 ring-[var(--qn-accent-hover)] font-semibold'
-                    : 'text-content-muted hover:bg-white/80 dark:hover:bg-surface-raised'
+ ? 'bg-accent-soft text-accent-text ring-1 ring-[var(--qn-accent-border)] font-semibold'
+                    : 'text-content-muted hover:bg-surface-hover'
                 }`}
               >
-                <tab.icon className={`h-4 w-4 shrink-0 ${activeTab === tab.id ? 'text-accent-on' : 'text-content-subtle'}`} />
+                <tab.icon className={`h-4 w-4 shrink-0 ${activeTab === tab.id ? 'text-accent-text' : 'text-content-subtle'}`} />
                 <span>{tab.label}</span>
               </button>
             ))}
@@ -447,7 +434,7 @@ export default function SettingsModal() {
               {tabs.find((t) => t.id === activeTab)?.label}
             </h3>
           </div>
-          <div data-settings-pane tabIndex="0" aria-label="Settings options" className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain bg-surface p-4 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--qn-focus-ring)] sm:p-6">
+          <div data-settings-pane tabIndex="0" aria-label="Settings options" className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain bg-surface-raised p-4 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--qn-focus-ring)] sm:p-6">
             {activeTab === 'general' && (
               <div className="space-y-6">
                 <div>

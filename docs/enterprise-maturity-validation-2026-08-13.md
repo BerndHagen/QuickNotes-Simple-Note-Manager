@@ -8,12 +8,12 @@ Scope: all 156 JavaScript/JSX/CSS source files, all 103 component/style files, e
 
 QuickNotes entered this pass with strong functionality, navigation, editing, search, persistence, accessibility coverage, and a recognizable dark-green identity. Its weakest quality was inconsistent visual containment: the shell could feel unfinished because large areas were near-white, note-list cards had lost their distinct rounded treatment, Idea Board objects were visually under-defined, and older structured workspace internals used a mixture of dashboard statistics, raw palette utilities, bespoke popovers, and inconsistent empty states.
 
-The resulting product is materially calmer and more credible without being gray or generic. Navigation and flat application headers share one controlled deep-green brand surface. Working areas use a texture-free, layered green-neutral surface system, compact headers, restrained semantic status, predictable cards/panels, and content-first hierarchy. Rounded cards remain where they make a note, idea, task, project item, or setting read as one object; they are not used to frame every line or tab.
+The resulting product is materially calmer and more credible without being gray or generic. The navigation rail is the single large deep-green brand surface; document, workspace and dialog headers are neutral working chrome. Working areas use compact headers, restrained semantic status, predictable cards/panels, and content-first hierarchy. Rounded cards remain where they make a note, idea, task, project item, or setting read as one object; they are not used to frame every line or tab.
 
 ## Post-audit feedback refinement
 
 - Decorative contour and radial treatments are now reserved for authentication and onboarding. Signed-in document headers, focused-workspace headers, dialog banners, editor paper, and workspace canvases are flat surfaces.
-- Application banners use the navigation rail's deep green, including Settings, search, transfer, tag-management, and editor headers.
+- Green is reserved for the navigation landmark, primary actions and small state cues. Settings, search, transfer, tag-management, document and workspace headers share one neutral dialog/work surface.
 - Structured notes expose a visible **Tags** button in the top action bar instead of relying on an icon alone.
 - Every Idea Board card exposes its category as a direct dropdown in both grid and list views. Category management is a labelled **Categories** action rather than an isolated plus icon.
 
@@ -23,18 +23,23 @@ The resulting product is materially calmer and more credible without being gray 
   favourite shortcut and context-menu trigger appear together as one contained
   hover/focus action group, while remaining permanently available on touch.
 - Kanban was already implemented as the Project Board workspace; the sidebar
-  now exposes it directly as **Workspaces & Kanban** and the starter/help copy
+  now exposes it directly as **Workspaces** and the starter/help copy
   uses the same name.
-- The rich-text editor now defaults to a calm, single-line core toolbar.
-  Specialist typography, alignment, page and source controls remain available
-  through an explicit **More / Simplify** mode rather than competing with daily
-  writing actions.
-- Notes can contain editable rectangles, rounded rectangles, ellipses,
-  diamonds and arrows. Shape HTML persists text, exact dimensions, free
-  rotation, 15-degree snapping, 90-degree rotation, flips, alignment and colour.
+- The rich-text editor now defaults to a calm, single-line core toolbar. Its
+  capacity is measured from the editor pane: additional groups are promoted as
+  room becomes available, and **More** contains only groups that do not fit.
+  Typography, paragraph, tools & automation, and data & presets remain visibly
+  grouped instead of wrapping into unexplained loose controls.
+- Notes can contain twelve vector shapes across basic, arrow and callout
+  families. A visual gallery is used at insertion and when changing a shape.
+  Shape HTML persists editable text, vector geometry, exact dimensions, free
+  drag positioning, inline/left/right wrapping, arrow-key nudging, rotation,
+  15-degree snapping, 90-degree commands, flips, alignment and colour.
 - Fields, substantial cards, popovers and application windows now resolve to
   one 12 px product radius. Settings, Archive, Trash and legacy dialogs share
-  the same shell geometry, elevation and surface hierarchy.
+  the same shell geometry, elevation and surface hierarchy. Standard and
+  migrated legacy windows reuse one `DialogHeader` primitive, while one
+  explicit child region owns scrolling.
 - Plain-text previews preserve semantic spacing between document blocks, so
   Archive, Trash, search and note-card excerpts no longer concatenate headings
   and paragraphs.
@@ -62,7 +67,7 @@ The audit did not equate “read every file” with changing every file. Every s
 | --- | --- | --- |
 | Shell and navigation | `App`, `Sidebar`, auth/recovery, breakpoints, themes | Edge-to-edge signed-in shell retained; expressive framed presentation remains only in authentication/marketing contexts. |
 | Note navigation | `NotesList`, `NoteCard`, `NotesGrid`, sort/filter/context menu | Rounded list cards restored, selected edge made precise, grid elevation restrained, empty grid standardized. |
-| Document work | `NoteEditor`, `RichTextEditor`, editor extensions, toolbars/popovers | Content remains primary; the document header uses the flat rail-green application banner; daily tools stay visible, specialist tools expand on demand, and editable transformed shapes persist in note HTML. |
+| Document work | `NoteEditor`, `RichTextEditor`, editor extensions, toolbars/popovers | Content remains primary; the document header is neutral, daily tools stay visible, hidden groups expand on demand, and movable wrapped vector shapes persist in note HTML. |
 | Structured workspaces | task, project, meeting, journal, idea, shopping, weekly editors | Every default view and secondary tab rendered and inspected; shared metrics, panels, cards, empty states, responsive fixes, and interaction parity applied. |
 | Shared UI | button, field, menu, modal, empty state, badge, avatar, spinner | Reused instead of adding more one-off controls; semantic states and control geometry retained. |
 | Secondary workflows | settings, global search, archive/trash, sharing, import/export, type picker, dialogs | Rendered or regression-covered; expressive search/settings hierarchy preserved; transition and selection behavior normalized where touched. |
@@ -79,7 +84,7 @@ No release-blocking visual or interaction defect remained after verification.
 ### P1 — resolved
 
 - **Idea cards lacked convincing object boundaries.** New ideas now render as raised, one-pixel bordered cards with a restrained category edge, predictable header/body/footer structure, clear vote/star state, and contained edit/duplicate/delete actions.
-- **Working areas looked too white and unfinished.** A semantic green-neutral surface ladder now separates application canvas, panes, working canvas, panels, raised cards, and flat rail-green application headers in both themes.
+- **Working areas looked inconsistent and unfinished.** Neutral document, workspace and dialog chrome now separates controls from content without multiplying gray wells or repeating the rail colour across every header.
 - **Mobile task labels collapsed beside actions.** Mobile task cards now use a two-row grid: completion/content first, secondary actions below. A browser assertion requires useful text width and verifies the action row position.
 - **Meeting navigation could hide the summary action.** Tabs now scroll inside their own region while the labelled summary action remains persistently visible; it becomes icon-only at constrained widths without losing its accessible name.
 
@@ -100,7 +105,7 @@ No release-blocking visual or interaction defect remained after verification.
 
 ## Deliberate preservation
 
-- The dark-green rail remains. It is the clearest QuickNotes identity and has strong hierarchy and contrast.
+- The dark-green rail remains as the single large brand landmark. Repeating the same green across document, workspace and dialog headers was removed because it flattened hierarchy and made long sessions visually heavy.
 - Authentication remains more expressive and retains its branded presentation frame; that context is product presentation, not the work surface.
 - The readable content measure, global search, keyboard workflow, persistence architecture, and local-first language remain intact. Toolbar density changed only by prioritizing commands; no editor capability was removed.
 - Cards remain for real objects. The implementation avoids both extremes: neither every region nor no region is a card.
@@ -122,7 +127,7 @@ The final gate covers:
 Final pass evidence:
 
 - 48 unit/integration files, 228 tests passed;
-- 109 Playwright scenarios passed across Chromium and mobile WebKit;
+- 111 Playwright scenarios passed across Chromium and mobile WebKit;
 - 7/7 production deployment checks passed;
 - lint, production build, screenshot regeneration, and diff hygiene passed.
 

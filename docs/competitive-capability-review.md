@@ -53,19 +53,20 @@ official product guidance:
 
 - Word for the web makes its simplified, single-line ribbon the default and
   expands to the classic ribbon when the user needs less-common commands.
-  QuickNotes now keeps everyday writing, lists, tables, links, images, text
-  boxes and shapes visible, with specialist typography, alignment, source and
-  page controls behind an explicit **More / Simplify** switch.
-- Word exposes direct drag sizing, exact width and height, free rotation,
-  Shift-constrained 15-degree rotation, 90-degree commands and horizontal or
-  vertical flips. OneNote also treats shapes as useful note objects. QuickNotes
-  now persists that practical subset directly in note HTML for rectangles,
-  rounded rectangles, ellipses, diamonds and arrows with editable text,
-  alignment and restrained colour presets.
+  Evernote similarly shows **More** only when navigation items are hidden.
+  QuickNotes now measures the editor pane, progressively promotes complete
+  command groups, hides **More** when everything fits, and lists only the
+  remaining groups when it does not.
+- Word exposes an explicit shape gallery, direct movement after selecting a
+  wrapping mode, document anchors, exact position/size, free rotation,
+  Shift-constrained 15-degree rotation, 90-degree commands and flips. QuickNotes
+  now persists that practical subset directly in note HTML for twelve genuine
+  SVG shapes with editable text, a visual change-shape gallery, inline/side/free
+  layout modes, pointer movement, keyboard nudging and restrained styles.
 - Notion's board view confirms Kanban as a status-based workspace pattern.
   QuickNotes already had a full Project Board with columns, drag-and-drop,
   milestones, assignees and keyboard status movement; it was a discovery gap,
-  not a missing capability. The rail now names **Workspaces & Kanban** directly.
+  not a missing capability. The rail now names **Workspaces** directly.
 - Notion Forms is a response-collection system connected to databases, public
   links and permissions. That is a different product model from document
   shapes and would require a durable response schema, access policy and abuse
@@ -96,3 +97,5 @@ backend flows are designed and tested.
 - Microsoft OneNote: [drawing and shapes](https://support.microsoft.com/en-us/onenote/onenote-help-and-learning/draw-and-sketch-notes-in-onenote)
 - Notion: [board views](https://www.notion.com/help/boards) and [forms](https://www.notion.com/en-gb/help/forms)
 - Evernote: [editor and insert options](https://help.evernote.com/hc/en-us/articles/360022954093-Note-editor-and-editing-toolbar-overview)
+- Evernote: [sidebar and navbar customization](https://help.evernote.com/hc/en-us/articles/221189627-Sidebar-and-Navbar-Overview)
+- Microsoft Word: [wrap text and move objects](https://support.microsoft.com/en-us/word/wrap-text-and-move-pictures-in-word)

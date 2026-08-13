@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { buttonClasses } from './ui'
-import { X, Tag, Trash2, Edit2, Check, Plus, Hash } from 'lucide-react'
+import { Tag, Trash2, Edit2, Check, Plus, Hash } from 'lucide-react'
 import { useNotesStore, useUIStore } from '../store'
 import { useTranslation } from '../lib/useTranslation'
 import LegacyDialog from './ui/LegacyDialog'
+import DialogHeader from './ui/DialogHeader'
 import { MAX_TAG_NAME_LENGTH } from '../lib/dataValidation'
 import toast from 'react-hot-toast'
 
@@ -179,26 +180,16 @@ export default function TagManagerModal() {
   return (
     <LegacyDialog label="Manage tags" onClose={() => setTagManagerOpen(false)} align="center">
       <div 
-        className="flex max-h-full min-h-0 w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-subtle bg-surface-raised shadow-2xl modal-animate"
+        className="flex max-h-full min-h-0 w-full max-w-lg flex-col overflow-hidden rounded-dialog border border-subtle bg-surface-raised shadow-dialog modal-animate"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex shrink-0 items-center justify-between p-5 qn-banner-surface text-white">
-          <div className="flex items-center gap-3">
-            <Tag className="w-6 h-6" />
-            <div>
-              <h2 className="text-lg font-bold">{t('tags.manageTitle', 'Manage Tags')}</h2>
-              <p className="text-sm text-white/70">Organize your notes with tags</p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => setTagManagerOpen(false)}
-            aria-label={t('common.close', 'Close')}
-            className="qn-square-control rounded-full p-2 transition-colors hover:bg-white/20"
-          >
-            <X className="w-5 h-5" aria-hidden="true" />
-          </button>
-        </div>
+        <DialogHeader
+          title={t('tags.manageTitle', 'Manage Tags')}
+          description="Organize your notes with tags"
+          icon={Tag}
+          onClose={() => setTagManagerOpen(false)}
+          closeLabel={t('common.close', 'Close')}
+        />
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6">
           {!showNewTag && (
             <button
