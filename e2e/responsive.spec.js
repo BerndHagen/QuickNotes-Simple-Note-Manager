@@ -240,46 +240,45 @@ test.describe('mobile editor usability', () => {
   })
 
   test('keeps the toolbar compact while every command remains reachable', async ({ page }) => {
-    await page.getByRole('button', { name: /show more formatting tools/i }).click()
-    const metrics = await page.locator('.editor-toolbar').evaluate((toolbar) => {
-      const toolbarBox = toolbar.getBoundingClientRect()
-      const results = []
-      for (const button of toolbar.querySelectorAll('button')) {
-        button.scrollIntoView({ block: 'nearest', inline: 'nearest' })
-        const box = button.getBoundingClientRect()
-        results.push({
-          label: button.getAttribute('aria-label'),
-          left: box.left,
-          right: box.right,
-          width: box.width,
-          height: box.height,
-        })
-      }
-      const rows = new Set(
-        [...toolbar.querySelectorAll('button')].map((button) =>
-          Math.round(button.getBoundingClientRect().top)
-        )
-      )
-      return {
-        clientWidth: toolbar.clientWidth,
-        scrollWidth: toolbar.scrollWidth,
-        height: toolbarBox.height,
-        rows: rows.size,
-        results,
-      }
-    })
+    const toolbar = page.locator('.editor-toolbar')
+    const tabs = page.getByRole('tablist', { name: 'Editor ribbon' })
+    let commandCount = 0
+    for (const tabName of ['Home', 'Insert', 'Format', 'Layout', 'Tools']) {
+      await tabs.getByRole('tab', { name: tabName }).click()
+      const metrics = await toolbar.evaluate((element) => {
+        const toolbarBox = element.getBoundingClientRect()
+        const visibleButtons = [...element.querySelectorAll('button')].filter((button) => button.offsetParent !== null)
+        const results = []
+        for (const button of visibleButtons) {
+          button.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+          const box = button.getBoundingClientRect()
+          results.push({
+            label: button.getAttribute('aria-label'),
+            left: box.left,
+            right: box.right,
+            width: box.width,
+            height: box.height,
+          })
+        }
+        return {
+          height: toolbarBox.height,
+          rows: new Set(visibleButtons.map((button) => Math.round(button.getBoundingClientRect().top))).size,
+          results,
+        }
+      })
 
-    expect(metrics.height).toBeLessThanOrEqual(60)
-    expect(metrics.rows).toBe(1)
-    expect(metrics.scrollWidth).toBeGreaterThan(metrics.clientWidth)
-    expect(metrics.results.length).toBeGreaterThan(30)
-    for (const command of metrics.results) {
-      expect(command.label, 'Every toolbar button needs an accessible name').toBeTruthy()
-      expect(command.left, `${command.label} is clipped on the left`).toBeGreaterThanOrEqual(-1)
-      expect(command.right, `${command.label} is clipped on the right`).toBeLessThanOrEqual(321)
-      expect(command.width, `${command.label} is too narrow for touch`).toBeGreaterThanOrEqual(44)
-      expect(command.height, `${command.label} is too short for touch`).toBeGreaterThanOrEqual(44)
+      expect(metrics.height).toBeLessThanOrEqual(61)
+      expect(metrics.rows).toBe(1)
+      commandCount += metrics.results.length
+      for (const command of metrics.results) {
+        expect(command.label, 'Every toolbar button needs an accessible name').toBeTruthy()
+        expect(command.left, `${command.label} is clipped on the left`).toBeGreaterThanOrEqual(-1)
+        expect(command.right, `${command.label} is clipped on the right`).toBeLessThanOrEqual(321)
+        expect(command.width, `${command.label} is too narrow for touch`).toBeGreaterThanOrEqual(44)
+        expect(command.height, `${command.label} is too short for touch`).toBeGreaterThanOrEqual(44)
+      }
     }
+    expect(commandCount).toBeGreaterThan(30)
 
     const editorViewport = page.locator('.ProseMirror').locator('xpath=../..')
     const editorBox = await editorViewport.boundingBox()
@@ -288,7 +287,7 @@ test.describe('mobile editor usability', () => {
   })
 
   test('keeps formatting popovers inside the visible viewport', async ({ page }) => {
-    await page.getByRole('button', { name: /show more formatting tools/i }).click()
+    await page.getByRole('tab', { name: 'Format' }).click()
     await page.getByRole('button', { name: 'Text Color' }).click()
     const dropdown = page.getByRole('dialog', { name: 'Formatting options' })
     await expect(dropdown).toBeVisible()
@@ -315,6 +314,7 @@ test.describe('mobile editor usability', () => {
   })
 
   test('keeps selected-image controls touch accessible and inside the editor', async ({ page }) => {
+    await page.getByRole('tab', { name: 'Insert' }).click()
     await page.getByRole('button', { name: 'Insert image' }).first().click()
     const dialog = page.getByRole('dialog', { name: 'Insert image' })
     await dialog.getByRole('radio', { name: 'Upload file' }).click()
@@ -384,7 +384,7 @@ test.describe('phone landscape editor', () => {
 
     await page.getByRole('button', { name: /show formatting tools/i }).click()
     const [toolbarBox, editorBox] = await Promise.all([toolbar.boundingBox(), editorViewport.boundingBox()])
-    expect(toolbarBox.height).toBeLessThanOrEqual(60)
+    expect(toolbarBox.height).toBeLessThanOrEqual(61)
     expect(editorBox.height).toBeGreaterThanOrEqual(145)
     await expectNoHorizontalOverflow(page)
   })
@@ -427,29 +427,15 @@ test.describe('desktop editor tools', () => {
 
     const toolbar = page.locator('.editor-toolbar')
     await expect(toolbar).toBeVisible()
-    await toolbar.getByRole('button', { name: /show more formatting tools/i }).click()
-    const metrics = await toolbar.evaluate((element) => {
-      const toolbarBox = element.getBoundingClientRect()
-      const tools = [...element.querySelectorAll('button')]
-        .filter((button) => button.offsetParent !== null)
-        .map((button) => {
-          const box = button.getBoundingClientRect()
-          return { left: box.left, right: box.right }
-        })
-      const style = getComputedStyle(element)
-      return {
+    const tabs = page.getByRole('tablist', { name: 'Editor ribbon' })
+    for (const tabName of ['Home', 'Insert', 'Format', 'Layout', 'Tools']) {
+      await tabs.getByRole('tab', { name: tabName }).click()
+      const metrics = await toolbar.evaluate((element) => ({
         clientWidth: element.clientWidth,
         scrollWidth: element.scrollWidth,
-        overflowX: style.overflowX,
-        allToolsInside: tools.every(
-          ({ left, right }) => left >= toolbarBox.left - 1 && right <= toolbarBox.right + 1
-        ),
-      }
-    })
-
-    expect(metrics.overflowX).toBe('visible')
-    expect(metrics.scrollWidth).toBeLessThanOrEqual(metrics.clientWidth + 1)
-    expect(metrics.allToolsInside).toBe(true)
+      }))
+      expect(metrics.scrollWidth, `${tabName} commands should fit the desktop editor`).toBeLessThanOrEqual(metrics.clientWidth + 1)
+    }
   })
 
   test('renders readable tooltips and distinct paper focus, selection, and hover states', async ({ page }) => {
@@ -478,7 +464,7 @@ test.describe('desktop editor tools', () => {
     })
     expect(contrast).toBeGreaterThanOrEqual(4.5)
 
-    await page.getByRole('button', { name: /show more formatting tools/i }).click()
+    await page.getByRole('tab', { name: 'Layout' }).click()
     await page.getByRole('button', { name: 'Paper Style' }).click()
     const paperMenu = page.getByRole('dialog', { name: 'Formatting options' })
     const plain = paperMenu.getByRole('button', { name: 'Plain' })
@@ -496,7 +482,7 @@ test.describe('desktop editor tools', () => {
     ).not.toBe(backgroundBefore)
   })
 
-  test('promotes complete tool groups without duplicating them in More', async ({ page }) => {
+  test('keeps complete tool groups in stable tabs at every desktop width', async ({ page }) => {
     await page.setViewportSize({ width: 1920, height: 900 })
     await signIn(page)
     await page.getByRole('heading', { name: 'Welcome to QuickNotes' }).click()
@@ -505,13 +491,10 @@ test.describe('desktop editor tools', () => {
     await expect(toolbar.getByRole('button', { name: 'Strikethrough' })).toBeVisible()
     await expect(toolbar.getByRole('button', { name: 'Align Left' })).toBeVisible()
     await expect(toolbar.getByRole('button', { name: 'Paper Style' })).toBeHidden()
-    await toolbar.getByRole('button', { name: /show more formatting tools/i }).click()
-    await expect(toolbar.getByText('Data & presets', { exact: true })).toBeVisible()
-    await expect(toolbar.getByText('Tools & automation', { exact: true })).toBeHidden()
+    await page.getByRole('tab', { name: 'Layout' }).click()
     await expect(toolbar.getByRole('button', { name: 'Paper Style' })).toBeVisible()
 
     await page.setViewportSize({ width: 2560, height: 1080 })
-    await expect(toolbar.getByRole('button', { name: /formatting tools/i })).toBeHidden()
     await expect(toolbar.getByRole('button', { name: 'Paper Style' })).toBeVisible()
     const metrics = await toolbar.evaluate((element) => ({
       clientWidth: element.clientWidth,

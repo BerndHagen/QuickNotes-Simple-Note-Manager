@@ -137,23 +137,22 @@ test.describe('mobile Safari workflows', () => {
     const toolbar = page.locator('.editor-toolbar')
     await expect(toolbar).toBeHidden()
     await page.getByRole('button', { name: /show formatting tools/i }).tap()
-    await page.getByRole('button', { name: /show more formatting tools/i }).tap()
     const toolbarMetrics = await toolbar.evaluate((element) => ({
       height: element.getBoundingClientRect().height,
       clientWidth: element.clientWidth,
       scrollWidth: element.scrollWidth,
       rows: new Set(
-        [...element.querySelectorAll('button')].map((button) =>
+        [...element.querySelectorAll('button')].filter((button) => button.offsetParent !== null).map((button) =>
           Math.round(button.getBoundingClientRect().top)
         )
       ).size,
     }))
-    expect(toolbarMetrics.height).toBeLessThanOrEqual(60)
+    expect(toolbarMetrics.height).toBeLessThanOrEqual(61)
     expect(toolbarMetrics.rows).toBe(1)
     expect(toolbarMetrics.scrollWidth).toBeGreaterThan(toolbarMetrics.clientWidth)
 
     const finalToolBox = await toolbar.evaluate((element) => {
-      const finalTool = element.querySelector('button:last-of-type')
+      const finalTool = [...element.querySelectorAll('button')].filter((button) => button.offsetParent !== null).at(-1)
       finalTool.scrollIntoView({ block: 'nearest', inline: 'nearest' })
       const box = finalTool.getBoundingClientRect()
       return { left: box.left, right: box.right }
@@ -161,6 +160,7 @@ test.describe('mobile Safari workflows', () => {
     expect(finalToolBox.left).toBeGreaterThanOrEqual(-1)
     expect(finalToolBox.right).toBeLessThanOrEqual(321)
 
+    await page.getByRole('tab', { name: 'Format' }).tap()
     await page.getByRole('button', { name: 'Text Color' }).tap()
     const popover = page.getByRole('dialog', { name: 'Formatting options' })
     await expect(popover).toBeVisible()

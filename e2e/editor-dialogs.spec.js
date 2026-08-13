@@ -41,6 +41,17 @@ const expectDialogQuality = async (page, dialog) => {
   expect(formatViolations(violations)).toBe('')
 }
 
+const drawOnPage = async (page, accessibleName, { x = 140, y = 90, width = 280, height = 150 } = {}) => {
+  const layer = page.getByRole('application', { name: accessibleName })
+  await expect(layer).toBeVisible()
+  const box = await layer.boundingBox()
+  await page.mouse.move(box.x + x, box.y + y)
+  await page.mouse.down()
+  await page.mouse.move(box.x + x + width, box.y + y + height, { steps: 8 })
+  await page.mouse.up()
+  await expect(layer).toBeHidden()
+}
+
 test.describe('editor dialogs on a small screen', () => {
   test.use({ viewport: { width: 320, height: 640 } })
 
@@ -53,6 +64,7 @@ test.describe('editor dialogs on a small screen', () => {
   })
 
   test('image upload rejects an unsafe embedded file before reading it', async ({ page }) => {
+    await page.getByRole('tab', { name: 'Insert' }).click()
     await page.getByRole('button', { name: 'Insert image' }).first().click()
 
     const dialog = page.getByRole('dialog', { name: 'Insert image' })
@@ -71,6 +83,7 @@ test.describe('editor dialogs on a small screen', () => {
   })
 
   test('link insertion rejects executable schemes and remains keyboard usable', async ({ page }) => {
+    await page.getByRole('tab', { name: 'Insert' }).click()
     await page.getByRole('button', { name: /Insert Link/ }).first().click()
 
     const dialog = page.getByRole('dialog', { name: 'Insert link' })
@@ -91,7 +104,7 @@ test.describe('editor dialogs on a small screen', () => {
         value: { writeText: () => Promise.reject(new Error('denied')) },
       })
     })
-    await page.getByRole('button', { name: /show more formatting tools/i }).click()
+    await page.getByRole('tab', { name: 'Tools' }).click()
     await page.getByRole('button', { name: 'Edit HTML Source' }).click()
 
     const dialog = page.getByRole('dialog', { name: 'HTML editor' })
@@ -110,25 +123,39 @@ test.describe('editor productivity objects', () => {
     await expect(page.locator('.editor-toolbar')).toBeVisible()
   })
 
-  test('uses a simplified ribbon until the writer asks for specialist tools', async ({ page }) => {
+  test('uses consistent tabs and named groups instead of a mixed command strip', async ({ page }) => {
     const toolbar = page.locator('.editor-toolbar')
+    const tabs = page.getByRole('tablist', { name: 'Editor ribbon' })
+    await expect(tabs.getByRole('tab')).toHaveCount(5)
+    await expect(tabs.getByRole('tab', { name: 'Home' })).toHaveAttribute('aria-selected', 'true')
     await expect(toolbar.getByRole('button', { name: 'Bold' })).toBeVisible()
-    await expect(toolbar.getByRole('button', { name: 'Insert shape' })).toBeVisible()
-    await expect(toolbar.getByRole('button', { name: 'Strikethrough' })).toBeHidden()
+    await expect(toolbar.getByRole('button', { name: 'Insert shape' })).toBeHidden()
     await expect(toolbar.getByRole('button', { name: 'Edit HTML Source' })).toBeHidden()
 
-    await toolbar.getByRole('button', { name: /show more formatting tools/i }).click()
-    await expect(toolbar.getByRole('button', { name: 'Strikethrough' })).toBeVisible()
+    await tabs.getByRole('tab', { name: 'Home' }).focus()
+    await tabs.getByRole('tab', { name: 'Home' }).press('ArrowRight')
+    await expect(tabs.getByRole('tab', { name: 'Insert' })).toBeFocused()
+    await expect(tabs.getByRole('tab', { name: 'Insert' })).toHaveAttribute('aria-selected', 'true')
+    await expect(toolbar.getByRole('button', { name: 'Insert shape' })).toBeVisible()
+    await expect(toolbar.getByRole('button', { name: 'Draw text box' })).toBeVisible()
+    await tabs.getByRole('tab', { name: 'Tools' }).click()
     await expect(toolbar.getByRole('button', { name: 'Edit HTML Source' })).toBeVisible()
-    await expect(toolbar.getByRole('button', { name: /use simplified toolbar/i })).toBeVisible()
+
+    const ungrouped = await toolbar.locator('button:visible').evaluateAll((buttons) =>
+      buttons.filter((button) => !button.closest('.qn-ribbon-group')).map((button) => button.getAttribute('aria-label'))
+    )
+    expect(ungrouped).toEqual([])
   })
 
   test('inserts a shape with direct and exact transformation controls', async ({ page }) => {
+    await page.getByRole('tab', { name: 'Insert' }).click()
     await page.getByRole('button', { name: 'Insert shape' }).click()
     const gallery = page.getByRole('dialog', { name: 'Insert a shape' })
     await expect(gallery.getByRole('button', { name: 'Insert diamond' })).toBeVisible()
     await expect(gallery.getByRole('button', { name: 'Insert right arrow' })).toBeVisible()
+    await expect(gallery.locator('.qn-shape-gallery-item .qn-shape__geometry > *')).toHaveCount(12)
     await gallery.getByRole('button', { name: 'Insert diamond' }).click()
+    await drawOnPage(page, 'Draw shape on the page', { width: 300, height: 160 })
     const shape = page.locator('.qn-shape').last()
     await expect(shape).toBeVisible()
     await shape.locator('.qn-shape__surface').click()
@@ -163,10 +190,12 @@ test.describe('editor productivity objects', () => {
   })
 
   test('moves a shape freely and exposes Word-style wrapping choices', async ({ page }) => {
+    await page.getByRole('tab', { name: 'Insert' }).click()
     await page.getByRole('button', { name: 'Insert shape' }).click()
     await page.getByRole('dialog', { name: 'Insert a shape' })
       .getByRole('button', { name: 'Insert right arrow' })
       .click()
+    await drawOnPage(page, 'Draw shape on the page')
 
     const shape = page.locator('.qn-shape').last()
     await shape.locator('.qn-shape__surface').click()
@@ -182,8 +211,74 @@ test.describe('editor productivity objects', () => {
     await page.mouse.move(before.x + before.width / 2 + 64, before.y + before.height / 2 + 36, { steps: 5 })
     await page.mouse.up()
 
-    await expect(shape).toHaveAttribute('data-wrap', 'free')
+    await expect(shape).toHaveAttribute('data-wrap', 'absolute')
     await expect.poll(async () => Number(await shape.getAttribute('data-x'))).toBeGreaterThan(40)
     await expect.poll(async () => Number(await shape.getAttribute('data-y'))).toBeGreaterThan(20)
+  })
+
+  test('draws, freely moves, resizes, and colours a text box', async ({ page }) => {
+    await page.getByRole('tab', { name: 'Insert' }).click()
+    await page.getByRole('button', { name: 'Draw text box' }).click()
+    await drawOnPage(page, 'Draw text box on the page', { x: 180, y: 100, width: 340, height: 170 })
+
+    const textBox = page.locator('.qn-text-box').last()
+    await expect(textBox).toHaveAttribute('data-wrap', 'absolute')
+    await expect(textBox).toHaveAttribute('data-width', '340')
+    await expect(textBox).toHaveAttribute('data-height', '170')
+    await textBox.click({ position: { x: 30, y: 30 } })
+    await expect(textBox.getByRole('button', { name: /Resize text box/ })).toHaveCount(8)
+
+    const formatting = page.getByRole('toolbar', { name: 'Text box formatting' })
+    await formatting.getByRole('button', { name: 'Text box fill' }).click()
+    await page.getByRole('dialog', { name: 'Text box fill' }).getByRole('button', { name: 'Fill #eff6ff' }).click()
+    await expect(textBox).toHaveAttribute('data-bg', '#eff6ff')
+
+    const moveHandle = textBox.getByRole('button', { name: 'Move text box' })
+    const beforeMove = await moveHandle.boundingBox()
+    await page.mouse.move(beforeMove.x + beforeMove.width / 2, beforeMove.y + beforeMove.height / 2)
+    await page.mouse.down()
+    await page.mouse.move(beforeMove.x + beforeMove.width / 2 + 70, beforeMove.y + beforeMove.height / 2 + 40, { steps: 6 })
+    await page.mouse.up()
+    await expect.poll(async () => Number(await textBox.getAttribute('data-x'))).toBeGreaterThan(200)
+
+    const resize = textBox.getByRole('button', { name: 'Resize text box se' })
+    const beforeResize = await resize.boundingBox()
+    await page.mouse.move(beforeResize.x + beforeResize.width / 2, beforeResize.y + beforeResize.height / 2)
+    await page.mouse.down()
+    await page.mouse.move(beforeResize.x + beforeResize.width / 2 + 30, beforeResize.y + beforeResize.height / 2 + 25, { steps: 6 })
+    await page.mouse.up()
+    await expect(textBox).toHaveAttribute('data-width', '370')
+    await expect(textBox).toHaveAttribute('data-height', '195')
+  })
+
+  test('supports repeated indents, styled checklists, and persistent ruler tab stops', async ({ page }) => {
+    const editor = page.locator('.ProseMirror').first()
+    const paragraph = editor.locator('p').first()
+    await paragraph.click()
+    await editor.press('End')
+    await editor.pressSequentially('Project owner')
+
+    await page.getByRole('tab', { name: 'Layout' }).click()
+    const toolbar = page.locator('.editor-toolbar')
+    const increaseIndent = toolbar.getByRole('button', { name: 'Increase Indent' })
+    await increaseIndent.click()
+    await increaseIndent.click()
+    await increaseIndent.click()
+    await expect(paragraph).toHaveAttribute('data-left-indent', '120')
+
+    await toolbar.getByRole('button', { name: 'Checklist style' }).click()
+    await page.getByRole('dialog', { name: 'Checklist styles' }).getByRole('button', { name: 'Circle' }).click()
+    await expect(editor.locator('li[data-checkbox-style]').first()).toHaveAttribute('data-checkbox-style', 'circle')
+
+    const ruler = page.locator('.qn-document-ruler')
+    await expect(ruler).toBeVisible()
+    const track = ruler.locator('div').nth(1)
+    await track.click({ position: { x: 210, y: 18 } })
+    await expect(ruler.getByRole('button', { name: /Tab stop at 210 pixels/ })).toBeVisible()
+
+    await paragraph.click()
+    await editor.press('End')
+    await editor.press('Tab')
+    await expect(editor.locator('[data-type="tabStop"]')).toHaveCount(1)
   })
 })

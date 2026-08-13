@@ -36,9 +36,9 @@ export const ShapeExtension = Node.create({
       height: numberAttribute('data-height', 112),
       rotation: numberAttribute('data-rotation', 0),
       wrap: {
-        default: 'inline',
-        parseHTML: (element) => element.getAttribute('data-wrap') || 'inline',
-        renderHTML: (attributes) => ({ 'data-wrap': attributes.wrap || 'inline' }),
+        default: 'absolute',
+        parseHTML: (element) => element.getAttribute('data-wrap') || 'absolute',
+        renderHTML: (attributes) => ({ 'data-wrap': attributes.wrap || 'absolute' }),
       },
       x: numberAttribute('data-x', 0),
       y: numberAttribute('data-y', 0),
@@ -76,7 +76,7 @@ export const ShapeExtension = Node.create({
     const scaleX = HTMLAttributes['data-flip-h'] === 'true' ? -1 : 1
     const scaleY = HTMLAttributes['data-flip-v'] === 'true' ? -1 : 1
     const align = HTMLAttributes['data-align'] || 'center'
-    const wrap = HTMLAttributes['data-wrap'] || 'inline'
+    const wrap = HTMLAttributes['data-wrap'] || 'absolute'
     const x = HTMLAttributes['data-x'] ?? 0
     const y = HTMLAttributes['data-y'] ?? 0
     const margin = align === 'left' ? '12px auto 12px 0' : align === 'right' ? '12px 0 12px auto' : '12px auto'
@@ -84,8 +84,8 @@ export const ShapeExtension = Node.create({
       ? 'float:left;margin:4px 16px 12px 0'
       : wrap === 'right'
         ? 'float:right;margin:4px 0 12px 16px'
-        : wrap === 'free'
-          ? `position:relative;left:${x}px;top:${y}px;z-index:2;margin:${margin};margin-bottom:${Math.max(18, Number(y) + 18)}px`
+        : wrap === 'absolute' || wrap === 'free'
+          ? `position:absolute;left:${x}px;top:${y}px;z-index:2;margin:0`
           : `margin:${margin}`
 
     return [
@@ -133,7 +133,7 @@ export const ShapeExtension = Node.create({
         ({ commands }) =>
           commands.insertContent({
             type: this.name,
-            attrs: { shapeType: 'rounded', width: 240, height: 112, wrap: 'inline', x: 0, y: 0, ...attrs },
+            attrs: { shapeType: 'rounded', width: 240, height: 112, wrap: 'absolute', x: 0, y: 0, ...attrs },
             content: [{ type: 'text', text: attrs.label || 'Add text' }],
           }),
       updateShape:

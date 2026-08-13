@@ -32,9 +32,9 @@ export const TextBoxExtension = Node.create({
   addAttributes() {
     return {
       wrap: {
-        default: 'inline',
-        parseHTML: (el) => el.getAttribute('data-wrap') || 'inline',
-        renderHTML: (attrs) => ({ 'data-wrap': attrs.wrap || 'inline' }),
+        default: 'absolute',
+        parseHTML: (el) => el.getAttribute('data-wrap') || 'absolute',
+        renderHTML: (attrs) => ({ 'data-wrap': attrs.wrap || 'absolute' }),
       },
       x: {
         default: 0,
@@ -66,10 +66,20 @@ export const TextBoxExtension = Node.create({
         parseHTML: (el) => el.getAttribute('data-border') || 'solid',
         renderHTML: (attrs) => ({ 'data-border': attrs.borderStyle || 'solid' }),
       },
+      borderColor: {
+        default: '#64748b',
+        parseHTML: (el) => el.getAttribute('data-border-color') || '#64748b',
+        renderHTML: (attrs) => ({ 'data-border-color': attrs.borderColor || '#64748b' }),
+      },
+      borderWidth: {
+        default: 1,
+        parseHTML: (el) => num(el.getAttribute('data-border-width'), 1),
+        renderHTML: (attrs) => ({ 'data-border-width': attrs.borderWidth ?? 1 }),
+      },
       background: {
-        default: 'subtle',
-        parseHTML: (el) => el.getAttribute('data-bg') || 'subtle',
-        renderHTML: (attrs) => ({ 'data-bg': attrs.background || 'subtle' }),
+        default: '#ffffff',
+        parseHTML: (el) => el.getAttribute('data-bg') || '#ffffff',
+        renderHTML: (attrs) => ({ 'data-bg': attrs.background || '#ffffff' }),
       },
     }
   },
@@ -81,7 +91,7 @@ export const TextBoxExtension = Node.create({
   renderHTML({ HTMLAttributes }) {
     // Inline styles are emitted so exported HTML and the read-only
     // previews keep the geometry without the editor running.
-    const wrap = HTMLAttributes['data-wrap'] || 'inline'
+    const wrap = HTMLAttributes['data-wrap'] || 'absolute'
     const width = HTMLAttributes['data-width'] ?? 320
     const height = HTMLAttributes['data-height']
     const x = HTMLAttributes['data-x'] ?? 0
@@ -91,6 +101,8 @@ export const TextBoxExtension = Node.create({
       `width:${width}px`,
       height ? `height:${height}px` : null,
       `text-align:${HTMLAttributes['data-text-align'] || 'left'}`,
+      `background:${HTMLAttributes['data-bg'] === 'none' ? 'transparent' : HTMLAttributes['data-bg'] || '#ffffff'}`,
+      `border:${HTMLAttributes['data-border'] === 'none' ? '0' : `${HTMLAttributes['data-border-width'] || 1}px ${HTMLAttributes['data-border'] || 'solid'} ${HTMLAttributes['data-border-color'] || '#64748b'}`}`,
       wrap === 'absolute' ? `position:absolute;left:${x}px;top:${y}px` : null,
       wrap === 'left' ? 'float:left;margin:4px 16px 8px 0' : null,
       wrap === 'right' ? 'float:right;margin:4px 0 8px 16px' : null,
@@ -116,7 +128,7 @@ export const TextBoxExtension = Node.create({
         ({ commands }) =>
           commands.insertContent({
             type: this.name,
-            attrs: { wrap: 'inline', width: 320, ...attrs },
+            attrs: { wrap: 'absolute', width: 320, height: 140, background: '#ffffff', ...attrs },
             content: [{ type: 'paragraph' }],
           }),
 

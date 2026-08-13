@@ -25,16 +25,20 @@ The resulting product is materially calmer and more credible without being gray 
 - Kanban was already implemented as the Project Board workspace; the sidebar
   now exposes it directly as **Workspaces** and the starter/help copy
   uses the same name.
-- The rich-text editor now defaults to a calm, single-line core toolbar. Its
-  capacity is measured from the editor pane: additional groups are promoted as
-  room becomes available, and **More** contains only groups that do not fit.
-  Typography, paragraph, tools & automation, and data & presets remain visibly
-  grouped instead of wrapping into unexplained loose controls.
-- Notes can contain twelve vector shapes across basic, arrow and callout
-  families. A visual gallery is used at insertion and when changing a shape.
-  Shape HTML persists editable text, vector geometry, exact dimensions, free
-  drag positioning, inline/left/right wrapping, arrow-key nudging, rotation,
-  15-degree snapping, 90-degree commands, flips, alignment and colour.
+- The rich-text editor now uses a stable five-tab ribbon. Home, Insert, Format,
+  Layout and Tools do not change identity at arbitrary width breakpoints, and
+  every command belongs to one visibly named group. A narrow active tab scrolls
+  as one row; every active tab fits the desktop editor without an overflow menu.
+- Notes can contain free-positioned text boxes and twelve vector shapes across
+  basic, arrow and callout families. Both use drag-to-create sizing, direct
+  movement, eight resize handles, keyboard nudging, exact geometry, page-edge
+  clamping and durable HTML. Text boxes add background and border controls;
+  shapes add editable text, rotation, 15-degree snapping, 90-degree commands,
+  flips, wrapping, alignment and colour.
+- Paragraph indentation is repeatable rather than a one-shot margin. The
+  interactive ruler persists first-line, left and right indents plus draggable
+  tab stops; Tab inserts a durable advance to the next stop. Nested checklists
+  support square, rounded and circular checkbox treatments.
 - Fields, substantial cards, popovers and application windows now resolve to
   one 12 px product radius. Settings, Archive, Trash and legacy dialogs share
   the same shell geometry, elevation and surface hierarchy. Standard and
@@ -52,8 +56,10 @@ The implementation was checked against primary design-system guidance rather tha
 - [Atlassian design tokens](https://atlassian.design/foundations/tokens/design-tokens/) recommends selecting tokens by semantic meaning. New application, panel, brand-tint, state, border, motion, and elevation decisions flow through semantic tokens.
 - [Atlassian drag-and-drop guidance](https://atlassian.design/components/pragmatic-drag-and-drop/design-guidelines) calls for clear drag affordances and alternative actions. Kanban tasks now have a dedicated handle plus directly focusable previous/next status actions and a live announcement.
 - [Fluent 2 card guidance](https://fluent2.microsoft.design/components/web/react/core/card/usage) treats a card as one predictable object with structured content and actions. Idea and note cards now follow that model.
-- [Fluent 2 toolbar guidance](https://fluent2.microsoft.design/components/web/react/core/toolbar/usage) emphasizes logical action groups, accessible names, and overflow discipline. The editor retains logical groups while the default presentation now prioritizes daily commands.
-- [Word simplified ribbon guidance](https://support.microsoft.com/en-US/Word/using-the-simplified-ribbon-in-word-for-the-web) validates a one-line default with an explicit route to less-common commands.
+- [Fluent 2 toolbar guidance](https://fluent2.microsoft.design/components/web/react/core/toolbar/usage) emphasizes logical action groups, accessible names, and overflow discipline. The editor now exposes those groups through stable task-based tabs.
+- [Word ribbon customization guidance](https://support.microsoft.com/en-us/office/customize-the-ribbon-in-word-7dc27f62-70ab-42e8-a527-4603018013af) validates predictable tabs and named command groups.
+- [Word text-box guidance](https://support.microsoft.com/en-us/office/add-copy-or-remove-a-text-box-in-word-57e099ac-0525-46ae-8109-8a1d844f5834) documents drag-to-create sizing and border-based movement; both editor object types now share that interaction contract.
+- [Word tab-stop guidance](https://support.microsoft.com/en-us/office/set-or-change-the-tab-stops-2fcc4b98-a330-4f14-9ca7-6f8c6421e29e) validates ruler-based tab and indent controls.
 - [Word object guidance](https://support.microsoft.com/en-us/office/rotate-or-flip-a-text-box-shape-wordart-or-picture-in-word-8e55a7a0-274b-455b-a8aa-4aacd437c527) documents direct rotation, 15-degree snapping, exact angles and flips; the note-native shape subset follows those interactions.
 - [Carbon empty-state guidance](https://carbondesignsystem.com/patterns/empty-states-pattern/) recommends stating what is missing and providing the relevant next action. Bare blank regions in tasks, meetings, projects, goals, shopping, grids, and ideas now use a shared explanatory empty state.
 - [Carbon tile guidance](https://carbondesignsystem.com/components/tile/usage/) supports visible containment when several related values/actions form one object. This validated restoring rounded note cards while keeping tool rails and tabs flatter.
@@ -67,7 +73,7 @@ The audit did not equate “read every file” with changing every file. Every s
 | --- | --- | --- |
 | Shell and navigation | `App`, `Sidebar`, auth/recovery, breakpoints, themes | Edge-to-edge signed-in shell retained; expressive framed presentation remains only in authentication/marketing contexts. |
 | Note navigation | `NotesList`, `NoteCard`, `NotesGrid`, sort/filter/context menu | Rounded list cards restored, selected edge made precise, grid elevation restrained, empty grid standardized. |
-| Document work | `NoteEditor`, `RichTextEditor`, editor extensions, toolbars/popovers | Content remains primary; the document header is neutral, daily tools stay visible, hidden groups expand on demand, and movable wrapped vector shapes persist in note HTML. |
+| Document work | `NoteEditor`, `RichTextEditor`, editor extensions, toolbars/popovers | Content remains primary; the document header is neutral, stable tabs expose complete groups, ruler geometry persists, and drag-created text boxes/vector shapes remain freely editable in note HTML. |
 | Structured workspaces | task, project, meeting, journal, idea, shopping, weekly editors | Every default view and secondary tab rendered and inspected; shared metrics, panels, cards, empty states, responsive fixes, and interaction parity applied. |
 | Shared UI | button, field, menu, modal, empty state, badge, avatar, spinner | Reused instead of adding more one-off controls; semantic states and control geometry retained. |
 | Secondary workflows | settings, global search, archive/trash, sharing, import/export, type picker, dialogs | Rendered or regression-covered; expressive search/settings hierarchy preserved; transition and selection behavior normalized where touched. |

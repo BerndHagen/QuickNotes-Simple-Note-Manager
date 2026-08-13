@@ -1,70 +1,124 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { NodeViewContent, NodeViewWrapper } from '@tiptap/react'
 import {
   AlignCenter,
   AlignJustify,
   AlignLeft,
   AlignRight,
+  ChevronDown,
+  Frame,
   Move,
-  Square,
-  SquareDashedBottom,
   PaintBucket,
   Trash2,
   WrapText,
 } from 'lucide-react'
-
-const WRAP_MODES = [
-  { value: 'inline', label: 'In line with text', icon: WrapText },
-  { value: 'left', label: 'Wrap right of box', icon: AlignLeft },
-  { value: 'right', label: 'Wrap left of box', icon: AlignRight },
-  { value: 'absolute', label: 'Free position', icon: Move },
-]
-
-const ALIGNMENTS = [
-  { value: 'left', label: 'Align left', icon: AlignLeft },
-  { value: 'center', label: 'Align centre', icon: AlignCenter },
-  { value: 'right', label: 'Align right', icon: AlignRight },
-  { value: 'justify', label: 'Justify', icon: AlignJustify },
-]
+import { useAnchoredPosition } from './ui'
 
 const MIN_WIDTH = 120
 const MIN_HEIGHT = 60
+const MAX_DIMENSION = 1600
 
-/**
- * Interactive text box.
- *
- * Supports what a word processor's text box does: drag to move (in free
- * position mode), resize from the corner, choose how surrounding text
- * wraps around it, and align the text inside it.
- *
- * Drag and resize are pointer-event based so they work with mouse, pen
- * and touch, and both commit a single `updateAttributes` on release
- * rather than one per frame — otherwise every pixel of movement would
- * push a separate entry onto the undo stack and trigger an autosave.
- */
+const FILLS = ['transparent', '#ffffff', '#ecfdf5', '#eff6ff', '#fff7ed', '#fdf2f8', '#f3f4f6', '#fef9c3']
+const BORDERS = ['#0f172a', '#64748b', '#059669', '#2563eb', '#d97706', '#dc2626']
+const LAYOUTS = [
+  ['absolute', 'Free position', 'Place the box anywhere on the page.'],
+  ['inline', 'In line', 'Keep the box between paragraphs.'],
+  ['left', 'Wrap left', 'Flow text down the right side.'],
+  ['right', 'Wrap right', 'Flow text down the left side.'],
+]
+const HANDLES = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w']
+
+const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value))
+
+function ControlButton({ buttonRef, icon: Icon, label, active, onClick, tone, children }) {
+  return (
+    <button
+      ref={buttonRef}
+      type="button"
+      aria-label={label}
+      aria-pressed={active === undefined ? undefined : active}
+      title={label}
+      onMouseDown={(event) => event.preventDefault()}
+      onClick={onClick}
+      className={`flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-control px-2 text-ui-sm font-medium transition-colors ${
+        tone === 'danger'
+          ? 'text-danger-text hover:bg-danger-soft'
+          : active
+            ? 'bg-accent-soft text-accent-text'
+            : 'text-content-muted hover:bg-surface-hover hover:text-content'
+      }`}
+    >
+      <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+      {children}
+    </button>
+  )
+}
+
+function Panel({ open, anchorRef, onClose, label, children, className = '' }) {
+  const { floatingRef, style } = useAnchoredPosition({ anchorRef, open, placement: 'bottom-start', offset: 8 })
+  useEffect(() => {
+    if (!open) return undefined
+    const dismiss = (event) => {
+      if (floatingRef.current?.contains(event.target) || anchorRef.current?.contains(event.target)) return
+      onClose()
+    }
+    const escape = (event) => event.key === 'Escape' && onClose()
+    document.addEventListener('pointerdown', dismiss)
+    document.addEventListener('keydown', escape)
+    return () => {
+      document.removeEventListener('pointerdown', dismiss)
+      document.removeEventListener('keydown', escape)
+    }
+  }, [anchorRef, floatingRef, onClose, open])
+  if (!open) return null
+  return createPortal(
+    <div
+      ref={floatingRef}
+      role="dialog"
+      aria-label={label}
+      contentEditable={false}
+      style={style}
+      className={`z-[99999] max-h-[min(28rem,calc(100dvh-1rem))] overflow-y-auto rounded-card border border-subtle bg-surface-raised p-3 shadow-lg ${className}`}
+    >
+      {children}
+    </div>,
+    document.body
+  )
+}
+
 export default function TextBoxView({ node, updateAttributes, deleteNode, selected, editor, getPos }) {
-  const { wrap, x, y, width, height, textAlign, borderStyle, background } = node.attrs
+  const {
+    wrap,
+    x,
+    y,
+    width,
+    height,
+    textAlign,
+    borderStyle,
+    borderColor,
+    borderWidth,
+    background,
+  } = node.attrs
   const wrapperRef = useRef(null)
-  const [drag, setDrag] = useState(null)
-  const [resize, setResize] = useState(null)
-
+  const toolbarRef = useRef(null)
+  const layoutRef = useRef(null)
+  const fillRef = useRef(null)
+  const borderRef = useRef(null)
+  const gestureRef = useRef(null)
+  const [active, setActive] = useState(!!selected)
+  const [gesture, setGesture] = useState(null)
+  const [panel, setPanel] = useState(null)
   const editable = editor?.isEditable !== false
   const isAbsolute = wrap === 'absolute'
 
-  /**
-   * A text box holds block content, so clicking into it places a text
-   * cursor rather than creating a NodeSelection — `selected` stays false
-   * and the controls would never appear. Treat the box as active
-   * whenever the selection sits inside this node's range.
-   */
-  const [active, setActive] = useState(false)
   useEffect(() => {
     if (!editor) return undefined
     const sync = () => {
       const pos = typeof getPos === 'function' ? getPos() : null
-      if (pos === null || pos === undefined || Number.isNaN(pos)) return setActive(!!selected)
+      if (!Number.isFinite(pos)) return setActive(!!selected)
       const { from, to } = editor.state.selection
-      return setActive(!!selected || (from >= pos && to <= pos + node.nodeSize))
+      setActive(!!selected || (from >= pos && to <= pos + node.nodeSize))
     }
     sync()
     editor.on('selectionUpdate', sync)
@@ -73,147 +127,162 @@ export default function TextBoxView({ node, updateAttributes, deleteNode, select
       editor.off('selectionUpdate', sync)
       editor.off('transaction', sync)
     }
-  }, [editor, getPos, node, selected])
-
-  // Live geometry while a gesture is in flight; committed on release.
-  const liveX = drag ? drag.currentX : x
-  const liveY = drag ? drag.currentY : y
-  const liveWidth = resize ? resize.currentWidth : width
-  const liveHeight = resize ? resize.currentHeight : height
-
-  const onDragPointerDown = useCallback(
-    (e) => {
-      if (!editable || !isAbsolute) return
-      e.preventDefault()
-      e.stopPropagation()
-      e.currentTarget.setPointerCapture?.(e.pointerId)
-      setDrag({
-        pointerId: e.pointerId,
-        startX: e.clientX,
-        startY: e.clientY,
-        originX: x || 0,
-        originY: y || 0,
-        currentX: x || 0,
-        currentY: y || 0,
-      })
-    },
-    [editable, isAbsolute, x, y]
-  )
-
-  const onResizePointerDown = useCallback(
-    (e) => {
-      if (!editable) return
-      e.preventDefault()
-      e.stopPropagation()
-      e.currentTarget.setPointerCapture?.(e.pointerId)
-      const rect = wrapperRef.current?.getBoundingClientRect()
-      setResize({
-        pointerId: e.pointerId,
-        startX: e.clientX,
-        startY: e.clientY,
-        originWidth: rect?.width ?? width ?? MIN_WIDTH,
-        originHeight: rect?.height ?? height ?? MIN_HEIGHT,
-        currentWidth: rect?.width ?? width ?? MIN_WIDTH,
-        currentHeight: rect?.height ?? height ?? MIN_HEIGHT,
-      })
-    },
-    [editable, width, height]
-  )
+  }, [editor, getPos, node.nodeSize, selected])
 
   useEffect(() => {
-    if (!drag && !resize) return
+    if (!active) setPanel(null)
+  }, [active])
 
-    const onMove = (e) => {
-      if (drag) {
-        setDrag((d) =>
-          d
-            ? { ...d, currentX: d.originX + (e.clientX - d.startX), currentY: d.originY + (e.clientY - d.startY) }
-            : d
-        )
-      }
-      if (resize) {
-        setResize((r) =>
-          r
-            ? {
-                ...r,
-                currentWidth: Math.max(MIN_WIDTH, r.originWidth + (e.clientX - r.startX)),
-                currentHeight: Math.max(MIN_HEIGHT, r.originHeight + (e.clientY - r.startY)),
-              }
-            : r
-        )
-      }
+  const live = gesture?.live || { x, y, width, height: height || 140 }
+
+  const startMove = useCallback((event) => {
+    if (!editable || !isAbsolute) return
+    if (event.target.closest('.qn-text-box__content, button, input, select')) return
+    event.preventDefault()
+    event.stopPropagation()
+    const editorRect = wrapperRef.current?.closest('.ProseMirror')?.getBoundingClientRect()
+    const nextGesture = {
+      type: 'move',
+      startX: event.clientX,
+      startY: event.clientY,
+      origin: { x, y, width, height: height || 140 },
+      live: { x, y, width, height: height || 140 },
+      editorWidth: editorRect?.width || MAX_DIMENSION,
     }
+    gestureRef.current = nextGesture
+    setGesture(nextGesture)
+  }, [editable, height, isAbsolute, width, x, y])
 
-    const onUp = () => {
-      if (drag) {
-        updateAttributes({ x: Math.round(drag.currentX), y: Math.round(drag.currentY) })
-        setDrag(null)
+  const startResize = useCallback((event, direction) => {
+    if (!editable) return
+    event.preventDefault()
+    event.stopPropagation()
+    const editorRect = wrapperRef.current?.closest('.ProseMirror')?.getBoundingClientRect()
+    const nextGesture = {
+      type: 'resize',
+      direction,
+      startX: event.clientX,
+      startY: event.clientY,
+      origin: { x, y, width, height: height || 140 },
+      live: { x, y, width, height: height || 140 },
+      editorWidth: editorRect?.width || MAX_DIMENSION,
+    }
+    gestureRef.current = nextGesture
+    setGesture(nextGesture)
+  }, [editable, height, width, x, y])
+
+  const hasActiveGesture = Boolean(gesture)
+
+  useEffect(() => {
+    if (!hasActiveGesture) return undefined
+    const move = (event) => {
+      const current = gestureRef.current
+      if (!current) return
+      const dx = event.clientX - current.startX
+      const dy = event.clientY - current.startY
+      const origin = current.origin
+      if (current.type === 'move') {
+        const next = {
+          ...current,
+          live: {
+            ...origin,
+            x: clamp(origin.x + dx, 0, Math.max(0, current.editorWidth - origin.width)),
+            y: Math.max(0, origin.y + dy),
+          },
+        }
+        gestureRef.current = next
+        setGesture(next)
+        return
       }
-      if (resize) {
+
+      const west = current.direction.includes('w')
+      const east = current.direction.includes('e')
+      const north = current.direction.includes('n')
+      const south = current.direction.includes('s')
+      const maximumWidth = isAbsolute
+        ? east
+          ? Math.max(MIN_WIDTH, current.editorWidth - origin.x - 8)
+          : west
+            ? Math.max(MIN_WIDTH, origin.x + origin.width - 8)
+            : MAX_DIMENSION
+        : MAX_DIMENSION
+      const nextWidth = clamp(origin.width + (east ? dx : west ? -dx : 0), MIN_WIDTH, maximumWidth)
+      const nextHeight = clamp(origin.height + (south ? dy : north ? -dy : 0), MIN_HEIGHT, MAX_DIMENSION)
+      const next = {
+        ...current,
+        live: {
+          x: west ? origin.x + origin.width - nextWidth : origin.x,
+          y: north ? Math.max(0, origin.y + origin.height - nextHeight) : origin.y,
+          width: nextWidth,
+          height: nextHeight,
+        },
+      }
+      gestureRef.current = next
+      setGesture(next)
+    }
+    const finish = () => {
+      const current = gestureRef.current
+      gestureRef.current = null
+      if (current) {
         updateAttributes({
-          width: Math.round(resize.currentWidth),
-          height: Math.round(resize.currentHeight),
+          ...(isAbsolute ? { x: Math.round(current.live.x), y: Math.round(current.live.y) } : {}),
+          width: Math.round(current.live.width),
+          height: Math.round(current.live.height),
         })
-        setResize(null)
       }
+      setGesture(null)
     }
-
-    window.addEventListener('pointermove', onMove)
-    window.addEventListener('pointerup', onUp)
-    window.addEventListener('pointercancel', onUp)
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', finish, { once: true })
+    window.addEventListener('pointercancel', finish, { once: true })
     return () => {
-      window.removeEventListener('pointermove', onMove)
-      window.removeEventListener('pointerup', onUp)
-      window.removeEventListener('pointercancel', onUp)
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', finish)
+      window.removeEventListener('pointercancel', finish)
     }
-  }, [drag, resize, updateAttributes])
+  }, [hasActiveGesture, isAbsolute, updateAttributes])
 
-  /**
-   * The controls sit above the box by default, but a box near the top of
-   * the document would put them behind the editor toolbar, which then
-   * swallows the clicks. Flip below when there is not enough room.
-   */
-  const [controlsBelow, setControlsBelow] = useState(false)
-  useEffect(() => {
-    if (!active) return
-    const el = wrapperRef.current
-    if (!el) return
-    const boxTop = el.getBoundingClientRect().top
-    const toolbar = el.closest('.editor-paper')?.querySelector('.editor-toolbar')
-    const limit = toolbar ? toolbar.getBoundingClientRect().bottom : 0
-    setControlsBelow(boxTop - limit < 44)
-  }, [active, liveY, wrap])
+  const { floatingRef: anchoredToolbarRef, style: toolbarStyle } = useAnchoredPosition({
+    anchorRef: wrapperRef,
+    open: editable && active,
+    placement: 'top-start',
+    offset: 32,
+  })
+  const setToolbarRefs = (element) => {
+    toolbarRef.current = element
+    anchoredToolbarRef.current = element
+  }
 
   const wrapperStyle = {
-    width: liveWidth ? `${liveWidth}px` : undefined,
-    height: liveHeight ? `${liveHeight}px` : undefined,
+    width: `${live.width}px`,
+    height: `${live.height}px`,
     textAlign,
-    ...(isAbsolute
-      ? { position: 'absolute', left: `${liveX}px`, top: `${liveY}px`, zIndex: active ? 20 : 10 }
-      : {}),
+    background: background === 'none' || background === 'transparent' ? 'transparent' : background === 'subtle' ? 'var(--qn-surface-sunken)' : background,
+    borderStyle: borderStyle === 'none' ? 'solid' : borderStyle,
+    borderColor: borderStyle === 'none' ? 'transparent' : borderColor,
+    borderWidth: `${borderStyle === 'none' ? 0 : borderWidth}px`,
+    ...(isAbsolute ? { position: 'absolute', left: `${live.x}px`, top: `${live.y}px`, zIndex: active ? 20 : 10 } : {}),
     ...(wrap === 'left' ? { float: 'left', margin: '4px 16px 8px 0' } : {}),
     ...(wrap === 'right' ? { float: 'right', margin: '4px 0 8px 16px' } : {}),
   }
 
-  const ToolbarButton = ({ icon: Icon, label, active, onClick, tone }) => (
-    <button
-      type="button"
-      title={label}
-      aria-label={label}
-      aria-pressed={active || undefined}
-      onMouseDown={(e) => e.preventDefault()}
-      onClick={onClick}
-      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded transition-colors duration-fast ${
- tone === 'danger'
- ? 'text-danger-text hover:bg-danger-soft'
-          : active
-            ? 'bg-accent-soft text-accent-text'
-            : 'text-content-muted hover:bg-surface-hover hover:text-content'
-      }`}
-    >
-      <Icon className="h-3.5 w-3.5" aria-hidden="true" />
-    </button>
-  )
+  const updateExactGeometry = (attribute, rawValue) => {
+    const value = Number(rawValue) || 0
+    const editorWidth = wrapperRef.current?.closest('.ProseMirror')?.getBoundingClientRect().width || MAX_DIMENSION
+    if (attribute === 'x') {
+      updateAttributes({ x: clamp(value, 0, Math.max(0, editorWidth - width - 8)) })
+      return
+    }
+    if (attribute === 'y') {
+      updateAttributes({ y: Math.max(0, value) })
+      return
+    }
+    if (attribute === 'width') {
+      updateAttributes({ width: clamp(value, MIN_WIDTH, Math.max(MIN_WIDTH, editorWidth - x - 8)) })
+      return
+    }
+    updateAttributes({ height: clamp(value, MIN_HEIGHT, MAX_DIMENSION) })
+  }
 
   return (
     <NodeViewWrapper
@@ -222,81 +291,180 @@ export default function TextBoxView({ node, updateAttributes, deleteNode, select
       data-wrap={wrap}
       data-border={borderStyle}
       data-bg={background}
-      data-x={Math.round(liveX || 0)}
-      data-y={Math.round(liveY || 0)}
-      data-width={Math.round(liveWidth || 0)}
-      data-height={liveHeight ? Math.round(liveHeight) : undefined}
+      data-x={Math.round(live.x || 0)}
+      data-y={Math.round(live.y || 0)}
+      data-width={Math.round(live.width)}
+      data-height={Math.round(live.height)}
       data-text-align={textAlign}
-      className={`qn-text-box group/textbox relative ${active ? 'qn-text-box--selected' : ''} ${
- drag ? 'qn-text-box--dragging' : ''
- }`}
+      className={`qn-text-box group/textbox ${active ? 'qn-text-box--selected' : ''} ${gesture?.type === 'move' ? 'qn-text-box--dragging' : ''}`}
       style={wrapperStyle}
+      onPointerDown={startMove}
     >
-      {editable && active && (
+      {editable && active && createPortal(
         <div
+          ref={setToolbarRefs}
+          role="toolbar"
+          aria-label="Text box formatting"
           contentEditable={false}
-          className={`qn-text-box-toolbar absolute left-0 z-30 flex max-w-[calc(100vw-2rem)] items-center gap-0.5 overflow-x-auto overscroll-x-contain rounded-control border border-subtle bg-surface-raised p-1 shadow-md ${
- controlsBelow ? 'top-full mt-2' : '-top-9'
- }`}
+          style={toolbarStyle}
+          className="fixed z-[99998] flex max-w-[calc(100vw-1rem)] items-center gap-0.5 overflow-x-auto rounded-card border border-subtle bg-surface-raised p-1 shadow-lg"
         >
-          {WRAP_MODES.map((mode) => (
-            <ToolbarButton
-              key={mode.value}
-              icon={mode.icon}
-              label={mode.label}
-              active={wrap === mode.value}
-              onClick={() => updateAttributes({ wrap: mode.value })}
+          <ControlButton buttonRef={layoutRef} icon={WrapText} label="Text box layout" active={panel === 'layout'} onClick={() => setPanel((value) => value === 'layout' ? null : 'layout')}>
+            Position <ChevronDown className="h-3 w-3" />
+          </ControlButton>
+          <ControlButton buttonRef={fillRef} icon={PaintBucket} label="Text box fill" active={panel === 'fill'} onClick={() => setPanel((value) => value === 'fill' ? null : 'fill')}>
+            Fill <ChevronDown className="h-3 w-3" />
+          </ControlButton>
+          <ControlButton buttonRef={borderRef} icon={Frame} label="Text box border" active={panel === 'border'} onClick={() => setPanel((value) => value === 'border' ? null : 'border')}>
+            Border <ChevronDown className="h-3 w-3" />
+          </ControlButton>
+          <span className="mx-0.5 h-5 w-px bg-[var(--qn-border-subtle)]" />
+          {[
+            ['left', AlignLeft, 'Align text left'],
+            ['center', AlignCenter, 'Align text centre'],
+            ['right', AlignRight, 'Align text right'],
+            ['justify', AlignJustify, 'Justify text'],
+          ].map(([value, Icon, label]) => (
+            <ControlButton key={value} icon={Icon} label={label} active={textAlign === value} onClick={() => updateAttributes({ textAlign: value })} />
+          ))}
+          <span className="mx-0.5 h-5 w-px bg-[var(--qn-border-subtle)]" />
+          <ControlButton icon={Trash2} label="Delete text box" tone="danger" onClick={deleteNode} />
+        </div>,
+        document.body
+      )}
+
+      <Panel open={panel === 'layout'} anchorRef={layoutRef} onClose={() => setPanel(null)} label="Text box position" className="w-[min(20rem,calc(100vw-1rem))]">
+        <p className="mb-2 text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">Position and wrapping</p>
+        {LAYOUTS.map(([value, label, description]) => (
+          <button
+            key={value}
+            type="button"
+            aria-pressed={wrap === value}
+            onClick={() => {
+              if (value === 'absolute' && !isAbsolute) {
+                const objectRect = wrapperRef.current?.getBoundingClientRect()
+                const editorRect = wrapperRef.current?.closest('.ProseMirror')?.getBoundingClientRect()
+                updateAttributes({
+                  wrap: value,
+                  x: Math.max(0, (objectRect?.left || 0) - (editorRect?.left || 0)),
+                  y: Math.max(0, (objectRect?.top || 0) - (editorRect?.top || 0)),
+                })
+              } else {
+                updateAttributes({ wrap: value })
+              }
+              setPanel(null)
+            }}
+            className={`mb-1 flex w-full items-start gap-3 rounded-control px-3 py-2.5 text-left last:mb-0 ${wrap === value ? 'bg-accent-soft text-accent-text' : 'hover:bg-surface-hover'}`}
+          >
+            <span className={`mt-1 h-3 w-3 shrink-0 rounded-full border ${wrap === value ? 'border-accent bg-accent' : 'border-strong'}`} />
+            <span><span className="block text-ui-md font-semibold">{label}</span><span className="mt-0.5 block text-ui-sm text-content-muted">{description}</span></span>
+          </button>
+        ))}
+        {isAbsolute && (
+          <div className="mt-3 grid grid-cols-2 gap-2 border-t border-subtle pt-3">
+            {[
+              ['X position', 'x', x],
+              ['Y position', 'y', y],
+              ['Width', 'width', width],
+              ['Height', 'height', height || 140],
+            ].map(([label, attribute, value]) => (
+              <label key={attribute} className="text-ui-sm font-medium text-content-muted">{label}
+                <input
+                  type="number"
+                  min="0"
+                  value={Math.round(value || 0)}
+                  onChange={(event) => updateExactGeometry(attribute, event.target.value)}
+                  className="mt-1 h-9 w-full rounded-control border border-subtle bg-surface-raised px-2 text-content outline-none focus:border-accent"
+                />
+              </label>
+            ))}
+          </div>
+        )}
+      </Panel>
+
+      <Panel open={panel === 'fill'} anchorRef={fillRef} onClose={() => setPanel(null)} label="Text box fill" className="w-[min(17rem,calc(100vw-1rem))]">
+        <p className="mb-2 text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">Background fill</p>
+        <div className="grid grid-cols-4 gap-2">
+          {FILLS.map((colour) => (
+            <button
+              key={colour}
+              type="button"
+              aria-label={colour === 'transparent' ? 'Transparent fill' : `Fill ${colour}`}
+              aria-pressed={background === colour || (colour === 'transparent' && background === 'none')}
+              onClick={() => updateAttributes({ background: colour })}
+              className="qn-text-box-swatch h-10 rounded-control border border-subtle shadow-xs"
+              style={{ background: colour === 'transparent' ? 'linear-gradient(135deg,#fff 45%,#dc2626 46%,#dc2626 54%,#fff 55%)' : colour }}
             />
           ))}
-          <span className="mx-0.5 h-4 w-px bg-[var(--qn-border-subtle)]" />
-          {ALIGNMENTS.map((a) => (
-            <ToolbarButton
-              key={a.value}
-              icon={a.icon}
-              label={a.label}
-              active={textAlign === a.value}
-              onClick={() => updateAttributes({ textAlign: a.value })}
-            />
-          ))}
-          <span className="mx-0.5 h-4 w-px bg-[var(--qn-border-subtle)]" />
-          <ToolbarButton
-            icon={borderStyle === 'none' ? SquareDashedBottom : Square}
-            label={borderStyle === 'none' ? 'Show border' : 'Hide border'}
-            onClick={() => updateAttributes({ borderStyle: borderStyle === 'none' ? 'solid' : 'none' })}
-          />
-          <ToolbarButton
-            icon={PaintBucket}
-            label={background === 'none' ? 'Add background' : 'Clear background'}
-            active={background !== 'none'}
-            onClick={() => updateAttributes({ background: background === 'none' ? 'subtle' : 'none' })}
-          />
-          <span className="mx-0.5 h-4 w-px bg-[var(--qn-border-subtle)]" />
-          <ToolbarButton icon={Trash2} label="Delete text box" tone="danger" onClick={deleteNode} />
         </div>
-      )}
+        <label className="mt-3 flex items-center justify-between border-t border-subtle pt-3 text-ui-sm font-medium text-content-muted">
+          Custom colour
+          <input type="color" value={background?.startsWith?.('#') ? background : '#ffffff'} onChange={(event) => updateAttributes({ background: event.target.value })} className="h-9 w-12 rounded-control border border-subtle" />
+        </label>
+      </Panel>
 
-      {editable && isAbsolute && (
-        <span
+      <Panel open={panel === 'border'} anchorRef={borderRef} onClose={() => setPanel(null)} label="Text box border" className="w-[min(18rem,calc(100vw-1rem))]">
+        <p className="mb-2 text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">Border style</p>
+        <div className="grid grid-cols-2 gap-2">
+          {['none', 'solid', 'dashed', 'dotted'].map((style) => (
+            <button key={style} type="button" aria-pressed={borderStyle === style} onClick={() => updateAttributes({ borderStyle: style })} className={`rounded-control border px-3 py-2 text-ui-sm font-medium capitalize ${borderStyle === style ? 'border-accent bg-accent-soft text-accent-text' : 'border-subtle hover:bg-surface-hover'}`}>{style}</button>
+          ))}
+        </div>
+        <p className="mb-2 mt-3 text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">Colour and weight</p>
+        <div className="flex flex-wrap gap-2">
+          {BORDERS.map((colour) => (
+            <button key={colour} type="button" aria-label={`Border ${colour}`} aria-pressed={borderColor === colour} onClick={() => updateAttributes({ borderColor: colour })} className="h-8 w-8 rounded-full border-2 border-surface-raised ring-1 ring-[var(--qn-border-strong)]" style={{ background: colour }} />
+          ))}
+          <input type="color" aria-label="Custom border colour" value={borderColor} onChange={(event) => updateAttributes({ borderColor: event.target.value })} className="h-8 w-10 rounded-control border border-subtle" />
+        </div>
+        <label className="mt-3 block text-ui-sm font-medium text-content-muted">Border width
+          <input type="range" min="1" max="6" step="1" value={borderWidth} onChange={(event) => updateAttributes({ borderWidth: Number(event.target.value) })} className="mt-1 w-full accent-[var(--qn-accent)]" />
+        </label>
+      </Panel>
+
+      <NodeViewContent className="qn-text-box__content h-full overflow-auto" />
+
+      {editable && active && HANDLES.map((direction) => (
+        <button
+          key={direction}
+          type="button"
           contentEditable={false}
-          onPointerDown={onDragPointerDown}
-          title="Drag to move"
-          aria-hidden="true"
-          className="absolute -left-2 -top-2 z-20 flex h-6 w-6 cursor-grab items-center justify-center rounded-full border border-subtle bg-surface-raised text-content-muted opacity-0 shadow-sm transition-opacity duration-fast active:cursor-grabbing group-hover/textbox:opacity-100 [.qn-text-box--selected_&]:opacity-100"
-        >
-          <Move className="h-3 w-3" />
-        </span>
-      )}
-
-      <NodeViewContent className="qn-text-box__content" />
-
-      {editable && (
-        <span
-          contentEditable={false}
-          onPointerDown={onResizePointerDown}
-          title="Drag to resize"
-          aria-hidden="true"
-          className="absolute -bottom-1 -right-1 z-20 h-3.5 w-3.5 cursor-nwse-resize rounded-sm border border-strong bg-surface-raised opacity-0 transition-opacity duration-fast group-hover/textbox:opacity-100 [.qn-text-box--selected_&]:opacity-100"
+          aria-label={`Resize text box ${direction}`}
+          onPointerDown={(event) => startResize(event, direction)}
+          className={`qn-object-resize-handle qn-object-resize-handle--${direction}`}
         />
+      ))}
+      {editable && active && isAbsolute && (
+        <button
+          type="button"
+          contentEditable={false}
+          aria-label="Move text box"
+          title="Drag the border to move; arrow keys nudge"
+          onPointerDown={(event) => {
+            event.preventDefault()
+            const editorRect = wrapperRef.current?.closest('.ProseMirror')?.getBoundingClientRect()
+            const nextGesture = { type: 'move', startX: event.clientX, startY: event.clientY, origin: { x, y, width, height: height || 140 }, live: { x, y, width, height: height || 140 }, editorWidth: editorRect?.width || MAX_DIMENSION }
+            gestureRef.current = nextGesture
+            setGesture(nextGesture)
+          }}
+          onKeyDown={(event) => {
+            if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return
+            event.preventDefault()
+            const amount = event.shiftKey ? 10 : 1
+            const editorWidth = wrapperRef.current?.closest('.ProseMirror')?.getBoundingClientRect().width || MAX_DIMENSION
+            updateAttributes({
+              x: clamp(
+                x + (event.key === 'ArrowLeft' ? -amount : event.key === 'ArrowRight' ? amount : 0),
+                0,
+                Math.max(0, editorWidth - width - 8)
+              ),
+              y: Math.max(0, y + (event.key === 'ArrowUp' ? -amount : event.key === 'ArrowDown' ? amount : 0)),
+            })
+          }}
+          className="absolute -left-9 top-1/2 z-30 flex h-7 w-7 -translate-y-1/2 cursor-move items-center justify-center rounded-full border-2 border-accent bg-surface-raised text-accent-text shadow-sm"
+        >
+          <Move className="h-3.5 w-3.5" />
+        </button>
       )}
     </NodeViewWrapper>
   )

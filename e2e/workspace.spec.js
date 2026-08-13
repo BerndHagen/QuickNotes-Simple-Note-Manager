@@ -217,7 +217,7 @@ test.describe('workspace', () => {
     await expect(page.locator('.ProseMirror strong')).toContainText('keyboard bold')
   })
 
-  test('Tab leaves a plain paragraph when no indent command can run', async ({ page }) => {
+  test('Tab inserts a durable advance in a plain paragraph', async ({ page }) => {
     await signIn(page)
     await createNote(page, `Tab navigation ${Date.now()}`)
 
@@ -226,7 +226,16 @@ test.describe('workspace', () => {
     await body.pressSequentially('plain paragraph')
     await page.keyboard.press('Tab')
 
-    await expect(body).not.toBeFocused()
+    await expect(body).toBeFocused()
+    const tabStop = body.locator('[data-type="tabStop"]')
+    await expect(tabStop).toHaveCount(1)
+    const geometry = await tabStop.evaluate((element) => ({
+      width: Number(element.getAttribute('data-width')),
+      stop: Number(element.getAttribute('data-stop')),
+    }))
+    expect(geometry.width).toBeGreaterThanOrEqual(8)
+    expect(geometry.width).toBeLessThanOrEqual(48)
+    expect(geometry.stop % 48).toBe(0)
   })
 
   test('marks a note as a favourite and finds it under Favorites', async ({ page }) => {

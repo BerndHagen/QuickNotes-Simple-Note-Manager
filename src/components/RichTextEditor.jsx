@@ -6,7 +6,6 @@ import Placeholder from '@tiptap/extension-placeholder'
 import Link from '@tiptap/extension-link'
 import Highlight from '@tiptap/extension-highlight'
 import TaskList from '@tiptap/extension-task-list'
-import TaskItem from '@tiptap/extension-task-item'
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
 import TextAlign from '@tiptap/extension-text-align'
 import Underline from '@tiptap/extension-underline'
@@ -22,6 +21,9 @@ import ResizableImageExtension from './ResizableImageExtension'
 import TextBoxExtension from './TextBoxExtension'
 import ShapeExtension from './ShapeExtension'
 import ShapeGeometry, { SHAPE_GROUPS } from './ShapeGeometry'
+import ParagraphLayoutExtension from './ParagraphLayoutExtension'
+import TabStopExtension from './TabStopExtension'
+import StyledTaskItem from './StyledTaskItem'
 import InvisibleCharactersExtension from './InvisibleCharactersExtension'
 import CustomTableCell from './CustomTableCell'
 import CustomTableHeader from './CustomTableHeader'
@@ -78,7 +80,6 @@ import {
   ClipboardPaste,
   MousePointer2,
   Shapes,
-  SlidersHorizontal,
 } from 'lucide-react'
 import { debounce } from '../lib/utils'
 import { formatShortcut } from '../lib/shortcuts'
@@ -195,74 +196,6 @@ const LineHeight = Extension.create({
       },
       unsetLineHeight: () => ({ commands }) => {
         return this.options.types.every(type => commands.resetAttributes(type, 'lineHeight'))
-      },
-    }
-  },
-})
-
-const TextIndent = Extension.create({
-  name: 'textIndent',
-  addOptions() {
-    return {
-      types: ['paragraph'],
-      defaultIndent: '0px',
-      indentSize: '40px',
-    }
-  },
-  addGlobalAttributes() {
-    return [
-      {
-        types: this.options.types,
-        attributes: {
-          textIndent: {
-            default: this.options.defaultIndent,
-            parseHTML: element => element.style.textIndent || this.options.defaultIndent,
-            renderHTML: attributes => {
-              if (!attributes.textIndent || attributes.textIndent === this.options.defaultIndent) {
-                return {}
-              }
-              return {
-                style: `text-indent: ${attributes.textIndent}`,
-              }
-            },
-          },
-        },
-      },
-    ]
-  },
-  addCommands() {
-    return {
-      indent: () => ({ commands, state }) => {
-        const { from, to } = state.selection
-        const nodes = []
-
-        state.doc.nodesBetween(from, to, (node, pos) => {
-          if (this.options.types.includes(node.type.name)) {
-            nodes.push({ node, pos })
-          }
-        })
-
-        if (nodes.length === 0) return false
-
-        return commands.updateAttributes('paragraph', {
-          textIndent: this.options.indentSize
-        })
-      },
-      outdent: () => ({ commands, state }) => {
-        const { from, to } = state.selection
-        const nodes = []
-
-        state.doc.nodesBetween(from, to, (node, pos) => {
-          if (this.options.types.includes(node.type.name)) {
-            nodes.push({ node, pos })
-          }
-        })
-
-        if (nodes.length === 0) return false
-
-        return commands.updateAttributes('paragraph', {
-          textIndent: this.options.defaultIndent
-        })
       },
     }
   },
@@ -548,106 +481,264 @@ const highlightColors = [
   '#fee2e2', '#fecaca', '#fca5a5',
 ]
 
-// Realistic cm/mm ruler component that fills the editor width
-function EditorRuler({ containerRef }) {
-  const [cmCount, setCmCount] = useState(40)
+function DocumentRuler({ editor, containerRef }) {
+  const trackRef = useRef(null)
+  const dragRef = useRef(null)
+  const [width, setWidth] = useState(720)
+  const [layout, setLayout] = useState({ leftIndent: 0, rightIndent: 0, firstLineIndent: 0, tabStops: [] })
+  const [drag, setDrag] = useState(null)
 
   useEffect(() => {
-    const updateWidth = () => {
-      const el = containerRef?.current
-      if (el) {
-        const widthPx = el.clientWidth - 32 // subtract padding
-        // 1cm ≈ 37.8px at 96dpi
-        const cms = Math.ceil(widthPx / 37.8) + 1
-        setCmCount(cms)
-      }
+    if (!editor) return undefined
+    const sync = () => {
+      const attrs = editor.getAttributes(editor.isActive('heading') ? 'heading' : 'paragraph')
+      setLayout({
+        leftIndent: Number(attrs.leftIndent) || 0,
+        rightIndent: Number(attrs.rightIndent) || 0,
+        firstLineIndent: Number(attrs.firstLineIndent) || 0,
+        tabStops: Array.isArray(attrs.tabStops) ? attrs.tabStops : [],
+      })
     }
-    updateWidth()
-    window.addEventListener('resize', updateWidth)
-    return () => window.removeEventListener('resize', updateWidth)
+    sync()
+    editor.on('selectionUpdate', sync)
+    editor.on('transaction', sync)
+    return () => {
+      editor.off('selectionUpdate', sync)
+      editor.off('transaction', sync)
+    }
+  }, [editor])
+
+  useEffect(() => {
+    const element = trackRef.current
+    if (!element || typeof ResizeObserver === 'undefined') return undefined
+    const sync = () => setWidth(element.clientWidth)
+    sync()
+    const observer = new ResizeObserver(sync)
+    observer.observe(element)
+    return () => observer.disconnect()
   }, [containerRef])
 
-  // Build tick marks: 10 mm per cm
-  const ticks = []
-  for (let cm = 0; cm < cmCount; cm++) {
-    for (let mm = 0; mm < 10; mm++) {
-      const isCm = mm === 0
-      const isHalf = mm === 5
-      if (isCm) {
-        ticks.push(
-          <div key={`${cm}-${mm}`} className="editor-ruler-tick editor-ruler-tick--cm">
-            {cm > 0 && <span className="editor-ruler-number">{cm}</span>}
-          </div>
-        )
-      } else if (isHalf) {
-        ticks.push(
-          <div key={`${cm}-${mm}`} className="editor-ruler-tick editor-ruler-tick--half" />
-        )
-      } else {
-        ticks.push(
-          <div key={`${cm}-${mm}`} className="editor-ruler-tick editor-ruler-tick--mm" />
-        )
-      }
+  const hasActiveDrag = Boolean(drag)
+
+  useEffect(() => {
+    if (!hasActiveDrag) return undefined
+    const move = (event) => {
+      const rect = trackRef.current?.getBoundingClientRect()
+      if (!rect) return
+      const current = dragRef.current
+      if (!current) return
+      const next = { ...current, current: Math.max(0, Math.min(rect.width, event.clientX - rect.left)) }
+      dragRef.current = next
+      setDrag(next)
     }
+    const finish = () => {
+      const current = dragRef.current
+      if (!current) return
+      if (current.type === 'left') editor.commands.setParagraphLayout({ leftIndent: current.current })
+      if (current.type === 'right') editor.commands.setParagraphLayout({ rightIndent: width - current.current })
+      if (current.type === 'first') editor.commands.setParagraphLayout({ firstLineIndent: current.current - layout.leftIndent })
+      if (current.type === 'tab') {
+        const next = layout.tabStops.map((stop, index) => index === current.index ? current.current : stop)
+        editor.commands.setParagraphLayout({ tabStops: next })
+      }
+      dragRef.current = null
+      setDrag(null)
+      editor.view.focus()
+    }
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', finish, { once: true })
+    window.addEventListener('pointercancel', finish, { once: true })
+    return () => {
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', finish)
+      window.removeEventListener('pointercancel', finish)
+    }
+  }, [editor, hasActiveDrag, layout.leftIndent, layout.tabStops, width])
+
+  const startDrag = (event, value) => {
+    event.preventDefault()
+    event.stopPropagation()
+    dragRef.current = value
+    setDrag(value)
   }
+  const markerPosition = (type, fallback) => drag?.type === type ? drag.current : fallback
+  const tickCount = Math.ceil(width / 40)
 
   return (
-    <div className="editor-ruler" aria-hidden="true">
-      <div className="editor-ruler-inner">
-        {ticks}
+    <div className="qn-document-ruler flex shrink-0 items-stretch border-b border-subtle bg-surface-raised" aria-label="Paragraph ruler">
+      <div className="flex w-10 shrink-0 items-center justify-center border-r border-subtle text-ui-xs font-semibold text-content-subtle" title="Click the ruler to add a left tab stop">L</div>
+      <div
+        ref={trackRef}
+        className="relative h-9 min-w-0 flex-1 cursor-crosshair overflow-hidden"
+        onPointerDown={(event) => {
+          if (event.target !== event.currentTarget) return
+          const rect = event.currentTarget.getBoundingClientRect()
+          const stop = Math.round(event.clientX - rect.left)
+          editor.commands.setParagraphLayout({ tabStops: [...layout.tabStops, stop] })
+          editor.view.focus()
+        }}
+      >
+        {Array.from({ length: tickCount + 1 }, (_, index) => (
+          <span key={index} className="qn-ruler-tick" style={{ left: `${index * 40}px` }}>
+            {index > 0 && <span>{index}</span>}
+          </span>
+        ))}
+        <button
+          type="button"
+          aria-label={`First-line indent ${Math.round(layout.firstLineIndent)} pixels`}
+          className="qn-ruler-marker qn-ruler-marker--first"
+          style={{ left: `${markerPosition('first', layout.leftIndent + layout.firstLineIndent)}px` }}
+          onPointerDown={(event) => startDrag(event, { type: 'first', current: layout.leftIndent + layout.firstLineIndent })}
+        />
+        <button
+          type="button"
+          aria-label={`Left paragraph indent ${Math.round(layout.leftIndent)} pixels`}
+          className="qn-ruler-marker qn-ruler-marker--left"
+          style={{ left: `${markerPosition('left', layout.leftIndent)}px` }}
+          onPointerDown={(event) => startDrag(event, { type: 'left', current: layout.leftIndent })}
+        />
+        <button
+          type="button"
+          aria-label={`Right paragraph indent ${Math.round(layout.rightIndent)} pixels`}
+          className="qn-ruler-marker qn-ruler-marker--right"
+          style={{ left: `${markerPosition('right', width - layout.rightIndent)}px` }}
+          onPointerDown={(event) => startDrag(event, { type: 'right', current: width - layout.rightIndent })}
+        />
+        {layout.tabStops.map((stop, index) => (
+          <button
+            key={`${stop}-${index}`}
+            type="button"
+            aria-label={`Tab stop at ${Math.round(stop)} pixels. Press Delete to remove.`}
+            className="qn-ruler-tab-stop"
+            style={{ left: `${drag?.type === 'tab' && drag.index === index ? drag.current : stop}px` }}
+            onDoubleClick={() => editor.commands.setParagraphLayout({ tabStops: layout.tabStops.filter((_, itemIndex) => itemIndex !== index) })}
+            onKeyDown={(event) => {
+              if (event.key !== 'Delete' && event.key !== 'Backspace') return
+              event.preventDefault()
+              editor.commands.setParagraphLayout({ tabStops: layout.tabStops.filter((_, itemIndex) => itemIndex !== index) })
+            }}
+            onPointerDown={(event) => startDrag(event, { type: 'tab', index, current: stop })}
+          />
+        ))}
       </div>
     </div>
   )
 }
 
-// Vertical cm/mm ruler component on the left side of the editor
-function VerticalEditorRuler({ containerRef }) {
-  const [cmCount, setCmCount] = useState(60)
+function ObjectDrawingLayer({ editor, tool, containerRef, onFinish }) {
+  const [gesture, setGesture] = useState(null)
+  const [bounds, setBounds] = useState(null)
 
   useEffect(() => {
-    const updateHeight = () => {
-      const el = containerRef?.current
-      if (el) {
-        const heightPx = el.scrollHeight || el.clientHeight
-        const cms = Math.ceil(heightPx / 37.8) + 1
-        setCmCount(cms)
-      }
+    if (!tool) return undefined
+    const sync = () => {
+      const rect = containerRef.current?.getBoundingClientRect()
+      if (rect) setBounds(rect)
     }
-    updateHeight()
-    const observer = new ResizeObserver(updateHeight)
-    if (containerRef?.current) observer.observe(containerRef.current)
-    return () => observer.disconnect()
-  }, [containerRef])
+    sync()
+    window.addEventListener('resize', sync)
+    window.addEventListener('scroll', sync, true)
+    const previousCursor = document.body.style.cursor
+    document.body.style.cursor = 'crosshair'
+    const cancel = (event) => {
+      if (event.key !== 'Escape') return
+      setGesture(null)
+      onFinish()
+    }
+    document.addEventListener('keydown', cancel)
+    return () => {
+      document.body.style.cursor = previousCursor
+      window.removeEventListener('resize', sync)
+      window.removeEventListener('scroll', sync, true)
+      document.removeEventListener('keydown', cancel)
+    }
+  }, [containerRef, onFinish, tool])
 
-  const ticks = []
-  for (let cm = 0; cm < cmCount; cm++) {
-    for (let mm = 0; mm < 10; mm++) {
-      const isCm = mm === 0
-      const isHalf = mm === 5
-      if (isCm) {
-        ticks.push(
-          <div key={`${cm}-${mm}`} className="editor-vruler-tick editor-vruler-tick--cm">
-            {cm > 0 && <span className="editor-vruler-number">{cm}</span>}
-          </div>
-        )
-      } else if (isHalf) {
-        ticks.push(
-          <div key={`${cm}-${mm}`} className="editor-vruler-tick editor-vruler-tick--half" />
-        )
-      } else {
-        ticks.push(
-          <div key={`${cm}-${mm}`} className="editor-vruler-tick editor-vruler-tick--mm" />
-        )
+  if (!tool || !bounds) return null
+
+  const preview = gesture
+    ? {
+        left: Math.min(gesture.startClientX, gesture.currentClientX),
+        top: Math.min(gesture.startClientY, gesture.currentClientY),
+        width: Math.abs(gesture.currentClientX - gesture.startClientX),
+        height: Math.abs(gesture.currentClientY - gesture.startClientY),
       }
-    }
+    : null
+
+  const finishDrawing = (event) => {
+    if (!gesture) return
+    const editorRect = editor.view.dom.getBoundingClientRect()
+    const rawWidth = Math.abs(event.clientX - gesture.startClientX)
+    const rawHeight = Math.abs(event.clientY - gesture.startClientY)
+    const minimumWidth = tool.kind === 'textBox' ? 160 : 96
+    const preferredWidth = tool.kind === 'textBox' ? 320 : 240
+    const horizontalInset = 8
+    const width = Math.min(
+      Math.max(minimumWidth, rawWidth || preferredWidth),
+      Math.max(minimumWidth, editorRect.width - horizontalInset * 2)
+    )
+    const height = Math.max(tool.kind === 'textBox' ? 80 : 56, rawHeight || (tool.kind === 'textBox' ? 140 : 112))
+    const left = Math.min(gesture.startClientX, rawWidth ? event.clientX : gesture.startClientX)
+    const top = Math.min(gesture.startClientY, rawHeight ? event.clientY : gesture.startClientY)
+    const x = Math.round(Math.min(
+      Math.max(horizontalInset, left - editorRect.left),
+      Math.max(horizontalInset, editorRect.width - width - horizontalInset)
+    ))
+    const y = Math.max(0, Math.round(top - editorRect.top))
+    const node = tool.kind === 'textBox'
+      ? {
+          type: 'textBox',
+          attrs: { wrap: 'absolute', x, y, width: Math.round(width), height: Math.round(height), background: '#ffffff' },
+          content: [{ type: 'paragraph' }],
+        }
+      : {
+          type: 'shape',
+          attrs: { shapeType: tool.shapeType, wrap: 'absolute', x, y, width: Math.round(width), height: Math.round(height) },
+          content: [{ type: 'text', text: 'Add text' }],
+        }
+
+    editor.commands.insertContentAt(editor.state.doc.content.size, node, { updateSelection: true })
+    editor.view.focus()
+    setGesture(null)
+    onFinish()
   }
 
-  return (
-    <div className="editor-vruler" aria-hidden="true">
-      <div className="editor-vruler-inner">
-        {ticks}
+  return createPortal(
+    <div
+      role="application"
+      aria-label={tool.kind === 'textBox' ? 'Draw text box on the page' : 'Draw shape on the page'}
+      className="fixed z-[99990] cursor-crosshair touch-none overflow-hidden"
+      style={{ left: bounds.left, top: bounds.top, width: bounds.width, height: bounds.height }}
+      onPointerDown={(event) => {
+        event.currentTarget.setPointerCapture?.(event.pointerId)
+        setGesture({
+          startClientX: event.clientX,
+          startClientY: event.clientY,
+          currentClientX: event.clientX,
+          currentClientY: event.clientY,
+        })
+      }}
+      onPointerMove={(event) => {
+        if (!gesture) return
+        setGesture((current) => current ? { ...current, currentClientX: event.clientX, currentClientY: event.clientY } : null)
+      }}
+      onPointerUp={finishDrawing}
+      onPointerCancel={() => {
+        setGesture(null)
+        onFinish()
+      }}
+    >
+      <div className="pointer-events-none absolute left-3 top-3 rounded-control border border-accent bg-surface-raised px-2.5 py-1.5 text-ui-sm font-semibold text-accent-text shadow-md">
+        Drag to set the {tool.kind === 'textBox' ? 'text box' : 'shape'} size · Esc cancels
       </div>
-    </div>
+      {preview && (
+        <div
+          className="pointer-events-none fixed border-2 border-accent bg-accent-soft opacity-70 shadow-lg"
+          style={preview}
+        />
+      )}
+    </div>,
+    document.body
   )
 }
 
@@ -667,6 +758,8 @@ export default function RichTextEditor({
   const [typingEpoch, setTypingEpoch] = useState(0)
   const [mobileToolbarOpen, setMobileToolbarOpen] = useState(false)
   const [editorMenuPoint, setEditorMenuPoint] = useState(null)
+  const [activeRibbonTab, setActiveRibbonTab] = useState('home')
+  const [drawTool, setDrawTool] = useState(null)
   const editorContainerRef = useRef(null)
   const isInternalUpdate = useRef(false)
   const lastKnownContent = useRef(content)
@@ -678,6 +771,7 @@ export default function RichTextEditor({
   const onChangeRef = useRef(onChange)
   const onDraftChangeRef = useRef(onDraftChange)
   const editorSettings = useEditorSettings()
+  const finishObjectDrawing = useCallback(() => setDrawTool(null), [])
 
   useEffect(() => {
     onChangeRef.current = onChange
@@ -691,6 +785,7 @@ export default function RichTextEditor({
 
   useEffect(() => {
     setMobileToolbarOpen(false)
+    setDrawTool(null)
     isUserTyping.current = false
     isInternalUpdate.current = false
     lastSentContent.current = null
@@ -749,7 +844,7 @@ export default function RichTextEditor({
           class: 'task-list',
         },
       }),
-      TaskItem.configure({
+      StyledTaskItem.configure({
         nested: true,
         HTMLAttributes: {
           class: 'task-item',
@@ -769,7 +864,8 @@ export default function RichTextEditor({
       FontFamily,
       FontSize,
       LineHeight,
-      TextIndent,
+      ParagraphLayoutExtension,
+      TabStopExtension,
       LetterSpacing,
       DropCap,
       Table.configure({
@@ -814,20 +910,42 @@ export default function RichTextEditor({
       },
       handleKeyDown: (view, event) => {
         if (event.key === 'Tab') {
-          let command = null
-          if (event.shiftKey) {
-            if (editor.can().liftListItem('listItem')) {
-              command = () => editor.chain().focus().liftListItem('listItem').run()
-            }
-          } else {
-            if (editor.can().sinkListItem('listItem')) {
-              command = () => editor.chain().focus().sinkListItem('listItem').run()
-            }
+          const listType = ['taskItem', 'listItem'].find((type) => event.shiftKey
+            ? editor.can().liftListItem(type)
+            : editor.can().sinkListItem(type))
+          if (listType) {
+            event.preventDefault()
+            const chain = editor.chain().focus()
+            if (event.shiftKey) chain.liftListItem(listType).run()
+            else chain.sinkListItem(listType).run()
+            return true
           }
 
-          if (!command) return false
+          const { $from } = view.state.selection
+          const insideTable = Array.from({ length: $from.depth + 1 }, (_, depth) => $from.node(depth).type.name)
+            .some((name) => name === 'tableCell' || name === 'tableHeader')
+          if (insideTable) return false
+
           event.preventDefault()
-          command()
+          if (event.shiftKey) {
+            editor.chain().focus().decreaseParagraphIndent().run()
+            return true
+          }
+
+          const coords = view.coordsAtPos(view.state.selection.from)
+          const domAtPosition = view.domAtPos(view.state.selection.from).node
+          const element = domAtPosition.nodeType === Node.ELEMENT_NODE ? domAtPosition : domAtPosition.parentElement
+          const paragraph = element?.closest?.('p')
+          const paragraphLeft = paragraph?.getBoundingClientRect().left ?? coords.left
+          const currentX = Math.max(0, coords.left - paragraphLeft)
+          const attributes = editor.getAttributes(editor.isActive('heading') ? 'heading' : 'paragraph')
+          const customStops = Array.isArray(attributes.tabStops) ? attributes.tabStops : []
+          const nextStop = customStops.find((stop) => stop > currentX + 4)
+            ?? (Math.floor(currentX / 48) + 1) * 48
+          editor.chain().focus().insertTabStop({
+            width: Math.max(8, nextStop - currentX),
+            stop: nextStop,
+          }).run()
           return true
         }
         
@@ -841,6 +959,26 @@ export default function RichTextEditor({
       onEditorReady(editor)
     }
   }, [editor, onEditorReady])
+
+  useEffect(() => {
+    if (!editor) return undefined
+    const syncObjectCanvasHeight = () => {
+      let objectBottom = 0
+      if (typeof editor.state.doc.descendants !== 'function') return
+      editor.state.doc.descendants((node) => {
+        if (!['textBox', 'shape'].includes(node.type.name) || node.attrs.wrap !== 'absolute') return
+        objectBottom = Math.max(
+          objectBottom,
+          (Number(node.attrs.y) || 0) + (Number(node.attrs.height) || (node.type.name === 'textBox' ? 140 : 112))
+        )
+      })
+      editor.view.dom.style.minHeight = `${Math.max(300, objectBottom + 72)}px`
+    }
+    syncObjectCanvasHeight()
+    if (typeof editor.on !== 'function' || typeof editor.off !== 'function') return undefined
+    editor.on('transaction', syncObjectCanvasHeight)
+    return () => editor.off('transaction', syncObjectCanvasHeight)
+  }, [editor])
 
   useEffect(() => {
     if (editor && !editor.isDestroyed) editor.setEditable(!readOnly)
@@ -1065,6 +1203,9 @@ export default function RichTextEditor({
             onPaperChange={handlePaperChange}
             content={content}
             onMobileClose={() => setMobileToolbarOpen(false)}
+            activeTab={activeRibbonTab}
+            onTabChange={setActiveRibbonTab}
+            onStartDrawing={setDrawTool}
           />
         </div>
       )}
@@ -1133,17 +1274,11 @@ export default function RichTextEditor({
 
       {!readOnly && <TableBubbleMenu editor={editor} />}
 
-      {editorSettings.showRuler && (
-        <div className="flex">
-          <div className="editor-ruler-corner" aria-hidden="true" />
-          <EditorRuler containerRef={editorContainerRef} />
-        </div>
+      {(editorSettings.showRuler || activeRibbonTab === 'layout') && (
+        <DocumentRuler editor={editor} containerRef={editorContainerRef} />
       )}
 
       <div className="flex flex-1 overflow-hidden">
-        {editorSettings.showRuler && (
-          <VerticalEditorRuler containerRef={editorContainerRef} />
-        )}
         <div 
           ref={editorContainerRef}
           data-editor-canvas
@@ -1158,6 +1293,15 @@ export default function RichTextEditor({
           <EditorContent editor={editor} />
         </div>
       </div>
+
+      {!readOnly && (
+        <ObjectDrawingLayer
+          editor={editor}
+          tool={drawTool}
+          containerRef={editorContainerRef}
+          onFinish={finishObjectDrawing}
+        />
+      )}
 
       {!readOnly && !mobileToolbarOpen && (
         <button
@@ -1407,7 +1551,16 @@ function ImageToolbarButton() {
   )
 }
 
-function EditorToolbar({ editor, currentPaper, onPaperChange, content, onMobileClose }) {
+function EditorToolbar({
+  editor,
+  currentPaper,
+  onPaperChange,
+  content,
+  onMobileClose,
+  activeTab,
+  onTabChange,
+  onStartDrawing,
+}) {
   const { t } = useTranslation()
   const shortcut = (key, modifiers = {}) =>
     formatShortcut({ key, ctrl: true, ...modifiers })
@@ -1421,8 +1574,7 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content, onMobileC
   const [showTableOfContents, setShowTableOfContents] = useState(false)
   const [showHeadingsPicker, setShowHeadingsPicker] = useState(false)
   const [showShapePicker, setShowShapePicker] = useState(false)
-  const [toolbarExpanded, setToolbarExpanded] = useState(false)
-  const [toolbarTier, setToolbarTier] = useState(0)
+  const [showChecklistMenu, setShowChecklistMenu] = useState(false)
   const [customColor, setCustomColor] = useState('#000000')
   const [customHighlight, setCustomHighlight] = useState('#fef08a')
   const [hoverCell, setHoverCell] = useState({ row: 0, col: 0 })
@@ -1443,30 +1595,14 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content, onMobileC
   const tocRef = useRef(null)
   const headingsRef = useRef(null)
   const shapePickerRef = useRef(null)
+  const checklistRef = useRef(null)
 
   const letterSpacingRef = useRef(null)
   
   const toolbarRef = useRef(null)
   const rovingButtonRef = useRef(null)
 
-  useEffect(() => {
-    const toolbar = toolbarRef.current
-    if (!toolbar || typeof ResizeObserver === 'undefined') return undefined
-    const updateTier = (width) => {
-      const nextTier = width >= 1680 ? 3 : width >= 1080 ? 2 : width >= 860 ? 1 : 0
-      setToolbarTier((current) => current === nextTier ? current : nextTier)
-    }
-    updateTier(toolbar.getBoundingClientRect().width)
-    const observer = new ResizeObserver(([entry]) => updateTier(entry.contentRect.width))
-    observer.observe(toolbar)
-    return () => observer.disconnect()
-  }, [])
-
-  const advancedGroupClass = (minimumTier) => {
-    if (toolbarTier >= minimumTier) return 'contents'
-    if (!toolbarExpanded) return 'hidden'
-    return 'qn-toolbar-overflow-group flex min-h-9 shrink-0 items-center gap-0.5 rounded-control border border-subtle bg-surface-raised px-1.5 py-0.5'
-  }
+  const ribbonGroupClass = (tab) => tab === activeTab ? 'qn-ribbon-group' : 'hidden'
 
   useEffect(() => {
     const buttons = getFocusable(toolbarRef.current).filter((element) => element.tagName === 'BUTTON')
@@ -1569,6 +1705,7 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content, onMobileC
     setShowTableOfContents(false)
     setShowHeadingsPicker(false)
     setShowShapePicker(false)
+    setShowChecklistMenu(false)
   }, [])
 
   useEffect(() => {
@@ -1778,37 +1915,86 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content, onMobileC
   }
 
   return (
-    <div
-      id="qn-editor-toolbar"
-      ref={toolbarRef}
-      role="toolbar"
-      aria-label="Text formatting"
-      onFocusCapture={handleToolbarFocus}
-      onKeyDown={handleToolbarKeyDown}
-      className={`editor-toolbar flex items-center gap-0.5 overscroll-x-contain border-b border-subtle bg-surface-raised px-2 py-1 sm:px-3 md:py-1.5 ${
-        toolbarExpanded
-          ? 'flex-nowrap overflow-x-auto overflow-y-hidden md:flex-wrap md:overflow-visible md:overscroll-auto'
-          : 'flex-nowrap overflow-x-auto overflow-y-hidden'
-      }`}
-    >
-      <button
-        type="button"
-        onClick={onMobileClose}
-        aria-label="Hide formatting tools"
-        className="qn-square-control flex h-8 w-8 shrink-0 items-center justify-center rounded-control text-content-muted transition-colors hover:bg-surface-hover hover:text-content md:hidden"
+    <div className="editor-ribbon border-b border-subtle bg-surface-raised">
+      <div className="flex min-h-9 items-center border-b border-subtle px-2 sm:px-3">
+        <button
+          type="button"
+          onClick={onMobileClose}
+          aria-label="Hide formatting tools"
+          className="qn-square-control mr-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-control text-content-muted transition-colors hover:bg-surface-hover hover:text-content md:hidden"
+        >
+          <X className="h-4 w-4" aria-hidden="true" />
+        </button>
+        <div role="tablist" aria-label="Editor ribbon" className="flex min-w-0 items-stretch overflow-x-auto">
+          {[
+            ['home', 'Home'],
+            ['insert', 'Insert'],
+            ['format', 'Format'],
+            ['layout', 'Layout'],
+            ['tools', 'Tools'],
+          ].map(([value, label]) => (
+            <button
+              key={value}
+              id={`qn-ribbon-tab-${value}`}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === value}
+              aria-controls="qn-editor-ribbon-panel"
+              tabIndex={activeTab === value ? 0 : -1}
+              onKeyDown={(event) => {
+                if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return
+                event.preventDefault()
+                const tabs = [...event.currentTarget.parentElement.querySelectorAll('[role="tab"]')]
+                const current = tabs.indexOf(event.currentTarget)
+                const next = event.key === 'Home'
+                  ? tabs[0]
+                  : event.key === 'End'
+                    ? tabs.at(-1)
+                    : tabs[(current + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length]
+                next?.focus()
+                next?.click()
+              }}
+              onClick={() => {
+                closeAllDropdowns()
+                onTabChange(value)
+              }}
+              className={`relative h-9 shrink-0 px-3 text-ui-sm font-semibold transition-colors ${
+                activeTab === value
+                  ? 'text-accent-text after:absolute after:inset-x-2 after:bottom-0 after:h-0.5 after:rounded-full after:bg-accent'
+                  : 'text-content-muted hover:bg-surface-hover hover:text-content'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div
+        id="qn-editor-ribbon-panel"
+        role="tabpanel"
+        aria-labelledby={`qn-ribbon-tab-${activeTab}`}
       >
-        <X className="h-4 w-4" aria-hidden="true" />
-      </button>
-      <div role="separator" aria-orientation="vertical" className="qn-toolbar-sep mx-1 w-px shrink-0 bg-[var(--qn-border-subtle)] md:hidden" />
+        <div
+          id="qn-editor-toolbar"
+          ref={toolbarRef}
+          role="toolbar"
+          aria-label={`${activeTab[0].toUpperCase()}${activeTab.slice(1)} ribbon commands`}
+          onFocusCapture={handleToolbarFocus}
+          onKeyDown={handleToolbarKeyDown}
+          className="editor-toolbar flex min-h-[58px] flex-nowrap items-stretch gap-1 overflow-x-auto overflow-y-hidden overscroll-x-contain px-2 sm:px-3"
+        >
+      <div className={ribbonGroupClass('home')}>
+      <span className="qn-ribbon-group-label">History</span>
       <ToolbarButton onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} title="Undo" shortcut={shortcut('z')}>
         <Undo className="w-4 h-4" />
       </ToolbarButton>
       <ToolbarButton onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} title="Redo" shortcut={shortcut('y')}>
         <Redo className="w-4 h-4" />
       </ToolbarButton>
+      </div>
 
-      <div className={advancedGroupClass(3)}>
-      <span className="qn-toolbar-overflow-label hidden px-1.5 text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">Typography</span>
+      <div className={ribbonGroupClass('format')}>
+      <span className="qn-ribbon-group-label">Typography</span>
       <ToolbarDivider />
 
       <ToolbarButton
@@ -1930,6 +2116,8 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content, onMobileC
       </div>
       </div>
 
+      <div className={ribbonGroupClass('home')}>
+      <span className="qn-ribbon-group-label">Text styles</span>
       <div className="relative" ref={headingsRef}>
         <DropdownButton
           isOpen={showHeadingsPicker}
@@ -1996,15 +2184,13 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content, onMobileC
       <ToolbarButton onClick={() => editor.chain().focus().toggleUnderline().run()} isActive={editor.isActive('underline')} title="Underline" shortcut={shortcut('u')}>
         <UnderlineIcon className="w-4 h-4" />
       </ToolbarButton>
-      <div className={advancedGroupClass(1)}>
-      <span className="qn-toolbar-overflow-label hidden px-1.5 text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">Text</span>
       <ToolbarButton onClick={() => editor.chain().focus().toggleStrike().run()} isActive={editor.isActive('strike')} title="Strikethrough" shortcut={shortcut('s', { shift: true })}>
         <Strikethrough className="w-4 h-4" />
       </ToolbarButton>
       </div>
 
-      <div className={advancedGroupClass(3)}>
-      <span className="qn-toolbar-overflow-label hidden px-1.5 text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">Colour & effects</span>
+      <div className={ribbonGroupClass('format')}>
+      <span className="qn-ribbon-group-label">Colour & effects</span>
       <div className="relative" ref={colorPickerRef}>
         <DropdownButton isOpen={showColorPicker} onClick={() => toggleDropdown(setShowColorPicker, showColorPicker)} title="Text Color">
           <Palette className="w-4 h-4" />
@@ -2176,8 +2362,8 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content, onMobileC
       </ToolbarButton>
       </div>
 
-      <div className={advancedGroupClass(2)}>
-      <span className="qn-toolbar-overflow-label hidden px-1.5 text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">Paragraph</span>
+      <div className={ribbonGroupClass('home')}>
+      <span className="qn-ribbon-group-label">Paragraph</span>
       <ToolbarDivider />
 
       <ToolbarButton onClick={() => editor.chain().focus().setTextAlign('left').run()} isActive={editor.isActive({ textAlign: 'left' })} title="Align Left">
@@ -2194,50 +2380,93 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content, onMobileC
       </ToolbarButton>
       </div>
 
-      <ToolbarDivider />
-
+      <div className={ribbonGroupClass('layout')}>
+      <span className="qn-ribbon-group-label">Lists</span>
       <ToolbarButton onClick={() => editor.chain().focus().toggleBulletList().run()} isActive={editor.isActive('bulletList')} title="Bullet List">
         <List className="w-4 h-4" />
       </ToolbarButton>
       <ToolbarButton onClick={() => editor.chain().focus().toggleOrderedList().run()} isActive={editor.isActive('orderedList')} title="Numbered List">
         <ListOrdered className="w-4 h-4" />
       </ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().toggleTaskList().run()} isActive={editor.isActive('taskList')} title="Checklist">
-        <CheckSquare className="w-4 h-4" />
-      </ToolbarButton>
+      <div className="relative" ref={checklistRef}>
+        <DropdownButton isOpen={showChecklistMenu} onClick={() => toggleDropdown(setShowChecklistMenu, showChecklistMenu)} title="Checklist style">
+          <CheckSquare className="w-4 h-4" />
+        </DropdownButton>
+        <PortalDropdown isOpen={showChecklistMenu} anchorRef={checklistRef} onClose={() => setShowChecklistMenu(false)} label="Checklist styles">
+          <div className="w-56 p-2">
+            <button
+              type="button"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => {
+                editor.chain().focus().toggleTaskList().run()
+                setShowChecklistMenu(false)
+              }}
+              className="flex w-full items-center gap-3 rounded-control px-3 py-2 text-left text-ui-md font-medium text-content hover:bg-surface-hover"
+            >
+              <CheckSquare className="h-4 w-4" /> {editor.isActive('taskList') ? 'Turn off checklist' : 'Create checklist'}
+            </button>
+            <div className="my-1 h-px bg-[var(--qn-border-subtle)]" />
+            <p className="px-3 py-1 text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">Checkbox appearance</p>
+            {[
+              ['square', 'Square'],
+              ['rounded', 'Rounded'],
+              ['circle', 'Circle'],
+            ].map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={editor.isActive('taskItem', { checkboxStyle: value })}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => {
+                  const chain = editor.chain().focus()
+                  if (!editor.isActive('taskList')) chain.toggleTaskList()
+                  chain.updateAttributes('taskItem', { checkboxStyle: value }).run()
+                  setShowChecklistMenu(false)
+                }}
+                className="flex w-full items-center gap-3 rounded-control px-3 py-2 text-left text-ui-md text-content-muted hover:bg-surface-hover hover:text-content"
+              >
+                <span className={`qn-check-style-preview qn-check-style-preview--${value}`} /> {label}
+              </button>
+            ))}
+          </div>
+        </PortalDropdown>
+      </div>
+      </div>
 
-      <div className={advancedGroupClass(2)}>
-      <span className="qn-toolbar-overflow-label hidden px-1.5 text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">Indent</span>
+      <div className={ribbonGroupClass('layout')}>
+      <span className="qn-ribbon-group-label">Indent</span>
       <ToolbarButton
         onClick={() => {
-          if (editor.can().sinkListItem('listItem')) {
-            editor.chain().focus().sinkListItem('listItem').run()
+          const listType = ['taskItem', 'listItem'].find((type) => editor.can().sinkListItem(type))
+          if (listType) {
+            editor.chain().focus().sinkListItem(listType).run()
           } else {
-            editor.chain().focus().indent().run()
+            editor.chain().focus().increaseParagraphIndent().run()
           }
         }} 
-        disabled={!editor.can().sinkListItem('listItem') && !editor.can().indent()}
+        disabled={!editor.can().sinkListItem('listItem') && !editor.can().sinkListItem('taskItem') && !editor.can().increaseParagraphIndent()}
         title="Increase Indent"
       >
         <Indent className="w-4 h-4" />
       </ToolbarButton>
       <ToolbarButton 
         onClick={() => {
-          if (editor.can().liftListItem('listItem')) {
-            editor.chain().focus().liftListItem('listItem').run()
+          const listType = ['taskItem', 'listItem'].find((type) => editor.can().liftListItem(type))
+          if (listType) {
+            editor.chain().focus().liftListItem(listType).run()
           } else {
-            editor.chain().focus().outdent().run()
+            editor.chain().focus().decreaseParagraphIndent().run()
           }
         }} 
-        disabled={!editor.can().liftListItem('listItem') && !editor.can().outdent()}
+        disabled={!editor.can().liftListItem('listItem') && !editor.can().liftListItem('taskItem') && !editor.can().decreaseParagraphIndent()}
         title="Decrease Indent"
       >
         <Outdent className="w-4 h-4" />
       </ToolbarButton>
       </div>
 
-      <div className={advancedGroupClass(3)}>
-      <span className="qn-toolbar-overflow-label hidden px-1.5 text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">Text layout</span>
+      <div className={ribbonGroupClass('layout')}>
+      <span className="qn-ribbon-group-label">Text layout</span>
       <ToolbarDivider />
 
       <div className="relative" ref={letterSpacingRef}>
@@ -2277,8 +2506,8 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content, onMobileC
       </ToolbarButton>
       </div>
 
-      <div className={advancedGroupClass(2)}>
-      <span className="qn-toolbar-overflow-label hidden px-1.5 text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">Blocks</span>
+      <div className={ribbonGroupClass('insert')}>
+      <span className="qn-ribbon-group-label">Blocks</span>
       <ToolbarDivider />
 
       <ToolbarButton onClick={() => editor.chain().focus().toggleBlockquote().run()} isActive={editor.isActive('blockquote')} title="Quote">
@@ -2292,6 +2521,8 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content, onMobileC
       </ToolbarButton>
       </div>
 
+      <div className={ribbonGroupClass('insert')}>
+      <span className="qn-ribbon-group-label">Tables</span>
       <div className="relative" ref={tableMenuRef}>
         <DropdownButton isOpen={showTableMenu} onClick={() => toggleDropdown(setShowTableMenu, showTableMenu)} title="Table">
           <TableIcon className="w-4 h-4" />
@@ -2363,26 +2594,20 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content, onMobileC
           </div>
         </PortalDropdown>
       </div>
+      </div>
 
-      <ToolbarDivider />
-
+      <div className={ribbonGroupClass('insert')}>
+      <span className="qn-ribbon-group-label">Objects & links</span>
       <ToolbarButton onClick={setLink} isActive={editor.isActive('link')} title={`Insert Link (${shortcut('k', { shift: true })})`}>
         <LinkIcon className="w-4 h-4" />
       </ToolbarButton>
 
-      <div className={advancedGroupClass(1)}>
-      <span className="qn-toolbar-overflow-label hidden px-1.5 text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">Tools & automation</span>
-      <ToolbarButton onClick={openTranslation} title="Translate selected text or note">
-        <Languages className="w-4 h-4" />
-      </ToolbarButton>
-      </div>
-
       <ImageToolbarButton />
 
       <ToolbarButton 
-        onClick={() => editor.chain().focus().insertTextBox().run()} 
+        onClick={() => onStartDrawing({ kind: 'textBox' })}
         isActive={editor.isActive('textBox')} 
-        title="Text Box"
+        title="Draw text box"
       >
         <Square className="w-4 h-4" />
       </ToolbarButton>
@@ -2417,8 +2642,8 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content, onMobileC
                       title={shape.label}
                       onMouseDown={(event) => event.preventDefault()}
                       onClick={() => {
-                        editor.chain().focus().insertShape({ shapeType: shape.value }).run()
                         setShowShapePicker(false)
+                        onStartDrawing({ kind: 'shape', shapeType: shape.value })
                       }}
                       className="qn-shape-gallery-item flex aspect-square items-center justify-center rounded-control border border-subtle p-2 transition-colors hover:border-strong hover:bg-surface-hover"
                     >
@@ -2431,9 +2656,17 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content, onMobileC
           </div>
         </PortalDropdown>
       </div>
+      </div>
 
-      <div className={advancedGroupClass(3)}>
-      <span className="qn-toolbar-overflow-label hidden px-1.5 text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">Data & presets</span>
+      <div className={ribbonGroupClass('tools')}>
+      <span className="qn-ribbon-group-label">Language</span>
+      <ToolbarButton onClick={openTranslation} title="Translate selected text or note">
+        <Languages className="w-4 h-4" />
+      </ToolbarButton>
+      </div>
+
+      <div className={ribbonGroupClass('insert')}>
+      <span className="qn-ribbon-group-label">References</span>
       <div className="relative" ref={tocRef}>
         <DropdownButton 
           isOpen={showTableOfContents} 
@@ -2479,7 +2712,10 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content, onMobileC
           </div>
         </PortalDropdown>
       </div>
+      </div>
 
+      <div className={ribbonGroupClass('layout')}>
+      <span className="qn-ribbon-group-label">Page</span>
       <div className="relative" ref={paperPickerRef}>
         <DropdownButton isOpen={showPaperPicker} onClick={() => toggleDropdown(setShowPaperPicker, showPaperPicker)} title="Paper Style">
           <span className="text-xs font-medium">{paperStyles[currentPaper]?.name || 'Plain'}</span>
@@ -2510,7 +2746,10 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content, onMobileC
           </div>
         </PortalDropdown>
       </div>
+      </div>
 
+      <div className={ribbonGroupClass('tools')}>
+      <span className="qn-ribbon-group-label">Advanced</span>
       <ToolbarButton 
         onClick={() => useUIStore.getState().setHTMLEditorOpen(true)}
         title="Edit HTML Source"
@@ -2525,27 +2764,8 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content, onMobileC
         <Settings className="w-4 h-4" />
       </ToolbarButton>
       </div>
-
-      {toolbarTier < 3 && <button
-        type="button"
-        aria-expanded={toolbarExpanded}
-        aria-controls="qn-editor-toolbar"
-        aria-label={toolbarExpanded ? 'Use simplified toolbar' : 'Show more formatting tools'}
-        title={toolbarExpanded ? 'Simplified toolbar' : 'More formatting tools'}
-        onMouseDown={(event) => event.preventDefault()}
-        onClick={() => {
-          closeAllDropdowns()
-          setToolbarExpanded((value) => !value)
-        }}
-        className={`${toolbarExpanded ? 'ml-1' : 'ml-auto'} flex h-9 shrink-0 items-center gap-1.5 rounded-control px-2.5 text-ui-sm font-semibold leading-none transition-colors ${
-          toolbarExpanded
-            ? 'bg-accent-soft text-accent-text'
-            : 'border border-subtle bg-surface-raised text-content-muted hover:bg-surface-hover hover:text-content'
-        }`}
-      >
-        <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden="true" />
-        <span>{toolbarExpanded ? 'Less' : 'More'}</span>
-      </button>}
+      </div>
+      </div>
     </div>
   )
 }

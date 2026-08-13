@@ -27,10 +27,11 @@ You can try QuickNotes [**here**](https://berndhagen.github.io/QuickNotes-Simple
 - **Rich Text Editor:** Full WYSIWYG editor powered by TipTap with headings, bold, italic, underline, strikethrough, text alignment, font colors, highlights, and more
 - **Code Blocks:** Syntax highlighting for many programming languages via Lowlight
 - **Tables:** Insert and edit tables with a bubble menu for row/column operations, cell merging, header toggling, and cell background colors
-- **Task Lists:** Interactive checklists with checkbox toggling
+- **Task Lists:** Interactive, nestable checklists with square, rounded, and circular checkbox styles
 - **Image Support:** Upload and embed resizable images directly in notes with drag handles
-- **Document Objects:** Add editable text boxes and shapes with direct resize, free rotation, exact dimensions, flips, alignment, and color presets
-- **Simplified Editor Ribbon:** Common writing and insert actions stay visible while specialist formatting is available through an explicit More mode
+- **Document Objects:** Drag to draw editable text boxes and twelve SVG shapes at an exact page position, then move, resize from eight handles, rotate, flip, wrap, recolor, and size them precisely
+- **Task-based Editor Ribbon:** Home, Insert, Format, Layout, and Tools tabs keep every command in a named group without duplicating or hiding tools in a changing More menu
+- **Paragraph Layout:** Repeatable multilevel indentation, a working ruler with first-line/left/right indent markers, custom tab stops, and durable Tab-key advances
 - **Folders & Tags:** Organize notes into folders and assign color-coded tags via the Tag Manager
 - **Favorites & Pins:** Star or pin important notes for quick access
 - **Global Search:** Full-text search across all notes by title, content, and tags
@@ -251,6 +252,9 @@ QuickNotes-Simple-Note-Manager/
     │   ├── ResizableImageExtension.js    # TipTap extension for resizable images
     │   ├── TextBoxExtension.js           # TipTap extension: movable text box
     │   ├── TextBoxView.jsx               # Text box node view (drag, resize, wrap)
+    │   ├── ParagraphLayoutExtension.js    # Persistent ruler, indents, and tab stops
+    │   ├── TabStopExtension.js            # Durable inline tab advances
+    │   ├── StyledTaskItem.js              # Selectable checkbox appearances
     │   ├── CustomTableCell.js            # TipTap extension: custom table cell
     │   └── CustomTableHeader.js          # TipTap extension: custom table header
     │
@@ -497,7 +501,7 @@ The editor is built on **TipTap** (ProseMirror wrapper) with the following exten
 | `Link` | Clickable hyperlinks |
 | `Image` (custom) | Resizable images with drag handles (`ResizableImageExtension.js`) |
 | `Table`, `TableRow`, `TableCell`, `TableHeader` (custom) | Tables with cell colors (`CustomTableCell.js`, `CustomTableHeader.js`) |
-| `TaskList` + `TaskItem` | Interactive checkboxes |
+| `TaskList` + `StyledTaskItem` | Nested interactive checkboxes with selectable geometry |
 | `CodeBlockLowlight` | Syntax-highlighted code blocks |
 | `Placeholder` | Placeholder text when editor is empty |
 | `Subscript` + `Superscript` | Sub/superscript text |
@@ -506,8 +510,10 @@ The editor is built on **TipTap** (ProseMirror wrapper) with the following exten
 
 ### Custom TipTap Extensions
 
-- **`TextBoxExtension.js`** — Adds movable, resizable text boxes with in-flow, wrapped, and free-position modes.
-- **`ShapeExtension.js`** — Adds editable rectangle, rounded rectangle, ellipse, diamond, and arrow objects with drag resize, exact dimensions, rotation, flips, alignment, and color presets.
+- **`TextBoxExtension.js`** — Adds drag-created, freely movable text boxes with eight resize handles, exact geometry, wrapping, fill, border, and text-alignment controls.
+- **`ShapeExtension.js`** — Adds twelve editable SVG objects with drag creation, eight-handle resize, exact geometry, rotation, flips, wrapping, keyboard movement, and color presets.
+- **`ParagraphLayoutExtension.js` + `TabStopExtension.js`** — Persist repeatable indents, ruler markers, custom stops, and inline Tab-key advances in note HTML.
+- **`StyledTaskItem.js`** — Persists square, rounded, or circular checkbox presentation without replacing task semantics.
 
 - **`ResizableImageExtension.js`** — Extends the Image node to support drag-to-resize with handles. Renders via `ResizableImage.jsx`.
 - **`CustomTableCell.js`** — Extends TableCell with a `backgroundColor` attribute for per-cell coloring.

@@ -31,12 +31,13 @@ const LAYOUTS = [
   { value: 'inline', label: 'In line', description: 'Moves with the surrounding text.' },
   { value: 'left', label: 'Wrap left', description: 'Text flows along the right side.' },
   { value: 'right', label: 'Wrap right', description: 'Text flows along the left side.' },
-  { value: 'free', label: 'Free position', description: 'Drag anywhere while keeping a document anchor.' },
+  { value: 'absolute', label: 'Free position', description: 'Place and move the shape anywhere on the page.' },
 ]
 
 const MIN_WIDTH = 96
 const MIN_HEIGHT = 56
 const MAX_DIMENSION = 1200
+const RESIZE_HANDLES = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w']
 
 const normalizeAngle = (value) => ((Math.round(value) % 360) + 360) % 360
 const clampDimension = (value, minimum) => Math.min(MAX_DIMENSION, Math.max(minimum, value))
@@ -148,6 +149,9 @@ export default function ShapeView({ node, updateAttributes, deleteNode, selected
   const layoutButtonRef = useRef(null)
   const fillButtonRef = useRef(null)
   const formatButtonRef = useRef(null)
+  const resizeRef = useRef(null)
+  const rotateRef = useRef(null)
+  const moveRef = useRef(null)
   const [resize, setResize] = useState(null)
   const [rotate, setRotate] = useState(null)
   const [move, setMove] = useState(null)
@@ -179,9 +183,9 @@ export default function ShapeView({ node, updateAttributes, deleteNode, selected
   const liveWidth = resize?.currentWidth ?? width
   const liveHeight = resize?.currentHeight ?? height
   const liveRotation = rotate?.currentRotation ?? rotation
-  const liveX = move?.currentX ?? x ?? 0
-  const liveY = move?.currentY ?? y ?? 0
-  const effectiveWrap = move ? 'free' : wrap
+  const liveX = resize?.currentX ?? move?.currentX ?? x ?? 0
+  const liveY = resize?.currentY ?? move?.currentY ?? y ?? 0
+  const effectiveWrap = move ? 'absolute' : wrap
 
   const startMove = useCallback((event) => {
     if (!editable) return
@@ -191,34 +195,51 @@ export default function ShapeView({ node, updateAttributes, deleteNode, selected
     event.currentTarget.setPointerCapture?.(event.pointerId)
     const shapeRect = wrapperRef.current?.getBoundingClientRect()
     const editorRect = wrapperRef.current?.closest('.ProseMirror')?.getBoundingClientRect()
-    setMove({
+    const originX = wrap === 'absolute' || wrap === 'free'
+      ? x || 0
+      : shapeRect && editorRect ? shapeRect.left - editorRect.left : 0
+    const originY = wrap === 'absolute' || wrap === 'free'
+      ? y || 0
+      : shapeRect && editorRect ? shapeRect.top - editorRect.top : 0
+    const nextMove = {
       startX: event.clientX,
       startY: event.clientY,
-      originX: x || 0,
-      originY: y || 0,
-      currentX: x || 0,
-      currentY: y || 0,
+      originX,
+      originY,
+      currentX: originX,
+      currentY: originY,
       minDeltaX: shapeRect && editorRect ? editorRect.left + 8 - shapeRect.left : -MAX_DIMENSION,
       maxDeltaX: shapeRect && editorRect ? editorRect.right - 8 - shapeRect.right : MAX_DIMENSION,
       minDeltaY: shapeRect && editorRect ? editorRect.top + 8 - shapeRect.top : -MAX_DIMENSION,
       maxDeltaY: MAX_DIMENSION,
-    })
-  }, [editable, x, y])
+    }
+    moveRef.current = nextMove
+    setMove(nextMove)
+  }, [editable, wrap, x, y])
 
-  const startResize = useCallback((event) => {
+  const startResize = useCallback((event, direction = 'se') => {
     if (!editable) return
     event.preventDefault()
     event.stopPropagation()
     event.currentTarget.setPointerCapture?.(event.pointerId)
-    setResize({
+    const editorRect = wrapperRef.current?.closest('.ProseMirror')?.getBoundingClientRect()
+    const nextResize = {
       startX: event.clientX,
       startY: event.clientY,
       originWidth: width,
       originHeight: height,
+      originX: x || 0,
+      originY: y || 0,
+      currentX: x || 0,
+      currentY: y || 0,
+      direction,
       currentWidth: width,
       currentHeight: height,
-    })
-  }, [editable, height, width])
+      editorWidth: editorRect?.width || MAX_DIMENSION,
+    }
+    resizeRef.current = nextResize
+    setResize(nextResize)
+  }, [editable, height, width, x, y])
 
   const startRotate = useCallback((event) => {
     if (!editable) return
@@ -229,56 +250,94 @@ export default function ShapeView({ node, updateAttributes, deleteNode, selected
     const centreX = rect.left + rect.width / 2
     const centreY = rect.top + rect.height / 2
     const pointerAngle = Math.atan2(event.clientY - centreY, event.clientX - centreX) * (180 / Math.PI)
-    setRotate({ centreX, centreY, offset: pointerAngle - rotation, currentRotation: rotation })
+    const nextRotate = { centreX, centreY, offset: pointerAngle - rotation, currentRotation: rotation }
+    rotateRef.current = nextRotate
+    setRotate(nextRotate)
   }, [editable, rotation])
 
+  const hasActiveGesture = Boolean(resize || rotate || move)
+
   useEffect(() => {
-    if (!resize && !rotate && !move) return undefined
+    if (!hasActiveGesture) return undefined
     const onMove = (event) => {
-      if (move) {
-        setMove((value) => {
-          if (!value) return value
-          const deltaX = clamp(event.clientX - value.startX, value.minDeltaX, value.maxDeltaX)
-          return {
+      if (moveRef.current) {
+        const value = moveRef.current
+        const deltaX = clamp(event.clientX - value.startX, value.minDeltaX, value.maxDeltaX)
+        const next = {
+          ...value,
+          currentX: value.originX + deltaX,
+          currentY: value.originY + clamp(event.clientY - value.startY, value.minDeltaY, value.maxDeltaY),
+        }
+        moveRef.current = next
+        setMove(next)
+      }
+      if (resizeRef.current) {
+          const value = resizeRef.current
+          const dx = event.clientX - value.startX
+          const dy = event.clientY - value.startY
+          const west = value.direction.includes('w')
+          const east = value.direction.includes('e')
+          const north = value.direction.includes('n')
+          const south = value.direction.includes('s')
+          const maximumWidth = wrap === 'absolute' || wrap === 'free'
+            ? east
+              ? Math.max(MIN_WIDTH, value.editorWidth - value.originX - 8)
+              : west
+                ? Math.max(MIN_WIDTH, value.originX + value.originWidth - 8)
+                : MAX_DIMENSION
+            : MAX_DIMENSION
+          const nextWidth = Math.min(
+            maximumWidth,
+            clampDimension(value.originWidth + (east ? dx : west ? -dx : 0), MIN_WIDTH)
+          )
+          const nextHeight = clampDimension(value.originHeight + (south ? dy : north ? -dy : 0), MIN_HEIGHT)
+          const geometry = {
             ...value,
-            currentX: value.originX + deltaX,
-            currentY: value.originY + clamp(event.clientY - value.startY, value.minDeltaY, value.maxDeltaY),
+            currentWidth: nextWidth,
+            currentHeight: nextHeight,
+            currentX: west ? value.originX + value.originWidth - nextWidth : value.originX,
+            currentY: north ? Math.max(0, value.originY + value.originHeight - nextHeight) : value.originY,
           }
-        })
-      }
-      if (resize) {
-        setResize((value) => {
-          if (!value) return value
-          const nextWidth = clampDimension(value.originWidth + event.clientX - value.startX, MIN_WIDTH)
-          const nextHeight = clampDimension(value.originHeight + event.clientY - value.startY, MIN_HEIGHT)
-          if (!event.shiftKey) return { ...value, currentWidth: nextWidth, currentHeight: nextHeight }
           const ratio = value.originWidth / value.originHeight
-          return Math.abs(nextWidth - value.originWidth) >= Math.abs(nextHeight - value.originHeight)
-            ? { ...value, currentWidth: nextWidth, currentHeight: clampDimension(nextWidth / ratio, MIN_HEIGHT) }
-            : { ...value, currentWidth: clampDimension(nextHeight * ratio, MIN_WIDTH), currentHeight: nextHeight }
-        })
+          const next = !event.shiftKey || (!east && !west) || (!north && !south)
+            ? geometry
+            : Math.abs(nextWidth - value.originWidth) >= Math.abs(nextHeight - value.originHeight)
+            ? { ...geometry, currentWidth: nextWidth, currentHeight: clampDimension(nextWidth / ratio, MIN_HEIGHT) }
+            : { ...geometry, currentWidth: clampDimension(nextHeight * ratio, MIN_WIDTH), currentHeight: nextHeight }
+          resizeRef.current = next
+          setResize(next)
       }
-      if (rotate) {
-        setRotate((value) => {
-          if (!value) return value
+      if (rotateRef.current) {
+          const value = rotateRef.current
           const pointerAngle = Math.atan2(event.clientY - value.centreY, event.clientX - value.centreX) * (180 / Math.PI)
           let next = pointerAngle - value.offset
           if (event.shiftKey) next = Math.round(next / 15) * 15
-          return { ...value, currentRotation: next }
-        })
+          const nextRotate = { ...value, currentRotation: next }
+          rotateRef.current = nextRotate
+          setRotate(nextRotate)
       }
     }
     const onUp = () => {
-      if (move) {
-        updateAttributes({ wrap: 'free', x: Math.round(move.currentX), y: Math.round(move.currentY) })
+      if (moveRef.current) {
+        const value = moveRef.current
+        moveRef.current = null
+        updateAttributes({ wrap: 'absolute', x: Math.round(value.currentX), y: Math.round(value.currentY) })
         setMove(null)
       }
-      if (resize) {
-        updateAttributes({ width: Math.round(resize.currentWidth), height: Math.round(resize.currentHeight) })
+      if (resizeRef.current) {
+        const value = resizeRef.current
+        resizeRef.current = null
+        updateAttributes({
+          width: Math.round(value.currentWidth),
+          height: Math.round(value.currentHeight),
+          ...((wrap === 'absolute' || wrap === 'free') ? { x: Math.round(value.currentX), y: Math.round(value.currentY) } : {}),
+        })
         setResize(null)
       }
-      if (rotate) {
-        updateAttributes({ rotation: normalizeAngle(rotate.currentRotation) })
+      if (rotateRef.current) {
+        const value = rotateRef.current
+        rotateRef.current = null
+        updateAttributes({ rotation: normalizeAngle(value.currentRotation) })
         setRotate(null)
       }
     }
@@ -290,7 +349,7 @@ export default function ShapeView({ node, updateAttributes, deleteNode, selected
       window.removeEventListener('pointerup', onUp)
       window.removeEventListener('pointercancel', onUp)
     }
-  }, [move, resize, rotate, updateAttributes])
+  }, [hasActiveGesture, updateAttributes, wrap])
 
   // Leave room for the rotation stem and handle instead of covering them with
   // the contextual toolbar.
@@ -306,18 +365,18 @@ export default function ShapeView({ node, updateAttributes, deleteNode, selected
     '--qn-shape-width': `${liveWidth}px`,
     width: `${liveWidth}px`,
     height: `${liveHeight}px`,
-    ...(effectiveWrap === 'free'
+    ...((effectiveWrap === 'absolute' || effectiveWrap === 'free')
       ? {
-          position: 'relative',
+          position: 'absolute',
           left: `${liveX}px`,
           top: `${liveY}px`,
-          zIndex: active ? 3 : 2,
-          marginBottom: `${Math.max(18, liveY + 18)}px`,
+          zIndex: active ? 20 : 10,
+          margin: 0,
         }
       : {}),
     ...(effectiveWrap === 'left' ? { float: 'left', margin: '4px 16px 12px 0' } : {}),
     ...(effectiveWrap === 'right' ? { float: 'right', margin: '4px 0 12px 16px' } : {}),
-    ...(effectiveWrap === 'inline' || effectiveWrap === 'free'
+    ...(effectiveWrap === 'inline'
       ? {
           marginLeft: align === 'right' || align === 'center' ? 'auto' : 0,
           marginRight: align === 'left' || align === 'center' ? 'auto' : 0,
@@ -326,7 +385,17 @@ export default function ShapeView({ node, updateAttributes, deleteNode, selected
   }
 
   const selectLayout = (nextWrap) => {
-    updateAttributes({ wrap: nextWrap, ...(nextWrap === 'free' ? {} : { x: 0, y: 0 }) })
+    if (nextWrap === 'absolute' && wrap !== 'absolute' && wrap !== 'free') {
+      const objectRect = wrapperRef.current?.getBoundingClientRect()
+      const editorRect = wrapperRef.current?.closest('.ProseMirror')?.getBoundingClientRect()
+      updateAttributes({
+        wrap: nextWrap,
+        x: Math.max(0, (objectRect?.left || 0) - (editorRect?.left || 0)),
+        y: Math.max(0, (objectRect?.top || 0) - (editorRect?.top || 0)),
+      })
+    } else {
+      updateAttributes({ wrap: nextWrap, ...(nextWrap === 'absolute' ? {} : { x: 0, y: 0 }) })
+    }
     setOpenPanel(null)
   }
 
@@ -349,7 +418,13 @@ export default function ShapeView({ node, updateAttributes, deleteNode, selected
       style={wrapperStyle}
     >
       <div className="qn-shape__object" style={{ transform }}>
-        <div className="qn-shape__surface">
+        <div
+          className="qn-shape__surface"
+          onPointerDown={(event) => {
+            if (event.target.closest('.qn-shape__content')) return
+            startMove(event)
+          }}
+        >
           <ShapeGeometry shapeType={shapeType} />
           <NodeViewContent
             className="qn-shape__content"
@@ -477,7 +552,11 @@ export default function ShapeView({ node, updateAttributes, deleteNode, selected
             <p className="mb-2 text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">Exact size</p>
             <div className="grid grid-cols-2 gap-2">
               <label className="text-ui-sm font-medium text-content-muted">Width
-                <input type="number" min={MIN_WIDTH} max={MAX_DIMENSION} value={Math.round(width)} onChange={(event) => updateAttributes({ width: clampDimension(Number(event.target.value) || MIN_WIDTH, MIN_WIDTH) })} aria-label="Shape width" className="mt-1 h-9 w-full rounded-control border border-subtle bg-surface-raised px-2 text-content outline-none focus:border-accent" />
+                <input type="number" min={MIN_WIDTH} max={MAX_DIMENSION} value={Math.round(width)} onChange={(event) => {
+                  const editorWidth = wrapperRef.current?.closest('.ProseMirror')?.getBoundingClientRect().width || MAX_DIMENSION
+                  const maximum = wrap === 'absolute' || wrap === 'free' ? Math.max(MIN_WIDTH, editorWidth - (x || 0) - 8) : MAX_DIMENSION
+                  updateAttributes({ width: Math.min(maximum, clampDimension(Number(event.target.value) || MIN_WIDTH, MIN_WIDTH)) })
+                }} aria-label="Shape width" className="mt-1 h-9 w-full rounded-control border border-subtle bg-surface-raised px-2 text-content outline-none focus:border-accent" />
               </label>
               <label className="text-ui-sm font-medium text-content-muted">Height
                 <input type="number" min={MIN_HEIGHT} max={MAX_DIMENSION} value={Math.round(height)} onChange={(event) => updateAttributes({ height: clampDimension(Number(event.target.value) || MIN_HEIGHT, MIN_HEIGHT) })} aria-label="Shape height" className="mt-1 h-9 w-full rounded-control border border-subtle bg-surface-raised px-2 text-content outline-none focus:border-accent" />
@@ -513,19 +592,34 @@ export default function ShapeView({ node, updateAttributes, deleteNode, selected
               if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return
               event.preventDefault()
               const amount = event.shiftKey ? 10 : 1
+              const editorWidth = wrapperRef.current?.closest('.ProseMirror')?.getBoundingClientRect().width || MAX_DIMENSION
               updateAttributes({
-                wrap: 'free',
-                x: (x || 0) + (event.key === 'ArrowLeft' ? -amount : event.key === 'ArrowRight' ? amount : 0),
-                y: (y || 0) + (event.key === 'ArrowUp' ? -amount : event.key === 'ArrowDown' ? amount : 0),
+                wrap: 'absolute',
+                x: clamp(
+                  (x || 0) + (event.key === 'ArrowLeft' ? -amount : event.key === 'ArrowRight' ? amount : 0),
+                  0,
+                  Math.max(0, editorWidth - width - 8)
+                ),
+                y: Math.max(0, (y || 0) + (event.key === 'ArrowUp' ? -amount : event.key === 'ArrowDown' ? amount : 0)),
               })
             }}
-            className="absolute left-0 top-0 z-20 flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 cursor-move items-center justify-center rounded-full border-2 border-accent bg-surface-raised text-accent-text shadow-sm"
+            className="absolute -left-9 top-1/2 z-30 flex h-7 w-7 -translate-y-1/2 cursor-move items-center justify-center rounded-full border-2 border-accent bg-surface-raised text-accent-text shadow-sm"
           >
             <Move className="h-3.5 w-3.5" aria-hidden="true" />
           </button>
           <span contentEditable={false} className="qn-shape__rotation-line absolute left-1/2 top-0 w-px -translate-x-1/2 -translate-y-5 bg-[var(--qn-accent)]" />
           <button type="button" contentEditable={false} aria-label="Drag to rotate shape; hold Shift to snap to 15 degrees" title="Drag to rotate; Shift snaps to 15°" onPointerDown={startRotate} className="absolute left-1/2 top-0 z-20 h-3.5 w-3.5 -translate-x-1/2 -translate-y-8 cursor-grab rounded-full border-2 border-accent bg-surface-raised shadow-sm active:cursor-grabbing" />
-          <button type="button" contentEditable={false} aria-label="Drag to resize shape" title="Drag to resize; Shift keeps proportions" onPointerDown={startResize} className="absolute -bottom-1.5 -right-1.5 z-20 h-4 w-4 cursor-nwse-resize rounded-control border-2 border-accent bg-surface-raised shadow-sm" />
+          {RESIZE_HANDLES.map((direction) => (
+            <button
+              key={direction}
+              type="button"
+              contentEditable={false}
+              aria-label={`Resize shape ${direction}`}
+              title="Drag to resize; Shift keeps proportions from a corner"
+              onPointerDown={(event) => startResize(event, direction)}
+              className={`qn-object-resize-handle qn-object-resize-handle--${direction}`}
+            />
+          ))}
           <span contentEditable={false} className="qn-shape__size absolute bottom-1 right-2 rounded bg-black/75 px-1.5 py-0.5 text-[10px] leading-none text-white">{Math.round(liveWidth)} × {Math.round(liveHeight)}</span>
         </>
       )}

@@ -428,11 +428,55 @@ html {
 }
 
 .ProseMirror ul[data-type="taskList"] li input[type="checkbox"] {
+  appearance: none;
+  display: grid;
+  place-content: center;
   width: 1rem;
   height: 1rem;
+  margin: 0;
+  border: 1.5px solid var(--qn-border-strong);
+  border-radius: 4px;
+  background: var(--qn-surface-raised);
   cursor: pointer;
-  accent-color: #3b82f6;
   flex-shrink: 0;
+  transition: border-color var(--qn-duration-fast) var(--qn-ease),
+    background-color var(--qn-duration-fast) var(--qn-ease),
+    box-shadow var(--qn-duration-fast) var(--qn-ease);
+}
+
+.ProseMirror ul[data-type="taskList"] li[data-checkbox-style='square'] input[type="checkbox"] {
+  border-radius: 1px;
+}
+
+.ProseMirror ul[data-type="taskList"] li[data-checkbox-style='circle'] input[type="checkbox"] {
+  border-radius: 999px;
+}
+
+.ProseMirror ul[data-type="taskList"] li input[type="checkbox"]::after {
+  content: '';
+  width: 0.48rem;
+  height: 0.26rem;
+  border-bottom: 2px solid var(--qn-accent-on);
+  border-left: 2px solid var(--qn-accent-on);
+  opacity: 0;
+  transform: translateY(-1px) rotate(-45deg) scale(0.7);
+  transition: opacity var(--qn-duration-fast) var(--qn-ease),
+    transform var(--qn-duration-fast) var(--qn-ease);
+}
+
+.ProseMirror ul[data-type="taskList"] li input[type="checkbox"]:checked {
+  border-color: var(--qn-accent);
+  background: var(--qn-accent);
+}
+
+.ProseMirror ul[data-type="taskList"] li input[type="checkbox"]:checked::after {
+  opacity: 1;
+  transform: translateY(-1px) rotate(-45deg) scale(1);
+}
+
+.ProseMirror ul[data-type="taskList"] li input[type="checkbox"]:focus-visible {
+  outline: 2px solid var(--qn-focus-ring);
+  outline-offset: 2px;
 }
 
 /* Nested task lists */
@@ -1697,11 +1741,11 @@ body {
 
 /* Shared interface details */
 
-/* Phones retain one compact, horizontally scrollable strip so tools do not
-   consume the writing area. Pointer-sized layouts wrap the complete toolset
-   instead, keeping every command visible without a horizontal scrollbar. */
+/* One ribbon model at every width: tabs choose a task, and every command is
+   contained by a named group. Narrow screens scroll the active tab instead of
+   mixing unnamed buttons with an unrelated More panel. */
 .editor-toolbar {
-  min-height: 44px;
+  min-height: 58px;
   scroll-padding-inline: 0.5rem;
   scrollbar-width: thin;
   -webkit-overflow-scrolling: touch;
@@ -1711,17 +1755,190 @@ body {
   flex-shrink: 0;
 }
 
-.editor-toolbar > .qn-toolbar-sep {
-  align-self: stretch;
+.qn-ribbon-group {
+  position: relative;
+  display: flex;
+  min-width: max-content;
+  flex: 0 0 auto;
+  align-items: flex-start;
+  gap: 0.125rem;
+  padding: 0.375rem 0.625rem 1.15rem;
+  border-right: 1px solid var(--qn-border-subtle);
 }
 
-.qn-toolbar-overflow-group .qn-toolbar-overflow-label {
-  display: block !important;
+.qn-ribbon-group:last-child {
+  border-right: 0;
+}
+
+.qn-ribbon-group > [role='separator'] {
+  align-self: flex-start;
+  margin-top: 0.25rem;
+}
+
+.qn-ribbon-group-label {
+  position: absolute;
+  right: 0.5rem;
+  bottom: 0.2rem;
+  left: 0.5rem;
+  overflow: hidden;
+  color: var(--qn-text-subtle);
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1;
+  text-align: center;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   white-space: nowrap;
+  pointer-events: none;
 }
 
-.qn-toolbar-overflow-group > [role='separator'] {
-  align-self: center;
+@media (max-width: 767px) {
+  .editor-toolbar {
+    min-height: 60px;
+  }
+
+  .qn-ribbon-group {
+    padding-top: 0.125rem;
+    padding-bottom: 0.875rem;
+  }
+
+  .qn-ribbon-group-label {
+    bottom: 0.125rem;
+  }
+}
+
+/* Interactive paragraph ruler. */
+.qn-document-ruler {
+  user-select: none;
+}
+
+.qn-ruler-tick {
+  position: absolute;
+  bottom: 0;
+  width: 1px;
+  height: 8px;
+  background: var(--qn-border-strong);
+  pointer-events: none;
+}
+
+.qn-ruler-tick::before {
+  content: '';
+  position: absolute;
+  left: 9px;
+  bottom: 0;
+  width: 1px;
+  height: 4px;
+  background: var(--qn-border-subtle);
+  box-shadow: 10px 0 var(--qn-border-subtle), 20px 0 var(--qn-border-subtle);
+}
+
+.qn-ruler-tick > span {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  color: var(--qn-text-subtle);
+  font-size: 9px;
+  line-height: 1;
+}
+
+.qn-ruler-marker,
+.qn-ruler-tab-stop {
+  position: absolute;
+  z-index: 2;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: ew-resize;
+  transform: translateX(-50%);
+}
+
+.qn-ruler-marker::after,
+.qn-ruler-tab-stop::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.qn-ruler-marker--first {
+  top: 0;
+}
+
+.qn-ruler-marker--first::after {
+  border-top: 7px solid var(--qn-accent);
+  border-right: 5px solid transparent;
+  border-left: 5px solid transparent;
+}
+
+.qn-ruler-marker--left,
+.qn-ruler-marker--right {
+  bottom: 0;
+}
+
+.qn-ruler-marker--left::after,
+.qn-ruler-marker--right::after {
+  bottom: 0;
+  border-right: 5px solid transparent;
+  border-bottom: 7px solid var(--qn-accent);
+  border-left: 5px solid transparent;
+}
+
+.qn-ruler-tab-stop {
+  bottom: 0;
+}
+
+.qn-ruler-tab-stop::after {
+  bottom: 0;
+  width: 8px;
+  height: 9px;
+  border-bottom: 2px solid var(--qn-info-text);
+  border-left: 2px solid var(--qn-info-text);
+}
+
+.qn-ruler-marker:focus-visible::after,
+.qn-ruler-tab-stop:focus-visible::after {
+  filter: drop-shadow(0 0 2px var(--qn-focus-ring));
+}
+
+.qn-tab-stop {
+  position: relative;
+  min-width: 8px;
+  border-bottom: 1px dotted transparent;
+  white-space: pre;
+}
+
+.ProseMirror.show-invisibles .qn-tab-stop {
+  border-bottom-color: var(--qn-border-strong);
+}
+
+.ProseMirror.show-invisibles .qn-tab-stop::after {
+  content: '→';
+  position: absolute;
+  left: 2px;
+  color: var(--qn-text-subtle);
+  font-size: 0.72em;
+}
+
+.qn-check-style-preview {
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid var(--qn-border-strong);
+  background: var(--qn-surface-raised);
+}
+
+.qn-check-style-preview--square {
+  border-radius: 1px;
+}
+
+.qn-check-style-preview--rounded {
+  border-radius: 4px;
+}
+
+.qn-check-style-preview--circle {
+  border-radius: 999px;
 }
 
 .editor-paper {
@@ -1819,6 +2036,10 @@ body {
   background: transparent;
 }
 
+.qn-text-box[data-bg='transparent'] {
+  background: transparent;
+}
+
 .qn-text-box:hover {
   border-color: var(--qn-accent-border);
 }
@@ -1846,6 +2067,33 @@ body {
 .qn-text-box__content > p:first-child {
   margin-top: 0;
 }
+
+.qn-text-box__content {
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 0;
+}
+
+.qn-object-resize-handle {
+  position: absolute;
+  z-index: 30;
+  width: 11px;
+  height: 11px;
+  padding: 0;
+  border: 2px solid var(--qn-accent);
+  border-radius: 2px;
+  background: var(--qn-surface-raised);
+  box-shadow: var(--qn-shadow-xs);
+}
+
+.qn-object-resize-handle--nw { top: -6px; left: -6px; cursor: nwse-resize; }
+.qn-object-resize-handle--n { top: -6px; left: 50%; cursor: ns-resize; transform: translateX(-50%); }
+.qn-object-resize-handle--ne { top: -6px; right: -6px; cursor: nesw-resize; }
+.qn-object-resize-handle--e { top: 50%; right: -6px; cursor: ew-resize; transform: translateY(-50%); }
+.qn-object-resize-handle--se { right: -6px; bottom: -6px; cursor: nwse-resize; }
+.qn-object-resize-handle--s { bottom: -6px; left: 50%; cursor: ns-resize; transform: translateX(-50%); }
+.qn-object-resize-handle--sw { bottom: -6px; left: -6px; cursor: nesw-resize; }
+.qn-object-resize-handle--w { top: 50%; left: -6px; cursor: ew-resize; transform: translateY(-50%); }
 
 /* ============================================================
    Document shapes

@@ -51,18 +51,27 @@ attachments).
 The editor and workspace changes in this pass were selected against current
 official product guidance:
 
-- Word for the web makes its simplified, single-line ribbon the default and
-  expands to the classic ribbon when the user needs less-common commands.
-  Evernote similarly shows **More** only when navigation items are hidden.
-  QuickNotes now measures the editor pane, progressively promotes complete
-  command groups, hides **More** when everything fits, and lists only the
-  remaining groups when it does not.
-- Word exposes an explicit shape gallery, direct movement after selecting a
-  wrapping mode, document anchors, exact position/size, free rotation,
-  Shift-constrained 15-degree rotation, 90-degree commands and flips. QuickNotes
-  now persists that practical subset directly in note HTML for twelve genuine
-  SVG shapes with editable text, a visual change-shape gallery, inline/side/free
-  layout modes, pointer movement, keyboard nudging and restrained styles.
+- Word organizes commands into predictable ribbon tabs and named groups, and
+  permits users to customize that hierarchy. QuickNotes now uses one stable
+  five-tab ribbon (Home, Insert, Format, Layout, and Tools). Every command is
+  contained by a named group; narrow panes scroll only the active tab, while
+  every tab fits without horizontal scrolling in the desktop editor.
+- Word creates text boxes by dragging to the requested size and moves them from
+  their border. QuickNotes now uses the same direct-manipulation contract for
+  text boxes and twelve genuine SVG shapes: choose an object, drag on the page
+  to create it at that size and position, then drag the surface/border to move
+  it or any of eight handles to resize it. Objects are clamped to the page,
+  expand its scrollable height, and retain exact geometry in note HTML.
+- Text boxes now include free/in-flow/left-wrap/right-wrap layouts, exact X/Y/W/H
+  fields, text alignment, transparent or custom background fills, and configurable
+  border style, colour, and weight. Shapes additionally retain rotation,
+  Shift-constrained 15-degree rotation, 90-degree commands, flips, editable
+  text, and a visual change-shape gallery.
+- Word's ruler uses paragraph indent markers and custom tab stops; its list
+  tools support custom bullet symbols. QuickNotes now persists repeatable
+  40-pixel indent levels, left/right/first-line ruler geometry, draggable tab
+  stops and real Tab-key advances. Checklists remain nested and can use square,
+  rounded, or circular controls.
 - Notion's board view confirms Kanban as a status-based workspace pattern.
   QuickNotes already had a full Project Board with columns, drag-and-drop,
   milestones, assignees and keyboard status movement; it was a discovery gap,
@@ -93,7 +102,7 @@ backend flows are designed and tested.
 - Obsidian: [backlinks](https://obsidian.md/help/plugins/backlinks), [graph view](https://obsidian.md/help/plugins/graph), and [Canvas](https://obsidian.md/help/plugins/canvas)
 - Apple Notes: [macOS Notes guide](https://support.apple.com/guide/notes/welcome/mac)
 - Google Keep: [product workflow](https://support.google.com/keep/answer/2888240) and [sharing](https://support.google.com/keep/answer/6101196)
-- Microsoft Word: [simplified ribbon](https://support.microsoft.com/en-US/Word/using-the-simplified-ribbon-in-word-for-the-web), [drawing and sizing](https://support.microsoft.com/en-US/Word/add-a-drawing-to-a-document), and [rotate or flip objects](https://support.microsoft.com/en-us/office/rotate-or-flip-a-text-box-shape-wordart-or-picture-in-word-8e55a7a0-274b-455b-a8aa-4aacd437c527)
+- Microsoft Word: [customize the ribbon](https://support.microsoft.com/en-us/office/customize-the-ribbon-in-word-7dc27f62-70ab-42e8-a527-4603018013af), [add and move text boxes](https://support.microsoft.com/en-us/office/add-copy-or-remove-a-text-box-in-word-57e099ac-0525-46ae-8109-8a1d844f5834), [set tab stops](https://support.microsoft.com/en-us/office/set-or-change-the-tab-stops-2fcc4b98-a330-4f14-9ca7-6f8c6421e29e), [custom bullets](https://support.microsoft.com/en-us/office/create-custom-bullets-with-pictures-or-symbols-9e01908a-8ab1-4d0b-82c2-d83b9c5dc722), and [rotate or flip objects](https://support.microsoft.com/en-us/office/rotate-or-flip-a-text-box-shape-wordart-or-picture-in-word-8e55a7a0-274b-455b-a8aa-4aacd437c527)
 - Microsoft OneNote: [drawing and shapes](https://support.microsoft.com/en-us/onenote/onenote-help-and-learning/draw-and-sketch-notes-in-onenote)
 - Notion: [board views](https://www.notion.com/help/boards) and [forms](https://www.notion.com/en-gb/help/forms)
 - Evernote: [editor and insert options](https://help.evernote.com/hc/en-us/articles/360022954093-Note-editor-and-editing-toolbar-overview)
