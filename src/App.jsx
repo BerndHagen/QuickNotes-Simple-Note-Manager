@@ -1,7 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Sidebar from './components/Sidebar'
-import NotesList from './components/NotesList'
-import NotesGrid from './components/NotesGrid'
 import ErrorBoundary from './components/ErrorBoundary'
 import ReminderModal from './components/ReminderModal'
 import { ThemeProvider } from './components/ThemeProvider'
@@ -54,6 +52,8 @@ const restoreMobileHistorySurface = (surface) => {
 }
 
 const NoteEditor = lazy(() => import('./components/NoteEditor'))
+const NotesList = lazy(() => import('./components/NotesList'))
+const NotesGrid = lazy(() => import('./components/NotesGrid'))
 const PasswordRecoveryScreen = lazy(() => import('./components/PasswordRecoveryScreen'))
 const QuickNoteModal = lazy(() => import('./components/QuickNoteModal'))
 const SettingsModal = lazy(() => import('./components/SettingsModal'))
@@ -583,24 +583,28 @@ export default function App() {
         >
           {viewMode === 'grid' ? (
             <div className="min-h-0 flex-1 overflow-hidden">
-              <NotesGrid sidebarToggle={sidebarToggle} />
+              <Suspense fallback={<EditorLoading />}>
+                <NotesGrid sidebarToggle={sidebarToggle} />
+              </Suspense>
             </div>
           ) : (
             <div className="flex min-h-0 flex-1">
               <div
                 className={[
-                  'flex min-h-0 shrink-0 flex-col border-r border-subtle',
+                  'qn-note-list-pane flex min-h-0 shrink-0 flex-col border-r border-subtle',
                   isCompact ? 'w-full' : 'w-list 2xl:w-[var(--qn-list-width-wide)]',
                   showList ? '' : 'hidden',
                 ].join(' ')}
               >
-                <NotesList
-                  sidebarToggle={isWide && sidebarOpen ? null : sidebarToggle}
-                  onOpenNote={() => isCompact && setMobileView('editor')}
-                />
+                <Suspense fallback={<EditorLoading />}>
+                  <NotesList
+                    sidebarToggle={isWide && sidebarOpen ? null : sidebarToggle}
+                    onOpenNote={() => isCompact && setMobileView('editor')}
+                  />
+                </Suspense>
               </div>
 
-              <main className={`min-w-0 flex-1 ${showEditor ? 'flex' : 'hidden'}`}>
+              <main className={`qn-editor-pane min-w-0 flex-1 ${showEditor ? 'flex' : 'hidden'}`}>
                 <ErrorBoundary>
                   <Suspense fallback={<EditorLoading />}>
                     <NoteEditor onBack={returnToMobileNotes} showBack={isCompact} />

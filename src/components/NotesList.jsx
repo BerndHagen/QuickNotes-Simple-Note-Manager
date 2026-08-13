@@ -431,8 +431,8 @@ export default function NotesList({ sidebarToggle, onOpenNote }) {
   ))
 
   return (
-    <section aria-label={title} className="flex h-full w-full min-w-0 flex-col bg-panel">
-      <div className="shrink-0 px-3 pb-2.5 pt-3">
+    <section aria-label={title} className="qn-note-list flex h-full w-full min-w-0 flex-col bg-panel">
+      <div className="qn-note-list-header shrink-0 px-3 pb-2.5 pt-3">
         <div className="mb-2.5 flex items-center gap-1.5">
           {sidebarToggle}
           <h2 className="min-w-0 flex-1 truncate text-title-sm font-semibold text-content">{title}</h2>
@@ -505,7 +505,7 @@ export default function NotesList({ sidebarToggle, onOpenNote }) {
       <div
         ref={listRef}
         onKeyDown={handleListKeyDown}
-        className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain border-t border-subtle"
+        className="qn-note-list-scroll min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain border-t border-subtle"
       >
         {visibleNotes.length === 0 ? (
           <EmptyState

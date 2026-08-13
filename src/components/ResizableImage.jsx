@@ -115,7 +115,7 @@ export default function ResizableImage({ node, updateAttributes, deleteNode, sel
           src={src}
           alt={alt || ''}
           title={title || ''}
-          className={`rounded-lg shadow-md transition-all duration-200 ${
+          className={`rounded-lg shadow-md transition-[width,transform,box-shadow] duration-base ${
  selected ? 'ring-2 ring-accent ring-offset-2' : ''
  } ${isResizing ? 'select-none' : ''}`}
           style={{

@@ -176,7 +176,7 @@ export default function NoteTypesModal({ onCreated }) {
                     aria-pressed={active}
                     onClick={() => selectType(type.id)}
                     className={[
-                      'group flex w-full items-start gap-3 rounded-card border p-3.5 text-left transition-all duration-fast',
+                      'group flex w-full items-start gap-3 rounded-card border p-3.5 text-left transition-[background-color,border-color,box-shadow] duration-fast',
                       active
                         ? 'border-accent bg-surface-raised shadow-sm ring-1 ring-[var(--qn-accent-soft)]'
                         : 'border-transparent bg-transparent hover:border-subtle hover:bg-surface-raised',
@@ -285,7 +285,7 @@ export default function NoteTypesModal({ onCreated }) {
                       <label
                         key={starter.id}
                         className={[
-                          'relative cursor-pointer rounded-card border p-3.5 transition-all',
+                          'relative cursor-pointer rounded-card border p-3.5 transition-[background-color,border-color,box-shadow] duration-fast',
                           active
                             ? 'border-accent bg-accent-soft shadow-xs'
                             : 'border-subtle bg-surface-raised hover:border-strong hover:bg-surface-hover',

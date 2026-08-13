@@ -22,7 +22,7 @@ import { filterNotes } from '../lib/filterNotes'
 import { useTranslation } from '../lib/useTranslation'
 import SortDropdown, { sortNotes } from './SortDropdown'
 import { ConfirmDialog } from './FolderDialogs'
-import { Button, IconButton, Input, Menu, MenuItem, MenuLabel, MenuSeparator, Spinner } from './ui'
+import { Button, EmptyState, IconButton, Input, Menu, MenuItem, MenuLabel, MenuSeparator, Spinner } from './ui'
 
 const NoteEditor = lazy(() => import('./NoteEditor'))
 
@@ -125,7 +125,7 @@ function GridNoteCard({ note, isSelected, onClick, onOpenMenu }) {
         event.preventDefault()
         onOpenMenu({ x: event.clientX, y: event.clientY })
       }}
-      className={`group relative flex min-h-40 flex-col rounded-card border bg-surface-raised p-3 shadow-xs transition-[border-color,box-shadow,transform] duration-fast hover:-translate-y-0.5 hover:shadow-md sm:min-h-48 sm:p-4 ${
+      className={`group relative flex min-h-40 flex-col rounded-card border bg-surface-raised p-3 shadow-xs transition-[border-color,box-shadow] duration-fast hover:shadow-sm sm:min-h-48 sm:p-4 ${
         isSelected
           ? 'border-accent ring-2 ring-[var(--qn-accent-soft)]'
           : 'border-subtle hover:border-strong'
@@ -338,24 +338,24 @@ export default function NotesGrid({ sidebarToggle }) {
       </header>
       <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-6">
         {filteredNotes.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center">
-            <div className="flex items-center justify-center w-20 h-20 mb-5 rounded-2xl bg-surface-sunken">
-              <FileText className="w-10 h-10 text-content-subtle dark:text-content-muted" />
-            </div>
-            <p className="text-base font-semibold text-content-muted">
-              {searchQuery ? t('notes.noNotesFound') : t('notes.noNotes')}
-            </p>
-            {!searchQuery && (
+          <EmptyState
+            icon={FileText}
+            title={searchQuery ? t('notes.noNotesFound') : t('notes.noNotes')}
+            description={
+              searchQuery
+                ? 'Try another title, tag, or phrase.'
+                : 'Create a note to start building your workspace.'
+            }
+            action={!searchQuery ? (
               <Button
                 size="sm"
                 variant="primary"
                 onClick={handleCreateNote}
-                className="mt-3"
               >
                 {t('notes.createFirst')}
               </Button>
-            )}
-          </div>
+            ) : null}
+          />
         ) : (
           <div data-note-grid className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
             {filteredNotes.map((note) => (

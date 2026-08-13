@@ -21,6 +21,7 @@ import { formatDateKey, generateId, parseDateKey } from './noteTypes'
 import { useLatestValue } from './useLatestValue'
 import { useEditorDataSync } from './useEditorDataSync'
 import FocusedNoteTitle from './FocusedNoteTitle'
+import WorkspaceMetrics from './WorkspaceMetrics'
 const MOODS = [
   { id: 1, emoji: '\u{1F622}', label: 'Terrible', color: '#ef4444' },
   { id: 2, emoji: '\u{1F614}', label: 'Bad', color: '#f97316' },
@@ -161,10 +162,10 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
   ]
 
   return (
-    <div className="qn-type-editor qn-type-journal flex flex-col h-full bg-surface-raised">
-      <div className="qn-type-hero flex-shrink-0 p-4 border-b border-subtle bg-[#e5eaf0] dark:bg-surface-raised">
-        <div className="flex items-center justify-between mb-4">
-          <div>
+    <div className="qn-type-editor qn-type-journal flex h-full flex-col">
+      <header className="qn-type-hero qn-workspace-header flex-shrink-0 border-b border-subtle">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
             <FocusedNoteTitle
               icon={BookOpen}
               typeLabel="Journal workspace"
@@ -177,7 +178,7 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
               <button
                 onClick={() => changeDate(-1)}
                 aria-label="Previous journal day"
-                className="p-1 rounded-lg bg-surface-sunken dark:bg-surface-sunken hover:bg-surface-active dark:hover:bg-surface-active text-content-muted"
+                className="qn-square-control flex h-8 w-8 items-center justify-center rounded-control border border-subtle bg-surface-raised text-content-muted hover:bg-surface-hover"
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
@@ -186,55 +187,23 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
                 onClick={() => changeDate(1)}
                 disabled={isToday}
                 aria-label="Next journal day"
-                className="p-1 rounded-lg bg-surface-sunken dark:bg-surface-sunken hover:bg-surface-active dark:hover:bg-surface-active text-content-muted disabled:opacity-50"
+                className="qn-square-control flex h-8 w-8 items-center justify-center rounded-control border border-subtle bg-surface-raised text-content-muted hover:bg-surface-hover disabled:opacity-50"
               >
                 <ChevronRight className="w-5 h-5" />
               </button>
             </div>
           </div>
           
-          <div className="text-right">
-            <div className="flex items-baseline justify-end gap-2 mb-2">
-              <span className="text-2xl font-bold text-content">{completionPercent}%</span>
-              <span className="text-content-muted text-sm">entry complete</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-32 h-2 rounded-full bg-surface-active dark:bg-surface-active overflow-hidden">
-                <div
-                  className="h-full bg-accent rounded-full transition-all"
-                  style={{ width: `${completionPercent}%` }}
-                />
-              </div>
-            </div>
-          </div>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <span className="text-content-muted text-sm">Mood:</span>
-            <span className="text-2xl">{journalData.mood ? MOODS.find(m => m.id === journalData.mood)?.emoji : '\u2753'}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-content-muted text-sm">Energy:</span>
-            <div className="flex gap-0.5">
-              {[1, 2, 3, 4, 5].map((level) => (
-                <div
-                  key={level}
-                  className={`w-3 h-5 rounded-sm ${
- level <= (journalData.energy || 0)
- ? 'bg-accent'
-                      : 'bg-surface-active dark:bg-surface-active'
-                  }`}
-                />
-              ))}
-            </div>
-          </div>
-          {journalData.weather && (
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">{WEATHER.find(w => w.id === journalData.weather)?.emoji}</span>
-            </div>
-          )}
-        </div>
-      </div>
+        <WorkspaceMetrics
+          items={[
+            { label: 'Complete', value: `${completionPercent}%`, tone: completionPercent === 100 ? 'success' : 'neutral' },
+            { label: 'Mood', value: journalData.mood ? MOODS.find(m => m.id === journalData.mood)?.emoji : 'Not set' },
+            { label: 'Energy', value: journalData.energy ? `${journalData.energy}/5` : 'Not set' },
+            { label: 'Weather', value: journalData.weather ? WEATHER.find(w => w.id === journalData.weather)?.emoji : 'Not set' },
+          ]}
+        />
+      </header>
       <div className="qn-type-tabs flex-shrink-0 flex gap-1 p-2 border-b border-subtle bg-surface-sunken overflow-x-auto">
         {sections.map(section => (
           <button
@@ -252,9 +221,9 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
           </button>
         ))}
       </div>
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="qn-workspace-canvas flex-1 overflow-y-auto p-4">
         {activeSection === 'morning' && (
-          <div className="max-w-2xl mx-auto space-y-6">
+          <div className="qn-workspace-panel mx-auto max-w-2xl space-y-6 p-5">
             <div>
               <h3 className="text-lg font-semibold text-content mb-3 flex items-center gap-2">
                 <Smile className="w-5 h-5 text-accent-text" />
@@ -266,10 +235,10 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
                     key={mood.id}
                     onClick={() => update('mood', mood.id)}
                     aria-pressed={journalData.mood === mood.id}
-                    className={`flex flex-col items-center gap-2 p-4 rounded-xl transition-all ${
+                    className={`qn-choice-card flex flex-col items-center gap-2 rounded-card border p-4 ${
  journalData.mood === mood.id
- ? 'bg-accent-soft ring-2 ring-amber-500 scale-110'
-                        : 'bg-surface-sunken hover:bg-surface-sunken dark:hover:bg-surface-sunken'
+ ? 'border-accent bg-accent-soft ring-2 ring-[var(--qn-accent-soft)]'
+                        : 'border-subtle bg-surface-raised hover:border-strong hover:bg-surface-hover'
                     }`}
                   >
                     <span className="text-4xl">{mood.emoji}</span>
@@ -289,10 +258,10 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
                     key={level.id}
                     onClick={() => update('energy', level.id)}
                     aria-pressed={journalData.energy === level.id}
-                    className={`flex flex-col items-center gap-1 p-3 rounded-xl transition-all flex-1 max-w-[100px] ${
+                    className={`qn-choice-card flex max-w-[100px] flex-1 flex-col items-center gap-1 rounded-card border p-3 ${
  journalData.energy === level.id
- ? 'bg-accent-soft ring-2 ring-amber-500'
-                        : 'bg-surface-sunken hover:bg-surface-sunken dark:hover:bg-surface-sunken'
+ ? 'border-accent bg-accent-soft ring-2 ring-[var(--qn-accent-soft)]'
+                        : 'border-subtle bg-surface-raised hover:border-strong hover:bg-surface-hover'
                     }`}
                   >
                     <div className="flex gap-0.5">
@@ -321,10 +290,10 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
                     key={w.id}
                     onClick={() => update('weather', w.id)}
                     aria-pressed={journalData.weather === w.id}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${
+                    className={`qn-choice-card flex items-center gap-2 rounded-card border px-4 py-2 ${
  journalData.weather === w.id
- ? 'bg-accent-soft ring-2 ring-amber-500'
-                        : 'bg-surface-sunken hover:bg-surface-sunken dark:hover:bg-surface-sunken'
+ ? 'border-accent bg-accent-soft ring-2 ring-[var(--qn-accent-soft)]'
+                        : 'border-subtle bg-surface-raised hover:border-strong hover:bg-surface-hover'
                     }`}
                   >
                     <span className="text-2xl">{w.emoji}</span>
@@ -342,10 +311,10 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
                 {journalData.goals.map((goal) => (
                   <div
                     key={goal.id}
-                    className={`flex items-center gap-3 p-3 rounded-xl ${
+                    className={`qn-domain-card flex items-center gap-3 rounded-card border p-3 ${
  goal.completed
- ? 'bg-green-50 dark:bg-green-900/20'
-                        : 'bg-surface-sunken'
+ ? 'border-[var(--qn-success-border)] bg-success-soft'
+                        : 'border-subtle bg-surface-raised shadow-xs'
                     }`}
                   >
                     <button
@@ -395,7 +364,7 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
           </div>
         )}
         {activeSection === 'day' && (
-          <div className="max-w-2xl mx-auto space-y-6">
+          <div className="qn-workspace-panel mx-auto max-w-2xl space-y-6 p-5">
             <div>
               <h3 className="text-lg font-semibold text-content mb-3 flex items-center gap-2">
                 <Star className="w-5 h-5 text-accent-text" />
@@ -405,7 +374,7 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
                 {journalData.highlights.map((highlight) => (
                   <div
                     key={highlight.id}
-                    className="flex items-start gap-3 p-3 rounded-xl bg-accent-soft border border-amber-200 dark:border-amber-800"
+                  className="qn-domain-card flex items-start gap-3 rounded-card border border-[var(--qn-warning-border)] bg-warning-soft p-3"
                   >
                     <Star className="w-5 h-5 text-accent-text flex-shrink-0 mt-0.5" />
                     <div className="flex-1">
@@ -460,7 +429,7 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
           </div>
         )}
         {activeSection === 'evening' && (
-          <div className="max-w-2xl mx-auto space-y-6">
+          <div className="qn-workspace-panel mx-auto max-w-2xl space-y-6 p-5">
             <div>
               <h3 className="text-lg font-semibold text-content mb-3 flex items-center gap-2">
                 <Heart className="w-5 h-5 text-red-500" />
@@ -503,7 +472,7 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
                 <Target className="w-5 h-5 text-accent-text" />
                 Goal Review
               </h3>
-              <div className="p-4 rounded-xl bg-surface-sunken">
+            <div className="rounded-card border border-subtle bg-surface-sunken p-4">
                 {journalData.goals.length === 0 ? (
                   <p className="text-content-muted text-center">No goals set for today</p>
                 ) : (
@@ -518,7 +487,7 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
                     </div>
                     <div className="w-full h-3 rounded-full bg-surface-sunken dark:bg-surface-sunken overflow-hidden">
                       <div
-                        className="h-full bg-accent rounded-full transition-all"
+                        className="h-full rounded-full bg-accent transition-[width] duration-base"
                         style={{
                           width: `${(journalData.goals.filter(g => g.completed).length / journalData.goals.length) * 100}%`
                         }}
@@ -531,7 +500,7 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
           </div>
         )}
         {activeSection === 'reflect' && (
-          <div className="max-w-2xl mx-auto space-y-6">
+          <div className="qn-workspace-panel mx-auto max-w-2xl space-y-6 p-5">
             <div>
               <h3 className="text-lg font-semibold text-content mb-3">
                 Tags for this entry
@@ -590,7 +559,7 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
                       selectSection('write')
                       update('freeWrite', journalData.freeWrite + (journalData.freeWrite ? '\n\n' : '') + prompt + '\n')
                     }}
-                    className="p-3 rounded-xl bg-surface-sunken hover:bg-accent-soft dark:hover:bg-amber-900/20 text-left text-sm text-content-muted transition-colors"
+                  className="rounded-card border border-subtle bg-surface-raised p-3 text-left text-sm text-content-muted transition-colors hover:border-accent-border hover:bg-accent-soft"
                   >
                     {prompt}
                   </button>
@@ -600,7 +569,7 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
           </div>
         )}
         {activeSection === 'write' && (
-          <div className="max-w-2xl mx-auto">
+          <div className="qn-workspace-panel mx-auto max-w-2xl p-5">
             <div className="mb-4">
               <h3 className="text-lg font-semibold text-content mb-1">
                 Free Writing

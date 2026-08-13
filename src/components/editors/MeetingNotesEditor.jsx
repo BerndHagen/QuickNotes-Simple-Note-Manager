@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { buttonClasses } from '../ui'
+import { EmptyState, buttonClasses } from '../ui'
 import {
   Users,
   Plus,
@@ -276,42 +276,44 @@ ${meetingData.notes}
           ]}
         />
       </header>
-      <div className="qn-type-tabs flex-shrink-0 flex gap-1 p-2 border-b border-subtle bg-surface-sunken overflow-x-auto">
-        {sections.map(section => (
-          <button
-            key={section.id}
-            onClick={() => setActiveSection(section.id)}
-            aria-pressed={activeSection === section.id}
-            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+      <div className="qn-type-tabs qn-meeting-tabs flex-shrink-0 flex items-center gap-2 p-2 border-b border-subtle bg-surface-sunken">
+        <div className="qn-tab-scroller flex min-w-0 flex-1 gap-1 overflow-x-auto">
+          {sections.map(section => (
+            <button
+              key={section.id}
+              onClick={() => setActiveSection(section.id)}
+              aria-pressed={activeSection === section.id}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
  activeSection === section.id
  ? 'bg-accent-soft text-accent-text'
                 : 'text-content-muted hover:bg-surface-hover'
             }`}
-          >
-            <section.icon className="w-4 h-4" />
-            {section.label}
-            {section.badge !== undefined && (
-              <span className="px-1.5 py-0.5 rounded-full bg-surface-sunken dark:bg-surface-sunken text-xs">
-                {section.badge}
-              </span>
-            )}
-          </button>
-        ))}
-        
-        <div className="flex-1" />
+            >
+              <section.icon className="w-4 h-4" />
+              {section.label}
+              {section.badge !== undefined && (
+                <span className="px-1.5 py-0.5 rounded-full bg-surface-sunken dark:bg-surface-sunken text-xs">
+                  {section.badge}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
         
         <button
           onClick={copyMeetingSummary}
           type="button"
-          className={buttonClasses({ variant: 'primary' })}
+          aria-label="Copy meeting summary"
+          title="Copy meeting summary"
+          className={`${buttonClasses({ variant: 'primary' })} flex-shrink-0`}
         >
           <Copy className="w-4 h-4" />
-          Copy summary
+          <span className="qn-copy-label">Copy summary</span>
         </button>
       </div>
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="qn-workspace-canvas flex-1 overflow-y-auto p-4">
         {activeSection === 'details' && (
-          <div className="max-w-2xl mx-auto space-y-4">
+          <div className="qn-workspace-panel mx-auto max-w-2xl space-y-4 p-5">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label className="block text-sm font-medium text-content-muted mb-1">
@@ -369,7 +371,7 @@ ${meetingData.notes}
           </div>
         )}
         {activeSection === 'attendees' && (
-          <div className="max-w-2xl mx-auto">
+          <div className="qn-workspace-panel mx-auto max-w-2xl p-5">
             <div className="flex flex-col gap-2 mb-4 sm:flex-row">
               <input
                 type="text"
@@ -391,14 +393,17 @@ ${meetingData.notes}
 
             <div className="space-y-2">
               {meetingData.attendees.length === 0 ? (
-                <div className="text-center py-12 text-content-muted">
-                  No attendees added yet
-                </div>
+                <EmptyState
+                  icon={Users}
+                  title="No attendees yet"
+                  description="Add participants above and mark who is present."
+                  size="sm"
+                />
               ) : (
                 meetingData.attendees.map((attendee) => (
                   <div
                     key={attendee.id}
-                    className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-colors ${
+                    className={`qn-domain-card flex items-center gap-3 rounded-card border p-3 transition-colors ${
  attendee.present
  ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
                         : 'bg-surface-sunken border-subtle'
@@ -446,7 +451,7 @@ ${meetingData.notes}
           </div>
         )}
         {activeSection === 'agenda' && (
-          <div className="max-w-2xl mx-auto">
+          <div className="qn-workspace-panel mx-auto max-w-2xl p-5">
             <div className="mb-4 p-4 rounded-xl bg-surface-sunken border border-subtle">
               <div className="grid grid-cols-1 gap-3 mb-3 sm:grid-cols-3">
                 <div className="sm:col-span-2">
@@ -497,14 +502,17 @@ ${meetingData.notes}
 
             <div className="space-y-2">
               {meetingData.agenda.length === 0 ? (
-                <div className="text-center py-12 text-content-muted">
-                  No agenda items yet
-                </div>
+                <EmptyState
+                  icon={Target}
+                  title="No agenda items yet"
+                  description="Add the first topic and reserve time for it."
+                  size="sm"
+                />
               ) : (
                 meetingData.agenda.map((item, index) => (
                   <div
                     key={item.id}
-                    className={`p-4 rounded-xl border-2 transition-colors ${
+                    className={`qn-domain-card rounded-card border p-4 transition-colors ${
  item.completed
  ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
                         : currentAgendaItem === item.id
@@ -585,7 +593,7 @@ ${meetingData.notes}
           </div>
         )}
         {activeSection === 'notes' && (
-          <div className="max-w-2xl mx-auto">
+          <div className="qn-workspace-panel mx-auto max-w-2xl p-5">
             <textarea
               aria-label="Meeting notes"
               value={meetingData.notes}
@@ -596,7 +604,7 @@ ${meetingData.notes}
           </div>
         )}
         {activeSection === 'actions' && (
-          <div className="max-w-2xl mx-auto">
+          <div className="qn-workspace-panel mx-auto max-w-2xl p-5">
             <div className="mb-4 p-4 rounded-xl bg-surface-sunken border border-subtle">
               <div className="grid grid-cols-1 gap-3 mb-3 sm:grid-cols-3">
                 <div className="sm:col-span-2">
@@ -643,14 +651,17 @@ ${meetingData.notes}
 
             <div className="space-y-2">
               {meetingData.actionItems.length === 0 ? (
-                <div className="text-center py-12 text-content-muted">
-                  No action items yet
-                </div>
+                <EmptyState
+                  icon={CheckCircle2}
+                  title="No action items yet"
+                  description="Record a task, owner, and due date above."
+                  size="sm"
+                />
               ) : (
                 meetingData.actionItems.map((item) => (
                   <div
                     key={item.id}
-                    className={`flex items-center gap-3 p-3 rounded-xl border-2 ${
+                    className={`qn-domain-card flex items-center gap-3 rounded-card border p-3 ${
  item.completed
  ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
                         : 'bg-surface-raised border-subtle'
@@ -701,7 +712,7 @@ ${meetingData.notes}
           </div>
         )}
         {activeSection === 'decisions' && (
-          <div className="max-w-2xl mx-auto">
+          <div className="qn-workspace-panel mx-auto max-w-2xl p-5">
             <div className="flex flex-col gap-2 mb-4 sm:flex-row">
               <input
                 type="text"
@@ -723,14 +734,17 @@ ${meetingData.notes}
 
             <div className="space-y-2">
               {meetingData.decisions.length === 0 ? (
-                <div className="text-center py-12 text-content-muted">
-                  No decisions recorded yet
-                </div>
+                <EmptyState
+                  icon={Target}
+                  title="No decisions recorded"
+                  description="Capture an agreed decision so it remains visible after the meeting."
+                  size="sm"
+                />
               ) : (
                 meetingData.decisions.map((decision, index) => (
                   <div
                     key={decision.id}
-                    className="flex items-start gap-3 p-4 rounded-xl bg-accent-soft border-2 border-amber-200 dark:border-amber-800"
+                    className="qn-domain-card flex items-start gap-3 rounded-card border border-[var(--qn-warning-border)] bg-warning-soft p-4"
                   >
                     <div className="w-8 h-8 rounded-full bg-amber-200 dark:bg-amber-800 text-accent-text flex items-center justify-center font-bold text-sm">
                       {index + 1}

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { buttonClasses } from '../ui'
+import { EmptyState, buttonClasses } from '../ui'
 import {
   ShoppingCart,
   Plus,
@@ -19,6 +19,7 @@ import {
 import { useLatestValue } from './useLatestValue'
 import { useEditorDataSync } from './useEditorDataSync'
 import FocusedNoteTitle from './FocusedNoteTitle'
+import WorkspaceMetrics from './WorkspaceMetrics'
 const UNITS = ['pcs', 'kg', 'g', 'lb', 'oz', 'L', 'ml', 'gal', 'pack', 'box', 'bag', 'bottle', 'can', 'bunch', 'dozen']
 
 export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleChange, readOnly }) {
@@ -122,10 +123,10 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
   }[shoppingData.currency] || shoppingData.currency
 
   return (
-    <div className="qn-type-editor qn-type-shopping flex flex-col h-full bg-surface-raised">
-      <div className="qn-type-hero flex-shrink-0 p-4 border-b border-subtle bg-[#e5eaf0] dark:bg-surface-raised">
-        <div className="flex items-center justify-between mb-4">
-          <div>
+    <div className="qn-type-editor qn-type-shopping flex h-full flex-col">
+      <header className="qn-type-hero qn-workspace-header flex-shrink-0 border-b border-subtle">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
             <FocusedNoteTitle
               icon={ShoppingCart}
               typeLabel="Shopping workspace"
@@ -138,33 +139,24 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
               {checkedCount} of {totalCount} items checked
             </p>
           </div>
-          <div className="text-right">
-            {shoppingData.showPrices && (
-              <div className="space-y-1">
-                <div className="text-2xl font-bold text-content">
-                  {currencySymbol}{total.toFixed(2)}
-                </div>
-                {shoppingData.budget != null && (
-                  <div className={`text-sm ${total > shoppingData.budget ? 'text-red-500 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
-                    Budget: {currencySymbol}{shoppingData.budget.toFixed(2)}
-                    {total > shoppingData.budget && ' (Over!)'}
-                  </div>
-                )}
-                <div className="flex gap-4 text-sm text-content-muted">
-                  <span>{"\u2713"} {currencySymbol}{checkedTotal.toFixed(2)}</span>
-                  <span>{"\u25CB"} {currencySymbol}{uncheckedTotal.toFixed(2)}</span>
-                </div>
-              </div>
-            )}
-          </div>
         </div>
-        <div className="w-full h-2 rounded-full bg-surface-active dark:bg-surface-active overflow-hidden">
-          <div
-            className="h-full bg-emerald-500 rounded-full transition-all"
-            style={{ width: `${totalCount > 0 ? (checkedCount / totalCount) * 100 : 0}%` }}
-          />
-        </div>
-      </div>
+        <WorkspaceMetrics
+          items={[
+            { label: 'Checked', value: `${checkedCount}/${totalCount}` },
+            ...(shoppingData.showPrices ? [
+              { label: 'Purchased', value: `${currencySymbol}${checkedTotal.toFixed(2)}` },
+              { label: 'Still to buy', value: `${currencySymbol}${uncheckedTotal.toFixed(2)}` },
+              {
+                label: shoppingData.budget != null ? 'Budget status' : 'Total',
+                value: shoppingData.budget != null
+                  ? `${currencySymbol}${total.toFixed(2)} / ${currencySymbol}${shoppingData.budget.toFixed(2)}`
+                  : `${currencySymbol}${total.toFixed(2)}`,
+                tone: shoppingData.budget != null && total > shoppingData.budget ? 'danger' : 'neutral',
+              },
+            ] : []),
+          ]}
+        />
+      </header>
       <div className="qn-type-tabs flex-shrink-0 p-4 border-b border-subtle bg-surface-sunken">
         <div className="flex gap-2 flex-wrap">
           <input
@@ -305,13 +297,13 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
           </div>
         )}
       </div>
-      <div className="flex-1 overflow-y-auto">
+      <div className="qn-workspace-canvas flex-1 overflow-y-auto">
         {shoppingData.items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-content-subtle">
-            <ShoppingBag className="w-16 h-16 mb-4 opacity-50" />
-            <p className="text-lg">Your shopping list is empty</p>
-            <p className="text-sm mt-1">Add items using the form above</p>
-          </div>
+          <EmptyState
+            icon={ShoppingBag}
+            title="Your shopping list is empty"
+            description="Add the first item using the form above."
+          />
         ) : (
           <div className="p-4 space-y-2">
             {shoppingData.categories.map((category) => {
@@ -323,9 +315,9 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
               const categoryTotal = categoryItems.reduce((sum, i) => sum + (i.price || 0) * i.quantity, 0)
 
               return (
-                <div
+                <section
                   key={category.id}
-                  className="rounded-xl overflow-hidden border border-subtle"
+                  className="qn-section-card overflow-hidden rounded-card border border-subtle bg-surface-raised shadow-xs"
                 >
                   <button
                     onClick={() => toggleCategory(category.id)}
@@ -351,12 +343,12 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
                     )}
                   </button>
                   {isExpanded && (
-                    <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                    <div className="divide-y divide-[var(--qn-border-subtle)]">
                       {categoryItems.map((item) => (
                         <div
                           key={item.id}
                           className={`flex flex-wrap items-center gap-3 p-3 ${
- item.checked ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-surface-raised'
+ item.checked ? 'bg-success-soft' : 'bg-surface-raised'
  }`}
                         >
                           <button
@@ -469,7 +461,7 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
                       ))}
                     </div>
                   )}
-                </div>
+                </section>
               )
             })}
           </div>

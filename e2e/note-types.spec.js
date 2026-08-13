@@ -47,7 +47,7 @@ const focusedTypes = [
     starter: 'Problem solving',
     className: '.qn-type-brainstorm',
     title: 'Professional problem solving',
-    expectation: /possible cause/i,
+    expectation: /no ideas yet/i,
     sections: [],
   },
   {
@@ -146,8 +146,13 @@ test.describe('focused note types', () => {
         await taskDialog.getByRole('button', { name: 'Cancel' }).click()
       }
       if (definition.type === 'Idea Board') {
-        await editor.getByRole('button', { name: 'List view' }).click()
-        await editor.getByRole('button', { name: /possible cause/i }).first().click()
+        await editor.getByRole('radio', { name: 'List' }).click()
+        const categorySelect = editor.getByLabel('Filter ideas by category')
+        if (await categorySelect.isVisible()) {
+          await categorySelect.selectOption('cause')
+        } else {
+          await editor.getByRole('button', { name: /possible cause/i }).first().click()
+        }
       }
       if (definition.type === 'Shopping List') {
         await editor.getByRole('button', { name: 'Settings' }).click()

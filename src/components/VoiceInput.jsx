@@ -214,7 +214,7 @@ export default function VoiceInput({ onTranscript, isActive, onToggle }) {
             onClick={() => (isListening ? pauseRecognition() : startRecognition())}
             aria-label={isListening ? 'Pause voice input' : 'Resume voice input'}
             aria-pressed={isListening}
-            className={`flex h-16 w-16 items-center justify-center rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 ${
+            className={`flex h-16 w-16 items-center justify-center rounded-full transition-[background-color,color,box-shadow,transform] duration-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 ${
               isListening
                 ? 'scale-110 bg-red-500 text-white shadow-lg shadow-red-500/30'
                 : 'bg-surface-sunken text-content-muted hover:bg-surface-hover'

@@ -55,7 +55,7 @@ const NoteCard = forwardRef(function NoteCard(
   const extraTags = (note.tags?.length || 0) - visibleTags.length
 
   return (
-    <li className={`group relative ${dragHandle ? 'qn-note-card--sortable' : ''}`}>
+    <li className={`group relative px-3 py-1 ${dragHandle ? 'qn-note-card--sortable' : ''}`}>
       <div className="relative">
         {dragHandle}
         <button
@@ -69,13 +69,13 @@ const NoteCard = forwardRef(function NoteCard(
           aria-current={isSelected ? 'true' : undefined}
           aria-pressed={isMultiSelected || undefined}
           className={[
-            'note-card relative flex w-full flex-col gap-1.5 border-0 border-b border-subtle text-left transition-colors duration-fast',
-            compactMode ? 'px-4 py-2.5' : 'px-4 py-3.5',
+            'note-card relative flex w-full flex-col gap-1.5 rounded-card border text-left shadow-xs transition-[background-color,border-color,box-shadow] duration-fast',
+            compactMode ? 'px-3 py-2' : 'px-3.5 py-3',
             isSelected
-              ? 'bg-accent-soft shadow-[inset_3px_0_0_var(--qn-accent)]'
+              ? 'border-[var(--qn-accent-border)] bg-accent-soft shadow-[inset_3px_0_0_var(--qn-accent),var(--qn-shadow-xs)]'
               : isMultiSelected
-                ? 'bg-info-soft shadow-[inset_3px_0_0_var(--qn-info)]'
-                : 'bg-transparent hover:bg-surface-hover',
+                ? 'border-[var(--qn-info-border)] bg-info-soft shadow-[inset_3px_0_0_var(--qn-info),var(--qn-shadow-xs)]'
+                : 'border-subtle bg-surface-raised hover:border-strong hover:shadow-sm',
             isDragging ? 'opacity-50' : '',
           ].join(' ')}
         >
@@ -136,7 +136,7 @@ const NoteCard = forwardRef(function NoteCard(
             invalid HTML and breaks screen-reader navigation. The pin rides along
             so the two never land on the same pixels. */}
         <div
-          className={`absolute right-3 flex items-center gap-1 ${compactMode ? 'top-1.5' : 'top-2.5'}`}
+          className={`absolute right-0.5 flex items-center gap-1 ${compactMode ? 'top-1' : 'top-2'}`}
         >
           {note.pinned && (
             <>

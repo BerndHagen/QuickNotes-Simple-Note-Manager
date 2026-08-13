@@ -12,6 +12,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "screenshots:update": "node scripts/capture-screenshots.mjs",
     "test:deployment": "npm run build && node scripts/validate-deployment.mjs",
     "validate:release-notes": "node scripts/validate-release-notes.mjs"
   },

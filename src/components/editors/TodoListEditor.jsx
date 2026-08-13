@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { buttonClasses } from '../ui'
+import { EmptyState, Menu, MenuItem, MenuSeparator, buttonClasses } from '../ui'
 import {
   Plus,
   Trash2,
@@ -74,18 +74,6 @@ export default function TodoListEditor({ data, onChange, noteTitle, onTitleChang
     if (skipChangeRef.current) { skipChangeRef.current = false; return }
     onChangeRef.current?.({ tasks, filter, sortBy })
   }, [filter, onChangeRef, skipChangeRef, sortBy, tasks])
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (filterRef.current && !filterRef.current.contains(e.target)) {
-        setShowFilterMenu(false)
-      }
-      if (sortRef.current && !sortRef.current.contains(e.target)) {
-        setShowSortMenu(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
   const addTask = () => {
     if (!newTaskText.trim()) return
     
@@ -269,26 +257,27 @@ export default function TodoListEditor({ data, onChange, noteTitle, onTitleChang
             <ChevronDown className="w-4 h-4 text-content-subtle" />
           </button>
           
-          {showFilterMenu && (
-            <div className="absolute top-full left-0 mt-1.5 w-48 bg-surface-raised rounded-2xl shadow-xl shadow-black/5 dark:shadow-black/20 border border-subtle z-50 overflow-hidden backdrop-blur-xl py-1.5">
+          <Menu
+            open={showFilterMenu}
+            onClose={() => setShowFilterMenu(false)}
+            anchorRef={filterRef}
+            label="Filter tasks"
+            width={208}
+          >
               {FILTERS.map((f) => {
                 const Icon = f.icon
                 return (
-                  <button
+                  <MenuItem
                     key={f.id}
+                    icon={Icon}
                     onClick={() => { setFilter(f.id); setShowFilterMenu(false) }}
-                    aria-pressed={filter === f.id}
-                    className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-surface-hover transition-colors ${
- filter === f.id ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600' : 'text-content-muted'
- }`}
+                    selected={filter === f.id}
                   >
-                    <Icon className="w-4 h-4" />
                     {f.label}
-                  </button>
+                  </MenuItem>
                 )
               })}
-            </div>
-          )}
+          </Menu>
         </div>
         <div className="relative" ref={sortRef}>
           <button
@@ -304,22 +293,23 @@ export default function TodoListEditor({ data, onChange, noteTitle, onTitleChang
             <ChevronDown className="w-4 h-4 text-content-subtle" />
           </button>
           
-          {showSortMenu && (
-            <div className="absolute top-full left-0 mt-1.5 w-40 bg-surface-raised rounded-2xl shadow-xl shadow-black/5 dark:shadow-black/20 border border-subtle z-50 overflow-hidden backdrop-blur-xl py-1.5">
+          <Menu
+            open={showSortMenu}
+            onClose={() => setShowSortMenu(false)}
+            anchorRef={sortRef}
+            label="Sort tasks"
+            width={176}
+          >
               {SORT_OPTIONS.map((s) => (
-                <button
+                <MenuItem
                   key={s.id}
                   onClick={() => { setSortBy(s.id); setShowSortMenu(false) }}
-                  aria-pressed={sortBy === s.id}
-                  className={`w-full text-left px-4 py-2.5 text-sm hover:bg-surface-hover transition-colors ${
- sortBy === s.id ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600' : 'text-content-muted'
- }`}
+                  selected={sortBy === s.id}
                 >
                   {s.label}
-                </button>
+                </MenuItem>
               ))}
-            </div>
-          )}
+          </Menu>
         </div>
 
         <div className="flex-1" />
@@ -359,17 +349,11 @@ export default function TodoListEditor({ data, onChange, noteTitle, onTitleChang
       </div>
       <div className="qn-task-list flex-1 overflow-y-auto px-4">
         {filteredTasks.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-surface-sunken flex items-center justify-center">
-              <CheckCircle2 className="w-8 h-8 text-content-subtle" />
-            </div>
-            <p className="text-content-muted font-medium">
-              {filter === 'all' ? 'No tasks yet' : `No ${FILTERS.find(f => f.id === filter)?.label.toLowerCase()}`}
-            </p>
-            <p className="text-content-subtle text-sm mt-1">
-              {filter === 'all' ? 'Add your first task above' : 'Try a different filter'}
-            </p>
-          </div>
+          <EmptyState
+            icon={CheckCircle2}
+            title={filter === 'all' ? 'No tasks yet' : `No ${FILTERS.find(f => f.id === filter)?.label.toLowerCase()}`}
+            description={filter === 'all' ? 'Add your first task above.' : 'Try a different filter.'}
+          />
         ) : (
           filteredTasks.map((task) => (
             <TaskItem
@@ -438,19 +422,6 @@ function TaskItem({
     }
   }, [isEditing])
 
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (priorityRef.current && !priorityRef.current.contains(e.target)) {
-        setShowPriorityMenu(false)
-      }
-      if (moreRef.current && !moreRef.current.contains(e.target)) {
-        setShowMoreMenu(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
   const priority = PRIORITIES[task.priority]
   const isOverdue = task.dueDate && task.dueDate < formatDateKey() && !task.completed
   const subtaskProgress = task.subtasks.length > 0 
@@ -465,7 +436,7 @@ function TaskItem({
           : 'hover:bg-surface-hover'
       }`}
     >
-      <div className="flex items-center gap-3 p-3">
+      <div className="qn-task-main flex items-center gap-3 p-3">
         <button
           onClick={onToggle}
           aria-label={task.completed ? `Mark ${task.text} incomplete` : `Complete ${task.text}`}
@@ -520,17 +491,18 @@ function TaskItem({
             )}
           </div>
         </div>
-        <button
-          onClick={() => onUpdate({ starred: !task.starred })}
-          aria-label={task.starred ? `Remove star from ${task.text}` : `Star ${task.text}`}
-          aria-pressed={task.starred}
-          className={`p-1 rounded transition-colors ${
+        <div className="qn-task-actions flex flex-shrink-0 items-center gap-2">
+          <button
+            onClick={() => onUpdate({ starred: !task.starred })}
+            aria-label={task.starred ? `Remove star from ${task.text}` : `Star ${task.text}`}
+            aria-pressed={task.starred}
+            className={`p-1 rounded transition-colors ${
  task.starred ? 'text-accent-text' : 'text-content-subtle hover:text-accent-text'
  }`}
-        >
-          <Star className={`w-5 h-5 ${task.starred ? 'fill-yellow-500' : ''}`} />
-        </button>
-        <div className="relative" ref={priorityRef}>
+          >
+            <Star className={`w-5 h-5 ${task.starred ? 'fill-yellow-500' : ''}`} />
+          </button>
+          <div className="relative" ref={priorityRef}>
           <button
             onClick={() => setShowPriorityMenu(!showPriorityMenu)}
             aria-label={`Set priority for ${task.text}. Current priority: ${priority.label}`}
@@ -542,25 +514,29 @@ function TaskItem({
             <Flag className="w-4 h-4" />
           </button>
           
-          {showPriorityMenu && (
-            <div className="absolute right-0 top-full mt-1.5 w-32 bg-surface-raised rounded-2xl shadow-xl shadow-black/5 dark:shadow-black/20 border border-subtle z-50 overflow-hidden backdrop-blur-xl py-1.5">
+          <Menu
+            open={showPriorityMenu}
+            onClose={() => setShowPriorityMenu(false)}
+            anchorRef={priorityRef}
+            placement="bottom-end"
+            label={`Set priority for ${task.text}`}
+            width={160}
+          >
               {Object.entries(PRIORITIES).map(([key, value]) => (
-                <button
+                <MenuItem
                   key={key}
                   onClick={() => { onUpdate({ priority: key }); setShowPriorityMenu(false) }}
-                  aria-pressed={task.priority === key}
-                  className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 hover:bg-surface-hover ${
- task.priority === key ? 'bg-surface-sunken' : ''
- }`}
+                  selected={task.priority === key}
                 >
-                  <span>{value.icon}</span>
-                  <span style={{ color: value.color }}>{value.label}</span>
-                </button>
+                  <span className="flex items-center gap-2">
+                    <span aria-hidden="true">{value.icon}</span>
+                    <span>{value.label}</span>
+                  </span>
+                </MenuItem>
               ))}
-            </div>
-          )}
-        </div>
-        <div className="relative group/date">
+          </Menu>
+          </div>
+          <div className="relative group/date">
           <input
             type="date"
             value={task.dueDate || ''}
@@ -584,16 +560,16 @@ function TaskItem({
           >
             <Calendar className="w-4 h-4" />
           </button>
-        </div>
-        <button
+          </div>
+          <button
           onClick={onExpand}
           aria-label={isExpanded ? `Collapse details for ${task.text}` : `Expand details for ${task.text}`}
           aria-expanded={isExpanded}
           className="p-1.5 rounded-lg bg-surface-sunken text-content-muted hover:bg-surface-sunken dark:hover:bg-surface-active transition-colors"
         >
           {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-        </button>
-        <div className="relative" ref={moreRef}>
+          </button>
+          <div className="relative" ref={moreRef}>
           <button
             onClick={() => setShowMoreMenu(!showMoreMenu)}
             aria-label={`More actions for ${task.text}`}
@@ -603,28 +579,36 @@ function TaskItem({
             <MoreHorizontal className="w-4 h-4" />
           </button>
           
-          {showMoreMenu && (
-            <div className="absolute right-0 top-full mt-1.5 w-40 bg-surface-raised rounded-2xl shadow-xl shadow-black/5 dark:shadow-black/20 border border-subtle z-50 overflow-hidden backdrop-blur-xl py-1.5">
-              <button
+          <Menu
+            open={showMoreMenu}
+            onClose={() => setShowMoreMenu(false)}
+            anchorRef={moreRef}
+            placement="bottom-end"
+            label={`Actions for ${task.text}`}
+            width={176}
+          >
+              <MenuItem
+                icon={Edit3}
                 onClick={() => { onEdit(); setShowMoreMenu(false) }}
-                className="w-full text-left px-4 py-2.5 text-sm text-content-muted hover:bg-surface-hover flex items-center gap-2 transition-colors"
               >
-                <Edit3 className="w-4 h-4 text-content-subtle" /> Edit
-              </button>
-              <button
+                Edit
+              </MenuItem>
+              <MenuItem
+                icon={Copy}
                 onClick={() => { onDuplicate(); setShowMoreMenu(false) }}
-                className="w-full text-left px-4 py-2.5 text-sm text-content-muted hover:bg-surface-hover flex items-center gap-2 transition-colors"
               >
-                <Copy className="w-4 h-4 text-content-subtle" /> Duplicate
-              </button>
-              <button
+                Duplicate
+              </MenuItem>
+              <MenuSeparator />
+              <MenuItem
+                icon={Trash2}
+                tone="danger"
                 onClick={() => { onDelete(); setShowMoreMenu(false) }}
-                className="w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 flex items-center gap-2 transition-colors"
               >
-                <Trash2 className="w-4 h-4" /> Delete
-              </button>
-            </div>
-          )}
+                Delete
+              </MenuItem>
+          </Menu>
+          </div>
         </div>
       </div>
       {isExpanded && (

@@ -6,15 +6,21 @@
  * relationship for assistive technology.
  */
 export default function WorkspaceMetrics({ items }) {
+  const toneClass = {
+    danger: 'text-danger-text',
+    warning: 'text-warning-text',
+    success: 'text-success-text',
+    info: 'text-info-text',
+    neutral: 'text-content',
+  }
+
   return (
     <dl className="qn-workspace-metrics" aria-label="Workspace summary">
       {items.map(({ label, value, tone = 'neutral' }) => (
         <div key={label} className="qn-workspace-metric">
           <dt className="qn-workspace-metric-label">{label}</dt>
           <dd
-            className={`qn-workspace-metric-value ${
-              tone === 'danger' ? 'text-danger-text' : 'text-content'
-            }`}
+            className={`qn-workspace-metric-value ${toneClass[tone] || toneClass.neutral}`}
           >
             {value}
           </dd>

@@ -8,14 +8,17 @@ import {
   Edit3,
   CheckCircle2,
   Milestone,
-  BarChart3
+  BarChart3,
+  ArrowLeft,
+  ArrowRight,
+  GripVertical,
 } from 'lucide-react'
 import { formatDateKey, generateId, parseDateKey } from './noteTypes'
 import { useLatestValue } from './useLatestValue'
 import { useEditorDataSync } from './useEditorDataSync'
 import FocusedNoteTitle from './FocusedNoteTitle'
 import WorkspaceMetrics from './WorkspaceMetrics'
-import Modal from '../ui/Modal'
+import { EmptyState, Modal } from '../ui'
 const COLUMN_COLORS = {
   backlog: { indicator: 'bg-content-subtle' },
   todo: { indicator: 'bg-info' },
@@ -46,6 +49,7 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitl
   const [editingTask, setEditingTask] = useState(null)
   const [showMilestoneForm, setShowMilestoneForm] = useState(false)
   const [showTeamForm, setShowTeamForm] = useState(false)
+  const [boardAnnouncement, setBoardAnnouncement] = useState('')
   const onChangeRef = useLatestValue(onChange)
   const currentEditorData = { columns, milestones, team }
   const skipChangeRef = useEditorDataSync(data, currentEditorData, (incoming) => {
@@ -147,7 +151,24 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitl
     })
 
     setColumns(newColumns)
+    const targetColumn = columns.find((column) => column.id === targetColumnId)
+    setBoardAnnouncement(`${task.title} moved to ${targetColumn?.name || 'the next column'}`)
     setDraggedTask(null)
+  }
+
+  const moveTaskToColumn = (task, sourceColumnId, targetColumnId) => {
+    if (!targetColumnId || sourceColumnId === targetColumnId) return
+    setColumns((currentColumns) => currentColumns.map((column) => {
+      if (column.id === sourceColumnId) {
+        return { ...column, tasks: column.tasks.filter((item) => item.id !== task.id) }
+      }
+      if (column.id === targetColumnId) {
+        return { ...column, tasks: [...column.tasks, task] }
+      }
+      return column
+    }))
+    const targetColumn = columns.find((column) => column.id === targetColumnId)
+    setBoardAnnouncement(`${task.title} moved to ${targetColumn?.name || 'another column'}`)
   }
   const addMilestone = (name, dueDate) => {
     const newMilestone = {
@@ -228,24 +249,26 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitl
           </button>
         ))}
       </div>
-      <div className="flex-1 overflow-hidden">
+      <div className="qn-workspace-canvas flex-1 overflow-hidden">
         {activeView === 'board' && (
           <div className="h-full overflow-x-auto p-4">
+            <p className="qn-sr-only" aria-live="polite">{boardAnnouncement}</p>
             <div className="flex gap-4 h-full min-w-max">
-              {columns.map((column) => {
+              {columns.map((column, columnIndex) => {
                 const colors = COLUMN_COLORS[column.id] || COLUMN_COLORS.backlog
                 return (
                   <section
                     key={column.id}
+                    data-column={column.id}
                     onDragOver={(e) => handleDragOver(e, column.id)}
                     onDragLeave={handleDragLeave}
                     onDrop={(e) => handleDrop(e, column.id)}
-                    className={`w-72 flex flex-col overflow-hidden rounded-card border border-subtle bg-surface-raised ${
+                    className={`qn-project-column w-72 flex flex-col overflow-hidden rounded-card border border-subtle bg-surface-raised ${
  dragOverColumn === column.id ? 'ring-2 ring-accent ring-offset-2 ring-offset-[var(--qn-surface-sunken)]' : ''
  }`}
                     aria-label={`${column.name}, ${column.tasks.length} tasks`}
                   >
-                    <div className="flex items-center justify-between border-b border-subtle bg-surface-sunken px-3 py-2.5">
+                    <div className="qn-project-column-header flex items-center justify-between border-b border-subtle bg-surface-sunken px-3 py-2.5">
                       <div className="flex items-center gap-2">
                         <span className={`h-2 w-2 rounded-full ${colors.indicator}`} aria-hidden="true" />
                         <span className="text-ui-lg font-semibold text-content">{column.name}</span>
@@ -261,7 +284,7 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitl
                         <Plus className="w-4 h-4 text-content-muted" />
                       </button>
                     </div>
-                    <div className="flex-1 overflow-y-auto space-y-2 bg-surface-raised p-2">
+                    <div className="qn-project-column-body flex-1 overflow-y-auto space-y-2 bg-surface-raised p-2">
                       {showAddTask === column.id && (
                         <div className="p-3 rounded-lg border-2 border-dashed border-accent-border bg-accent-soft">
                           <input
@@ -299,8 +322,20 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitl
                           task={task}
                           team={team}
                           onDragStart={(e) => handleDragStart(e, task, column.id)}
+                          onDragEnd={() => {
+                            setDraggedTask(null)
+                            setDragOverColumn(null)
+                          }}
                           onDelete={() => deleteTask(column.id, task.id)}
                           onEdit={() => setEditingTask({ ...task, columnId: column.id })}
+                          previousColumnName={columns[columnIndex - 1]?.name}
+                          nextColumnName={columns[columnIndex + 1]?.name}
+                          onMovePrevious={columns[columnIndex - 1]
+                            ? () => moveTaskToColumn(task, column.id, columns[columnIndex - 1].id)
+                            : undefined}
+                          onMoveNext={columns[columnIndex + 1]
+                            ? () => moveTaskToColumn(task, column.id, columns[columnIndex + 1].id)
+                            : undefined}
                         />
                       ))}
 
@@ -319,7 +354,7 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitl
 
         {activeView === 'milestones' && (
           <div className="p-4 overflow-y-auto">
-            <div className="max-w-2xl mx-auto">
+            <div className="qn-workspace-panel mx-auto max-w-2xl p-5">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-content">Milestones</h2>
                 <button
@@ -340,9 +375,12 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitl
 
               <div className="space-y-3">
                 {milestones.length === 0 ? (
-                  <div className="text-center py-12 text-content-muted">
-                    No milestones yet. Add your first milestone to track progress.
-                  </div>
+                  <EmptyState
+                    icon={Milestone}
+                    title="No milestones yet"
+                    description="Add a milestone to track the next meaningful outcome."
+                    size="sm"
+                  />
                 ) : (
                   milestones.map((milestone) => (
                     <MilestoneCard
@@ -360,7 +398,7 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitl
 
         {activeView === 'team' && (
           <div className="p-4 overflow-y-auto">
-            <div className="max-w-2xl mx-auto">
+            <div className="qn-workspace-panel mx-auto max-w-2xl p-5">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-content">Team Members</h2>
                 <button
@@ -381,9 +419,13 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitl
 
               <div className="grid grid-cols-2 gap-3">
                 {team.length === 0 ? (
-                  <div className="col-span-2 text-center py-12 text-content-muted">
-                    No team members yet. Add people to assign tasks.
-                  </div>
+                  <EmptyState
+                    icon={Users}
+                    title="No team members yet"
+                    description="Add people here when tasks need clear ownership."
+                    size="sm"
+                    className="col-span-2"
+                  />
                 ) : (
                   team.map((member) => (
                     <TeamMemberCard
@@ -416,22 +458,62 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitl
     </div>
   )
 }
-function TaskCard({ task, team, onDragStart, onDelete, onEdit }) {
+function TaskCard({
+  task,
+  team,
+  onDragStart,
+  onDragEnd,
+  onDelete,
+  onEdit,
+  previousColumnName,
+  nextColumnName,
+  onMovePrevious,
+  onMoveNext,
+}) {
   const priority = PRIORITIES[task.priority]
   const assignee = team.find(m => m.id === task.assignee)
   const isOverdue = task.dueDate && task.dueDate < formatDateKey()
 
   return (
-    <div
-      draggable
-      onDragStart={onDragStart}
-      className="group p-3 rounded-lg bg-surface-raised border border-subtle hover:shadow-md transition-all cursor-grab active:cursor-grabbing"
+    <article
+      className="qn-project-task-card group p-3 rounded-card bg-surface-raised border border-subtle"
     >
       <div className="flex items-start justify-between gap-2 mb-2">
+        <button
+          type="button"
+          draggable
+          onDragStart={onDragStart}
+          onDragEnd={onDragEnd}
+          aria-label={`Drag ${task.title}`}
+          title="Drag task"
+          className="qn-drag-handle -ml-1 flex h-7 w-6 flex-shrink-0 cursor-grab items-center justify-center rounded-control text-content-subtle hover:bg-surface-sunken hover:text-content active:cursor-grabbing"
+        >
+          <GripVertical className="h-4 w-4" aria-hidden="true" />
+        </button>
         <h3 className="font-medium text-content text-sm flex-1">
           {task.title}
         </h3>
-        <div className="flex items-center">
+        <div className="flex items-center opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
+          {onMovePrevious && (
+            <button
+              type="button"
+              onClick={onMovePrevious}
+              aria-label={`Move ${task.title} to ${previousColumnName}`}
+              className="qn-square-control flex h-7 w-7 items-center justify-center rounded-control text-content-muted hover:bg-surface-sunken hover:text-content"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
+            </button>
+          )}
+          {onMoveNext && (
+            <button
+              type="button"
+              onClick={onMoveNext}
+              aria-label={`Move ${task.title} to ${nextColumnName}`}
+              className="qn-square-control flex h-7 w-7 items-center justify-center rounded-control text-content-muted hover:bg-surface-sunken hover:text-content"
+            >
+              <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+            </button>
+          )}
           <button
             onClick={onEdit}
             aria-label={`Edit ${task.title}`}
@@ -479,7 +561,7 @@ function TaskCard({ task, team, onDragStart, onDelete, onEdit }) {
           </div>
         )}
       </div>
-    </div>
+    </article>
   )
 }
 function TaskEditModal({ task, team, columns, onSave, onClose }) {
@@ -649,11 +731,11 @@ function MilestoneCard({ milestone, onToggle, onDelete }) {
   const isOverdue = milestone.dueDate && milestone.dueDate < formatDateKey() && !milestone.completed
 
   return (
-    <div className={`flex items-center gap-3 p-4 rounded-lg border ${
+    <div className={`qn-domain-card flex items-center gap-3 rounded-card border p-4 ${
  milestone.completed 
- ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+ ? 'bg-success-soft border-[var(--qn-success-border)]'
         : isOverdue
-          ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+          ? 'bg-danger-soft border-[var(--qn-danger-border)]'
           : 'bg-surface-raised border-subtle'
     }`}>
       <button
@@ -730,7 +812,7 @@ function TeamMemberForm({ onSave, onCancel }) {
 }
 function TeamMemberCard({ member, tasksAssigned, onDelete }) {
   return (
-    <div className="flex items-center gap-3 p-4 rounded-lg bg-surface-raised border border-subtle">
+    <div className="qn-domain-card flex items-center gap-3 rounded-card border border-subtle bg-surface-raised p-4 shadow-xs">
       <div className="w-10 h-10 rounded-full bg-accent-soft text-accent-text flex items-center justify-center font-medium">
         {member.avatar}
       </div>

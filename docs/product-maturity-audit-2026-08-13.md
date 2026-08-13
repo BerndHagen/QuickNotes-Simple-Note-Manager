@@ -1,5 +1,7 @@
 # QuickNotes product maturity audit
 
+> Historical first-pass record. The subsequent repository-wide design and validation pass is documented in [enterprise-maturity-validation-2026-08-13.md](./enterprise-maturity-validation-2026-08-13.md), including the restored rounded note cards requested after this audit.
+
 Date: 2026-08-13
 Scope: production shell, core note workflow, structured workspaces, shared UI, responsive behavior, accessibility, and focused engineering risks.
 

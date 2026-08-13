@@ -481,7 +481,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
 
       {/* Document header */}
       {!isSpecialized && (
-        <header className={`qn-note-banner shrink-0 border-b border-subtle bg-surface px-3 py-2.5 text-content sm:px-4 sm:py-3 ${
+        <header className={`qn-note-banner qn-document-header shrink-0 border-b border-subtle px-3 py-2.5 text-content sm:px-4 sm:py-3 ${
           noteDetailsExpanded ? 'block' : 'hidden md:block'
         }`}>
         <div

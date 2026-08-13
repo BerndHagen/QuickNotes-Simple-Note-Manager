@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { buttonClasses } from '../ui'
+import { EmptyState, buttonClasses } from '../ui'
 import {
   Calendar,
   Plus,
@@ -17,13 +17,13 @@ import {
   Circle,
   CalendarDays,
   BarChart3,
-  Trophy,
   Flame
 } from 'lucide-react'
 import { formatDateKey, generateId, parseDateKey } from './noteTypes'
 import { useLatestValue } from './useLatestValue'
 import { useEditorDataSync } from './useEditorDataSync'
 import FocusedNoteTitle from './FocusedNoteTitle'
+import WorkspaceMetrics from './WorkspaceMetrics'
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 const SHORT_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -204,10 +204,10 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle, onTitle
   ]
 
   return (
-    <div className="qn-type-editor qn-type-weekly flex flex-col h-full bg-surface-raised">
-      <div className="qn-type-hero flex-shrink-0 p-4 border-b border-subtle bg-[#e5eaf0] dark:bg-surface-raised">
-        <div className="flex items-center justify-between mb-4">
-          <div>
+    <div className="qn-type-editor qn-type-weekly flex h-full flex-col">
+      <header className="qn-type-hero qn-workspace-header flex-shrink-0 border-b border-subtle">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
             <FocusedNoteTitle
               icon={Calendar}
               typeLabel="Planning workspace"
@@ -242,28 +242,15 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle, onTitle
               )}
             </div>
           </div>
-          <div className="flex gap-6 text-content">
-            <div className="text-center">
-              <div className="text-3xl font-bold">{stats.completedTasks}/{stats.totalTasks}</div>
-              <div className="text-content-muted text-sm">Tasks Done</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold">{stats.completedGoals}/{stats.totalGoals}</div>
-              <div className="text-content-muted text-sm">Goals Met</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold">{completionPercent}%</div>
-              <div className="text-content-muted text-sm">Complete</div>
-            </div>
-          </div>
         </div>
-        <div className="w-full h-2 rounded-full bg-surface-active dark:bg-surface-active overflow-hidden">
-          <div
-            className="h-full bg-accent rounded-full transition-all"
-            style={{ width: `${completionPercent}%` }}
-          />
-        </div>
-      </div>
+        <WorkspaceMetrics
+          items={[
+            { label: 'Tasks done', value: `${stats.completedTasks}/${stats.totalTasks}` },
+            { label: 'Goals met', value: `${stats.completedGoals}/${stats.totalGoals}` },
+            { label: 'Complete', value: `${completionPercent}%`, tone: completionPercent === 100 ? 'success' : 'neutral' },
+          ]}
+        />
+      </header>
       <div className="qn-type-tabs flex-shrink-0 flex gap-1 p-2 border-b border-subtle bg-surface-sunken">
         {views.map((view) => (
           <button
@@ -284,7 +271,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle, onTitle
           </button>
         ))}
       </div>
-      <div className="flex-1 overflow-y-auto">
+      <div className="qn-workspace-canvas flex-1 overflow-y-auto">
         {activeView === 'week' && (
           <div className="flex h-full">
             <div className="w-20 flex-shrink-0 border-r border-subtle bg-surface-sunken">
@@ -337,8 +324,8 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle, onTitle
               })}
             </div>
             <div className="flex-1 p-4 overflow-y-auto">
-              <div className="max-w-2xl mx-auto">
-                <div className="flex items-center justify-between mb-6">
+              <div className="qn-workspace-panel mx-auto max-w-2xl p-5">
+                <div className="qn-weekly-day-heading flex items-start justify-between gap-4 mb-6">
                   <div>
                     <h2 className="text-2xl font-bold text-content capitalize">
                       {selectedDay}
@@ -348,7 +335,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle, onTitle
                         .toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                     </p>
                   </div>
-                  <div className="flex gap-1">
+                  <div className="qn-weekly-rating flex flex-shrink-0 gap-1">
                     {[1, 2, 3, 4, 5].map((rating) => (
                       <button
                         key={rating}
@@ -377,7 +364,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle, onTitle
                     {plannerData.days[selectedDay]?.events.map((event) => (
                       <div
                         key={event.id}
-                        className="flex items-center gap-3 p-2 rounded-lg bg-accent-soft border border-purple-200 dark:border-purple-800"
+                        className="qn-domain-card flex items-center gap-3 rounded-card border border-[var(--qn-info-border)] bg-info-soft p-2"
                       >
                         {event.time && (
                           <span className="text-sm font-medium text-accent-text">
@@ -445,10 +432,10 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle, onTitle
                           {tasks.map((task) => (
                             <div
                               key={task.id}
-                              className={`flex items-center gap-2 p-2 rounded-lg ${
+                              className={`qn-domain-card flex items-center gap-2 rounded-card border p-2 ${
  task.completed
- ? 'bg-green-50 dark:bg-green-900/20'
-                                  : 'bg-surface-sunken'
+ ? 'border-[var(--qn-success-border)] bg-success-soft'
+                                  : 'border-subtle bg-surface-raised shadow-xs'
                               }`}
                             >
                               <button
@@ -524,7 +511,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle, onTitle
           </div>
         )}
         {activeView === 'goals' && (
-          <div className="p-6 max-w-2xl mx-auto">
+          <div className="qn-workspace-panel mx-auto max-w-2xl p-5">
             <div className="mb-6">
               <h2 className="text-xl font-bold text-content mb-1 flex items-center gap-2">
                 <Target className="w-6 h-6 text-accent-text" />
@@ -551,22 +538,24 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle, onTitle
             </div>
             <div className="space-y-3">
               {plannerData.weeklyGoals.length === 0 ? (
-                <div className="text-center py-12 text-content-subtle">
-                  <Target className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>No goals set for this week yet</p>
-                </div>
+                <EmptyState
+                  icon={Target}
+                  title="No goals set for this week"
+                  description="Add a goal above to keep the week focused."
+                  size="sm"
+                />
               ) : (
                 [...plannerData.weeklyGoals]
                   .sort((a, b) => (b.priority ? 1 : 0) - (a.priority ? 1 : 0))
                   .map((goal) => (
                     <div
                       key={goal.id}
-                      className={`flex items-center gap-4 p-4 rounded-xl ${
+                      className={`qn-domain-card flex items-center gap-4 rounded-card border p-4 ${
  goal.completed
- ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
+ ? 'border-[var(--qn-success-border)] bg-success-soft'
                           : goal.priority
-                          ? 'bg-accent-soft border border-blue-200 dark:border-blue-800'
-                          : 'bg-surface-sunken border border-subtle'
+                          ? 'border-[var(--qn-accent-border)] bg-accent-soft'
+                          : 'border-subtle bg-surface-raised shadow-xs'
                       }`}
                     >
                       <button
@@ -604,21 +593,21 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle, onTitle
               )}
             </div>
             {plannerData.weeklyGoals.length > 0 && (
-              <div className="mt-8 p-6 rounded-xl bg-[#e5eaf0] dark:bg-surface-raised border border-subtle">
-                <div className="flex justify-between items-center">
+              <div className="mt-6 rounded-card border border-subtle bg-[var(--qn-surface-brand-tint)] p-4">
+                <div className="flex items-end justify-between gap-4">
                   <div>
-                    <p className="text-content-muted">Weekly Goal Progress</p>
-                    <p className="text-3xl font-bold mt-1 text-content">
+                    <p className="text-ui-sm font-medium uppercase tracking-wide text-content-muted">Weekly goal progress</p>
+                    <p className="mt-1 text-title-md font-semibold text-content">
                       {stats.completedGoals} of {stats.totalGoals} completed
                     </p>
                   </div>
-                  <div className="text-6xl font-bold text-content">
+                  <div className="text-title-lg font-semibold tabular-nums text-content">
                     {stats.totalGoals > 0 ? Math.round((stats.completedGoals / stats.totalGoals) * 100) : 0}%
                   </div>
                 </div>
-                <div className="mt-4 w-full h-3 rounded-full bg-white/30 overflow-hidden">
+                <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-surface-active">
                   <div
-                    className="h-full bg-white rounded-full transition-all"
+                    className="h-full rounded-full bg-accent transition-[width]"
                     style={{ width: `${stats.totalGoals > 0 ? (stats.completedGoals / stats.totalGoals) * 100 : 0}%` }}
                   />
                 </div>
@@ -627,7 +616,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle, onTitle
           </div>
         )}
         {activeView === 'review' && (
-          <div className="p-6 max-w-2xl mx-auto">
+          <div className="qn-workspace-panel mx-auto max-w-2xl p-5">
             <div className="mb-6">
               <h2 className="text-xl font-bold text-content mb-1 flex items-center gap-2">
                 <BarChart3 className="w-6 h-6 text-accent-text" />
@@ -635,24 +624,14 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle, onTitle
               </h2>
               <p className="text-content-muted">Reflect on your week and plan for the next</p>
             </div>
-            <div className="grid grid-cols-1 gap-4 mb-8 sm:grid-cols-3">
-              <div className="p-4 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-center">
-                <Trophy className="w-8 h-8 text-green-500 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-green-600">{stats.completedTasks}</div>
-                <div className="text-sm text-green-700 dark:text-green-300">Tasks Completed</div>
-              </div>
-              <div className="p-4 rounded-xl bg-accent-soft border border-blue-200 dark:border-blue-800 text-center">
-                <Target className="w-8 h-8 text-accent-text mx-auto mb-2" />
-                <div className="text-2xl font-bold text-accent-text">{stats.completedGoals}</div>
-                <div className="text-sm text-accent-text">Goals Achieved</div>
-              </div>
-              <div className="p-4 rounded-xl bg-accent-soft border border-purple-200 dark:border-purple-800 text-center">
-                <Star className="w-8 h-8 text-accent-text mx-auto mb-2" />
-                <div className="text-2xl font-bold text-accent-text">
-                  {Object.values(plannerData.days).filter(d => d.rating).length}
-                </div>
-                <div className="text-sm text-accent-text">Days Rated</div>
-              </div>
+            <div className="mb-8">
+              <WorkspaceMetrics
+                items={[
+                  { label: 'Tasks completed', value: stats.completedTasks, tone: stats.completedTasks ? 'success' : 'neutral' },
+                  { label: 'Goals achieved', value: stats.completedGoals, tone: stats.completedGoals ? 'success' : 'neutral' },
+                  { label: 'Days rated', value: Object.values(plannerData.days).filter((day) => day.rating).length },
+                ]}
+              />
             </div>
 
             <div className="space-y-6">

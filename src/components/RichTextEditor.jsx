@@ -1394,7 +1394,7 @@ function ImageToolbarButton() {
           e.stopPropagation()
         }}
         onClick={() => setImageUploadOpen(true)}
-        className="p-2 text-content-muted transition-all duration-150 rounded-lg hover:bg-surface-hover dark:text-content-subtle hover:text-content dark:hover:text-white"
+        className="rounded-lg p-2 text-content-muted transition-colors duration-fast hover:bg-surface-hover hover:text-content dark:text-content-subtle dark:hover:text-white"
       >
         <ImageIcon className="w-4 h-4" />
       </button>
@@ -1726,7 +1726,7 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content, onMobileC
         onClick={() => {
           if (!disabled) onClick?.()
         }}
-        className={`p-1.5 rounded-lg transition-all duration-150 flex items-center gap-1 ${
+        className={`flex items-center gap-1 rounded-lg p-1.5 transition-[background-color,color,box-shadow,opacity] duration-fast ${
  disabled
  ? 'opacity-30 cursor-not-allowed text-content-subtle dark:text-content-muted'
             : isOpen
@@ -1983,7 +1983,7 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content, onMobileC
                       editor.chain().focus().setColor(color).run()
                       setShowColorPicker(false)
                     }}
-                    className={`qn-format-colour h-7 w-7 rounded-lg border-2 hover:scale-110 transition-all shadow-sm flex items-center justify-center ${
+                    className={`qn-format-colour flex h-7 w-7 items-center justify-center rounded-lg border-2 shadow-sm transition-[border-color,box-shadow,transform] duration-fast hover:scale-110 ${
  isActive 
  ? 'border-emerald-500 ring-2 ring-emerald-200 dark:ring-emerald-800' 
                         : 'border-subtle  hover:border-emerald-500'
@@ -2063,7 +2063,7 @@ function EditorToolbar({ editor, currentPaper, onPaperChange, content, onMobileC
                       editor.chain().focus().toggleHighlight({ color }).run()
                       setShowHighlightPicker(false)
                     }}
-                    className={`qn-format-colour h-7 w-7 rounded-lg border-2 hover:scale-110 transition-all shadow-sm flex items-center justify-center ${
+                    className={`qn-format-colour flex h-7 w-7 items-center justify-center rounded-lg border-2 shadow-sm transition-[border-color,box-shadow,transform] duration-fast hover:scale-110 ${
  isActive 
  ? 'border-emerald-500 ring-2 ring-emerald-200 dark:ring-emerald-800' 
                         : 'border-subtle  hover:border-emerald-500'

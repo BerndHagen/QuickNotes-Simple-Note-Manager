@@ -106,7 +106,7 @@ function MenuButton({ onClick, isActive, disabled, children, title }) {
         if (!disabled && onClick) onClick()
       }}
       disabled={disabled}
-      className={`p-1.5 rounded transition-all duration-150 ${
+      className={`rounded p-1.5 transition-[background-color,color,opacity] duration-fast ${
  isActive
  ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300'
           : 'hover:bg-surface-hover text-content-muted hover:text-content dark:hover:text-white'
@@ -140,7 +140,7 @@ function DropdownButton({ children, isOpen, onClick, title, popupRole = 'menu' }
         e.stopPropagation()
         onClick?.()
       }}
-      className={`p-1.5 rounded transition-all duration-150 flex items-center gap-1 ${
+      className={`flex items-center gap-1 rounded p-1.5 transition-[background-color,color] duration-fast ${
  isOpen
  ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300'
           : 'hover:bg-surface-hover text-content-muted hover:text-content dark:hover:text-white'
@@ -221,7 +221,7 @@ function ColorPickerDropdown({ isOpen, onClose, onSelect, currentColor, title, a
               onSelect(color)
               onClose()
             }}
-            className={`qn-format-colour h-6 w-6 rounded border-2 hover:scale-110 transition-all flex items-center justify-center ${
+            className={`qn-format-colour flex h-6 w-6 items-center justify-center rounded border-2 transition-[border-color,box-shadow,transform] duration-fast hover:scale-110 ${
  currentColor === color 
  ? 'border-emerald-500 ring-2 ring-emerald-200 dark:ring-emerald-800' 
                 : 'border-subtle  hover:border-emerald-400'

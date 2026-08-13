@@ -37,11 +37,13 @@
   /* base : editor + dialog bodies                              */
   /* raised: cards, menus, popovers                             */
   /* sunken: inset wells, code blocks, form groups              */
-  --qn-surface-app: #ffffff;
-  --qn-surface-panel: #f7f8fa;
-  --qn-surface-base: #ffffff;
+  --qn-surface-app: #eaf1ee;
+  --qn-surface-panel: #f1f5f3;
+  --qn-surface-base: #f8faf9;
   --qn-surface-raised: #ffffff;
-  --qn-surface-sunken: #f3f4f6;
+  --qn-surface-sunken: #e8efec;
+  --qn-surface-brand-tint: #eef8f3;
+  --qn-surface-brand-tint-strong: #e1f1e9;
   --qn-surface-hover: rgba(15, 23, 42, 0.07);
   --qn-surface-active: rgba(15, 23, 42, 0.11);
   --qn-overlay: rgba(15, 23, 42, 0.45);
@@ -207,6 +209,8 @@
   --qn-surface-base: #0e131a;
   --qn-surface-raised: #161c25;
   --qn-surface-sunken: #0a0e13;
+  --qn-surface-brand-tint: #10231d;
+  --qn-surface-brand-tint-strong: #133027;
   --qn-surface-hover: rgba(255, 255, 255, 0.08);
   --qn-surface-active: rgba(255, 255, 255, 0.13);
   --qn-overlay: rgba(2, 6, 12, 0.65);

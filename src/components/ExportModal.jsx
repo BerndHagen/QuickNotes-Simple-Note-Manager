@@ -716,7 +716,7 @@ export default function ExportModal() {
               type="button"
               aria-pressed={selectedFormat === format.id}
               onClick={() => setSelectedFormat(format.id)}
-              className={`flex w-full min-w-0 items-center gap-3 rounded-lg border-2 p-3 transition-all ${
+              className={`flex w-full min-w-0 items-center gap-3 rounded-lg border-2 p-3 transition-[background-color,border-color,box-shadow] duration-fast ${
  selectedFormat === format.id
  ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
                   : 'border-subtle hover:border-subtle dark:hover:border-subtle'
