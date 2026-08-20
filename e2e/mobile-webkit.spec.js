@@ -160,7 +160,7 @@ test.describe('mobile Safari workflows', () => {
     expect(finalToolBox.left).toBeGreaterThanOrEqual(-1)
     expect(finalToolBox.right).toBeLessThanOrEqual(321)
 
-    await page.getByRole('tab', { name: 'Format' }).tap()
+    await page.getByRole('tab', { name: 'Home' }).tap()
     await page.getByRole('button', { name: 'Text Color' }).tap()
     const popover = page.getByRole('dialog', { name: 'Formatting options' })
     await expect(popover).toBeVisible()

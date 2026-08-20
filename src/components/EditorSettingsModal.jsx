@@ -27,7 +27,6 @@ const defaultSettings = {
   documentWidth: 'standard',
   ribbonDensity: 'comfortable',
   defaultRibbonTab: 'home',
-  showRibbonGroupLabels: true,
   defaultFontFamily: DEFAULT_EDITOR_FONT,
   defaultFontSize: '16px',
   defaultLineHeight: '1.5',
@@ -67,7 +66,6 @@ const tabSizeOptions = [
 
 const booleanSettingKeys = [
   'showRuler',
-  'showRibbonGroupLabels',
   'autoCorrect',
   'showInvisibles',
   'wordWrap',
@@ -77,7 +75,7 @@ const booleanSettingKeys = [
 const enumSettings = {
   documentWidth: new Set(['focused', 'standard', 'wide', 'full']),
   ribbonDensity: new Set(['comfortable', 'compact']),
-  defaultRibbonTab: new Set(['home', 'insert', 'format', 'layout', 'tools']),
+  defaultRibbonTab: new Set(['home', 'insert', 'format', 'layout', 'review', 'view', 'tools']),
   defaultCheckboxStyle: new Set(['square', 'rounded', 'circle']),
   defaultCheckboxColor: new Set(['accent', 'blue', 'purple', 'amber', 'rose', 'slate']),
   defaultCheckboxSize: new Set(['compact', 'standard', 'large']),
@@ -207,6 +205,8 @@ export default function EditorSettingsModal() {
                   <option value="insert">Insert</option>
                   <option value="format">Format</option>
                   <option value="layout">Layout</option>
+                  <option value="review">Review</option>
+                  <option value="view">View</option>
                   <option value="tools">Tools</option>
                 </select>
               </div>
@@ -224,21 +224,6 @@ export default function EditorSettingsModal() {
                   <option value="compact">Compact</option>
                 </select>
               </div>
-              <label className="flex cursor-pointer items-center justify-between rounded-control border border-subtle p-3 transition-colors hover:bg-surface-sunken">
-                <div className="flex items-center gap-3">
-                  <PanelTop className="h-5 w-5 text-content-muted" />
-                  <div>
-                    <p className="font-medium text-content">Group labels</p>
-                    <p className="text-xs text-content-muted">Keep command groups named</p>
-                  </div>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={settings.showRibbonGroupLabels}
-                  onChange={(e) => handleSettingChange('showRibbonGroupLabels', e.target.checked)}
-                  className="h-5 w-5 rounded text-emerald-600 focus:ring-emerald-500"
-                />
-              </label>
             </div>
           </div>
           <div className="space-y-4">

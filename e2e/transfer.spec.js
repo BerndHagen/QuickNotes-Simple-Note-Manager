@@ -173,14 +173,19 @@ test('PDF export downloads a real file and preserves the note paper setting', as
   const pagesBefore = page.context().pages().length
   await page.keyboard.press('Control+Shift+e')
   const dialog = page.getByRole('dialog', { name: 'Export notes' })
-  const downloadPromise = page.waitForEvent('download')
+  const downloadPromise = page.waitForEvent('download').then((download) => ({ download }))
+  const exportErrorPromise = page.getByText(/export failed:/i).waitFor()
+    .then(async () => ({ error: await page.getByText(/export failed:/i).innerText() }))
   await dialog.getByRole('button', { name: /export note/i }).click()
-  const download = await downloadPromise
+  const result = await Promise.race([downloadPromise, exportErrorPromise])
+  expect(result.error || '', result.error).toBe('')
+  const download = result.download
 
   expect(download.suggestedFilename()).toBe(`${title.replace(/[^a-z0-9_-]/gi, '_').replace(/_+/g, '_')}.pdf`)
   const path = await download.path()
   const bytes = await readFile(path)
   expect(bytes.subarray(0, 5).toString()).toBe('%PDF-')
   expect(bytes.length).toBeGreaterThan(5_000)
+  expect(bytes.toString('latin1').match(/\/Type \/Page\b/g) || []).toHaveLength(1)
   expect(page.context().pages()).toHaveLength(pagesBefore)
 })

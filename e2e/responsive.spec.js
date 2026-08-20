@@ -287,7 +287,7 @@ test.describe('mobile editor usability', () => {
   })
 
   test('keeps formatting popovers inside the visible viewport', async ({ page }) => {
-    await page.getByRole('tab', { name: 'Format' }).click()
+    await page.getByRole('tab', { name: 'Home' }).click()
     await page.getByRole('button', { name: 'Text Color' }).click()
     const dropdown = page.getByRole('dialog', { name: 'Formatting options' })
     await expect(dropdown).toBeVisible()
@@ -421,7 +421,7 @@ test.describe('large desktop', () => {
 test.describe('desktop editor tools', () => {
   test.use({ viewport: { width: 1280, height: 800 } })
 
-  test('shows every formatting tool without horizontal scrolling', async ({ page }) => {
+  test('keeps every formatting tool in one horizontally reachable row', async ({ page }) => {
     await signIn(page)
     await page.getByRole('button', { name: /new note/i }).first().click()
 
@@ -430,11 +430,25 @@ test.describe('desktop editor tools', () => {
     const tabs = page.getByRole('tablist', { name: 'Editor ribbon' })
     for (const tabName of ['Home', 'Insert', 'Format', 'Layout', 'Tools']) {
       await tabs.getByRole('tab', { name: tabName }).click()
-      const metrics = await toolbar.evaluate((element) => ({
-        clientWidth: element.clientWidth,
-        scrollWidth: element.scrollWidth,
-      }))
-      expect(metrics.scrollWidth, `${tabName} commands should fit the desktop editor`).toBeLessThanOrEqual(metrics.clientWidth + 1)
+      const metrics = await toolbar.evaluate((element) => {
+        const buttons = [...element.querySelectorAll('button')].filter((button) => button.offsetParent !== null)
+        const groups = [...element.querySelectorAll(':scope > .qn-ribbon-group')]
+          .filter((group) => group.offsetParent !== null)
+        const rows = new Set(groups.map((group) => Math.round(group.getBoundingClientRect().top))).size
+        buttons.at(-1)?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+        const toolbarBox = element.getBoundingClientRect()
+        const finalBox = buttons.at(-1)?.getBoundingClientRect()
+        return {
+          rows,
+          finalLeft: finalBox?.left,
+          finalRight: finalBox?.right,
+          toolbarLeft: toolbarBox.left,
+          toolbarRight: toolbarBox.right,
+        }
+      })
+      expect(metrics.rows, `${tabName} commands should stay in one row`).toBe(1)
+      expect(metrics.finalLeft).toBeGreaterThanOrEqual(metrics.toolbarLeft - 1)
+      expect(metrics.finalRight).toBeLessThanOrEqual(metrics.toolbarRight + 1)
     }
   })
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildPdfExportElement, escapePdfFilename } from './pdfExport'
+import { buildPdfExportElement, escapePdfFilename, getPdfPageHeight } from './pdfExport'
 
 describe('PDF export document', () => {
   it('reuses the note paper and rich content presentation without executable HTML', () => {
@@ -25,5 +25,10 @@ describe('PDF export document', () => {
   it('creates a safe downloadable PDF filename', () => {
     expect(escapePdfFilename('Q3 plan / review')).toBe('Q3_plan_review.pdf')
     expect(escapePdfFilename('')).toBe('QuickNotes_note.pdf')
+  })
+
+  it('keeps a rendered single A4 page on one PDF page', () => {
+    expect(getPdfPageHeight(794)).toBe(1123)
+    expect(getPdfPageHeight(1588)).toBe(2246)
   })
 })

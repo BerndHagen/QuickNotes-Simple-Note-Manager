@@ -128,6 +128,10 @@ const getPageSlices = (article, canvas, pageHeight) => {
     .map((element) => Math.round((element.getBoundingClientRect().bottom - articleTop) * scale))
     .filter((position) => position > 0 && position < canvas.height)
     .sort((first, second) => first - second)
+  const explicitPageBreaks = [...article.querySelectorAll('[data-type="pageBreak"]')]
+    .map((element) => Math.round((element.getBoundingClientRect().top - articleTop) * scale))
+    .filter((position) => position > 0 && position < canvas.height)
+    .sort((first, second) => first - second)
 
   const slices = []
   let start = 0
@@ -135,7 +139,12 @@ const getPageSlices = (article, canvas, pageHeight) => {
     const naturalEnd = Math.min(start + pageHeight, canvas.height)
     let end = naturalEnd
 
-    if (naturalEnd < canvas.height) {
+    const explicitBreak = explicitPageBreaks.find((position) => position > start + 1)
+    if (explicitBreak && explicitBreak <= naturalEnd) {
+      end = explicitBreak
+    }
+
+    if (end === naturalEnd && naturalEnd < canvas.height) {
       const earliestUsefulBreak = start + pageHeight * 0.55
       const safeBottom = naturalEnd - Math.max(24 * scale, pageHeight * 0.025)
       const candidates = breakpoints.filter(
@@ -150,8 +159,14 @@ const getPageSlices = (article, canvas, pageHeight) => {
   return slices
 }
 
+export const getPdfPageHeight = (canvasWidth) =>
+  Math.ceil(canvasWidth * A4_HEIGHT_MM / A4_WIDTH_MM)
+
 const addCanvasToPdf = (pdf, article, canvas, addPage) => {
-  const pageHeightInCanvas = Math.floor(canvas.width * A4_HEIGHT_MM / A4_WIDTH_MM)
+  // Round up here. A 794 × 1123 CSS-pixel A4 page rendered at 2× becomes
+  // 1588 × 2246, while flooring the aspect-ratio calculation yields 2245.
+  // That orphaned final pixel used to be exported as a blank second page.
+  const pageHeightInCanvas = getPdfPageHeight(canvas.width)
 
   for (const slice of getPageSlices(article, canvas, pageHeightInCanvas)) {
     if (addPage()) pdf.addPage('a4', 'portrait')

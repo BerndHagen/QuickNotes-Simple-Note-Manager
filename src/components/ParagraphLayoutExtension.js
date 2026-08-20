@@ -3,6 +3,7 @@ import { Extension } from '@tiptap/core'
 const INDENT_STEP = 40
 const MAX_INDENT = 480
 const TEXT_BLOCK_TYPES = new Set(['paragraph', 'heading'])
+const TAB_TYPES = new Set(['left', 'center', 'right', 'decimal'])
 
 const clamp = (value, minimum = 0, maximum = MAX_INDENT) =>
   Math.min(maximum, Math.max(minimum, Math.round(Number(value) || 0)))
@@ -10,13 +11,23 @@ const clamp = (value, minimum = 0, maximum = MAX_INDENT) =>
 const parseNumber = (value) => clamp(parseFloat(value) || 0)
 const parseSpacing = (value) => clamp(parseFloat(value) || 0, 0, 160)
 
+const normalizeTabStops = (stops) => {
+  if (!Array.isArray(stops)) return []
+  const normalized = stops.map((stop) => ({
+    position: clamp(typeof stop === 'number' ? stop : stop?.position, 8, 2000),
+    type: TAB_TYPES.has(stop?.type) ? stop.type : 'left',
+  }))
+  return normalized
+    .filter((stop, index) => normalized.findIndex((candidate) => (
+      candidate.position === stop.position && candidate.type === stop.type
+    )) === index)
+    .sort((first, second) => first.position - second.position)
+}
+
 const parseTabStops = (value) => {
   if (!value) return []
   try {
-    const parsed = JSON.parse(value)
-    return Array.isArray(parsed)
-      ? [...new Set(parsed.map((stop) => clamp(stop, 8, 2000)))].sort((a, b) => a - b)
-      : []
+    return normalizeTabStops(JSON.parse(value))
   } catch {
     return []
   }
@@ -130,7 +141,7 @@ const ParagraphLayoutExtension = Extension.create({
             ? { firstLineIndent: clamp(attributes.firstLineIndent, -MAX_INDENT, MAX_INDENT) }
             : {}),
           ...(attributes.tabStops !== undefined
-            ? { tabStops: [...new Set(attributes.tabStops.map((stop) => clamp(stop, 8, 2000)))].sort((a, b) => a - b) }
+            ? { tabStops: normalizeTabStops(attributes.tabStops) }
             : {}),
           ...(attributes.spaceBefore !== undefined
             ? { spaceBefore: parseSpacing(attributes.spaceBefore) }
@@ -143,5 +154,5 @@ const ParagraphLayoutExtension = Extension.create({
   },
 })
 
-export { INDENT_STEP, MAX_INDENT }
+export { INDENT_STEP, MAX_INDENT, normalizeTabStops }
 export default ParagraphLayoutExtension

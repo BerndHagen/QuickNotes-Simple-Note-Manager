@@ -1,6 +1,6 @@
 import { useEffect, useCallback, useMemo, useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { useEditor, EditorContent, BubbleMenu, FloatingMenu } from '@tiptap/react'
+import { useEditor, EditorContent, BubbleMenu } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import Link from '@tiptap/extension-link'
@@ -24,6 +24,8 @@ import ShapeExtension from './ShapeExtension'
 import ShapeGeometry, { SHAPE_GROUPS } from './ShapeGeometry'
 import ParagraphLayoutExtension from './ParagraphLayoutExtension'
 import TabStopExtension from './TabStopExtension'
+import PageBreakExtension from './PageBreakExtension'
+import PaginationExtension from './PaginationExtension'
 import StyledTaskItem from './StyledTaskItem'
 import CalloutExtension from './CalloutExtension'
 import InvisibleCharactersExtension from './InvisibleCharactersExtension'
@@ -57,7 +59,6 @@ import {
   Subscript as SubscriptIcon,
   Superscript as SuperscriptIcon,
   Palette,
-  Type,
   Table as TableIcon,
   Trash2,
   ChevronDown,
@@ -94,6 +95,15 @@ import {
   Check,
   ListPlus,
   SlidersHorizontal,
+  Accessibility,
+  BarChart3,
+  Focus,
+  Keyboard,
+  Mic,
+  PanelTop,
+  Pilcrow,
+  SpellCheck,
+  FilePlus2,
 } from 'lucide-react'
 import { debounce } from '../lib/utils'
 import { formatShortcut } from '../lib/shortcuts'
@@ -102,6 +112,7 @@ import { updateEditorSettings, useEditorSettings } from './EditorSettingsModal'
 import { DEFAULT_EDITOR_FONT, EDITOR_FONT_GROUPS } from '../lib/editorFonts'
 import { paperStyles } from '../lib/paperStyles'
 import { getSelectedTaskItems } from '../lib/checklistSelection'
+import { inspectEditorAccessibility } from '../lib/editorAccessibility'
 import toast from 'react-hot-toast'
 import {
   getFocusable,
@@ -371,10 +382,15 @@ const highlightColors = [
   '#fee2e2', '#fecaca', '#fca5a5',
 ]
 
+const TAB_STOP_TYPES = ['left', 'center', 'right', 'decimal']
+const tabTypeLabel = (type) => `${type[0].toUpperCase()}${type.slice(1)}`
+
 function DocumentRuler({ editor, containerRef }) {
+  const rulerRef = useRef(null)
   const trackRef = useRef(null)
   const dragRef = useRef(null)
-  const [width, setWidth] = useState(720)
+  const [geometry, setGeometry] = useState({ width: 720, left: 40 })
+  const [tabType, setTabType] = useState('left')
   const [layout, setLayout] = useState({ leftIndent: 0, rightIndent: 0, firstLineIndent: 0, tabStops: [] })
   const [drag, setDrag] = useState(null)
 
@@ -386,7 +402,9 @@ function DocumentRuler({ editor, containerRef }) {
         leftIndent: Number(attrs.leftIndent) || 0,
         rightIndent: Number(attrs.rightIndent) || 0,
         firstLineIndent: Number(attrs.firstLineIndent) || 0,
-        tabStops: Array.isArray(attrs.tabStops) ? attrs.tabStops : [],
+        tabStops: Array.isArray(attrs.tabStops)
+          ? attrs.tabStops.map((stop) => typeof stop === 'number' ? { position: stop, type: 'left' } : stop)
+          : [],
       })
     }
     sync()
@@ -399,25 +417,43 @@ function DocumentRuler({ editor, containerRef }) {
   }, [editor])
 
   useEffect(() => {
-    const element = trackRef.current
-    if (!element || typeof ResizeObserver === 'undefined') return undefined
-    const sync = () => setWidth(element.clientWidth)
+    const ruler = rulerRef.current
+    const editorElement = editor?.view?.dom
+    if (!ruler || !editorElement || typeof ResizeObserver === 'undefined') return undefined
+    const sync = () => {
+      const rulerRect = ruler.getBoundingClientRect()
+      const editorRect = editorElement.getBoundingClientRect()
+      const styles = getComputedStyle(editorElement)
+      const paddingLeft = parseFloat(styles.paddingLeft) || 0
+      const paddingRight = parseFloat(styles.paddingRight) || 0
+      setGeometry({
+        width: Math.max(120, editorElement.clientWidth - paddingLeft - paddingRight),
+        left: Math.max(40, editorRect.left + paddingLeft - rulerRect.left),
+      })
+    }
     sync()
     const observer = new ResizeObserver(sync)
-    observer.observe(element)
-    return () => observer.disconnect()
-  }, [containerRef])
+    observer.observe(editorElement)
+    if (containerRef.current) observer.observe(containerRef.current)
+    window.addEventListener('resize', sync)
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('resize', sync)
+    }
+  }, [containerRef, editor])
 
   const hasActiveDrag = Boolean(drag)
-
   useEffect(() => {
     if (!hasActiveDrag) return undefined
     const move = (event) => {
       const rect = trackRef.current?.getBoundingClientRect()
-      if (!rect) return
       const current = dragRef.current
-      if (!current) return
-      const next = { ...current, current: Math.max(0, Math.min(rect.width, event.clientX - rect.left)) }
+      if (!rect || !current) return
+      const next = {
+        ...current,
+        current: Math.max(0, Math.min(rect.width, event.clientX - rect.left)),
+        outside: event.clientY < rect.top - 18 || event.clientY > rect.bottom + 18,
+      }
       dragRef.current = next
       setDrag(next)
     }
@@ -425,10 +461,12 @@ function DocumentRuler({ editor, containerRef }) {
       const current = dragRef.current
       if (!current) return
       if (current.type === 'left') editor.commands.setParagraphLayout({ leftIndent: current.current })
-      if (current.type === 'right') editor.commands.setParagraphLayout({ rightIndent: width - current.current })
+      if (current.type === 'right') editor.commands.setParagraphLayout({ rightIndent: geometry.width - current.current })
       if (current.type === 'first') editor.commands.setParagraphLayout({ firstLineIndent: current.current - layout.leftIndent })
       if (current.type === 'tab') {
-        const next = layout.tabStops.map((stop, index) => index === current.index ? current.current : stop)
+        const next = current.outside
+          ? layout.tabStops.filter((_, index) => index !== current.index)
+          : layout.tabStops.map((stop, index) => index === current.index ? { ...stop, position: current.current } : stop)
         editor.commands.setParagraphLayout({ tabStops: next })
       }
       dragRef.current = null
@@ -443,28 +481,41 @@ function DocumentRuler({ editor, containerRef }) {
       window.removeEventListener('pointerup', finish)
       window.removeEventListener('pointercancel', finish)
     }
-  }, [editor, hasActiveDrag, layout.leftIndent, layout.tabStops, width])
+  }, [editor, geometry.width, hasActiveDrag, layout.leftIndent, layout.tabStops])
 
   const startDrag = (event, value) => {
+    if (event.button !== 0) return
     event.preventDefault()
     event.stopPropagation()
     dragRef.current = value
     setDrag(value)
   }
+  const cycleTabType = (currentType) => TAB_STOP_TYPES[(TAB_STOP_TYPES.indexOf(currentType) + 1) % TAB_STOP_TYPES.length]
   const markerPosition = (type, fallback) => drag?.type === type ? drag.current : fallback
-  const tickCount = Math.ceil(width / 40)
+  const tickCount = Math.ceil(geometry.width / 40)
 
   return (
-    <div className="qn-document-ruler flex shrink-0 items-stretch border-b border-subtle bg-surface-raised" aria-label="Paragraph ruler">
-      <div className="flex w-10 shrink-0 items-center justify-center border-r border-subtle text-ui-xs font-semibold text-content-subtle" title="Click the ruler to add a left tab stop">L</div>
+    <div ref={rulerRef} className="qn-document-ruler relative h-9 shrink-0 border-b border-subtle bg-surface-raised" aria-label="Paragraph ruler">
+      <button
+        type="button"
+        aria-label={`Tab stop type: ${tabTypeLabel(tabType)}. Activate to choose ${tabTypeLabel(cycleTabType(tabType))}.`}
+        title={`${tabTypeLabel(tabType)} tab stop`}
+        onClick={() => setTabType(cycleTabType(tabType))}
+        className="absolute inset-y-0 flex w-9 items-center justify-center border-x border-subtle text-ui-xs font-bold text-content-muted hover:bg-surface-hover"
+        style={{ left: `${geometry.left - 36}px` }}
+      >
+        {tabType === 'decimal' ? 'D.' : tabType[0].toUpperCase()}
+      </button>
       <div
         ref={trackRef}
-        className="relative h-9 min-w-0 flex-1 cursor-crosshair overflow-hidden"
+        data-ruler-track
+        className="absolute inset-y-0 cursor-crosshair overflow-hidden"
+        style={{ left: `${geometry.left}px`, width: `${geometry.width}px` }}
         onPointerDown={(event) => {
           if (event.target !== event.currentTarget) return
           const rect = event.currentTarget.getBoundingClientRect()
           const stop = Math.round(event.clientX - rect.left)
-          editor.commands.setParagraphLayout({ tabStops: [...layout.tabStops, stop] })
+          editor.commands.setParagraphLayout({ tabStops: [...layout.tabStops, { position: stop, type: tabType }] })
           editor.view.focus()
         }}
       >
@@ -473,43 +524,34 @@ function DocumentRuler({ editor, containerRef }) {
             {index > 0 && <span>{index}</span>}
           </span>
         ))}
-        <button
-          type="button"
-          aria-label={`First-line indent ${Math.round(layout.firstLineIndent)} pixels`}
-          className="qn-ruler-marker qn-ruler-marker--first"
-          style={{ left: `${markerPosition('first', layout.leftIndent + layout.firstLineIndent)}px` }}
-          onPointerDown={(event) => startDrag(event, { type: 'first', current: layout.leftIndent + layout.firstLineIndent })}
-        />
-        <button
-          type="button"
-          aria-label={`Left paragraph indent ${Math.round(layout.leftIndent)} pixels`}
-          className="qn-ruler-marker qn-ruler-marker--left"
-          style={{ left: `${markerPosition('left', layout.leftIndent)}px` }}
-          onPointerDown={(event) => startDrag(event, { type: 'left', current: layout.leftIndent })}
-        />
-        <button
-          type="button"
-          aria-label={`Right paragraph indent ${Math.round(layout.rightIndent)} pixels`}
-          className="qn-ruler-marker qn-ruler-marker--right"
-          style={{ left: `${markerPosition('right', width - layout.rightIndent)}px` }}
-          onPointerDown={(event) => startDrag(event, { type: 'right', current: width - layout.rightIndent })}
-        />
-        {layout.tabStops.map((stop, index) => (
-          <button
-            key={`${stop}-${index}`}
-            type="button"
-            aria-label={`Tab stop at ${Math.round(stop)} pixels. Press Delete to remove.`}
-            className="qn-ruler-tab-stop"
-            style={{ left: `${drag?.type === 'tab' && drag.index === index ? drag.current : stop}px` }}
-            onDoubleClick={() => editor.commands.setParagraphLayout({ tabStops: layout.tabStops.filter((_, itemIndex) => itemIndex !== index) })}
-            onKeyDown={(event) => {
-              if (event.key !== 'Delete' && event.key !== 'Backspace') return
-              event.preventDefault()
-              editor.commands.setParagraphLayout({ tabStops: layout.tabStops.filter((_, itemIndex) => itemIndex !== index) })
-            }}
-            onPointerDown={(event) => startDrag(event, { type: 'tab', index, current: stop })}
-          />
-        ))}
+        <button type="button" aria-label={`First-line indent ${Math.round(layout.firstLineIndent)} pixels`} className="qn-ruler-marker qn-ruler-marker--first" style={{ left: `${markerPosition('first', layout.leftIndent + layout.firstLineIndent)}px` }} onPointerDown={(event) => startDrag(event, { type: 'first', current: layout.leftIndent + layout.firstLineIndent })} />
+        <button type="button" aria-label={`Left paragraph indent ${Math.round(layout.leftIndent)} pixels`} className="qn-ruler-marker qn-ruler-marker--left" style={{ left: `${markerPosition('left', layout.leftIndent)}px` }} onPointerDown={(event) => startDrag(event, { type: 'left', current: layout.leftIndent })} />
+        <button type="button" aria-label={`Right paragraph indent ${Math.round(layout.rightIndent)} pixels`} className="qn-ruler-marker qn-ruler-marker--right" style={{ left: `${markerPosition('right', geometry.width - layout.rightIndent)}px` }} onPointerDown={(event) => startDrag(event, { type: 'right', current: geometry.width - layout.rightIndent })} />
+        {layout.tabStops.map((stop, index) => {
+          const position = drag?.type === 'tab' && drag.index === index ? drag.current : stop.position
+          return (
+            <button
+              key={`${stop.position}-${stop.type}-${index}`}
+              type="button"
+              data-tab-type={stop.type}
+              aria-label={`${tabTypeLabel(stop.type)} tab stop at ${Math.round(stop.position)} pixels. Press Enter to change type or Delete to remove.`}
+              className={`qn-ruler-tab-stop ${drag?.type === 'tab' && drag.index === index && drag.outside ? 'opacity-40' : ''}`}
+              style={{ left: `${position}px` }}
+              onDoubleClick={() => editor.commands.setParagraphLayout({ tabStops: layout.tabStops.map((item, itemIndex) => itemIndex === index ? { ...item, type: cycleTabType(item.type) } : item) })}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault()
+                  editor.commands.setParagraphLayout({ tabStops: layout.tabStops.map((item, itemIndex) => itemIndex === index ? { ...item, type: cycleTabType(item.type) } : item) })
+                  return
+                }
+                if (event.key !== 'Delete' && event.key !== 'Backspace') return
+                event.preventDefault()
+                editor.commands.setParagraphLayout({ tabStops: layout.tabStops.filter((_, itemIndex) => itemIndex !== index) })
+              }}
+              onPointerDown={(event) => startDrag(event, { type: 'tab', index, current: stop.position, outside: false })}
+            />
+          )
+        })}
       </div>
     </div>
   )
@@ -531,6 +573,7 @@ function SlashCommandMenu({ editor, editorSettings, menu, onClose }) {
     { label: 'Quote', hint: 'Set apart quoted text', keywords: 'blockquote citation', icon: Quote, run: () => editor.chain().focus().toggleBlockquote().run() },
     { label: 'Code block', hint: 'Monospaced code with highlighting', keywords: 'pre developer', icon: FileCode, run: () => editor.chain().focus().toggleCodeBlock().run() },
     { label: 'Divider', hint: 'Separate sections', keywords: 'line horizontal rule', icon: Minus, run: () => editor.chain().focus().setHorizontalRule().run() },
+    { label: 'Page break', hint: 'Start a new A4 page', keywords: 'page break ctrl enter', icon: FilePlus2, run: () => editor.chain().focus().insertPageBreak().run() },
     { label: 'Table', hint: 'Insert a 3 by 3 table', keywords: 'grid cells', icon: TableIcon, run: () => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run() },
     { label: 'Current date', hint: 'Insert today’s local date', keywords: 'today timestamp', icon: Calendar, run: () => editor.chain().focus().insertContent(new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(new Date())).run() },
   ], [editor, editorSettings])
@@ -883,6 +926,8 @@ export default function RichTextEditor({
       LineHeight,
       ParagraphLayoutExtension,
       TabStopExtension,
+      PageBreakExtension,
+      PaginationExtension,
       LetterSpacing,
       DropCap,
       Table.configure({
@@ -929,6 +974,11 @@ export default function RichTextEditor({
         'aria-multiline': 'true',
       },
       handleKeyDown: (view, event) => {
+        if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+          event.preventDefault()
+          editor.chain().focus().insertPageBreak().run()
+          return true
+        }
         if (event.key === 'Tab') {
           const listType = ['taskItem', 'listItem'].find((type) => event.shiftKey
             ? editor.can().liftListItem(type)
@@ -953,18 +1003,20 @@ export default function RichTextEditor({
           }
 
           const coords = view.coordsAtPos(view.state.selection.from)
-          const domAtPosition = view.domAtPos(view.state.selection.from).node
-          const element = domAtPosition.nodeType === Node.ELEMENT_NODE ? domAtPosition : domAtPosition.parentElement
-          const paragraph = element?.closest?.('p')
-          const paragraphLeft = paragraph?.getBoundingClientRect().left ?? coords.left
-          const currentX = Math.max(0, coords.left - paragraphLeft)
+          const editorRect = view.dom.getBoundingClientRect()
+          const editorStyle = getComputedStyle(view.dom)
+          const contentLeft = editorRect.left + (parseFloat(editorStyle.paddingLeft) || 0)
+          const currentX = Math.max(0, coords.left - contentLeft)
           const attributes = editor.getAttributes(editor.isActive('heading') ? 'heading' : 'paragraph')
-          const customStops = Array.isArray(attributes.tabStops) ? attributes.tabStops : []
-          const nextStop = customStops.find((stop) => stop > currentX + 4)
-            ?? (Math.floor(currentX / 48) + 1) * 48
+          const customStops = Array.isArray(attributes.tabStops)
+            ? attributes.tabStops.map((stop) => typeof stop === 'number' ? { position: stop, type: 'left' } : stop)
+            : []
+          const nextStop = customStops.find((stop) => stop.position > currentX + 4)
+            ?? { position: (Math.floor(currentX / 48) + 1) * 48, type: 'left' }
           editor.chain().focus().insertTabStop({
-            width: Math.max(8, nextStop - currentX),
-            stop: nextStop,
+            width: Math.max(8, nextStop.position - currentX),
+            stop: nextStop.position,
+            type: nextStop.type,
           }).run()
           return true
         }
@@ -992,7 +1044,7 @@ export default function RichTextEditor({
           (Number(node.attrs.y) || 0) + (Number(node.attrs.height) || (node.type.name === 'textBox' ? 140 : 112))
         )
       })
-      editor.view.dom.style.minHeight = `${Math.max(300, objectBottom + 72)}px`
+      editor.view.dom.style.setProperty('--qn-object-min-height', `${Math.max(300, objectBottom + 72)}px`)
     }
     syncObjectCanvasHeight()
     if (typeof editor.on !== 'function' || typeof editor.off !== 'function') return undefined
@@ -1270,32 +1322,6 @@ export default function RichTextEditor({
         </BubbleButton>
       </BubbleMenu>}
 
-      {!readOnly && <FloatingMenu
-        editor={editor}
-        tippyOptions={{ duration: 100, aria: { expanded: false, content: 'describedby' } }}
-        shouldShow={({ state }) => state.selection.empty && state.doc.textContent.length === 0}
-        className="bg-surface-raised shadow-xl rounded-lg border border-subtle flex items-center p-1 gap-0.5"
-      >
-        <BubbleButton label="Heading 1" onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}>
-          <Heading1 className="w-4 h-4" />
-        </BubbleButton>
-        <BubbleButton label="Heading 2" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>
-          <Heading2 className="w-4 h-4" />
-        </BubbleButton>
-        <BubbleButton label="Bullet list" onClick={() => editor.chain().focus().toggleBulletList().run()}>
-          <List className="w-4 h-4" />
-        </BubbleButton>
-        <BubbleButton label="Checklist" onClick={() => editor.chain().focus().toggleTaskList().run()}>
-          <CheckSquare className="w-4 h-4" />
-        </BubbleButton>
-        <BubbleButton label="Quote" onClick={() => editor.chain().focus().toggleBlockquote().run()}>
-          <Quote className="w-4 h-4" />
-        </BubbleButton>
-        <BubbleButton label="Insert table" onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}>
-          <TableIcon className="w-4 h-4" />
-        </BubbleButton>
-      </FloatingMenu>}
-
       {!readOnly && <TableBubbleMenu editor={editor} />}
 
       {!readOnly && <SlashCommandMenu editor={editor} editorSettings={editorSettings} menu={slashMenu} onClose={() => setSlashMenu(null)} />}
@@ -1318,6 +1344,12 @@ export default function RichTextEditor({
             ref={editorContainerRef}
             data-editor-page
             data-document-width={editorSettings.documentWidth}
+            onKeyDownCapture={(event) => {
+              if ((!event.ctrlKey && !event.metaKey) || event.key !== 'Enter') return
+              event.preventDefault()
+              event.stopPropagation()
+              editor.chain().focus().insertPageBreak().run()
+            }}
             className={`qn-editor-page relative ${paperStyle.className || ''}`}
             style={paperStyle.style}
           >
@@ -1598,6 +1630,9 @@ function EditorToolbar({
   onPaste,
 }) {
   const { t } = useTranslation()
+  const spellCheck = useUIStore((state) => state.spellCheck)
+  const showNoteStatistics = useUIStore((state) => state.showNoteStatistics)
+  const voiceInputActive = useUIStore((state) => state.voiceInputActive)
   const shortcut = (key, modifiers = {}) =>
     formatShortcut({ key, ctrl: true, ...modifiers })
   const [showColorPicker, setShowColorPicker] = useState(false)
@@ -1611,6 +1646,9 @@ function EditorToolbar({
   const [showHeadingsPicker, setShowHeadingsPicker] = useState(false)
   const [showShapePicker, setShowShapePicker] = useState(false)
   const [showChecklistMenu, setShowChecklistMenu] = useState(false)
+  const [showAccessibilityCheck, setShowAccessibilityCheck] = useState(false)
+  const [accessibilityIssues, setAccessibilityIssues] = useState([])
+  const [showDocumentWidth, setShowDocumentWidth] = useState(false)
   const [checklistFeedback, setChecklistFeedback] = useState('')
   const [showCalloutMenu, setShowCalloutMenu] = useState(false)
   const [showParagraphSpacing, setShowParagraphSpacing] = useState(false)
@@ -1635,6 +1673,8 @@ function EditorToolbar({
   const headingsRef = useRef(null)
   const shapePickerRef = useRef(null)
   const checklistRef = useRef(null)
+  const accessibilityRef = useRef(null)
+  const documentWidthRef = useRef(null)
   const calloutRef = useRef(null)
   const paragraphSpacingRef = useRef(null)
 
@@ -1747,6 +1787,8 @@ function EditorToolbar({
     setShowHeadingsPicker(false)
     setShowShapePicker(false)
     setShowChecklistMenu(false)
+    setShowAccessibilityCheck(false)
+    setShowDocumentWidth(false)
     setShowCalloutMenu(false)
     setShowParagraphSpacing(false)
   }, [])
@@ -1764,6 +1806,18 @@ function EditorToolbar({
   const toggleDropdown = (setter, currentValue) => {
     closeAllDropdowns()
     setter(!currentValue)
+  }
+
+  const openAccessibilityCheck = () => {
+    closeAllDropdowns()
+    setAccessibilityIssues(inspectEditorAccessibility(editor.state.doc))
+    setShowAccessibilityCheck(true)
+  }
+
+  const focusAccessibilityIssue = (issueItem) => {
+    setShowAccessibilityCheck(false)
+    const maximum = Math.max(1, editor.state.doc.content.size - 1)
+    editor.chain().focus(Math.min(issueItem.position + 1, maximum)).run()
   }
 
   const copyFormat = useCallback(() => {
@@ -1964,6 +2018,13 @@ function EditorToolbar({
   const activeCheckboxColor = checklistControlValue('checkboxColor', 'defaultCheckboxColor')
   const activeCheckboxSize = checklistControlValue('checkboxSize', 'defaultCheckboxSize')
   const activeCheckedStyle = checklistControlValue('checkedStyle', 'defaultCheckedStyle')
+  const activeTextStyle = editor.getAttributes('textStyle')
+  const activeFontValue = activeTextStyle.fontFamily || editorSettings.defaultFontFamily || DEFAULT_EDITOR_FONT
+  const activeFontName = fontGroups
+    .flatMap((group) => group.fonts)
+    .find((font) => font.value === activeFontValue)?.name || 'Font'
+  const activeFontSize = String(activeTextStyle.fontSize || editorSettings.defaultFontSize || '16px').replace(/px$/, '')
+  const activeLineHeight = editor.getAttributes('paragraph').lineHeight || editorSettings.defaultLineHeight || '1.5'
 
   const insertDateOrTime = useCallback((kind) => {
     const now = new Date()
@@ -1973,7 +2034,7 @@ function EditorToolbar({
     editor.chain().focus().insertContent(value).run()
   }, [editor])
 
-  const ToolbarButton = ({ onClick, isActive, disabled, children, title, shortcut }) => {
+  const ToolbarButton = ({ onClick, isActive, disabled, children, title, shortcut, className = '' }) => {
     const buttonRef = useRef(null)
     const activate = () => {
       closeAllDropdowns()
@@ -1996,7 +2057,7 @@ function EditorToolbar({
  isActive
  ? 'bg-accent-soft text-accent-text'
             : 'text-content-muted hover:bg-surface-hover hover:text-content'
-        } ${disabled ? 'cursor-not-allowed opacity-40' : ''}`}
+        } ${disabled ? 'cursor-not-allowed opacity-40' : ''} ${className}`}
       >
         {children}
       </button>
@@ -2015,7 +2076,7 @@ function EditorToolbar({
     <div role="separator" aria-orientation="vertical" className="mx-1 h-5 w-px shrink-0 bg-[var(--qn-border-subtle)]" />
   )
 
-  const DropdownButton = ({ children, isOpen, onClick, title, disabled }) => {
+  const DropdownButton = ({ children, isOpen, onClick, title, disabled, className = '' }) => {
     const buttonRef = useRef(null)
     
     const button = (
@@ -2039,7 +2100,7 @@ function EditorToolbar({
             : isOpen
               ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 shadow-sm'
               : 'hover:bg-surface-hover text-content-muted hover:text-content dark:hover:text-content-subtle'
-        }`}
+        } ${className}`}
       >
         {children}
         <ChevronDown className="w-3 h-3 opacity-50" />
@@ -2059,7 +2120,6 @@ function EditorToolbar({
     <div
       className="editor-ribbon border-b border-subtle"
       data-density={editorSettings.ribbonDensity}
-      data-group-labels={editorSettings.showRibbonGroupLabels ? 'visible' : 'hidden'}
     >
       <div className="qn-ribbon-tabs flex min-h-10 items-center border-b border-subtle px-2 sm:px-3">
         <button
@@ -2076,6 +2136,8 @@ function EditorToolbar({
             ['insert', 'Insert'],
             ['format', 'Format'],
             ['layout', 'Layout'],
+            ['review', 'Review'],
+            ['view', 'View'],
             ['tools', 'Tools'],
           ].map(([value, label]) => (
             <button
@@ -2137,29 +2199,6 @@ function EditorToolbar({
           onKeyDown={handleToolbarKeyDown}
           className="editor-toolbar flex min-h-[58px] flex-nowrap items-stretch gap-1 overflow-x-auto overflow-y-hidden overscroll-x-contain px-2 sm:px-3"
         >
-      <div className={ribbonGroupClass('home')}>
-      <span className="qn-ribbon-group-label">History</span>
-      <ToolbarButton onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} title="Undo" shortcut={shortcut('z')}>
-        <Undo className="w-4 h-4" />
-      </ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} title="Redo" shortcut={shortcut('y')}>
-        <Redo className="w-4 h-4" />
-      </ToolbarButton>
-      </div>
-
-      <div className={ribbonGroupClass('tools')}>
-      <span className="qn-ribbon-group-label">Clipboard</span>
-      <ToolbarButton onClick={onCut} disabled={editor.state.selection.empty} title="Cut" shortcut={shortcut('x')}>
-        <Scissors className="h-4 w-4" />
-      </ToolbarButton>
-      <ToolbarButton onClick={onCopy} disabled={editor.state.selection.empty} title="Copy" shortcut={shortcut('c')}>
-        <Copy className="h-4 w-4" />
-      </ToolbarButton>
-      <ToolbarButton onClick={onPaste} title="Paste" shortcut={shortcut('v')}>
-        <ClipboardPaste className="h-4 w-4" />
-      </ToolbarButton>
-      </div>
-
       <div className={ribbonGroupClass('format')}>
       <span className="qn-ribbon-group-label">Format tools</span>
       <ToolbarButton
@@ -2174,19 +2213,19 @@ function EditorToolbar({
       </ToolbarButton>
       </div>
 
-      <div className={ribbonGroupClass('tools')}>
+      <div className={ribbonGroupClass('review')}>
       <span className="qn-ribbon-group-label">Find</span>
       <ToolbarButton onClick={() => useUIStore.getState().setFindReplaceOpen(true)} title="Find and replace" shortcut={shortcut('f')}>
         <Search className="h-4 w-4" />
       </ToolbarButton>
       </div>
 
-      <div className={ribbonGroupClass('format')}>
+      <div className={ribbonGroupClass('home')} style={{ order: -10 }}>
       <span className="qn-ribbon-group-label">Typography</span>
 
       <div className="relative" ref={fontPickerRef}>
-        <DropdownButton isOpen={showFontPicker} onClick={() => toggleDropdown(setShowFontPicker, showFontPicker)} title="Font">
-          <Type className="w-4 h-4" />
+        <DropdownButton isOpen={showFontPicker} onClick={() => toggleDropdown(setShowFontPicker, showFontPicker)} title="Font family" className="min-w-[112px] justify-between px-2">
+          <span className="max-w-[88px] truncate text-ui-sm font-medium" style={{ fontFamily: activeFontValue }}>{activeFontName}</span>
         </DropdownButton>
         <PortalDropdown
           isOpen={showFontPicker}
@@ -2229,8 +2268,8 @@ function EditorToolbar({
       </div>
 
       <div className="relative" ref={fontSizePickerRef}>
-        <DropdownButton isOpen={showFontSizePicker} onClick={() => toggleDropdown(setShowFontSizePicker, showFontSizePicker)} title="Font Size">
-          <CaseSensitive className="w-4 h-4" />
+        <DropdownButton isOpen={showFontSizePicker} onClick={() => toggleDropdown(setShowFontSizePicker, showFontSizePicker)} title="Font size" className="min-w-[48px] justify-between px-2">
+          <span className="text-ui-sm font-medium tabular-nums">{activeFontSize}</span>
         </DropdownButton>
         <PortalDropdown isOpen={showFontSizePicker} anchorRef={fontSizePickerRef} onClose={() => setShowFontSizePicker(false)}>
           <div className="py-1.5 w-[100px] max-h-[300px] overflow-y-auto">
@@ -2258,8 +2297,9 @@ function EditorToolbar({
       </div>
 
       <div className="relative" ref={lineHeightPickerRef}>
-        <DropdownButton isOpen={showLineHeightPicker} onClick={() => toggleDropdown(setShowLineHeightPicker, showLineHeightPicker)} title="Line Height">
-          <MoveVertical className="w-4 h-4" />
+        <DropdownButton isOpen={showLineHeightPicker} onClick={() => toggleDropdown(setShowLineHeightPicker, showLineHeightPicker)} title="Line height" className="min-w-[58px] justify-between px-2">
+          <MoveVertical className="h-4 w-4" />
+          <span className="text-ui-xs font-medium tabular-nums">{activeLineHeight}</span>
         </DropdownButton>
         <PortalDropdown isOpen={showLineHeightPicker} anchorRef={lineHeightPickerRef} onClose={() => setShowLineHeightPicker(false)}>
           <div className="py-1.5 w-[100px]">
@@ -2286,7 +2326,7 @@ function EditorToolbar({
       </div>
       </div>
 
-      <div className={ribbonGroupClass('home')}>
+      <div className={ribbonGroupClass('home')} style={{ order: -9 }}>
       <span className="qn-ribbon-group-label">Text styles</span>
       <div className="relative" ref={headingsRef}>
         <DropdownButton
@@ -2359,7 +2399,7 @@ function EditorToolbar({
       </ToolbarButton>
       </div>
 
-      <div className={ribbonGroupClass('format')}>
+      <div className={ribbonGroupClass('home')} style={{ order: -8 }}>
       <span className="qn-ribbon-group-label">Colour & effects</span>
       <div className="relative" ref={colorPickerRef}>
         <DropdownButton isOpen={showColorPicker} onClick={() => toggleDropdown(setShowColorPicker, showColorPicker)} title="Text Color">
@@ -2532,9 +2572,8 @@ function EditorToolbar({
       </ToolbarButton>
       </div>
 
-      <div className={ribbonGroupClass('home')}>
+      <div className={ribbonGroupClass('home')} style={{ order: -7 }}>
       <span className="qn-ribbon-group-label">Paragraph</span>
-      <ToolbarDivider />
 
       <ToolbarButton onClick={() => editor.chain().focus().setTextAlign('left').run()} isActive={editor.isActive({ textAlign: 'left' })} title="Align Left">
         <AlignLeft className="w-4 h-4" />
@@ -2550,7 +2589,7 @@ function EditorToolbar({
       </ToolbarButton>
       </div>
 
-      <div className={ribbonGroupClass('home')} style={{ order: -1 }}>
+      <div className={ribbonGroupClass('home')} style={{ order: -6 }}>
       <span className="qn-ribbon-group-label">Lists</span>
       <ToolbarButton onClick={() => editor.chain().focus().toggleBulletList().run()} isActive={editor.isActive('bulletList')} title="Bullet List">
         <List className="w-4 h-4" />
@@ -2558,9 +2597,25 @@ function EditorToolbar({
       <ToolbarButton onClick={() => editor.chain().focus().toggleOrderedList().run()} isActive={editor.isActive('orderedList')} title="Numbered List">
         <ListOrdered className="w-4 h-4" />
       </ToolbarButton>
-      <div className="relative" ref={checklistRef}>
-        <DropdownButton isOpen={showChecklistMenu} onClick={() => toggleDropdown(setShowChecklistMenu, showChecklistMenu)} title="Checklist options">
+      <div className="qn-checklist-split relative flex items-center" ref={checklistRef}>
+        <ToolbarButton
+          onClick={() => {
+            createChecklist()
+            setShowChecklistMenu(true)
+          }}
+          isActive={editor.isActive('taskList')}
+          title={editor.isActive('taskList') ? 'Turn off checklist and show options' : 'Create checklist with current style'}
+          className="qn-checklist-primary"
+        >
           <CheckSquare className="w-4 h-4" />
+        </ToolbarButton>
+        <DropdownButton
+          isOpen={showChecklistMenu}
+          onClick={() => toggleDropdown(setShowChecklistMenu, showChecklistMenu)}
+          title="Checklist options"
+          className="qn-checklist-menu-trigger"
+        >
+          <span className="qn-sr-only">Checklist options</span>
         </DropdownButton>
         <PortalDropdown isOpen={showChecklistMenu} anchorRef={checklistRef} onClose={() => setShowChecklistMenu(false)} label="Checklist options">
           <div className="w-[min(22rem,calc(100vw-1rem))] p-2">
@@ -2667,7 +2722,30 @@ function EditorToolbar({
       </div>
       </div>
 
-      <div className={ribbonGroupClass('layout')}>
+      <div className={ribbonGroupClass('home')} style={{ order: -5 }}>
+      <span className="qn-ribbon-group-label">Clipboard</span>
+      <ToolbarButton onClick={onCut} disabled={editor.state.selection.empty} title="Cut" shortcut={shortcut('x')}>
+        <Scissors className="h-4 w-4" />
+      </ToolbarButton>
+      <ToolbarButton onClick={onCopy} disabled={editor.state.selection.empty} title="Copy" shortcut={shortcut('c')}>
+        <Copy className="h-4 w-4" />
+      </ToolbarButton>
+      <ToolbarButton onClick={onPaste} title="Paste" shortcut={shortcut('v')}>
+        <ClipboardPaste className="h-4 w-4" />
+      </ToolbarButton>
+      </div>
+
+      <div className={ribbonGroupClass('home')} style={{ order: -4 }}>
+      <span className="qn-ribbon-group-label">History</span>
+      <ToolbarButton onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} title="Undo" shortcut={shortcut('z')}>
+        <Undo className="w-4 h-4" />
+      </ToolbarButton>
+      <ToolbarButton onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} title="Redo" shortcut={shortcut('y')}>
+        <Redo className="w-4 h-4" />
+      </ToolbarButton>
+      </div>
+
+      <div className={ribbonGroupClass('format')}>
       <span className="qn-ribbon-group-label">Indent</span>
       <ToolbarButton
         onClick={() => {
@@ -2699,9 +2777,8 @@ function EditorToolbar({
       </ToolbarButton>
       </div>
 
-      <div className={ribbonGroupClass('layout')}>
+      <div className={ribbonGroupClass('format')}>
       <span className="qn-ribbon-group-label">Text layout</span>
-      <ToolbarDivider />
 
       <div className="relative" ref={letterSpacingRef}>
         <DropdownButton isOpen={showLetterSpacing} onClick={() => toggleDropdown(setShowLetterSpacing, showLetterSpacing)} title="Letter Spacing">
@@ -2773,7 +2850,6 @@ function EditorToolbar({
 
       <div className={ribbonGroupClass('insert')}>
       <span className="qn-ribbon-group-label">Blocks</span>
-      <ToolbarDivider />
 
       <ToolbarButton onClick={() => editor.chain().focus().toggleBlockquote().run()} isActive={editor.isActive('blockquote')} title="Quote">
         <Quote className="w-4 h-4" />
@@ -2946,7 +3022,7 @@ function EditorToolbar({
       </div>
       </div>
 
-      <div className={ribbonGroupClass('tools')}>
+      <div className={ribbonGroupClass('review')}>
       <span className="qn-ribbon-group-label">Language</span>
       <ToolbarButton onClick={openTranslation} title="Translate selected text or note">
         <Languages className="w-4 h-4" />
@@ -2954,18 +3030,22 @@ function EditorToolbar({
       </div>
 
       <div className={ribbonGroupClass('insert')}>
-      <span className="qn-ribbon-group-label">References</span>
+      <span className="qn-ribbon-group-label">Date & time</span>
       <ToolbarButton onClick={() => insertDateOrTime('date')} title="Insert current date">
         <Calendar className="h-4 w-4" />
       </ToolbarButton>
       <ToolbarButton onClick={() => insertDateOrTime('time')} title="Insert current time">
         <Clock className="h-4 w-4" />
       </ToolbarButton>
+      </div>
+
+      <div className={ribbonGroupClass('view')}>
+      <span className="qn-ribbon-group-label">Navigation</span>
       <div className="relative" ref={tocRef}>
         <DropdownButton 
           isOpen={showTableOfContents} 
           onClick={() => toggleDropdown(setShowTableOfContents, showTableOfContents)} 
-          title="Table of Contents"
+          title="Document outline"
           disabled={headings.length === 0}
         >
           <ListTree className="w-4 h-4" />
@@ -2973,7 +3053,7 @@ function EditorToolbar({
         <PortalDropdown isOpen={showTableOfContents} anchorRef={tocRef} onClose={() => setShowTableOfContents(false)}>
           <div className="py-1.5 min-w-[220px] max-w-[320px] max-h-[400px] overflow-y-auto">
             <p className="px-3 py-2 text-[10px] font-bold tracking-[0.12em] uppercase text-content-subtle border-b border-subtle">
-              Table of Contents
+              Document outline
             </p>
             {headings.length === 0 ? (
               <p className="px-3 py-3 text-[13px] text-content-subtle italic">
@@ -3010,8 +3090,8 @@ function EditorToolbar({
 
       <div className={ribbonGroupClass('layout')}>
       <span className="qn-ribbon-group-label">Page</span>
-      <ToolbarButton onClick={() => updateEditorSettings({ showRuler: !editorSettings.showRuler })} isActive={editorSettings.showRuler} title={editorSettings.showRuler ? 'Hide ruler' : 'Show ruler'}>
-        <Ruler className="h-4 w-4" />
+      <ToolbarButton onClick={() => editor.chain().focus().insertPageBreak().run()} title={`Insert page break (${shortcut('Enter')})`}>
+        <FilePlus2 className="h-4 w-4" />
       </ToolbarButton>
       <div className="relative" ref={paperPickerRef}>
         <DropdownButton isOpen={showPaperPicker} onClick={() => toggleDropdown(setShowPaperPicker, showPaperPicker)} title="Paper Style">
@@ -3040,21 +3120,137 @@ function EditorToolbar({
                 <span className="truncate">{paper.name}</span>
               </button>
             ))}
-            <div className="my-1 h-px bg-[var(--qn-border-subtle)]" />
-            <p className="px-3 py-1 text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">Note width</p>
+          </div>
+        </PortalDropdown>
+      </div>
+      </div>
+
+      <div className={ribbonGroupClass('review')}>
+      <span className="qn-ribbon-group-label">Proofing</span>
+      <ToolbarButton
+        onClick={() => useUIStore.getState().setSpellCheck(!spellCheck)}
+        isActive={spellCheck}
+        title={spellCheck ? 'Turn off spell check' : 'Turn on spell check'}
+      >
+        <SpellCheck className="h-4 w-4" />
+      </ToolbarButton>
+      <div className="relative" ref={accessibilityRef}>
+        <ToolbarButton
+          onClick={openAccessibilityCheck}
+          isActive={showAccessibilityCheck}
+          title="Accessibility checker"
+        >
+          <Accessibility className="h-4 w-4" />
+        </ToolbarButton>
+        <PortalDropdown
+          isOpen={showAccessibilityCheck}
+          anchorRef={accessibilityRef}
+          onClose={() => setShowAccessibilityCheck(false)}
+          align="right"
+          label="Accessibility checker"
+        >
+          <div className="w-[min(25rem,calc(100vw-1rem))] p-3">
+            <div className="flex items-start gap-3 border-b border-subtle pb-3">
+              <span className={`mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full ${accessibilityIssues.length === 0 ? 'bg-success-soft text-success-text' : 'bg-warning-soft text-warning-text'}`}>
+                {accessibilityIssues.length === 0 ? <Check className="h-4 w-4" /> : <Accessibility className="h-4 w-4" />}
+              </span>
+              <div>
+                <p className="font-semibold text-content">
+                  {accessibilityIssues.length === 0
+                    ? 'No accessibility issues found'
+                    : `${accessibilityIssues.length} ${accessibilityIssues.length === 1 ? 'issue' : 'issues'} found`}
+                </p>
+                <p className="mt-0.5 text-ui-xs leading-relaxed text-content-muted">
+                  Checks heading order, image descriptions, table headers, and descriptive link text.
+                </p>
+              </div>
+            </div>
+            {accessibilityIssues.length > 0 && (
+              <div className="max-h-72 overflow-y-auto py-2">
+                {accessibilityIssues.map((issueItem) => (
+                  <button
+                    key={issueItem.id}
+                    type="button"
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => focusAccessibilityIssue(issueItem)}
+                    className="w-full rounded-control px-2.5 py-2 text-left hover:bg-surface-hover"
+                  >
+                    <span className="block text-ui-sm font-semibold text-content">{issueItem.title}</span>
+                    <span className="mt-0.5 block text-ui-xs leading-relaxed text-content-muted">{issueItem.description}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            <button
+              type="button"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => setAccessibilityIssues(inspectEditorAccessibility(editor.state.doc))}
+              className="mt-2 w-full rounded-control border border-subtle px-3 py-2 text-ui-sm font-medium text-content-muted hover:bg-surface-hover hover:text-content"
+            >
+              Check again
+            </button>
+          </div>
+        </PortalDropdown>
+      </div>
+      </div>
+
+      <div className={ribbonGroupClass('review')}>
+      <span className="qn-ribbon-group-label">Insights</span>
+      <ToolbarButton
+        onClick={() => useUIStore.getState().setShowNoteStatistics(!showNoteStatistics)}
+        isActive={showNoteStatistics}
+        title={showNoteStatistics ? 'Hide document statistics' : 'Show document statistics'}
+      >
+        <BarChart3 className="h-4 w-4" />
+      </ToolbarButton>
+      </div>
+
+      <div className={ribbonGroupClass('view')}>
+      <span className="qn-ribbon-group-label">Show</span>
+      <ToolbarButton onClick={() => updateEditorSettings({ showRuler: !editorSettings.showRuler })} isActive={editorSettings.showRuler} title={editorSettings.showRuler ? 'Hide ruler' : 'Show ruler'}>
+        <Ruler className="h-4 w-4" />
+      </ToolbarButton>
+      <ToolbarButton onClick={() => updateEditorSettings({ showInvisibles: !editorSettings.showInvisibles })} isActive={editorSettings.showInvisibles} title={editorSettings.showInvisibles ? 'Hide formatting marks' : 'Show formatting marks'}>
+        <Pilcrow className="h-4 w-4" />
+      </ToolbarButton>
+      </div>
+
+      <div className={ribbonGroupClass('view')}>
+      <span className="qn-ribbon-group-label">Display</span>
+      <div className="relative" ref={documentWidthRef}>
+        <DropdownButton isOpen={showDocumentWidth} onClick={() => toggleDropdown(setShowDocumentWidth, showDocumentWidth)} title="Document width">
+          <PanelTop className="h-4 w-4" />
+        </DropdownButton>
+        <PortalDropdown isOpen={showDocumentWidth} anchorRef={documentWidthRef} onClose={() => setShowDocumentWidth(false)} align="right" label="Document width">
+          <div className="w-48 p-1.5">
             {[
-              ['focused', 'Focused'],
-              ['standard', 'Standard'],
-              ['wide', 'Wide'],
-              ['full', 'Full width'],
-            ].map(([value, label]) => (
-              <button key={value} type="button" aria-pressed={editorSettings.documentWidth === value} onMouseDown={(event) => event.preventDefault()} onClick={() => updateEditorSettings({ documentWidth: value })} className={`flex w-full items-center justify-between rounded-control px-3 py-2 text-left text-ui-sm hover:bg-surface-hover ${editorSettings.documentWidth === value ? 'font-medium text-accent-text' : 'text-content-muted'}`}>
-                {label} {editorSettings.documentWidth === value && <Check className="h-4 w-4" />}
+              ['focused', 'Focused', 'Comfortable reading column'],
+              ['standard', 'Standard', 'Balanced writing space'],
+              ['wide', 'Wide', 'More room for tables'],
+              ['full', 'Full width', 'Use all available space'],
+            ].map(([value, label, description]) => (
+              <button key={value} type="button" aria-pressed={editorSettings.documentWidth === value} onMouseDown={(event) => event.preventDefault()} onClick={() => { updateEditorSettings({ documentWidth: value }); setShowDocumentWidth(false) }} className={`flex w-full items-start justify-between gap-3 rounded-control px-2.5 py-2 text-left hover:bg-surface-hover ${editorSettings.documentWidth === value ? 'text-accent-text' : 'text-content-muted'}`}>
+                <span><span className="block text-ui-sm font-semibold">{label}</span><span className="block text-ui-xs font-normal text-content-subtle">{description}</span></span>
+                {editorSettings.documentWidth === value && <Check className="mt-0.5 h-4 w-4 shrink-0" />}
               </button>
             ))}
           </div>
         </PortalDropdown>
       </div>
+      </div>
+
+      <div className={ribbonGroupClass('view')}>
+      <span className="qn-ribbon-group-label">Focus</span>
+      <ToolbarButton onClick={() => useUIStore.getState().setFocusModeOpen(true)} title="Open focus mode">
+        <Focus className="h-4 w-4" />
+      </ToolbarButton>
+      </div>
+
+      <div className={ribbonGroupClass('tools')}>
+      <span className="qn-ribbon-group-label">Speech</span>
+      <ToolbarButton onClick={() => useUIStore.getState().setVoiceInputActive(!voiceInputActive)} isActive={voiceInputActive} title={voiceInputActive ? 'Stop dictation' : 'Start dictation'}>
+        <Mic className="h-4 w-4" />
+      </ToolbarButton>
       </div>
 
       <div className={ribbonGroupClass('tools')}>
@@ -3071,6 +3267,13 @@ function EditorToolbar({
         title="Editor Settings"
       >
         <Settings className="w-4 h-4" />
+      </ToolbarButton>
+
+      <ToolbarButton
+        onClick={() => useUIStore.getState().setShortcutsModalOpen(true)}
+        title="Keyboard shortcuts"
+      >
+        <Keyboard className="h-4 w-4" />
       </ToolbarButton>
       </div>
       </div>

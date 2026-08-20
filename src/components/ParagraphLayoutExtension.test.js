@@ -6,6 +6,8 @@ import ParagraphLayoutExtension from './ParagraphLayoutExtension'
 import TabStopExtension from './TabStopExtension'
 import StyledTaskItem from './StyledTaskItem'
 import CalloutExtension from './CalloutExtension'
+import PageBreakExtension from './PageBreakExtension'
+import PaginationExtension from './PaginationExtension'
 
 const editors = []
 const createEditor = (options) => {
@@ -32,12 +34,12 @@ describe('document layout extensions', () => {
     expect(editor.getAttributes('paragraph').leftIndent).toBe(120)
 
     editor.commands.decreaseParagraphIndent()
-    editor.commands.setParagraphLayout({ rightIndent: 24, firstLineIndent: -16, tabStops: [240, 96, 240], spaceBefore: 8, spaceAfter: 16 })
+    editor.commands.setParagraphLayout({ rightIndent: 24, firstLineIndent: -16, tabStops: [{ position: 240, type: 'right' }, 96, { position: 240, type: 'right' }], spaceBefore: 8, spaceAfter: 16 })
     expect(editor.getAttributes('paragraph')).toMatchObject({
       leftIndent: 80,
       rightIndent: 24,
       firstLineIndent: -16,
-      tabStops: [96, 240],
+      tabStops: [{ position: 96, type: 'left' }, { position: 240, type: 'right' }],
       spaceBefore: 8,
       spaceAfter: 16,
     })
@@ -46,7 +48,8 @@ describe('document layout extensions', () => {
     expect(html).toContain('data-left-indent="80"')
     expect(html).toContain('data-right-indent="24"')
     expect(html).toContain('data-first-line-indent="-16"')
-    expect(html).toContain('data-tab-stops="[96,240]"')
+    const tabStops = JSON.parse(new DOMParser().parseFromString(html, 'text/html').querySelector('p').dataset.tabStops)
+    expect(tabStops).toEqual([{ position: 96, type: 'left' }, { position: 240, type: 'right' }])
     expect(html).toContain('data-space-before="8"')
     expect(html).toContain('data-space-after="16"')
 
@@ -59,7 +62,7 @@ describe('document layout extensions', () => {
       leftIndent: 80,
       rightIndent: 24,
       firstLineIndent: -16,
-      tabStops: [96, 240],
+      tabStops: [{ position: 96, type: 'left' }, { position: 240, type: 'right' }],
       spaceBefore: 8,
       spaceAfter: 16,
     })
@@ -71,14 +74,42 @@ describe('document layout extensions', () => {
       content: '<p>Label</p>',
     })
     editor.commands.setTextSelection(6)
-    editor.commands.insertTabStop({ width: 72, stop: 120 })
+    editor.commands.insertTabStop({ width: 72, stop: 120, type: 'decimal' })
 
     expect(editor.getHTML()).toContain('data-type="tabStop"')
     expect(editor.getHTML()).toContain('data-width="72"')
     expect(editor.getJSON().content[0].content.at(-1)).toMatchObject({
       type: 'tabStop',
-      attrs: { width: 72, stop: 120 },
+      attrs: { width: 72, stop: 120, type: 'decimal' },
     })
+  })
+
+  it('stores manual page breaks as document structure', () => {
+    const editor = createEditor({
+      extensions: [StarterKit, PageBreakExtension, PaginationExtension],
+      content: '<p>Page one</p><p>Page two</p>',
+    })
+    editor.commands.setTextSelection(9)
+    expect(editor.commands.insertPageBreak()).toBe(true)
+    expect(editor.getJSON().content.some((node) => node.type === 'pageBreak')).toBe(true)
+    expect(editor.getHTML()).toContain('data-type="pageBreak"')
+  })
+
+  it('maps Ctrl+Enter to a page break instead of a hard line break', () => {
+    const editor = createEditor({
+      extensions: [StarterKit, PageBreakExtension],
+      content: '<p>Page one</p>',
+    })
+    editor.commands.setTextSelection(9)
+    editor.view.dom.dispatchEvent(new KeyboardEvent('keydown', {
+      key: 'Enter',
+      code: 'Enter',
+      ctrlKey: true,
+      bubbles: true,
+      cancelable: true,
+    }))
+    expect(editor.getJSON().content.some((node) => node.type === 'pageBreak')).toBe(true)
+    expect(editor.getJSON().content[0].content?.some((node) => node.type === 'hardBreak')).not.toBe(true)
   })
 
   it('round-trips selectable checklist appearances', () => {

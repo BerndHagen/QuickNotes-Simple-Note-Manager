@@ -72,7 +72,7 @@ const NoteCard = forwardRef(function NoteCard(
             'note-card relative flex w-full flex-col gap-1.5 rounded-card border text-left shadow-xs transition-[background-color,border-color,box-shadow] duration-fast',
             compactMode ? 'px-3 py-2' : 'px-3.5 py-3',
             isSelected
-              ? 'border-[var(--qn-accent-border)] bg-accent-soft shadow-[inset_3px_0_0_var(--qn-accent),var(--qn-shadow-xs)]'
+              ? 'border-strong bg-surface-raised shadow-md ring-1 ring-[var(--qn-border-strong)]'
               : isMultiSelected
                 ? 'border-[var(--qn-info-border)] bg-info-soft shadow-[inset_3px_0_0_var(--qn-info),var(--qn-shadow-xs)]'
                 : 'border-subtle bg-surface-raised hover:border-strong hover:shadow-sm',

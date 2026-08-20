@@ -18,7 +18,7 @@
   <img src="https://img.shields.io/badge/Status-Active-brightgreen?style=flat-square" alt="Status">
 </p>
 
-**QuickNotes** is a browser-based note-taking application built with React and TipTap. It works fully offline using IndexedDB and can optionally sync to a cloud backend. Notes support rich text formatting, code blocks with syntax highlighting, tables, images, checklists, and more.
+**QuickNotes** is a browser-based writing and note workspace built with React and TipTap. It works fully offline using IndexedDB and can optionally sync to a cloud backend. Standard notes use a paginated A4 document editor, while purpose-built workspaces cover tasks, project planning, meetings, journals, brainstorming, shopping, and weekly planning.
 
 You can try QuickNotes [**here**](https://berndhagen.github.io/QuickNotes-Simple-Note-Manager/) — no account required. A local workspace keeps everything in your own browser, or you can sign up to sync and share notes across devices.
 
@@ -30,10 +30,12 @@ You can try QuickNotes [**here**](https://berndhagen.github.io/QuickNotes-Simple
 - **Task Lists:** Interactive, nestable checklists with per-item shape, colour, size, completion treatment, add/remove-item actions, and persistent defaults for new lists
 - **Image Support:** Upload and embed resizable images directly in notes with drag handles
 - **Document Objects:** Drag to draw editable text boxes and twelve SVG shapes at an exact page position, then move, resize from eight handles, rotate, flip, wrap, recolor, and size them precisely
-- **Task-based Editor Ribbon:** Home, Insert, Format, Layout, and Tools tabs keep commands in named groups, with persistent density, group-label, default-tab, and note-width preferences
+- **Professional Editor Ribbon:** A flat, familiar command row across Home, Insert, Format, Layout, Review, View, and Tools. Home begins with font family, size, line height, styles, colour, alignment, and lists; clear separators replace boxed one-command groups
 - **Structured Writing:** Searchable slash commands, semantic callouts, local date/time insertion, and a contextual checklist editor keep advanced blocks discoverable without crowding every tab
-- **Paragraph Layout:** Repeatable multilevel indentation, before/after spacing, an optional ruler with first-line/left/right indent markers, custom tab stops, and durable Tab-key advances
-- **Document Workbench:** A centered, elevated note surface with focused, standard, wide, and full-width modes separates the document from application chrome
+- **Paragraph Layout:** Repeatable multilevel indentation, before/after spacing, and a true ruler with first-line/left/right indents plus left, centre, right, and decimal tab stops that the Tab key follows
+- **A4 Document Pages:** Standard notes render as complete A4 sheets. Content automatically flows onto additional visible pages, `Ctrl/Cmd+Enter` inserts a durable manual page break, and PDF export follows those boundaries without adding blank pages
+- **Review & View Tools:** Find and replace, browser spell checking, translation, document statistics, an accessibility checker with issue navigation, document outline, formatting marks, ruler, width controls, and focus mode
+- **Document Workbench:** A centred A4 writing surface with focused, standard, wide, and full-width modes separates the document from application chrome
 - **Persistent Paper:** Plain, ruled, grid, dotted, sepia, blueprint, and dark paper choices are saved with each note and carried into PDF exports
 - **Folders & Tags:** Organize notes into folders and assign color-coded tags via the Tag Manager
 - **Favorites & Pins:** Star or pin important notes for quick access
@@ -47,7 +49,7 @@ You can try QuickNotes [**here**](https://berndhagen.github.io/QuickNotes-Simple
 - **Focus Mode:** Distraction-free writing experience
 - **Dark / Light / System Theme:** Three theme modes with automatic system preference detection
 - **Drag & Drop Sorting:** Reorder notes via drag and drop using @dnd-kit
-- **Export & Import:** Download notes as JSON, Markdown, plain text, HTML, or a self-contained A4 PDF that preserves the note paper and rich formatting; import Markdown, plain-text, and HTML files
+- **Export & Import:** Download notes as JSON, Markdown, plain text, HTML, or a self-contained paginated A4 PDF that preserves paper, rich formatting, and manual page breaks; import Markdown, plain-text, and HTML files
 - **Reminders:** Set one-time, daily, weekly, or monthly reminders
 - **Note Sharing:** Share notes with other users via invite links (requires backend)
 - **Real-Time Collaboration:** Live updates on shared notes via realtime subscriptions (requires backend)
@@ -257,6 +259,8 @@ QuickNotes-Simple-Note-Manager/
     │   ├── TextBoxView.jsx               # Text box node view (drag, resize, wrap)
     │   ├── ParagraphLayoutExtension.js    # Persistent ruler, indents, and tab stops
     │   ├── TabStopExtension.js            # Durable inline tab advances
+    │   ├── PageBreakExtension.js           # Durable Ctrl/Cmd+Enter page boundaries
+    │   ├── PaginationExtension.js          # Automatic visual A4 page flow
     │   ├── StyledTaskItem.js              # Selectable checkbox appearances
     │   ├── CustomTableCell.js            # TipTap extension: custom table cell
     │   └── CustomTableHeader.js          # TipTap extension: custom table header
@@ -511,12 +515,14 @@ The editor is built on **TipTap** (ProseMirror wrapper) with the following exten
 | `Subscript` + `Superscript` | Sub/superscript text |
 | `TextBoxExtension` (custom) | Editable text boxes with resize, wrapping and free positioning |
 | `ShapeExtension` (custom) | Editable document shapes with persistent geometry and transforms |
+| `PageBreakExtension` + `PaginationExtension` (custom) | Manual and automatic A4 page boundaries with visible inter-page gaps |
 
 ### Custom TipTap Extensions
 
 - **`TextBoxExtension.js`** — Adds drag-created, freely movable text boxes with eight resize handles, exact geometry, wrapping, fill, border, and text-alignment controls.
 - **`ShapeExtension.js`** — Adds twelve editable SVG objects with drag creation, eight-handle resize, exact geometry, rotation, flips, wrapping, keyboard movement, and color presets.
-- **`ParagraphLayoutExtension.js` + `TabStopExtension.js`** — Persist repeatable indents, paragraph spacing, ruler markers, custom stops, and inline Tab-key advances in note HTML.
+- **`ParagraphLayoutExtension.js` + `TabStopExtension.js`** — Persist repeatable indents, paragraph spacing, ruler markers, typed left/centre/right/decimal stops, and matching Tab-key advances in note HTML.
+- **`PageBreakExtension.js` + `PaginationExtension.js`** — Render the editor as successive A4 sheets, add pages as content grows, and persist manual `Ctrl/Cmd+Enter` boundaries for editing and PDF export.
 - **`StyledTaskItem.js`** — Persists per-item checkbox shape, colour, size, checked-text behavior, and accessible interaction without replacing task semantics.
 - **`CalloutExtension.js`** — Stores editable callout tone as semantic note HTML instead of a decorative floating shape.
 

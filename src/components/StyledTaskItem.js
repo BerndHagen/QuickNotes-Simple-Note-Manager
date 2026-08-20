@@ -1,9 +1,27 @@
 import TaskItem from '@tiptap/extension-task-item'
+import { mergeAttributes } from '@tiptap/core'
 
 const CHECKBOX_STYLES = new Set(['square', 'rounded', 'circle'])
 const CHECKBOX_COLORS = new Set(['accent', 'blue', 'purple', 'amber', 'rose', 'slate'])
 const CHECKBOX_SIZES = new Set(['compact', 'standard', 'large'])
 const CHECKED_STYLES = new Set(['strike', 'fade', 'keep'])
+
+const checkboxVisualSpec = () => [
+  'span',
+  { class: 'qn-task-checkbox-visual', 'aria-hidden': 'true' },
+  [
+    'svg',
+    { viewBox: '0 0 16 16', focusable: 'false' },
+    ['path', {
+      d: 'M3.25 8.25 6.35 11.25 12.75 4.85',
+      fill: 'none',
+      stroke: 'currentColor',
+      'stroke-width': '2.15',
+      'stroke-linecap': 'round',
+      'stroke-linejoin': 'round',
+    }],
+  ],
+]
 
 const StyledTaskItem = TaskItem.extend({
   addAttributes() {
@@ -56,6 +74,25 @@ const StyledTaskItem = TaskItem.extend({
     }
   },
 
+  renderHTML({ node, HTMLAttributes }) {
+    return [
+      'li',
+      mergeAttributes(this.options.HTMLAttributes, HTMLAttributes, {
+        'data-type': this.name,
+      }),
+      [
+        'label',
+        { class: 'qn-task-checkbox' },
+        ['input', {
+          type: 'checkbox',
+          checked: node.attrs.checked ? 'checked' : null,
+        }],
+        checkboxVisualSpec(),
+      ],
+      ['div', 0],
+    ]
+  },
+
   addNodeView() {
     return ({ node, getPos, editor }) => {
       const listItem = document.createElement('li')
@@ -63,9 +100,24 @@ const StyledTaskItem = TaskItem.extend({
       const checkboxStyler = document.createElement('span')
       const checkbox = document.createElement('input')
       const content = document.createElement('div')
+      const checkmark = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+      const checkmarkPath = document.createElementNS('http://www.w3.org/2000/svg', 'path')
 
       checkboxWrapper.contentEditable = 'false'
+      checkboxWrapper.className = 'qn-task-checkbox'
+      checkboxStyler.className = 'qn-task-checkbox-visual'
+      checkboxStyler.ariaHidden = 'true'
       checkbox.type = 'checkbox'
+      checkmark.setAttribute('viewBox', '0 0 16 16')
+      checkmark.setAttribute('focusable', 'false')
+      checkmarkPath.setAttribute('d', 'M3.25 8.25 6.35 11.25 12.75 4.85')
+      checkmarkPath.setAttribute('fill', 'none')
+      checkmarkPath.setAttribute('stroke', 'currentColor')
+      checkmarkPath.setAttribute('stroke-width', '2.15')
+      checkmarkPath.setAttribute('stroke-linecap', 'round')
+      checkmarkPath.setAttribute('stroke-linejoin', 'round')
+      checkmark.append(checkmarkPath)
+      checkboxStyler.append(checkmark)
       checkboxWrapper.append(checkbox, checkboxStyler)
       listItem.append(checkboxWrapper, content)
 

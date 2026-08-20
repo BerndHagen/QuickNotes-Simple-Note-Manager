@@ -25,7 +25,7 @@ import { useTranslation } from '../lib/useTranslation'
 import { getFolderIcon } from '../lib/folderIcons'
 import { isBackendConfigured } from '../lib/backend'
 import { formatShortcut, loadShortcuts } from '../lib/shortcuts'
-import { Avatar, Button, Menu, MenuItem, MenuSeparator, NotepadGlyph, TagChip } from './ui'
+import { Avatar, Button, Menu, MenuItem, MenuSeparator, TagChip } from './ui'
 import { FolderDialog, ConfirmDialog } from './FolderDialogs'
 
 /**
@@ -199,27 +199,16 @@ export default function Sidebar({ onNavigate }) {
       aria-label="Workspace"
       className="qn-nav-surface flex h-full w-full flex-col bg-nav text-nav-text"
     >
-      {/* Brand */}
-      <div className="flex shrink-0 items-center gap-2.5 px-4 pb-4 pt-4">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[11px] border border-white/10 bg-[linear-gradient(140deg,#0e5341,#05352a)] text-white shadow-sm">
-          <NotepadGlyph className="h-6 w-6 shrink-0" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-title-xs font-bold leading-tight text-nav-text">QuickNotes</p>
-          <p className="truncate text-ui-sm leading-tight text-nav-subtle">
-            {t('sidebar.noteManager', 'Note Manager')}
-          </p>
-        </div>
+      <div className="flex shrink-0 justify-end px-3 pt-3 lg:hidden">
         <NavIconButton
           icon={X}
           label={t('common.close', 'Close navigation')}
           onClick={() => setSidebarOpen(false)}
-          className="lg:hidden"
         />
       </div>
 
       {/* Quick note */}
-      <div className="shrink-0 px-4 pb-4">
+      <div className="shrink-0 px-4 pb-4 pt-4 max-lg:pt-2">
         {/* The rail's primary action. Built from the shared Button so it picks
             up the accent tokens; the ring gives it an edge against the rail,
             which is itself dark green. */}
@@ -430,13 +419,14 @@ export default function Sidebar({ onNavigate }) {
           </li>
         </ul>
 
+        <div aria-hidden="true" className="mx-2 mt-2 border-t border-nav-border" />
         <button
           ref={accountRef}
           type="button"
           onClick={() => setAccountOpen((v) => !v)}
           aria-expanded={accountOpen}
           aria-haspopup="menu"
-          className="mt-2 flex w-full items-center gap-2.5 rounded-control border-t border-nav-border px-2 pb-1 pt-3 text-left transition-colors duration-fast hover:bg-nav-hover"
+          className="mt-2 flex w-full items-center gap-2.5 rounded-control px-2 py-1.5 text-left transition-colors duration-fast hover:bg-nav-hover"
         >
           <Avatar user={user} size="md" />
           <span className="min-w-0 flex-1">

@@ -127,7 +127,7 @@ function GridNoteCard({ note, isSelected, onClick, onOpenMenu }) {
       }}
       className={`group relative flex min-h-40 flex-col rounded-card border bg-surface-raised p-3 shadow-xs transition-[border-color,box-shadow] duration-fast hover:shadow-sm sm:min-h-48 sm:p-4 ${
         isSelected
-          ? 'border-accent ring-2 ring-[var(--qn-accent-soft)]'
+          ? 'border-strong bg-surface-raised shadow-md ring-1 ring-[var(--qn-border-strong)]'
           : 'border-subtle hover:border-strong'
       }`}
     >

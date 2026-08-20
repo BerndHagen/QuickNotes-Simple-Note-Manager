@@ -126,8 +126,8 @@ test.describe('production-critical UX contracts', () => {
     await capture(page, testInfo, 'editor-context-menu.png')
     await page.keyboard.press('Escape')
 
-    await page.getByRole('tab', { name: 'Format' }).click()
-    await page.getByRole('button', { name: 'Font', exact: true }).click()
+    await page.getByRole('tab', { name: 'Home' }).click()
+    await page.getByRole('button', { name: 'Font family', exact: true }).click()
     const fontDialog = page.getByRole('dialog', { name: 'Font families' })
     await expect(fontDialog).toBeVisible()
     await expect(fontDialog.locator('button')).toHaveCount(39)

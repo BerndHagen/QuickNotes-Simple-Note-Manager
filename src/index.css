@@ -410,9 +410,13 @@ html {
 }
 
 .ProseMirror ul[data-type="taskList"] li > label {
+  position: relative;
+  display: grid;
+  place-items: center;
   flex: 0 0 auto;
   margin-top: 0.25rem;
   user-select: none;
+  cursor: pointer;
 }
 
 .ProseMirror ul[data-type="taskList"] li > div {
@@ -428,53 +432,66 @@ html {
 }
 
 .ProseMirror ul[data-type="taskList"] li input[type="checkbox"] {
-  appearance: none;
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.ProseMirror ul[data-type="taskList"] li .qn-task-checkbox-visual,
+.ProseMirror ul[data-type="taskList"] li > label > span {
   display: grid;
-  place-content: center;
   width: 1rem;
   height: 1rem;
-  margin: 0;
+  flex-shrink: 0;
+  place-items: center;
   border: 1.5px solid var(--qn-border-strong);
   border-radius: 4px;
   background: var(--qn-surface-raised);
-  cursor: pointer;
-  flex-shrink: 0;
+  color: var(--qn-accent-on);
   transition: border-color var(--qn-duration-fast) var(--qn-ease),
     background-color var(--qn-duration-fast) var(--qn-ease),
     box-shadow var(--qn-duration-fast) var(--qn-ease);
 }
 
-.ProseMirror ul[data-type="taskList"] li[data-checkbox-style='square'] input[type="checkbox"] {
+.ProseMirror ul[data-type="taskList"] li[data-checkbox-style='square'] .qn-task-checkbox-visual,
+.ProseMirror ul[data-type="taskList"] li[data-checkbox-style='square'] > label > span {
   border-radius: 1px;
 }
 
-.ProseMirror ul[data-type="taskList"] li[data-checkbox-style='circle'] input[type="checkbox"] {
+.ProseMirror ul[data-type="taskList"] li[data-checkbox-style='circle'] .qn-task-checkbox-visual,
+.ProseMirror ul[data-type="taskList"] li[data-checkbox-style='circle'] > label > span {
   border-radius: 999px;
 }
 
-.ProseMirror ul[data-type="taskList"] li input[type="checkbox"]::after {
-  content: '';
-  width: 0.48rem;
-  height: 0.26rem;
-  border-bottom: 2px solid var(--qn-accent-on);
-  border-left: 2px solid var(--qn-accent-on);
+.ProseMirror ul[data-type="taskList"] li .qn-task-checkbox-visual svg,
+.ProseMirror ul[data-type="taskList"] li > label > span > svg {
+  width: 85%;
+  height: 85%;
   opacity: 0;
-  transform: translateY(-1px) rotate(-45deg) scale(0.7);
+  transform: scale(0.68);
   transition: opacity var(--qn-duration-fast) var(--qn-ease),
     transform var(--qn-duration-fast) var(--qn-ease);
 }
 
-.ProseMirror ul[data-type="taskList"] li input[type="checkbox"]:checked {
-  border-color: var(--qn-accent);
-  background: var(--qn-accent);
+.ProseMirror ul[data-type="taskList"] li[data-checked='true'] .qn-task-checkbox-visual,
+.ProseMirror ul[data-type="taskList"] li[data-checked='true'] > label > span {
+  border-color: var(--qn-check-accent, var(--qn-accent));
+  background: var(--qn-check-accent, var(--qn-accent));
 }
 
-.ProseMirror ul[data-type="taskList"] li input[type="checkbox"]:checked::after {
+.ProseMirror ul[data-type="taskList"] li[data-checked='true'] .qn-task-checkbox-visual svg,
+.ProseMirror ul[data-type="taskList"] li[data-checked='true'] > label > span > svg {
   opacity: 1;
-  transform: translateY(-1px) rotate(-45deg) scale(1);
+  transform: scale(1);
 }
 
-.ProseMirror ul[data-type="taskList"] li input[type="checkbox"]:focus-visible {
+.ProseMirror ul[data-type="taskList"] li input[type="checkbox"]:focus-visible + .qn-task-checkbox-visual,
+.ProseMirror ul[data-type="taskList"] li input[type="checkbox"]:focus-visible + span {
   outline: 2px solid var(--qn-focus-ring);
   outline-offset: 2px;
 }
@@ -611,10 +628,6 @@ html {
 
 .dark .note-card:hover {
   background-color: var(--qn-surface-hover);
-}
-
-.note-card[aria-current='true'] {
-  box-shadow: inset 3px 0 0 var(--qn-accent);
 }
 
 @keyframes auth-form-in {
@@ -1759,10 +1772,11 @@ body {
   position: relative;
   display: flex;
   min-width: max-content;
+  width: max-content;
   flex: 0 0 auto;
-  align-items: flex-start;
-  gap: 0.125rem;
-  padding: 0.375rem 0.625rem 1.15rem;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.25rem 0.65rem;
   border-right: 1px solid var(--qn-border-subtle);
 }
 
@@ -1776,21 +1790,28 @@ body {
 }
 
 .qn-ribbon-group-label {
-  position: absolute;
-  right: 0.5rem;
-  bottom: 0.2rem;
-  left: 0.5rem;
-  overflow: hidden;
-  color: var(--qn-text-subtle);
-  font-size: 9px;
-  font-weight: 600;
-  line-height: 1;
-  text-align: center;
-  text-overflow: ellipsis;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  white-space: nowrap;
-  pointer-events: none;
+  display: none;
+}
+
+.qn-checklist-primary {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.qn-checklist-menu-trigger {
+  width: 1.25rem;
+  height: 2rem;
+  justify-content: center;
+  gap: 0;
+  padding: 0;
+  border-left: 1px solid var(--qn-border-subtle);
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.qn-checklist-menu-trigger svg {
+  width: 0.7rem;
+  height: 0.7rem;
 }
 
 @media (max-width: 767px) {
@@ -1898,6 +1919,27 @@ body {
   border-left: 2px solid var(--qn-info-text);
 }
 
+.qn-ruler-tab-stop[data-tab-type='center']::after {
+  border-right: 2px solid var(--qn-info-text);
+}
+
+.qn-ruler-tab-stop[data-tab-type='right']::after,
+.qn-ruler-tab-stop[data-tab-type='decimal']::after {
+  border-right: 2px solid var(--qn-info-text);
+  border-left: 0;
+}
+
+.qn-ruler-tab-stop[data-tab-type='decimal']::before {
+  content: '';
+  position: absolute;
+  right: 1px;
+  bottom: 2px;
+  width: 2px;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--qn-info-text);
+}
+
 .qn-ruler-marker:focus-visible::after,
 .qn-ruler-tab-stop:focus-visible::after {
   filter: drop-shadow(0 0 2px var(--qn-focus-ring));
@@ -1905,6 +1947,7 @@ body {
 
 .qn-tab-stop {
   position: relative;
+  display: inline-block;
   min-width: 8px;
   border-bottom: 1px dotted transparent;
   white-space: pre;
@@ -2691,17 +2734,18 @@ body {
 }
 
 .qn-ribbon-group {
-  align-items: flex-start;
-  min-height: 52px;
-  padding: 0.35rem 0.55rem 1.05rem;
-  border: 1px solid var(--qn-border-subtle);
-  border-radius: var(--qn-radius-card);
-  background: var(--qn-surface-raised);
-  box-shadow: var(--qn-shadow-xs);
+  min-height: 40px;
+  align-items: center;
+  padding: 0.2rem 0.65rem;
+  border: 0;
+  border-right: 1px solid var(--qn-border-subtle);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .qn-ribbon-group:last-child {
-  border-right: 1px solid var(--qn-border-subtle);
+  border-right: 0;
 }
 
 .editor-ribbon[data-density='compact'] .editor-toolbar {
@@ -2710,13 +2754,13 @@ body {
 }
 
 .editor-ribbon[data-density='compact'] .qn-ribbon-group {
-  min-height: 43px;
-  padding: 0.2rem 0.35rem 0.85rem;
+  min-height: 36px;
+  padding: 0.1rem 0.45rem;
 }
 
 .editor-ribbon[data-group-labels='hidden'] .qn-ribbon-group {
   min-height: 40px;
-  padding-bottom: 0.35rem;
+  padding-bottom: 0.2rem;
 }
 
 .editor-ribbon[data-group-labels='hidden'] .qn-ribbon-group-label {
@@ -2736,16 +2780,16 @@ body {
   width: 100%;
   min-height: calc(100% - 1px);
   margin: 0 auto;
-  border: 1px solid color-mix(in srgb, var(--qn-border-strong) 72%, var(--qn-border-subtle));
-  border-radius: var(--qn-radius-card);
+  border: 0;
+  border-radius: 0;
   background-color: var(--qn-surface-raised);
-  box-shadow: var(--qn-shadow-sm);
+  box-shadow: none;
   transition: max-width var(--qn-duration-base) var(--qn-ease), box-shadow var(--qn-duration-fast) var(--qn-ease);
 }
 
-.qn-editor-page[data-document-width='focused'] { max-width: 720px; }
-.qn-editor-page[data-document-width='standard'] { max-width: 880px; }
-.qn-editor-page[data-document-width='wide'] { max-width: 1120px; }
+.qn-editor-page[data-document-width='focused'] { max-width: 680px; }
+.qn-editor-page[data-document-width='standard'] { max-width: 794px; }
+.qn-editor-page[data-document-width='wide'] { max-width: 960px; }
 .qn-editor-page[data-document-width='full'] { max-width: none; }
 
 .qn-editor-page:focus-within {
@@ -2753,9 +2797,47 @@ body {
 }
 
 .qn-editor-page .ProseMirror {
+  --qn-page-pad-x: clamp(28px, 6vw, 76px);
+  --qn-page-pad-y: clamp(42px, 5vw, 68px);
   box-sizing: border-box;
-  min-height: max(420px, calc(100vh - 310px));
-  padding: clamp(30px, 5vw, 68px) clamp(28px, 6vw, 76px) 96px;
+  min-height: max(var(--qn-paginated-min-height, 1123px), var(--qn-object-min-height, 300px));
+  padding: var(--qn-page-pad-y) var(--qn-page-pad-x);
+  border: 1px solid color-mix(in srgb, var(--qn-border-strong) 72%, var(--qn-border-subtle));
+  background-color: inherit;
+  background-image: inherit;
+  background-position: inherit;
+  background-size: inherit;
+  box-shadow: var(--qn-shadow-sm);
+}
+
+.qn-page-break-marker {
+  height: 0;
+  margin: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.qn-page-gap {
+  display: block;
+  pointer-events: none;
+}
+
+.qn-page-gap > span {
+  display: block;
+}
+
+.qn-page-gap__remaining,
+.qn-page-gap__top {
+  background-color: var(--qn-surface-raised);
+  background-image: inherit;
+}
+
+.qn-page-gap__gutter {
+  position: relative;
+  border-top: 1px solid var(--qn-border-strong);
+  border-bottom: 1px solid var(--qn-border-strong);
+  background: var(--qn-surface-workbench);
+  box-shadow: inset 0 5px 10px -10px rgb(15 23 42 / 0.55), inset 0 -5px 10px -10px rgb(15 23 42 / 0.55);
 }
 
 /* Semantic callouts provide structured emphasis without relying on floating
@@ -2825,17 +2907,20 @@ body {
 .ProseMirror ul[data-type='taskList'] li[data-checkbox-color='accent'],
 .ProseMirror ul[data-type='taskList'] li:not([data-checkbox-color]) { --qn-check-accent: var(--qn-accent); }
 
-.ProseMirror ul[data-type='taskList'] li input[type='checkbox']:checked {
+.ProseMirror ul[data-type='taskList'] li[data-checked='true'] .qn-task-checkbox-visual,
+.ProseMirror ul[data-type='taskList'] li[data-checked='true'] > label > span {
   border-color: var(--qn-check-accent);
   background: var(--qn-check-accent);
 }
 
-.ProseMirror ul[data-type='taskList'] li[data-checkbox-size='compact'] input[type='checkbox'] {
+.ProseMirror ul[data-type='taskList'] li[data-checkbox-size='compact'] .qn-task-checkbox-visual,
+.ProseMirror ul[data-type='taskList'] li[data-checkbox-size='compact'] > label > span {
   width: 0.875rem;
   height: 0.875rem;
 }
 
-.ProseMirror ul[data-type='taskList'] li[data-checkbox-size='large'] input[type='checkbox'] {
+.ProseMirror ul[data-type='taskList'] li[data-checkbox-size='large'] .qn-task-checkbox-visual,
+.ProseMirror ul[data-type='taskList'] li[data-checkbox-size='large'] > label > span {
   width: 1.25rem;
   height: 1.25rem;
 }
@@ -2915,7 +3000,7 @@ body {
     min-height: 48px;
     align-items: center;
     padding: 1px 0.25rem;
-    border-radius: var(--qn-radius-control);
+    border-radius: 0;
   }
 
   .qn-ribbon-group-label {
@@ -3010,6 +3095,8 @@ body {
   min-height: 0 !important;
   height: auto !important;
   padding: 34px 68px 88px !important;
+  border: 0 !important;
+  box-shadow: none !important;
   color: inherit;
 }
 
