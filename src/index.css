@@ -1861,6 +1861,11 @@ body {
   user-select: none;
 }
 
+.qn-tab-selector {
+  background: color-mix(in srgb, var(--qn-surface-sunken) 86%, var(--qn-surface-raised));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--qn-border-strong) 58%, transparent);
+}
+
 .qn-ruler-page {
   border-inline: 1px solid var(--qn-border-subtle);
   background: var(--qn-surface-raised);
@@ -1885,6 +1890,64 @@ body {
 
 [data-ruler-track] {
   background: var(--qn-surface-raised);
+}
+
+.qn-vertical-ruler {
+  width: 22px;
+  overflow: hidden;
+  border: 1px solid var(--qn-border-subtle);
+  background: var(--qn-surface-raised);
+  pointer-events: none;
+  user-select: none;
+}
+
+.qn-vertical-ruler__margin {
+  position: absolute;
+  inset-inline: 0;
+  z-index: 1;
+  background: color-mix(in srgb, var(--qn-surface-workbench) 82%, var(--qn-surface-sunken));
+}
+
+.qn-vertical-ruler__margin--top {
+  inset-block-start: 0;
+  border-block-end: 1px solid var(--qn-border-strong);
+}
+
+.qn-vertical-ruler__margin--bottom {
+  inset-block-end: 0;
+  border-block-start: 1px solid var(--qn-border-strong);
+}
+
+.qn-vertical-ruler__track {
+  background: var(--qn-surface-raised);
+}
+
+.qn-vertical-ruler__tick {
+  position: absolute;
+  inset-inline-end: 0;
+  width: 8px;
+  height: 1px;
+  background: var(--qn-border-strong);
+}
+
+.qn-vertical-ruler__tick::before {
+  content: '';
+  position: absolute;
+  top: 9px;
+  right: 0;
+  width: 4px;
+  height: 1px;
+  background: var(--qn-border-subtle);
+  box-shadow: 0 10px var(--qn-border-subtle), 0 20px var(--qn-border-subtle);
+}
+
+.qn-vertical-ruler__tick > span {
+  position: absolute;
+  top: 3px;
+  right: 9px;
+  color: var(--qn-text-subtle);
+  font-size: 8px;
+  line-height: 1;
 }
 
 .qn-ruler-tick {
@@ -2072,20 +2135,10 @@ body {
 
 .qn-document-header {
   position: relative;
+  isolation: isolate;
+  overflow: hidden;
   border-color: var(--qn-border-subtle) !important;
-  background:
-    radial-gradient(
-      ellipse 42% 145% at 104% 50%,
-      transparent 52%,
-      color-mix(in srgb, var(--qn-brand-300) 12%, transparent) 52.5%,
-      transparent 53.2%
-    ),
-    radial-gradient(
-      ellipse 48% 170% at 104% 50%,
-      color-mix(in srgb, var(--qn-surface-brand-tint-strong) 72%, transparent),
-      transparent 72%
-    ),
-    var(--qn-surface-raised);
+  background: var(--qn-surface-raised);
   color: var(--qn-text);
 }
 
@@ -2093,8 +2146,49 @@ body {
   display: none;
 }
 
+.qn-document-header::after {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  inset-block: 0;
+  inset-inline-end: 0;
+  width: min(34%, 30rem);
+  pointer-events: none;
+  opacity: 0.52;
+  background-image:
+    conic-gradient(
+      from 32deg at 50% 50%,
+      transparent 0 78%,
+      color-mix(in srgb, var(--qn-brand-400) 20%, transparent) 79% 84%,
+      transparent 85% 100%
+    ),
+    conic-gradient(
+      from 214deg at 50% 50%,
+      transparent 0 81%,
+      color-mix(in srgb, var(--qn-brand-300) 16%, transparent) 82% 87%,
+      transparent 88% 100%
+    );
+  background-position: 8px 3px, 31px 22px;
+  background-size: 54px 46px, 68px 58px;
+  mask-image: linear-gradient(to right, transparent, #000 46%);
+}
+
+.qn-document-header > * {
+  position: relative;
+  z-index: 1;
+}
+
 .qn-document-header #qn-note-title {
+  background: var(--qn-surface-raised);
   color: var(--qn-text);
+}
+
+.qn-document-header #qn-note-title:hover {
+  background: var(--qn-surface-hover);
+}
+
+.qn-document-header #qn-note-title:focus {
+  background: var(--qn-surface-sunken);
 }
 
 .qn-document-header #qn-note-title::placeholder,
@@ -2279,12 +2373,46 @@ body {
 
 .qn-shape-gallery-item {
   position: relative;
+  display: flex;
+  width: 2rem;
+  height: 2rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  --shape-fill: var(--qn-surface-raised);
+  --shape-stroke: var(--qn-text-muted);
+  transition: border-color var(--qn-duration-fast) var(--qn-ease),
+    background-color var(--qn-duration-fast) var(--qn-ease);
+}
+
+.qn-shape-gallery-item:hover,
+.qn-shape-gallery-item:focus-visible {
+  border-color: var(--qn-accent-border);
+  background: var(--qn-accent-soft);
+}
+
+.qn-shape-gallery-heading {
+  padding: 0.25rem 0.625rem;
+  background: var(--qn-surface-sunken);
+  color: var(--qn-text-muted);
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+.qn-common-shape-button {
   --shape-fill: var(--qn-surface-raised);
   --shape-stroke: var(--qn-text-muted);
 }
 
-.qn-shape-gallery-item .qn-shape__geometry {
+.qn-shape-gallery-item .qn-shape__geometry,
+.qn-common-shape-button .qn-shape__geometry {
   position: static;
+}
+
+.qn-shape__geometry[data-shape-type^='line'] .qn-shape__geometry-path {
+  fill: none;
+  stroke-width: 3;
 }
 
 .qn-shape__content {
@@ -2969,8 +3097,7 @@ body {
   color: var(--qn-check-accent);
 }
 
-/* Primary actions share one restrained, tactile treatment. On the dark rail,
-   the same control automatically becomes a light, high-contrast action. */
+/* Primary actions share one restrained, tactile treatment. */
 .qn-button-primary:not(:disabled) {
   border: 1px solid color-mix(in srgb, var(--qn-accent) 78%, black);
   background: var(--qn-accent);
@@ -2984,17 +3111,17 @@ body {
 }
 
 .qn-nav-surface .qn-button-primary:not(:disabled) {
-  border-color: rgb(255 255 255 / 0.62);
-  background: var(--qn-surface-raised);
-  color: var(--qn-nav-bg);
-  box-shadow: 0 2px 8px rgb(0 0 0 / 0.22), inset 0 1px 0 rgb(255 255 255 / 0.72);
+  border-color: color-mix(in srgb, var(--qn-brand-400) 72%, white);
+  background: var(--qn-brand-700);
+  color: white;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.24), inset 0 1px 0 rgb(255 255 255 / 0.18);
 }
 
 .qn-nav-surface .qn-button-primary:not(:disabled):hover {
-  border-color: white;
-  background: color-mix(in srgb, var(--qn-surface-raised) 88%, var(--qn-brand-100));
-  color: var(--qn-nav-bg);
-  box-shadow: 0 3px 10px rgb(0 0 0 / 0.28), inset 0 1px 0 rgb(255 255 255 / 0.78);
+  border-color: var(--qn-brand-300);
+  background: var(--qn-brand-800);
+  color: white;
+  box-shadow: 0 3px 10px rgb(0 0 0 / 0.3), inset 0 1px 0 rgb(255 255 255 / 0.2);
 }
 
 .ProseMirror ul[data-type='taskList'] li[data-checkbox-size='compact'] .qn-task-checkbox-visual,

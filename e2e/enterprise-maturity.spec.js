@@ -89,15 +89,19 @@ test.describe('enterprise UI maturity regressions', () => {
     await expect(header).toBeVisible()
     const surface = await header.evaluate((element) => {
       const style = getComputedStyle(element)
+      const pattern = getComputedStyle(element, '::after')
       return {
         backgroundColor: style.backgroundColor,
         backgroundImage: style.backgroundImage,
         color: style.color,
+        patternImage: pattern.backgroundImage,
+        patternWidth: pattern.width,
       }
     })
 
-    expect(surface.backgroundImage.match(/radial-gradient/g)).toHaveLength(2)
-    expect(surface.backgroundImage).toContain('104% 50%')
+    expect(surface.backgroundImage).toBe('none')
+    expect(surface.patternImage.match(/conic-gradient/g)).toHaveLength(2)
+    expect(Number.parseFloat(surface.patternWidth)).toBeGreaterThan(200)
     expect(surface.backgroundColor).toBe('rgb(255, 255, 255)')
     expect(surface.color).not.toBe('rgb(255, 255, 255)')
   })

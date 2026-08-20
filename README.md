@@ -29,10 +29,10 @@ You can try QuickNotes [**here**](https://berndhagen.github.io/QuickNotes-Simple
 - **Tables:** Insert and edit tables with a bubble menu for row/column operations, cell merging, header toggling, and cell background colors
 - **Task Lists:** Interactive, nestable checklists with per-item shape, colour, size, completion treatment, add/remove-item actions, and persistent defaults for new lists
 - **Image Support:** Upload and embed resizable images directly in notes with drag handles
-- **Document Objects:** Drag to draw editable text boxes and twelve SVG shapes at an exact page position, then move, resize from eight handles, rotate, flip, wrap, recolor, and size them precisely
+- **Document Objects:** Draw five common SVG shapes directly from the ribbon or open a dense Word-style gallery of 46 categorized shapes, then move, resize from eight handles, rotate, flip, wrap, recolor, and size them precisely
 - **Professional Editor Ribbon:** A flat, familiar command row across Home, Insert, Layout, Review, and View. Home begins with font family, size, line height, styles, colour, alignment, and lists; compact separators replace boxed groups, and no tab exists for only a handful of disconnected commands
 - **Structured Writing:** Searchable slash commands, semantic callouts, local date/time insertion, and a contextual checklist editor keep advanced blocks discoverable without crowding every tab
-- **Paragraph Layout:** Repeatable multilevel indentation, before/after spacing, and a full-page ruler with shaded margin areas, first-line/left/right indents, plus left, centre, right, and decimal tab stops that the Tab key follows
+- **Paragraph Layout:** Repeatable multilevel indentation, before/after spacing, a horizontal and vertical full-page ruler with shaded margin areas, a top-left tab selector, first-line/left/right indents, plus left, centre, right, and decimal tab stops that the Tab key follows
 - **A4 Document Pages:** Standard notes render as complete A4 sheets. Content automatically flows onto additional visible pages, `Ctrl/Cmd+Enter` inserts a durable manual page break, and PDF export follows those boundaries without adding blank pages
 - **Review & View Tools:** Find and replace, browser spell checking, translation, document statistics, an accessibility checker with issue navigation, document outline, formatting marks, ruler, width controls, and focus mode
 - **Document Workbench:** A centred A4 writing surface with focused, standard, wide, and full-width modes separates the document from application chrome
@@ -520,7 +520,7 @@ The editor is built on **TipTap** (ProseMirror wrapper) with the following exten
 ### Custom TipTap Extensions
 
 - **`TextBoxExtension.js`** — Adds drag-created, freely movable text boxes with eight resize handles, exact geometry, wrapping, fill, border, and text-alignment controls.
-- **`ShapeExtension.js`** — Adds twelve editable SVG objects with drag creation, eight-handle resize, exact geometry, rotation, flips, wrapping, keyboard movement, and color presets.
+- **`ShapeExtension.js`** — Adds 46 editable SVG objects with five direct ribbon choices, a categorized full gallery, drag creation, eight-handle resize, exact geometry, rotation, flips, wrapping, keyboard movement, and color presets.
 - **`ParagraphLayoutExtension.js` + `TabStopExtension.js`** — Persist repeatable indents, paragraph spacing, ruler markers, typed left/centre/right/decimal stops, and matching Tab-key advances in note HTML.
 - **`PageBreakExtension.js` + `PaginationExtension.js`** — Render the editor as successive A4 sheets, add pages as content grows, and persist manual `Ctrl/Cmd+Enter` boundaries for editing and PDF export.
 - **`StyledTaskItem.js`** — Persists per-item checkbox shape, colour, size, checked-text behavior, and accessible interaction without replacing task semantics.

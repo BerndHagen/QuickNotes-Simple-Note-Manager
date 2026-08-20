@@ -21,11 +21,11 @@ import { TextSelection } from '@tiptap/pm/state'
 import ResizableImageExtension from './ResizableImageExtension'
 import TextBoxExtension from './TextBoxExtension'
 import ShapeExtension from './ShapeExtension'
-import ShapeGeometry, { SHAPE_GROUPS } from './ShapeGeometry'
+import ShapeGeometry, { SHAPE_GROUPS, SHAPE_OPTIONS } from './ShapeGeometry'
 import ParagraphLayoutExtension from './ParagraphLayoutExtension'
 import TabStopExtension from './TabStopExtension'
 import PageBreakExtension from './PageBreakExtension'
-import PaginationExtension from './PaginationExtension'
+import PaginationExtension, { A4_RATIO } from './PaginationExtension'
 import StyledTaskItem from './StyledTaskItem'
 import CalloutExtension from './CalloutExtension'
 import InvisibleCharactersExtension from './InvisibleCharactersExtension'
@@ -124,6 +124,8 @@ import {
 } from './ui'
 
 const lowlight = createLowlight(common)
+const COMMON_SHAPE_TYPES = ['rectangle', 'ellipse', 'triangle', 'arrow-right', 'callout']
+const COMMON_SHAPES = COMMON_SHAPE_TYPES.map((type) => SHAPE_OPTIONS.find((shape) => shape.value === type)).filter(Boolean)
 
 const toggleStructuralCallout = (editor, tone = 'info') => {
   let chain = editor.chain().focus()
@@ -508,11 +510,11 @@ function DocumentRuler({ editor, containerRef }) {
     <div ref={rulerRef} className="qn-document-ruler relative h-9 shrink-0 border-b border-subtle" aria-label="Paragraph ruler">
       <button
         type="button"
+        data-tab-selector
         aria-label={`Tab stop type: ${tabTypeLabel(tabType)}. Activate to choose ${tabTypeLabel(cycleTabType(tabType))}.`}
         title={`${tabTypeLabel(tabType)} tab stop`}
         onClick={() => setTabType(cycleTabType(tabType))}
-        className="absolute inset-y-0 flex w-9 items-center justify-center border-x border-subtle text-ui-xs font-bold text-content-muted hover:bg-surface-hover"
-        style={{ left: `${Math.max(0, geometry.pageLeft - 36)}px` }}
+        className="qn-tab-selector absolute inset-y-0 left-0 flex w-9 items-center justify-center border-r border-subtle text-ui-xs font-bold text-content-muted hover:bg-surface-hover"
       >
         {tabType === 'decimal' ? 'D.' : tabType[0].toUpperCase()}
       </button>
@@ -571,6 +573,62 @@ function DocumentRuler({ editor, containerRef }) {
           })}
         </div>
       </div>
+    </div>
+  )
+}
+
+function VerticalDocumentRuler({ containerRef }) {
+  const [geometry, setGeometry] = useState({ top: 24, height: 1123, paddingTop: 68, paddingBottom: 68 })
+
+  useEffect(() => {
+    const pageElement = containerRef.current
+    const editorElement = pageElement?.querySelector('.ProseMirror')
+    if (!pageElement || !editorElement || typeof ResizeObserver === 'undefined') return undefined
+
+    const sync = () => {
+      const pageWidth = pageElement.getBoundingClientRect().width
+      const styles = getComputedStyle(editorElement)
+      setGeometry({
+        top: pageElement.offsetTop,
+        height: pageWidth * A4_RATIO,
+        paddingTop: parseFloat(styles.paddingTop) || 0,
+        paddingBottom: parseFloat(styles.paddingBottom) || 0,
+      })
+    }
+
+    sync()
+    const observer = new ResizeObserver(sync)
+    observer.observe(pageElement)
+    observer.observe(editorElement)
+    window.addEventListener('resize', sync)
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('resize', sync)
+    }
+  }, [containerRef])
+
+  const contentHeight = Math.max(120, geometry.height - geometry.paddingTop - geometry.paddingBottom)
+  const tickCount = Math.ceil(contentHeight / 40)
+
+  return (
+    <div
+      data-vertical-ruler
+      aria-label="Vertical page ruler"
+      className="qn-vertical-ruler absolute left-0 z-10"
+      style={{ top: `${geometry.top}px`, height: `${geometry.height}px` }}
+    >
+      <span className="qn-vertical-ruler__margin qn-vertical-ruler__margin--top" style={{ height: `${geometry.paddingTop}px` }} />
+      <div
+        className="qn-vertical-ruler__track absolute inset-x-0"
+        style={{ top: `${geometry.paddingTop}px`, height: `${contentHeight}px` }}
+      >
+        {Array.from({ length: tickCount + 1 }, (_, index) => (
+          <span key={index} className="qn-vertical-ruler__tick" style={{ top: `${index * 40}px` }}>
+            {index > 0 && <span>{index}</span>}
+          </span>
+        ))}
+      </div>
+      <span className="qn-vertical-ruler__margin qn-vertical-ruler__margin--bottom" style={{ height: `${geometry.paddingBottom}px` }} />
     </div>
   )
 }
@@ -1359,6 +1417,9 @@ export default function RichTextEditor({
           }}
           className="qn-editor-workbench relative flex-1 overflow-y-auto"
         >
+          {editorSettings.showRuler && (
+            <VerticalDocumentRuler containerRef={editorContainerRef} />
+          )}
           <div
             ref={editorContainerRef}
             data-editor-page
@@ -2994,14 +3055,26 @@ function EditorToolbar({
         <Square className="w-4 h-4" />
       </ToolbarButton>
 
-      <div className="relative" ref={shapePickerRef}>
-        <DropdownButton
-          isOpen={showShapePicker}
-          onClick={() => toggleDropdown(setShowShapePicker, showShapePicker)}
-          title="Insert shape"
-        >
-          <Shapes className="h-4 w-4" />
-        </DropdownButton>
+      <div className="flex items-center" aria-label="Shapes">
+        {COMMON_SHAPES.map((shape) => (
+          <ToolbarButton
+            key={shape.value}
+            onClick={() => onStartDrawing({ kind: 'shape', shapeType: shape.value })}
+            title={`Draw ${shape.label.toLowerCase()}`}
+            className="qn-common-shape-button"
+          >
+            <ShapeGeometry shapeType={shape.value} className="h-5 w-5" />
+          </ToolbarButton>
+        ))}
+        <div className="relative" ref={shapePickerRef}>
+          <DropdownButton
+            isOpen={showShapePicker}
+            onClick={() => toggleDropdown(setShowShapePicker, showShapePicker)}
+            title="More shapes"
+            className="h-8 px-1"
+          >
+            <Shapes className="h-4 w-4" />
+          </DropdownButton>
         <PortalDropdown
           isOpen={showShapePicker}
           anchorRef={shapePickerRef}
@@ -3009,13 +3082,30 @@ function EditorToolbar({
           align="right"
           label="Insert a shape"
         >
-          <div className="w-[min(22rem,calc(100vw-1rem))] p-3">
+          <div className="max-h-[min(34rem,calc(100vh-2rem))] w-[min(25rem,calc(100vw-1rem))] overflow-y-auto pb-2">
+            <div className="qn-shape-gallery-heading">Recently used shapes</div>
+            <div className="grid grid-cols-8 gap-0.5 px-2 py-1.5">
+              {COMMON_SHAPES.map((shape) => (
+                <button
+                  key={`recent-${shape.value}`}
+                  type="button"
+                  aria-label={`Insert ${shape.label.toLowerCase()}`}
+                  title={shape.label}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => {
+                    setShowShapePicker(false)
+                    onStartDrawing({ kind: 'shape', shapeType: shape.value })
+                  }}
+                  className="qn-shape-gallery-item"
+                >
+                  <ShapeGeometry shapeType={shape.value} className="h-5 w-5" />
+                </button>
+              ))}
+            </div>
             {SHAPE_GROUPS.map((group) => (
-              <div key={group.label} className="mb-3 last:mb-0">
-                <p className="mb-1.5 text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">
-                  {group.label}
-                </p>
-                <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-6">
+              <div key={group.label}>
+                <div className="qn-shape-gallery-heading">{group.label}</div>
+                <div className="grid grid-cols-8 gap-0.5 px-2 py-1.5">
                   {group.options.map((shape) => (
                     <button
                       key={shape.value}
@@ -3027,9 +3117,9 @@ function EditorToolbar({
                         setShowShapePicker(false)
                         onStartDrawing({ kind: 'shape', shapeType: shape.value })
                       }}
-                      className="qn-shape-gallery-item flex aspect-square items-center justify-center rounded-control border border-subtle p-2 transition-colors hover:border-strong hover:bg-surface-hover"
+                      className="qn-shape-gallery-item"
                     >
-                      <ShapeGeometry shapeType={shape.value} className="h-full w-full" />
+                      <ShapeGeometry shapeType={shape.value} className="h-5 w-5" />
                     </button>
                   ))}
                 </div>
@@ -3037,6 +3127,7 @@ function EditorToolbar({
             ))}
           </div>
         </PortalDropdown>
+        </div>
       </div>
       </div>
 

@@ -535,7 +535,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
                 }}
                 readOnly={isReadOnly}
                 placeholder={t('editor.untitled', 'Untitled note')}
-                className={`w-full truncate rounded-control bg-transparent px-1.5 py-1 text-title-md font-semibold text-content outline-none transition-colors duration-fast placeholder:text-content-subtle sm:text-title-lg ${
+                className={`w-full truncate rounded-control bg-surface-raised px-1.5 py-1 text-title-md font-semibold text-content outline-none transition-colors duration-fast placeholder:text-content-subtle sm:text-title-lg ${
                   isEditingTitle ? 'bg-surface-sunken' : 'hover:bg-surface-hover'
                 } ${isReadOnly ? 'cursor-default' : 'cursor-text'}`}
               />

@@ -131,14 +131,14 @@ test.describe('editor productivity objects', () => {
     await expect(tabs.getByRole('tab', { name: 'Tools' })).toHaveCount(0)
     await expect(tabs.getByRole('tab', { name: 'Home' })).toHaveAttribute('aria-selected', 'true')
     await expect(toolbar.getByRole('button', { name: 'Bold' })).toBeVisible()
-    await expect(toolbar.getByRole('button', { name: 'Insert shape' })).toBeHidden()
+    await expect(toolbar.getByRole('button', { name: 'More shapes' })).toBeHidden()
     await expect(toolbar.getByRole('button', { name: 'Edit HTML Source' })).toBeHidden()
 
     await tabs.getByRole('tab', { name: 'Home' }).focus()
     await tabs.getByRole('tab', { name: 'Home' }).press('ArrowRight')
     await expect(tabs.getByRole('tab', { name: 'Insert' })).toBeFocused()
     await expect(tabs.getByRole('tab', { name: 'Insert' })).toHaveAttribute('aria-selected', 'true')
-    await expect(toolbar.getByRole('button', { name: 'Insert shape' })).toBeVisible()
+    await expect(toolbar.getByRole('button', { name: 'More shapes' })).toBeVisible()
     await expect(toolbar.getByRole('button', { name: 'Draw text box' })).toBeVisible()
     await tabs.getByRole('tab', { name: 'View', exact: true }).click()
     await expect(toolbar.getByRole('button', { name: 'Edit HTML Source' })).toBeVisible()
@@ -179,8 +179,15 @@ test.describe('editor productivity objects', () => {
 
     await page.getByRole('button', { name: 'Show ruler' }).click()
     await expect(page.getByLabel('Paragraph ruler')).toBeVisible()
+    await expect(page.getByLabel('Vertical page ruler')).toBeVisible()
+    const [selectorBox, rulerBox] = await Promise.all([
+      page.locator('[data-tab-selector]').boundingBox(),
+      page.getByLabel('Paragraph ruler').boundingBox(),
+    ])
+    expect(selectorBox.x).toBeCloseTo(rulerBox.x, 0)
     await page.getByRole('button', { name: 'Hide ruler' }).click()
     await expect(page.getByLabel('Paragraph ruler')).toBeHidden()
+    await expect(page.getByLabel('Vertical page ruler')).toBeHidden()
 
     await page.getByRole('button', { name: 'Customize editor' }).click()
     const settings = page.getByRole('dialog', { name: 'Editor settings' })
@@ -391,11 +398,11 @@ test.describe('editor productivity objects', () => {
 
   test('inserts a shape with direct and exact transformation controls', async ({ page }) => {
     await page.getByRole('tab', { name: 'Insert' }).click()
-    await page.getByRole('button', { name: 'Insert shape' }).click()
+    await page.getByRole('button', { name: 'More shapes' }).click()
     const gallery = page.getByRole('dialog', { name: 'Insert a shape' })
     await expect(gallery.getByRole('button', { name: 'Insert diamond' })).toBeVisible()
-    await expect(gallery.getByRole('button', { name: 'Insert right arrow' })).toBeVisible()
-    await expect(gallery.locator('.qn-shape-gallery-item .qn-shape__geometry > *')).toHaveCount(12)
+    await expect(gallery.getByRole('button', { name: 'Insert right arrow' }).first()).toBeVisible()
+    await expect(gallery.locator('.qn-shape-gallery-item .qn-shape__geometry > *')).toHaveCount(51)
     await gallery.getByRole('button', { name: 'Insert diamond' }).click()
     await drawOnPage(page, 'Draw shape on the page', { width: 300, height: 160 })
     const shape = page.locator('.qn-shape').last()
@@ -433,9 +440,10 @@ test.describe('editor productivity objects', () => {
 
   test('moves a shape freely and exposes Word-style wrapping choices', async ({ page }) => {
     await page.getByRole('tab', { name: 'Insert' }).click()
-    await page.getByRole('button', { name: 'Insert shape' }).click()
+    await page.getByRole('button', { name: 'More shapes' }).click()
     await page.getByRole('dialog', { name: 'Insert a shape' })
       .getByRole('button', { name: 'Insert right arrow' })
+      .first()
       .click()
     await drawOnPage(page, 'Draw shape on the page')
 

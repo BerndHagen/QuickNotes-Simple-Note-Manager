@@ -58,7 +58,8 @@ official product guidance:
   are in View. Narrow panes scroll only the active flat command row.
 - Word creates text boxes by dragging to the requested size and moves them from
   their border. QuickNotes now uses the same direct-manipulation contract for
-  text boxes and twelve genuine SVG shapes: choose an object, drag on the page
+  text boxes and 46 genuine SVG shapes: choose one of five common ribbon shapes
+  or open the dense categorized gallery, then drag on the page
   to create it at that size and position, then drag the surface/border to move
   it or any of eight handles to resize it. Objects are clamped to the page,
   expand its scrollable height, and retain exact geometry in note HTML.
@@ -67,7 +68,8 @@ official product guidance:
   border style, colour, and weight. Shapes additionally retain rotation,
   Shift-constrained 15-degree rotation, 90-degree commands, flips, editable
   text, and a visual change-shape gallery.
-- Word's ruler spans the page, shades non-writing margins, and uses paragraph
+- Word's horizontal and vertical rulers frame the page, place the tab selector
+  in the upper-left corner, shade non-writing margins, and use paragraph
   indent markers and typed tab stops; its list
   tools support custom bullet symbols. QuickNotes now persists repeatable
   40-pixel indent levels, left/right/first-line ruler geometry, draggable tab
@@ -95,7 +97,7 @@ model rather than implemented as visual imitations.
 | Observed mature-editor pattern | QuickNotes decision in this pass |
 | --- | --- |
 | Office lets users show or collapse the ribbon and personalize tabs/groups; Evernote also offers note-width choices. | Added one visible **Customize editor** entry point plus persistent note width, ribbon density, default tab, group-label, ruler, typography, tab, and new-checklist defaults. |
-| Word treats the ruler as a View choice, exposes before/after paragraph spacing alongside indents, and aligns its ruler to the full page with shaded margin areas. | View owns the ruler toggle; Layout owns paragraph geometry. The ruler spans the document page, marks both non-writing margins, and keeps tab/indent coordinates relative to the writing area. |
+| Word treats the ruler as a View choice, exposes before/after paragraph spacing alongside indents, and frames the page with horizontal and vertical scales. | View owns the ruler toggle; Layout owns paragraph geometry. The horizontal ruler spans the document page, the vertical ruler follows its left-side page scale, the tab-type selector stays in the upper-left workbench corner, and both rulers mark non-writing margins. |
 | Evernote distinguishes checkboxes from checklist behavior, and Notion exposes actions on the current block instead of requiring whole-list replacement. | The checklist menu now edits the current item: toggle completion, add above/below, remove only that checkbox, choose square/rounded/circle geometry, six tick colours, three sizes, and strike/fade/unchanged completed text. New-item defaults are separate from existing-item data. |
 | Notion and Evernote expose searchable slash insertion; Notion includes callouts and block conversion. | Typing `/` on an otherwise empty line opens a keyboard-operable, searchable insert menu for text, headings, lists, checklist, callout, quote, code, divider, table, and date. Insert also contains semantic callouts and date/time commands. |
 | Evernote offers selectable note width and keeps the document distinct from navigation chrome. | The editor now renders a centered document surface on a quiet workbench instead of an undifferentiated white debug area. Focused, standard, wide, and full-width modes are durable preferences. |
@@ -133,7 +135,7 @@ and paper/width choices are document presentation, not disposable menu state.
 | PDF export | The PDF command opened a browser print tab, making pop-up settings and the operating-system print dialog part of the workflow. It also rendered a separate generic document instead of the note surface. | PDF now downloads directly, starts with a valid PDF file signature, paginates at content boundaries where possible, sanitizes rich HTML, and renders the saved paper, title, metadata, tags, typography, tables, callouts, task items, and document objects. The rendering libraries are loaded only when export is requested. |
 | Paper choice | Paper lived only in component state, so reloads and exports could not honor it. | Paper type is now stored in the note's standard `noteData`, which also brings it into existing sync, backup, and version-history behavior. |
 | Editor hierarchy | The paper and surrounding workbench were too close in value; the toolbar also blended into the page. | The workbench is now a stronger neutral material close to Word's `#e6e6e6`, the toolbar uses a quieter near-`#f3f3f3` surface, and the paper has a clearer edge without looking boxed in. |
-| Title area | The full-width green replacement did not match the requested recent editor banner. | Restored the exact `027ca7e` document header: a neutral surface with two restrained elliptical contours confined to the far-right edge, plus the original neutral title, metadata, action, and hover colours. The startup miniature reuses this same header class instead of duplicating it. |
+| Title area | The soft radial wash read like texture inside the transparent title field. | The title input now owns an opaque neutral surface, while the parent document header owns a restrained field of angular triangle fragments masked into the far-right edge. The startup miniature reuses this same header class instead of duplicating it. |
 | Left rail | The deep-green radial/linear gradient remains legible and gives the application a stable visual anchor. | Retained it. Replacing it with another flat grey would weaken navigation hierarchy without solving a usability defect. |
 
 No attachment system, comments layer, handwriting canvas, OCR, or AI surface was

@@ -222,7 +222,7 @@ export default function Sidebar({ onNavigate }) {
           className="h-10 justify-start px-3.5 text-ui-lg"
         >
           <span className="flex-1 text-left">{t('sidebar.quickNote')}</span>
-          <kbd className="shrink-0 font-sans text-ui-xs font-medium text-[color:var(--qn-nav-bg)] opacity-60">{newNoteShortcut}</kbd>
+          <kbd className="shrink-0 font-sans text-ui-xs font-medium text-white/70">{newNoteShortcut}</kbd>
         </Button>
       </div>
 

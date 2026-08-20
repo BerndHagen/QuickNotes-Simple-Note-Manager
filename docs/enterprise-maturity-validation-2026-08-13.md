@@ -12,7 +12,7 @@ The resulting product is materially calmer and more credible without being gray 
 
 ## Post-audit feedback refinement
 
-- Decorative contour and radial treatments remain absent from working canvases and dialogs. The normal document header retains its established, restrained right-edge contour on an otherwise neutral surface; focused-workspace headers, editor paper, and workspace canvases remain flat.
+- Decorative treatments remain absent from working canvases and dialogs. The normal document header uses a restrained right-edge field of angular fragments on an otherwise neutral surface; its title field remains fully opaque and texture-free. Focused-workspace headers, editor paper, and workspace canvases remain flat.
 - Green is reserved for the navigation landmark, primary actions and small state cues. Settings, search, transfer, tag-management, document and workspace headers share one neutral dialog/work surface.
 - Structured notes expose a visible **Tags** button in the top action bar instead of relying on an icon alone.
 - Every Idea Board card exposes its category as a direct dropdown in both grid and list views. Category management is a labelled **Categories** action rather than an isolated plus icon.
@@ -29,8 +29,10 @@ The resulting product is materially calmer and more credible without being gray 
   Review and View. Format commands live in Home or Layout, while source,
   shortcut and display commands live in View, so no underfilled utility tab is
   presented as a major task. A narrow active tab scrolls as one flat row.
-- Notes can contain free-positioned text boxes and twelve vector shapes across
-  basic, arrow and callout families. Both use drag-to-create sizing, direct
+- Notes can contain free-positioned text boxes and 46 vector shapes across
+  lines, rectangles, basic shapes, arrows, equations, flowcharts, stars,
+  banners and callouts. Five common shapes remain directly on the ribbon while
+  a dense categorized gallery exposes the complete set. All use drag-to-create sizing, direct
   movement, eight resize handles, keyboard nudging, exact geometry, page-edge
   clamping and durable HTML. Text boxes add background and border controls;
   shapes add editable text, rotation, 15-degree snapping, 90-degree commands,

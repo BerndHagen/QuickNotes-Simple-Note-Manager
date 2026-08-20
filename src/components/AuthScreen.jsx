@@ -113,10 +113,10 @@ function WorkspacePreview() {
       <div className="flex h-[330px] overflow-hidden rounded-[14px] border border-slate-300/80 bg-white">
         {/* Mirrors the real rail: navigation starts immediately with capture. */}
         <div className="qn-nav-surface flex w-[138px] shrink-0 flex-col px-2.5 py-2.5 text-nav-text">
-          <div className="mb-2.5 flex h-7 items-center gap-1.5 rounded-[7px] border border-white/60 bg-white px-2 text-[8px] font-bold text-[#0b4637] shadow-sm">
+          <div className="mb-2.5 flex h-7 items-center gap-1.5 rounded-[7px] border border-emerald-400/80 bg-emerald-700 px-2 text-[8px] font-bold text-white shadow-sm">
             <Plus className="h-3 w-3" />
             <span className="flex-1">Quick Note</span>
-            <span className="text-[6px] font-semibold text-[#0b4637]/60">Ctrl N</span>
+            <span className="text-[6px] font-semibold text-white/70">Ctrl N</span>
           </div>
           {navigationItems.map(({ icon: Icon, label, count, active }) => (
             <div

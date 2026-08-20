@@ -90,9 +90,10 @@ async function captureWorkspaceAndShapes() {
 
   await page.getByRole('heading', { name: 'Welcome to QuickNotes' }).click()
   await page.getByRole('tab', { name: 'Insert' }).click()
-  await page.getByRole('button', { name: 'Insert shape' }).click()
+  await page.getByRole('button', { name: 'More shapes' }).click()
   await page.getByRole('dialog', { name: 'Insert a shape' })
     .getByRole('button', { name: 'Insert right arrow' })
+    .first()
     .click()
   const drawLayer = page.getByRole('application', { name: 'Draw shape on the page' })
   const drawBox = await drawLayer.boundingBox()
