@@ -9,6 +9,7 @@ import DialogHeader from './ui/DialogHeader'
 import Button from './ui/Button'
 import { escapeHtml, sanitizeNoteHtml } from '../lib/sanitizeHtml'
 import { htmlToMarkdown, htmlToPlainText } from '../lib/noteTransfer'
+import { escapePdfFilename, exportNotesToPdf } from '../lib/pdfExport'
 
 const noteDataToHtml = (noteType, noteData, noteTitle) => {
   if (!noteData) return '<p>No content</p>'
@@ -350,188 +351,6 @@ export const buildHtmlExportDocument = (noteItem, exportContent) => `<!DOCTYPE h
   <div class="content">${sanitizeNoteHtml(exportContent)}</div>
 </body>
 </html>`
-const formatExportDate = (value) => {
-  const date = new Date(value)
-  if (!Number.isFinite(date.getTime())) return 'Unknown'
-  return date.toLocaleString(undefined, {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
-
-export const buildPrintExportDocument = (noteItems) => {
-  const notes = Array.isArray(noteItems) ? noteItems : [noteItems]
-  const documentTitle = notes.length === 1 ? notes[0].title : 'QuickNotes export'
-  const articles = notes.map((note) => `
-  <article class="note">
-    <h1>${escapeHtml(note.title)}</h1>
-    <div class="meta">
-      Created: ${escapeHtml(formatExportDate(note.createdAt))} ·
-      Last modified: ${escapeHtml(formatExportDate(note.updatedAt))}
-    </div>
-    ${note.tags?.length ? `
-    <div class="tags">
-      ${note.tags.map((tag) => `<span class="tag">#${escapeHtml(tag)}</span>`).join('')}
-    </div>` : ''}
-    <div class="content">${sanitizeNoteHtml(note.content) || '<p>No content</p>'}</div>
-  </article>`).join('')
-
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data: blob: https: http:; style-src 'unsafe-inline'">
-  <title>${escapeHtml(documentTitle)}</title>
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-    
-    body {
-      font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      line-height: 1.6;
-      color: #1f2937;
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 40px;
-    }
-
-    .note + .note {
-      break-before: page;
-      page-break-before: always;
-    }
-    
-    h1 {
-      font-size: 28px;
-      font-weight: 700;
-      color: #111827;
-      margin-bottom: 8px;
-      border-bottom: 2px solid #10b981;
-      padding-bottom: 12px;
-    }
-    
-    .meta {
-      color: #6b7280;
-      font-size: 12px;
-      margin-bottom: 24px;
-    }
-    
-    .tags {
-      margin-bottom: 24px;
-    }
-    
-    .tag {
-      display: inline-block;
-      background: #ecfdf5;
-      color: #047857;
-      padding: 2px 8px;
-      border-radius: 9999px;
-      font-size: 11px;
-      font-weight: 500;
-      margin-right: 6px;
-    }
-    
-    .content {
-      font-size: 14px;
-    }
-    
-    .content h2 { font-size: 22px; margin-top: 24px; }
-    .content h3 { font-size: 18px; margin-top: 20px; }
-    .content h4 { font-size: 16px; margin-top: 16px; }
-    
-    .content p { margin-bottom: 12px; }
-    
-    .content ul, .content ol {
-      margin-bottom: 12px;
-      padding-left: 24px;
-    }
-    
-    .content li { margin-bottom: 4px; }
-    
-    .content pre {
-      background: #f3f4f6;
-      padding: 12px;
-      border-radius: 6px;
-      overflow-x: auto;
-      font-size: 13px;
-    }
-    
-    .content code {
-      background: #f3f4f6;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 13px;
-    }
-    
-    .content blockquote {
-      border-left: 4px solid #10b981;
-      margin: 16px 0;
-      padding: 8px 16px;
-      background: #f9fafb;
-      font-style: italic;
-    }
-    
-    .content table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 16px 0;
-    }
-    
-    .content th, .content td {
-      border: 1px solid #e5e7eb;
-      padding: 8px 12px;
-      text-align: left;
-    }
-    
-    .content th {
-      background: #f3f4f6;
-      font-weight: 600;
-    }
-    
-    .content hr {
-      border: none;
-      border-top: 1px solid #e5e7eb;
-      margin: 24px 0;
-    }
-    
-    .content a {
-      color: #047857;
-      text-decoration: underline;
-    }
-    
-    @media print {
-      body {
-        padding: 20px;
-      }
-    }
-  </style>
-</head>
-<body>
-  ${articles}
-</body>
-</html>
-`
-}
-
-const generatePDF = async (notes) => {
-  const printWindow = window.open('', '_blank')
-  if (!printWindow) {
-    throw new Error('The print window was blocked. Allow pop-ups and try again.')
-  }
-
-  printWindow.opener = null
-  const htmlContent = buildPrintExportDocument(notes)
-  printWindow.addEventListener('load', () => {
-    setTimeout(() => printWindow.print(), 250)
-  }, { once: true })
-  
-  printWindow.document.write(htmlContent)
-  printWindow.document.close()
-}
 const downloadFile = (content, filename, mimeType) => {
   // Add UTF-8 BOM to ensure proper encoding when opening in external apps
   const bom = '\uFEFF'
@@ -612,12 +431,14 @@ export default function ExportModal() {
       if (notesToExport.length === 0) throw new Error('There are no notes available to export.')
 
       if (selectedFormat === 'pdf') {
-        await generatePDF(
-          notesToExport.map((noteItem) => ({
-            ...noteItem,
-            content: getExportableContent(noteItem),
-          }))
-        )
+        const preparedNotes = notesToExport.map((noteItem) => ({
+          ...noteItem,
+          content: getExportableContent(noteItem),
+        }))
+        const filename = exportAll
+          ? 'QuickNotes_export.pdf'
+          : escapePdfFilename(notesToExport[0].title)
+        await exportNotesToPdf(preparedNotes, filename)
       }
       
       for (const noteItem of selectedFormat === 'pdf' ? [] : notesToExport) {

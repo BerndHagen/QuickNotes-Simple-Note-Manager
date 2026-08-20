@@ -38,10 +38,15 @@ vi.mock('./NoteLinkPopover', () => ({
   useNoteLinkHandler: () => {},
 }))
 vi.mock('./RichTextEditor', () => ({
-  default: ({ onDraftChange }) => (
-    <button type="button" onClick={() => onDraftChange('<p>Original!</p>')}>
-      Simulate content edit
-    </button>
+  default: ({ onDraftChange, onPaperTypeChange }) => (
+    <div>
+      <button type="button" onClick={() => onDraftChange('<p>Original!</p>')}>
+        Simulate content edit
+      </button>
+      <button type="button" onClick={() => onPaperTypeChange('grid')}>
+        Simulate paper change
+      </button>
+    </div>
   ),
 }))
 vi.mock('../store', () => {
@@ -167,6 +172,23 @@ describe('NoteEditor recovery checkpoints', () => {
 
     await waitFor(() => expect(title).toHaveValue('Original title'))
     expect(mocks.toast.error).toHaveBeenCalledWith('Could not save the title')
+  })
+
+  it('persists paper style as note-specific appearance data', async () => {
+    render(<NoteEditor />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Simulate paper change' }))
+
+    expect(mocks.notesState.updateNoteDraft).toHaveBeenCalledWith(
+      'note-1',
+      { noteData: { paperType: 'grid' } }
+    )
+    await waitFor(() => {
+      expect(mocks.notesState.updateNote).toHaveBeenCalledWith(
+        'note-1',
+        { noteData: { paperType: 'grid' } }
+      )
+    })
   })
 
   it('checkpoints focused-note edits immediately and persists a debounced draft', async () => {

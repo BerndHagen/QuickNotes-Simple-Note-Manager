@@ -1,6 +1,6 @@
 # Competitive capability review
 
-Reviewed 2026-08-13 against current official product documentation. The goal is
+Reviewed 2026-08-20 against current official product documentation. The goal is
 not to combine every specialist feature from every notes product. It is to keep
 QuickNotes complete for its core job without adding shallow, unsafe, or
 unfinished parity features.
@@ -117,6 +117,27 @@ reload.
   and OCR remain separate lifecycle/privacy projects. A label that opens an
   incomplete dialog would reduce trust rather than increase editor maturity.
 
+## 2026-08-20 reliability and visual-quality pass
+
+This pass deliberately improved existing workflows instead of adding another
+surface-level feature. The official references reinforced three useful product
+contracts: a PDF export should create a portable file that keeps its appearance;
+block controls should clearly act on the current selection or on future blocks;
+and paper/width choices are document presentation, not disposable menu state.
+
+| Area | Finding | Product decision |
+| --- | --- | --- |
+| Checklist controls | Shape and colour actions previously had no visible scope, silently did nothing outside a task item, and did not reliably affect a selection. | The menu now names its scope, shows selected state, edits the current item or every selected item, and otherwise changes persistent defaults used by the next checklist. |
+| PDF export | The PDF command opened a browser print tab, making pop-up settings and the operating-system print dialog part of the workflow. It also rendered a separate generic document instead of the note surface. | PDF now downloads directly, starts with a valid PDF file signature, paginates at content boundaries where possible, sanitizes rich HTML, and renders the saved paper, title, metadata, tags, typography, tables, callouts, task items, and document objects. The rendering libraries are loaded only when export is requested. |
+| Paper choice | Paper lived only in component state, so reloads and exports could not honor it. | Paper type is now stored in the note's standard `noteData`, which also brings it into existing sync, backup, and version-history behavior. |
+| Editor hierarchy | The paper and surrounding workbench were too close in value; the toolbar also blended into the page. | The workbench is now a stronger neutral material close to Word's `#e6e6e6`, the toolbar uses a quieter near-`#f3f3f3` surface, and the paper has a clearer edge without looking boxed in. |
+| Title area | A previous build's right-side green title wash had useful brand character but was too easy to overstate. | Restored it as a restrained right-edge radial wash and contour, on both standard and specialized note headers, while keeping text on a neutral base. |
+| Left rail | The deep-green radial/linear gradient remains legible and gives the application a stable visual anchor. | Retained it. Replacing it with another flat grey would weaken navigation hierarchy without solving a usability defect. |
+
+No attachment system, comments layer, handwriting canvas, OCR, or AI surface was
+added. Those remain valuable only when their permissions, storage, recovery,
+privacy, offline, and mobile behavior can be delivered end to end.
+
 ## Product conclusion
 
 QuickNotes should not claim to contain “everything” from every competitor; no
@@ -143,6 +164,7 @@ backend flows are designed and tested.
 - Notion: [writing, block actions, slash commands, callouts and toggle lists](https://www.notion.com/help/writing-and-editing-basics)
 - Microsoft Word: [wrap text and move objects](https://support.microsoft.com/en-us/word/wrap-text-and-move-pictures-in-word)
 - Microsoft Word: [paragraph indentation and before/after spacing](https://support.microsoft.com/en-US/Word/adjust-indents-and-spacing-in-word)
+- Microsoft Office: [save or convert documents to PDF](https://support.microsoft.com/en-US/Office/collab-files/save-or-convert-to-pdf-or-xps-in-office-desktop-apps)
 - Microsoft Office: [ribbon visibility and customization](https://support.microsoft.com/en-US/Office/foundations-experiences/customize-the-ribbon-in-office)
 - Microsoft OneNote: [free-positioned notes, formatting, search and follow-up tags](https://support.microsoft.com/en-us/onenote/take-and-format-notes)
 - Apple Notes: [editable tables, text conversion and row/column movement](https://support.apple.com/guide/notes/add-a-table-apd0a136b9cc/mac)

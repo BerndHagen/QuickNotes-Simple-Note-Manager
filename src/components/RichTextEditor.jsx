@@ -100,6 +100,8 @@ import { formatShortcut } from '../lib/shortcuts'
 import { useUIStore } from '../store'
 import { updateEditorSettings, useEditorSettings } from './EditorSettingsModal'
 import { DEFAULT_EDITOR_FONT, EDITOR_FONT_GROUPS } from '../lib/editorFonts'
+import { paperStyles } from '../lib/paperStyles'
+import { getSelectedTaskItems } from '../lib/checklistSelection'
 import toast from 'react-hot-toast'
 import {
   getFocusable,
@@ -311,142 +313,6 @@ const DropCap = Extension.create({
     }
   },
 })
-
-export const paperStyles = {
-  plain: {
-    name: 'Plain',
-    className: 'paper-plain',
-    style: {},
-    preview: { backgroundColor: '#ffffff', border: '1px solid #e5e7eb' },
-  },
-  lined: {
-    name: 'Lined',
-    className: 'paper-lined',
-    style: {
-      backgroundImage: 'repeating-linear-gradient(transparent, transparent 31px, #e5e7eb 31px, #e5e7eb 32px)',
-      backgroundSize: '100% 32px',
-      backgroundAttachment: 'local',
-      lineHeight: '32px',
-    },
-    preview: { backgroundImage: 'repeating-linear-gradient(transparent, transparent 3px, #d1d5db 3px, #d1d5db 4px)', backgroundSize: '100% 4px' },
-  },
-  linedMargin: {
-    name: 'Lined + Margin',
-    className: 'paper-lined-margin',
-    style: {
-      backgroundImage: `
-        linear-gradient(90deg, transparent 60px, #ef4444 60px, #ef4444 62px, transparent 62px),
-        repeating-linear-gradient(transparent, transparent 31px, #e5e7eb 31px, #e5e7eb 32px)
-      `,
-      backgroundSize: '100% 32px',
-      backgroundAttachment: 'local',
-      lineHeight: '32px',
-      paddingLeft: '70px',
-    },
-    preview: { backgroundImage: 'linear-gradient(90deg, transparent 4px, #ef4444 4px, #ef4444 5px, transparent 5px), repeating-linear-gradient(transparent, transparent 3px, #d1d5db 3px, #d1d5db 4px)', backgroundSize: '100% 4px' },
-  },
-  college: {
-    name: 'College Rule',
-    className: 'paper-college',
-    style: {
-      backgroundImage: `
-        linear-gradient(90deg, transparent 40px, #3b82f6 40px, #3b82f6 42px, transparent 42px),
-        repeating-linear-gradient(transparent, transparent 27px, #93c5fd 27px, #93c5fd 28px)
-      `,
-      backgroundSize: '100% 28px',
-      backgroundAttachment: 'local',
-      lineHeight: '28px',
-      paddingLeft: '50px',
-    },
-    preview: { backgroundImage: 'linear-gradient(90deg, transparent 4px, #3b82f6 4px, #3b82f6 5px, transparent 5px), repeating-linear-gradient(transparent, transparent 3px, #93c5fd 3px, #93c5fd 4px)', backgroundSize: '100% 4px' },
-  },
-  grid: {
-    name: 'Grid',
-    className: 'paper-grid',
-    style: {
-      backgroundImage: `linear-gradient(#e5e7eb 1px, transparent 1px), linear-gradient(90deg, #e5e7eb 1px, transparent 1px)`,
-      backgroundSize: '24px 24px',
-      backgroundAttachment: 'local',
-    },
-    preview: { backgroundImage: 'linear-gradient(#d1d5db 1px, transparent 1px), linear-gradient(90deg, #d1d5db 1px, transparent 1px)', backgroundSize: '5px 5px' },
-  },
-  gridSmall: {
-    name: 'Grid (Small)',
-    className: 'paper-grid-small',
-    style: {
-      backgroundImage: `linear-gradient(#e5e7eb 1px, transparent 1px), linear-gradient(90deg, #e5e7eb 1px, transparent 1px)`,
-      backgroundSize: '12px 12px',
-      backgroundAttachment: 'local',
-    },
-    preview: { backgroundImage: 'linear-gradient(#d1d5db 1px, transparent 1px), linear-gradient(90deg, #d1d5db 1px, transparent 1px)', backgroundSize: '3px 3px' },
-  },
-  dotted: {
-    name: 'Dotted',
-    className: 'paper-dotted',
-    style: {
-      backgroundImage: 'radial-gradient(circle, #d1d5db 1px, transparent 1px)',
-      backgroundSize: '24px 24px',
-      backgroundAttachment: 'local',
-    },
-    preview: { backgroundImage: 'radial-gradient(circle, #9ca3af 1px, transparent 1px)', backgroundSize: '5px 5px' },
-  },
-  dottedDense: {
-    name: 'Dotted (Dense)',
-    className: 'paper-dotted-dense',
-    style: {
-      backgroundImage: 'radial-gradient(circle, #d1d5db 1.5px, transparent 1.5px)',
-      backgroundSize: '16px 16px',
-      backgroundAttachment: 'local',
-    },
-    preview: { backgroundImage: 'radial-gradient(circle, #9ca3af 1px, transparent 1px)', backgroundSize: '3px 3px' },
-  },
-  sepia: {
-    name: 'Sepia',
-    className: 'paper-sepia',
-    style: {
-      backgroundColor: '#fef3c7',
-      backgroundImage: 'repeating-linear-gradient(transparent, transparent 31px, #fde68a 31px, #fde68a 32px)',
-      backgroundSize: '100% 32px',
-      backgroundAttachment: 'local',
-      lineHeight: '32px',
-    },
-    preview: { backgroundColor: '#fef3c7' },
-  },
-  blueprint: {
-    name: 'Blueprint',
-    className: 'paper-blueprint',
-    style: {
-      backgroundColor: '#1e3a5f',
-      backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
-      backgroundSize: '24px 24px',
-      backgroundAttachment: 'local',
-      color: '#e0e7ff',
-    },
-    preview: { backgroundColor: '#1e3a5f', backgroundImage: 'linear-gradient(rgba(255,255,255,0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.2) 1px, transparent 1px)', backgroundSize: '5px 5px' },
-  },
-  dark: {
-    name: 'Dark',
-    className: 'paper-dark',
-    style: {
-      backgroundColor: '#1f2937',
-      color: '#e5e7eb',
-    },
-    preview: { backgroundColor: '#1f2937' },
-  },
-  darkLined: {
-    name: 'Dark Lined',
-    className: 'paper-dark-lined',
-    style: {
-      backgroundColor: '#1f2937',
-      backgroundImage: 'repeating-linear-gradient(transparent, transparent 31px, #374151 31px, #374151 32px)',
-      backgroundSize: '100% 32px',
-      backgroundAttachment: 'local',
-      lineHeight: '32px',
-      color: '#e5e7eb',
-    },
-    preview: { backgroundColor: '#1f2937', backgroundImage: 'repeating-linear-gradient(transparent, transparent 3px, #4b5563 3px, #4b5563 4px)', backgroundSize: '100% 4px' },
-  },
-}
 
 const fontGroups = EDITOR_FONT_GROUPS
 
@@ -1745,6 +1611,7 @@ function EditorToolbar({
   const [showHeadingsPicker, setShowHeadingsPicker] = useState(false)
   const [showShapePicker, setShowShapePicker] = useState(false)
   const [showChecklistMenu, setShowChecklistMenu] = useState(false)
+  const [checklistFeedback, setChecklistFeedback] = useState('')
   const [showCalloutMenu, setShowCalloutMenu] = useState(false)
   const [showParagraphSpacing, setShowParagraphSpacing] = useState(false)
   const [customColor, setCustomColor] = useState('#000000')
@@ -2008,28 +1875,53 @@ function EditorToolbar({
     useUIStore.getState().openTranslateModal(text)
   }, [editor])
 
-  const taskItemContext = useCallback(() => {
-    const { $from } = editor.state.selection
-    for (let depth = $from.depth; depth > 0; depth -= 1) {
-      if ($from.node(depth).type.name === 'taskItem') {
-        return { node: $from.node(depth), pos: $from.before(depth) }
-      }
-    }
-    return null
-  }, [editor])
+  const taskItemContexts = useCallback(
+    () => getSelectedTaskItems(editor.state),
+    [editor]
+  )
+
+  const taskItemContext = useCallback(
+    () => taskItemContexts()[0] || null,
+    [taskItemContexts]
+  )
 
   const updateTaskItem = useCallback((attributes) => {
-    const context = taskItemContext()
-    if (!context) return false
-    const transaction = editor.state.tr.setNodeMarkup(
-      context.pos,
-      undefined,
-      { ...context.node.attrs, ...attributes }
+    const contexts = taskItemContexts()
+    if (contexts.length === 0) return 0
+    const transaction = contexts.reduce(
+      (nextTransaction, context) => nextTransaction.setNodeMarkup(
+        context.pos,
+        undefined,
+        { ...context.node.attrs, ...attributes }
+      ),
+      editor.state.tr
     )
     editor.view.dispatch(transaction)
     editor.view.focus()
-    return true
-  }, [editor, taskItemContext])
+    return contexts.length
+  }, [editor, taskItemContexts])
+
+  const updateChecklistAppearance = useCallback((attributes, description) => {
+    const count = updateTaskItem(attributes)
+    if (count > 0) {
+      setChecklistFeedback(`Applied ${description} to ${count === 1 ? 'this item' : `${count} selected items`}.`)
+      return
+    }
+
+    const settingKeys = {
+      checkboxStyle: 'defaultCheckboxStyle',
+      checkboxColor: 'defaultCheckboxColor',
+      checkboxSize: 'defaultCheckboxSize',
+      checkedStyle: 'defaultCheckedStyle',
+    }
+    const patch = Object.fromEntries(
+      Object.entries(attributes)
+        .filter(([key]) => settingKeys[key])
+        .map(([key, value]) => [settingKeys[key], value])
+    )
+    updateEditorSettings(patch)
+    setChecklistFeedback(`New checklist items will use ${description}.`)
+  }, [updateTaskItem])
 
   const createChecklist = useCallback(() => {
     const chain = editor.chain().focus()
@@ -2056,6 +1948,22 @@ function EditorToolbar({
     editor.view.dispatch(editor.state.tr.setSelection(selection))
     editor.chain().focus().splitListItem('taskItem').run()
   }, [editor, taskItemContext])
+
+  const selectedTaskItems = taskItemContexts()
+  const checklistControlValue = (attribute, defaultSetting) => {
+    if (selectedTaskItems.length === 0) return editorSettings[defaultSetting]
+    const values = new Set(selectedTaskItems.map(({ node }) => node.attrs[attribute]))
+    return values.size === 1 ? values.values().next().value : 'mixed'
+  }
+  const checklistScope = selectedTaskItems.length === 0
+    ? 'New checklist defaults'
+    : selectedTaskItems.length === 1
+      ? 'Current item'
+      : `${selectedTaskItems.length} selected items`
+  const activeCheckboxStyle = checklistControlValue('checkboxStyle', 'defaultCheckboxStyle')
+  const activeCheckboxColor = checklistControlValue('checkboxColor', 'defaultCheckboxColor')
+  const activeCheckboxSize = checklistControlValue('checkboxSize', 'defaultCheckboxSize')
+  const activeCheckedStyle = checklistControlValue('checkedStyle', 'defaultCheckedStyle')
 
   const insertDateOrTime = useCallback((kind) => {
     const now = new Date()
@@ -2656,6 +2564,16 @@ function EditorToolbar({
         </DropdownButton>
         <PortalDropdown isOpen={showChecklistMenu} anchorRef={checklistRef} onClose={() => setShowChecklistMenu(false)} label="Checklist options">
           <div className="w-[min(22rem,calc(100vw-1rem))] p-2">
+            <div className="mb-1 rounded-control border border-[var(--qn-accent-border)] bg-accent-soft px-3 py-2">
+              <p className="text-ui-xs font-semibold uppercase tracking-wide text-accent-text">{checklistScope}</p>
+              <p className="mt-0.5 text-ui-xs leading-relaxed text-content-muted">
+                {selectedTaskItems.length === 0
+                  ? 'Choose the appearance first, then create a checklist with those defaults.'
+                  : selectedTaskItems.length === 1
+                    ? 'Appearance changes apply immediately to the item at the cursor.'
+                    : 'Appearance changes apply immediately to every selected checklist item.'}
+              </p>
+            </div>
             <button
               type="button"
               onMouseDown={(event) => event.preventDefault()}
@@ -2667,23 +2585,31 @@ function EditorToolbar({
             >
               <CheckSquare className="h-4 w-4" /> {editor.isActive('taskList') ? 'Turn off checklist' : 'Create checklist'}
             </button>
-            {editor.isActive('taskItem') && (
+            {selectedTaskItems.length > 0 && (
               <>
                 <div className="my-1 h-px bg-[var(--qn-border-subtle)]" />
-                <p className="px-3 py-1 text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">Current item</p>
+                <p className="px-3 py-1 text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">Item actions</p>
                 <div className="grid grid-cols-2 gap-1">
-                  <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => updateTaskItem({ checked: !taskItemContext()?.node.attrs.checked })} className="flex items-center gap-2 rounded-control px-3 py-2 text-left text-ui-sm text-content-muted hover:bg-surface-hover hover:text-content">
+                  <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => {
+                    const checked = !selectedTaskItems.every(({ node }) => node.attrs.checked)
+                    const count = updateTaskItem({ checked })
+                    setChecklistFeedback(`${checked ? 'Completed' : 'Reopened'} ${count === 1 ? 'this item' : `${count} selected items`}.`)
+                  }} className="flex items-center gap-2 rounded-control px-3 py-2 text-left text-ui-sm text-content-muted hover:bg-surface-hover hover:text-content">
                     <Check className="h-4 w-4" /> Toggle complete
                   </button>
-                  <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => addTaskItem('above')} className="flex items-center gap-2 rounded-control px-3 py-2 text-left text-ui-sm text-content-muted hover:bg-surface-hover hover:text-content">
-                    <ListPlus className="h-4 w-4" /> Add above
-                  </button>
-                  <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => addTaskItem('below')} className="flex items-center gap-2 rounded-control px-3 py-2 text-left text-ui-sm text-content-muted hover:bg-surface-hover hover:text-content">
-                    <Plus className="h-4 w-4" /> Add below
-                  </button>
-                  <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => editor.chain().focus().liftListItem('taskItem').run()} className="flex items-center gap-2 rounded-control px-3 py-2 text-left text-ui-sm text-content-muted hover:bg-surface-hover hover:text-content">
-                    <AlignLeft className="h-4 w-4" /> Remove this checkbox
-                  </button>
+                  {selectedTaskItems.length === 1 && (
+                    <>
+                      <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => addTaskItem('above')} className="flex items-center gap-2 rounded-control px-3 py-2 text-left text-ui-sm text-content-muted hover:bg-surface-hover hover:text-content">
+                        <ListPlus className="h-4 w-4" /> Add above
+                      </button>
+                      <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => addTaskItem('below')} className="flex items-center gap-2 rounded-control px-3 py-2 text-left text-ui-sm text-content-muted hover:bg-surface-hover hover:text-content">
+                        <Plus className="h-4 w-4" /> Add below
+                      </button>
+                      <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => editor.chain().focus().liftListItem('taskItem').run()} className="flex items-center gap-2 rounded-control px-3 py-2 text-left text-ui-sm text-content-muted hover:bg-surface-hover hover:text-content">
+                        <AlignLeft className="h-4 w-4" /> Remove this checkbox
+                      </button>
+                    </>
+                  )}
                 </div>
               </>
             )}
@@ -2693,8 +2619,9 @@ function EditorToolbar({
                 <legend className="mb-1 text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">Shape</legend>
                 <div className="flex gap-1">
                   {[['square', 'Square'], ['rounded', 'Rounded'], ['circle', 'Circle']].map(([value, label]) => (
-                    <button key={value} type="button" aria-label={`${label} checkbox`} aria-pressed={editor.isActive('taskItem', { checkboxStyle: value })} title={label} onMouseDown={(event) => event.preventDefault()} onClick={() => updateTaskItem({ checkboxStyle: value })} className="qn-check-option flex h-9 flex-1 items-center justify-center rounded-control border border-subtle hover:bg-surface-hover">
+                    <button key={value} type="button" aria-label={`${label} checkbox`} aria-pressed={activeCheckboxStyle === value} title={label} onMouseDown={(event) => event.preventDefault()} onClick={() => updateChecklistAppearance({ checkboxStyle: value }, `${label.toLowerCase()} boxes`)} className="qn-check-option relative flex h-9 flex-1 items-center justify-center rounded-control border border-subtle hover:bg-surface-hover">
                       <span className={`qn-check-style-preview qn-check-style-preview--${value}`} />
+                      {activeCheckboxStyle === value && <Check className="absolute right-1 top-1 h-3 w-3 text-accent-text" aria-hidden="true" />}
                     </button>
                   ))}
                 </div>
@@ -2703,13 +2630,16 @@ function EditorToolbar({
                 <legend className="mb-1 text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">Checked colour</legend>
                 <div className="flex gap-1">
                   {['accent', 'blue', 'purple', 'amber', 'rose', 'slate'].map((value) => (
-                    <button key={value} type="button" aria-label={`${value} checkbox colour`} aria-pressed={editor.isActive('taskItem', { checkboxColor: value })} title={value} onMouseDown={(event) => event.preventDefault()} onClick={() => updateTaskItem({ checkboxColor: value })} className={`qn-check-colour qn-check-colour--${value}`} />
+                    <button key={value} type="button" aria-label={`${value} checkbox colour`} aria-pressed={activeCheckboxColor === value} title={value} onMouseDown={(event) => event.preventDefault()} onClick={() => updateChecklistAppearance({ checkboxColor: value }, `${value === 'accent' ? 'QuickNotes green' : value} checked colour`)} className={`qn-check-colour qn-check-colour--${value}`}>
+                      {activeCheckboxColor === value && <Check className="h-3.5 w-3.5 text-white drop-shadow-sm" aria-hidden="true" />}
+                    </button>
                   ))}
                 </div>
               </fieldset>
               <div>
                 <label htmlFor="checklist-size" className="mb-1 block text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">Size</label>
-                <select id="checklist-size" value={editor.getAttributes('taskItem').checkboxSize || editorSettings.defaultCheckboxSize} onChange={(event) => updateTaskItem({ checkboxSize: event.target.value })} className="w-full rounded-control border border-subtle bg-surface-raised px-2 py-1.5 text-ui-sm text-content">
+                <select id="checklist-size" value={activeCheckboxSize === 'mixed' ? '' : activeCheckboxSize} onChange={(event) => updateChecklistAppearance({ checkboxSize: event.target.value }, `${event.target.value} boxes`)} className="w-full rounded-control border border-subtle bg-surface-raised px-2 py-1.5 text-ui-sm text-content">
+                  {activeCheckboxSize === 'mixed' && <option value="" disabled>Mixed</option>}
                   <option value="compact">Compact</option>
                   <option value="standard">Standard</option>
                   <option value="large">Large</option>
@@ -2717,14 +2647,21 @@ function EditorToolbar({
               </div>
               <div>
                 <label htmlFor="checklist-completed-style" className="mb-1 block text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">Completed text</label>
-                <select id="checklist-completed-style" value={editor.getAttributes('taskItem').checkedStyle || editorSettings.defaultCheckedStyle} onChange={(event) => updateTaskItem({ checkedStyle: event.target.value })} className="w-full rounded-control border border-subtle bg-surface-raised px-2 py-1.5 text-ui-sm text-content">
+                <select id="checklist-completed-style" value={activeCheckedStyle === 'mixed' ? '' : activeCheckedStyle} onChange={(event) => updateChecklistAppearance({ checkedStyle: event.target.value }, `${event.target.options[event.target.selectedIndex].text.toLowerCase()} completed text`)} className="w-full rounded-control border border-subtle bg-surface-raised px-2 py-1.5 text-ui-sm text-content">
+                  {activeCheckedStyle === 'mixed' && <option value="" disabled>Mixed</option>}
                   <option value="strike">Strike through</option>
                   <option value="fade">Fade</option>
                   <option value="keep">Keep unchanged</option>
                 </select>
               </div>
             </div>
-            {!editor.isActive('taskItem') && <p className="px-3 pb-2 text-ui-xs leading-relaxed text-content-subtle">Create a checklist or place the cursor in an item to edit its appearance and structure.</p>}
+            <p className="min-h-5 px-3 pb-1 text-ui-xs leading-relaxed text-content-subtle" role="status" aria-live="polite">
+              {checklistFeedback || (activeCheckboxStyle === 'mixed' || activeCheckboxColor === 'mixed'
+                ? 'The selected items currently use mixed styles.'
+                : selectedTaskItems.length === 0
+                  ? 'Your selection will be used for every newly created checklist item.'
+                  : 'Changes are saved with the note and can be adjusted later.')}
+            </p>
           </div>
         </PortalDropdown>
       </div>

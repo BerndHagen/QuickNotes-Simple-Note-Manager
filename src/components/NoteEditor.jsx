@@ -50,6 +50,7 @@ import { insertTextIntoActiveField } from '../lib/textFieldInsertion'
 import { useRealtimeCollaboration } from '../lib/useCollaboration'
 import { getFolderIcon } from '../lib/folderIcons'
 import { MAX_NOTE_TITLE_LENGTH, MAX_TAG_NAME_LENGTH } from '../lib/dataValidation'
+import { getNotePaperType, normalizePaperType } from '../lib/paperStyles'
 import { Button, IconButton, Input, Menu, MenuItem, MenuSeparator, EmptyState, TagChip } from './ui'
 import { ConfirmDialog } from './FolderDialogs'
 import { SyncStatusPill } from './SyncStatus'
@@ -134,16 +135,28 @@ export default function NoteEditor({ onBack, showBack = false }) {
     theme === 'dark' ||
     (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
 
-  const [paperType, setPaperType] = useState(() => (isDarkMode ? 'dark' : 'plain'))
-  const [userChangedPaper, setUserChangedPaper] = useState(false)
+  const [paperType, setPaperType] = useState(() => getNotePaperType(note, isDarkMode))
 
   useEffect(() => {
-    if (!userChangedPaper) setPaperType(isDarkMode ? 'dark' : 'plain')
-  }, [isDarkMode, userChangedPaper])
+    setPaperType(normalizePaperType(note?.noteData?.paperType, isDarkMode ? 'dark' : 'plain'))
+  }, [isDarkMode, note?.id, note?.noteData?.paperType])
 
   const handlePaperTypeChange = (newType) => {
-    setPaperType(newType)
-    setUserChangedPaper(true)
+    if (!note) return
+    const nextPaperType = normalizePaperType(newType, getNotePaperType(note, isDarkMode))
+    const previousPaperType = getNotePaperType(note, isDarkMode)
+    const previousNoteData = note.noteData && typeof note.noteData === 'object'
+      ? note.noteData
+      : {}
+    const nextNoteData = { ...previousNoteData, paperType: nextPaperType }
+
+    setPaperType(nextPaperType)
+    updateNoteDraft(note.id, { noteData: nextNoteData })
+    void updateNote(note.id, { noteData: nextNoteData }).catch(() => {
+      setPaperType(previousPaperType)
+      updateNoteDraft(note.id, { noteData: previousNoteData })
+      toast.error(t('editor.paperSaveFailed', 'Could not save the paper style'))
+    })
   }
 
   const noteId = note?.id

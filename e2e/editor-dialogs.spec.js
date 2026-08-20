@@ -201,6 +201,50 @@ test.describe('editor productivity objects', () => {
     await expect(editor).toContainText('Ship the release')
   })
 
+  test('uses visible checklist defaults and batch-applies styles to selected items', async ({ page }) => {
+    const editor = page.getByRole('textbox', { name: 'Note content' })
+    await editor.click()
+    await page.keyboard.press('Control+A')
+    await page.keyboard.type('First task')
+
+    await page.getByRole('tab', { name: 'Home' }).click()
+    await page.getByRole('button', { name: 'Checklist options' }).click()
+    let options = page.getByRole('dialog', { name: 'Checklist options' })
+    const circle = options.getByRole('button', { name: 'Circle checkbox' })
+    const blue = options.getByRole('button', { name: 'blue checkbox colour' })
+    await circle.click()
+    await blue.click()
+    await expect(circle).toHaveAttribute('aria-pressed', 'true')
+    await expect(blue).toHaveAttribute('aria-pressed', 'true')
+    await expect(options.getByRole('status')).toContainText('New checklist items will use blue checked colour')
+    await options.getByRole('button', { name: 'Create checklist' }).click()
+
+    const items = editor.locator('li[data-type="taskItem"]')
+    await expect(items).toHaveCount(1)
+    await expect(items.first()).toHaveAttribute('data-checkbox-style', 'circle')
+    await expect(items.first()).toHaveAttribute('data-checkbox-color', 'blue')
+
+    await editor.press('End')
+    await editor.press('Enter')
+    await editor.pressSequentially('Second task')
+    await expect(items).toHaveCount(2)
+    await editor.click()
+    await page.keyboard.press('Control+A')
+
+    await page.getByRole('button', { name: 'Checklist options' }).click()
+    options = page.getByRole('dialog', { name: 'Checklist options' })
+    await expect(options.getByText('2 selected items', { exact: true })).toBeVisible()
+    await options.getByRole('button', { name: 'Square checkbox' }).click()
+    await options.getByRole('button', { name: 'rose checkbox colour' }).click()
+
+    await expect(items).toHaveCount(2)
+    await expect(items.nth(0)).toHaveAttribute('data-checkbox-style', 'square')
+    await expect(items.nth(1)).toHaveAttribute('data-checkbox-style', 'square')
+    await expect(items.nth(0)).toHaveAttribute('data-checkbox-color', 'rose')
+    await expect(items.nth(1)).toHaveAttribute('data-checkbox-color', 'rose')
+    await expect(options.getByRole('status')).toContainText('2 selected items')
+  })
+
   test('inserts semantic callouts and timestamps from the Insert tab', async ({ page }) => {
     const editor = page.getByRole('textbox', { name: 'Note content' })
     await editor.click()

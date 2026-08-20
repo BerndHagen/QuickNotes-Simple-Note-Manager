@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
+import { readFile } from 'node:fs/promises'
 import { createNote, expectNoHorizontalOverflow, signIn } from './helpers'
 
 const formatViolations = (violations) =>
@@ -150,4 +151,36 @@ test('export all excludes notes in Trash from the actual downloads', async ({ pa
 
   expect(filenames).toContain(`${keepTitle.replace(/[^a-z0-9]/gi, '_')}.md`)
   expect(filenames).not.toContain(`${trashTitle.replace(/[^a-z0-9]/gi, '_')}.md`)
+})
+
+test('PDF export downloads a real file and preserves the note paper setting', async ({ page }) => {
+  await signIn(page)
+  const title = `PDF fidelity ${Date.now()}`
+  await createNote(page, title)
+  const editor = page.getByRole('textbox', { name: 'Note content' })
+  await editor.click()
+  await editor.pressSequentially('A faithful PDF keeps the selected paper and rich editor presentation.')
+
+  await page.getByRole('tab', { name: 'Layout' }).click()
+  await page.getByRole('button', { name: 'Paper Style' }).click()
+  await page.getByRole('button', { name: 'Grid', exact: true }).click()
+  await expect(page.locator('[data-editor-page]')).toHaveClass(/paper-grid/)
+
+  await signIn(page)
+  await page.getByRole('button', { name: new RegExp(title, 'i') }).first().click()
+  await expect(page.locator('[data-editor-page]')).toHaveClass(/paper-grid/)
+
+  const pagesBefore = page.context().pages().length
+  await page.keyboard.press('Control+Shift+e')
+  const dialog = page.getByRole('dialog', { name: 'Export notes' })
+  const downloadPromise = page.waitForEvent('download')
+  await dialog.getByRole('button', { name: /export note/i }).click()
+  const download = await downloadPromise
+
+  expect(download.suggestedFilename()).toBe(`${title.replace(/[^a-z0-9_-]/gi, '_').replace(/_+/g, '_')}.pdf`)
+  const path = await download.path()
+  const bytes = await readFile(path)
+  expect(bytes.subarray(0, 5).toString()).toBe('%PDF-')
+  expect(bytes.length).toBeGreaterThan(5_000)
+  expect(page.context().pages()).toHaveLength(pagesBefore)
 })

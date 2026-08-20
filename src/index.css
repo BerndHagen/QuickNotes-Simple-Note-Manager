@@ -1977,7 +1977,19 @@ body {
 .qn-document-header {
   position: relative;
   border-color: var(--qn-border-subtle) !important;
-  background: var(--qn-surface-raised);
+  background:
+    radial-gradient(
+      ellipse 42% 145% at 104% 50%,
+      transparent 52%,
+      color-mix(in srgb, var(--qn-brand-300) 12%, transparent) 52.5%,
+      transparent 53.2%
+    ),
+    radial-gradient(
+      ellipse 48% 170% at 104% 50%,
+      color-mix(in srgb, var(--qn-surface-brand-tint-strong) 72%, transparent),
+      transparent 72%
+    ),
+    var(--qn-surface-raised);
   color: var(--qn-text);
 }
 
@@ -2287,7 +2299,19 @@ body {
   position: relative;
   padding: 14px 18px !important;
   border-color: var(--qn-border-subtle) !important;
-  background: var(--qn-surface-raised) !important;
+  background:
+    radial-gradient(
+      ellipse 38% 150% at 104% 50%,
+      transparent 54%,
+      color-mix(in srgb, var(--qn-brand-300) 10%, transparent) 54.5%,
+      transparent 55.2%
+    ),
+    radial-gradient(
+      ellipse 44% 175% at 104% 50%,
+      color-mix(in srgb, var(--qn-surface-brand-tint-strong) 64%, transparent),
+      transparent 74%
+    ),
+    var(--qn-surface-raised) !important;
   color: var(--qn-text);
   box-shadow: none;
 }
@@ -2663,7 +2687,7 @@ body {
 .editor-toolbar {
   gap: 0.375rem;
   padding-block: 0.375rem;
-  background: color-mix(in srgb, var(--qn-surface-panel) 72%, var(--qn-surface-raised));
+  background: var(--qn-surface-toolbar);
 }
 
 .qn-ribbon-group {
@@ -2702,8 +2726,8 @@ body {
 .qn-editor-workbench {
   padding: 24px clamp(18px, 3vw, 44px) 44px;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--qn-surface-panel) 88%, transparent), transparent 140px),
-    var(--qn-surface-base);
+    linear-gradient(180deg, color-mix(in srgb, var(--qn-surface-panel) 54%, transparent), transparent 150px),
+    var(--qn-surface-workbench);
   scrollbar-color: var(--qn-border-strong) transparent;
 }
 
@@ -2712,7 +2736,7 @@ body {
   width: 100%;
   min-height: calc(100% - 1px);
   margin: 0 auto;
-  border: 1px solid var(--qn-border-subtle);
+  border: 1px solid color-mix(in srgb, var(--qn-border-strong) 72%, var(--qn-border-subtle));
   border-radius: var(--qn-radius-card);
   background-color: var(--qn-surface-raised);
   box-shadow: var(--qn-shadow-sm);
@@ -2844,8 +2868,10 @@ body {
 }
 
 .qn-check-colour {
+  display: grid;
   width: 1.75rem;
   height: 1.75rem;
+  place-items: center;
   border: 2px solid var(--qn-surface-raised);
   border-radius: 999px;
   background: var(--qn-accent);
@@ -2914,4 +2940,90 @@ body {
   .qn-ribbon-group-label {
     display: none;
   }
+}
+
+/* PDF staging uses the same paper classes and ProseMirror presentation as the
+   live editor. It stays behind the application while html2canvas renders it,
+   then the export module removes it immediately. */
+.qn-pdf-export {
+  position: fixed;
+  z-index: -1000;
+  top: 0;
+  left: 0;
+  width: 794px;
+  pointer-events: none;
+  background: #ffffff;
+  color: #111827;
+}
+
+.qn-pdf-export .qn-pdf-note {
+  width: 794px !important;
+  max-width: none !important;
+  min-height: 1123px !important;
+  height: auto !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.qn-pdf-note__header {
+  padding: 52px 68px 0;
+}
+
+.qn-pdf-note__header h1 {
+  margin: 0;
+  color: inherit;
+  font-size: 30px;
+  font-weight: 720;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.qn-pdf-note__meta {
+  margin: 10px 0 0;
+  color: #5b6472;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.qn-pdf-note__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 14px;
+}
+
+.qn-pdf-note__tags span {
+  padding: 3px 8px;
+  border: 1px solid #a7f3d0;
+  border-radius: 999px;
+  background: #ecfdf5;
+  color: #047857;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.qn-pdf-export .qn-pdf-note__content {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 0 !important;
+  height: auto !important;
+  padding: 34px 68px 88px !important;
+  color: inherit;
+}
+
+.qn-pdf-export .paper-lined-margin .qn-pdf-note__header,
+.qn-pdf-export .paper-lined-margin .qn-pdf-note__content {
+  padding-left: 86px !important;
+}
+
+.qn-pdf-export :is(.paper-dark, .paper-dark-lined, .paper-blueprint) .qn-pdf-note__meta {
+  color: #cbd5e1;
+}
+
+.qn-pdf-export :is(.paper-dark, .paper-dark-lined, .paper-blueprint) .qn-pdf-note__tags span {
+  border-color: rgba(110, 231, 183, 0.45);
+  background: rgba(16, 185, 129, 0.18);
+  color: #a7f3d0;
 }

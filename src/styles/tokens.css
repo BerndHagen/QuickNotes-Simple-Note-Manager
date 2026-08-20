@@ -41,6 +41,8 @@
   --qn-surface-panel: #f1f5f3;
   --qn-surface-base: #f8faf9;
   --qn-surface-raised: #ffffff;
+  --qn-surface-workbench: #e6ebe9;
+  --qn-surface-toolbar: #f3f5f4;
   --qn-surface-sunken: #e8efec;
   --qn-surface-brand-tint: #eef8f3;
   --qn-surface-brand-tint-strong: #e1f1e9;
@@ -208,6 +210,8 @@
   --qn-surface-panel: #10151c;
   --qn-surface-base: #0e131a;
   --qn-surface-raised: #161c25;
+  --qn-surface-workbench: #090e14;
+  --qn-surface-toolbar: #121820;
   --qn-surface-sunken: #0a0e13;
   --qn-surface-brand-tint: #10231d;
   --qn-surface-brand-tint-strong: #133027;

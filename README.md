@@ -34,6 +34,7 @@ You can try QuickNotes [**here**](https://berndhagen.github.io/QuickNotes-Simple
 - **Structured Writing:** Searchable slash commands, semantic callouts, local date/time insertion, and a contextual checklist editor keep advanced blocks discoverable without crowding every tab
 - **Paragraph Layout:** Repeatable multilevel indentation, before/after spacing, an optional ruler with first-line/left/right indent markers, custom tab stops, and durable Tab-key advances
 - **Document Workbench:** A centered, elevated note surface with focused, standard, wide, and full-width modes separates the document from application chrome
+- **Persistent Paper:** Plain, ruled, grid, dotted, sepia, blueprint, and dark paper choices are saved with each note and carried into PDF exports
 - **Folders & Tags:** Organize notes into folders and assign color-coded tags via the Tag Manager
 - **Favorites & Pins:** Star or pin important notes for quick access
 - **Global Search:** Full-text search across all notes by title, content, and tags
@@ -46,7 +47,7 @@ You can try QuickNotes [**here**](https://berndhagen.github.io/QuickNotes-Simple
 - **Focus Mode:** Distraction-free writing experience
 - **Dark / Light / System Theme:** Three theme modes with automatic system preference detection
 - **Drag & Drop Sorting:** Reorder notes via drag and drop using @dnd-kit
-- **Export & Import:** Export notes as JSON, Markdown, plain text, HTML, or print-ready PDF; import Markdown, plain-text, and HTML files
+- **Export & Import:** Download notes as JSON, Markdown, plain text, HTML, or a self-contained A4 PDF that preserves the note paper and rich formatting; import Markdown, plain-text, and HTML files
 - **Reminders:** Set one-time, daily, weekly, or monthly reminders
 - **Note Sharing:** Share notes with other users via invite links (requires backend)
 - **Real-Time Collaboration:** Live updates on shared notes via realtime subscriptions (requires backend)

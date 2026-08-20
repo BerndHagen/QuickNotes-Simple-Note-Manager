@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import {
   buildHtmlExportDocument,
   buildMarkdownExport,
-  buildPrintExportDocument,
   getExportableContent,
   getLiveNotes,
 } from './ExportModal'
@@ -59,29 +58,6 @@ describe('safe note export', () => {
     expect(markdown).toContain('&lt;script&gt;')
   })
 
-  it('builds one offline print document for multiple sanitized notes', () => {
-    const html = buildPrintExportDocument([
-      {
-        title: 'First',
-        content: '<p>One</p><script>alert(1)</script>',
-        createdAt: '2026-08-01T10:00:00.000Z',
-        updatedAt: '2026-08-01T10:00:00.000Z',
-      },
-      {
-        title: 'Second',
-        content: '<p>Two</p>',
-        createdAt: 'invalid',
-        updatedAt: 'invalid',
-      },
-    ])
-    const documentNode = new DOMParser().parseFromString(html, 'text/html')
-
-    expect(documentNode.querySelectorAll('article.note')).toHaveLength(2)
-    expect(documentNode.querySelectorAll('script')).toHaveLength(0)
-    expect(documentNode.querySelector('style')?.textContent).toContain('break-before: page')
-    expect(html).not.toContain('fonts.googleapis.com')
-    expect(documentNode.body.textContent).toContain('Unknown')
-  })
 })
 
 describe('safe note import', () => {
