@@ -1747,17 +1747,24 @@ body {
 
 .qn-ribbon-group-label {
   position: absolute;
-  right: 0.45rem;
-  bottom: 0.12rem;
-  left: 0.45rem;
-  display: block;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  height: 13px;
+  align-items: center;
+  justify-content: center;
   overflow: hidden;
-  color: var(--qn-text-subtle);
-  font-size: 9px;
-  font-weight: 600;
+  border-top: 1px solid color-mix(in srgb, var(--qn-border-subtle) 72%, transparent);
+  background: color-mix(in srgb, var(--qn-surface-sunken) 48%, transparent);
+  color: var(--qn-text-muted);
+  font-size: 7.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   line-height: 1;
   text-align: center;
   text-overflow: ellipsis;
+  text-transform: uppercase;
   white-space: nowrap;
 }
 
@@ -2095,11 +2102,33 @@ body {
 }
 
 .qn-document-header::before {
-  display: none;
+  position: absolute;
+  z-index: 0;
+  inset: 0 0 0 auto;
+  display: block;
+  width: 53%;
+  background:
+    linear-gradient(135deg, transparent 0 16%, rgba(222, 239, 194, 0.98) 16% 24%, transparent 24%),
+    linear-gradient(135deg, transparent 0 24%, rgba(162, 216, 174, 0.96) 24% 33%, transparent 33%),
+    linear-gradient(135deg, transparent 0 33%, rgba(63, 177, 102, 0.92) 33% 44%, transparent 44%),
+    linear-gradient(135deg, transparent 0 44%, rgba(0, 139, 71, 0.88) 44% 58%, transparent 58%);
+  content: '';
+  pointer-events: none;
 }
 
 .qn-document-header::after {
-  display: none;
+  position: absolute;
+  z-index: 0;
+  inset: 0 0 0 auto;
+  display: block;
+  width: 47%;
+  background:
+    linear-gradient(225deg, transparent 0 17%, rgba(112, 190, 49, 0.96) 17% 26%, transparent 26%),
+    linear-gradient(45deg, transparent 0 37%, rgba(4, 161, 77, 0.9) 37% 51%, transparent 51%),
+    linear-gradient(135deg, rgba(0, 113, 67, 0.97) 0 35%, rgba(0, 91, 58, 0.98) 35% 100%);
+  clip-path: polygon(18% 0, 100% 0, 100% 100%, 0 100%);
+  content: '';
+  pointer-events: none;
 }
 
 .qn-document-header > * {
@@ -2108,8 +2137,8 @@ body {
 }
 
 .qn-document-header .qn-note-title-field {
-  width: min(70%, 52rem);
-  flex: 0 1 min(70%, 52rem);
+  width: min(52%, 52rem);
+  flex: 0 1 min(52%, 52rem);
 }
 
 .qn-document-header #qn-note-title {
@@ -2137,6 +2166,17 @@ body {
 .qn-document-header :where(button, .qn-icon-button):enabled:hover {
   background: var(--qn-surface-hover) !important;
   color: var(--qn-text) !important;
+}
+
+.qn-document-header .qn-note-title-row > :where(button, .qn-icon-button) {
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.92);
+  box-shadow: none !important;
+}
+
+.qn-document-header .qn-note-title-row > :where(button, .qn-icon-button):enabled:hover {
+  background: rgba(255, 255, 255, 0.14) !important;
+  color: #ffffff !important;
 }
 
 /* ============================================================
@@ -2972,6 +3012,27 @@ body {
   margin-left: -16px;
   background: var(--qn-surface-workbench);
   box-shadow: none;
+}
+
+.qn-page-gap__gutter::before,
+.qn-page-gap__gutter::after {
+  position: absolute;
+  right: 15px;
+  left: 15px;
+  height: 8px;
+  content: '';
+}
+
+.qn-page-gap__gutter::before {
+  top: 0;
+  border-top: 1px solid var(--qn-border-subtle);
+  background: linear-gradient(to bottom, var(--qn-shadow-page-edge), transparent);
+}
+
+.qn-page-gap__gutter::after {
+  bottom: 0;
+  border-bottom: 1px solid var(--qn-border-subtle);
+  background: linear-gradient(to top, var(--qn-shadow-page-edge), transparent);
 }
 
 /* Semantic callouts provide structured emphasis without relying on floating

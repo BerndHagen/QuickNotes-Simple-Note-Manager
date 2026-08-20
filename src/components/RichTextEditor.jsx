@@ -1709,7 +1709,7 @@ function PortalDropdown({ isOpen, anchorRef, children, onClose, align = 'left', 
   )
 }
 
-function ImageToolbarButton({ label }) {
+function ImageToolbarButton() {
   const { setImageUploadOpen } = useUIStore()
   const buttonRef = useRef(null)
   
@@ -1724,12 +1724,9 @@ function ImageToolbarButton({ label }) {
           e.stopPropagation()
         }}
         onClick={() => setImageUploadOpen(true)}
-        className={label
-          ? 'flex h-10 min-w-[54px] flex-col items-center justify-center gap-0.5 rounded-control px-2 text-content-muted transition-colors duration-fast hover:bg-surface-hover hover:text-content'
-          : 'rounded-lg p-2 text-content-muted transition-colors duration-fast hover:bg-surface-hover hover:text-content dark:text-content-subtle dark:hover:text-white'}
+        className="rounded-lg p-2 text-content-muted transition-colors duration-fast hover:bg-surface-hover hover:text-content dark:text-content-subtle dark:hover:text-white"
       >
         <ImageIcon className="w-4 h-4" />
-        {label && <span className="max-w-[72px] truncate text-[10px] font-medium leading-none">{label}</span>}
       </button>
     </PortalTooltip>
   )
@@ -2155,7 +2152,7 @@ function EditorToolbar({
     editor.chain().focus().insertContent(value).run()
   }, [editor])
 
-  const ToolbarButton = ({ onClick, isActive, disabled, children, title, shortcut, label, className = '' }) => {
+  const ToolbarButton = ({ onClick, isActive, disabled, children, title, shortcut, className = '' }) => {
     const buttonRef = useRef(null)
     const activate = () => {
       closeAllDropdowns()
@@ -2174,14 +2171,13 @@ function EditorToolbar({
         disabled={disabled}
         aria-pressed={isActive || undefined}
         aria-label={title}
-        className={`flex shrink-0 items-center justify-center rounded-control transition-colors duration-fast ${label ? 'h-10 min-w-[54px] flex-col gap-0.5 px-2' : 'h-8 w-8'} ${
+        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-control transition-colors duration-fast ${
  isActive
  ? 'bg-accent-soft text-accent-text'
             : 'text-content-muted hover:bg-surface-hover hover:text-content'
         } ${disabled ? 'cursor-not-allowed opacity-40' : ''} ${className}`}
       >
         {children}
-        {label && <span className="max-w-[76px] truncate text-[10px] font-medium leading-none">{label}</span>}
       </button>
     )
     
@@ -2198,7 +2194,7 @@ function EditorToolbar({
     <div role="separator" aria-orientation="vertical" className="mx-1 h-5 w-px shrink-0 bg-[var(--qn-border-subtle)]" />
   )
 
-  const DropdownButton = ({ children, isOpen, onClick, title, disabled, label, className = '' }) => {
+  const DropdownButton = ({ children, isOpen, onClick, title, disabled, className = '' }) => {
     const buttonRef = useRef(null)
     
     const button = (
@@ -2216,7 +2212,7 @@ function EditorToolbar({
         onClick={() => {
           if (!disabled) onClick?.()
         }}
-        className={`flex items-center gap-1 rounded-lg transition-[background-color,color,box-shadow,opacity] duration-fast ${label ? 'h-10 min-w-[58px] flex-col justify-center gap-0.5 px-2 py-1' : 'p-1.5'} ${
+        className={`flex items-center gap-1 rounded-lg p-1.5 transition-[background-color,color,box-shadow,opacity] duration-fast ${
  disabled
  ? 'opacity-30 cursor-not-allowed text-content-subtle dark:text-content-muted'
             : isOpen
@@ -2224,11 +2220,8 @@ function EditorToolbar({
               : 'hover:bg-surface-hover text-content-muted hover:text-content dark:hover:text-content-subtle'
         } ${className}`}
       >
-        <span className={label ? 'flex items-center gap-1' : 'contents'}>
-          {children}
-          <ChevronDown className="w-3 h-3 opacity-50" />
-        </span>
-        {label && <span className="max-w-[82px] truncate text-[10px] font-medium leading-none">{label}</span>}
+        {children}
+        <ChevronDown className="w-3 h-3 opacity-50" />
       </button>
     )
     
@@ -2881,7 +2874,6 @@ function EditorToolbar({
         }} 
         disabled={!editor.can().sinkListItem('listItem') && !editor.can().sinkListItem('taskItem') && !editor.can().increaseParagraphIndent()}
         title="Increase Indent"
-        label="Increase"
       >
         <Indent className="w-4 h-4" />
       </ToolbarButton>
@@ -2896,7 +2888,6 @@ function EditorToolbar({
         }} 
         disabled={!editor.can().liftListItem('listItem') && !editor.can().liftListItem('taskItem') && !editor.can().decreaseParagraphIndent()}
         title="Decrease Indent"
-        label="Decrease"
       >
         <Outdent className="w-4 h-4" />
       </ToolbarButton>
@@ -2906,7 +2897,7 @@ function EditorToolbar({
       <span className="qn-ribbon-group-label">Typography</span>
 
       <div className="relative" ref={letterSpacingRef}>
-        <DropdownButton isOpen={showLetterSpacing} onClick={() => toggleDropdown(setShowLetterSpacing, showLetterSpacing)} title="Letter Spacing" label="Character">
+        <DropdownButton isOpen={showLetterSpacing} onClick={() => toggleDropdown(setShowLetterSpacing, showLetterSpacing)} title="Letter Spacing">
           <TypeIcon className="w-4 h-4" />
         </DropdownButton>
         <PortalDropdown isOpen={showLetterSpacing} anchorRef={letterSpacingRef} onClose={() => setShowLetterSpacing(false)}>
@@ -2937,13 +2928,12 @@ function EditorToolbar({
         onClick={() => editor.chain().focus().setDropCap().run()} 
         isActive={editor.isActive('paragraph', { dropCap: true })}
         title="Drop Cap - Make first letter large"
-        label="Drop cap"
       >
         <Sparkles className="w-4 h-4" />
       </ToolbarButton>
 
       <div className="relative" ref={paragraphSpacingRef}>
-        <DropdownButton isOpen={showParagraphSpacing} onClick={() => toggleDropdown(setShowParagraphSpacing, showParagraphSpacing)} title="Paragraph spacing" label="Spacing">
+        <DropdownButton isOpen={showParagraphSpacing} onClick={() => toggleDropdown(setShowParagraphSpacing, showParagraphSpacing)} title="Paragraph spacing">
           <MoveVertical className="h-4 w-4" />
         </DropdownButton>
         <PortalDropdown isOpen={showParagraphSpacing} anchorRef={paragraphSpacingRef} onClose={() => setShowParagraphSpacing(false)} label="Paragraph spacing">
@@ -2977,17 +2967,17 @@ function EditorToolbar({
       <div className={ribbonGroupClass('insert')}>
       <span className="qn-ribbon-group-label">Content blocks</span>
 
-      <ToolbarButton onClick={() => editor.chain().focus().toggleBlockquote().run()} isActive={editor.isActive('blockquote')} title="Quote" label="Quote">
+      <ToolbarButton onClick={() => editor.chain().focus().toggleBlockquote().run()} isActive={editor.isActive('blockquote')} title="Quote">
         <Quote className="w-4 h-4" />
       </ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().toggleCodeBlock().run()} isActive={editor.isActive('codeBlock')} title="Code Block" label="Code">
+      <ToolbarButton onClick={() => editor.chain().focus().toggleCodeBlock().run()} isActive={editor.isActive('codeBlock')} title="Code Block">
         <FileCode className="w-4 h-4" />
       </ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().setHorizontalRule().run()} title="Horizontal Line" label="Divider">
+      <ToolbarButton onClick={() => editor.chain().focus().setHorizontalRule().run()} title="Horizontal Line">
         <Minus className="w-4 h-4" />
       </ToolbarButton>
       <div className="relative" ref={calloutRef}>
-        <DropdownButton isOpen={showCalloutMenu} onClick={() => toggleDropdown(setShowCalloutMenu, showCalloutMenu)} title="Callout" label="Callout">
+        <DropdownButton isOpen={showCalloutMenu} onClick={() => toggleDropdown(setShowCalloutMenu, showCalloutMenu)} title="Callout">
           <Info className="h-4 w-4" />
         </DropdownButton>
         <PortalDropdown isOpen={showCalloutMenu} anchorRef={calloutRef} onClose={() => setShowCalloutMenu(false)} label="Callout styles">
@@ -3014,7 +3004,7 @@ function EditorToolbar({
       <div className={ribbonGroupClass('insert')}>
       <span className="qn-ribbon-group-label">Tables</span>
       <div className="relative" ref={tableMenuRef}>
-        <DropdownButton isOpen={showTableMenu} onClick={() => toggleDropdown(setShowTableMenu, showTableMenu)} title="Table" label="Table">
+        <DropdownButton isOpen={showTableMenu} onClick={() => toggleDropdown(setShowTableMenu, showTableMenu)} title="Table">
           <TableIcon className="w-4 h-4" />
         </DropdownButton>
         <PortalDropdown isOpen={showTableMenu} anchorRef={tableMenuRef} onClose={() => setShowTableMenu(false)}>
@@ -3088,20 +3078,19 @@ function EditorToolbar({
 
       <div className={ribbonGroupClass('insert')}>
       <span className="qn-ribbon-group-label">Links</span>
-      <ToolbarButton onClick={setLink} isActive={editor.isActive('link')} title={`Insert Link (${shortcut('k', { shift: true })})`} label="Link">
+      <ToolbarButton onClick={setLink} isActive={editor.isActive('link')} title={`Insert Link (${shortcut('k', { shift: true })})`}>
         <LinkIcon className="w-4 h-4" />
       </ToolbarButton>
       </div>
 
       <div className={ribbonGroupClass('insert')}>
       <span className="qn-ribbon-group-label">Illustrations</span>
-      <ImageToolbarButton label="Image" />
+      <ImageToolbarButton />
 
       <ToolbarButton 
         onClick={() => onStartDrawing({ kind: 'textBox' })}
         isActive={editor.isActive('textBox')} 
         title="Draw text box"
-        label="Text box"
       >
         <Square className="w-4 h-4" />
       </ToolbarButton>
@@ -3111,7 +3100,6 @@ function EditorToolbar({
           isOpen={showShapePicker}
           onClick={() => toggleDropdown(setShowShapePicker, showShapePicker)}
           title="More shapes"
-          label="Shapes"
         >
           <Shapes className="h-4 w-4" />
         </DropdownButton>
@@ -3172,17 +3160,17 @@ function EditorToolbar({
 
       <div className={ribbonGroupClass('review')}>
       <span className="qn-ribbon-group-label">Language</span>
-      <ToolbarButton onClick={openTranslation} title="Translate selected text or note" label="Translate">
+      <ToolbarButton onClick={openTranslation} title="Translate selected text or note">
         <Languages className="w-4 h-4" />
       </ToolbarButton>
       </div>
 
       <div className={ribbonGroupClass('insert')}>
       <span className="qn-ribbon-group-label">Date & time</span>
-      <ToolbarButton onClick={() => insertDateOrTime('date')} title="Insert current date" label="Date">
+      <ToolbarButton onClick={() => insertDateOrTime('date')} title="Insert current date">
         <Calendar className="h-4 w-4" />
       </ToolbarButton>
-      <ToolbarButton onClick={() => insertDateOrTime('time')} title="Insert current time" label="Time">
+      <ToolbarButton onClick={() => insertDateOrTime('time')} title="Insert current time">
         <Clock className="h-4 w-4" />
       </ToolbarButton>
       </div>
@@ -3195,7 +3183,6 @@ function EditorToolbar({
           onClick={() => toggleDropdown(setShowTableOfContents, showTableOfContents)} 
           title="Document outline"
           disabled={headings.length === 0}
-          label="Outline"
         >
           <ListTree className="w-4 h-4" />
         </DropdownButton>
@@ -3239,11 +3226,11 @@ function EditorToolbar({
 
       <div className={ribbonGroupClass('layout')} style={{ order: -10 }}>
       <span className="qn-ribbon-group-label">Page setup</span>
-      <ToolbarButton onClick={() => editor.chain().focus().insertPageBreak().run()} title={`Insert page break (${shortcut('Enter')})`} label="Page break">
+      <ToolbarButton onClick={() => editor.chain().focus().insertPageBreak().run()} title={`Insert page break (${shortcut('Enter')})`}>
         <FilePlus2 className="h-4 w-4" />
       </ToolbarButton>
       <div className="relative" ref={paperPickerRef}>
-        <DropdownButton isOpen={showPaperPicker} onClick={() => toggleDropdown(setShowPaperPicker, showPaperPicker)} title="Paper Style" label="Paper style">
+        <DropdownButton isOpen={showPaperPicker} onClick={() => toggleDropdown(setShowPaperPicker, showPaperPicker)} title="Paper Style">
           <span className="text-xs font-medium">{paperStyles[currentPaper]?.name || 'Plain'}</span>
         </DropdownButton>
         <PortalDropdown isOpen={showPaperPicker} anchorRef={paperPickerRef} onClose={() => setShowPaperPicker(false)} align="right">
@@ -3280,7 +3267,6 @@ function EditorToolbar({
         onClick={() => useUIStore.getState().setSpellCheck(!spellCheck)}
         isActive={spellCheck}
         title={spellCheck ? 'Turn off spell check' : 'Turn on spell check'}
-        label="Spelling"
       >
         <SpellCheck className="h-4 w-4" />
       </ToolbarButton>
@@ -3289,7 +3275,6 @@ function EditorToolbar({
           onClick={openAccessibilityCheck}
           isActive={showAccessibilityCheck}
           title="Accessibility checker"
-          label="Accessibility"
         >
           <Accessibility className="h-4 w-4" />
         </ToolbarButton>
@@ -3351,14 +3336,12 @@ function EditorToolbar({
         onClick={() => useUIStore.getState().setShowNoteStatistics(!showNoteStatistics)}
         isActive={showNoteStatistics}
         title={showNoteStatistics ? 'Hide document statistics' : 'Show document statistics'}
-        label="Statistics"
       >
         <BarChart3 className="h-4 w-4" />
       </ToolbarButton>
       <ToolbarButton
         onClick={() => useUIStore.getState().setVersionHistoryOpen(true, noteId)}
         title="Version history"
-        label="History"
       >
         <VersionHistory className="h-4 w-4" />
       </ToolbarButton>
@@ -3366,10 +3349,10 @@ function EditorToolbar({
 
       <div className={ribbonGroupClass('view')}>
       <span className="qn-ribbon-group-label">Show</span>
-      <ToolbarButton onClick={() => updateEditorSettings({ showRuler: !editorSettings.showRuler })} isActive={editorSettings.showRuler} title={editorSettings.showRuler ? 'Hide ruler' : 'Show ruler'} label="Ruler">
+      <ToolbarButton onClick={() => updateEditorSettings({ showRuler: !editorSettings.showRuler })} isActive={editorSettings.showRuler} title={editorSettings.showRuler ? 'Hide ruler' : 'Show ruler'}>
         <Ruler className="h-4 w-4" />
       </ToolbarButton>
-      <ToolbarButton onClick={() => updateEditorSettings({ showInvisibles: !editorSettings.showInvisibles })} isActive={editorSettings.showInvisibles} title={editorSettings.showInvisibles ? 'Hide formatting marks' : 'Show formatting marks'} label="Marks">
+      <ToolbarButton onClick={() => updateEditorSettings({ showInvisibles: !editorSettings.showInvisibles })} isActive={editorSettings.showInvisibles} title={editorSettings.showInvisibles ? 'Hide formatting marks' : 'Show formatting marks'}>
         <Pilcrow className="h-4 w-4" />
       </ToolbarButton>
       </div>
@@ -3377,7 +3360,7 @@ function EditorToolbar({
       <div className={ribbonGroupClass('view')}>
       <span className="qn-ribbon-group-label">Page view</span>
       <div className="relative" ref={documentWidthRef}>
-        <DropdownButton isOpen={showDocumentWidth} onClick={() => toggleDropdown(setShowDocumentWidth, showDocumentWidth)} title="Document width" label="Width">
+        <DropdownButton isOpen={showDocumentWidth} onClick={() => toggleDropdown(setShowDocumentWidth, showDocumentWidth)} title="Document width">
           <PanelTop className="h-4 w-4" />
         </DropdownButton>
         <PortalDropdown isOpen={showDocumentWidth} anchorRef={documentWidthRef} onClose={() => setShowDocumentWidth(false)} align="right" label="Document width">
@@ -3400,7 +3383,7 @@ function EditorToolbar({
 
       <div className={ribbonGroupClass('view')}>
       <span className="qn-ribbon-group-label">Focus</span>
-      <ToolbarButton onClick={() => useUIStore.getState().setFocusModeOpen(true)} title="Open focus mode" label="Focus mode">
+      <ToolbarButton onClick={() => useUIStore.getState().setFocusModeOpen(true)} title="Open focus mode">
         <Focus className="h-4 w-4" />
       </ToolbarButton>
       </div>
@@ -3417,7 +3400,6 @@ function EditorToolbar({
       <ToolbarButton 
         onClick={() => useUIStore.getState().setHTMLEditorOpen(true)}
         title="Edit HTML Source"
-        label="HTML"
       >
         <FileCode className="w-4 h-4" />
       </ToolbarButton>
@@ -3425,7 +3407,6 @@ function EditorToolbar({
       <ToolbarButton
         onClick={() => useUIStore.getState().setShortcutsModalOpen(true)}
         title="Keyboard shortcuts"
-        label="Shortcuts"
       >
         <Keyboard className="h-4 w-4" />
       </ToolbarButton>
