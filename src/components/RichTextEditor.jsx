@@ -507,14 +507,14 @@ function DocumentRuler({ editor, containerRef }) {
   const tickCount = Math.ceil(geometry.contentWidth / 40)
 
   return (
-    <div ref={rulerRef} className="qn-document-ruler relative h-9 shrink-0 border-b border-subtle" aria-label="Paragraph ruler">
+    <div ref={rulerRef} className="qn-document-ruler relative h-6 shrink-0 border-b border-subtle" aria-label="Paragraph ruler">
       <button
         type="button"
         data-tab-selector
         aria-label={`Tab stop type: ${tabTypeLabel(tabType)}. Activate to choose ${tabTypeLabel(cycleTabType(tabType))}.`}
         title={`${tabTypeLabel(tabType)} tab stop`}
         onClick={() => setTabType(cycleTabType(tabType))}
-        className="qn-tab-selector absolute inset-y-0 left-0 flex w-9 items-center justify-center border-r border-subtle text-ui-xs font-bold text-content-muted hover:bg-surface-hover"
+        className="qn-tab-selector absolute inset-y-0 left-0 flex w-6 items-center justify-center border-r border-subtle text-ui-xs font-bold text-content-muted hover:bg-surface-hover"
       >
         {tabType === 'decimal' ? 'D.' : tabType[0].toUpperCase()}
       </button>
@@ -578,7 +578,7 @@ function DocumentRuler({ editor, containerRef }) {
 }
 
 function VerticalDocumentRuler({ containerRef }) {
-  const [geometry, setGeometry] = useState({ top: 24, height: 1123, paddingTop: 68, paddingBottom: 68 })
+  const [geometry, setGeometry] = useState({ height: 1147, paddingTop: 92, paddingBottom: 68 })
 
   useEffect(() => {
     const pageElement = containerRef.current
@@ -588,10 +588,10 @@ function VerticalDocumentRuler({ containerRef }) {
     const sync = () => {
       const pageWidth = pageElement.getBoundingClientRect().width
       const styles = getComputedStyle(editorElement)
+      const pageTop = pageElement.offsetTop
       setGeometry({
-        top: pageElement.offsetTop,
-        height: pageWidth * A4_RATIO,
-        paddingTop: parseFloat(styles.paddingTop) || 0,
+        height: pageTop + (pageWidth * A4_RATIO),
+        paddingTop: pageTop + (parseFloat(styles.paddingTop) || 0),
         paddingBottom: parseFloat(styles.paddingBottom) || 0,
       })
     }
@@ -614,8 +614,8 @@ function VerticalDocumentRuler({ containerRef }) {
     <div
       data-vertical-ruler
       aria-label="Vertical page ruler"
-      className="qn-vertical-ruler absolute left-0 z-10"
-      style={{ top: `${geometry.top}px`, height: `${geometry.height}px` }}
+      className="qn-vertical-ruler absolute left-0 top-0 z-10"
+      style={{ height: `${geometry.height}px` }}
     >
       <span className="qn-vertical-ruler__margin qn-vertical-ruler__margin--top" style={{ height: `${geometry.paddingTop}px` }} />
       <div
@@ -3055,26 +3055,15 @@ function EditorToolbar({
         <Square className="w-4 h-4" />
       </ToolbarButton>
 
-      <div className="flex items-center" aria-label="Shapes">
-        {COMMON_SHAPES.map((shape) => (
-          <ToolbarButton
-            key={shape.value}
-            onClick={() => onStartDrawing({ kind: 'shape', shapeType: shape.value })}
-            title={`Draw ${shape.label.toLowerCase()}`}
-            className="qn-common-shape-button"
-          >
-            <ShapeGeometry shapeType={shape.value} className="h-5 w-5" />
-          </ToolbarButton>
-        ))}
-        <div className="relative" ref={shapePickerRef}>
-          <DropdownButton
-            isOpen={showShapePicker}
-            onClick={() => toggleDropdown(setShowShapePicker, showShapePicker)}
-            title="More shapes"
-            className="h-8 px-1"
-          >
-            <Shapes className="h-4 w-4" />
-          </DropdownButton>
+      <div className="relative" ref={shapePickerRef}>
+        <DropdownButton
+          isOpen={showShapePicker}
+          onClick={() => toggleDropdown(setShowShapePicker, showShapePicker)}
+          title="More shapes"
+          className="h-8 px-1.5"
+        >
+          <Shapes className="h-4 w-4" />
+        </DropdownButton>
         <PortalDropdown
           isOpen={showShapePicker}
           anchorRef={shapePickerRef}
@@ -3082,9 +3071,9 @@ function EditorToolbar({
           align="right"
           label="Insert a shape"
         >
-          <div className="max-h-[min(34rem,calc(100vh-2rem))] w-[min(25rem,calc(100vw-1rem))] overflow-y-auto pb-2">
+          <div className="max-h-[min(34rem,calc(100vh-2rem))] w-[min(20rem,calc(100vw-1rem))] overflow-y-auto pb-2">
             <div className="qn-shape-gallery-heading">Recently used shapes</div>
-            <div className="grid grid-cols-8 gap-0.5 px-2 py-1.5">
+            <div className="grid grid-cols-10 gap-0.5 px-2 py-1.5">
               {COMMON_SHAPES.map((shape) => (
                 <button
                   key={`recent-${shape.value}`}
@@ -3098,14 +3087,14 @@ function EditorToolbar({
                   }}
                   className="qn-shape-gallery-item"
                 >
-                  <ShapeGeometry shapeType={shape.value} className="h-5 w-5" />
+                  <ShapeGeometry shapeType={shape.value} className="h-4 w-4" />
                 </button>
               ))}
             </div>
             {SHAPE_GROUPS.map((group) => (
               <div key={group.label}>
                 <div className="qn-shape-gallery-heading">{group.label}</div>
-                <div className="grid grid-cols-8 gap-0.5 px-2 py-1.5">
+                <div className="grid grid-cols-10 gap-0.5 px-2 py-1.5">
                   {group.options.map((shape) => (
                     <button
                       key={shape.value}
@@ -3119,7 +3108,7 @@ function EditorToolbar({
                       }}
                       className="qn-shape-gallery-item"
                     >
-                      <ShapeGeometry shapeType={shape.value} className="h-5 w-5" />
+                      <ShapeGeometry shapeType={shape.value} className="h-4 w-4" />
                     </button>
                   ))}
                 </div>
@@ -3127,7 +3116,6 @@ function EditorToolbar({
             ))}
           </div>
         </PortalDropdown>
-        </div>
       </div>
       </div>
 

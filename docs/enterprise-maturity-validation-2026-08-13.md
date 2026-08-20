@@ -31,8 +31,8 @@ The resulting product is materially calmer and more credible without being gray 
   presented as a major task. A narrow active tab scrolls as one flat row.
 - Notes can contain free-positioned text boxes and 46 vector shapes across
   lines, rectangles, basic shapes, arrows, equations, flowcharts, stars,
-  banners and callouts. Five common shapes remain directly on the ribbon while
-  a dense categorized gallery exposes the complete set. All use drag-to-create sizing, direct
+  banners and callouts. One compact Shapes control keeps the ribbon narrow while
+  a dense categorized gallery with recently used shapes exposes the complete set. All use drag-to-create sizing, direct
   movement, eight resize handles, keyboard nudging, exact geometry, page-edge
   clamping and durable HTML. Text boxes add background and border controls;
   shapes add editable text, rotation, 15-degree snapping, 90-degree commands,

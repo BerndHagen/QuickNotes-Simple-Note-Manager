@@ -1857,11 +1857,13 @@ body {
 
 /* Interactive paragraph ruler. */
 .qn-document-ruler {
+  height: 24px;
   background: var(--qn-surface-workbench);
   user-select: none;
 }
 
 .qn-tab-selector {
+  width: 24px;
   background: color-mix(in srgb, var(--qn-surface-sunken) 86%, var(--qn-surface-raised));
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--qn-border-strong) 58%, transparent);
 }
@@ -1893,7 +1895,7 @@ body {
 }
 
 .qn-vertical-ruler {
-  width: 22px;
+  width: 24px;
   overflow: hidden;
   border: 1px solid var(--qn-border-subtle);
   background: var(--qn-surface-raised);
@@ -2152,20 +2154,20 @@ body {
   z-index: 0;
   inset-block: 0;
   inset-inline-end: 0;
-  width: min(34%, 30rem);
+  width: min(38%, 32rem);
   pointer-events: none;
-  opacity: 0.52;
+  opacity: 0.78;
   background-image:
     conic-gradient(
       from 32deg at 50% 50%,
       transparent 0 78%,
-      color-mix(in srgb, var(--qn-brand-400) 20%, transparent) 79% 84%,
+      color-mix(in srgb, var(--qn-brand-400) 28%, transparent) 79% 84%,
       transparent 85% 100%
     ),
     conic-gradient(
       from 214deg at 50% 50%,
       transparent 0 81%,
-      color-mix(in srgb, var(--qn-brand-300) 16%, transparent) 82% 87%,
+      color-mix(in srgb, var(--qn-brand-300) 22%, transparent) 82% 87%,
       transparent 88% 100%
     );
   background-position: 8px 3px, 31px 22px;
@@ -2178,13 +2180,18 @@ body {
   z-index: 1;
 }
 
+.qn-document-header .qn-note-title-field {
+  width: min(70%, 52rem);
+  flex: 0 1 min(70%, 52rem);
+}
+
 .qn-document-header #qn-note-title {
   background: var(--qn-surface-raised);
   color: var(--qn-text);
 }
 
 .qn-document-header #qn-note-title:hover {
-  background: var(--qn-surface-hover);
+  background: color-mix(in srgb, var(--qn-surface-raised) 94%, var(--qn-text));
 }
 
 .qn-document-header #qn-note-title:focus {
@@ -2374,8 +2381,8 @@ body {
 .qn-shape-gallery-item {
   position: relative;
   display: flex;
-  width: 2rem;
-  height: 2rem;
+  width: 1.75rem;
+  height: 1.75rem;
   align-items: center;
   justify-content: center;
   border: 1px solid transparent;
@@ -2400,13 +2407,7 @@ body {
   font-weight: 700;
 }
 
-.qn-common-shape-button {
-  --shape-fill: var(--qn-surface-raised);
-  --shape-stroke: var(--qn-text-muted);
-}
-
-.qn-shape-gallery-item .qn-shape__geometry,
-.qn-common-shape-button .qn-shape__geometry {
+.qn-shape-gallery-item .qn-shape__geometry {
   position: static;
 }
 

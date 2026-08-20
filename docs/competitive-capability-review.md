@@ -58,8 +58,8 @@ official product guidance:
   are in View. Narrow panes scroll only the active flat command row.
 - Word creates text boxes by dragging to the requested size and moves them from
   their border. QuickNotes now uses the same direct-manipulation contract for
-  text boxes and 46 genuine SVG shapes: choose one of five common ribbon shapes
-  or open the dense categorized gallery, then drag on the page
+  text boxes and 46 genuine SVG shapes: open one compact ribbon control and
+  choose from the dense categorized gallery, then drag on the page
   to create it at that size and position, then drag the surface/border to move
   it or any of eight handles to resize it. Objects are clamped to the page,
   expand its scrollable height, and retain exact geometry in note HTML.

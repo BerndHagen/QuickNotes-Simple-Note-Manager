@@ -539,13 +539,22 @@ test.describe('editor productivity objects', () => {
     const rulerPage = ruler.locator('[data-ruler-page]')
     const leftMargin = ruler.locator('.qn-ruler-margin--left')
     const rightMargin = ruler.locator('.qn-ruler-margin--right')
+    const tabSelector = ruler.locator('[data-tab-selector]')
+    const verticalRuler = page.locator('[data-vertical-ruler]')
     const editorPage = page.locator('[data-editor-page]')
-    const [rulerPageBox, editorPageBox, leftMarginBox, rightMarginBox] = await Promise.all([
+    const [rulerBox, rulerPageBox, editorPageBox, leftMarginBox, rightMarginBox, tabSelectorBox, verticalRulerBox] = await Promise.all([
+      ruler.boundingBox(),
       rulerPage.boundingBox(),
       editorPage.boundingBox(),
       leftMargin.boundingBox(),
       rightMargin.boundingBox(),
+      tabSelector.boundingBox(),
+      verticalRuler.boundingBox(),
     ])
+    expect(rulerBox.height).toBe(24)
+    expect(tabSelectorBox.width).toBe(24)
+    expect(verticalRulerBox.width).toBe(24)
+    expect(Math.abs(tabSelectorBox.x - verticalRulerBox.x)).toBeLessThanOrEqual(1)
     expect(Math.abs(rulerPageBox.x - editorPageBox.x)).toBeLessThanOrEqual(1)
     expect(Math.abs(rulerPageBox.width - editorPageBox.width)).toBeLessThanOrEqual(1)
     expect(leftMarginBox.width).toBeGreaterThan(20)

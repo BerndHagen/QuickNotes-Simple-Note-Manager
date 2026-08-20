@@ -510,7 +510,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
           }`}
         >
 
-          <div className="min-w-0 flex-1">
+          <div className="qn-note-title-field min-w-0">
             <label htmlFor="qn-note-title" className="qn-sr-only">
               {t('editor.noteTitle', 'Note title')}
             </label>
@@ -550,7 +550,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
               iconClassName={note.pinned ? 'fill-current' : ''}
               aria-pressed={!!note.pinned}
               onClick={() => togglePin(note.id)}
-              className="mt-1 hidden md:inline-flex"
+              className="ml-auto mt-1 hidden md:inline-flex"
             />
           )}
         </div>
