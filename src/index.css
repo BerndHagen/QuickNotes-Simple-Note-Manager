@@ -1746,7 +1746,19 @@ body {
 }
 
 .qn-ribbon-group-label {
-  display: none;
+  position: absolute;
+  right: 0.45rem;
+  bottom: 0.12rem;
+  left: 0.45rem;
+  display: block;
+  overflow: hidden;
+  color: var(--qn-text-subtle);
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .qn-checklist-primary {
@@ -2851,9 +2863,9 @@ body {
 }
 
 .qn-ribbon-group {
-  min-height: 40px;
+  min-height: 56px;
   align-items: center;
-  padding: 0.2rem 0.65rem;
+  padding: 0.15rem 0.65rem 0.85rem;
   border: 0;
   border-right: 1px solid var(--qn-border-subtle);
   border-radius: 0;
@@ -2873,6 +2885,10 @@ body {
 .editor-ribbon[data-density='compact'] .qn-ribbon-group {
   min-height: 36px;
   padding: 0.1rem 0.45rem;
+}
+
+.editor-ribbon[data-density='compact'] .qn-ribbon-group-label {
+  display: none;
 }
 
 .editor-ribbon[data-group-labels='hidden'] .qn-ribbon-group {
@@ -2919,12 +2935,12 @@ body {
   box-sizing: border-box;
   min-height: max(var(--qn-paginated-min-height, 1123px), var(--qn-object-min-height, 300px));
   padding: var(--qn-page-pad-y) var(--qn-page-pad-x);
-  border: 0;
+  border: 1px solid var(--qn-border-subtle);
   background-color: inherit;
   background-image: inherit;
   background-position: inherit;
   background-size: inherit;
-  box-shadow: none;
+  box-shadow: var(--qn-shadow-md);
 }
 
 .qn-page-break-marker {
@@ -2950,7 +2966,10 @@ body {
 }
 
 .qn-page-gap__gutter {
-  width: 100%;
+  position: relative;
+  z-index: 2;
+  width: calc(100% + 32px);
+  margin-left: -16px;
   background: var(--qn-surface-workbench);
   box-shadow: none;
 }
