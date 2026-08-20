@@ -2268,7 +2268,7 @@ function EditorToolbar({
           {[
             ['home', 'Home'],
             ['insert', 'Insert'],
-            ['layout', 'Format'],
+            ['layout', 'Layout'],
             ['review', 'Review'],
             ['view', 'View'],
           ].map(([value, label]) => (
@@ -2347,33 +2347,19 @@ function EditorToolbar({
           onKeyDown={handleToolbarKeyDown}
           className="editor-toolbar flex min-h-[58px] flex-nowrap items-stretch gap-1 overflow-x-auto overflow-y-hidden overscroll-x-contain px-2 sm:px-3"
         >
-      <div className={ribbonGroupClass('home')} style={{ order: -3 }}>
-      <span className="qn-ribbon-group-label">Format tools</span>
-      <ToolbarButton
-        onClick={formatPainterActive ? () => { setFormatPainterActive(false); setCopiedFormat(null) } : copyFormat}
-        isActive={formatPainterActive}
-        title={formatPainterActive ? 'Cancel format painter' : 'Format painter'}
-      >
-        <Paintbrush className={`h-4 w-4 ${formatPainterActive ? 'text-emerald-600 animate-pulse' : ''}`} />
-      </ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()} title="Clear formatting">
-        <RemoveFormatting className="h-4 w-4" />
-      </ToolbarButton>
-      </div>
-
-      <div className={ribbonGroupClass('review')} style={{ order: -3 }}>
-      <span className="qn-ribbon-group-label">Find</span>
+      <div className={ribbonGroupClass('home')} style={{ order: -5 }}>
+      <span className="qn-ribbon-group-label">Editing</span>
       <ToolbarButton onClick={() => useUIStore.getState().setFindReplaceOpen(true)} title="Find and replace" shortcut={shortcut('f')}>
         <Search className="h-4 w-4" />
       </ToolbarButton>
       </div>
 
-      <div className={ribbonGroupClass('home')} style={{ order: -10 }}>
-      <span className="qn-ribbon-group-label">Typography</span>
+      <div className={`${ribbonGroupClass('home')} qn-ribbon-font-group`} style={{ order: -9 }}>
+      <span className="qn-ribbon-group-label">Font</span>
 
       <div className="relative" ref={fontPickerRef}>
-        <DropdownButton isOpen={showFontPicker} onClick={() => toggleDropdown(setShowFontPicker, showFontPicker)} title="Font family" className="min-w-[112px] justify-between px-2">
-          <span className="max-w-[88px] truncate text-ui-sm font-medium" style={{ fontFamily: activeFontValue }}>{activeFontName}</span>
+        <DropdownButton isOpen={showFontPicker} onClick={() => toggleDropdown(setShowFontPicker, showFontPicker)} title="Font family" className="min-w-[104px] justify-between px-2">
+          <span className="max-w-[80px] truncate text-ui-sm font-medium" style={{ fontFamily: activeFontValue }}>{activeFontName}</span>
         </DropdownButton>
         <PortalDropdown
           isOpen={showFontPicker}
@@ -2416,7 +2402,7 @@ function EditorToolbar({
       </div>
 
       <div className="relative" ref={fontSizePickerRef}>
-        <DropdownButton isOpen={showFontSizePicker} onClick={() => toggleDropdown(setShowFontSizePicker, showFontSizePicker)} title="Font size" className="min-w-[48px] justify-between px-2">
+        <DropdownButton isOpen={showFontSizePicker} onClick={() => toggleDropdown(setShowFontSizePicker, showFontSizePicker)} title="Font size" className="min-w-[44px] justify-between px-2">
           <span className="text-ui-sm font-medium tabular-nums">{activeFontSize}</span>
         </DropdownButton>
         <PortalDropdown isOpen={showFontSizePicker} anchorRef={fontSizePickerRef} onClose={() => setShowFontSizePicker(false)}>
@@ -2444,45 +2430,13 @@ function EditorToolbar({
         </PortalDropdown>
       </div>
 
-      <div className="relative" ref={lineHeightPickerRef}>
-        <DropdownButton isOpen={showLineHeightPicker} onClick={() => toggleDropdown(setShowLineHeightPicker, showLineHeightPicker)} title="Line height" className="min-w-[58px] justify-between px-2">
-          <MoveVertical className="h-4 w-4" />
-          <span className="text-ui-xs font-medium tabular-nums">{activeLineHeight}</span>
-        </DropdownButton>
-        <PortalDropdown isOpen={showLineHeightPicker} anchorRef={lineHeightPickerRef} onClose={() => setShowLineHeightPicker(false)}>
-          <div className="py-1.5 w-[100px]">
-            {lineHeights.map((lh) => {
-              const isActive = editor.isActive('paragraph', { lineHeight: lh.value })
-              return (
-                <button
-                  key={lh.name}
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => {
-                    editor.chain().focus().setLineHeight(lh.value).run()
-                    setShowLineHeightPicker(false)
-                  }}
-                  className={`w-full px-3 py-1.5 text-left text-[13px] hover:bg-surface-hover rounded-lg transition-colors ${
- isActive ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 font-medium' : 'text-content-muted'
- }`}
-                >
-                  {lh.name}
-                </button>
-              )
-            })}
-          </div>
-        </PortalDropdown>
-      </div>
-      </div>
-
-      <div className={ribbonGroupClass('layout')} style={{ order: -7 }}>
-      <span className="qn-ribbon-group-label">Text styles</span>
       <div className="relative" ref={headingsRef}>
         <DropdownButton
           isOpen={showHeadingsPicker}
           onClick={() => toggleDropdown(setShowHeadingsPicker, showHeadingsPicker)}
           title="Block style"
         >
-          <span className="min-w-[74px] whitespace-nowrap text-left text-ui-md font-medium">
+          <span className="min-w-[68px] whitespace-nowrap text-left text-ui-md font-medium">
             {[1, 2, 3, 4, 5, 6].reduce(
               (label, level) => (editor.isActive('heading', { level }) ? `Heading ${level}` : label),
               'Normal text'
@@ -2545,10 +2499,6 @@ function EditorToolbar({
       <ToolbarButton onClick={() => editor.chain().focus().toggleStrike().run()} isActive={editor.isActive('strike')} title="Strikethrough" shortcut={shortcut('s', { shift: true })}>
         <Strikethrough className="w-4 h-4" />
       </ToolbarButton>
-      </div>
-
-      <div className={ribbonGroupClass('layout')} style={{ order: -6 }}>
-      <span className="qn-ribbon-group-label">Colour & effects</span>
       <div className="relative" ref={colorPickerRef}>
         <DropdownButton isOpen={showColorPicker} onClick={() => toggleDropdown(setShowColorPicker, showColorPicker)} title="Text Color">
           <Palette className="w-4 h-4" />
@@ -2718,9 +2668,12 @@ function EditorToolbar({
       <ToolbarButton onClick={() => editor.chain().focus().toggleCode().run()} isActive={editor.isActive('code')} title="Inline Code">
         <Code className="w-4 h-4" />
       </ToolbarButton>
+      <ToolbarButton onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()} title="Clear formatting">
+        <RemoveFormatting className="h-4 w-4" />
+      </ToolbarButton>
       </div>
 
-      <div className={ribbonGroupClass('layout')} style={{ order: -5 }}>
+      <div className={ribbonGroupClass('home')} style={{ order: -8 }}>
       <span className="qn-ribbon-group-label">Paragraph</span>
 
       <ToolbarButton onClick={() => editor.chain().focus().setTextAlign('left').run()} isActive={editor.isActive({ textAlign: 'left' })} title="Align Left">
@@ -2735,10 +2688,6 @@ function EditorToolbar({
       <ToolbarButton onClick={() => editor.chain().focus().setTextAlign('justify').run()} isActive={editor.isActive({ textAlign: 'justify' })} title="Justify">
         <AlignJustify className="w-4 h-4" />
       </ToolbarButton>
-      </div>
-
-      <div className={ribbonGroupClass('layout')} style={{ order: -4 }}>
-      <span className="qn-ribbon-group-label">Lists</span>
       <ToolbarButton onClick={() => editor.chain().focus().toggleBulletList().run()} isActive={editor.isActive('bulletList')} title="Bullet List">
         <List className="w-4 h-4" />
       </ToolbarButton>
@@ -2870,7 +2819,7 @@ function EditorToolbar({
       </div>
       </div>
 
-      <div className={ribbonGroupClass('home')} style={{ order: -5 }}>
+      <div className={ribbonGroupClass('home')} style={{ order: -10 }}>
       <span className="qn-ribbon-group-label">Clipboard</span>
       <ToolbarButton onClick={onCut} disabled={editor.state.selection.empty} title="Cut" shortcut={shortcut('x')}>
         <Scissors className="h-4 w-4" />
@@ -2880,6 +2829,13 @@ function EditorToolbar({
       </ToolbarButton>
       <ToolbarButton onClick={onPaste} title="Paste" shortcut={shortcut('v')}>
         <ClipboardPaste className="h-4 w-4" />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={formatPainterActive ? () => { setFormatPainterActive(false); setCopiedFormat(null) } : copyFormat}
+        isActive={formatPainterActive}
+        title={formatPainterActive ? 'Cancel format painter' : 'Format painter'}
+      >
+        <Paintbrush className={`h-4 w-4 ${formatPainterActive ? 'animate-pulse' : ''}`} />
       </ToolbarButton>
       </div>
 
@@ -2926,7 +2882,36 @@ function EditorToolbar({
       </div>
 
       <div className={ribbonGroupClass('layout')} style={{ order: -8 }}>
-      <span className="qn-ribbon-group-label">Typography</span>
+      <span className="qn-ribbon-group-label">Spacing</span>
+
+      <div className="relative" ref={lineHeightPickerRef}>
+        <DropdownButton isOpen={showLineHeightPicker} onClick={() => toggleDropdown(setShowLineHeightPicker, showLineHeightPicker)} title="Line height" className="min-w-[58px] justify-between px-2">
+          <MoveVertical className="h-4 w-4" />
+          <span className="text-ui-xs font-medium tabular-nums">{activeLineHeight}</span>
+        </DropdownButton>
+        <PortalDropdown isOpen={showLineHeightPicker} anchorRef={lineHeightPickerRef} onClose={() => setShowLineHeightPicker(false)}>
+          <div className="w-[100px] py-1.5">
+            {lineHeights.map((lineHeight) => {
+              const isActive = editor.isActive('paragraph', { lineHeight: lineHeight.value })
+              return (
+                <button
+                  key={lineHeight.name}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => {
+                    editor.chain().focus().setLineHeight(lineHeight.value).run()
+                    setShowLineHeightPicker(false)
+                  }}
+                  className={`w-full rounded-lg px-3 py-1.5 text-left text-[13px] transition-colors hover:bg-surface-hover ${
+                    isActive ? 'bg-accent-soft font-medium text-accent-text' : 'text-content-muted'
+                  }`}
+                >
+                  {lineHeight.name}
+                </button>
+              )
+            })}
+          </div>
+        </PortalDropdown>
+      </div>
 
       <div className="relative" ref={letterSpacingRef}>
         <DropdownButton isOpen={showLetterSpacing} onClick={() => toggleDropdown(setShowLetterSpacing, showLetterSpacing)} title="Letter Spacing">

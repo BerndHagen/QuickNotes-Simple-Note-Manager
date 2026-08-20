@@ -493,6 +493,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
                     iconClassName={note.pinned ? 'fill-current' : ''}
                     aria-pressed={!!note.pinned}
                     onClick={() => togglePin(note.id)}
+                    className="qn-ribbon-primary-action"
                   />
                 )}
                 {!isShared && (
