@@ -47,7 +47,7 @@ export function CountBadge({ value, tone = 'neutral', className = '' }) {
  * the same hue falls far below WCAG's 4.5:1 — the label always takes a theme
  * text colour instead.
  *
- * `surface` sits on the light panels, `dark` on the rail and the editor banner,
+ * `surface` sits on light panels and the editor header, `dark` on the rail,
  * where the tint has to be stronger to register against a dark green.
  */
 const TAG_SURFACES = {

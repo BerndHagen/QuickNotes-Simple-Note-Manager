@@ -30,9 +30,9 @@ You can try QuickNotes [**here**](https://berndhagen.github.io/QuickNotes-Simple
 - **Task Lists:** Interactive, nestable checklists with per-item shape, colour, size, completion treatment, add/remove-item actions, and persistent defaults for new lists
 - **Image Support:** Upload and embed resizable images directly in notes with drag handles
 - **Document Objects:** Drag to draw editable text boxes and twelve SVG shapes at an exact page position, then move, resize from eight handles, rotate, flip, wrap, recolor, and size them precisely
-- **Professional Editor Ribbon:** A flat, familiar command row across Home, Insert, Format, Layout, Review, View, and Tools. Home begins with font family, size, line height, styles, colour, alignment, and lists; clear separators replace boxed one-command groups
+- **Professional Editor Ribbon:** A flat, familiar command row across Home, Insert, Layout, Review, and View. Home begins with font family, size, line height, styles, colour, alignment, and lists; compact separators replace boxed groups, and no tab exists for only a handful of disconnected commands
 - **Structured Writing:** Searchable slash commands, semantic callouts, local date/time insertion, and a contextual checklist editor keep advanced blocks discoverable without crowding every tab
-- **Paragraph Layout:** Repeatable multilevel indentation, before/after spacing, and a true ruler with first-line/left/right indents plus left, centre, right, and decimal tab stops that the Tab key follows
+- **Paragraph Layout:** Repeatable multilevel indentation, before/after spacing, and a full-page ruler with shaded margin areas, first-line/left/right indents, plus left, centre, right, and decimal tab stops that the Tab key follows
 - **A4 Document Pages:** Standard notes render as complete A4 sheets. Content automatically flows onto additional visible pages, `Ctrl/Cmd+Enter` inserts a durable manual page break, and PDF export follows those boundaries without adding blank pages
 - **Review & View Tools:** Find and replace, browser spell checking, translation, document statistics, an accessibility checker with issue navigation, document outline, formatting marks, ruler, width controls, and focus mode
 - **Document Workbench:** A centred A4 writing surface with focused, standard, wide, and full-width modes separates the document from application chrome

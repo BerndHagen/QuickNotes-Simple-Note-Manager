@@ -59,6 +59,49 @@ test.describe('enterprise UI maturity regressions', () => {
     expect(windowRadius).toBe(searchRadius)
   })
 
+  test('uses identical rail separators and shared high-contrast creation actions', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await signIn(page)
+
+    const rail = page.getByRole('navigation', { name: 'Workspace' })
+    const separators = rail.locator('.qn-nav-separator')
+    await expect(separators).toHaveCount(2)
+    const separatorBoxes = await separators.evaluateAll((elements) => elements.map((element) => {
+      const box = element.getBoundingClientRect()
+      return { x: box.x, width: box.width }
+    }))
+    expect(separatorBoxes[0]).toEqual(separatorBoxes[1])
+
+    const quickNote = rail.getByRole('button', { name: /Quick Note/i })
+    const newNote = page.getByRole('button', { name: 'New note', exact: true }).first()
+    await expect(quickNote).toHaveClass(/qn-button-primary/)
+    await expect(newNote).toHaveClass(/qn-button-primary/)
+    const restingBackground = await quickNote.evaluate((element) => getComputedStyle(element).backgroundColor)
+    await quickNote.hover()
+    await expect.poll(() => quickNote.evaluate((element) => getComputedStyle(element).backgroundColor)).not.toBe(restingBackground)
+  })
+
+  test('keeps the document header neutral with its pattern confined to the right edge', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await signIn(page)
+
+    const header = page.locator('.qn-document-header')
+    await expect(header).toBeVisible()
+    const surface = await header.evaluate((element) => {
+      const style = getComputedStyle(element)
+      return {
+        backgroundColor: style.backgroundColor,
+        backgroundImage: style.backgroundImage,
+        color: style.color,
+      }
+    })
+
+    expect(surface.backgroundImage.match(/radial-gradient/g)).toHaveLength(2)
+    expect(surface.backgroundImage).toContain('104% 50%')
+    expect(surface.backgroundColor).toBe('rgb(255, 255, 255)')
+    expect(surface.color).not.toBe('rgb(255, 255, 255)')
+  })
+
   test('keeps mobile task copy readable and places secondary actions on their own row', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 })
     const errors = collectErrors(page)

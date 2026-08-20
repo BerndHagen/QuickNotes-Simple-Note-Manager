@@ -31,6 +31,31 @@
   .dark ::selection {
     background-color: rgba(52, 211, 153, 0.36);
   }
+
+  /* Native select arrows sit almost against the edge in Chromium and WebKit.
+     Draw one shared chevron with the same inset as the field's leading text. */
+  select:not([multiple]) {
+    appearance: none;
+    -webkit-appearance: none;
+    padding-inline-start: 0.75rem !important;
+    padding-inline-end: 2.25rem !important;
+    background-image:
+      linear-gradient(45deg, transparent 50%, var(--qn-text-muted) 50%),
+      linear-gradient(135deg, var(--qn-text-muted) 50%, transparent 50%);
+    background-position:
+      calc(100% - 0.95rem) calc(50% - 1px),
+      calc(100% - 0.7rem) calc(50% - 1px);
+    background-size: 0.32rem 0.32rem, 0.32rem 0.32rem;
+    background-repeat: no-repeat;
+  }
+
+  [dir='rtl'] select:not([multiple]) {
+    padding-inline-start: 2.25rem !important;
+    padding-inline-end: 0.75rem !important;
+    background-position:
+      0.7rem calc(50% - 1px),
+      0.95rem calc(50% - 1px);
+  }
 }
 
 /* Date input dark mode support */
@@ -452,7 +477,7 @@ html {
   border: 1.5px solid var(--qn-border-strong);
   border-radius: 4px;
   background: var(--qn-surface-raised);
-  color: var(--qn-accent-on);
+  color: var(--qn-check-accent, var(--qn-accent));
   transition: border-color var(--qn-duration-fast) var(--qn-ease),
     background-color var(--qn-duration-fast) var(--qn-ease),
     box-shadow var(--qn-duration-fast) var(--qn-ease);
@@ -481,7 +506,8 @@ html {
 .ProseMirror ul[data-type="taskList"] li[data-checked='true'] .qn-task-checkbox-visual,
 .ProseMirror ul[data-type="taskList"] li[data-checked='true'] > label > span {
   border-color: var(--qn-check-accent, var(--qn-accent));
-  background: var(--qn-check-accent, var(--qn-accent));
+  background: transparent;
+  color: var(--qn-check-accent, var(--qn-accent));
 }
 
 .ProseMirror ul[data-type="taskList"] li[data-checked='true'] .qn-task-checkbox-visual svg,
@@ -1804,7 +1830,7 @@ body {
   justify-content: center;
   gap: 0;
   padding: 0;
-  border-left: 1px solid var(--qn-border-subtle);
+  border-left: 0;
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
 }
@@ -1831,7 +1857,34 @@ body {
 
 /* Interactive paragraph ruler. */
 .qn-document-ruler {
+  background: var(--qn-surface-workbench);
   user-select: none;
+}
+
+.qn-ruler-page {
+  border-inline: 1px solid var(--qn-border-subtle);
+  background: var(--qn-surface-raised);
+}
+
+.qn-ruler-margin {
+  position: absolute;
+  inset-block: 0;
+  z-index: 0;
+  background: color-mix(in srgb, var(--qn-surface-workbench) 82%, var(--qn-surface-sunken));
+}
+
+.qn-ruler-margin--left {
+  inset-inline-start: 0;
+  border-inline-end: 1px solid var(--qn-border-strong);
+}
+
+.qn-ruler-margin--right {
+  inset-inline-end: 0;
+  border-inline-start: 1px solid var(--qn-border-strong);
+}
+
+[data-ruler-track] {
+  background: var(--qn-surface-raised);
 }
 
 .qn-ruler-tick {
@@ -2834,6 +2887,8 @@ body {
 
 .qn-page-gap__gutter {
   position: relative;
+  width: calc(100% + 2px);
+  margin-left: -1px;
   border-top: 1px solid var(--qn-border-strong);
   border-bottom: 1px solid var(--qn-border-strong);
   background: var(--qn-surface-workbench);
@@ -2910,7 +2965,36 @@ body {
 .ProseMirror ul[data-type='taskList'] li[data-checked='true'] .qn-task-checkbox-visual,
 .ProseMirror ul[data-type='taskList'] li[data-checked='true'] > label > span {
   border-color: var(--qn-check-accent);
-  background: var(--qn-check-accent);
+  background: transparent;
+  color: var(--qn-check-accent);
+}
+
+/* Primary actions share one restrained, tactile treatment. On the dark rail,
+   the same control automatically becomes a light, high-contrast action. */
+.qn-button-primary:not(:disabled) {
+  border: 1px solid color-mix(in srgb, var(--qn-accent) 78%, black);
+  background: var(--qn-accent);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.18), inset 0 1px 0 rgb(255 255 255 / 0.16);
+}
+
+.qn-button-primary:not(:disabled):hover {
+  border-color: color-mix(in srgb, var(--qn-accent-hover) 84%, black);
+  background: var(--qn-accent-hover);
+  box-shadow: 0 2px 5px rgb(15 23 42 / 0.22), inset 0 1px 0 rgb(255 255 255 / 0.18);
+}
+
+.qn-nav-surface .qn-button-primary:not(:disabled) {
+  border-color: rgb(255 255 255 / 0.62);
+  background: var(--qn-surface-raised);
+  color: var(--qn-nav-bg);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.22), inset 0 1px 0 rgb(255 255 255 / 0.72);
+}
+
+.qn-nav-surface .qn-button-primary:not(:disabled):hover {
+  border-color: white;
+  background: color-mix(in srgb, var(--qn-surface-raised) 88%, var(--qn-brand-100));
+  color: var(--qn-nav-bg);
+  box-shadow: 0 3px 10px rgb(0 0 0 / 0.28), inset 0 1px 0 rgb(255 255 255 / 0.78);
 }
 
 .ProseMirror ul[data-type='taskList'] li[data-checkbox-size='compact'] .qn-task-checkbox-visual,

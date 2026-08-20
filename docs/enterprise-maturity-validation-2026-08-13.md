@@ -12,7 +12,7 @@ The resulting product is materially calmer and more credible without being gray 
 
 ## Post-audit feedback refinement
 
-- Decorative contour and radial treatments are now reserved for authentication and onboarding. Signed-in document headers, focused-workspace headers, dialog banners, editor paper, and workspace canvases are flat surfaces.
+- Decorative contour and radial treatments remain absent from working canvases and dialogs. The normal document header retains its established, restrained right-edge contour on an otherwise neutral surface; focused-workspace headers, editor paper, and workspace canvases remain flat.
 - Green is reserved for the navigation landmark, primary actions and small state cues. Settings, search, transfer, tag-management, document and workspace headers share one neutral dialog/work surface.
 - Structured notes expose a visible **Tags** button in the top action bar instead of relying on an icon alone.
 - Every Idea Board card exposes its category as a direct dropdown in both grid and list views. Category management is a labelled **Categories** action rather than an isolated plus icon.
@@ -25,10 +25,10 @@ The resulting product is materially calmer and more credible without being gray 
 - Kanban was already implemented as the Project Board workspace; the sidebar
   now exposes it directly as **Workspaces** and the starter/help copy
   uses the same name.
-- The rich-text editor now uses a stable five-tab ribbon. Home, Insert, Format,
-  Layout and Tools do not change identity at arbitrary width breakpoints, and
-  every command belongs to one visibly named group. A narrow active tab scrolls
-  as one row; every active tab fits the desktop editor without an overflow menu.
+- The rich-text editor uses a stable five-tab ribbon: Home, Insert, Layout,
+  Review and View. Format commands live in Home or Layout, while source,
+  shortcut and display commands live in View, so no underfilled utility tab is
+  presented as a major task. A narrow active tab scrolls as one flat row.
 - Notes can contain free-positioned text boxes and twelve vector shapes across
   basic, arrow and callout families. Both use drag-to-create sizing, direct
   movement, eight resize handles, keyboard nudging, exact geometry, page-edge

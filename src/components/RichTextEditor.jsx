@@ -77,7 +77,6 @@ import {
   Outdent,
   Sparkles,
   Type as TypeIcon,
-  Settings,
   Scissors,
   Copy,
   ClipboardPaste,
@@ -97,6 +96,7 @@ import {
   SlidersHorizontal,
   Accessibility,
   BarChart3,
+  History as VersionHistory,
   Focus,
   Keyboard,
   Mic,
@@ -389,7 +389,13 @@ function DocumentRuler({ editor, containerRef }) {
   const rulerRef = useRef(null)
   const trackRef = useRef(null)
   const dragRef = useRef(null)
-  const [geometry, setGeometry] = useState({ width: 720, left: 40 })
+  const [geometry, setGeometry] = useState({
+    pageLeft: 40,
+    pageWidth: 794,
+    contentWidth: 642,
+    paddingLeft: 76,
+    paddingRight: 76,
+  })
   const [tabType, setTabType] = useState('left')
   const [layout, setLayout] = useState({ leftIndent: 0, rightIndent: 0, firstLineIndent: 0, tabStops: [] })
   const [drag, setDrag] = useState(null)
@@ -419,22 +425,26 @@ function DocumentRuler({ editor, containerRef }) {
   useEffect(() => {
     const ruler = rulerRef.current
     const editorElement = editor?.view?.dom
-    if (!ruler || !editorElement || typeof ResizeObserver === 'undefined') return undefined
+    const pageElement = containerRef.current
+    if (!ruler || !editorElement || !pageElement || typeof ResizeObserver === 'undefined') return undefined
     const sync = () => {
       const rulerRect = ruler.getBoundingClientRect()
-      const editorRect = editorElement.getBoundingClientRect()
+      const pageRect = pageElement.getBoundingClientRect()
       const styles = getComputedStyle(editorElement)
       const paddingLeft = parseFloat(styles.paddingLeft) || 0
       const paddingRight = parseFloat(styles.paddingRight) || 0
       setGeometry({
-        width: Math.max(120, editorElement.clientWidth - paddingLeft - paddingRight),
-        left: Math.max(40, editorRect.left + paddingLeft - rulerRect.left),
+        pageLeft: pageRect.left - rulerRect.left,
+        pageWidth: pageRect.width,
+        contentWidth: Math.max(120, editorElement.clientWidth - paddingLeft - paddingRight),
+        paddingLeft,
+        paddingRight,
       })
     }
     sync()
     const observer = new ResizeObserver(sync)
     observer.observe(editorElement)
-    if (containerRef.current) observer.observe(containerRef.current)
+    observer.observe(pageElement)
     window.addEventListener('resize', sync)
     return () => {
       observer.disconnect()
@@ -461,7 +471,7 @@ function DocumentRuler({ editor, containerRef }) {
       const current = dragRef.current
       if (!current) return
       if (current.type === 'left') editor.commands.setParagraphLayout({ leftIndent: current.current })
-      if (current.type === 'right') editor.commands.setParagraphLayout({ rightIndent: geometry.width - current.current })
+      if (current.type === 'right') editor.commands.setParagraphLayout({ rightIndent: geometry.contentWidth - current.current })
       if (current.type === 'first') editor.commands.setParagraphLayout({ firstLineIndent: current.current - layout.leftIndent })
       if (current.type === 'tab') {
         const next = current.outside
@@ -481,7 +491,7 @@ function DocumentRuler({ editor, containerRef }) {
       window.removeEventListener('pointerup', finish)
       window.removeEventListener('pointercancel', finish)
     }
-  }, [editor, geometry.width, hasActiveDrag, layout.leftIndent, layout.tabStops])
+  }, [editor, geometry.contentWidth, hasActiveDrag, layout.leftIndent, layout.tabStops])
 
   const startDrag = (event, value) => {
     if (event.button !== 0) return
@@ -492,66 +502,74 @@ function DocumentRuler({ editor, containerRef }) {
   }
   const cycleTabType = (currentType) => TAB_STOP_TYPES[(TAB_STOP_TYPES.indexOf(currentType) + 1) % TAB_STOP_TYPES.length]
   const markerPosition = (type, fallback) => drag?.type === type ? drag.current : fallback
-  const tickCount = Math.ceil(geometry.width / 40)
+  const tickCount = Math.ceil(geometry.contentWidth / 40)
 
   return (
-    <div ref={rulerRef} className="qn-document-ruler relative h-9 shrink-0 border-b border-subtle bg-surface-raised" aria-label="Paragraph ruler">
+    <div ref={rulerRef} className="qn-document-ruler relative h-9 shrink-0 border-b border-subtle" aria-label="Paragraph ruler">
       <button
         type="button"
         aria-label={`Tab stop type: ${tabTypeLabel(tabType)}. Activate to choose ${tabTypeLabel(cycleTabType(tabType))}.`}
         title={`${tabTypeLabel(tabType)} tab stop`}
         onClick={() => setTabType(cycleTabType(tabType))}
         className="absolute inset-y-0 flex w-9 items-center justify-center border-x border-subtle text-ui-xs font-bold text-content-muted hover:bg-surface-hover"
-        style={{ left: `${geometry.left - 36}px` }}
+        style={{ left: `${Math.max(0, geometry.pageLeft - 36)}px` }}
       >
         {tabType === 'decimal' ? 'D.' : tabType[0].toUpperCase()}
       </button>
       <div
-        ref={trackRef}
-        data-ruler-track
-        className="absolute inset-y-0 cursor-crosshair overflow-hidden"
-        style={{ left: `${geometry.left}px`, width: `${geometry.width}px` }}
-        onPointerDown={(event) => {
-          if (event.target !== event.currentTarget) return
-          const rect = event.currentTarget.getBoundingClientRect()
-          const stop = Math.round(event.clientX - rect.left)
-          editor.commands.setParagraphLayout({ tabStops: [...layout.tabStops, { position: stop, type: tabType }] })
-          editor.view.focus()
-        }}
+        data-ruler-page
+        className="qn-ruler-page absolute inset-y-0 overflow-hidden"
+        style={{ left: `${geometry.pageLeft}px`, width: `${geometry.pageWidth}px` }}
       >
-        {Array.from({ length: tickCount + 1 }, (_, index) => (
-          <span key={index} className="qn-ruler-tick" style={{ left: `${index * 40}px` }}>
-            {index > 0 && <span>{index}</span>}
-          </span>
-        ))}
-        <button type="button" aria-label={`First-line indent ${Math.round(layout.firstLineIndent)} pixels`} className="qn-ruler-marker qn-ruler-marker--first" style={{ left: `${markerPosition('first', layout.leftIndent + layout.firstLineIndent)}px` }} onPointerDown={(event) => startDrag(event, { type: 'first', current: layout.leftIndent + layout.firstLineIndent })} />
-        <button type="button" aria-label={`Left paragraph indent ${Math.round(layout.leftIndent)} pixels`} className="qn-ruler-marker qn-ruler-marker--left" style={{ left: `${markerPosition('left', layout.leftIndent)}px` }} onPointerDown={(event) => startDrag(event, { type: 'left', current: layout.leftIndent })} />
-        <button type="button" aria-label={`Right paragraph indent ${Math.round(layout.rightIndent)} pixels`} className="qn-ruler-marker qn-ruler-marker--right" style={{ left: `${markerPosition('right', geometry.width - layout.rightIndent)}px` }} onPointerDown={(event) => startDrag(event, { type: 'right', current: geometry.width - layout.rightIndent })} />
-        {layout.tabStops.map((stop, index) => {
-          const position = drag?.type === 'tab' && drag.index === index ? drag.current : stop.position
-          return (
-            <button
-              key={`${stop.position}-${stop.type}-${index}`}
-              type="button"
-              data-tab-type={stop.type}
-              aria-label={`${tabTypeLabel(stop.type)} tab stop at ${Math.round(stop.position)} pixels. Press Enter to change type or Delete to remove.`}
-              className={`qn-ruler-tab-stop ${drag?.type === 'tab' && drag.index === index && drag.outside ? 'opacity-40' : ''}`}
-              style={{ left: `${position}px` }}
-              onDoubleClick={() => editor.commands.setParagraphLayout({ tabStops: layout.tabStops.map((item, itemIndex) => itemIndex === index ? { ...item, type: cycleTabType(item.type) } : item) })}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
+        <span className="qn-ruler-margin qn-ruler-margin--left" style={{ width: `${geometry.paddingLeft}px` }} />
+        <span className="qn-ruler-margin qn-ruler-margin--right" style={{ width: `${geometry.paddingRight}px` }} />
+        <div
+          ref={trackRef}
+          data-ruler-track
+          className="absolute inset-y-0 cursor-crosshair"
+          style={{ left: `${geometry.paddingLeft}px`, width: `${geometry.contentWidth}px` }}
+          onPointerDown={(event) => {
+            if (event.target !== event.currentTarget) return
+            const rect = event.currentTarget.getBoundingClientRect()
+            const stop = Math.round(event.clientX - rect.left)
+            editor.commands.setParagraphLayout({ tabStops: [...layout.tabStops, { position: stop, type: tabType }] })
+            editor.view.focus()
+          }}
+        >
+          {Array.from({ length: tickCount + 1 }, (_, index) => (
+            <span key={index} className="qn-ruler-tick" style={{ left: `${index * 40}px` }}>
+              {index > 0 && <span>{index}</span>}
+            </span>
+          ))}
+          <button type="button" aria-label={`First-line indent ${Math.round(layout.firstLineIndent)} pixels`} className="qn-ruler-marker qn-ruler-marker--first" style={{ left: `${markerPosition('first', layout.leftIndent + layout.firstLineIndent)}px` }} onPointerDown={(event) => startDrag(event, { type: 'first', current: layout.leftIndent + layout.firstLineIndent })} />
+          <button type="button" aria-label={`Left paragraph indent ${Math.round(layout.leftIndent)} pixels`} className="qn-ruler-marker qn-ruler-marker--left" style={{ left: `${markerPosition('left', layout.leftIndent)}px` }} onPointerDown={(event) => startDrag(event, { type: 'left', current: layout.leftIndent })} />
+          <button type="button" aria-label={`Right paragraph indent ${Math.round(layout.rightIndent)} pixels`} className="qn-ruler-marker qn-ruler-marker--right" style={{ left: `${markerPosition('right', geometry.contentWidth - layout.rightIndent)}px` }} onPointerDown={(event) => startDrag(event, { type: 'right', current: geometry.contentWidth - layout.rightIndent })} />
+          {layout.tabStops.map((stop, index) => {
+            const position = drag?.type === 'tab' && drag.index === index ? drag.current : stop.position
+            return (
+              <button
+                key={`${stop.position}-${stop.type}-${index}`}
+                type="button"
+                data-tab-type={stop.type}
+                aria-label={`${tabTypeLabel(stop.type)} tab stop at ${Math.round(stop.position)} pixels. Press Enter to change type or Delete to remove.`}
+                className={`qn-ruler-tab-stop ${drag?.type === 'tab' && drag.index === index && drag.outside ? 'opacity-40' : ''}`}
+                style={{ left: `${position}px` }}
+                onDoubleClick={() => editor.commands.setParagraphLayout({ tabStops: layout.tabStops.map((item, itemIndex) => itemIndex === index ? { ...item, type: cycleTabType(item.type) } : item) })}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault()
+                    editor.commands.setParagraphLayout({ tabStops: layout.tabStops.map((item, itemIndex) => itemIndex === index ? { ...item, type: cycleTabType(item.type) } : item) })
+                    return
+                  }
+                  if (event.key !== 'Delete' && event.key !== 'Backspace') return
                   event.preventDefault()
-                  editor.commands.setParagraphLayout({ tabStops: layout.tabStops.map((item, itemIndex) => itemIndex === index ? { ...item, type: cycleTabType(item.type) } : item) })
-                  return
-                }
-                if (event.key !== 'Delete' && event.key !== 'Backspace') return
-                event.preventDefault()
-                editor.commands.setParagraphLayout({ tabStops: layout.tabStops.filter((_, itemIndex) => itemIndex !== index) })
-              }}
-              onPointerDown={(event) => startDrag(event, { type: 'tab', index, current: stop.position, outside: false })}
-            />
-          )
-        })}
+                  editor.commands.setParagraphLayout({ tabStops: layout.tabStops.filter((_, itemIndex) => itemIndex !== index) })
+                }}
+                onPointerDown={(event) => startDrag(event, { type: 'tab', index, current: stop.position, outside: false })}
+              />
+            )
+          })}
+        </div>
       </div>
     </div>
   )
@@ -1271,6 +1289,7 @@ export default function RichTextEditor({
         <div className={`${mobileToolbarOpen ? 'block' : 'hidden'} shrink-0 md:block`}>
           <EditorToolbar
             editor={editor}
+            noteId={noteId}
             currentPaper={currentPaper}
             onPaperChange={handlePaperChange}
             content={content}
@@ -1617,6 +1636,7 @@ function ImageToolbarButton() {
 
 function EditorToolbar({
   editor,
+  noteId,
   currentPaper,
   onPaperChange,
   content,
@@ -2134,11 +2154,9 @@ function EditorToolbar({
           {[
             ['home', 'Home'],
             ['insert', 'Insert'],
-            ['format', 'Format'],
             ['layout', 'Layout'],
             ['review', 'Review'],
             ['view', 'View'],
-            ['tools', 'Tools'],
           ].map(([value, label]) => (
             <button
               key={value}
@@ -2199,7 +2217,7 @@ function EditorToolbar({
           onKeyDown={handleToolbarKeyDown}
           className="editor-toolbar flex min-h-[58px] flex-nowrap items-stretch gap-1 overflow-x-auto overflow-y-hidden overscroll-x-contain px-2 sm:px-3"
         >
-      <div className={ribbonGroupClass('format')}>
+      <div className={ribbonGroupClass('home')} style={{ order: -3 }}>
       <span className="qn-ribbon-group-label">Format tools</span>
       <ToolbarButton
         onClick={formatPainterActive ? () => { setFormatPainterActive(false); setCopiedFormat(null) } : copyFormat}
@@ -2213,7 +2231,7 @@ function EditorToolbar({
       </ToolbarButton>
       </div>
 
-      <div className={ribbonGroupClass('review')}>
+      <div className={ribbonGroupClass('home')} style={{ order: -2 }}>
       <span className="qn-ribbon-group-label">Find</span>
       <ToolbarButton onClick={() => useUIStore.getState().setFindReplaceOpen(true)} title="Find and replace" shortcut={shortcut('f')}>
         <Search className="h-4 w-4" />
@@ -2682,10 +2700,10 @@ function EditorToolbar({
                 </div>
               </fieldset>
               <fieldset className="sm:col-span-2">
-                <legend className="mb-1 text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">Checked colour</legend>
+                <legend className="mb-1 text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">Tick colour</legend>
                 <div className="flex gap-1">
                   {['accent', 'blue', 'purple', 'amber', 'rose', 'slate'].map((value) => (
-                    <button key={value} type="button" aria-label={`${value} checkbox colour`} aria-pressed={activeCheckboxColor === value} title={value} onMouseDown={(event) => event.preventDefault()} onClick={() => updateChecklistAppearance({ checkboxColor: value }, `${value === 'accent' ? 'QuickNotes green' : value} checked colour`)} className={`qn-check-colour qn-check-colour--${value}`}>
+                    <button key={value} type="button" aria-label={`${value} tick colour`} aria-pressed={activeCheckboxColor === value} title={value} onMouseDown={(event) => event.preventDefault()} onClick={() => updateChecklistAppearance({ checkboxColor: value }, `${value === 'accent' ? 'QuickNotes green' : value} tick colour`)} className={`qn-check-colour qn-check-colour--${value}`}>
                       {activeCheckboxColor === value && <Check className="h-3.5 w-3.5 text-white drop-shadow-sm" aria-hidden="true" />}
                     </button>
                   ))}
@@ -2745,7 +2763,7 @@ function EditorToolbar({
       </ToolbarButton>
       </div>
 
-      <div className={ribbonGroupClass('format')}>
+      <div className={ribbonGroupClass('layout')} style={{ order: -9 }}>
       <span className="qn-ribbon-group-label">Indent</span>
       <ToolbarButton
         onClick={() => {
@@ -2777,7 +2795,7 @@ function EditorToolbar({
       </ToolbarButton>
       </div>
 
-      <div className={ribbonGroupClass('format')}>
+      <div className={ribbonGroupClass('layout')} style={{ order: -8 }}>
       <span className="qn-ribbon-group-label">Text layout</span>
 
       <div className="relative" ref={letterSpacingRef}>
@@ -3088,7 +3106,7 @@ function EditorToolbar({
       </div>
       </div>
 
-      <div className={ribbonGroupClass('layout')}>
+      <div className={ribbonGroupClass('layout')} style={{ order: -10 }}>
       <span className="qn-ribbon-group-label">Page</span>
       <ToolbarButton onClick={() => editor.chain().focus().insertPageBreak().run()} title={`Insert page break (${shortcut('Enter')})`}>
         <FilePlus2 className="h-4 w-4" />
@@ -3203,6 +3221,12 @@ function EditorToolbar({
       >
         <BarChart3 className="h-4 w-4" />
       </ToolbarButton>
+      <ToolbarButton
+        onClick={() => useUIStore.getState().setVersionHistoryOpen(true, noteId)}
+        title="Version history"
+      >
+        <VersionHistory className="h-4 w-4" />
+      </ToolbarButton>
       </div>
 
       <div className={ribbonGroupClass('view')}>
@@ -3246,27 +3270,20 @@ function EditorToolbar({
       </ToolbarButton>
       </div>
 
-      <div className={ribbonGroupClass('tools')}>
+      <div className={ribbonGroupClass('home')} style={{ order: -1 }}>
       <span className="qn-ribbon-group-label">Speech</span>
       <ToolbarButton onClick={() => useUIStore.getState().setVoiceInputActive(!voiceInputActive)} isActive={voiceInputActive} title={voiceInputActive ? 'Stop dictation' : 'Start dictation'}>
         <Mic className="h-4 w-4" />
       </ToolbarButton>
       </div>
 
-      <div className={ribbonGroupClass('tools')}>
+      <div className={ribbonGroupClass('view')}>
       <span className="qn-ribbon-group-label">Advanced</span>
       <ToolbarButton 
         onClick={() => useUIStore.getState().setHTMLEditorOpen(true)}
         title="Edit HTML Source"
       >
         <FileCode className="w-4 h-4" />
-      </ToolbarButton>
-
-      <ToolbarButton 
-        onClick={() => useUIStore.getState().setEditorSettingsOpen(true)}
-        title="Editor Settings"
-      >
-        <Settings className="w-4 h-4" />
       </ToolbarButton>
 
       <ToolbarButton

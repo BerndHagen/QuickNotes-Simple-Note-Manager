@@ -99,6 +99,11 @@ function NavIconButton({ icon: Icon, label, onClick, className = '' }) {
   )
 }
 
+/** One full-width divider for every section boundary in the navigation rail. */
+function NavSeparator({ className = '' }) {
+  return <div aria-hidden="true" className={`qn-nav-separator border-t border-nav-border ${className}`} />
+}
+
 export default function Sidebar({ onNavigate }) {
   const { t } = useTranslation()
   const newNoteShortcut = formatShortcut(loadShortcuts().newNote)
@@ -209,18 +214,15 @@ export default function Sidebar({ onNavigate }) {
 
       {/* Quick note */}
       <div className="shrink-0 px-4 pb-4 pt-4 max-lg:pt-2">
-        {/* The rail's primary action. Built from the shared Button so it picks
-            up the accent tokens; the ring gives it an edge against the rail,
-            which is itself dark green. */}
         <Button
           variant="primary"
           fullWidth
           icon={Plus}
           onClick={go(() => setQuickNoteOpen(true))}
-          className="h-10 justify-start rounded-[10px] px-3.5 text-ui-lg ring-1 ring-white/15"
+          className="h-10 justify-start px-3.5 text-ui-lg"
         >
           <span className="flex-1 text-left">{t('sidebar.quickNote')}</span>
-          <kbd className="shrink-0 font-sans text-ui-xs font-medium text-white/70">{newNoteShortcut}</kbd>
+          <kbd className="shrink-0 font-sans text-ui-xs font-medium text-[color:var(--qn-nav-bg)] opacity-60">{newNoteShortcut}</kbd>
         </Button>
       </div>
 
@@ -389,7 +391,8 @@ export default function Sidebar({ onNavigate }) {
 
       {/* Footer */}
       <div className="qn-safe-bottom shrink-0 px-3 pb-3">
-        <ul className="space-y-0.5 border-t border-nav-border pt-2">
+        <NavSeparator />
+        <ul className="space-y-0.5 pt-2">
           <li>
             <NavItem
               icon={Settings}
@@ -419,7 +422,7 @@ export default function Sidebar({ onNavigate }) {
           </li>
         </ul>
 
-        <div aria-hidden="true" className="mx-2 mt-2 border-t border-nav-border" />
+        <NavSeparator className="mt-2" />
         <button
           ref={accountRef}
           type="button"

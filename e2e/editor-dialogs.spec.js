@@ -104,7 +104,7 @@ test.describe('editor dialogs on a small screen', () => {
         value: { writeText: () => Promise.reject(new Error('denied')) },
       })
     })
-    await page.getByRole('tab', { name: 'Tools' }).click()
+    await page.getByRole('tab', { name: 'View', exact: true }).click()
     await page.getByRole('button', { name: 'Edit HTML Source' }).click()
 
     const dialog = page.getByRole('dialog', { name: 'HTML editor' })
@@ -126,7 +126,9 @@ test.describe('editor productivity objects', () => {
   test('uses a flat, conventionally ordered command ribbon', async ({ page }) => {
     const toolbar = page.locator('.editor-toolbar')
     const tabs = page.getByRole('tablist', { name: 'Editor ribbon' })
-    await expect(tabs.getByRole('tab')).toHaveCount(7)
+    await expect(tabs.getByRole('tab')).toHaveCount(5)
+    await expect(tabs.getByRole('tab', { name: 'Format' })).toHaveCount(0)
+    await expect(tabs.getByRole('tab', { name: 'Tools' })).toHaveCount(0)
     await expect(tabs.getByRole('tab', { name: 'Home' })).toHaveAttribute('aria-selected', 'true')
     await expect(toolbar.getByRole('button', { name: 'Bold' })).toBeVisible()
     await expect(toolbar.getByRole('button', { name: 'Insert shape' })).toBeHidden()
@@ -138,7 +140,7 @@ test.describe('editor productivity objects', () => {
     await expect(tabs.getByRole('tab', { name: 'Insert' })).toHaveAttribute('aria-selected', 'true')
     await expect(toolbar.getByRole('button', { name: 'Insert shape' })).toBeVisible()
     await expect(toolbar.getByRole('button', { name: 'Draw text box' })).toBeVisible()
-    await tabs.getByRole('tab', { name: 'Tools' }).click()
+    await tabs.getByRole('tab', { name: 'View', exact: true }).click()
     await expect(toolbar.getByRole('button', { name: 'Edit HTML Source' })).toBeVisible()
 
     const ungrouped = await toolbar.locator('button:visible').evaluateAll((buttons) =>
@@ -163,6 +165,12 @@ test.describe('editor productivity objects', () => {
     expect(groupChrome.radius).toBe('0px')
     expect(groupChrome.shadow).toBe('none')
     expect(groupChrome.background).toBe('rgba(0, 0, 0, 0)')
+
+    for (const tabName of ['Home', 'Insert', 'Layout', 'Review', 'View']) {
+      await tabs.getByRole('tab', { name: tabName, exact: true }).click()
+      const commandCount = await toolbar.locator('button:visible').count()
+      expect(commandCount, `${tabName} should not be an underfilled ribbon tab`).toBeGreaterThanOrEqual(5)
+    }
   })
 
   test('keeps the ruler optional and provides persistent workbench customization', async ({ page }) => {
@@ -176,8 +184,22 @@ test.describe('editor productivity objects', () => {
 
     await page.getByRole('button', { name: 'Customize editor' }).click()
     const settings = page.getByRole('dialog', { name: 'Editor settings' })
-    await expect(settings.getByLabel('Note width')).toHaveValue('standard')
-    await settings.getByLabel('Note width').selectOption('focused')
+    const noteWidth = settings.getByLabel('Note width')
+    await expect(noteWidth).toHaveValue('standard')
+    const selectChrome = await noteWidth.evaluate((element) => {
+      const style = getComputedStyle(element)
+      return {
+        appearance: style.appearance,
+        backgroundImage: style.backgroundImage,
+        backgroundPosition: style.backgroundPosition,
+        paddingLeft: style.paddingLeft,
+      }
+    })
+    expect(selectChrome.appearance).toBe('none')
+    expect(selectChrome.backgroundImage).not.toBe('none')
+    expect(selectChrome.backgroundPosition).toContain('calc(100% -')
+    expect(selectChrome.paddingLeft).toBe('12px')
+    await noteWidth.selectOption('focused')
     await settings.getByLabel('Ribbon spacing').selectOption('compact')
     await settings.getByRole('button', { name: 'Done' }).click()
 
@@ -195,7 +217,7 @@ test.describe('editor productivity objects', () => {
     await page.getByRole('button', { name: 'Checklist options' }).click()
     const options = page.getByRole('dialog', { name: 'Checklist options' })
     await options.getByRole('button', { name: 'Circle checkbox' }).click()
-    await options.getByRole('button', { name: 'blue checkbox colour' }).click()
+    await options.getByRole('button', { name: 'blue tick colour' }).click()
     await page.keyboard.press('Escape')
 
     await page.getByRole('button', { name: 'Create checklist with current style' }).click()
@@ -208,6 +230,8 @@ test.describe('editor productivity objects', () => {
     await item.locator('input[type="checkbox"]').check({ force: true })
     await expect(item).toHaveAttribute('data-checked', 'true')
     await expect(checkmark).toHaveCSS('opacity', '1')
+    await expect(item.locator('.qn-task-checkbox-visual')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
+    await expect(item.locator('.qn-task-checkbox-visual')).toHaveCSS('color', 'rgb(37, 99, 235)')
   })
 
   test('paginates notes and persists Ctrl+Enter as a manual PDF boundary', async ({ page }) => {
@@ -223,6 +247,14 @@ test.describe('editor productivity objects', () => {
     await expect.poll(async () => Number(await editor.getAttribute('data-page-count'))).toBe(2)
     const gapHeight = await editor.locator('.qn-page-gap').evaluate((gap) => gap.getBoundingClientRect().height)
     expect(gapHeight).toBeGreaterThan(100)
+    const [editorBox, gutterBox] = await Promise.all([
+      editor.boundingBox(),
+      editor.locator('.qn-page-gap__gutter').boundingBox(),
+    ])
+    expect(gutterBox.x).toBeLessThanOrEqual(editorBox.x + 0.5)
+    expect(gutterBox.x + gutterBox.width).toBeGreaterThanOrEqual(editorBox.x + editorBox.width - 0.5)
+    await expect(editor.locator('.qn-page-gap__gutter')).toHaveCSS('border-left-width', '0px')
+    await expect(editor.locator('.qn-page-gap__gutter')).toHaveCSS('border-right-width', '0px')
 
     await page.getByRole('tab', { name: 'Layout' }).click()
     await expect(page.getByRole('button', { name: /Insert page break/ })).toBeVisible()
@@ -259,7 +291,7 @@ test.describe('editor productivity objects', () => {
     await expect(item).toHaveClass(/task-item/)
     await page.getByRole('button', { name: 'Checklist options' }).click()
     await options.getByRole('button', { name: 'Circle checkbox' }).click()
-    await options.getByRole('button', { name: 'purple checkbox colour' }).click()
+    await options.getByRole('button', { name: 'purple tick colour' }).click()
     await options.getByLabel('Size').selectOption('large')
     await options.getByLabel('Completed text').selectOption('keep')
 
@@ -285,12 +317,12 @@ test.describe('editor productivity objects', () => {
     await page.getByRole('button', { name: 'Checklist options' }).click()
     let options = page.getByRole('dialog', { name: 'Checklist options' })
     const circle = options.getByRole('button', { name: 'Circle checkbox' })
-    const blue = options.getByRole('button', { name: 'blue checkbox colour' })
+    const blue = options.getByRole('button', { name: 'blue tick colour' })
     await circle.click()
     await blue.click()
     await expect(circle).toHaveAttribute('aria-pressed', 'true')
     await expect(blue).toHaveAttribute('aria-pressed', 'true')
-    await expect(options.getByRole('status')).toContainText('New checklist items will use blue checked colour')
+    await expect(options.getByRole('status')).toContainText('New checklist items will use blue tick colour')
     await options.getByRole('button', { name: 'Create checklist' }).click()
 
     const items = editor.locator('li[data-type="taskItem"]')
@@ -309,7 +341,7 @@ test.describe('editor productivity objects', () => {
     options = page.getByRole('dialog', { name: 'Checklist options' })
     await expect(options.getByText('2 selected items', { exact: true })).toBeVisible()
     await options.getByRole('button', { name: 'Square checkbox' }).click()
-    await options.getByRole('button', { name: 'rose checkbox colour' }).click()
+    await options.getByRole('button', { name: 'rose tick colour' }).click()
 
     await expect(items).toHaveCount(2)
     await expect(items.nth(0)).toHaveAttribute('data-checkbox-style', 'square')
@@ -470,7 +502,7 @@ test.describe('editor productivity objects', () => {
     await editor.press('End')
     await editor.pressSequentially('Project owner')
 
-    await page.getByRole('tab', { name: 'Format' }).click()
+    await page.getByRole('tab', { name: 'Layout' }).click()
     const toolbar = page.locator('.editor-toolbar')
     const increaseIndent = toolbar.getByRole('button', { name: 'Increase Indent' })
     await increaseIndent.click()
@@ -496,6 +528,22 @@ test.describe('editor productivity objects', () => {
     await toolbar.getByRole('button', { name: 'Show ruler' }).click()
     const ruler = page.locator('.qn-document-ruler')
     await expect(ruler).toBeVisible()
+    const rulerPage = ruler.locator('[data-ruler-page]')
+    const leftMargin = ruler.locator('.qn-ruler-margin--left')
+    const rightMargin = ruler.locator('.qn-ruler-margin--right')
+    const editorPage = page.locator('[data-editor-page]')
+    const [rulerPageBox, editorPageBox, leftMarginBox, rightMarginBox] = await Promise.all([
+      rulerPage.boundingBox(),
+      editorPage.boundingBox(),
+      leftMargin.boundingBox(),
+      rightMargin.boundingBox(),
+    ])
+    expect(Math.abs(rulerPageBox.x - editorPageBox.x)).toBeLessThanOrEqual(1)
+    expect(Math.abs(rulerPageBox.width - editorPageBox.width)).toBeLessThanOrEqual(1)
+    expect(leftMarginBox.width).toBeGreaterThan(20)
+    expect(rightMarginBox.width).toBeGreaterThan(20)
+    await expect(leftMargin).not.toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
+    await expect(rightMargin).not.toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
     const track = ruler.locator('[data-ruler-track]')
     await track.click({ position: { x: 210, y: 18 } })
     await expect(ruler.getByRole('button', { name: /Left tab stop at 210 pixels/ })).toBeVisible()

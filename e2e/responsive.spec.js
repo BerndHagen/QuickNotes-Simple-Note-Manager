@@ -243,8 +243,8 @@ test.describe('mobile editor usability', () => {
     const toolbar = page.locator('.editor-toolbar')
     const tabs = page.getByRole('tablist', { name: 'Editor ribbon' })
     let commandCount = 0
-    for (const tabName of ['Home', 'Insert', 'Format', 'Layout', 'Tools']) {
-      await tabs.getByRole('tab', { name: tabName }).click()
+    for (const tabName of ['Home', 'Insert', 'Layout', 'Review', 'View']) {
+      await tabs.getByRole('tab', { name: tabName, exact: true }).click()
       const metrics = await toolbar.evaluate((element) => {
         const toolbarBox = element.getBoundingClientRect()
         const visibleButtons = [...element.querySelectorAll('button')].filter((button) => button.offsetParent !== null)
@@ -428,8 +428,8 @@ test.describe('desktop editor tools', () => {
     const toolbar = page.locator('.editor-toolbar')
     await expect(toolbar).toBeVisible()
     const tabs = page.getByRole('tablist', { name: 'Editor ribbon' })
-    for (const tabName of ['Home', 'Insert', 'Format', 'Layout', 'Tools']) {
-      await tabs.getByRole('tab', { name: tabName }).click()
+    for (const tabName of ['Home', 'Insert', 'Layout', 'Review', 'View']) {
+      await tabs.getByRole('tab', { name: tabName, exact: true }).click()
       const metrics = await toolbar.evaluate((element) => {
         const buttons = [...element.querySelectorAll('button')].filter((button) => button.offsetParent !== null)
         const groups = [...element.querySelectorAll(':scope > .qn-ribbon-group')]

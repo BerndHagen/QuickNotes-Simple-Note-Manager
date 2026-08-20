@@ -75,7 +75,7 @@ const booleanSettingKeys = [
 const enumSettings = {
   documentWidth: new Set(['focused', 'standard', 'wide', 'full']),
   ribbonDensity: new Set(['comfortable', 'compact']),
-  defaultRibbonTab: new Set(['home', 'insert', 'format', 'layout', 'review', 'view', 'tools']),
+  defaultRibbonTab: new Set(['home', 'insert', 'layout', 'review', 'view']),
   defaultCheckboxStyle: new Set(['square', 'rounded', 'circle']),
   defaultCheckboxColor: new Set(['accent', 'blue', 'purple', 'amber', 'rose', 'slate']),
   defaultCheckboxSize: new Set(['compact', 'standard', 'large']),
@@ -84,21 +84,29 @@ const enumSettings = {
 
 export function normalizeEditorSettings(value) {
   const candidate = value && typeof value === 'object' && !Array.isArray(value) ? value : {}
+  const migratedCandidate = {
+    ...candidate,
+    defaultRibbonTab: candidate.defaultRibbonTab === 'format'
+      ? 'home'
+      : candidate.defaultRibbonTab === 'tools'
+        ? 'view'
+        : candidate.defaultRibbonTab,
+  }
   const normalized = { ...defaultSettings }
   const allowedFonts = new Set(fontOptions.map((option) => option.value))
   const allowedFontSizes = new Set(fontSizeOptions.map((option) => option.value))
   const allowedLineHeights = new Set(lineHeightOptions.map((option) => option.value))
   const allowedTabSizes = new Set(tabSizeOptions.map((option) => option.value))
 
-  if (allowedFonts.has(candidate.defaultFontFamily)) normalized.defaultFontFamily = candidate.defaultFontFamily
-  if (allowedFontSizes.has(candidate.defaultFontSize)) normalized.defaultFontSize = candidate.defaultFontSize
-  if (allowedLineHeights.has(candidate.defaultLineHeight)) normalized.defaultLineHeight = candidate.defaultLineHeight
-  if (allowedTabSizes.has(candidate.tabSize)) normalized.tabSize = candidate.tabSize
+  if (allowedFonts.has(migratedCandidate.defaultFontFamily)) normalized.defaultFontFamily = migratedCandidate.defaultFontFamily
+  if (allowedFontSizes.has(migratedCandidate.defaultFontSize)) normalized.defaultFontSize = migratedCandidate.defaultFontSize
+  if (allowedLineHeights.has(migratedCandidate.defaultLineHeight)) normalized.defaultLineHeight = migratedCandidate.defaultLineHeight
+  if (allowedTabSizes.has(migratedCandidate.tabSize)) normalized.tabSize = migratedCandidate.tabSize
   for (const [key, values] of Object.entries(enumSettings)) {
-    if (values.has(candidate[key])) normalized[key] = candidate[key]
+    if (values.has(migratedCandidate[key])) normalized[key] = migratedCandidate[key]
   }
   for (const key of booleanSettingKeys) {
-    if (typeof candidate[key] === 'boolean') normalized[key] = candidate[key]
+    if (typeof migratedCandidate[key] === 'boolean') normalized[key] = migratedCandidate[key]
   }
   return normalized
 }
@@ -185,9 +193,9 @@ export default function EditorSettingsModal() {
                   onChange={(e) => handleSettingChange('documentWidth', e.target.value)}
                   className="w-full rounded-control border border-subtle bg-surface-sunken px-3 py-2 text-content focus:ring-2 focus:ring-emerald-500"
                 >
-                  <option value="focused">Focused · 720 px</option>
-                  <option value="standard">Standard · 880 px</option>
-                  <option value="wide">Wide · 1120 px</option>
+                  <option value="focused">Focused · 680 px</option>
+                  <option value="standard">Standard · 794 px</option>
+                  <option value="wide">Wide · 960 px</option>
                   <option value="full">Full width</option>
                 </select>
               </div>
@@ -203,11 +211,9 @@ export default function EditorSettingsModal() {
                 >
                   <option value="home">Home</option>
                   <option value="insert">Insert</option>
-                  <option value="format">Format</option>
                   <option value="layout">Layout</option>
                   <option value="review">Review</option>
                   <option value="view">View</option>
-                  <option value="tools">Tools</option>
                 </select>
               </div>
               <div>
@@ -299,7 +305,7 @@ export default function EditorSettingsModal() {
                 </select>
               </div>
               <div>
-                <label htmlFor="editor-checkbox-colour" className="mb-2 block text-sm font-medium text-content-muted">Checked colour</label>
+                <label htmlFor="editor-checkbox-colour" className="mb-2 block text-sm font-medium text-content-muted">Tick colour</label>
                 <select id="editor-checkbox-colour" value={settings.defaultCheckboxColor} onChange={(e) => handleSettingChange('defaultCheckboxColor', e.target.value)} className="w-full rounded-control border border-subtle bg-surface-sunken px-3 py-2 text-content focus:ring-2 focus:ring-emerald-500">
                   <option value="accent">QuickNotes green</option>
                   <option value="blue">Blue</option>

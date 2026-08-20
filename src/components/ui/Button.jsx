@@ -3,7 +3,7 @@ import { Loader2 } from 'lucide-react'
 
 const VARIANTS = {
   primary:
-    'bg-accent text-accent-on hover:bg-accent-hover active:bg-accent-active shadow-xs disabled:bg-[var(--qn-border-strong)] disabled:text-content-subtle disabled:shadow-none',
+    'qn-button-primary bg-accent text-accent-on hover:bg-accent-hover active:bg-accent-active shadow-xs disabled:bg-[var(--qn-border-strong)] disabled:text-content-subtle disabled:shadow-none',
   secondary:
     'bg-surface-raised text-content border border-strong hover:bg-surface-hover active:bg-surface-active disabled:text-content-subtle',
   subtle:

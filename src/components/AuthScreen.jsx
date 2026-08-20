@@ -113,10 +113,10 @@ function WorkspacePreview() {
       <div className="flex h-[330px] overflow-hidden rounded-[14px] border border-slate-300/80 bg-white">
         {/* Mirrors the real rail: navigation starts immediately with capture. */}
         <div className="qn-nav-surface flex w-[138px] shrink-0 flex-col px-2.5 py-2.5 text-nav-text">
-          <div className="mb-2.5 flex h-7 items-center gap-1.5 rounded-[7px] bg-emerald-600 px-2 text-[8px] font-bold text-white shadow-sm ring-1 ring-white/10">
+          <div className="mb-2.5 flex h-7 items-center gap-1.5 rounded-[7px] border border-white/60 bg-white px-2 text-[8px] font-bold text-[#0b4637] shadow-sm">
             <Plus className="h-3 w-3" />
             <span className="flex-1">Quick Note</span>
-            <span className="text-[6px] font-semibold text-white/65">Ctrl N</span>
+            <span className="text-[6px] font-semibold text-[#0b4637]/60">Ctrl N</span>
           </div>
           {navigationItems.map(({ icon: Icon, label, count, active }) => (
             <div
@@ -205,18 +205,18 @@ function WorkspacePreview() {
             <MoreHorizontal className="ml-2 h-3 w-3" />
           </div>
 
-          <div className="relative px-3.5 py-2 text-slate-800">
+          <div className="qn-document-header relative px-3.5 py-2">
             <div className="flex items-start gap-2">
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[12px] font-bold">Welcome to QuickNotes</p>
-                <div className="mt-1.5 flex items-center gap-2 text-[6px] text-slate-500">
+                <div className="qn-note-metadata mt-1.5 flex items-center gap-2 text-[6px]">
                   <span className="flex items-center gap-1"><Clock3 className="h-2.5 w-2.5" />Just now</span>
                   <span className="flex items-center gap-1"><FolderOpen className="h-2.5 w-2.5" />No folder</span>
                   <span className="flex items-center gap-1"><Tag className="h-2.5 w-2.5" />2 tags</span>
                   <span className="rounded border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-blue-700">#welcome</span>
                 </div>
               </div>
-              <span className="flex h-6 w-6 items-center justify-center rounded-[6px] bg-slate-100 text-slate-500">
+              <span className="qn-icon-button flex h-6 w-6 items-center justify-center rounded-[6px]">
                 <Pin className="h-3 w-3" />
               </span>
             </div>
@@ -225,11 +225,9 @@ function WorkspacePreview() {
           <div className="flex h-5 shrink-0 items-end gap-3 border-y border-slate-200 bg-slate-50 px-3 text-[6px] font-medium text-slate-600">
             <span className="border-b-2 border-emerald-600 pb-1 text-emerald-700">Home</span>
             <span className="pb-1">Insert</span>
-            <span className="pb-1">Format</span>
             <span className="pb-1">Layout</span>
             <span className="pb-1">Review</span>
             <span className="pb-1">View</span>
-            <span className="pb-1">Tools</span>
           </div>
           <div className="flex h-8 shrink-0 items-center gap-2 border-b border-slate-200 bg-slate-50 px-3 text-[7px] font-semibold text-slate-500">
             <span>System Sans</span>

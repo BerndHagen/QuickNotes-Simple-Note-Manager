@@ -51,10 +51,11 @@ attachments).
 The editor and workspace changes in this pass were selected against current
 official product guidance:
 
-- Word organizes commands into predictable ribbon tabs and named groups, and
-  permits users to customize that hierarchy. QuickNotes now uses one stable
-  five-tab ribbon (Home, Insert, Format, Layout, and Tools). Every command is
-  contained by a named group, and narrow panes scroll only the active tab.
+- Word organizes commands into predictable ribbon tasks and lets users
+  customize that hierarchy. QuickNotes now uses five substantial tabs (Home,
+  Insert, Layout, Review and View): text formatting is in Home, paragraph/page
+  geometry is in Layout, proofing is in Review, and source/display utilities
+  are in View. Narrow panes scroll only the active flat command row.
 - Word creates text boxes by dragging to the requested size and moves them from
   their border. QuickNotes now uses the same direct-manipulation contract for
   text boxes and twelve genuine SVG shapes: choose an object, drag on the page
@@ -66,7 +67,8 @@ official product guidance:
   border style, colour, and weight. Shapes additionally retain rotation,
   Shift-constrained 15-degree rotation, 90-degree commands, flips, editable
   text, and a visual change-shape gallery.
-- Word's ruler uses paragraph indent markers and custom tab stops; its list
+- Word's ruler spans the page, shades non-writing margins, and uses paragraph
+  indent markers and typed tab stops; its list
   tools support custom bullet symbols. QuickNotes now persists repeatable
   40-pixel indent levels, left/right/first-line ruler geometry, draggable tab
   stops and real Tab-key advances. Checklists remain nested and can use square,
@@ -93,8 +95,8 @@ model rather than implemented as visual imitations.
 | Observed mature-editor pattern | QuickNotes decision in this pass |
 | --- | --- |
 | Office lets users show or collapse the ribbon and personalize tabs/groups; Evernote also offers note-width choices. | Added one visible **Customize editor** entry point plus persistent note width, ribbon density, default tab, group-label, ruler, typography, tab, and new-checklist defaults. |
-| Word treats the ruler as a view choice, and exposes exact before/after paragraph spacing alongside indents. | Layout now has an explicit ruler toggle; merely opening Layout no longer changes the view. Paragraph spacing before/after is stored with each paragraph or heading. |
-| Evernote distinguishes checkboxes from checklist behavior, and Notion exposes actions on the current block instead of requiring whole-list replacement. | The checklist menu now edits the current item: toggle completion, add above/below, remove only that checkbox, choose square/rounded/circle geometry, six checked colours, three sizes, and strike/fade/unchanged completed text. New-item defaults are separate from existing-item data. |
+| Word treats the ruler as a View choice, exposes before/after paragraph spacing alongside indents, and aligns its ruler to the full page with shaded margin areas. | View owns the ruler toggle; Layout owns paragraph geometry. The ruler spans the document page, marks both non-writing margins, and keeps tab/indent coordinates relative to the writing area. |
+| Evernote distinguishes checkboxes from checklist behavior, and Notion exposes actions on the current block instead of requiring whole-list replacement. | The checklist menu now edits the current item: toggle completion, add above/below, remove only that checkbox, choose square/rounded/circle geometry, six tick colours, three sizes, and strike/fade/unchanged completed text. New-item defaults are separate from existing-item data. |
 | Notion and Evernote expose searchable slash insertion; Notion includes callouts and block conversion. | Typing `/` on an otherwise empty line opens a keyboard-operable, searchable insert menu for text, headings, lists, checklist, callout, quote, code, divider, table, and date. Insert also contains semantic callouts and date/time commands. |
 | Evernote offers selectable note width and keeps the document distinct from navigation chrome. | The editor now renders a centered document surface on a quiet workbench instead of an undifferentiated white debug area. Focused, standard, wide, and full-width modes are durable preferences. |
 
@@ -131,7 +133,7 @@ and paper/width choices are document presentation, not disposable menu state.
 | PDF export | The PDF command opened a browser print tab, making pop-up settings and the operating-system print dialog part of the workflow. It also rendered a separate generic document instead of the note surface. | PDF now downloads directly, starts with a valid PDF file signature, paginates at content boundaries where possible, sanitizes rich HTML, and renders the saved paper, title, metadata, tags, typography, tables, callouts, task items, and document objects. The rendering libraries are loaded only when export is requested. |
 | Paper choice | Paper lived only in component state, so reloads and exports could not honor it. | Paper type is now stored in the note's standard `noteData`, which also brings it into existing sync, backup, and version-history behavior. |
 | Editor hierarchy | The paper and surrounding workbench were too close in value; the toolbar also blended into the page. | The workbench is now a stronger neutral material close to Word's `#e6e6e6`, the toolbar uses a quieter near-`#f3f3f3` surface, and the paper has a clearer edge without looking boxed in. |
-| Title area | A previous build's right-side green title wash had useful brand character but was too easy to overstate. | Restored it as a restrained right-edge radial wash and contour, on both standard and specialized note headers, while keeping text on a neutral base. |
+| Title area | The full-width green replacement did not match the requested recent editor banner. | Restored the exact `027ca7e` document header: a neutral surface with two restrained elliptical contours confined to the far-right edge, plus the original neutral title, metadata, action, and hover colours. The startup miniature reuses this same header class instead of duplicating it. |
 | Left rail | The deep-green radial/linear gradient remains legible and gives the application a stable visual anchor. | Retained it. Replacing it with another flat grey would weaken navigation hierarchy without solving a usability defect. |
 
 No attachment system, comments layer, handwriting canvas, OCR, or AI surface was
@@ -155,7 +157,7 @@ backend flows are designed and tested.
 - Obsidian: [backlinks](https://obsidian.md/help/plugins/backlinks), [graph view](https://obsidian.md/help/plugins/graph), and [Canvas](https://obsidian.md/help/plugins/canvas)
 - Apple Notes: [macOS Notes guide](https://support.apple.com/guide/notes/welcome/mac)
 - Google Keep: [product workflow](https://support.google.com/keep/answer/2888240) and [sharing](https://support.google.com/keep/answer/6101196)
-- Microsoft Word: [customize the ribbon](https://support.microsoft.com/en-us/office/customize-the-ribbon-in-word-7dc27f62-70ab-42e8-a527-4603018013af), [add and move text boxes](https://support.microsoft.com/en-us/office/add-copy-or-remove-a-text-box-in-word-57e099ac-0525-46ae-8109-8a1d844f5834), [set tab stops](https://support.microsoft.com/en-us/office/set-or-change-the-tab-stops-2fcc4b98-a330-4f14-9ca7-6f8c6421e29e), [custom bullets](https://support.microsoft.com/en-us/office/create-custom-bullets-with-pictures-or-symbols-9e01908a-8ab1-4d0b-82c2-d83b9c5dc722), and [rotate or flip objects](https://support.microsoft.com/en-us/office/rotate-or-flip-a-text-box-shape-wordart-or-picture-in-word-8e55a7a0-274b-455b-a8aa-4aacd437c527)
+- Microsoft Word: [customize the ribbon](https://support.microsoft.com/en-us/word/customize-the-ribbon-in-word), [use the full-page ruler and typed tab stops](https://support.microsoft.com/en-us/word/using-the-ruler-in-word), [change document layout](https://support.microsoft.com/en-us/word/training/change-document-layout), [display page white space and formatting marks](https://support.microsoft.com/en-us/word/word-options-display), [add and move text boxes](https://support.microsoft.com/en-us/office/add-copy-or-remove-a-text-box-in-word-57e099ac-0525-46ae-8109-8a1d844f5834), [custom bullets](https://support.microsoft.com/en-us/office/create-custom-bullets-with-pictures-or-symbols-9e01908a-8ab1-4d0b-82c2-d83b9c5dc722), and [rotate or flip objects](https://support.microsoft.com/en-us/office/rotate-or-flip-a-text-box-shape-wordart-or-picture-in-word-8e55a7a0-274b-455b-a8aa-4aacd437c527)
 - Microsoft OneNote: [drawing and shapes](https://support.microsoft.com/en-us/onenote/onenote-help-and-learning/draw-and-sketch-notes-in-onenote)
 - Notion: [board views](https://www.notion.com/help/boards) and [forms](https://www.notion.com/en-gb/help/forms)
 - Evernote: [editor and insert options](https://help.evernote.com/hc/en-us/articles/360022954093-Note-editor-and-editing-toolbar-overview)
