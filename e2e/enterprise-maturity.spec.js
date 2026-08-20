@@ -81,7 +81,7 @@ test.describe('enterprise UI maturity regressions', () => {
     await expect.poll(() => quickNote.evaluate((element) => getComputedStyle(element).backgroundColor)).not.toBe(restingBackground)
   })
 
-  test('keeps the document header neutral with its pattern confined to the right edge', async ({ page }) => {
+  test('keeps the document header neutral with soft wave lines confined to the right edge', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 })
     await signIn(page)
 
@@ -100,7 +100,8 @@ test.describe('enterprise UI maturity regressions', () => {
     })
 
     expect(surface.backgroundImage).toBe('none')
-    expect(surface.patternImage.match(/conic-gradient/g)).toHaveLength(2)
+    expect(surface.patternImage).toContain('data:image/svg+xml')
+    expect(surface.patternImage).not.toContain('conic-gradient')
     expect(Number.parseFloat(surface.patternWidth)).toBeGreaterThan(200)
     expect(surface.backgroundColor).toBe('rgb(255, 255, 255)')
     expect(surface.color).not.toBe('rgb(255, 255, 255)')

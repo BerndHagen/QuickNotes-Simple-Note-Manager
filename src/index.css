@@ -2154,25 +2154,14 @@ body {
   z-index: 0;
   inset-block: 0;
   inset-inline-end: 0;
-  width: min(38%, 32rem);
+  width: min(40%, 34rem);
   pointer-events: none;
-  opacity: 0.78;
-  background-image:
-    conic-gradient(
-      from 32deg at 50% 50%,
-      transparent 0 78%,
-      color-mix(in srgb, var(--qn-brand-400) 28%, transparent) 79% 84%,
-      transparent 85% 100%
-    ),
-    conic-gradient(
-      from 214deg at 50% 50%,
-      transparent 0 81%,
-      color-mix(in srgb, var(--qn-brand-300) 22%, transparent) 82% 87%,
-      transparent 88% 100%
-    );
-  background-position: 8px 3px, 31px 22px;
-  background-size: 54px 46px, 68px 58px;
-  mask-image: linear-gradient(to right, transparent, #000 46%);
+  opacity: 0.72;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 520 140' preserveAspectRatio='none'%3E%3Cg fill='none' stroke-linecap='round'%3E%3Cpath d='M28 10C136-2 177 63 278 52S423 4 538 48' stroke='%239bd8c4' stroke-width='2.2' opacity='.55'/%3E%3Cpath d='M-18 49C99 26 169 106 278 87S425 43 541 99' stroke='%236fc2a7' stroke-width='1.8' opacity='.48'/%3E%3Cpath d='M24 119C135 78 221 146 335 112S457 84 543 126' stroke='%23c3e8dc' stroke-width='3' opacity='.7'/%3E%3Cpath d='M151-12C234 19 250 105 350 80S468 28 544 75' stroke='%2381ccb3' stroke-width='1.5' opacity='.42'/%3E%3Cpath d='M90 78C180 47 233 110 324 95S437 63 524 91' stroke='%23b2e1d2' stroke-width='1.2' opacity='.58'/%3E%3C/g%3E%3C/svg%3E");
+  background-position: center;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  mask-image: linear-gradient(to right, transparent, #000 32%);
 }
 
 .qn-document-header > * {
@@ -2381,8 +2370,8 @@ body {
 .qn-shape-gallery-item {
   position: relative;
   display: flex;
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 1.5rem;
+  height: 1.5rem;
   align-items: center;
   justify-content: center;
   border: 1px solid transparent;
@@ -2409,11 +2398,21 @@ body {
 
 .qn-shape-gallery-item .qn-shape__geometry {
   position: static;
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+.qn-shape-gallery-item .qn-shape__geometry-path {
+  stroke-width: 1.35;
 }
 
 .qn-shape__geometry[data-shape-type^='line'] .qn-shape__geometry-path {
   fill: none;
   stroke-width: 3;
+}
+
+.qn-shape-gallery-item .qn-shape__geometry[data-shape-type^='line'] .qn-shape__geometry-path {
+  stroke-width: 1.65;
 }
 
 .qn-shape__content {
@@ -2902,11 +2901,21 @@ body {
 }
 
 .qn-ribbon-tabs {
-  background: color-mix(in srgb, var(--qn-surface-panel) 90%, var(--qn-surface-raised));
+  background: #dbe5e2;
+}
+
+.qn-ribbon-tab:hover {
+  background: #cedbd7;
+  color: var(--qn-text);
 }
 
 .qn-ribbon-tab[aria-selected='true'] {
-  background: var(--qn-surface-raised);
+  background: #f2f7f5;
+  color: var(--qn-brand-800);
+}
+
+.qn-ribbon-tab[aria-selected='true']:hover {
+  background: #eaf2ef;
 }
 
 .editor-toolbar {

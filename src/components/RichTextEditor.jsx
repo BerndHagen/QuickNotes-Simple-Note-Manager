@@ -3073,7 +3073,7 @@ function EditorToolbar({
         >
           <div className="max-h-[min(34rem,calc(100vh-2rem))] w-[min(20rem,calc(100vw-1rem))] overflow-y-auto pb-2">
             <div className="qn-shape-gallery-heading">Recently used shapes</div>
-            <div className="grid grid-cols-10 gap-0.5 px-2 py-1.5">
+            <div className="grid grid-cols-10 gap-1 px-2 py-1.5">
               {COMMON_SHAPES.map((shape) => (
                 <button
                   key={`recent-${shape.value}`}
@@ -3094,7 +3094,7 @@ function EditorToolbar({
             {SHAPE_GROUPS.map((group) => (
               <div key={group.label}>
                 <div className="qn-shape-gallery-heading">{group.label}</div>
-                <div className="grid grid-cols-10 gap-0.5 px-2 py-1.5">
+                <div className="grid grid-cols-10 gap-1 px-2 py-1.5">
                   {group.options.map((shape) => (
                     <button
                       key={shape.value}
