@@ -434,13 +434,13 @@ export default function NoteEditor({ onBack, showBack = false }) {
             isExternalUpdate={isExternalUpdate}
             readOnly={isReadOnly}
             ribbonTitle={(
-              <div className="flex min-w-0 flex-1 items-center gap-1">
+              <div className="relative flex min-w-0 flex-1 items-center justify-center">
                 {showBack && (
                   <IconButton
                     icon={ArrowLeft}
                     label={t('editor.backToList', 'Back to notes')}
                     onClick={onBack}
-                    className="shrink-0"
+                    className="absolute left-0 shrink-0"
                   />
                 )}
                 <label htmlFor="qn-ribbon-note-title" className="qn-sr-only">
@@ -466,7 +466,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
                   }}
                   readOnly={isReadOnly}
                   placeholder={t('editor.untitled', 'Untitled note')}
-                  className={`h-8 min-w-0 flex-1 truncate rounded-control border-0 bg-transparent px-2 text-ui-md font-semibold text-content outline-none transition-colors placeholder:text-content-subtle ${
+                  className={`h-8 min-w-0 flex-1 truncate rounded-control border-0 bg-transparent px-9 text-center text-ui-md font-semibold text-content outline-none transition-colors placeholder:text-content-subtle ${
                     isEditingTitle ? 'bg-surface-sunken' : 'hover:bg-surface-hover'
                   } ${isReadOnly ? 'cursor-default' : 'cursor-text'}`}
                 />

@@ -1383,13 +1383,15 @@ export default function RichTextEditor({
   return (
     <div className="relative flex h-full min-h-0 flex-col">
       {!readOnly && (
-        <div className={`${mobileToolbarOpen ? 'block' : 'hidden'} shrink-0 md:block`}>
+        <div className="shrink-0">
           <EditorToolbar
             editor={editor}
             noteId={noteId}
             currentPaper={currentPaper}
             onPaperChange={handlePaperChange}
             content={content}
+            mobilePanelOpen={mobileToolbarOpen}
+            onMobileOpen={() => setMobileToolbarOpen(true)}
             onMobileClose={() => setMobileToolbarOpen(false)}
             activeTab={activeRibbonTab}
             onTabChange={setActiveRibbonTab}
@@ -1742,6 +1744,8 @@ function EditorToolbar({
   currentPaper,
   onPaperChange,
   content,
+  mobilePanelOpen,
+  onMobileOpen,
   onMobileClose,
   activeTab,
   onTabChange,
@@ -2245,21 +2249,19 @@ function EditorToolbar({
       className="editor-ribbon border-b border-subtle"
       data-density={editorSettings.ribbonDensity}
     >
-      <div className="qn-ribbon-tabs flex min-h-10 items-center border-b border-subtle px-2 sm:px-3">
-        <button
-          type="button"
-          onClick={onMobileClose}
-          aria-label="Hide formatting tools"
-          className="qn-square-control mr-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-control text-content-muted transition-colors hover:bg-surface-hover hover:text-content md:hidden"
-        >
-          <X className="h-4 w-4" aria-hidden="true" />
-        </button>
-        {ribbonTitle && (
-          <div className="mr-1 flex min-w-24 max-w-52 flex-1 items-center border-r border-subtle pr-1 sm:max-w-64">
-            {ribbonTitle}
-          </div>
-        )}
-        <div role="tablist" aria-label="Editor ribbon" className="flex min-w-0 flex-1 items-stretch overflow-x-auto">
+      <div className="qn-ribbon-tabs min-h-10 border-b border-subtle px-2 sm:px-3">
+        <div className="qn-ribbon-tabs-start flex min-w-0 items-center overflow-hidden">
+          {mobilePanelOpen && (
+            <button
+              type="button"
+              onClick={onMobileClose}
+              aria-label="Hide formatting tools"
+              className="qn-square-control mr-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-control text-content-muted transition-colors hover:bg-surface-hover hover:text-content md:hidden"
+            >
+              <X className="h-4 w-4" aria-hidden="true" />
+            </button>
+          )}
+          <div role="tablist" aria-label="Editor ribbon" className="flex min-w-0 items-stretch overflow-x-auto">
           {[
             ['home', 'Home'],
             ['insert', 'Insert'],
@@ -2291,6 +2293,7 @@ function EditorToolbar({
               onClick={() => {
                 closeAllDropdowns()
                 onTabChange(value)
+                onMobileOpen?.()
               }}
               className={`qn-ribbon-tab relative h-10 shrink-0 px-3 text-ui-sm font-semibold transition-colors ${
                 activeTab === value
@@ -2300,27 +2303,36 @@ function EditorToolbar({
             >
               {label}
             </button>
-          ))}
+            ))}
+          </div>
         </div>
-        {ribbonActions && (
-          <div className="ml-1 flex shrink-0 items-center gap-0.5" aria-label="Note actions">
-            {ribbonActions}
+        {ribbonTitle && (
+          <div className="qn-ribbon-title flex min-w-0 items-center px-1">
+            {ribbonTitle}
           </div>
         )}
-        <button
-          type="button"
-          aria-label="Customize editor"
-          title="Customize editor"
-          onClick={() => useUIStore.getState().setEditorSettingsOpen(true)}
-          className="qn-square-control ml-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-control text-content-muted transition-colors hover:bg-surface-hover hover:text-content"
-        >
-          <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
-        </button>
+        <div className="qn-ribbon-tabs-end flex min-w-0 items-center justify-end">
+          {ribbonActions && (
+            <div className="flex shrink-0 items-center gap-0.5" aria-label="Note actions">
+              {ribbonActions}
+            </div>
+          )}
+          <button
+            type="button"
+            aria-label="Customize editor"
+            title="Customize editor"
+            onClick={() => useUIStore.getState().setEditorSettingsOpen(true)}
+            className="qn-square-control ml-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-control text-content-muted transition-colors hover:bg-surface-hover hover:text-content"
+          >
+            <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+          </button>
+        </div>
       </div>
       <div
         id="qn-editor-ribbon-panel"
         role="tabpanel"
         aria-labelledby={`qn-ribbon-tab-${activeTab}`}
+        className={`${mobilePanelOpen ? 'block' : 'hidden'} md:block`}
       >
         <div
           id="qn-editor-toolbar"
