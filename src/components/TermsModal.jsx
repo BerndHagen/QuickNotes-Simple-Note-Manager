@@ -25,7 +25,7 @@ export default function TermsModal() {
       description="Usage terms and conditions"
       icon={FileText}
       size="xl"
-      bodyClassName="p-0 sm:p-0"
+      bodyPadding="none"
     >
       <article
         role="region"

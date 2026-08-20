@@ -86,7 +86,7 @@ export default function HelpModal() {
       description="Tips and instructions for QuickNotes"
       icon={HelpCircle}
       size="xl"
-      bodyClassName="p-0 sm:p-0"
+      bodyPadding="none"
     >
       <div
         role="region"

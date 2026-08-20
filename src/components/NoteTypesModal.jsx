@@ -90,7 +90,8 @@ export default function NoteTypesModal({ onCreated }) {
       icon={Sparkles}
       size="3xl"
       initialFocusRef={searchRef}
-      bodyClassName="p-0 sm:p-0 lg:overflow-hidden"
+      bodyPadding="none"
+      bodyClassName="lg:overflow-hidden"
       contentClassName="sm:h-[min(820px,88dvh)]"
       footer={
         <>

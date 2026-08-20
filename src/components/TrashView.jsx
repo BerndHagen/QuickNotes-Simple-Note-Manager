@@ -56,7 +56,8 @@ export default function TrashView() {
         description={countLabel}
         icon={Trash2}
         size="xl"
-        bodyClassName="!overflow-hidden p-0 sm:p-0"
+        bodyPadding="none"
+        bodyClassName="!overflow-hidden"
         footer={trashedNotes.length > 0 ? (
           <>
             <Button
@@ -96,7 +97,7 @@ export default function TrashView() {
                 description={t('trash.emptyDescription')}
               />
             ) : (
-              <ul className="space-y-3 p-4 sm:p-5">
+              <ul className="space-y-3 p-3 sm:p-4">
                 {trashedNotes.map((note) => {
                   const daysRemaining = getDaysRemaining(note.deletedAt)
                   const preview = truncateText(htmlToPlainText(note.content), 100)

@@ -419,7 +419,7 @@ export default function EditorSettingsModal() {
             </label>
           </div>
         </div>
-        <div data-dialog-footer className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-subtle bg-[var(--qn-surface-toolbar)] px-5 py-4 sm:px-6">
+        <div data-dialog-footer className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-strong px-5 py-4 sm:px-6">
           <Button
             onClick={handleResetDefaults}
             variant="ghost"

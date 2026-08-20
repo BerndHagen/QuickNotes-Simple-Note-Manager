@@ -20,10 +20,10 @@ export default function DialogHeader({
   return (
     <header
       data-dialog-banner
-      className={`qn-dialog-header flex shrink-0 items-start gap-3 border-b border-subtle bg-[var(--qn-surface-toolbar)] px-5 py-4 text-content sm:px-6 ${className}`}
+      className={`qn-dialog-header flex shrink-0 items-start gap-3 border-b border-strong bg-[var(--qn-surface-window-header)] px-5 py-4 text-content sm:px-6 ${className}`}
     >
       {Icon && (
-        <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-control border border-accent bg-accent-soft text-accent-text">
+        <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-control border border-strong bg-surface-raised text-content-muted shadow-xs">
           <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
         </span>
       )}

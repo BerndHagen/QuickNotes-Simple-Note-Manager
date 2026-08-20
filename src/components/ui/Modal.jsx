@@ -36,6 +36,7 @@ export default function Modal({
   hideCloseButton = false,
   contentClassName = '',
   bodyClassName = '',
+  bodyPadding = 'default',
   labelledBy,
 }) {
   const panelRef = useRef(null)
@@ -61,6 +62,7 @@ export default function Modal({
         aria-modal="true"
         aria-labelledby={labelledBy || (title ? titleId : undefined)}
         aria-describedby={description ? descriptionId : undefined}
+        data-window-shell
         tabIndex={-1}
         className={[
           'qn-dialog relative flex w-full flex-col overflow-hidden bg-surface text-content',
@@ -90,13 +92,15 @@ export default function Modal({
 
         <div
           data-dialog-body
-          className={`min-h-0 flex-1 overflow-y-auto overscroll-contain bg-surface px-5 py-4 sm:px-6 ${bodyClassName}`}
+          className={`min-h-0 flex-1 overflow-y-auto overscroll-contain bg-surface ${
+            bodyPadding === 'none' ? '' : 'px-5 py-4 sm:px-6'
+          } ${bodyClassName}`}
         >
           {children}
         </div>
 
         {footer && (
-          <footer data-dialog-footer className="flex shrink-0 flex-col-reverse gap-2 border-t border-subtle bg-[var(--qn-surface-toolbar)] px-5 py-4 sm:flex-row sm:items-center sm:justify-end sm:px-6 pb-[max(1rem,env(safe-area-inset-bottom))] sm:pb-4">
+          <footer data-dialog-footer className="flex shrink-0 flex-col-reverse gap-2 border-t border-strong bg-[var(--qn-surface-window-footer)] px-5 py-4 sm:flex-row sm:items-center sm:justify-end sm:px-6 pb-[max(1rem,env(safe-area-inset-bottom))] sm:pb-4">
             {footer}
           </footer>
         )}

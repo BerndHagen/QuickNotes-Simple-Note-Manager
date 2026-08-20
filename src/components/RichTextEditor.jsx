@@ -577,7 +577,7 @@ function DocumentRuler({ editor, containerRef }) {
   )
 }
 
-function VerticalDocumentRuler({ containerRef }) {
+function VerticalDocumentRuler({ editor, containerRef }) {
   const [geometry, setGeometry] = useState({
     height: 1147,
     pageTop: 24,
@@ -589,7 +589,7 @@ function VerticalDocumentRuler({ containerRef }) {
 
   useEffect(() => {
     const pageElement = containerRef.current
-    const editorElement = pageElement?.querySelector('.ProseMirror')
+    const editorElement = editor?.view?.dom || pageElement?.querySelector('.ProseMirror')
     if (!pageElement || !editorElement || typeof ResizeObserver === 'undefined') return undefined
 
     const sync = () => {
@@ -597,7 +597,13 @@ function VerticalDocumentRuler({ containerRef }) {
       const styles = getComputedStyle(editorElement)
       const pageTop = pageElement.offsetTop
       const pageHeight = pageWidth * A4_RATIO
-      const pageCount = Math.max(1, Number.parseInt(editorElement.dataset.pageCount || '1', 10) || 1)
+      const declaredPageCount = Number.parseInt(editorElement.dataset.pageCount || '1', 10) || 1
+      const decoratedPageCount = editorElement.querySelectorAll('.qn-page-gap').length + 1
+      const measuredPageCount = Math.max(
+        1,
+        Math.round((editorElement.scrollHeight + PAGE_GAP) / (pageHeight + PAGE_GAP))
+      )
+      const pageCount = Math.max(declaredPageCount, decoratedPageCount, measuredPageCount)
       setGeometry({
         height: pageTop + (pageCount * pageHeight) + ((pageCount - 1) * PAGE_GAP),
         pageTop,
@@ -613,14 +619,19 @@ function VerticalDocumentRuler({ containerRef }) {
     observer.observe(pageElement)
     observer.observe(editorElement)
     const pageCountObserver = new MutationObserver(sync)
-    pageCountObserver.observe(editorElement, { attributes: true, attributeFilter: ['data-page-count'] })
+    pageCountObserver.observe(editorElement, {
+      attributes: true,
+      attributeFilter: ['data-page-count'],
+      childList: true,
+      subtree: true,
+    })
     window.addEventListener('resize', sync)
     return () => {
       observer.disconnect()
       pageCountObserver.disconnect()
       window.removeEventListener('resize', sync)
     }
-  }, [containerRef])
+  }, [containerRef, editor])
 
   const contentHeight = Math.max(120, geometry.pageHeight - geometry.paddingTop - geometry.paddingBottom)
   const tickCount = Math.ceil(contentHeight / 40)
@@ -1444,7 +1455,7 @@ export default function RichTextEditor({
           className="qn-editor-workbench relative flex-1 overflow-y-auto"
         >
           {editorSettings.showRuler && (
-            <VerticalDocumentRuler containerRef={editorContainerRef} />
+            <VerticalDocumentRuler editor={editor} containerRef={editorContainerRef} />
           )}
           <div
             ref={editorContainerRef}

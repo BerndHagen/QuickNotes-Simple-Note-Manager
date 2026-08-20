@@ -56,7 +56,8 @@ export default function ArchiveView() {
       description={countLabel}
       icon={Archive}
       size="2xl"
-      bodyClassName="!overflow-hidden p-0 sm:p-0"
+      bodyPadding="none"
+      bodyClassName="!overflow-hidden"
     >
       <div className="flex h-full min-h-0 flex-col">
         <div className="shrink-0 border-b border-subtle px-5 py-3 sm:px-6">

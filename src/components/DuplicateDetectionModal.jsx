@@ -342,7 +342,7 @@ export default function DuplicateDetectionModal() {
             </div>
           )}
         </div>
-        <div data-dialog-footer className="flex shrink-0 justify-end border-t border-subtle bg-[var(--qn-surface-toolbar)] px-5 py-4 sm:px-6">
+        <div data-dialog-footer className="flex shrink-0 justify-end border-t border-strong px-5 py-4 sm:px-6">
           <Button type="button" variant="secondary" size="sm" onClick={handleClose}>
             Close
           </Button>

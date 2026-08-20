@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { Children, cloneElement, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useFocusTrap, useScrollLock, useEscapeKey } from './useFocusTrap'
 
@@ -27,6 +27,9 @@ export default function LegacyDialog({
   useEscapeKey(open, onClose)
 
   if (!open) return null
+
+  const panel = Children.only(children)
+  const standardizedPanel = cloneElement(panel, { 'data-window-shell': true })
 
   return createPortal(
     <div
@@ -59,7 +62,7 @@ export default function LegacyDialog({
           panelClassName,
         ].join(' ')}
       >
-        {children}
+        {standardizedPanel}
       </div>
     </div>,
     document.body

@@ -230,7 +230,7 @@ export default function GlobalSearchModal() {
       size="xl"
       initialFocusRef={inputRef}
       contentClassName="sm:self-start sm:mt-[8dvh]"
-      bodyClassName="p-0 sm:p-0"
+      bodyPadding="none"
       footer={resultFooter}
     >
       <div className="flex items-center gap-3 border-b border-subtle px-4 py-3 sm:px-5">

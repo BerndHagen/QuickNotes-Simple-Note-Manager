@@ -696,8 +696,8 @@ html {
     linear-gradient(rgba(237, 241, 239, 0.12), rgba(237, 241, 239, 0.12)),
     url('/quicknotes-auth-background.png');
   background-position: center;
-  background-repeat: no-repeat;
-  background-size: cover;
+  background-repeat: repeat;
+  background-size: 360px 360px;
   isolation: isolate;
 }
 
@@ -1447,9 +1447,31 @@ body {
    no longer feels like a separate product. */
 .qn-legacy-dialog-panel > * {
   border-radius: var(--qn-radius-dialog) !important;
-  border-color: var(--qn-border-subtle) !important;
-  background: var(--qn-surface-raised);
+  border-color: var(--qn-border-strong) !important;
+  background: var(--qn-surface-base) !important;
   box-shadow: var(--qn-shadow-dialog) !important;
+}
+
+/* Every standard and legacy application window consumes this same shell.
+   Feature content may scroll or split into panes, but its chrome never invents
+   a separate header, body, footer, border, or elevation system. */
+[data-window-shell] {
+  border-color: var(--qn-border-strong) !important;
+  background: var(--qn-surface-base) !important;
+}
+
+[data-window-shell] > .qn-dialog-header {
+  min-height: 76px;
+  background: var(--qn-surface-window-header) !important;
+}
+
+[data-window-shell] > .qn-dialog-header + :not([data-dialog-footer]) {
+  background-color: var(--qn-surface-base);
+}
+
+[data-dialog-footer] {
+  border-color: var(--qn-border-strong) !important;
+  background: var(--qn-surface-window-footer) !important;
 }
 
 .qn-settings-shell :where(input, textarea, select, button[class*='rounded-lg'], button[class*='rounded-xl']) {
@@ -2065,19 +2087,7 @@ body {
 }
 
 .qn-document-header::after {
-  content: '';
-  position: absolute;
-  z-index: 0;
-  inset-block: 0;
-  inset-inline-end: 0;
-  width: min(40%, 34rem);
-  pointer-events: none;
-  opacity: 0.72;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 520 140' preserveAspectRatio='none'%3E%3Cg fill='none' stroke-linecap='round'%3E%3Cpath d='M28 10C136-2 177 63 278 52S423 4 538 48' stroke='%239bd8c4' stroke-width='2.2' opacity='.55'/%3E%3Cpath d='M-18 49C99 26 169 106 278 87S425 43 541 99' stroke='%236fc2a7' stroke-width='1.8' opacity='.48'/%3E%3Cpath d='M24 119C135 78 221 146 335 112S457 84 543 126' stroke='%23c3e8dc' stroke-width='3' opacity='.7'/%3E%3Cpath d='M151-12C234 19 250 105 350 80S468 28 544 75' stroke='%2381ccb3' stroke-width='1.5' opacity='.42'/%3E%3Cpath d='M90 78C180 47 233 110 324 95S437 63 524 91' stroke='%23b2e1d2' stroke-width='1.2' opacity='.58'/%3E%3C/g%3E%3C/svg%3E");
-  background-position: center;
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
-  mask-image: linear-gradient(to right, transparent, #000 32%);
+  display: none;
 }
 
 .qn-document-header > * {
@@ -2900,7 +2910,7 @@ body {
 .qn-editor-page[data-document-width='full'] { max-width: none; }
 
 .qn-editor-page:focus-within {
-  box-shadow: var(--qn-shadow-md);
+  box-shadow: none;
 }
 
 .qn-editor-page .ProseMirror {
@@ -2909,12 +2919,12 @@ body {
   box-sizing: border-box;
   min-height: max(var(--qn-paginated-min-height, 1123px), var(--qn-object-min-height, 300px));
   padding: var(--qn-page-pad-y) var(--qn-page-pad-x);
-  border: 1px solid color-mix(in srgb, var(--qn-border-strong) 72%, var(--qn-border-subtle));
+  border: 0;
   background-color: inherit;
   background-image: inherit;
   background-position: inherit;
   background-size: inherit;
-  box-shadow: var(--qn-shadow-sm);
+  box-shadow: none;
 }
 
 .qn-page-break-marker {
@@ -2940,13 +2950,9 @@ body {
 }
 
 .qn-page-gap__gutter {
-  position: relative;
-  width: calc(100% + 2px);
-  margin-left: -1px;
-  border-top: 1px solid var(--qn-border-strong);
-  border-bottom: 1px solid var(--qn-border-strong);
+  width: 100%;
   background: var(--qn-surface-workbench);
-  box-shadow: inset 0 5px 10px -10px rgb(15 23 42 / 0.55), inset 0 -5px 10px -10px rgb(15 23 42 / 0.55);
+  box-shadow: none;
 }
 
 /* Semantic callouts provide structured emphasis without relying on floating

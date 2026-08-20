@@ -25,7 +25,7 @@ export default function PrivacyModal() {
       description="How we handle your data"
       icon={Shield}
       size="xl"
-      bodyClassName="p-0 sm:p-0"
+      bodyPadding="none"
     >
       <article
         role="region"

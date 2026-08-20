@@ -327,7 +327,8 @@ export default function VersionHistoryModal() {
         description={note?.title}
         icon={History}
         size="3xl"
-        bodyClassName="!overflow-hidden p-0 sm:p-0"
+        bodyPadding="none"
+        bodyClassName="!overflow-hidden"
         footer={footer}
       >
         <div className="grid h-[68dvh] min-h-0 grid-rows-[minmax(9rem,36%)_minmax(0,1fr)] md:h-[min(64dvh,620px)] md:grid-cols-[minmax(15rem,0.9fr)_minmax(0,2fr)] md:grid-rows-1">
