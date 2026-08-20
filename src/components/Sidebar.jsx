@@ -24,8 +24,7 @@ import { useNotesStore, useThemeStore, useUIStore } from '../store'
 import { useTranslation } from '../lib/useTranslation'
 import { getFolderIcon } from '../lib/folderIcons'
 import { isBackendConfigured } from '../lib/backend'
-import { formatShortcut, loadShortcuts } from '../lib/shortcuts'
-import { Avatar, Button, Menu, MenuItem, MenuSeparator, TagChip } from './ui'
+import { Avatar, Menu, MenuItem, MenuSeparator, TagChip } from './ui'
 import { FolderDialog, ConfirmDialog } from './FolderDialogs'
 
 /**
@@ -106,7 +105,6 @@ function NavSeparator({ className = '' }) {
 
 export default function Sidebar({ onNavigate }) {
   const { t } = useTranslation()
-  const newNoteShortcut = formatShortcut(loadShortcuts().newNote)
   const {
     folders,
     tags,
@@ -126,7 +124,6 @@ export default function Sidebar({ onNavigate }) {
   const { theme, setTheme } = useThemeStore()
   const {
     setSidebarOpen,
-    setQuickNoteOpen,
     setSettingsOpen,
     setShowTrash,
     setDuplicateModalOpen,
@@ -212,22 +209,8 @@ export default function Sidebar({ onNavigate }) {
         />
       </div>
 
-      {/* Quick note */}
-      <div className="shrink-0 px-4 pb-4 pt-4 max-lg:pt-2">
-        <Button
-          variant="primary"
-          fullWidth
-          icon={Plus}
-          onClick={go(() => setQuickNoteOpen(true))}
-          className="h-10 justify-start px-3.5 text-ui-lg"
-        >
-          <span className="flex-1 text-left">{t('sidebar.quickNote')}</span>
-          <kbd className="shrink-0 font-sans text-ui-xs font-medium text-white/70">{newNoteShortcut}</kbd>
-        </Button>
-      </div>
-
       {/* Scrollable navigation */}
-      <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-3 pb-4">
+      <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-3 pb-4 pt-4 max-lg:pt-2">
         <ul className="space-y-0.5">
           <li>
             <NavItem
@@ -260,6 +243,9 @@ export default function Sidebar({ onNavigate }) {
               />
             </li>
           )}
+          <li className="py-2">
+            <NavSeparator />
+          </li>
           <li>
             <NavItem
               icon={Trash2}
@@ -275,6 +261,9 @@ export default function Sidebar({ onNavigate }) {
               count={counts.archive}
               onClick={go(() => setArchiveViewOpen(true))}
             />
+          </li>
+          <li className="py-2">
+            <NavSeparator />
           </li>
           <li>
             <NavItem

@@ -63,7 +63,7 @@ export default function Modal({
         aria-describedby={description ? descriptionId : undefined}
         tabIndex={-1}
         className={[
-          'qn-dialog relative flex w-full flex-col overflow-hidden bg-surface-raised text-content',
+          'qn-dialog relative flex w-full flex-col overflow-hidden bg-surface text-content',
           'border border-subtle shadow-dialog outline-none',
           // Mobile: bottom sheet pinned to the viewport, never taller than it.
           'max-h-[92dvh] rounded-t-dialog animate-sheet-in',
@@ -90,13 +90,13 @@ export default function Modal({
 
         <div
           data-dialog-body
-          className={`min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4 sm:px-6 ${bodyClassName}`}
+          className={`min-h-0 flex-1 overflow-y-auto overscroll-contain bg-surface px-5 py-4 sm:px-6 ${bodyClassName}`}
         >
           {children}
         </div>
 
         {footer && (
-          <footer className="flex shrink-0 flex-col-reverse gap-2 border-t border-subtle px-5 py-4 sm:flex-row sm:items-center sm:justify-end sm:px-6 pb-[max(1rem,env(safe-area-inset-bottom))] sm:pb-4">
+          <footer data-dialog-footer className="flex shrink-0 flex-col-reverse gap-2 border-t border-subtle bg-[var(--qn-surface-toolbar)] px-5 py-4 sm:flex-row sm:items-center sm:justify-end sm:px-6 pb-[max(1rem,env(safe-area-inset-bottom))] sm:pb-4">
             {footer}
           </footer>
         )}

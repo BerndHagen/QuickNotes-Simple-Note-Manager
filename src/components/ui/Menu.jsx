@@ -164,11 +164,11 @@ export function Menu({
     return () => document.removeEventListener('pointerdown', onPointerDown)
   }, [open, onClose, anchorRef, floatingRef])
 
-  useEffect(() => {
-    if (!open) return
+  useLayoutEffect(() => {
+    if (!open || style.visibility !== 'visible') return
     const node = floatingRef.current
     if (!node) return
-    const frame = requestAnimationFrame(() => getFocusable(node)[0]?.focus({ preventScroll: true }))
+    getFocusable(node)[0]?.focus({ preventScroll: true })
 
     const onKeyDown = (e) => {
       if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp' && e.key !== 'Home' && e.key !== 'End') return
@@ -189,10 +189,9 @@ export function Menu({
 
     node.addEventListener('keydown', onKeyDown)
     return () => {
-      cancelAnimationFrame(frame)
       node.removeEventListener('keydown', onKeyDown)
     }
-  }, [open, floatingRef])
+  }, [open, floatingRef, style.visibility])
 
   if (!open) return null
 

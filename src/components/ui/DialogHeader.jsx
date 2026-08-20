@@ -3,8 +3,8 @@ import { X } from 'lucide-react'
 /**
  * One header for every application window.
  *
- * Brand colour belongs to the navigation landmark and primary actions; dialog
- * hierarchy comes from typography, a small accent icon, and a neutral surface.
+ * Dialog hierarchy comes from typography, a small accent icon, and the same
+ * quiet toolbar surface used by every application window.
  */
 export default function DialogHeader({
   title,
@@ -20,7 +20,7 @@ export default function DialogHeader({
   return (
     <header
       data-dialog-banner
-      className={`qn-dialog-header flex shrink-0 items-start gap-3 border-b border-subtle bg-surface-raised px-5 py-4 text-content sm:px-6 ${className}`}
+      className={`qn-dialog-header flex shrink-0 items-start gap-3 border-b border-subtle bg-[var(--qn-surface-toolbar)] px-5 py-4 text-content sm:px-6 ${className}`}
     >
       {Icon && (
         <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-control border border-accent bg-accent-soft text-accent-text">

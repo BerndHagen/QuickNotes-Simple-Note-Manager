@@ -447,9 +447,9 @@ export default function NotesList({ sidebarToggle, onOpenNote }) {
           />
           <IconButton
             icon={Plus}
-            variant="primary"
             label={t('notes.createNew', 'New note')}
             onClick={handleCreateNote}
+            className="border border-accent-border bg-accent-soft text-accent-text shadow-xs hover:bg-accent-soft-hover"
           />
         </div>
 

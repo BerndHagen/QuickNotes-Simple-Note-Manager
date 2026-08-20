@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, renderHook, screen, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, renderHook, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { sanitizeNoteHtml } from '../lib/sanitizeHtml'
@@ -395,13 +395,17 @@ describe('shared notes', () => {
     expect(screen.getByText('Owner: @morgan-lee')).toBeInTheDocument()
 
     await user.type(screen.getByRole('searchbox', { name: 'Search shared notes' }), 'morgan')
-    expect(screen.queryByText('Launch plan')).not.toBeInTheDocument()
-    expect(screen.getByText('Budget')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText('Launch plan')).not.toBeInTheDocument()
+      expect(screen.getByText('Budget')).toBeInTheDocument()
+    })
 
     await user.clear(screen.getByRole('searchbox', { name: 'Search shared notes' }))
     await user.selectOptions(screen.getByLabelText('Filter shared notes by permission'), 'edit')
-    expect(screen.getByText('Launch plan')).toBeInTheDocument()
-    expect(screen.queryByText('Budget')).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText('Launch plan')).toBeInTheDocument()
+      expect(screen.queryByText('Budget')).not.toBeInTheDocument()
+    })
   })
 
   it('prevents duplicate accepts and presents a failed invitation action', async () => {

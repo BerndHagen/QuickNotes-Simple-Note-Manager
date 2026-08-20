@@ -93,15 +93,15 @@
   --qn-text-on-brand: #ffffff;
 
   /* --- Accent (interactive brand) --------------------------- */
-  /* brand-700 rather than brand-600: white-on-brand-600 measures
-     3.76:1, which fails AA for the button labels that sit on it. */
-  --qn-accent: var(--qn-brand-700);
-  --qn-accent-hover: var(--qn-brand-800);
-  --qn-accent-active: var(--qn-brand-900);
-  --qn-accent-text: var(--qn-brand-700);
-  --qn-accent-soft: var(--qn-brand-50);
-  --qn-accent-soft-hover: var(--qn-brand-100);
-  --qn-accent-border: var(--qn-brand-200);
+  /* A muted eucalyptus accent keeps long writing sessions calm while the
+     darker action shades retain accessible contrast with white labels. */
+  --qn-accent: #3d7564;
+  --qn-accent-hover: #346657;
+  --qn-accent-active: #2b574b;
+  --qn-accent-text: #346657;
+  --qn-accent-soft: #e8f1ed;
+  --qn-accent-soft-hover: #dbe9e3;
+  --qn-accent-border: #b8d2c8;
 
   /* Application banners use the navigation rail's flat deep green. The
      decorative stationery treatment is reserved for authentication. */
@@ -229,13 +229,13 @@
   --qn-text-inverted: #0b0f14;
   --qn-text-on-brand: #0b0f14;
 
-  --qn-accent: var(--qn-brand-500);
-  --qn-accent-hover: var(--qn-brand-400);
-  --qn-accent-active: var(--qn-brand-300);
-  --qn-accent-text: var(--qn-brand-400);
-  --qn-accent-soft: rgba(16, 185, 129, 0.12);
-  --qn-accent-soft-hover: rgba(16, 185, 129, 0.2);
-  --qn-accent-border: rgba(16, 185, 129, 0.3);
+  --qn-accent: #77a998;
+  --qn-accent-hover: #86b5a5;
+  --qn-accent-active: #95c0b1;
+  --qn-accent-text: #8dbbaa;
+  --qn-accent-soft: rgba(119, 169, 152, 0.14);
+  --qn-accent-soft-hover: rgba(119, 169, 152, 0.22);
+  --qn-accent-border: rgba(119, 169, 152, 0.34);
 
   --qn-banner: var(--qn-nav-bg);
   --qn-banner-accent: #113b2b;

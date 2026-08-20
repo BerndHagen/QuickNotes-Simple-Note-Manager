@@ -15,6 +15,7 @@ import { markdownToHtml } from '../lib/noteTransfer'
 import { parseWorkspaceBackup } from '../lib/workspaceBackup'
 import LegacyDialog from './ui/LegacyDialog'
 import DialogHeader from './ui/DialogHeader'
+import Button from './ui/Button'
 
 const MAX_IMPORT_FILE_SIZE = 10 * 1024 * 1024
 const MAX_TOTAL_IMPORT_SIZE = 25 * 1024 * 1024
@@ -423,29 +424,20 @@ export default function ImportModal() {
                 </div>
               </div>
             )}
-            <button
-              type="button"
+            <Button
               onClick={handleImport}
               disabled={files.length === 0 || importing}
-              aria-busy={importing || undefined}
-              className={`w-full mt-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
- files.length === 0 || importing
- ? 'bg-surface-active dark:bg-surface-active text-content-muted cursor-not-allowed'
-                  : 'qn-banner-surface hover:from-emerald-700 hover:to-teal-700 text-white'
-              }`}
+              loading={importing}
+              variant="primary"
+              size="lg"
+              fullWidth
+              icon={Upload}
+              className="mt-6"
             >
-              {importing ? (
-                <>
-                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" aria-hidden="true" />
-                  {t('importModal.importing')}
-                </>
-              ) : (
-                <>
-                  <Upload className="h-5 w-5" aria-hidden="true" />
-                  {t('importModal.importFiles')} {files.length > 0 ? `${files.length} ${files.length > 1 ? t('importModal.files') : t('importModal.file')}` : ''}
-                </>
-              )}
-            </button>
+              {importing
+                ? t('importModal.importing')
+                : `${t('importModal.importFiles')} ${files.length > 0 ? `${files.length} ${files.length > 1 ? t('importModal.files') : t('importModal.file')}` : ''}`}
+            </Button>
           </>
         )}
         </div>

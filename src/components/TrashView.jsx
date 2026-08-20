@@ -56,34 +56,33 @@ export default function TrashView() {
         description={countLabel}
         icon={Trash2}
         size="xl"
-        bodyClassName="!overflow-hidden bg-surface-raised p-0 sm:p-0"
+        bodyClassName="!overflow-hidden p-0 sm:p-0"
+        footer={trashedNotes.length > 0 ? (
+          <>
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={RotateCcw}
+              fullWidth
+              className="sm:w-auto"
+              onClick={handleRestoreAll}
+            >
+              {t('trash.restoreAll')}
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              icon={Trash2}
+              fullWidth
+              className="sm:w-auto"
+              onClick={() => setDeleteTarget({ all: true })}
+            >
+              {t('trash.emptyTrash')}
+            </Button>
+          </>
+        ) : null}
       >
         <div className="flex h-full min-h-0 flex-col">
-          {trashedNotes.length > 0 && (
-            <div className="flex shrink-0 flex-col gap-2 border-b border-subtle bg-surface-raised px-5 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-              <Button
-                variant="primary"
-                size="sm"
-                icon={RotateCcw}
-                fullWidth
-                className="sm:w-auto"
-                onClick={handleRestoreAll}
-              >
-                {t('trash.restoreAll')}
-              </Button>
-              <Button
-                variant="danger-ghost"
-                size="sm"
-                icon={Trash2}
-                fullWidth
-                className="sm:w-auto"
-                onClick={() => setDeleteTarget({ all: true })}
-              >
-                {t('trash.emptyTrash')}
-              </Button>
-            </div>
-          )}
-
           <div
             role="region"
             aria-label={t('trash.title')}
@@ -97,7 +96,7 @@ export default function TrashView() {
                 description={t('trash.emptyDescription')}
               />
             ) : (
-              <ul className="space-y-2 p-3 sm:p-4">
+              <ul className="space-y-3 p-4 sm:p-5">
                 {trashedNotes.map((note) => {
                   const daysRemaining = getDaysRemaining(note.deletedAt)
                   const preview = truncateText(htmlToPlainText(note.content), 100)

@@ -4,6 +4,7 @@ import { useNotesStore, useUIStore } from '../store'
 import toast from 'react-hot-toast'
 import LegacyDialog from './ui/LegacyDialog'
 import DialogHeader from './ui/DialogHeader'
+import Button from './ui/Button'
 import { ConfirmDialog } from './FolderDialogs'
 
 const normalizeText = (value) => String(value ?? '').toLowerCase().replace(/\s+/g, ' ').trim()
@@ -341,14 +342,10 @@ export default function DuplicateDetectionModal() {
             </div>
           )}
         </div>
-        <div className="flex justify-end px-6 py-4 border-t border-subtle shrink-0">
-          <button
-            type="button"
-            onClick={handleClose}
-            className="px-4 py-2 text-content-muted hover:bg-surface-sunken dark:hover:bg-surface-sunken rounded-lg transition-colors border border-subtle "
-          >
+        <div data-dialog-footer className="flex shrink-0 justify-end border-t border-subtle bg-[var(--qn-surface-toolbar)] px-5 py-4 sm:px-6">
+          <Button type="button" variant="secondary" size="sm" onClick={handleClose}>
             Close
-          </button>
+          </Button>
         </div>
       </div>
     </LegacyDialog>

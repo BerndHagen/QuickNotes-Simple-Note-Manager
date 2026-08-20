@@ -408,7 +408,7 @@ export default function SettingsModal() {
           closeLabel={`${t('common.close', 'Close')} ${t('settings.title', 'settings')}`}
         />
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden sm:flex-row">
-        <div className="shrink-0 border-b border-subtle bg-surface-raised p-2 sm:w-48 sm:border-b-0 sm:border-r sm:p-4">
+        <div className="shrink-0 border-b border-subtle bg-[var(--qn-surface-toolbar)] p-2 sm:w-48 sm:border-b-0 sm:border-r sm:p-4">
           <nav aria-label="Settings sections" className="flex max-w-full gap-1 overflow-x-auto overscroll-x-contain sm:block sm:space-y-1 sm:overflow-visible">
             {tabs.map((tab) => (
               <button
@@ -429,12 +429,12 @@ export default function SettingsModal() {
           </nav>
         </div>
         <div data-settings-content className="flex min-h-0 min-w-0 flex-1 flex-col">
-          <div className="flex items-center justify-between border-b border-subtle bg-surface-raised px-4 py-3 sm:px-6">
+          <div className="flex items-center justify-between border-b border-subtle bg-[var(--qn-surface-toolbar)] px-4 py-3 sm:px-6">
             <h3 className="text-[10px] font-bold text-content-muted uppercase tracking-[0.12em]">
               {tabs.find((t) => t.id === activeTab)?.label}
             </h3>
           </div>
-          <div data-settings-pane tabIndex="0" aria-label="Settings options" className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain bg-surface-raised p-4 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--qn-focus-ring)] sm:p-6">
+          <div data-settings-pane tabIndex="0" aria-label="Settings options" className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain bg-surface p-4 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--qn-focus-ring)] sm:p-6">
             {activeTab === 'general' && (
               <div className="space-y-6">
                 <div>

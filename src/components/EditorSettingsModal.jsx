@@ -15,6 +15,7 @@ import {
 import { useUIStore } from '../store'
 import LegacyDialog from './ui/LegacyDialog'
 import DialogHeader from './ui/DialogHeader'
+import Button from './ui/Button'
 import {
   DEFAULT_EDITOR_FONT,
   EDITOR_FONT_FAMILIES,
@@ -418,20 +419,22 @@ export default function EditorSettingsModal() {
             </label>
           </div>
         </div>
-        <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-subtle bg-surface-sunken px-4 py-3 sm:px-6 sm:py-4">
-          <button
+        <div data-dialog-footer className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-subtle bg-[var(--qn-surface-toolbar)] px-5 py-4 sm:px-6">
+          <Button
             onClick={handleResetDefaults}
-            className="flex items-center gap-2 px-4 py-2 text-sm text-content-muted transition-colors rounded-lg dark:text-content-subtle hover:bg-surface-sunken dark:hover:bg-surface-sunken"
+            variant="ghost"
+            size="sm"
+            icon={RotateCcw}
           >
-            <RotateCcw className="w-4 h-4" />
             Reset to Defaults
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => setEditorSettingsOpen(false)}
-            className="px-4 py-2 font-medium text-white transition-colors rounded-lg bg-emerald-600 hover:bg-emerald-700"
+            variant="primary"
+            size="sm"
           >
             Done
-          </button>
+          </Button>
         </div>
       </div>
     </LegacyDialog>

@@ -25,7 +25,7 @@ import ShapeGeometry, { SHAPE_GROUPS, SHAPE_OPTIONS } from './ShapeGeometry'
 import ParagraphLayoutExtension from './ParagraphLayoutExtension'
 import TabStopExtension from './TabStopExtension'
 import PageBreakExtension from './PageBreakExtension'
-import PaginationExtension, { A4_RATIO } from './PaginationExtension'
+import PaginationExtension, { A4_RATIO, PAGE_GAP } from './PaginationExtension'
 import StyledTaskItem from './StyledTaskItem'
 import CalloutExtension from './CalloutExtension'
 import InvisibleCharactersExtension from './InvisibleCharactersExtension'
@@ -578,7 +578,14 @@ function DocumentRuler({ editor, containerRef }) {
 }
 
 function VerticalDocumentRuler({ containerRef }) {
-  const [geometry, setGeometry] = useState({ height: 1147, paddingTop: 92, paddingBottom: 68 })
+  const [geometry, setGeometry] = useState({
+    height: 1147,
+    pageTop: 24,
+    pageHeight: 1123,
+    pageCount: 1,
+    paddingTop: 68,
+    paddingBottom: 68,
+  })
 
   useEffect(() => {
     const pageElement = containerRef.current
@@ -589,9 +596,14 @@ function VerticalDocumentRuler({ containerRef }) {
       const pageWidth = pageElement.getBoundingClientRect().width
       const styles = getComputedStyle(editorElement)
       const pageTop = pageElement.offsetTop
+      const pageHeight = pageWidth * A4_RATIO
+      const pageCount = Math.max(1, Number.parseInt(editorElement.dataset.pageCount || '1', 10) || 1)
       setGeometry({
-        height: pageTop + (pageWidth * A4_RATIO),
-        paddingTop: pageTop + (parseFloat(styles.paddingTop) || 0),
+        height: pageTop + (pageCount * pageHeight) + ((pageCount - 1) * PAGE_GAP),
+        pageTop,
+        pageHeight,
+        pageCount,
+        paddingTop: parseFloat(styles.paddingTop) || 0,
         paddingBottom: parseFloat(styles.paddingBottom) || 0,
       })
     }
@@ -600,14 +612,17 @@ function VerticalDocumentRuler({ containerRef }) {
     const observer = new ResizeObserver(sync)
     observer.observe(pageElement)
     observer.observe(editorElement)
+    const pageCountObserver = new MutationObserver(sync)
+    pageCountObserver.observe(editorElement, { attributes: true, attributeFilter: ['data-page-count'] })
     window.addEventListener('resize', sync)
     return () => {
       observer.disconnect()
+      pageCountObserver.disconnect()
       window.removeEventListener('resize', sync)
     }
   }, [containerRef])
 
-  const contentHeight = Math.max(120, geometry.height - geometry.paddingTop - geometry.paddingBottom)
+  const contentHeight = Math.max(120, geometry.pageHeight - geometry.paddingTop - geometry.paddingBottom)
   const tickCount = Math.ceil(contentHeight / 40)
 
   return (
@@ -617,18 +632,29 @@ function VerticalDocumentRuler({ containerRef }) {
       className="qn-vertical-ruler absolute left-0 top-0 z-10"
       style={{ height: `${geometry.height}px` }}
     >
-      <span className="qn-vertical-ruler__margin qn-vertical-ruler__margin--top" style={{ height: `${geometry.paddingTop}px` }} />
-      <div
-        className="qn-vertical-ruler__track absolute inset-x-0"
-        style={{ top: `${geometry.paddingTop}px`, height: `${contentHeight}px` }}
-      >
-        {Array.from({ length: tickCount + 1 }, (_, index) => (
-          <span key={index} className="qn-vertical-ruler__tick" style={{ top: `${index * 40}px` }}>
-            {index > 0 && <span>{index}</span>}
-          </span>
-        ))}
-      </div>
-      <span className="qn-vertical-ruler__margin qn-vertical-ruler__margin--bottom" style={{ height: `${geometry.paddingBottom}px` }} />
+      {Array.from({ length: geometry.pageCount }, (_, pageIndex) => (
+        <div
+          key={pageIndex}
+          className="qn-vertical-ruler__page absolute inset-x-0 overflow-hidden"
+          style={{
+            top: `${geometry.pageTop + pageIndex * (geometry.pageHeight + PAGE_GAP)}px`,
+            height: `${geometry.pageHeight}px`,
+          }}
+        >
+          <span className="qn-vertical-ruler__margin qn-vertical-ruler__margin--top" style={{ height: `${geometry.paddingTop}px` }} />
+          <div
+            className="qn-vertical-ruler__track absolute inset-x-0"
+            style={{ top: `${geometry.paddingTop}px`, height: `${contentHeight}px` }}
+          >
+            {Array.from({ length: tickCount + 1 }, (_, index) => (
+              <span key={index} className="qn-vertical-ruler__tick" style={{ top: `${index * 40}px` }}>
+                {index > 0 && <span>{index}</span>}
+              </span>
+            ))}
+          </div>
+          <span className="qn-vertical-ruler__margin qn-vertical-ruler__margin--bottom" style={{ height: `${geometry.paddingBottom}px` }} />
+        </div>
+      ))}
     </div>
   )
 }

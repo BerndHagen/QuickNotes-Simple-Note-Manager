@@ -111,13 +111,8 @@ function WorkspacePreview() {
       aria-hidden="true"
     >
       <div className="flex h-[330px] overflow-hidden rounded-[14px] border border-slate-300/80 bg-white">
-        {/* Mirrors the real rail: navigation starts immediately with capture. */}
+        {/* Mirrors the real rail: All Notes is the first destination. */}
         <div className="qn-nav-surface flex w-[138px] shrink-0 flex-col px-2.5 py-2.5 text-nav-text">
-          <div className="mb-2.5 flex h-7 items-center gap-1.5 rounded-[7px] border border-emerald-400/80 bg-emerald-700 px-2 text-[8px] font-bold text-white shadow-sm">
-            <Plus className="h-3 w-3" />
-            <span className="flex-1">Quick Note</span>
-            <span className="text-[6px] font-semibold text-white/70">Ctrl N</span>
-          </div>
           {navigationItems.map(({ icon: Icon, label, count, active }) => (
             <div
               key={label}
@@ -153,7 +148,7 @@ function WorkspacePreview() {
             <p className="flex-1 text-[10px] font-bold text-slate-800">All Notes</p>
             <span className="rounded-full bg-slate-200 px-1.5 text-[7px] font-semibold text-slate-500">8</span>
             <Filter className="h-3 w-3 text-slate-500" />
-            <span className="flex h-5 w-5 items-center justify-center rounded-[6px] bg-emerald-600 text-white">
+            <span className="flex h-5 w-5 items-center justify-center rounded-[6px] border border-[#b8d2c8] bg-[#e8f1ed] text-[#346657]">
               <Plus className="h-3 w-3" />
             </span>
           </div>
