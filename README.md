@@ -123,15 +123,15 @@ You can try QuickNotes [**here**](https://berndhagen.github.io/QuickNotes-Simple
 
 ### Prerequisites
 
-- Node.js 20.19+ or 22.12+ (required by Vite 8)
-- npm
+- Node.js 22 (the version used by CI; see `.nvmrc`)
+- npm 10.9.4 (pinned in `package.json` for reproducible lockfiles)
 
 ### Installation
 
 ```bash
 git clone https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager.git
 cd QuickNotes-Simple-Note-Manager
-npm install
+npm ci
 npm run dev
 ```
 

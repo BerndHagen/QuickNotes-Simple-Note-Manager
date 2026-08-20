@@ -3,6 +3,7 @@
   "private": true,
   "version": "2.2.0",
   "license": "GPL-3.0",
+  "packageManager": "npm@10.9.4",
   "type": "module",
   "scripts": {
     "dev": "vite",
