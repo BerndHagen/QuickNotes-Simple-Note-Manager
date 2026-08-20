@@ -5,7 +5,6 @@ import {
   Bell,
   ChevronDown,
   Check,
-  Clock,
   Copy,
   Download,
   Eye,
@@ -14,7 +13,6 @@ import {
   FolderOpen,
   History,
   Image as ImageIcon,
-  Info,
   Link2,
   Mic,
   MoreVertical,
@@ -37,7 +35,7 @@ import VoiceInput from './VoiceInput'
 import ImageUploadModal from './ImageUploadModal'
 import LinkInsertModal from './LinkInsertModal'
 import HTMLEditorModal from './HTMLEditorModal'
-import { formatDate, debounce } from '../lib/utils'
+import { debounce } from '../lib/utils'
 import { useTranslation } from '../lib/useTranslation'
 import { saveNoteVersion } from '../lib/db'
 import {
@@ -51,11 +49,9 @@ import { useRealtimeCollaboration } from '../lib/useCollaboration'
 import { getFolderIcon } from '../lib/folderIcons'
 import { MAX_NOTE_TITLE_LENGTH, MAX_TAG_NAME_LENGTH } from '../lib/dataValidation'
 import { getNotePaperType, normalizePaperType } from '../lib/paperStyles'
-import { Button, IconButton, Input, Menu, MenuItem, MenuSeparator, EmptyState, TagChip } from './ui'
+import { IconButton, Input, Menu, MenuItem, MenuSeparator, EmptyState } from './ui'
 import { ConfirmDialog } from './FolderDialogs'
-import { SyncStatusPill } from './SyncStatus'
 import { isBackendConfigured } from '../lib/backend'
-import { BREAKPOINTS, useMediaQuery } from '../hooks/useBreakpoint'
 import toast from 'react-hot-toast'
 
 import {
@@ -66,8 +62,7 @@ import {
 } from './editors'
 
 export default function NoteEditor({ onBack, showBack = false }) {
-  const { t, language } = useTranslation()
-  const isCompact = useMediaQuery(BREAKPOINTS.compact)
+  const { t } = useTranslation()
   const {
     folders,
     tags,
@@ -117,7 +112,6 @@ export default function NoteEditor({ onBack, showBack = false }) {
   const [folderPickerOpen, setFolderPickerOpen] = useState(false)
   const [newTagName, setNewTagName] = useState('')
   const [showBacklinks, setShowBacklinks] = useState(false)
-  const [noteDetailsExpanded, setNoteDetailsExpanded] = useState(false)
   const [editorRef, setEditorRef] = useState(null)
   const [specializedContextMenu, setSpecializedContextMenu] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -188,10 +182,6 @@ export default function NoteEditor({ onBack, showBack = false }) {
   useEffect(() => {
     if (noteTitle !== undefined) setTitle(noteTitle || '')
   }, [noteId, noteTitle])
-
-  useEffect(() => {
-    setNoteDetailsExpanded(false)
-  }, [noteId])
 
   useEffect(() => {
     const tracker = versionTrackerRef.current
@@ -347,276 +337,6 @@ export default function NoteEditor({ onBack, showBack = false }) {
 
   return (
     <div className="editor-paper flex h-full w-full min-w-0 flex-col bg-surface">
-      {/* Window chrome: sync state and note-level actions sit on the light
-          strip above the coloured banner. */}
-      <div className="qn-editor-chrome flex shrink-0 items-center gap-1 border-b border-subtle bg-surface px-2 py-1.5 sm:px-3">
-        {showBack && (
-          <IconButton
-            icon={ArrowLeft}
-            label={t('editor.backToList', 'Back to notes')}
-            onClick={onBack}
-          />
-        )}
-        {isCompact && !isSpecialized && (
-          <div className="min-w-0 flex-1 md:hidden">
-            <label htmlFor="qn-mobile-note-title" className="qn-sr-only">
-              {t('editor.noteTitle', 'Note title')}
-            </label>
-            <input
-              id="qn-mobile-note-title"
-              type="text"
-              maxLength={MAX_NOTE_TITLE_LENGTH}
-              value={title}
-              onChange={handleTitleChange}
-              onFocus={() => setIsEditingTitle(true)}
-              onBlur={() => {
-                debouncedTitleUpdate.flush()
-                setIsEditingTitle(false)
-              }}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') {
-                  event.preventDefault()
-                  event.currentTarget.blur()
-                }
-              }}
-              readOnly={isReadOnly}
-              placeholder={t('editor.untitled', 'Untitled note')}
-              className={`h-11 w-full truncate rounded-control border-0 bg-transparent px-2 text-base font-semibold text-content outline-none transition-colors placeholder:text-content-subtle ${
-                isEditingTitle ? 'bg-surface-sunken' : 'hover:bg-surface-hover'
-              } ${isReadOnly ? 'cursor-default' : 'cursor-text'}`}
-            />
-          </div>
-        )}
-        {isCompact && isSpecialized && <div className="flex-1" aria-hidden="true" />}
-        <SyncStatusPill className="mr-auto hidden md:flex" />
-        {!isSpecialized && (
-          <IconButton
-            icon={Search}
-            label={t('editor.findReplace', 'Find & replace')}
-            active={findReplaceOpen}
-            onClick={() => setFindReplaceOpen(!findReplaceOpen)}
-            className="hidden md:inline-flex"
-          />
-        )}
-        {isSpecialized && !isShared && (
-          <>
-            <IconButton
-              ref={folderButtonRef}
-              icon={FolderOpen}
-              label={
-                currentFolder
-                  ? `${t('editor.moveToFolder', 'Move to folder')}: ${currentFolder.name}`
-                  : t('editor.moveToFolder', 'Move to folder')
-              }
-              active={folderPickerOpen}
-              aria-haspopup="menu"
-              aria-expanded={folderPickerOpen}
-              onClick={() => setFolderPickerOpen((value) => !value)}
-              className="hidden sm:inline-flex"
-            />
-            <Button
-              ref={tagButtonRef}
-              icon={Tag}
-              variant="secondary"
-              size="sm"
-              aria-haspopup="menu"
-              aria-expanded={tagPickerOpen}
-              onClick={() => setTagPickerOpen((value) => !value)}
-              className={`hidden capitalize sm:inline-flex ${
-                tagPickerOpen || note.tags?.length > 0
-                  ? 'border-[var(--qn-accent-border)] bg-accent-soft text-accent-text'
-                  : ''
-              }`}
-            >
-              {t('editor.tags', 'Tags')}
-              {note.tags?.length > 0 ? ` (${note.tags.length})` : ''}
-            </Button>
-            <IconButton
-              icon={Pin}
-              label={note.pinned ? t('editor.unpin', 'Unpin note') : t('editor.pin', 'Pin note')}
-              active={note.pinned}
-              iconClassName={note.pinned ? 'fill-current' : ''}
-              aria-pressed={!!note.pinned}
-              onClick={() => togglePin(note.id)}
-              className="hidden sm:inline-flex"
-            />
-          </>
-        )}
-        {!isShared && (
-          <IconButton
-            icon={Bell}
-            label={t('editor.reminders', 'Reminders')}
-            active={note.reminders?.length > 0}
-            onClick={() => setReminderModalOpen(true, note.id)}
-            className="hidden sm:inline-flex"
-          />
-        )}
-        {cloudEnabled && !isShared && (
-          <IconButton
-            icon={Send}
-            label={t('editor.share', 'Share note')}
-            onClick={() => setShareModalOpen(true, note.id)}
-            className="hidden sm:inline-flex"
-          />
-        )}
-        {!isShared && (
-          <IconButton
-            icon={Star}
-            label={
-              note.starred
-                ? t('editor.unfavourite', 'Remove from favourites')
-                : t('editor.favourite', 'Add to favourites')
-            }
-            active={note.starred}
-            iconClassName={note.starred ? 'fill-current' : ''}
-            aria-pressed={!!note.starred}
-            onClick={() => toggleStar(note.id)}
-            className="hidden md:inline-flex"
-          />
-        )}
-        {!isSpecialized && (
-          <IconButton
-            icon={Info}
-            label={
-              noteDetailsExpanded
-                ? t('editor.hideDetails', 'Hide note details')
-                : t('editor.showDetails', 'Show note details')
-            }
-            active={noteDetailsExpanded}
-            aria-expanded={noteDetailsExpanded}
-            aria-controls="qn-note-details"
-            onClick={() => setNoteDetailsExpanded((expanded) => !expanded)}
-            className="md:hidden"
-          />
-        )}
-        <IconButton
-          ref={menuButtonRef}
-          icon={MoreVertical}
-          label={t('editor.moreActions', 'More actions')}
-          aria-haspopup="menu"
-          aria-expanded={menuOpen}
-          onClick={() => setMenuOpen((v) => !v)}
-        />
-      </div>
-
-      {/* Document header */}
-      {!isSpecialized && (
-        <header className={`qn-note-banner qn-document-header shrink-0 border-b border-subtle px-3 py-2.5 text-content sm:px-4 sm:py-3 ${
-          noteDetailsExpanded ? 'block' : 'hidden md:block'
-        }`}>
-        <div
-          className={`qn-note-title-row hidden items-start gap-1.5 md:flex ${
-            noteDetailsExpanded ? 'mb-2' : 'mb-0 md:mb-2'
-          }`}
-        >
-
-          <div className="qn-note-title-field min-w-0">
-            <label htmlFor="qn-note-title" className="qn-sr-only">
-              {t('editor.noteTitle', 'Note title')}
-            </label>
-            {!isCompact && (
-              <input
-                id="qn-note-title"
-                ref={titleInputRef}
-                type="text"
-                maxLength={MAX_NOTE_TITLE_LENGTH}
-                value={title}
-                onChange={handleTitleChange}
-                onFocus={() => setIsEditingTitle(true)}
-                onBlur={() => {
-                  debouncedTitleUpdate.flush()
-                  setIsEditingTitle(false)
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    e.currentTarget.blur()
-                  }
-                }}
-                readOnly={isReadOnly}
-                placeholder={t('editor.untitled', 'Untitled note')}
-                className={`w-full truncate rounded-control bg-surface-raised px-1.5 py-1 text-title-md font-semibold text-content outline-none transition-colors duration-fast placeholder:text-content-subtle sm:text-title-lg ${
-                  isEditingTitle ? 'bg-surface-sunken' : 'hover:bg-surface-hover'
-                } ${isReadOnly ? 'cursor-default' : 'cursor-text'}`}
-              />
-            )}
-          </div>
-
-          {!isShared && (
-            <IconButton
-              icon={Pin}
-              label={note.pinned ? t('editor.unpin', 'Unpin note') : t('editor.pin', 'Pin note')}
-              active={note.pinned}
-              iconClassName={note.pinned ? 'fill-current' : ''}
-              aria-pressed={!!note.pinned}
-              onClick={() => togglePin(note.id)}
-              className="ml-auto mt-1 hidden md:inline-flex"
-            />
-          )}
-        </div>
-
-        {/* Metadata row */}
-        <div
-          id="qn-note-details"
-          className={`qn-note-metadata flex-nowrap items-center gap-x-1 gap-y-1 overflow-x-auto overscroll-x-contain text-ui-md text-content-muted sm:flex-wrap sm:overflow-visible md:flex ${
-            noteDetailsExpanded ? 'flex' : 'hidden'
-          }`}
-        >
-          <span className="inline-flex items-center gap-1.5 px-1.5 py-0.5">
-            <Clock className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-            <time dateTime={note.updatedAt}>{formatDate(note.updatedAt, language)}</time>
-          </span>
-
-          <button
-            ref={folderButtonRef}
-            type="button"
-            onClick={() => !isShared && setFolderPickerOpen((v) => !v)}
-            aria-haspopup={isShared ? undefined : 'menu'}
-            aria-expanded={isShared ? undefined : folderPickerOpen}
-            disabled={isShared}
-            className="qn-touch-target inline-flex max-w-[45%] items-center gap-1.5 rounded-control px-1.5 py-0.5 transition-colors duration-fast enabled:hover:bg-surface-hover enabled:hover:text-content disabled:cursor-default"
-          >
-            <FolderOpen className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-            <span className="truncate">{currentFolder?.name || t('editor.noFolder', 'No folder')}</span>
-            <ChevronDown className="h-3 w-3 shrink-0 opacity-60" aria-hidden="true" />
-          </button>
-
-          <button
-            ref={tagButtonRef}
-            type="button"
-            onClick={() => !isShared && setTagPickerOpen((v) => !v)}
-            aria-haspopup={isShared ? undefined : 'menu'}
-            aria-expanded={isShared ? undefined : tagPickerOpen}
-            disabled={isShared}
-            className="qn-touch-target inline-flex items-center gap-1.5 rounded-control px-1.5 py-0.5 transition-colors duration-fast enabled:hover:bg-surface-hover enabled:hover:text-content disabled:cursor-default"
-          >
-            <Tag className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-            <span>
-              {note.tags?.length
-                ? `${note.tags.length} ${note.tags.length === 1 ? t('editor.tag', 'tag') : t('editor.tags', 'tags')}`
-                : t('editor.noTags', 'No tags')}
-            </span>
-            <ChevronDown className="h-3 w-3 shrink-0 opacity-60" aria-hidden="true" />
-          </button>
-
-          {note.tags?.length > 0 && (
-            <ul className="flex min-w-max flex-nowrap items-center gap-1 sm:min-w-0 sm:flex-wrap">
-              {note.tags.map((tagName) => (
-                <li key={tagName} className="min-w-0">
-                  <TagChip
-                    surface="surface"
-                    name={tagName}
-                    color={tags.find((tag) => tag.name === tagName)?.color || '#6b7280'}
-                    className="max-w-[16ch]"
-                  />
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-        </header>
-      )}
-
       <FindReplaceBar editor={editorRef} isOpen={findReplaceOpen} onClose={() => setFindReplaceOpen(false)} />
 
       {isReadOnly && (
@@ -713,6 +433,126 @@ export default function NoteEditor({ onBack, showBack = false }) {
             onEditorReady={setEditorRef}
             isExternalUpdate={isExternalUpdate}
             readOnly={isReadOnly}
+            ribbonTitle={(
+              <div className="flex min-w-0 flex-1 items-center gap-1">
+                {showBack && (
+                  <IconButton
+                    icon={ArrowLeft}
+                    label={t('editor.backToList', 'Back to notes')}
+                    onClick={onBack}
+                    className="shrink-0"
+                  />
+                )}
+                <label htmlFor="qn-ribbon-note-title" className="qn-sr-only">
+                  {t('editor.noteTitle', 'Note title')}
+                </label>
+                <input
+                  id="qn-ribbon-note-title"
+                  ref={titleInputRef}
+                  type="text"
+                  maxLength={MAX_NOTE_TITLE_LENGTH}
+                  value={title}
+                  onChange={handleTitleChange}
+                  onFocus={() => setIsEditingTitle(true)}
+                  onBlur={() => {
+                    debouncedTitleUpdate.flush()
+                    setIsEditingTitle(false)
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') {
+                      event.preventDefault()
+                      event.currentTarget.blur()
+                    }
+                  }}
+                  readOnly={isReadOnly}
+                  placeholder={t('editor.untitled', 'Untitled note')}
+                  className={`h-8 min-w-0 flex-1 truncate rounded-control border-0 bg-transparent px-2 text-ui-md font-semibold text-content outline-none transition-colors placeholder:text-content-subtle ${
+                    isEditingTitle ? 'bg-surface-sunken' : 'hover:bg-surface-hover'
+                  } ${isReadOnly ? 'cursor-default' : 'cursor-text'}`}
+                />
+              </div>
+            )}
+            ribbonActions={(
+              <>
+                {!isShared && (
+                  <IconButton
+                    ref={folderButtonRef}
+                    icon={FolderOpen}
+                    label={currentFolder ? `${t('editor.moveToFolder', 'Move to folder')}: ${currentFolder.name}` : t('editor.moveToFolder', 'Move to folder')}
+                    active={folderPickerOpen}
+                    aria-haspopup="menu"
+                    aria-expanded={folderPickerOpen}
+                    onClick={() => setFolderPickerOpen((value) => !value)}
+                    className="qn-ribbon-secondary-action"
+                  />
+                )}
+                {!isShared && (
+                  <IconButton
+                    ref={tagButtonRef}
+                    icon={Tag}
+                    label={note.tags?.length ? `${note.tags.length} ${t('editor.tags', 'tags')}` : t('editor.tags', 'Tags')}
+                    active={tagPickerOpen || note.tags?.length > 0}
+                    aria-haspopup="menu"
+                    aria-expanded={tagPickerOpen}
+                    onClick={() => setTagPickerOpen((value) => !value)}
+                    className="qn-ribbon-secondary-action"
+                  />
+                )}
+                {!isShared && (
+                  <IconButton
+                    icon={Pin}
+                    label={note.pinned ? t('editor.unpin', 'Unpin note') : t('editor.pin', 'Pin note')}
+                    active={note.pinned}
+                    iconClassName={note.pinned ? 'fill-current' : ''}
+                    aria-pressed={!!note.pinned}
+                    onClick={() => togglePin(note.id)}
+                  />
+                )}
+                <IconButton
+                  icon={Search}
+                  label={t('editor.findReplace', 'Find & replace')}
+                  active={findReplaceOpen}
+                  onClick={() => setFindReplaceOpen(!findReplaceOpen)}
+                  className="qn-ribbon-secondary-action"
+                />
+                {!isShared && (
+                  <IconButton
+                    icon={Bell}
+                    label={t('editor.reminders', 'Reminders')}
+                    active={note.reminders?.length > 0}
+                    onClick={() => setReminderModalOpen(true, note.id)}
+                    className="qn-ribbon-secondary-action"
+                  />
+                )}
+                {cloudEnabled && !isShared && (
+                  <IconButton
+                    icon={Send}
+                    label={t('editor.share', 'Share note')}
+                    onClick={() => setShareModalOpen(true, note.id)}
+                    className="qn-ribbon-secondary-action"
+                  />
+                )}
+                {!isShared && (
+                  <IconButton
+                    icon={Star}
+                    label={note.starred ? t('editor.unfavourite', 'Remove from favourites') : t('editor.favourite', 'Add to favourites')}
+                    active={note.starred}
+                    iconClassName={note.starred ? 'fill-current' : ''}
+                    aria-pressed={!!note.starred}
+                    onClick={() => toggleStar(note.id)}
+                    className="qn-ribbon-secondary-action"
+                  />
+                )}
+                <IconButton
+                  ref={menuButtonRef}
+                  icon={MoreVertical}
+                  label={t('editor.moreActions', 'More actions')}
+                  aria-haspopup="menu"
+                  aria-expanded={menuOpen}
+                  onClick={() => setMenuOpen((value) => !value)}
+                />
+              </>
+            )}
           />
         )}
       </div>

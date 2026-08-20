@@ -893,6 +893,8 @@ export default function RichTextEditor({
   onEditorReady,
   isExternalUpdate = false,
   readOnly = false,
+  ribbonTitle,
+  ribbonActions,
 }) {
   const [currentPaper, setCurrentPaper] = useState(paperType)
   const [typingEpoch, setTypingEpoch] = useState(0)
@@ -1396,6 +1398,8 @@ export default function RichTextEditor({
             onCut={() => copySelection({ cut: true })}
             onCopy={() => copySelection()}
             onPaste={pasteClipboard}
+            ribbonTitle={ribbonTitle}
+            ribbonActions={ribbonActions}
           />
         </div>
       )}
@@ -1746,6 +1750,8 @@ function EditorToolbar({
   onCut,
   onCopy,
   onPaste,
+  ribbonTitle,
+  ribbonActions,
 }) {
   const { t } = useTranslation()
   const spellCheck = useUIStore((state) => state.spellCheck)
@@ -2248,6 +2254,11 @@ function EditorToolbar({
         >
           <X className="h-4 w-4" aria-hidden="true" />
         </button>
+        {ribbonTitle && (
+          <div className="mr-1 flex min-w-24 max-w-52 flex-1 items-center border-r border-subtle pr-1 sm:max-w-64">
+            {ribbonTitle}
+          </div>
+        )}
         <div role="tablist" aria-label="Editor ribbon" className="flex min-w-0 flex-1 items-stretch overflow-x-auto">
           {[
             ['home', 'Home'],
@@ -2291,6 +2302,11 @@ function EditorToolbar({
             </button>
           ))}
         </div>
+        {ribbonActions && (
+          <div className="ml-1 flex shrink-0 items-center gap-0.5" aria-label="Note actions">
+            {ribbonActions}
+          </div>
+        )}
         <button
           type="button"
           aria-label="Customize editor"
