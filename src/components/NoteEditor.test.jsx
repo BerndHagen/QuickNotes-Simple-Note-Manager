@@ -38,8 +38,9 @@ vi.mock('./NoteLinkPopover', () => ({
   useNoteLinkHandler: () => {},
 }))
 vi.mock('./RichTextEditor', () => ({
-  default: ({ onDraftChange, onPaperTypeChange }) => (
+  default: ({ onDraftChange, onPaperTypeChange, ribbonTitle }) => (
     <div>
+      {ribbonTitle}
       <button type="button" onClick={() => onDraftChange('<p>Original!</p>')}>
         Simulate content edit
       </button>
