@@ -476,6 +476,27 @@ export default function NoteEditor({ onBack, showBack = false }) {
               <>
                 {!isShared && (
                   <IconButton
+                    icon={Star}
+                    label={note.starred ? t('editor.unfavourite', 'Remove from favourites') : t('editor.favourite', 'Add to favourites')}
+                    active={note.starred}
+                    iconClassName={note.starred ? 'fill-current' : ''}
+                    aria-pressed={!!note.starred}
+                    onClick={() => toggleStar(note.id)}
+                    className="qn-ribbon-secondary-action"
+                  />
+                )}
+                {!isShared && (
+                  <IconButton
+                    icon={Pin}
+                    label={note.pinned ? t('editor.unpin', 'Unpin note') : t('editor.pin', 'Pin note')}
+                    active={note.pinned}
+                    iconClassName={note.pinned ? 'fill-current' : ''}
+                    aria-pressed={!!note.pinned}
+                    onClick={() => togglePin(note.id)}
+                  />
+                )}
+                {!isShared && (
+                  <IconButton
                     ref={folderButtonRef}
                     icon={FolderOpen}
                     label={currentFolder ? `${t('editor.moveToFolder', 'Move to folder')}: ${currentFolder.name}` : t('editor.moveToFolder', 'Move to folder')}
@@ -496,16 +517,6 @@ export default function NoteEditor({ onBack, showBack = false }) {
                     aria-expanded={tagPickerOpen}
                     onClick={() => setTagPickerOpen((value) => !value)}
                     className="qn-ribbon-secondary-action"
-                  />
-                )}
-                {!isShared && (
-                  <IconButton
-                    icon={Pin}
-                    label={note.pinned ? t('editor.unpin', 'Unpin note') : t('editor.pin', 'Pin note')}
-                    active={note.pinned}
-                    iconClassName={note.pinned ? 'fill-current' : ''}
-                    aria-pressed={!!note.pinned}
-                    onClick={() => togglePin(note.id)}
                   />
                 )}
                 <IconButton
@@ -532,26 +543,17 @@ export default function NoteEditor({ onBack, showBack = false }) {
                     className="qn-ribbon-secondary-action"
                   />
                 )}
-                {!isShared && (
-                  <IconButton
-                    icon={Star}
-                    label={note.starred ? t('editor.unfavourite', 'Remove from favourites') : t('editor.favourite', 'Add to favourites')}
-                    active={note.starred}
-                    iconClassName={note.starred ? 'fill-current' : ''}
-                    aria-pressed={!!note.starred}
-                    onClick={() => toggleStar(note.id)}
-                    className="qn-ribbon-secondary-action"
-                  />
-                )}
-                <IconButton
-                  ref={menuButtonRef}
-                  icon={MoreVertical}
-                  label={t('editor.moreActions', 'More actions')}
-                  aria-haspopup="menu"
-                  aria-expanded={menuOpen}
-                  onClick={() => setMenuOpen((value) => !value)}
-                />
               </>
+            )}
+            ribbonOverflowAction={(
+              <IconButton
+                ref={menuButtonRef}
+                icon={MoreVertical}
+                label={t('editor.moreActions', 'More actions')}
+                aria-haspopup="menu"
+                aria-expanded={menuOpen}
+                onClick={() => setMenuOpen((value) => !value)}
+              />
             )}
           />
         )}

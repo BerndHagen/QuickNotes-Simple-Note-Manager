@@ -895,6 +895,7 @@ export default function RichTextEditor({
   readOnly = false,
   ribbonTitle,
   ribbonActions,
+  ribbonOverflowAction,
 }) {
   const [currentPaper, setCurrentPaper] = useState(paperType)
   const [typingEpoch, setTypingEpoch] = useState(0)
@@ -1402,6 +1403,7 @@ export default function RichTextEditor({
             onPaste={pasteClipboard}
             ribbonTitle={ribbonTitle}
             ribbonActions={ribbonActions}
+            ribbonOverflowAction={ribbonOverflowAction}
           />
         </div>
       )}
@@ -1756,6 +1758,7 @@ function EditorToolbar({
   onPaste,
   ribbonTitle,
   ribbonActions,
+  ribbonOverflowAction,
 }) {
   const { t } = useTranslation()
   const spellCheck = useUIStore((state) => state.spellCheck)
@@ -2265,7 +2268,7 @@ function EditorToolbar({
           {[
             ['home', 'Home'],
             ['insert', 'Insert'],
-            ['layout', 'Layout'],
+            ['layout', 'Format'],
             ['review', 'Review'],
             ['view', 'View'],
           ].map(([value, label]) => (
@@ -2326,6 +2329,7 @@ function EditorToolbar({
           >
             <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
           </button>
+          {ribbonOverflowAction}
         </div>
       </div>
       <div
@@ -2357,7 +2361,7 @@ function EditorToolbar({
       </ToolbarButton>
       </div>
 
-      <div className={ribbonGroupClass('home')} style={{ order: -2 }}>
+      <div className={ribbonGroupClass('review')} style={{ order: -3 }}>
       <span className="qn-ribbon-group-label">Find</span>
       <ToolbarButton onClick={() => useUIStore.getState().setFindReplaceOpen(true)} title="Find and replace" shortcut={shortcut('f')}>
         <Search className="h-4 w-4" />
@@ -2470,7 +2474,7 @@ function EditorToolbar({
       </div>
       </div>
 
-      <div className={ribbonGroupClass('home')} style={{ order: -9 }}>
+      <div className={ribbonGroupClass('layout')} style={{ order: -7 }}>
       <span className="qn-ribbon-group-label">Text styles</span>
       <div className="relative" ref={headingsRef}>
         <DropdownButton
@@ -2543,7 +2547,7 @@ function EditorToolbar({
       </ToolbarButton>
       </div>
 
-      <div className={ribbonGroupClass('home')} style={{ order: -8 }}>
+      <div className={ribbonGroupClass('layout')} style={{ order: -6 }}>
       <span className="qn-ribbon-group-label">Colour & effects</span>
       <div className="relative" ref={colorPickerRef}>
         <DropdownButton isOpen={showColorPicker} onClick={() => toggleDropdown(setShowColorPicker, showColorPicker)} title="Text Color">
@@ -2716,7 +2720,7 @@ function EditorToolbar({
       </ToolbarButton>
       </div>
 
-      <div className={ribbonGroupClass('home')} style={{ order: -7 }}>
+      <div className={ribbonGroupClass('layout')} style={{ order: -5 }}>
       <span className="qn-ribbon-group-label">Paragraph</span>
 
       <ToolbarButton onClick={() => editor.chain().focus().setTextAlign('left').run()} isActive={editor.isActive({ textAlign: 'left' })} title="Align Left">
@@ -2733,7 +2737,7 @@ function EditorToolbar({
       </ToolbarButton>
       </div>
 
-      <div className={ribbonGroupClass('home')} style={{ order: -6 }}>
+      <div className={ribbonGroupClass('layout')} style={{ order: -4 }}>
       <span className="qn-ribbon-group-label">Lists</span>
       <ToolbarButton onClick={() => editor.chain().focus().toggleBulletList().run()} isActive={editor.isActive('bulletList')} title="Bullet List">
         <List className="w-4 h-4" />
@@ -3416,7 +3420,7 @@ function EditorToolbar({
       </ToolbarButton>
       </div>
 
-      <div className={ribbonGroupClass('home')} style={{ order: -1 }}>
+      <div className={ribbonGroupClass('review')} style={{ order: -2 }}>
       <span className="qn-ribbon-group-label">Speech</span>
       <ToolbarButton onClick={() => useUIStore.getState().setVoiceInputActive(!voiceInputActive)} isActive={voiceInputActive} title={voiceInputActive ? 'Stop dictation' : 'Start dictation'}>
         <Mic className="h-4 w-4" />

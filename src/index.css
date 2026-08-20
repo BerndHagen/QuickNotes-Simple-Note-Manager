@@ -2805,7 +2805,7 @@ body {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(10rem, 20rem) minmax(0, 1fr);
   align-items: center;
-  background: color-mix(in srgb, var(--qn-accent-soft) 82%, var(--qn-surface-raised));
+  background: color-mix(in srgb, var(--qn-brand-200) 32%, var(--qn-surface-brand-tint-strong));
 }
 
 .qn-ribbon-tabs-start {
@@ -2816,7 +2816,6 @@ body {
 .qn-ribbon-title {
   width: 100%;
   justify-self: center;
-  border-inline: 1px solid color-mix(in srgb, var(--qn-accent-border) 55%, transparent);
 }
 
 .qn-ribbon-tabs-end {
@@ -2922,7 +2921,7 @@ body {
   background-image: inherit;
   background-position: inherit;
   background-size: inherit;
-  box-shadow: var(--qn-shadow-md);
+  box-shadow: var(--qn-shadow-page-edge);
 }
 
 .qn-page-break-marker {
@@ -2960,20 +2959,18 @@ body {
   position: absolute;
   right: 15px;
   left: 15px;
-  height: 8px;
+  height: 1px;
+  background: var(--qn-border-subtle);
+  box-shadow: var(--qn-shadow-page-edge);
   content: '';
 }
 
 .qn-page-gap__gutter::before {
   top: 0;
-  border-top: 1px solid var(--qn-border-subtle);
-  background: linear-gradient(to bottom, var(--qn-shadow-page-edge), transparent);
 }
 
 .qn-page-gap__gutter::after {
   bottom: 0;
-  border-bottom: 1px solid var(--qn-border-subtle);
-  background: linear-gradient(to top, var(--qn-shadow-page-edge), transparent);
 }
 
 /* Semantic callouts provide structured emphasis without relying on floating
