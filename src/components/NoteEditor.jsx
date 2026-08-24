@@ -395,16 +395,61 @@ export default function NoteEditor({ onBack, showBack = false }) {
             const SpecializedEditor = getEditorForNoteType(note.noteType)
             return (
               <div
-                className="h-full"
+                className={`flex h-full min-h-0 flex-col ${showBack ? 'qn-focused-mobile-chrome' : ''}`}
                 onContextMenu={(e) => {
+                  // Text fields keep the platform menu for selection, spelling,
+                  // copy/paste, and assistive tooling. The workspace menu is
+                  // reserved for the surrounding structured canvas.
+                  if (e.target.closest?.('input, textarea, [contenteditable="true"]')) return
                   e.preventDefault()
                   setSpecializedContextMenu({ x: e.clientX, y: e.clientY })
                 }}
               >
+                {showBack && (
+                  <div className="qn-ribbon-note-bar grid min-h-11 shrink-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center px-2">
+                    <div className="min-w-0 justify-self-start">
+                      <IconButton
+                        icon={ArrowLeft}
+                        label={t('editor.backToList', 'Back to notes')}
+                        onClick={onBack}
+                      />
+                    </div>
+                    <div className="qn-ribbon-title min-w-0 justify-self-center px-1">
+                      <label htmlFor="qn-focused-mobile-title" className="qn-sr-only">
+                        {t('editor.noteTitle', 'Note title')}
+                      </label>
+                      <input
+                        id="qn-focused-mobile-title"
+                        ref={titleInputRef}
+                        type="text"
+                        maxLength={MAX_NOTE_TITLE_LENGTH}
+                        value={title}
+                        onChange={handleTitleChange}
+                        onFocus={() => setIsEditingTitle(true)}
+                        onBlur={() => {
+                          debouncedTitleUpdate.flush()
+                          setIsEditingTitle(false)
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter') {
+                            event.preventDefault()
+                            event.currentTarget.blur()
+                          }
+                        }}
+                        readOnly={isReadOnly}
+                        placeholder={t('editor.untitled', 'Untitled note')}
+                        className={`h-9 w-full min-w-0 truncate rounded-control border border-transparent bg-transparent px-2 text-center text-ui-lg font-semibold outline-none transition-colors ${
+                          isEditingTitle ? 'bg-white/12' : 'hover:bg-white/10'
+                        } ${isReadOnly ? 'cursor-default' : 'cursor-text'}`}
+                      />
+                    </div>
+                    <div className="h-9 w-9 justify-self-end" aria-hidden="true" />
+                  </div>
+                )}
                 <fieldset
                   disabled={isReadOnly}
                   aria-label={isReadOnly ? 'Read-only note workspace' : undefined}
-                  className="h-full min-w-0 border-0 p-0"
+                  className="min-h-0 min-w-0 flex-1 border-0 p-0"
                 >
                   <SpecializedEditor
                     key={note.id}

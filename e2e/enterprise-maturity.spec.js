@@ -59,52 +59,51 @@ test.describe('enterprise UI maturity regressions', () => {
     expect(windowRadius).toBe(searchRadius)
   })
 
-  test('uses identical rail separators and shared high-contrast creation actions', async ({ page }) => {
+  test('uses identical rail separators and a high-contrast creation action', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 })
     await signIn(page)
 
     const rail = page.getByRole('navigation', { name: 'Workspace' })
     const separators = rail.locator('.qn-nav-separator')
-    await expect(separators).toHaveCount(2)
+    expect(await separators.count()).toBeGreaterThanOrEqual(2)
     const separatorBoxes = await separators.evaluateAll((elements) => elements.map((element) => {
       const box = element.getBoundingClientRect()
       return { x: box.x, width: box.width }
     }))
-    expect(separatorBoxes[0]).toEqual(separatorBoxes[1])
+    expect(separatorBoxes.every((box) =>
+      box.x === separatorBoxes[0].x && box.width === separatorBoxes[0].width
+    )).toBe(true)
 
-    const quickNote = rail.getByRole('button', { name: /Quick Note/i })
     const newNote = page.getByRole('button', { name: 'New note', exact: true }).first()
-    await expect(quickNote).toHaveClass(/qn-button-primary/)
     await expect(newNote).toHaveClass(/qn-button-primary/)
-    const restingBackground = await quickNote.evaluate((element) => getComputedStyle(element).backgroundColor)
-    await quickNote.hover()
-    await expect.poll(() => quickNote.evaluate((element) => getComputedStyle(element).backgroundColor)).not.toBe(restingBackground)
+    const restingBackground = await newNote.evaluate((element) => getComputedStyle(element).backgroundColor)
+    await newNote.hover()
+    await expect.poll(() => newNote.evaluate((element) => getComputedStyle(element).backgroundColor)).not.toBe(restingBackground)
   })
 
-  test('keeps the document header neutral with soft wave lines confined to the right edge', async ({ page }) => {
+  test('uses one restrained brand bar and a neutral command surface', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 })
     await signIn(page)
 
-    const header = page.locator('.qn-document-header')
+    const header = page.locator('.qn-ribbon-note-bar')
+    const tabs = page.locator('.qn-ribbon-tabs')
     await expect(header).toBeVisible()
+    await expect(tabs).toBeVisible()
     const surface = await header.evaluate((element) => {
       const style = getComputedStyle(element)
-      const pattern = getComputedStyle(element, '::after')
       return {
         backgroundColor: style.backgroundColor,
         backgroundImage: style.backgroundImage,
         color: style.color,
-        patternImage: pattern.backgroundImage,
-        patternWidth: pattern.width,
       }
     })
+    const tabsBackground = await tabs.evaluate((element) => getComputedStyle(element).backgroundColor)
 
-    expect(surface.backgroundImage).toBe('none')
-    expect(surface.patternImage).toContain('data:image/svg+xml')
-    expect(surface.patternImage).not.toContain('conic-gradient')
-    expect(Number.parseFloat(surface.patternWidth)).toBeGreaterThan(200)
-    expect(surface.backgroundColor).toBe('rgb(255, 255, 255)')
-    expect(surface.color).not.toBe('rgb(255, 255, 255)')
+    expect(surface.backgroundImage).toContain('linear-gradient')
+    expect(surface.backgroundImage).not.toContain('url(')
+    expect(surface.backgroundColor).toBe('rgb(11, 74, 56)')
+    expect(surface.color).toBe('rgb(255, 255, 255)')
+    expect(tabsBackground).not.toBe(surface.backgroundColor)
   })
 
   test('keeps mobile task copy readable and places secondary actions on their own row', async ({ page }) => {

@@ -12,7 +12,7 @@ export default function FocusedNoteTitle({
   const id = useId()
 
   return (
-    <div className="flex min-w-0 items-center gap-3">
+    <div className="qn-focused-note-title flex min-w-0 items-center gap-3">
       <span className="qn-focused-type-icon flex h-9 w-9 shrink-0 items-center justify-center rounded-control border border-accent-border bg-accent-soft text-accent-text">
         <Icon className="h-5 w-5" aria-hidden="true" />
       </span>

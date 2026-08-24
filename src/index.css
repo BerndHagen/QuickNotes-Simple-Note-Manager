@@ -2895,6 +2895,15 @@ body {
   color: rgb(255 255 255 / 44%) !important;
 }
 
+@media (max-width: 767px) {
+  /* Focused workspaces use the same single mobile identity bar as documents.
+     Their larger in-canvas title remains a desktop affordance, avoiding the
+     former duplicate-title treatment on phones. */
+  .qn-focused-mobile-chrome .qn-focused-note-title {
+    display: none;
+  }
+}
+
 .qn-ribbon-tabs :where(button, input):focus-visible {
   outline: 2px solid var(--qn-focus-ring);
   outline-offset: -3px;

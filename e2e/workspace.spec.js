@@ -243,7 +243,14 @@ test.describe('workspace', () => {
     const title = `Favourite ${Date.now()}`
     await createNote(page, title)
 
-    await page.getByRole('button', { name: /add to favourites/i }).first().click()
+    const editorBar = page.locator('.qn-ribbon-note-bar')
+    const directFavourite = editorBar.getByRole('button', { name: /add to favourites/i })
+    if (await directFavourite.isVisible()) {
+      await directFavourite.click()
+    } else {
+      await editorBar.getByRole('button', { name: /^more actions$/i }).click()
+      await page.getByRole('menuitem', { name: /add to favourites/i }).click()
+    }
     await page.getByRole('button', { name: /^favorites/i }).click()
     await expect(page.getByRole('button', { name: new RegExp(title, 'i') }).first()).toBeVisible()
   })

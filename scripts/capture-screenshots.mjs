@@ -44,6 +44,9 @@ async function createFocused(page, type, starter, title, className) {
   await dialog.getByLabel('Note title').fill(title)
   await dialog.getByRole('button', { name: /^Create / }).click()
   const editor = page.locator(className)
+  if (!(await editor.isVisible().catch(() => false))) {
+    await page.locator('.note-card', { hasText: title }).click()
+  }
   await editor.waitFor({ state: 'visible' })
   await expect(editor.locator('.qn-type-hero input').first()).toHaveValue(title)
 }
@@ -75,6 +78,21 @@ async function captureFocused(name, type, starter, title, className) {
   await openLocalWorkspace(page)
   await createFocused(page, type, starter, title, className)
   await save(page, name)
+  await context.close()
+}
+
+async function captureMobileFocused() {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 } })
+  const page = await context.newPage()
+  await openLocalWorkspace(page)
+  await createFocused(
+    page,
+    'Task List',
+    'Daily priorities',
+    'Mobile delivery priorities',
+    '.qn-type-todo',
+  )
+  await save(page, 'screenshot-tasks-mobile.png')
   await context.close()
 }
 
@@ -134,8 +152,9 @@ try {
     'Enterprise launch plan',
     '.qn-type-project',
   )
+  await captureMobileFocused()
 } finally {
   await browser.close()
 }
 
-console.log(`Updated eight repository screenshots in ${outputDir}`)
+console.log(`Updated nine repository screenshots in ${outputDir}`)
