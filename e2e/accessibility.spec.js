@@ -63,12 +63,19 @@ test.describe('accessibility', () => {
     }
   })
 
-  test('settings dialog has no WCAG A/AA violations', async ({ page }) => {
+  test('settings dialog has no WCAG A/AA violations in light or dark mode', async ({ page }) => {
     await signIn(page)
     await page.getByRole('button', { name: /^settings$/i }).first().click()
-    await expect(page.getByRole('dialog')).toBeVisible()
-    const { violations } = await analyse(page, '[role="dialog"]')
-    expect(format(violations)).toBe('')
+    const settings = page.getByRole('dialog', { name: 'Settings' })
+    await expect(settings).toBeVisible()
+
+    const lightResult = await analyse(page, '[role="dialog"]')
+    expect(format(lightResult.violations), 'light settings').toBe('')
+
+    await settings.getByRole('button', { name: 'Dark', exact: true }).click()
+    await page.waitForTimeout(200)
+    const darkResult = await analyse(page, '[role="dialog"]')
+    expect(format(darkResult.violations), 'dark settings').toBe('')
   })
 
   test('keyboard shortcuts dialog has no WCAG A/AA violations', async ({ page }) => {

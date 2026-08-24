@@ -108,6 +108,7 @@ const normalizeWorkspaceSnapshot = (snapshot) => {
 
 const workspaceWrites = new Map()
 let workspaceTransitionChain = Promise.resolve()
+let backendSyncPromise = null
 let deferredPersistenceFailure = null
 let reportPersistenceFailure = (error, source) => {
   deferredPersistenceFailure = { error, source }
@@ -157,6 +158,17 @@ const runWorkspaceTransition = (transition) => {
     .then(transition)
   workspaceTransitionChain = nextTransition
   return nextTransition
+}
+
+const runBackendSync = (transition) => {
+  if (backendSyncPromise) return backendSyncPromise
+  const syncPromise = runWorkspaceTransition(transition)
+  backendSyncPromise = syncPromise
+  const clearSyncPromise = () => {
+    if (backendSyncPromise === syncPromise) backendSyncPromise = null
+  }
+  void syncPromise.then(clearSyncPromise, clearSyncPromise)
+  return syncPromise
 }
 
 const safePersistStorage = createJSONStorage(() => ({
@@ -1472,7 +1484,8 @@ export const useNotesStore = create(
       setSyncing: (syncing) => set({ isSyncing: syncing }),
       setLastSyncTime: (time) => set({ lastSyncTime: time }),
 
-      syncWithBackend: async () => runWorkspaceTransition(async () => {
+      syncWithBackend: (options = {}) => runBackendSync(async () => {
+        const notify = options?.notify === true
         const { isSyncing } = get()
         if (isSyncing) return false
         
@@ -1507,7 +1520,7 @@ export const useNotesStore = create(
           return false
         }
 
-        const showNotifications = useUIStore.getState().showSyncNotifications
+        const showNotifications = notify && useUIStore.getState().showSyncNotifications
         const syncToast = showNotifications ? toast.loading('Synchronizing...') : null
 
         try {
@@ -2164,7 +2177,7 @@ export const useNotesStore = create(
         } catch (error) {
           const message = error.message || 'Unknown synchronization error'
           set({ lastSyncError: message })
-          toast.error(`Sync failed: ${message}`, syncToast ? { id: syncToast } : undefined)
+          if (syncToast) toast.error(`Sync failed: ${message}`, { id: syncToast })
           return false
         } finally {
           set({ isSyncing: false })

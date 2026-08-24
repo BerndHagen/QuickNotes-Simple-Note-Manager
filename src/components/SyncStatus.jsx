@@ -67,7 +67,7 @@ export function SyncStatusPill({ className = '' }) {
   return (
     <button
       type="button"
-      onClick={canSync ? syncWithBackend : undefined}
+      onClick={canSync ? () => syncWithBackend({ notify: true }) : undefined}
       disabled={!canSync}
       title={title}
       className={`flex min-w-0 items-center gap-1.5 rounded-control px-1.5 py-1 text-ui-xs font-medium transition-colors duration-fast disabled:cursor-default ${

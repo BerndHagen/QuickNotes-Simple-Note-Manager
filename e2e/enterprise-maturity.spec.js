@@ -37,6 +37,23 @@ test.describe('enterprise UI maturity regressions', () => {
     await expect(cardFrame.getByRole('button', { name: /more actions for welcome to quicknotes/i })).toBeVisible()
   })
 
+  test('uses one gold Lucide favourite treatment in list, editor, and grid views', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await signIn(page)
+
+    const listStar = page.locator('.note-card').filter({ hasText: 'Welcome to QuickNotes' })
+      .getByTitle('Favourite').locator('svg')
+    const editorStar = page.getByRole('button', { name: /remove from favourites/i }).first().locator('svg')
+    const listColor = await listStar.evaluate((icon) => getComputedStyle(icon).color)
+    await expect(editorStar).toHaveCSS('color', listColor)
+
+    await page.getByRole('button', { name: 'Grid view', exact: true }).click()
+    const gridStar = page.getByRole('button', { name: 'Remove from favorites', exact: true }).first().locator('svg')
+    await expect(gridStar).toHaveCSS('color', listColor)
+    await expect(gridStar).toHaveCSS('fill', listColor)
+    await expect(page.getByText('⭐', { exact: false })).toHaveCount(0)
+  })
+
   test('uses one product radius for fields, note cards and application windows', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 })
     await signIn(page)
@@ -59,6 +76,32 @@ test.describe('enterprise UI maturity regressions', () => {
     expect(windowRadius).toBe(searchRadius)
   })
 
+  test('centers every window icon against its title block on a neutral header', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await signIn(page)
+    await page.getByRole('button', { name: /^settings$/i }).first().click()
+    const settings = page.getByRole('dialog', { name: 'Settings' })
+    const header = settings.locator('[data-dialog-banner]')
+    const geometry = await header.evaluate((element) => {
+      const icon = element.querySelector('[data-dialog-icon]').getBoundingClientRect()
+      const copy = element.querySelector('[data-dialog-copy]').getBoundingClientRect()
+      const close = element.querySelector('button').getBoundingClientRect()
+      const center = (rect) => rect.top + rect.height / 2
+      const style = getComputedStyle(element)
+      return {
+        iconCopyDelta: Math.abs(center(icon) - center(copy)),
+        closeCopyDelta: Math.abs(center(close) - center(copy)),
+        backgroundImage: style.backgroundImage,
+        backgroundColor: style.backgroundColor,
+      }
+    })
+
+    expect(geometry.iconCopyDelta).toBeLessThanOrEqual(1)
+    expect(geometry.closeCopyDelta).toBeLessThanOrEqual(1)
+    expect(geometry.backgroundImage).toBe('none')
+    expect(geometry.backgroundColor).toBe('rgb(240, 245, 243)')
+  })
+
   test('uses identical rail separators and a high-contrast creation action', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 })
     await signIn(page)
@@ -76,6 +119,28 @@ test.describe('enterprise UI maturity regressions', () => {
 
     const newNote = page.getByRole('button', { name: 'New note', exact: true }).first()
     await expect(newNote).toHaveClass(/qn-button-primary/)
+    const creationContrast = await newNote.evaluate((button) => {
+      const channels = (value) => value.match(/[\d.]+/g).slice(0, 3).map(Number)
+      const luminance = (value) => {
+        const rgb = channels(value).map((channel) => {
+          const normalized = channel / 255
+          return normalized <= 0.04045
+            ? normalized / 12.92
+            : ((normalized + 0.055) / 1.055) ** 2.4
+        })
+        return rgb[0] * 0.2126 + rgb[1] * 0.7152 + rgb[2] * 0.0722
+      }
+      const style = getComputedStyle(button)
+      const foreground = luminance(style.color)
+      const background = luminance(style.backgroundColor)
+      return {
+        ratio: (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05),
+        iconColor: getComputedStyle(button.querySelector('svg')).color,
+        foreground: style.color,
+      }
+    })
+    expect(creationContrast.ratio).toBeGreaterThanOrEqual(4.5)
+    expect(creationContrast.iconColor).toBe(creationContrast.foreground)
     const restingBackground = await newNote.evaluate((element) => getComputedStyle(element).backgroundColor)
     await newNote.hover()
     await expect.poll(() => newNote.evaluate((element) => getComputedStyle(element).backgroundColor)).not.toBe(restingBackground)
@@ -104,6 +169,36 @@ test.describe('enterprise UI maturity regressions', () => {
     expect(surface.backgroundColor).toBe('rgb(11, 74, 56)')
     expect(surface.color).toBe('rgb(255, 255, 255)')
     expect(tabsBackground).not.toBe(surface.backgroundColor)
+  })
+
+  test('uses neutral dark chrome while reserving green for interaction states', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await signIn(page)
+
+    await page.getByRole('button', { name: /^settings$/i }).first().click()
+    const settings = page.getByRole('dialog', { name: 'Settings' })
+    await settings.getByRole('button', { name: 'Dark', exact: true }).click()
+
+    const header = settings.locator('[data-dialog-banner]')
+    const settingsNavigation = settings.getByRole('navigation', { name: 'Settings sections' }).locator('..')
+    const selectedSection = settings.getByRole('button', { name: 'General', exact: true })
+    await expect(header).toHaveCSS('background-color', 'rgb(21, 27, 35)')
+    await expect(settingsNavigation).toHaveCSS('background-color', 'rgb(17, 23, 30)')
+    await expect(selectedSection).not.toHaveCSS('background-color', 'rgb(17, 23, 30)')
+
+    await settings.getByRole('button', { name: /close settings/i }).click()
+    const rail = page.locator('.qn-nav-surface').first()
+    const titleBar = page.locator('.qn-ribbon-note-bar')
+    const newNote = page.getByRole('button', { name: 'New note', exact: true }).first()
+
+    await expect(rail).toHaveCSS('background-color', 'rgb(19, 24, 32)')
+    await expect(rail).toHaveCSS('background-image', 'none')
+    await expect(titleBar).toHaveCSS('background-color', 'rgb(19, 24, 32)')
+    await expect(newNote).toHaveCSS('background-color', 'rgb(38, 49, 61)')
+
+    await newNote.hover()
+    await expect.poll(() => newNote.evaluate((element) => getComputedStyle(element).backgroundColor))
+      .toBe('rgb(134, 181, 165)')
   })
 
   test('keeps project creation controls readable on every column', async ({ page }) => {

@@ -297,7 +297,11 @@ export default function NotesList({ sidebarToggle, onOpenNote }) {
 
   const handleNoteClick = useCallback(
     (e, note, index) => {
-      if (e.ctrlKey || e.metaKey) {
+      // Modifier selection is a desktop keyboard affordance. Mobile WebKit can
+      // report a synthetic Meta modifier for a touch tap; treating that as a
+      // multi-select leaves the user stranded in the list instead of opening
+      // the note they touched.
+      if (!isCoarsePointer && (e.ctrlKey || e.metaKey)) {
         setSelectedIds((prev) => {
           const next = new Set(prev)
           if (next.has(note.id)) next.delete(note.id)
@@ -307,7 +311,7 @@ export default function NotesList({ sidebarToggle, onOpenNote }) {
         setLastClickedId(note.id)
         return
       }
-      if (e.shiftKey && lastClickedId) {
+      if (!isCoarsePointer && e.shiftKey && lastClickedId) {
         const from = visibleNotes.findIndex((n) => n.id === lastClickedId)
         if (from !== -1) {
           const [start, end] = from < index ? [from, index] : [index, from]
@@ -320,7 +324,7 @@ export default function NotesList({ sidebarToggle, onOpenNote }) {
       setLastClickedId(note.id)
       onOpenNote?.()
     },
-    [lastClickedId, visibleNotes, setSelectedNote, onOpenNote]
+    [isCoarsePointer, lastClickedId, visibleNotes, setSelectedNote, onOpenNote]
   )
 
   /**
@@ -477,9 +481,10 @@ export default function NotesList({ sidebarToggle, onOpenNote }) {
           />
           <IconButton
             icon={Plus}
+            variant="primary"
             label={t('notes.createNew', 'New note')}
             onClick={handleCreateNote}
-            className="qn-button-primary border border-transparent bg-accent text-accent-on shadow-xs hover:bg-accent-hover active:bg-accent-active"
+            className="qn-new-note-action"
           />
         </div>
 

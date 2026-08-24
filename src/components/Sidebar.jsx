@@ -283,6 +283,7 @@ export default function Sidebar({ onNavigate }) {
           <li>
             <NavItem
               icon={Star}
+              iconColor="var(--qn-warning)"
               label={t('sidebar.favorites')}
               count={counts.favorites}
               selected={selectedTagFilter === '__starred__'}
@@ -373,7 +374,7 @@ export default function Sidebar({ onNavigate }) {
                           icon={Pencil}
                           label={`Edit ${view.name}`}
                           onClick={go(() => setSmartViewModalOpen(true, view.id))}
-                          className="qn-nav-row-action absolute right-1.5 bg-[rgba(8,61,49,0.92)] opacity-0 backdrop-blur-sm focus-visible:opacity-100 group-hover:opacity-100"
+                          className="qn-nav-row-action absolute right-1.5 opacity-0 backdrop-blur-sm focus-visible:opacity-100 group-hover:opacity-100"
                         />
                       }
                     />
@@ -428,7 +429,7 @@ export default function Sidebar({ onNavigate }) {
                           icon={Pencil}
                           label={`${t('common.edit', 'Edit')} ${folder.name}`}
                           onClick={go(() => setFolderDialog({ folder }))}
-                          className="qn-nav-row-action absolute right-1.5 bg-[rgba(8,61,49,0.92)] opacity-0 backdrop-blur-sm focus-visible:opacity-100 group-hover:opacity-100"
+                          className="qn-nav-row-action absolute right-1.5 opacity-0 backdrop-blur-sm focus-visible:opacity-100 group-hover:opacity-100"
                         />
                       }
                     />

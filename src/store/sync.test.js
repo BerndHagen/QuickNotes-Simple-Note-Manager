@@ -198,6 +198,17 @@ describe('cloud synchronization reconciliation', () => {
     await clearLocalData()
   })
 
+  it('coalesces simultaneous synchronization requests into one backend run', async () => {
+    backend.auth.getSession.mockClear()
+
+    const first = useNotesStore.getState().syncWithBackend()
+    const second = useNotesStore.getState().syncWithBackend()
+
+    expect(second).toBe(first)
+    await expect(Promise.all([first, second])).resolves.toEqual([true, true])
+    expect(backend.auth.getSession).toHaveBeenCalledTimes(1)
+  })
+
   it('removes a clean local note that was deleted by another client', async () => {
     const note = localNote()
     resetStore({ notes: [note] })

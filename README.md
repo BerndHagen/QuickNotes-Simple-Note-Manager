@@ -950,6 +950,14 @@ If you'd like a preview of QuickNotes before trying it out, the screenshots belo
     <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/screenshot-editor.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/screenshot-editor.png" alt="QuickNotes Editor" width="450"></a></td>
   </tr>
   <tr>
+    <th>QuickNotes - Dark Editor</th>
+    <th>QuickNotes - Dark Settings</th>
+  </tr>
+  <tr>
+    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/screenshot-editor-dark.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/screenshot-editor-dark.png" alt="QuickNotes dark editor" width="450"></a></td>
+    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/screenshot-settings-dark.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/screenshot-settings-dark.png" alt="QuickNotes dark settings" width="450"></a></td>
+  </tr>
+  <tr>
     <th>QuickNotes - Task Workspace</th>
     <th>QuickNotes - Meeting Workspace</th>
   </tr>

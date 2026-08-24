@@ -172,6 +172,12 @@ describe('internal note links', () => {
 describe('note previews', () => {
   it('falls back to the available side, supports focus, and preserves child handlers', async () => {
     vi.useFakeTimers()
+    vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({
+      matches: query === '(hover: hover) and (pointer: fine)',
+      media: query,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }))
     const onFocus = vi.fn()
     useNotesStore.setState({
       notes: [{ id: 'n1', title: 'Preview me', content: '<p>Body</p>', updatedAt: '2026-01-01' }],
@@ -191,6 +197,33 @@ describe('note previews', () => {
     expect(screen.getByRole('tooltip')).toBeInTheDocument()
     expect(Number.parseFloat(screen.getByRole('tooltip').style.left)).toBeGreaterThanOrEqual(10)
     expect(trigger).toHaveAttribute('aria-describedby', screen.getByRole('tooltip').id)
+  })
+
+  it('never opens the desktop preview when a touch user taps a note', () => {
+    vi.useFakeTimers()
+    vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({
+      matches: false,
+      media: query,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }))
+    const onClick = vi.fn()
+    useNotesStore.setState({
+      notes: [{ id: 'n1', title: 'Open directly', content: '<p>Body</p>', updatedAt: '2026-01-01' }],
+    })
+    render(
+      <NotePreviewPopover noteId="n1">
+        <button type="button" onClick={onClick}>Open note</button>
+      </NotePreviewPopover>
+    )
+
+    const trigger = screen.getByRole('button', { name: 'Open note' })
+    fireEvent.focus(trigger)
+    fireEvent.click(trigger)
+    act(() => vi.runOnlyPendingTimers())
+
+    expect(onClick).toHaveBeenCalledTimes(1)
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
   })
 })
 

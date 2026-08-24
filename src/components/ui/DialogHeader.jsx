@@ -20,17 +20,18 @@ export default function DialogHeader({
   return (
     <header
       data-dialog-banner
-      className={`qn-dialog-header flex shrink-0 items-start gap-3 border-b border-strong bg-[var(--qn-surface-window-header)] px-5 py-4 text-content sm:px-6 ${className}`}
+      className={`qn-dialog-header flex shrink-0 items-center gap-3 border-b border-strong bg-[var(--qn-surface-window-header)] px-5 py-4 text-content sm:px-6 ${className}`}
     >
       {Icon && (
         <span
+          data-dialog-icon
           className="grid h-9 w-9 shrink-0 place-items-center rounded-control border border-[var(--qn-accent-border)] bg-[var(--qn-surface-brand-tint-strong)] text-accent-text shadow-xs"
           aria-hidden="true"
         >
           <Icon className="h-[18px] w-[18px]" />
         </span>
       )}
-      <div className="min-w-0 flex-1">
+      <div data-dialog-copy className="min-w-0 flex-1">
         {title && (
           <h2 id={titleId} className="truncate text-title-sm font-semibold text-content">
             {title}
@@ -47,7 +48,7 @@ export default function DialogHeader({
           type="button"
           onClick={onClose}
           aria-label={closeLabel}
-          className="qn-square-control -mr-1.5 -mt-1 flex h-control-md w-control-md shrink-0 items-center justify-center rounded-control text-content-muted transition-colors duration-fast hover:bg-surface-hover hover:text-content"
+          className="qn-square-control flex h-control-md w-control-md shrink-0 items-center justify-center rounded-control text-content-muted transition-colors duration-fast hover:bg-surface-hover hover:text-content"
         >
           <X className="h-[18px] w-[18px]" aria-hidden="true" />
         </button>

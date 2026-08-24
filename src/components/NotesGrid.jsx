@@ -166,6 +166,7 @@ function GridNoteCard({ note, isSelected, onClick, onOpenMenu }) {
             size="sm"
             label={note.starred ? 'Remove from favorites' : 'Add to favorites'}
             active={note.starred}
+            tone="favorite"
             iconClassName={note.starred ? 'fill-current' : ''}
             onClick={() => toggleStar(note.id)}
             className={note.starred ? '' : 'opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100'}

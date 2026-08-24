@@ -44,6 +44,7 @@ import { setLocalWorkspaceName } from '../lib/localSession'
 import { createWorkspaceBackup } from '../lib/workspaceBackup'
 import { normalizeWebUrl } from '../lib/webUrls'
 import { normalizeUsername, validateUsername } from '../lib/usernames'
+import { APP_VERSION } from '../lib/appVersion'
 import { useTranslation, LANGUAGES } from '../lib/useTranslation'
 import toast from 'react-hot-toast'
 import LegacyDialog from './ui/LegacyDialog'
@@ -707,15 +708,15 @@ export default function SettingsModal() {
               <div className="space-y-6">
                 {user?.isLocal ? (
                   <div className="space-y-5">
-                    <div className="flex items-center gap-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900 dark:bg-emerald-950/30">
-                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-emerald-700 shadow-sm dark:bg-surface-raised dark:text-emerald-300">
+                    <div className="flex items-center gap-4 rounded-xl border border-[var(--qn-accent-border)] bg-accent-soft p-4">
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-subtle bg-surface-raised text-accent-text shadow-xs">
                         <HardDrive className="h-5 w-5" aria-hidden="true" />
                       </span>
                       <div>
                         <p className="font-semibold text-content">
                           {user?.username || 'My workspace'}
                         </p>
-                        <p className="mt-0.5 text-sm text-emerald-800 dark:text-emerald-200">
+                        <p className="mt-0.5 text-sm text-accent-text">
                           Saved privately on this device
                         </p>
                       </div>
@@ -800,7 +801,7 @@ export default function SettingsModal() {
                           type="url"
                           defaultValue={user.user_metadata?.avatar_url || ''}
                           placeholder="https://example.com/your-image.jpg"
-                          className="flex-1 px-4 py-2 text-sm text-content bg-white border border-subtle rounded-lg dark:bg-surface-sunken dark:text-white"
+                          className="flex-1 rounded-lg border border-subtle bg-surface-raised px-4 py-2 text-sm text-content"
                           id="avatar-url-input"
                         />
                         <button
@@ -1076,7 +1077,7 @@ export default function SettingsModal() {
                           type="email"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
-                          className="w-full py-2 pl-10 pr-4 text-content bg-white border border-subtle rounded-lg dark:bg-surface-sunken dark:text-white"
+                          className="w-full rounded-lg border border-subtle bg-surface-raised py-2 pl-10 pr-4 text-content"
                           placeholder="your@email.com"
                           autoComplete="email"
                           required
@@ -1095,7 +1096,7 @@ export default function SettingsModal() {
                           type={showPassword ? 'text' : 'password'}
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
-                          className="w-full py-2 pl-10 pr-10 text-content bg-white border border-subtle rounded-lg dark:bg-surface-sunken dark:text-white"
+                          className="w-full rounded-lg border border-subtle bg-surface-raised py-2 pl-10 pr-10 text-content"
                           placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
                           autoComplete="current-password"
                           required
@@ -1140,7 +1141,11 @@ export default function SettingsModal() {
                       </p>
                     </div>
                   </div>
-                  <Button variant="primary" onClick={syncWithBackend} disabled={!user}>
+                  <Button
+                    variant="primary"
+                    onClick={() => syncWithBackend({ notify: true })}
+                    disabled={!user}
+                  >
                     {t('settings.syncNow')}
                   </Button>
                 </div>
@@ -1177,7 +1182,7 @@ export default function SettingsModal() {
                       value={syncInterval}
                       onChange={(e) => setSyncInterval(Number(e.target.value))}
                       disabled={!autoSync}
-                      className="px-3 py-1.5 text-sm border border-subtle rounded-lg bg-white dark:bg-surface-sunken text-content disabled:opacity-50"
+                      className="rounded-lg border border-subtle bg-surface-raised px-3 py-1.5 text-sm text-content disabled:opacity-50"
                     >
                       <option value={1}>1 {t('settings.minute', 'minute')}</option>
                       <option value={5}>5 {t('settings.minutes', 'minutes')}</option>
@@ -1341,7 +1346,7 @@ export default function SettingsModal() {
                   </div>
                   <div className="text-center">
                     <h3 className="text-lg font-semibold text-content">QuickNotes</h3>
-                    <p className="text-sm text-content-muted">{t('settings.version')} 2.2.0</p>
+                    <p className="text-sm text-content-muted">{t('settings.version')} {APP_VERSION}</p>
                   </div>
                   <p className="text-center text-sm text-content-muted max-w-sm">
                     {t('settings.aboutDescription')}

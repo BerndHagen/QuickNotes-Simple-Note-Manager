@@ -539,6 +539,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
                     icon={Star}
                     label={note.starred ? t('editor.unfavourite', 'Remove from favourites') : t('editor.favourite', 'Add to favourites')}
                     active={note.starred}
+                    tone="favorite"
                     iconClassName={note.starred ? 'fill-current' : ''}
                     aria-pressed={!!note.starred}
                     onClick={() => toggleStar(note.id)}

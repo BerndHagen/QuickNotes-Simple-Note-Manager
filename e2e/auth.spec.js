@@ -64,7 +64,15 @@ test.describe('authentication entry', () => {
     const response = await request.get(assetUrl)
     expect(response.ok()).toBe(true)
     expect(response.headers()['content-type']).toContain('image/png')
-    expect((await response.body()).byteLength).toBeGreaterThan(1_000_000)
+    expect((await response.body()).byteLength).toBeGreaterThan(200_000)
+    const dimensions = await page.evaluate(async (url) => {
+      const image = new Image()
+      image.src = url
+      await image.decode()
+      return { width: image.naturalWidth, height: image.naturalHeight }
+    }, assetUrl)
+    expect(dimensions.width).toBeGreaterThanOrEqual(1_200)
+    expect(dimensions.height).toBeGreaterThanOrEqual(1_200)
 
     const preview = page.locator('.qn-auth-preview')
     await expect(preview.locator('.qn-auth-preview-banner')).toHaveCount(1)

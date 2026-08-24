@@ -8,6 +8,16 @@ const openSettings = async (page) => {
 }
 
 test.describe('mobile Safari workflows', () => {
+  test('opens a tapped note directly without leaving a preview tooltip over the editor', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 568 })
+    await signIn(page)
+
+    await page.locator('.note-card').filter({ hasText: 'Welcome to QuickNotes' }).tap()
+
+    await expect(page.getByLabel('Note title')).toBeVisible()
+    await expect(page.getByRole('tooltip')).toHaveCount(0)
+  })
+
   test('keeps shared controls square and uses readable Apple shortcut names', async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 568 })
     await signIn(page)

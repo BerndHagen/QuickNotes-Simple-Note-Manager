@@ -507,10 +507,10 @@ function TaskItem({
             aria-label={task.starred ? `Remove star from ${task.text}` : `Star ${task.text}`}
             aria-pressed={task.starred}
             className={`p-1 rounded transition-colors ${
- task.starred ? 'text-accent-text' : 'text-content-subtle hover:text-accent-text'
+ task.starred ? 'text-warning' : 'text-content-subtle hover:text-warning'
  }`}
           >
-            <Star className={`w-5 h-5 ${task.starred ? 'fill-yellow-500' : ''}`} />
+            <Star className={`w-5 h-5 ${task.starred ? 'fill-current' : ''}`} />
           </button>
           <div className="relative" ref={priorityRef}>
           <button

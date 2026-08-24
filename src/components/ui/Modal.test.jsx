@@ -28,7 +28,9 @@ describe('Modal', () => {
     renderModal({ description: 'Consistent dialog header' })
     const banner = screen.getByRole('dialog').querySelector('[data-dialog-banner]')
     expect(banner).toHaveClass('qn-dialog-header')
+    expect(banner).toHaveClass('items-center')
     expect(banner).not.toHaveClass('qn-banner-surface')
+    expect(banner.querySelector('[data-dialog-icon]')).toBeNull()
     expect(banner).toContainElement(screen.getByRole('heading', { name: 'Delete folder' }))
   })
 

@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { useUIStore } from '../store'
 import { useTranslation } from '../lib/useTranslation'
+import { APP_VERSION } from '../lib/appVersion'
 import { Button, Modal, buttonClasses } from './ui'
 
 export default function HelpModal() {
@@ -177,7 +178,7 @@ export default function HelpModal() {
               {t('help.termsOfService')}
             </Button>
           </div>
-          <p className="mt-3 text-center text-ui-xs text-content-muted">QuickNotes v2.2.0</p>
+          <p className="mt-3 text-center text-ui-xs text-content-muted">QuickNotes v{APP_VERSION}</p>
         </div>
       </div>
     </Modal>

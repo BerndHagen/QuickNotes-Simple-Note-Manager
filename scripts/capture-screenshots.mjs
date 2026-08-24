@@ -72,6 +72,26 @@ async function captureEditorAndSearch() {
   await context.close()
 }
 
+async function captureDarkWorkspaceAndSettings() {
+  const context = await browser.newContext({ viewport })
+  const page = await context.newPage()
+  await openLocalWorkspace(page)
+
+  await page.getByRole('button', { name: /^settings$/i }).first().click()
+  const settings = page.getByRole('dialog', { name: 'Settings' })
+  await settings.getByRole('button', { name: 'Dark', exact: true }).click()
+  await expect(page.locator('html')).toHaveClass(/dark/)
+  // Theme-aware controls animate their colour tokens; capture the settled
+  // palette rather than the first transitional frame after toggling.
+  await page.waitForTimeout(250)
+  await save(page, 'screenshot-settings-dark.png')
+
+  await settings.getByRole('button', { name: /close settings/i }).click()
+  await page.locator('.ProseMirror').waitFor({ state: 'visible' })
+  await save(page, 'screenshot-editor-dark.png')
+  await context.close()
+}
+
 async function captureFocused(name, type, starter, title, className) {
   const context = await browser.newContext({ viewport })
   const page = await context.newPage()
@@ -165,6 +185,7 @@ async function captureTemplates() {
 try {
   await captureStartup()
   await captureEditorAndSearch()
+  await captureDarkWorkspaceAndSettings()
   await captureWorkspaceAndShapes()
   await captureFocused(
     'screenshot-tasks.png',
@@ -194,4 +215,4 @@ try {
   await browser.close()
 }
 
-console.log(`Updated eleven repository screenshots in ${outputDir}`)
+console.log(`Updated thirteen repository screenshots in ${outputDir}`)

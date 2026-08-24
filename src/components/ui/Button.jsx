@@ -107,6 +107,10 @@ const TONES = {
     base: 'text-banner-muted hover:bg-banner-hover hover:text-banner-text',
     active: 'bg-banner-hover text-banner-text',
   },
+  favorite: {
+    base: 'text-content-subtle hover:bg-warning-soft hover:text-warning',
+    active: 'bg-warning-soft text-warning',
+  },
 }
 
 /**
@@ -149,6 +153,7 @@ export const IconButton = forwardRef(function IconButton(
       aria-pressed={
         typeof props['aria-pressed'] === 'boolean' ? props['aria-pressed'] : active || undefined
       }
+      data-tone={tone || undefined}
       disabled={disabled || loading}
       className={[
         'qn-icon-button qn-square-control inline-flex aspect-square shrink-0 self-center items-center justify-center transition-colors duration-fast ease-qn',

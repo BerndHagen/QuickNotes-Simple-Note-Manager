@@ -1,10 +1,16 @@
 import { cloneElement, useState, useRef, useEffect, useId, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { Eye, FileText, Calendar, Tag, Folder } from 'lucide-react'
+import { Eye, FileText, Calendar, Tag, Folder, Pin, Star } from 'lucide-react'
 import { useNotesStore } from '../store'
+
+const supportsHoverPreview = () =>
+  typeof window === 'undefined' ||
+  typeof window.matchMedia !== 'function' ||
+  window.matchMedia('(hover: hover) and (pointer: fine)').matches
 
 export default function NotePreviewPopover({ noteId, children, position = 'right' }) {
   const [isVisible, setIsVisible] = useState(false)
+  const [canPreview, setCanPreview] = useState(supportsHoverPreview)
   const [coords, setCoords] = useState({ x: 0, y: 0 })
   const triggerRef = useRef(null)
   const popoverRef = useRef(null)
@@ -20,6 +26,22 @@ export default function NotePreviewPopover({ noteId, children, position = 'right
         clearTimeout(timeoutRef.current)
       }
     }
+  }, [])
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return undefined
+    const query = window.matchMedia('(hover: hover) and (pointer: fine)')
+    const handleChange = () => {
+      const enabled = query.matches
+      setCanPreview(enabled)
+      if (!enabled) {
+        if (timeoutRef.current) clearTimeout(timeoutRef.current)
+        setIsVisible(false)
+      }
+    }
+    handleChange()
+    query.addEventListener?.('change', handleChange)
+    return () => query.removeEventListener?.('change', handleChange)
   }, [])
 
   const updatePosition = useCallback(() => {
@@ -48,6 +70,7 @@ export default function NotePreviewPopover({ noteId, children, position = 'right
   }, [position])
 
   const showPreview = (delay = 500) => {
+    if (!canPreview) return
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
     }
@@ -208,8 +231,18 @@ export default function NotePreviewPopover({ noteId, children, position = 'right
               <FileText className="w-3 h-3" />
               {(note.content || '').replace(/<[^>]*>/g, '').trim().split(/\s+/).filter(Boolean).length} words
             </span>
-            {note.starred && <span className="text-yellow-500">{"\u2B50"} Favorite</span>}
-            {note.pinned && <span className="text-blue-500">{"\u{1F4CC}"} Pinned</span>}
+            {note.starred && (
+              <span className="inline-flex items-center gap-1 text-warning">
+                <Star className="h-3 w-3 fill-current" aria-hidden="true" />
+                Favorite
+              </span>
+            )}
+            {note.pinned && (
+              <span className="inline-flex items-center gap-1 text-accent-text">
+                <Pin className="h-3 w-3 fill-current" aria-hidden="true" />
+                Pinned
+              </span>
+            )}
           </div>
         </div>,
         document.body
