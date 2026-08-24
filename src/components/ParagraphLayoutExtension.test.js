@@ -84,6 +84,28 @@ describe('document layout extensions', () => {
     })
   })
 
+  it('keeps inserted tab atoms attached when their ruler stop moves', () => {
+    const editor = createEditor({
+      extensions: [StarterKit, ParagraphLayoutExtension, TabStopExtension],
+      content: '<p>Owner</p>',
+    })
+    editor.commands.setTextSelection(6)
+    editor.commands.setParagraphLayout({ tabStops: [{ position: 120, type: 'left' }] })
+    editor.commands.insertTabStop({ width: 48, stop: 120, type: 'left' })
+
+    editor.commands.setParagraphLayout({ tabStops: [{ position: 176, type: 'right' }] })
+
+    expect(editor.getJSON().content[0]).toMatchObject({
+      attrs: { tabStops: [{ position: 176, type: 'right' }] },
+    })
+    expect(editor.getJSON().content[0].content.at(-1)).toMatchObject({
+      type: 'tabStop',
+      attrs: { stop: 176, type: 'right' },
+    })
+    expect(editor.getHTML()).toContain('data-stop="176"')
+    expect(editor.getHTML()).toContain('data-tab-type="right"')
+  })
+
   it('stores manual page breaks as document structure', () => {
     const editor = createEditor({
       extensions: [StarterKit, PageBreakExtension, PaginationExtension],

@@ -60,7 +60,28 @@ const updateParagraphs = (state, dispatch, updater) => {
   positions.forEach((pos) => {
     const node = tr.doc.nodeAt(pos)
     if (!node) return
-    tr.setNodeMarkup(pos, undefined, { ...node.attrs, ...updater(node.attrs) })
+    const patch = updater(node.attrs)
+    tr.setNodeMarkup(pos, undefined, { ...node.attrs, ...patch })
+
+    // Ruler stops and inserted tab atoms describe the same paragraph
+    // geometry. When a user drags or changes a stop, keep existing tab atoms
+    // attached to it instead of leaving their durable HTML at the old pixel.
+    if (patch.tabStops && node.attrs.tabStops?.length === patch.tabStops.length) {
+      const previousStops = normalizeTabStops(node.attrs.tabStops)
+      node.descendants((child, offset) => {
+        if (child.type.name !== 'tabStop') return
+        const previousIndex = previousStops.findIndex((stop) => (
+          stop.position === child.attrs.stop && stop.type === child.attrs.type
+        ))
+        const nextStop = patch.tabStops[previousIndex]
+        if (!nextStop) return
+        tr.setNodeMarkup(pos + 1 + offset, undefined, {
+          ...child.attrs,
+          stop: nextStop.position,
+          type: nextStop.type,
+        })
+      })
+    }
   })
   dispatch(tr)
   return true

@@ -34,6 +34,7 @@ import CustomTableHeader from './CustomTableHeader'
 import TableBubbleMenu from './TableBubbleMenu'
 import { common, createLowlight } from 'lowlight'
 import { useTranslation } from '../lib/useTranslation'
+import { useMediaQuery } from '../hooks/useBreakpoint'
 import {
   Bold,
   Italic,
@@ -391,6 +392,8 @@ function DocumentRuler({ editor, containerRef }) {
   const rulerRef = useRef(null)
   const trackRef = useRef(null)
   const dragRef = useRef(null)
+  const geometryRef = useRef(null)
+  const layoutRef = useRef(null)
   const [geometry, setGeometry] = useState({
     pageLeft: 40,
     pageWidth: 794,
@@ -401,6 +404,8 @@ function DocumentRuler({ editor, containerRef }) {
   const [tabType, setTabType] = useState('left')
   const [layout, setLayout] = useState({ leftIndent: 0, rightIndent: 0, firstLineIndent: 0, tabStops: [] })
   const [drag, setDrag] = useState(null)
+  geometryRef.current = geometry
+  layoutRef.current = layout
 
   useEffect(() => {
     if (!editor) return undefined
@@ -460,47 +465,72 @@ function DocumentRuler({ editor, containerRef }) {
     const move = (event) => {
       const rect = trackRef.current?.getBoundingClientRect()
       const current = dragRef.current
-      if (!rect || !current) return
+      if (!rect || !current || (current.pointerId !== undefined && event.pointerId !== current.pointerId)) return
+      const currentGeometry = geometryRef.current
+      const currentLayout = layoutRef.current
+      const raw = event.clientX - rect.left
+      const snapped = event.shiftKey ? raw : Math.round(raw / 4) * 4
+      const minimumTextWidth = 40
+      const minimum = current.type === 'right'
+        ? currentLayout.leftIndent + minimumTextWidth
+        : 0
+      const maximum = current.type === 'left'
+        ? currentGeometry.contentWidth - currentLayout.rightIndent - minimumTextWidth
+        : current.type === 'first' || current.type === 'tab'
+          ? currentGeometry.contentWidth - currentLayout.rightIndent
+          : currentGeometry.contentWidth
+      const removalDistance = current.pointerType === 'touch' ? 48 : 28
       const next = {
         ...current,
-        current: Math.max(0, Math.min(rect.width, event.clientX - rect.left)),
-        outside: event.clientY < rect.top - 18 || event.clientY > rect.bottom + 18,
+        current: Math.round(Math.max(minimum, Math.min(maximum, snapped))),
+        outside: event.clientY < rect.top - removalDistance || event.clientY > rect.bottom + removalDistance,
       }
       dragRef.current = next
       setDrag(next)
     }
-    const finish = () => {
+    const finish = (event) => {
       const current = dragRef.current
-      if (!current) return
-      if (current.type === 'left') editor.commands.setParagraphLayout({ leftIndent: current.current })
-      if (current.type === 'right') editor.commands.setParagraphLayout({ rightIndent: geometry.contentWidth - current.current })
-      if (current.type === 'first') editor.commands.setParagraphLayout({ firstLineIndent: current.current - layout.leftIndent })
+      if (!current || (current.pointerId !== undefined && event.pointerId !== current.pointerId)) return
+      const currentGeometry = geometryRef.current
+      const currentLayout = layoutRef.current
+      const cancelled = event.type === 'pointercancel'
+      if (!cancelled && current.type === 'left') editor.commands.setParagraphLayout({ leftIndent: current.current })
+      if (!cancelled && current.type === 'right') editor.commands.setParagraphLayout({ rightIndent: currentGeometry.contentWidth - current.current })
+      if (!cancelled && current.type === 'first') editor.commands.setParagraphLayout({ firstLineIndent: current.current - currentLayout.leftIndent })
       if (current.type === 'tab') {
-        const next = current.outside
-          ? layout.tabStops.filter((_, index) => index !== current.index)
-          : layout.tabStops.map((stop, index) => index === current.index ? { ...stop, position: current.current } : stop)
-        editor.commands.setParagraphLayout({ tabStops: next })
+        if (!cancelled) {
+          const next = current.outside
+            ? currentLayout.tabStops.filter((_, index) => index !== current.index)
+            : currentLayout.tabStops.map((stop, index) => index === current.index ? { ...stop, position: current.current } : stop)
+          editor.commands.setParagraphLayout({ tabStops: next })
+        }
       }
       dragRef.current = null
       setDrag(null)
-      editor.view.focus()
+      if (!cancelled) editor.view.focus()
     }
     window.addEventListener('pointermove', move)
-    window.addEventListener('pointerup', finish, { once: true })
-    window.addEventListener('pointercancel', finish, { once: true })
+    window.addEventListener('pointerup', finish)
+    window.addEventListener('pointercancel', finish)
     return () => {
       window.removeEventListener('pointermove', move)
       window.removeEventListener('pointerup', finish)
       window.removeEventListener('pointercancel', finish)
     }
-  }, [editor, geometry.contentWidth, hasActiveDrag, layout.leftIndent, layout.tabStops])
+  }, [editor, hasActiveDrag])
 
   const startDrag = (event, value) => {
     if (event.button !== 0) return
     event.preventDefault()
     event.stopPropagation()
-    dragRef.current = value
-    setDrag(value)
+    event.currentTarget.setPointerCapture?.(event.pointerId)
+    const next = {
+      ...value,
+      pointerId: event.pointerId,
+      pointerType: event.pointerType,
+    }
+    dragRef.current = next
+    setDrag(next)
   }
   const cycleTabType = (currentType) => TAB_STOP_TYPES[(TAB_STOP_TYPES.indexOf(currentType) + 1) % TAB_STOP_TYPES.length]
   const markerPosition = (type, fallback) => drag?.type === type ? drag.current : fallback
@@ -895,6 +925,7 @@ export default function RichTextEditor({
   readOnly = false,
   ribbonTitle,
   ribbonActions,
+  ribbonDetails,
   ribbonOverflowAction,
 }) {
   const [currentPaper, setCurrentPaper] = useState(paperType)
@@ -915,6 +946,7 @@ export default function RichTextEditor({
   const onChangeRef = useRef(onChange)
   const onDraftChangeRef = useRef(onDraftChange)
   const editorSettings = useEditorSettings()
+  const isCompactViewport = useMediaQuery('(max-width: 767px)')
   const hasAppliedDefaultTab = useRef(false)
   const finishObjectDrawing = useCallback(() => setDrawTool(null), [])
   const syncSlashMenu = useCallback((currentEditor) => {
@@ -1403,6 +1435,7 @@ export default function RichTextEditor({
             onPaste={pasteClipboard}
             ribbonTitle={ribbonTitle}
             ribbonActions={ribbonActions}
+            ribbonDetails={ribbonDetails}
             ribbonOverflowAction={ribbonOverflowAction}
           />
         </div>
@@ -1448,7 +1481,7 @@ export default function RichTextEditor({
 
       {!readOnly && <SlashCommandMenu editor={editor} editorSettings={editorSettings} menu={slashMenu} onClose={() => setSlashMenu(null)} />}
 
-      {editorSettings.showRuler && (
+      {editorSettings.showRuler && !isCompactViewport && (
         <DocumentRuler editor={editor} containerRef={editorContainerRef} />
       )}
 
@@ -1462,7 +1495,7 @@ export default function RichTextEditor({
           }}
           className="qn-editor-workbench relative flex-1 overflow-y-auto"
         >
-          {editorSettings.showRuler && (
+          {editorSettings.showRuler && !isCompactViewport && (
             <VerticalDocumentRuler editor={editor} containerRef={editorContainerRef} />
           )}
           <div
@@ -1758,12 +1791,14 @@ function EditorToolbar({
   onPaste,
   ribbonTitle,
   ribbonActions,
+  ribbonDetails,
   ribbonOverflowAction,
 }) {
   const { t } = useTranslation()
   const spellCheck = useUIStore((state) => state.spellCheck)
   const showNoteStatistics = useUIStore((state) => state.showNoteStatistics)
   const voiceInputActive = useUIStore((state) => state.voiceInputActive)
+  const isCompactViewport = useMediaQuery('(max-width: 767px)')
   const shortcut = (key, modifiers = {}) =>
     formatShortcut({ key, ctrl: true, ...modifiers })
   const [showColorPicker, setShowColorPicker] = useState(false)
@@ -2252,19 +2287,33 @@ function EditorToolbar({
       className="editor-ribbon border-b border-subtle"
       data-density={editorSettings.ribbonDensity}
     >
-      <div className="qn-ribbon-tabs min-h-10 border-b border-subtle px-2 sm:px-3">
-        <div className="qn-ribbon-tabs-start flex min-w-0 items-center overflow-hidden">
-          {mobilePanelOpen && (
-            <button
-              type="button"
-              onClick={onMobileClose}
-              aria-label="Hide formatting tools"
-              className="qn-square-control mr-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-control text-content-muted transition-colors hover:bg-surface-hover hover:text-content md:hidden"
-            >
-              <X className="h-4 w-4" aria-hidden="true" />
-            </button>
+      <div className="qn-ribbon-note-bar flex min-h-11 items-center gap-2 border-b px-2 sm:px-3">
+        {ribbonTitle && (
+          <div className="qn-ribbon-title flex min-w-0 flex-1 items-center px-1">
+            {ribbonTitle}
+          </div>
+        )}
+        <div className="qn-ribbon-note-actions flex min-w-0 shrink-0 items-center justify-end">
+          {ribbonActions && (
+            <div className="flex shrink-0 items-center gap-0.5" aria-label="Note actions">
+              {ribbonActions}
+            </div>
           )}
-          <div role="tablist" aria-label="Editor ribbon" className="flex min-w-0 items-stretch overflow-x-auto">
+          <button
+            type="button"
+            aria-label="Customize editor"
+            title="Customize editor"
+            onClick={() => useUIStore.getState().setEditorSettingsOpen(true)}
+            className="qn-square-control ml-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-control text-content-muted transition-colors hover:bg-surface-hover hover:text-content"
+          >
+            <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+          </button>
+          {ribbonOverflowAction}
+        </div>
+      </div>
+      {ribbonDetails}
+      <div className="qn-ribbon-tabs flex min-h-10 items-center border-b border-subtle px-2 sm:px-3">
+        <div role="tablist" aria-label="Editor ribbon" className="flex min-w-0 flex-1 items-stretch overflow-x-auto">
           {[
             ['home', 'Home'],
             ['insert', 'Insert'],
@@ -2307,30 +2356,17 @@ function EditorToolbar({
               {label}
             </button>
             ))}
-          </div>
         </div>
-        {ribbonTitle && (
-          <div className="qn-ribbon-title flex min-w-0 items-center px-1">
-            {ribbonTitle}
-          </div>
-        )}
-        <div className="qn-ribbon-tabs-end flex min-w-0 items-center justify-end">
-          {ribbonActions && (
-            <div className="flex shrink-0 items-center gap-0.5" aria-label="Note actions">
-              {ribbonActions}
-            </div>
-          )}
+        {mobilePanelOpen && (
           <button
             type="button"
-            aria-label="Customize editor"
-            title="Customize editor"
-            onClick={() => useUIStore.getState().setEditorSettingsOpen(true)}
-            className="qn-square-control ml-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-control text-content-muted transition-colors hover:bg-surface-hover hover:text-content"
+            onClick={onMobileClose}
+            aria-label="Hide formatting tools"
+            className="qn-square-control ml-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-control text-content-muted transition-colors hover:bg-surface-hover hover:text-content md:hidden"
           >
-            <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+            <X className="h-4 w-4" aria-hidden="true" />
           </button>
-          {ribbonOverflowAction}
-        </div>
+        )}
       </div>
       <div
         id="qn-editor-ribbon-panel"
@@ -3366,7 +3402,12 @@ function EditorToolbar({
 
       <div className={ribbonGroupClass('view')}>
       <span className="qn-ribbon-group-label">Show</span>
-      <ToolbarButton onClick={() => updateEditorSettings({ showRuler: !editorSettings.showRuler })} isActive={editorSettings.showRuler} title={editorSettings.showRuler ? 'Hide ruler' : 'Show ruler'}>
+      <ToolbarButton
+        onClick={() => updateEditorSettings({ showRuler: !editorSettings.showRuler })}
+        isActive={!isCompactViewport && editorSettings.showRuler}
+        disabled={isCompactViewport}
+        title={isCompactViewport ? 'Ruler is available on larger screens' : editorSettings.showRuler ? 'Hide ruler' : 'Show ruler'}
+      >
         <Ruler className="h-4 w-4" />
       </ToolbarButton>
       <ToolbarButton onClick={() => updateEditorSettings({ showInvisibles: !editorSettings.showInvisibles })} isActive={editorSettings.showInvisibles} title={editorSettings.showInvisibles ? 'Hide formatting marks' : 'Show formatting marks'}>

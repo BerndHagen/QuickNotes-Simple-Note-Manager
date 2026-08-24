@@ -1462,11 +1462,14 @@ body {
 
 [data-window-shell] > .qn-dialog-header {
   min-height: 76px;
-  background: var(--qn-surface-window-header) !important;
+  background:
+    linear-gradient(110deg, rgb(255 255 255 / 20%), transparent 52%),
+    var(--qn-surface-window-header) !important;
 }
 
 [data-window-shell] > .qn-dialog-header + :not([data-dialog-footer]) {
-  background-color: var(--qn-surface-base);
+  background:
+    linear-gradient(180deg, var(--qn-surface-brand-tint) 0, var(--qn-surface-base) 88px);
 }
 
 [data-dialog-footer] {
@@ -1488,6 +1491,10 @@ body {
 }
 
 @media (max-width: 767px) {
+  .qn-ribbon-mobile-action {
+    display: inline-flex !important;
+  }
+
   * {
     -webkit-tap-highlight-color: transparent;
   }
@@ -2801,23 +2808,25 @@ body {
   background: var(--qn-surface-panel);
 }
 
+.qn-ribbon-note-bar,
 .qn-ribbon-tabs {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(10rem, 20rem) minmax(0, 1fr);
   align-items: center;
   border-color: rgb(255 255 255 / 18%);
-  background: #1f7b61;
   color: #ffffff;
 }
 
-.qn-ribbon-tabs-start {
-  justify-self: start;
-  max-width: 100%;
+.qn-ribbon-note-bar {
+  background:
+    linear-gradient(90deg, rgb(255 255 255 / 4%), transparent 46%),
+    #0b4a38;
+}
+
+.qn-ribbon-tabs {
+  background: #17654f;
 }
 
 .qn-ribbon-title {
-  width: 100%;
-  justify-self: center;
+  width: min(100%, 44rem);
 }
 
 .qn-ribbon-title input {
@@ -2832,11 +2841,6 @@ body {
 .qn-ribbon-title input:hover,
 .qn-ribbon-title input:focus {
   background: rgb(255 255 255 / 12%);
-}
-
-.qn-ribbon-tabs-end {
-  justify-self: end;
-  max-width: 100%;
 }
 
 .qn-ribbon-tab:hover {
@@ -2865,23 +2869,28 @@ body {
   background: #ffffff;
 }
 
+.qn-ribbon-note-bar :where(button, input):focus-visible,
 .qn-ribbon-tabs :where(button, input):focus-visible {
   outline: 2px solid #ffffff;
   outline-offset: -3px;
 }
 
-.qn-ribbon-tabs :where(.qn-ribbon-tabs-start, .qn-ribbon-title, .qn-ribbon-tabs-end) button {
+.qn-ribbon-note-bar button,
+.qn-ribbon-tabs > button {
   color: #ffffff !important;
 }
 
-.qn-ribbon-tabs :where(.qn-ribbon-tabs-start, .qn-ribbon-tabs-end) button:hover,
-.qn-ribbon-tabs :where(.qn-ribbon-tabs-start, .qn-ribbon-tabs-end) button[aria-pressed='true'],
-.qn-ribbon-tabs :where(.qn-ribbon-tabs-start, .qn-ribbon-tabs-end) button[aria-expanded='true'] {
+.qn-ribbon-note-bar button:hover,
+.qn-ribbon-note-bar button[aria-pressed='true'],
+.qn-ribbon-note-bar button[aria-expanded='true'],
+.qn-ribbon-tabs > button:hover,
+.qn-ribbon-tabs > button[aria-expanded='true'] {
   background: rgb(255 255 255 / 14%) !important;
   color: #ffffff !important;
 }
 
-.qn-ribbon-tabs :where(.qn-ribbon-tabs-start, .qn-ribbon-tabs-end) button:active {
+.qn-ribbon-note-bar button:active,
+.qn-ribbon-tabs > button:active {
   background: rgb(255 255 255 / 22%) !important;
 }
 
@@ -2897,8 +2906,13 @@ body {
   background: rgb(255 255 255 / 23%) !important;
 }
 
+.qn-ribbon-note-bar button:disabled,
 .qn-ribbon-tabs button:disabled {
   color: rgb(255 255 255 / 44%) !important;
+}
+
+.qn-ribbon-mobile-action {
+  display: none;
 }
 
 .editor-toolbar {
@@ -2988,6 +3002,17 @@ body {
   box-shadow: var(--qn-shadow-page-edge);
 }
 
+/* Ruled-paper margin guides belong to the sheet background, while their text
+   inset belongs to the content box. Keeping those responsibilities separate
+   prevents a paper switch from changing the measured page width. */
+.qn-editor-page.paper-lined-margin .ProseMirror {
+  padding-left: max(var(--qn-page-pad-x), 70px);
+}
+
+.qn-editor-page.paper-college .ProseMirror {
+  padding-left: max(var(--qn-page-pad-x), 50px);
+}
+
 .qn-page-break-marker {
   height: 0;
   margin: 0;
@@ -2997,7 +3022,17 @@ body {
 
 .qn-page-gap {
   display: block;
+  box-sizing: border-box;
+  max-width: none;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding: 0 !important;
   pointer-events: none;
+}
+
+.ProseMirror ul[data-type='taskList'] > .qn-page-gap {
+  display: block;
+  flex: none;
 }
 
 .qn-page-gap > span {
@@ -3012,8 +3047,8 @@ body {
 .qn-page-gap__gutter {
   position: relative;
   z-index: 2;
-  width: calc(100% + 32px);
-  margin-left: -16px;
+  width: 100%;
+  margin-left: 0;
   background: var(--qn-surface-workbench);
   box-shadow: none;
 }
@@ -3219,6 +3254,61 @@ body {
     padding: 20px 18px 80px;
   }
 
+  .qn-editor-page.paper-lined-margin .ProseMirror,
+  .qn-editor-page.paper-college .ProseMirror {
+    padding-left: 24px;
+  }
+
+  .qn-editor-page.paper-lined-margin {
+    background-image: repeating-linear-gradient(
+      transparent,
+      transparent 31px,
+      #e5e7eb 31px,
+      #e5e7eb 32px
+    ) !important;
+  }
+
+  .qn-editor-page.paper-college {
+    background-image: repeating-linear-gradient(
+      transparent,
+      transparent 27px,
+      #93c5fd 27px,
+      #93c5fd 28px
+    ) !important;
+  }
+
+  .dark .qn-editor-page.paper-lined-margin {
+    background-image: repeating-linear-gradient(
+      transparent,
+      transparent 31px,
+      var(--pattern-color) 31px,
+      var(--pattern-color) 32px
+    ) !important;
+  }
+
+  .dark .qn-editor-page.paper-college {
+    background-image: repeating-linear-gradient(
+      transparent,
+      transparent 27px,
+      var(--pattern-color) 27px,
+      var(--pattern-color) 28px
+    ) !important;
+  }
+
+  /* Phones use a continuous writing surface. Desktop page boundaries remain
+     durable in the document and reappear for print/PDF, but large simulated
+     paper gutters must never consume most of a small editing viewport. */
+  .qn-editor-page .qn-page-gap {
+    display: none !important;
+  }
+
+  .qn-editor-page .qn-page-break-marker {
+    height: 18px;
+    margin-block: 12px;
+    overflow: visible;
+    border-top: 1px dashed var(--qn-border-strong);
+  }
+
   .qn-ribbon-group {
     box-sizing: border-box;
     height: 48px;
@@ -3253,10 +3343,6 @@ body {
 }
 
 @container (max-width: 700px) {
-  .qn-ribbon-tabs {
-    grid-template-columns: minmax(0, 1fr) minmax(6rem, 9rem) minmax(0, 1fr);
-  }
-
   .qn-ribbon-tab {
     padding-inline: 0.625rem;
   }
@@ -3264,6 +3350,7 @@ body {
   .qn-ribbon-secondary-action {
     display: none !important;
   }
+
 }
 
 @container (max-width: 520px) {

@@ -9,6 +9,7 @@ import { X } from 'lucide-react'
 export default function DialogHeader({
   title,
   description,
+  icon: Icon,
   onClose,
   closeLabel = 'Close dialog',
   hideCloseButton = false,
@@ -21,6 +22,14 @@ export default function DialogHeader({
       data-dialog-banner
       className={`qn-dialog-header flex shrink-0 items-start gap-3 border-b border-strong bg-[var(--qn-surface-window-header)] px-5 py-4 text-content sm:px-6 ${className}`}
     >
+      {Icon && (
+        <span
+          className="grid h-9 w-9 shrink-0 place-items-center rounded-control border border-[var(--qn-accent-border)] bg-[var(--qn-surface-brand-tint-strong)] text-accent-text shadow-xs"
+          aria-hidden="true"
+        >
+          <Icon className="h-[18px] w-[18px]" />
+        </span>
+      )}
       <div className="min-w-0 flex-1">
         {title && (
           <h2 id={titleId} className="truncate text-title-sm font-semibold text-content">

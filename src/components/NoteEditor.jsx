@@ -13,6 +13,7 @@ import {
   FolderOpen,
   History,
   Image as ImageIcon,
+  Info,
   Link2,
   Mic,
   MoreVertical,
@@ -112,6 +113,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
   const [folderPickerOpen, setFolderPickerOpen] = useState(false)
   const [newTagName, setNewTagName] = useState('')
   const [showBacklinks, setShowBacklinks] = useState(false)
+  const [noteDetailsOpen, setNoteDetailsOpen] = useState(false)
   const [editorRef, setEditorRef] = useState(null)
   const [specializedContextMenu, setSpecializedContextMenu] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -119,6 +121,8 @@ export default function NoteEditor({ onBack, showBack = false }) {
   const menuButtonRef = useRef(null)
   const tagButtonRef = useRef(null)
   const folderButtonRef = useRef(null)
+  const mobileFolderButtonRef = useRef(null)
+  const mobileTagButtonRef = useRef(null)
   const titleInputRef = useRef(null)
   const versionTrackerRef = useRef(null)
   const versionBaselineRef = useRef(null)
@@ -181,6 +185,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
 
   useEffect(() => {
     if (noteTitle !== undefined) setTitle(noteTitle || '')
+    setNoteDetailsOpen(false)
   }, [noteId, noteTitle])
 
   useEffect(() => {
@@ -443,11 +448,11 @@ export default function NoteEditor({ onBack, showBack = false }) {
                     className="absolute left-0 shrink-0"
                   />
                 )}
-                <label htmlFor="qn-ribbon-note-title" className="qn-sr-only">
+                <label htmlFor="qn-mobile-note-title" className="qn-sr-only">
                   {t('editor.noteTitle', 'Note title')}
                 </label>
                 <input
-                  id="qn-ribbon-note-title"
+                  id="qn-mobile-note-title"
                   ref={titleInputRef}
                   type="text"
                   maxLength={MAX_NOTE_TITLE_LENGTH}
@@ -466,7 +471,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
                   }}
                   readOnly={isReadOnly}
                   placeholder={t('editor.untitled', 'Untitled note')}
-                  className={`h-8 min-w-0 flex-1 truncate rounded-control border-0 bg-transparent px-9 text-center text-ui-md font-semibold text-content outline-none transition-colors placeholder:text-content-subtle ${
+                  className={`h-9 min-w-0 flex-1 truncate rounded-control border border-transparent bg-transparent px-10 text-center text-ui-lg font-semibold text-content outline-none transition-colors placeholder:text-content-subtle sm:px-12 ${
                     isEditingTitle ? 'bg-surface-sunken' : 'hover:bg-surface-hover'
                   } ${isReadOnly ? 'cursor-default' : 'cursor-text'}`}
                 />
@@ -474,6 +479,15 @@ export default function NoteEditor({ onBack, showBack = false }) {
             )}
             ribbonActions={(
               <>
+                <IconButton
+                  icon={Info}
+                  label={noteDetailsOpen ? t('editor.hideNoteDetails', 'Hide note details') : t('editor.showNoteDetails', 'Show note details')}
+                  active={noteDetailsOpen}
+                  aria-expanded={noteDetailsOpen}
+                  aria-controls="qn-note-details"
+                  onClick={() => setNoteDetailsOpen((value) => !value)}
+                  className="qn-ribbon-mobile-action"
+                />
                 {!isShared && (
                   <IconButton
                     icon={Star}
@@ -545,6 +559,40 @@ export default function NoteEditor({ onBack, showBack = false }) {
                   />
                 )}
               </>
+            )}
+            ribbonDetails={(
+              <div
+                id="qn-note-details"
+                hidden={!noteDetailsOpen}
+                className="qn-mobile-note-details border-b border-subtle bg-surface-panel px-3 py-2 md:hidden"
+              >
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    ref={mobileFolderButtonRef}
+                    type="button"
+                    aria-haspopup="menu"
+                    aria-expanded={folderPickerOpen}
+                    onClick={() => setFolderPickerOpen((value) => !value)}
+                    className="flex min-w-0 items-center gap-2 rounded-control border border-subtle bg-surface-raised px-3 py-2 text-left text-ui-md text-content-muted shadow-xs"
+                  >
+                    <FolderOpen className="h-4 w-4 shrink-0 text-accent-text" aria-hidden="true" />
+                    <span className="truncate">{currentFolder?.name || t('editor.noFolder', 'No folder')}</span>
+                  </button>
+                  <button
+                    ref={mobileTagButtonRef}
+                    type="button"
+                    aria-haspopup="menu"
+                    aria-expanded={tagPickerOpen}
+                    onClick={() => setTagPickerOpen((value) => !value)}
+                    className="flex min-w-0 items-center gap-2 rounded-control border border-subtle bg-surface-raised px-3 py-2 text-left text-ui-md text-content-muted shadow-xs"
+                  >
+                    <Tag className="h-4 w-4 shrink-0 text-accent-text" aria-hidden="true" />
+                    <span className="truncate">
+                      {note.tags?.length ? note.tags.map((tag) => `#${tag}`).join(', ') : t('editor.noTags', 'No tags')}
+                    </span>
+                  </button>
+                </div>
+              </div>
             )}
             ribbonOverflowAction={(
               <IconButton
@@ -693,7 +741,13 @@ export default function NoteEditor({ onBack, showBack = false }) {
       <Menu
         open={folderPickerOpen}
         onClose={() => setFolderPickerOpen(false)}
-        anchorRef={folderButtonRef.current?.offsetParent ? folderButtonRef : menuButtonRef}
+        anchorRef={
+          mobileFolderButtonRef.current?.offsetParent
+            ? mobileFolderButtonRef
+            : folderButtonRef.current?.offsetParent
+              ? folderButtonRef
+              : menuButtonRef
+        }
         label={t('editor.moveToFolder', 'Move to folder')}
         width={220}
       >
@@ -723,7 +777,13 @@ export default function NoteEditor({ onBack, showBack = false }) {
       <Menu
         open={tagPickerOpen}
         onClose={() => setTagPickerOpen(false)}
-        anchorRef={tagButtonRef.current?.offsetParent ? tagButtonRef : menuButtonRef}
+        anchorRef={
+          mobileTagButtonRef.current?.offsetParent
+            ? mobileTagButtonRef
+            : tagButtonRef.current?.offsetParent
+              ? tagButtonRef
+              : menuButtonRef
+        }
         label={t('editor.tags', 'Tags')}
         width={250}
         className="p-2"

@@ -157,7 +157,7 @@ test.describe('editor productivity objects', () => {
       buttons.map((button) => ({ name: button.getAttribute('aria-label'), left: button.getBoundingClientRect().left }))
         .sort((first, second) => first.left - second.left)[0]?.name
     )
-    expect(leftmostCommand).toBe('Font family')
+    expect(leftmostCommand).toBe('Cut')
     const groupChrome = await toolbar.locator('.qn-ribbon-group:visible').first().evaluate((group) => {
       const style = getComputedStyle(group)
       return { radius: style.borderRadius, shadow: style.boxShadow, background: style.backgroundColor }
@@ -278,6 +278,48 @@ test.describe('editor productivity objects', () => {
 
     await expect.poll(async () => editor.locator('.qn-page-gap[data-page-break="automatic"]').count()).toBeGreaterThan(0)
     await expect.poll(async () => Number(await editor.getAttribute('data-page-count'))).toBeGreaterThanOrEqual(2)
+  })
+
+  test('flows a long checklist across pages without stretching the first sheet', async ({ page }) => {
+    const editor = page.getByRole('textbox', { name: 'Note content' })
+    await editor.click()
+    await page.keyboard.press('Control+A')
+    for (let index = 1; index <= 48; index += 1) {
+      await page.keyboard.insertText(`Checklist item ${index}`)
+      if (index < 48) await page.keyboard.press('Enter')
+    }
+    await page.keyboard.press('Control+A')
+    await page.getByRole('tab', { name: 'Home' }).click()
+    await page.getByRole('button', { name: /Create checklist/ }).click()
+
+    const items = editor.locator('li[data-type="taskItem"]')
+    await expect(items).toHaveCount(48)
+    await expect.poll(async () => editor.locator('ul[data-type="taskList"] > .qn-page-gap').count()).toBeGreaterThan(0)
+    await expect.poll(async () => Number(await editor.getAttribute('data-page-count'))).toBeGreaterThanOrEqual(2)
+
+    const firstGap = editor.locator('ul[data-type="taskList"] > .qn-page-gap').first()
+    const [editorBox, gapBox] = await Promise.all([editor.boundingBox(), firstGap.boundingBox()])
+    const expectedPageHeight = editorBox.width * (297 / 210)
+    expect(gapBox.y - editorBox.y).toBeLessThan(expectedPageHeight + 2)
+  })
+
+  test('changes ruled paper without shifting or narrowing the page', async ({ page }) => {
+    const editor = page.getByRole('textbox', { name: 'Note content' })
+    const paper = page.locator('[data-editor-page]')
+    const beforePaper = await paper.boundingBox()
+    const beforeEditor = await editor.boundingBox()
+
+    await page.getByRole('tab', { name: 'Layout' }).click()
+    await page.getByRole('button', { name: 'Paper Style' }).click()
+    await page.getByRole('dialog', { name: 'Formatting options' }).getByRole('button', { name: 'Lined + Margin' }).click()
+
+    const afterPaper = await paper.boundingBox()
+    const afterEditor = await editor.boundingBox()
+    expect(afterPaper.x).toBeCloseTo(beforePaper.x, 1)
+    expect(afterPaper.width).toBeCloseTo(beforePaper.width, 1)
+    expect(afterEditor.x).toBeCloseTo(beforeEditor.x, 1)
+    expect(afterEditor.width).toBeCloseTo(beforeEditor.width, 1)
+    expect(Number.parseFloat(await editor.evaluate((element) => getComputedStyle(element).paddingLeft))).toBeGreaterThanOrEqual(70)
   })
 
   test('edits one checklist item without forcing deletion of the checklist', async ({ page }) => {
@@ -563,13 +605,22 @@ test.describe('editor productivity objects', () => {
     await expect(rightMargin).not.toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
     const track = ruler.locator('[data-ruler-track]')
     await track.click({ position: { x: 210, y: 18 } })
-    await expect(ruler.getByRole('button', { name: /Left tab stop at 210 pixels/ })).toBeVisible()
+    const leftStop = ruler.getByRole('button', { name: /Left tab stop at 210 pixels/ })
+    await expect(leftStop).toBeVisible()
 
     await editor.getByText('Tab stop target', { exact: true }).click()
     await editor.press('End')
     await editor.press('Tab')
     await expect(editor.locator('[data-type="tabStop"]')).toHaveCount(1)
     await expect(editor.locator('[data-type="tabStop"]')).toHaveAttribute('data-tab-type', 'left')
+
+    const [leftStopBox, trackBox] = await Promise.all([leftStop.boundingBox(), track.boundingBox()])
+    await page.mouse.move(leftStopBox.x + leftStopBox.width / 2, leftStopBox.y + leftStopBox.height / 2)
+    await page.mouse.down()
+    await page.mouse.move(trackBox.x + 250, leftStopBox.y + leftStopBox.height / 2, { steps: 5 })
+    await page.mouse.up()
+    await expect(ruler.getByRole('button', { name: /Left tab stop at 252 pixels/ })).toBeVisible()
+    await expect(editor.locator('[data-type="tabStop"]')).toHaveAttribute('data-stop', '252')
 
     await ruler.getByRole('button', { name: /Tab stop type: Left/ }).click()
     await track.click({ position: { x: 300, y: 18 } })
