@@ -72,6 +72,36 @@ describe('GlobalSearchModal', () => {
     expect(screen.queryByText(/Ctrl\+Shift\+F/i)).not.toBeInTheDocument()
   })
 
+  it('searches structured workspace data and filters by note type', async () => {
+    useNotesStore.setState({
+      notes: [
+        {
+          id: 'meeting-1',
+          title: 'Team sync',
+          noteType: 'meeting',
+          content: '',
+          noteData: {
+            actionItems: [{ id: 'action-1', task: 'Send the purple dossier' }],
+          },
+          tags: [],
+          deleted: false,
+          archived: false,
+        },
+      ],
+      folders: [],
+      tags: [],
+    })
+    const user = userEvent.setup()
+    render(<GlobalSearchModal />)
+
+    await user.click(screen.getByRole('button', { name: 'Meetings' }))
+    await user.type(screen.getByRole('combobox'), 'purple dossier')
+
+    expect(await screen.findByText('Team sync')).toBeInTheDocument()
+    expect(screen.getByText('Match in structured note details')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Meetings' })).toHaveAttribute('aria-pressed', 'true')
+  })
+
   it('does not register the obsolete Ctrl+Shift+F document listener', async () => {
     useUIStore.setState({ globalSearchOpen: false })
     const user = userEvent.setup()

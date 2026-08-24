@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import {
   Archive,
+  CalendarDays,
   ChevronDown,
   ChevronRight,
   HelpCircle,
@@ -8,6 +9,7 @@ import {
   FolderOpen,
   Keyboard,
   Kanban,
+  ListChecks,
   LogOut,
   Monitor,
   Moon,
@@ -24,8 +26,11 @@ import { useNotesStore, useThemeStore, useUIStore } from '../store'
 import { useTranslation } from '../lib/useTranslation'
 import { getFolderIcon } from '../lib/folderIcons'
 import { isBackendConfigured } from '../lib/backend'
+import { createDailyNoteInput, findDailyNote } from '../lib/dailyNotes'
+import { collectWorkspaceTasks, getTaskSummary } from '../lib/workspaceTasks'
 import { Avatar, Menu, MenuItem, MenuSeparator, TagChip } from './ui'
 import { FolderDialog, ConfirmDialog } from './FolderDialogs'
+import { getDefaultData, NOTE_TYPES } from './editors/noteTypes'
 
 /**
  * Navigation row. A real `<button>`, so the rail is reachable by Tab and
@@ -109,6 +114,7 @@ export default function Sidebar({ onNavigate }) {
     folders,
     tags,
     notes,
+    selectedNoteId,
     selectedFolderId,
     selectedTagFilter,
     createFolder,
@@ -116,6 +122,8 @@ export default function Sidebar({ onNavigate }) {
     deleteFolder,
     setSelectedFolder,
     setSelectedTagFilter,
+    createNote,
+    setSelectedNote,
     user,
     pendingShares,
     logout,
@@ -129,6 +137,8 @@ export default function Sidebar({ onNavigate }) {
     setDuplicateModalOpen,
     setArchiveViewOpen,
     setNoteTypesModalOpen,
+    setTasksViewOpen,
+    setMobileView,
     setTagManagerOpen,
     setSharedNotesViewOpen,
     setHelpModalOpen,
@@ -172,6 +182,11 @@ export default function Sidebar({ onNavigate }) {
     }
     return { byFolder, byTag, all, favorites, trash, archive }
   }, [notes])
+  const taskSummary = useMemo(
+    () => getTaskSummary(collectWorkspaceTasks(notes)),
+    [notes]
+  )
+  const dailyNote = useMemo(() => findDailyNote(notes), [notes])
 
   const go = (fn) => () => {
     fn()
@@ -193,8 +208,22 @@ export default function Sidebar({ onNavigate }) {
 
   const accountName = user?.username || user?.user_metadata?.username || 'Account'
   const accountDetail = user?.isLocal ? t('auth.localWorkspace', 'Saved on this device') : user?.email
-  const isAllNotes = !selectedFolderId && !selectedTagFilter
+  const isAllNotes = !selectedFolderId && !selectedTagFilter && selectedNoteId !== dailyNote?.id
   const cloudEnabled = isBackendConfigured()
+
+  const openToday = () => {
+    const target = dailyNote || createNote(
+      createDailyNoteInput(
+        new Date(),
+        getDefaultData(NOTE_TYPES.JOURNAL),
+        typeof navigator === 'undefined' ? undefined : navigator.language
+      )
+    )
+    setSelectedFolder(null)
+    setSelectedTagFilter(null)
+    setSelectedNote(target.id)
+    setMobileView('editor')
+  }
 
   return (
     <nav
@@ -222,6 +251,22 @@ export default function Sidebar({ onNavigate }) {
                 setSelectedFolder(null)
                 setSelectedTagFilter(null)
               })}
+            />
+          </li>
+          <li>
+            <NavItem
+              icon={CalendarDays}
+              label={t('sidebar.today', 'Today')}
+              selected={selectedNoteId === dailyNote?.id}
+              onClick={go(openToday)}
+            />
+          </li>
+          <li>
+            <NavItem
+              icon={ListChecks}
+              label={t('sidebar.tasks', 'My Tasks')}
+              count={taskSummary.open}
+              onClick={go(() => setTasksViewOpen(true))}
             />
           </li>
           <li>

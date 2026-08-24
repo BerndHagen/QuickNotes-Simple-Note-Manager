@@ -29,6 +29,7 @@ const MOBILE_HISTORY_SURFACE_KEYS = [
   'privacyModalOpen',
   'helpModalOpen',
   'noteTypesModalOpen',
+  'tasksViewOpen',
   'shortcutsModalOpen',
   'archiveViewOpen',
   'globalSearchOpen',
@@ -69,6 +70,7 @@ const ShareNoteModal = lazy(() => import('./components/ShareNoteModal'))
 const SharedNotesView = lazy(() => import('./components/SharedNotesView'))
 const KeyboardShortcutsModal = lazy(() => import('./components/KeyboardShortcutsModal'))
 const NoteTypesModal = lazy(() => import('./components/NoteTypesModal'))
+const TasksView = lazy(() => import('./components/TasksView'))
 const HelpModal = lazy(() => import('./components/HelpModal'))
 const PrivacyModal = lazy(() => import('./components/PrivacyModal'))
 const TermsModal = lazy(() => import('./components/TermsModal'))
@@ -154,6 +156,7 @@ export default function App() {
     archiveViewOpen,
     shortcutsModalOpen,
     noteTypesModalOpen,
+    tasksViewOpen,
     helpModalOpen,
     privacyModalOpen,
     termsModalOpen,
@@ -302,12 +305,6 @@ export default function App() {
   useEffect(() => {
     if (user) useNotesStore.getState().cleanupExpiredTrash()
   }, [user])
-
-  useEffect(() => {
-    const preventNativeContextMenu = (event) => event.preventDefault()
-    document.addEventListener('contextmenu', preventNativeContextMenu, true)
-    return () => document.removeEventListener('contextmenu', preventNativeContextMenu, true)
-  }, [])
 
   useEffect(() => {
     return onConnectionChange((online) => {
@@ -630,6 +627,7 @@ export default function App() {
           {noteTypesModalOpen && (
             <NoteTypesModal onCreated={() => isCompact && setMobileView('editor')} />
           )}
+          {tasksViewOpen && <TasksView />}
           {helpModalOpen && <HelpModal />}
           {privacyModalOpen && <PrivacyModal />}
           {termsModalOpen && <TermsModal />}

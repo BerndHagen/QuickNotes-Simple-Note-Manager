@@ -1,17 +1,28 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronRight, FileText, Folder, Loader2, Search, Tag } from 'lucide-react'
 import { useNotesStore, useUIStore } from '../store'
-import { debounce, htmlToPlainText } from '../lib/utils'
+import { debounce, getNoteTypePreview, htmlToPlainText } from '../lib/utils'
+import { getSearchableText } from '../lib/filterNotes'
 import { formatShortcut, loadShortcuts } from '../lib/shortcuts'
 import { useTranslation } from '../lib/useTranslation'
 import { Input, Modal } from './ui'
 
 const EMPTY_RESULTS = { notes: [], folders: [], tags: [] }
+const TYPE_FILTERS = [
+  { id: 'all', label: 'All notes' },
+  { id: 'standard', label: 'Documents' },
+  { id: 'todo', label: 'Tasks' },
+  { id: 'project', label: 'Projects' },
+  { id: 'meeting', label: 'Meetings' },
+  { id: 'journal', label: 'Journals' },
+  { id: 'weekly', label: 'Weekly plans' },
+]
 
 const getMatchType = (note, query) => {
-  if (note.title.toLowerCase().includes(query)) return 'title'
+  if ((note.title || '').toLowerCase().includes(query)) return 'title'
   if (note.tags?.some((tag) => tag.toLowerCase().includes(query))) return 'tag'
-  return 'content'
+  if (htmlToPlainText(note.content || '').toLowerCase().includes(query)) return 'content'
+  return 'details'
 }
 
 const getMatchPreview = (note, query) => {
@@ -61,12 +72,13 @@ export default function GlobalSearchModal() {
   const [results, setResults] = useState(EMPTY_RESULTS)
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [isSearching, setIsSearching] = useState(false)
+  const [typeFilter, setTypeFilter] = useState('all')
   const [shortcutLabel, setShortcutLabel] = useState(readGlobalSearchShortcut)
   const inputRef = useRef(null)
 
   const performSearch = useMemo(
     () =>
-      debounce((searchQuery) => {
+      debounce((searchQuery, selectedType = 'all') => {
         const normalizedQuery = searchQuery.trim().toLowerCase()
         if (!normalizedQuery) {
           setResults(EMPTY_RESULTS)
@@ -76,21 +88,17 @@ export default function GlobalSearchModal() {
 
         const matchedNotes = notes
           .filter((note) => !note.deleted && !note.archived)
+          .filter((note) => selectedType === 'all' || (note.noteType || 'standard') === selectedType)
           .filter((note) => {
-            const titleMatch = note.title.toLowerCase().includes(normalizedQuery)
-            const contentMatch = htmlToPlainText(note.content || '')
-              .toLowerCase()
-              .includes(normalizedQuery)
-            const tagMatch = note.tags?.some((tag) =>
-              tag.toLowerCase().includes(normalizedQuery)
-            )
-            return titleMatch || contentMatch || tagMatch
+            const titleMatch = (note.title || '').toLowerCase().includes(normalizedQuery)
+            const tagMatch = note.tags?.some((tag) => tag.toLowerCase().includes(normalizedQuery))
+            return titleMatch || tagMatch || getSearchableText(note).includes(normalizedQuery)
           })
           .slice(0, 10)
           .map((note) => ({
             ...note,
             matchType: getMatchType(note, normalizedQuery),
-            preview: getMatchPreview(note, normalizedQuery),
+            preview: getMatchPreview(note, normalizedQuery) || getNoteTypePreview(note, 140),
           }))
 
         setResults({
@@ -163,6 +171,7 @@ export default function GlobalSearchModal() {
     setResults(EMPTY_RESULTS)
     setSelectedIndex(0)
     setIsSearching(false)
+    setTypeFilter('all')
   }, [globalSearchOpen, performSearch])
 
   useEffect(() => {
@@ -189,7 +198,20 @@ export default function GlobalSearchModal() {
     }
 
     setIsSearching(true)
-    performSearch(value)
+    performSearch(value, typeFilter)
+  }
+
+  const handleTypeFilterChange = (nextType) => {
+    setTypeFilter(nextType)
+    setSelectedIndex(0)
+    performSearch.cancel()
+    if (!query.trim()) {
+      setResults(EMPTY_RESULTS)
+      setIsSearching(false)
+      return
+    }
+    setIsSearching(true)
+    performSearch(query, nextType)
   }
 
   const handleSearchKeyDown = (event) => {
@@ -260,6 +282,28 @@ export default function GlobalSearchModal() {
       </div>
 
       <div
+        role="group"
+        aria-label="Search note types"
+        className="flex gap-1 overflow-x-auto border-b border-subtle bg-surface-raised px-3 py-2"
+      >
+        {TYPE_FILTERS.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            aria-pressed={typeFilter === item.id}
+            onClick={() => handleTypeFilterChange(item.id)}
+            className={`h-8 shrink-0 rounded-control px-3 text-ui-sm font-medium transition-colors ${
+              typeFilter === item.id
+                ? 'bg-accent-soft text-accent-text'
+                : 'text-content-muted hover:bg-surface-hover hover:text-content'
+            }`}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+
+      <div
         id="qn-global-search-results"
         role={totalResults > 0 ? 'listbox' : undefined}
         aria-label={totalResults > 0 ? t('search.globalSearch') : undefined}
@@ -310,6 +354,11 @@ export default function GlobalSearchModal() {
                       <span className="mt-1 flex items-center gap-1 text-ui-xs text-content-muted">
                         <Tag className="h-3 w-3" aria-hidden="true" />
                         {t('search.tags')}: {note.tags?.join(', ')}
+                      </span>
+                    )}
+                    {note.matchType === 'details' && (
+                      <span className="mt-1 block text-ui-xs font-medium text-accent-text">
+                        Match in structured note details
                       </span>
                     )}
                   </span>

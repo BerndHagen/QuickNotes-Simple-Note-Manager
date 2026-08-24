@@ -19,9 +19,11 @@ import {
   AlertCircle,
   CheckCheck,
   ListTodo,
+  Repeat2,
   X
 } from 'lucide-react'
 import { formatDateKey, generateId, parseDateKey } from './noteTypes'
+import { normalizeRecurrence, RECURRENCE_LABELS, toggleTaskWithRecurrence } from '../../lib/taskRecurrence'
 import { useLatestValue } from './useLatestValue'
 import { useEditorDataSync } from './useEditorDataSync'
 import FocusedNoteTitle from './FocusedNoteTitle'
@@ -47,6 +49,13 @@ const SORT_OPTIONS = [
   { id: 'created', label: 'Created' },
   { id: 'alphabetical', label: 'A-Z' },
 ]
+const RECURRENCE_UNITS = {
+  daily: 'days',
+  weekdays: 'workdays',
+  weekly: 'weeks',
+  monthly: 'months',
+  yearly: 'years',
+}
 
 export default function TodoListEditor({ data, onChange, noteTitle, onTitleChange, readOnly }) {
   const [tasks, setTasks] = useState(data?.tasks || [])
@@ -88,6 +97,7 @@ export default function TodoListEditor({ data, onChange, noteTitle, onTitleChang
       notes: '',
       createdAt: new Date().toISOString(),
       completedAt: null,
+      recurrence: null,
     }
     
     setTasks((currentTasks) => [newTask, ...currentTasks])
@@ -95,16 +105,7 @@ export default function TodoListEditor({ data, onChange, noteTitle, onTitleChang
     inputRef.current?.focus()
   }
   const toggleTask = (taskId) => {
-    setTasks((currentTasks) => currentTasks.map(task => {
-      if (task.id === taskId) {
-        return {
-          ...task,
-          completed: !task.completed,
-          completedAt: !task.completed ? new Date().toISOString() : null,
-        }
-      }
-      return task
-    }))
+    setTasks((currentTasks) => toggleTaskWithRecurrence(currentTasks, taskId, { createId: generateId }))
   }
   const updateTask = (taskId, updates) => {
     setTasks((currentTasks) => currentTasks.map(task =>
@@ -423,6 +424,7 @@ function TaskItem({
   }, [isEditing])
 
   const priority = PRIORITIES[task.priority]
+  const recurrence = normalizeRecurrence(task.recurrence)
   const isOverdue = task.dueDate && task.dueDate < formatDateKey() && !task.completed
   const subtaskProgress = task.subtasks.length > 0 
     ? Math.round((task.subtasks.filter(st => st.completed).length / task.subtasks.length) * 100)
@@ -487,6 +489,14 @@ function TaskItem({
             {task.subtasks.length > 0 && (
               <span className="text-xs px-2 py-0.5 rounded-full bg-accent-soft text-accent-text">
                 {task.subtasks.filter(st => st.completed).length}/{task.subtasks.length} subtasks
+              </span>
+            )}
+            {recurrence && (
+              <span className="flex items-center gap-1 rounded-full bg-info-soft px-2 py-0.5 text-xs text-info-text">
+                <Repeat2 className="h-3 w-3" aria-hidden="true" />
+                {recurrence.interval > 1
+                  ? `Every ${recurrence.interval} ${RECURRENCE_UNITS[recurrence.frequency]}`
+                  : RECURRENCE_LABELS[recurrence.frequency]}
               </span>
             )}
           </div>
@@ -613,6 +623,55 @@ function TaskItem({
       </div>
       {isExpanded && (
         <div className="px-4 pb-4 pt-2 border-t border-subtle">
+          <div className="mb-4 grid gap-3 rounded-card border border-subtle bg-surface-raised p-3 sm:grid-cols-[minmax(0,1fr)_9rem]">
+            <label className="flex min-w-0 flex-col gap-1.5 text-sm font-medium text-content-muted">
+              <span className="flex items-center gap-1.5">
+                <Repeat2 className="h-4 w-4" aria-hidden="true" />
+                Repeat
+              </span>
+              <select
+                aria-label={`Repeat ${task.text}`}
+                value={recurrence?.frequency || 'none'}
+                onChange={(event) => onUpdate({
+                  recurrence: event.target.value === 'none'
+                    ? null
+                    : { frequency: event.target.value, interval: recurrence?.interval || 1 },
+                })}
+                className="h-control-md rounded-control border border-strong bg-surface-raised px-3 text-sm text-content outline-none focus:border-accent focus:ring-2 focus:ring-[var(--qn-accent-soft)]"
+              >
+                <option value="none">Does not repeat</option>
+                <option value="daily">Daily</option>
+                <option value="weekdays">Weekdays</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+                <option value="yearly">Yearly</option>
+              </select>
+            </label>
+            {recurrence && (
+              <label className="flex flex-col gap-1.5 text-sm font-medium text-content-muted">
+                Every
+                <span className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min="1"
+                    max="30"
+                    value={recurrence.interval}
+                    aria-label={`Repeat interval for ${task.text}`}
+                    onChange={(event) => onUpdate({
+                      recurrence: {
+                        ...recurrence,
+                        interval: Math.min(30, Math.max(1, Number(event.target.value) || 1)),
+                      },
+                    })}
+                    className="h-control-md w-16 rounded-control border border-strong bg-surface-raised px-2 text-sm text-content outline-none focus:border-accent focus:ring-2 focus:ring-[var(--qn-accent-soft)]"
+                  />
+                  <span className="text-xs font-normal text-content-muted">
+                    {RECURRENCE_UNITS[recurrence.frequency]}
+                  </span>
+                </span>
+              </label>
+            )}
+          </div>
           <div className="mb-3">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-sm font-medium text-content-muted">Subtasks</span>

@@ -8,6 +8,7 @@ import {
   ShoppingCart,
   Calendar,
 } from 'lucide-react'
+import { normalizeRecurrence } from '../../lib/taskRecurrence'
 
 export const NOTE_TYPES = {
   STANDARD: 'standard',
@@ -78,6 +79,7 @@ const task = (text, options = {}) => ({
   starred: false,
   subtasks: [],
   notes: '',
+  recurrence: null,
   createdAt: new Date().toISOString(),
   completedAt: null,
   ...options,
@@ -778,6 +780,7 @@ export const normalizeNoteData = (noteType, value) => {
             text: String(taskData.text || taskData.title || 'Untitled task'),
             priority: allowedValue(taskData.priority, ['high', 'medium', 'low', 'none'], 'none'),
             completed: !!taskData.completed,
+            recurrence: normalizeRecurrence(taskData.recurrence),
             subtasks: asList(taskData.subtasks).map((subtask) => {
               const subtaskData = typeof subtask === 'string' ? { text: subtask } : subtask
               return {

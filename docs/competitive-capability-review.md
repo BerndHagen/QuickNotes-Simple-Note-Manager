@@ -1,9 +1,11 @@
 # Competitive capability review
 
-Reviewed 2026-08-20 against current official product documentation. The goal is
-not to combine every specialist feature from every notes product. It is to keep
-QuickNotes complete for its core job without adding shallow, unsafe, or
-unfinished parity features.
+Reviewed 2026-08-20 against then-current official product documentation.
+
+> Superseded by the broader
+> [2026-08-24 flagship product audit](./flagship-product-audit-2026-08-24.md),
+> which evaluates complete daily workflows and records missing product systems
+> instead of treating the existing feature inventory as sufficient.
 
 ## Current competitive core
 
