@@ -1355,7 +1355,7 @@ export default function SettingsModal() {
 
                 <div className="space-y-2">
                   <a
-                    href="https://github.com/Berenyiansen/QuickNotes"
+                    href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-3 p-3 rounded-lg bg-surface-sunken hover:bg-surface-hover transition-colors cursor-pointer"

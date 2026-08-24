@@ -10,6 +10,7 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/releases/latest"><img src="https://img.shields.io/github/v/release/BerndHagen/QuickNotes-Simple-Note-Manager?display_name=tag&sort=semver&style=flat-square&color=168966" alt="Latest stable release"></a>&nbsp;&nbsp;
   <a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-GPL--3.0-blue?style=flat-square" alt="License"></a>&nbsp;&nbsp;
   <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react" alt="React Version">&nbsp;&nbsp;
   <img src="https://img.shields.io/badge/Vite-8-646CFF?style=flat-square&logo=vite" alt="Vite Version">&nbsp;&nbsp;
@@ -18,7 +19,7 @@
   <img src="https://img.shields.io/badge/Status-Active-brightgreen?style=flat-square" alt="Status">
 </p>
 
-**QuickNotes** is a browser-based writing and note workspace built with React and TipTap. It works fully offline using IndexedDB and can optionally sync to a cloud backend. Standard notes use a paginated A4 document editor, while purpose-built workspaces cover tasks, project planning, meetings, journals, brainstorming, shopping, and weekly planning.
+**QuickNotes** is a browser-based writing and note workspace built with React and TipTap. Its core editing and organization workflows run offline using IndexedDB, with optional cloud sync, authentication, and sharing through Supabase. Standard notes use a paginated A4 document editor, while purpose-built workspaces cover tasks, project planning, meetings, journals, brainstorming, shopping, and weekly planning.
 
 You can try QuickNotes [**here**](https://berndhagen.github.io/QuickNotes-Simple-Note-Manager/) — no account required. A local workspace keeps everything in your own browser, or you can sign up to sync and share notes across devices.
 
@@ -40,6 +41,10 @@ You can try QuickNotes [**here**](https://berndhagen.github.io/QuickNotes-Simple
 - **Folders & Tags:** Organize notes into folders and assign color-coded tags via the Tag Manager
 - **Favorites & Pins:** Star or pin important notes for quick access
 - **Global Search:** Full-text search across all notes by title, content, and tags
+- **Today:** Create or reopen one date-safe daily journal without producing duplicates
+- **My Tasks:** Review and complete tasks from documents, task lists, projects, meetings, journals, and weekly plans in one workspace-wide view
+- **Smart Views:** Save compound all/any filters by text, title, tag, folder, note type, favorite, pin, task state, reminder state, and date
+- **Reusable Templates:** Save rich documents or structured workspaces as reusable templates with tags, favorites, and title/date/time variables
 - **Find & Replace:** In-editor find and replace with regex support
 - **Quick Note:** Capture ideas instantly with a floating modal
 - **Focused Note Types:** A unified creator with useful starters for documents, task lists, project boards, meetings, journals, idea boards, shopping lists, and weekly plans
@@ -51,13 +56,13 @@ You can try QuickNotes [**here**](https://berndhagen.github.io/QuickNotes-Simple
 - **Drag & Drop Sorting:** Reorder notes via drag and drop using @dnd-kit
 - **Export & Import:** Download notes as JSON, Markdown, plain text, HTML, or a self-contained paginated A4 PDF that preserves paper, rich formatting, and manual page breaks; import Markdown, plain-text, and HTML files
 - **Reminders:** Set one-time, daily, weekly, or monthly reminders
-- **Note Sharing:** Share notes with other users via invite links (requires backend)
-- **Real-Time Collaboration:** Live updates on shared notes via realtime subscriptions (requires backend)
-- **Voice Input:** Dictate notes using the Web Speech API
-- **Translation:** Translate note content between multiple languages
+- **Note Sharing:** Share notes with other users through email invitations and view/edit permissions (requires backend)
+- **Real-Time Collaboration:** Receive live shared-note edits through realtime subscriptions (requires backend)
+- **Voice Input:** Dictate notes in browsers that provide the Web Speech API and microphone access
+- **Translation:** Translate selected note content through the opt-in MyMemory service (requires internet; text is sent only after confirmation)
 - **HTML Editor:** Direct HTML editing for advanced formatting
-- **Offline-First:** All data stored locally in IndexedDB via Dexie; works without internet
-- **Cloud Sync:** Optional backend sync with automatic conflict resolution and sync queue
+- **Offline-First:** Notes, organization, templates, Smart Views, and core editing are stored locally in IndexedDB via Dexie
+- **Cloud Sync:** Optional Supabase synchronization with an offline queue and timestamp-based conflict reconciliation
 - **PWA Support:** Installable as a Progressive Web App with service worker caching
 - **Multilingual UI:** Interface available in English, German, Spanish, French, Portuguese, Chinese, Hindi, Arabic, and Russian
 - **Mobile Responsive:** Responsive layout with mobile-specific views, touch-friendly targets, and safe area support
@@ -162,7 +167,11 @@ QuickNotes-Simple-Note-Manager/
 ├── .env.example                          # Supabase environment variable template
 ├── .github/
 │   └── workflows/
-│       └── deploy.yml                    # GitHub Actions: build + publish to Pages
+│       ├── deploy.yml                    # Build, publish to Pages, verify live critical UX
+│       └── release.yml                   # Rolling preview + curated versioned releases
+├── docs/
+│   └── releases/                         # Reviewed release notes for every stable tag
+├── images/                               # Current product screenshots used by this README
 ├── index.html                            # HTML entry point
 ├── package.json                          # Dependencies and scripts
 ├── postcss.config.js                     # PostCSS configuration (Tailwind)
@@ -190,7 +199,9 @@ QuickNotes-Simple-Note-Manager/
 │   └── icons/                            # PWA icons
 │
 ├── scripts/
-│   └── validate-deployment.mjs            # Built PWA, deep-link, and offline checks
+│   ├── capture-screenshots.mjs           # Reproducible product screenshot capture
+│   ├── validate-deployment.mjs           # Built PWA, deep-link, and offline checks
+│   └── validate-release-notes.mjs        # Curated stable-note quality gate
 │
 └── src/
     ├── App.jsx                           # Root application component
@@ -350,7 +361,7 @@ The backend operates in two modes depending on whether `VITE_SUPABASE_URL` and e
 | Mode | Condition | Behavior |
 |------|-----------|----------|
 | **Cloud** | URL and a public key are set | Full Supabase client with auth, realtime, cloud sync |
-| **Offline-only** | Env vars missing or invalid | Stub backend — app works fully offline without auth or sync |
+| **Offline-only** | Env vars missing or invalid | Stub backend — core local editing, organization, backup, and export work without auth or sync |
 
 ### Stub Fallback (Offline-Only Mode)
 
@@ -467,7 +478,7 @@ Core data store for notes, folders, tags, and sync logic.
 | `loadSharedNotes()`, `leaveSharedNote()` | Sharing management |
 | `initializeStarterContent()` | Creates welcome note, starter folders, and tags for new users |
 
-**Persisted fields:** `notes`, `folders`, `tags`, `lastSyncTime`
+**Persisted fields:** `notes`, `folders`, `tags`, `savedViews`, `noteTemplates`, workspace ownership metadata, and `lastSyncTime`. After IndexedDB hydration, the lightweight local-storage copy is reduced to ownership and sync metadata.
 
 ### `useThemeStore` (persisted)
 
@@ -577,7 +588,7 @@ Each type provides at least four purposeful starters. `getDefaultData(type)` cre
 
 ## Internationalization (i18n)
 
-The i18n system is defined in `src/lib/i18n.js` (~3100 lines) with full translations for 9 languages:
+The i18n system is defined in `src/lib/i18n.js` (4000+ lines) with translations for 9 languages:
 
 | Code | Language | Direction |
 |------|----------|-----------|
@@ -701,7 +712,7 @@ supabase db push
 | `notes` | All notes with title, content, tags (array), note_type, note_data (JSONB), starred, pinned, deleted, archived, reminder |
 | `folders` | Folder hierarchy with name, icon, color, parent_id |
 | `tags` | Tag definitions with name and color |
-| `note_versions` | Version history (max 30 per note, auto-created on content change) |
+| `note_versions` | Recovery checkpoints (max 30 per note, created when title, document content, or structured data changes) |
 | `saved_views` | User-owned Smart View definitions with validated compound rules, scope, sort order, and display colour |
 | `note_templates` | User-owned reusable rich or structured note templates with tags, favorite state, and variables |
 | `shared_notes` | Share invitations with permission levels and status |
@@ -737,7 +748,7 @@ note type, and structured note data. Direct updates remain owner-only.
 | Trigger | Purpose |
 |---------|---------|
 | `update_updated_at_column()` | Auto-update `updated_at` on notes, folders, shared_notes |
-| `create_note_version()` | Auto-create a version on document or structured-data changes (max 30) |
+| `create_note_version()` | Create a typed recovery checkpoint for title, document, or structured-data changes; skip adjacent duplicate states and retain the newest 30 |
 
 ## GitHub Actions & Deployment
 
@@ -763,7 +774,7 @@ note type, and structured note data. Direct updates remain owner-only.
 | `VITE_SUPABASE_ANON_KEY` | No | Legacy fallback for older Supabase projects |
 | `VITE_BASE_PATH` | No | Absolute deployment path; defaults to the repository path for production and `/` for development |
 
-When `VITE_SUPABASE_URL` and one of the two keys are set and point to a valid Supabase instance, the app enables cloud sync, authentication, and sharing features. Without them, QuickNotes runs in local-only mode with full functionality except sync and auth.
+When `VITE_SUPABASE_URL` and one of the two keys are set and point to a valid Supabase instance, the app enables cloud sync, authentication, and sharing. Without them, QuickNotes runs as a local workspace with its editing, organization, templates, Smart Views, backup, and export workflows intact. Sharing and cross-device sync remain unavailable, while translation and browser speech recognition have their own network and browser requirements.
 
 ### Setup
 
@@ -895,6 +906,13 @@ service worker, clears Chromium's HTTP cache, and reloads offline:
 
 ```bash
 npm run test:deployment
+```
+
+Repository screenshots and stable release notes have reproducible maintenance commands:
+
+```bash
+npm run screenshots:update
+npm run validate:release-notes
 ```
 
 The suite uses the local workspace by default. To exercise the cloud sign-in path
