@@ -2808,10 +2808,8 @@ body {
   background: var(--qn-surface-panel);
 }
 
-.qn-ribbon-note-bar,
-.qn-ribbon-tabs {
+.qn-ribbon-note-bar {
   align-items: center;
-  border-color: rgb(255 255 255 / 18%);
   color: #ffffff;
 }
 
@@ -2819,14 +2817,17 @@ body {
   background:
     linear-gradient(90deg, rgb(255 255 255 / 4%), transparent 46%),
     #0b4a38;
+  box-shadow: 0 1px 0 rgb(0 0 0 / 18%);
 }
 
 .qn-ribbon-tabs {
-  background: #17654f;
+  background: var(--qn-surface-toolbar);
+  border-color: var(--qn-border-subtle);
+  color: var(--qn-text-muted);
 }
 
 .qn-ribbon-title {
-  width: min(100%, 44rem);
+  width: clamp(10rem, 32vw, 34rem);
 }
 
 .qn-ribbon-title input {
@@ -2843,72 +2844,64 @@ body {
   background: rgb(255 255 255 / 12%);
 }
 
-.qn-ribbon-tab:hover {
-  background: rgb(255 255 255 / 12%);
-  color: #ffffff;
-}
-
-.qn-ribbon-tab[aria-selected='true'] {
-  background: rgb(255 255 255 / 18%);
-  color: #ffffff;
-}
-
-.qn-ribbon-tab[aria-selected='true']:hover {
-  background: rgb(255 255 255 / 23%);
-}
-
 .qn-ribbon-tabs .qn-ribbon-tab {
-  color: #ffffff;
+  color: var(--qn-text-muted);
 }
 
 .qn-ribbon-tabs .qn-ribbon-tab[aria-selected='true'] {
-  color: #ffffff;
+  background: color-mix(in srgb, var(--qn-accent-soft) 58%, transparent);
+  color: var(--qn-accent-text);
 }
 
 .qn-ribbon-tabs .qn-ribbon-tab::after {
-  background: #ffffff;
+  background: var(--qn-accent);
 }
 
-.qn-ribbon-note-bar :where(button, input):focus-visible,
-.qn-ribbon-tabs :where(button, input):focus-visible {
+.qn-ribbon-note-bar :where(button, input):focus-visible {
   outline: 2px solid #ffffff;
   outline-offset: -3px;
 }
 
-.qn-ribbon-note-bar button,
-.qn-ribbon-tabs > button {
+.qn-ribbon-note-bar button {
   color: #ffffff !important;
 }
 
 .qn-ribbon-note-bar button:hover,
 .qn-ribbon-note-bar button[aria-pressed='true'],
-.qn-ribbon-note-bar button[aria-expanded='true'],
-.qn-ribbon-tabs > button:hover,
-.qn-ribbon-tabs > button[aria-expanded='true'] {
+.qn-ribbon-note-bar button[aria-expanded='true'] {
   background: rgb(255 255 255 / 14%) !important;
   color: #ffffff !important;
 }
 
-.qn-ribbon-note-bar button:active,
-.qn-ribbon-tabs > button:active {
+.qn-ribbon-note-bar button:active {
   background: rgb(255 255 255 / 22%) !important;
 }
 
 .qn-ribbon-tabs .qn-ribbon-tab:hover {
-  background: rgb(255 255 255 / 12%) !important;
+  background: var(--qn-surface-hover) !important;
+  color: var(--qn-text) !important;
 }
 
 .qn-ribbon-tabs .qn-ribbon-tab[aria-selected='true'] {
-  background: rgb(255 255 255 / 18%) !important;
+  background: color-mix(in srgb, var(--qn-accent-soft) 58%, transparent) !important;
+  color: var(--qn-accent-text) !important;
 }
 
 .qn-ribbon-tabs .qn-ribbon-tab[aria-selected='true']:hover {
-  background: rgb(255 255 255 / 23%) !important;
+  background: var(--qn-accent-soft) !important;
 }
 
-.qn-ribbon-note-bar button:disabled,
-.qn-ribbon-tabs button:disabled {
+.qn-ribbon-note-bar button:disabled {
   color: rgb(255 255 255 / 44%) !important;
+}
+
+.qn-ribbon-tabs :where(button, input):focus-visible {
+  outline: 2px solid var(--qn-focus-ring);
+  outline-offset: -3px;
+}
+
+.qn-ribbon-tabs button:disabled {
+  color: var(--qn-text-subtle) !important;
 }
 
 .qn-ribbon-mobile-action {
@@ -3343,6 +3336,10 @@ body {
 }
 
 @container (max-width: 700px) {
+  .qn-ribbon-title {
+    width: min(52vw, 22rem);
+  }
+
   .qn-ribbon-tab {
     padding-inline: 0.625rem;
   }

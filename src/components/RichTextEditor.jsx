@@ -923,6 +923,7 @@ export default function RichTextEditor({
   onEditorReady,
   isExternalUpdate = false,
   readOnly = false,
+  ribbonLeadingAction,
   ribbonTitle,
   ribbonActions,
   ribbonDetails,
@@ -1433,6 +1434,7 @@ export default function RichTextEditor({
             onCut={() => copySelection({ cut: true })}
             onCopy={() => copySelection()}
             onPaste={pasteClipboard}
+            ribbonLeadingAction={ribbonLeadingAction}
             ribbonTitle={ribbonTitle}
             ribbonActions={ribbonActions}
             ribbonDetails={ribbonDetails}
@@ -1789,6 +1791,7 @@ function EditorToolbar({
   onCut,
   onCopy,
   onPaste,
+  ribbonLeadingAction,
   ribbonTitle,
   ribbonActions,
   ribbonDetails,
@@ -2287,13 +2290,16 @@ function EditorToolbar({
       className="editor-ribbon border-b border-subtle"
       data-density={editorSettings.ribbonDensity}
     >
-      <div className="qn-ribbon-note-bar flex min-h-11 items-center gap-2 border-b px-2 sm:px-3">
+      <div className="qn-ribbon-note-bar grid min-h-11 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center px-2 sm:px-3">
+        <div className="qn-ribbon-leading-action min-w-0 justify-self-start">
+          {ribbonLeadingAction}
+        </div>
         {ribbonTitle && (
-          <div className="qn-ribbon-title flex min-w-0 flex-1 items-center px-1">
+          <div className="qn-ribbon-title min-w-0 justify-self-center px-1">
             {ribbonTitle}
           </div>
         )}
-        <div className="qn-ribbon-note-actions flex min-w-0 shrink-0 items-center justify-end">
+        <div className="qn-ribbon-note-actions flex min-w-0 items-center justify-end justify-self-end">
           {ribbonActions && (
             <div className="flex shrink-0 items-center gap-0.5" aria-label="Note actions">
               {ribbonActions}

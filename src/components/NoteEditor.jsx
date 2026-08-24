@@ -438,16 +438,15 @@ export default function NoteEditor({ onBack, showBack = false }) {
             onEditorReady={setEditorRef}
             isExternalUpdate={isExternalUpdate}
             readOnly={isReadOnly}
+            ribbonLeadingAction={showBack ? (
+              <IconButton
+                icon={ArrowLeft}
+                label={t('editor.backToList', 'Back to notes')}
+                onClick={onBack}
+              />
+            ) : null}
             ribbonTitle={(
-              <div className="relative flex min-w-0 flex-1 items-center justify-center">
-                {showBack && (
-                  <IconButton
-                    icon={ArrowLeft}
-                    label={t('editor.backToList', 'Back to notes')}
-                    onClick={onBack}
-                    className="absolute left-0 shrink-0"
-                  />
-                )}
+              <div className="flex min-w-0 items-center justify-center">
                 <label htmlFor="qn-mobile-note-title" className="qn-sr-only">
                   {t('editor.noteTitle', 'Note title')}
                 </label>
@@ -471,7 +470,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
                   }}
                   readOnly={isReadOnly}
                   placeholder={t('editor.untitled', 'Untitled note')}
-                  className={`h-9 min-w-0 flex-1 truncate rounded-control border border-transparent bg-transparent px-10 text-center text-ui-lg font-semibold text-content outline-none transition-colors placeholder:text-content-subtle sm:px-12 ${
+                  className={`h-9 w-full min-w-0 truncate rounded-control border border-transparent bg-transparent px-2 text-center text-ui-lg font-semibold text-content outline-none transition-colors placeholder:text-content-subtle ${
                     isEditingTitle ? 'bg-surface-sunken' : 'hover:bg-surface-hover'
                   } ${isReadOnly ? 'cursor-default' : 'cursor-text'}`}
                 />

@@ -123,6 +123,34 @@ test.describe('editor productivity objects', () => {
     await expect(page.locator('.editor-toolbar')).toBeVisible()
   })
 
+  test('uses one brand bar and geometrically centers the note title', async ({ page }) => {
+    const chrome = await page.evaluate(() => {
+      const noteBar = document.querySelector('.qn-ribbon-note-bar')
+      const title = document.querySelector('.qn-ribbon-title')
+      const tabs = document.querySelector('.qn-ribbon-tabs')
+      const activeTab = tabs.querySelector('[aria-selected="true"]')
+      const inactiveTab = tabs.querySelector('[aria-selected="false"]')
+      const noteBarBox = noteBar.getBoundingClientRect()
+      const titleBox = title.getBoundingClientRect()
+
+      return {
+        centerDelta: Math.abs(
+          noteBarBox.left + noteBarBox.width / 2 - (titleBox.left + titleBox.width / 2)
+        ),
+        noteBarBackground: getComputedStyle(noteBar).backgroundColor,
+        tabBackground: getComputedStyle(tabs).backgroundColor,
+        activeTabColor: getComputedStyle(activeTab).color,
+        inactiveTabColor: getComputedStyle(inactiveTab).color,
+      }
+    })
+
+    expect(chrome.centerDelta).toBeLessThan(0.5)
+    expect(chrome.noteBarBackground).toBe('rgb(11, 74, 56)')
+    expect(chrome.tabBackground).not.toBe(chrome.noteBarBackground)
+    expect(chrome.activeTabColor).not.toBe(chrome.inactiveTabColor)
+    expect(chrome.activeTabColor).not.toBe('rgb(255, 255, 255)')
+  })
+
   test('uses a flat, conventionally ordered command ribbon', async ({ page }) => {
     const toolbar = page.locator('.editor-toolbar')
     const tabs = page.getByRole('tablist', { name: 'Editor ribbon' })
