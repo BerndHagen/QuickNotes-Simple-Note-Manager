@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import { generateId, repairMojibake } from '../lib/utils'
-import { filterNotes } from '../lib/filterNotes'
+import { filterNotes, STARRED_FILTER } from '../lib/filterNotes'
 import {
   addToSyncQueue,
   adoptLegacyWorkspaceRecords,
@@ -33,6 +33,12 @@ import {
   shouldUploadPendingRecord,
 } from '../lib/syncReconciliation'
 import { prepareWorkspaceImport } from '../lib/workspaceBackup'
+import { createNoteInputFromTemplate } from '../lib/noteTemplates'
+import {
+  filterBySmartView,
+  getSmartViewScope,
+  normalizeSmartViewCriteria,
+} from '../lib/smartViews'
 import toast from 'react-hot-toast'
 const WELCOME_TITLE = 'Welcome to QuickNotes'
 
@@ -40,9 +46,12 @@ const emptyWorkspace = () => ({
   notes: [],
   folders: [],
   tags: [],
+  savedViews: [],
+  noteTemplates: [],
   selectedNoteId: null,
   selectedFolderId: null,
   selectedTagFilter: null,
+  selectedSmartViewId: null,
   searchQuery: '',
   lastSyncTime: null,
   isNewUser: false,
@@ -52,9 +61,12 @@ const selectWorkspaceSnapshot = (state) => ({
   notes: state.notes,
   folders: state.folders,
   tags: state.tags,
+  savedViews: state.savedViews,
+  noteTemplates: state.noteTemplates,
   selectedNoteId: state.selectedNoteId,
   selectedFolderId: state.selectedFolderId,
   selectedTagFilter: state.selectedTagFilter,
+  selectedSmartViewId: state.selectedSmartViewId,
   searchQuery: state.searchQuery,
   lastSyncTime: state.lastSyncTime,
   isNewUser: state.isNewUser,
@@ -69,9 +81,12 @@ const normalizeWorkspaceSnapshot = (snapshot) => {
     notes: validRecords(snapshot?.notes),
     folders: validRecords(snapshot?.folders),
     tags: validRecords(snapshot?.tags),
+    savedViews: validRecords(snapshot?.savedViews),
+    noteTemplates: validRecords(snapshot?.noteTemplates),
     selectedNoteId: snapshot?.selectedNoteId || null,
     selectedFolderId: snapshot?.selectedFolderId || null,
     selectedTagFilter: snapshot?.selectedTagFilter || null,
+    selectedSmartViewId: snapshot?.selectedSmartViewId || null,
     searchQuery: typeof snapshot?.searchQuery === 'string' ? snapshot.searchQuery : '',
     lastSyncTime: snapshot?.lastSyncTime || null,
     isNewUser: Boolean(snapshot?.isNewUser),
@@ -79,10 +94,15 @@ const normalizeWorkspaceSnapshot = (snapshot) => {
   const noteIds = new Set(workspace.notes.map((note) => note.id))
   const folderIds = new Set(workspace.folders.map((folder) => folder.id))
   const tagNames = new Set(workspace.tags.map((tag) => tag.name))
+  const savedViewIds = new Set(workspace.savedViews.map((view) => view.id))
 
   if (!noteIds.has(workspace.selectedNoteId)) workspace.selectedNoteId = null
   if (!folderIds.has(workspace.selectedFolderId)) workspace.selectedFolderId = null
-  if (!tagNames.has(workspace.selectedTagFilter)) workspace.selectedTagFilter = null
+  if (
+    workspace.selectedTagFilter !== STARRED_FILTER &&
+    !tagNames.has(workspace.selectedTagFilter)
+  ) workspace.selectedTagFilter = null
+  if (!savedViewIds.has(workspace.selectedSmartViewId)) workspace.selectedSmartViewId = null
   return workspace
 }
 
@@ -168,7 +188,11 @@ const safePersistStorage = createJSONStorage(() => ({
 }))
 
 const hasWorkspaceContent = (workspace) =>
-  workspace.notes.length > 0 || workspace.folders.length > 0 || workspace.tags.length > 0
+  workspace.notes.length > 0 ||
+  workspace.folders.length > 0 ||
+  workspace.tags.length > 0 ||
+  workspace.savedViews.length > 0 ||
+  workspace.noteTemplates.length > 0
 
 const persistCurrentWorkspace = async (get) => {
   const state = get()
@@ -365,9 +389,12 @@ export const useNotesStore = create(
       notes: [],
       folders: [],
       tags: [],
+      savedViews: [],
+      noteTemplates: [],
       selectedNoteId: null,
       selectedFolderId: null,
       selectedTagFilter: null,
+      selectedSmartViewId: null,
       searchQuery: '',
       isEditing: false,
       isSyncing: false,
@@ -419,8 +446,8 @@ export const useNotesStore = create(
           content: note.content || '',
           folderId: hasExplicitFolder ? note.folderId : get().selectedFolderId,
           tags: note.tags || [],
-          starred: false,
-          pinned: false,
+          starred: Boolean(note.starred),
+          pinned: Boolean(note.pinned),
           noteType: note.noteType || 'standard',
           noteData: note.noteData || null,
           createdAt: new Date().toISOString(),
@@ -440,6 +467,133 @@ export const useNotesStore = create(
         return newNote
       },
 
+      createSavedView: (input = {}) => {
+        const name = String(input.name || '').trim()
+        if (!name) throw new Error('A smart view name is required')
+        if (get().savedViews.some((view) => view.name.toLowerCase() === name.toLowerCase())) {
+          throw new Error('A smart view with this name already exists')
+        }
+        const now = new Date().toISOString()
+        const savedView = {
+          id: generateId(),
+          name: name.slice(0, 80),
+          icon: input.icon || 'ListFilter',
+          color: input.color || '#0f766e',
+          criteria: normalizeSmartViewCriteria(input.criteria),
+          order: get().savedViews.length,
+          createdAt: now,
+          updatedAt: now,
+          syncStatus: SyncStatus.PENDING,
+        }
+        set((state) => ({
+          savedViews: [...state.savedViews, savedView],
+          selectedSmartViewId: savedView.id,
+          selectedFolderId: null,
+          selectedTagFilter: null,
+        }))
+        addToSyncQueue('saved_views', 'insert', savedView)
+        return savedView
+      },
+
+      updateSavedView: (id, updates = {}) => {
+        const current = get().savedViews.find((view) => view.id === id)
+        if (!current) return null
+        const name = Object.prototype.hasOwnProperty.call(updates, 'name')
+          ? String(updates.name || '').trim()
+          : current.name
+        if (!name) throw new Error('A smart view name is required')
+        if (get().savedViews.some(
+          (view) => view.id !== id && view.name.toLowerCase() === name.toLowerCase()
+        )) throw new Error('A smart view with this name already exists')
+        const updated = {
+          ...current,
+          ...updates,
+          name: name.slice(0, 80),
+          criteria: normalizeSmartViewCriteria(updates.criteria ?? current.criteria),
+          updatedAt: new Date().toISOString(),
+          syncStatus: SyncStatus.PENDING,
+        }
+        set((state) => ({
+          savedViews: state.savedViews.map((view) => view.id === id ? updated : view),
+        }))
+        addToSyncQueue('saved_views', 'update', updated)
+        return updated
+      },
+
+      deleteSavedView: (id) => {
+        if (!get().savedViews.some((view) => view.id === id)) return
+        set((state) => ({
+          savedViews: state.savedViews.filter((view) => view.id !== id),
+          selectedSmartViewId: state.selectedSmartViewId === id ? null : state.selectedSmartViewId,
+        }))
+        addToSyncQueue('saved_views', 'delete', { id })
+      },
+
+      createNoteTemplate: (input = {}) => {
+        const name = String(input.name || '').trim()
+        if (!name) throw new Error('A template name is required')
+        if (get().noteTemplates.some(
+          (template) => template.name.toLowerCase() === name.toLowerCase()
+        )) throw new Error('A template with this name already exists')
+        const now = new Date().toISOString()
+        const template = {
+          id: generateId(),
+          name: name.slice(0, 80),
+          description: String(input.description || '').trim().slice(0, 500),
+          noteType: input.noteType || 'standard',
+          titleTemplate: String(input.titleTemplate || input.name || 'Untitled note').slice(0, 500),
+          content: input.content || '',
+          noteData: input.noteData ?? null,
+          tags: Array.isArray(input.tags) ? [...new Set(input.tags)].slice(0, 50) : [],
+          favorite: Boolean(input.favorite),
+          createdAt: now,
+          updatedAt: now,
+          syncStatus: SyncStatus.PENDING,
+        }
+        set((state) => ({ noteTemplates: [template, ...state.noteTemplates] }))
+        addToSyncQueue('note_templates', 'insert', template)
+        return template
+      },
+
+      updateNoteTemplate: (id, updates = {}) => {
+        const current = get().noteTemplates.find((template) => template.id === id)
+        if (!current) return null
+        const name = Object.prototype.hasOwnProperty.call(updates, 'name')
+          ? String(updates.name || '').trim()
+          : current.name
+        if (!name) throw new Error('A template name is required')
+        if (get().noteTemplates.some(
+          (template) => template.id !== id && template.name.toLowerCase() === name.toLowerCase()
+        )) throw new Error('A template with this name already exists')
+        const updated = {
+          ...current,
+          ...updates,
+          name: name.slice(0, 80),
+          description: String(updates.description ?? current.description ?? '').slice(0, 500),
+          updatedAt: new Date().toISOString(),
+          syncStatus: SyncStatus.PENDING,
+        }
+        set((state) => ({
+          noteTemplates: state.noteTemplates.map((template) => template.id === id ? updated : template),
+        }))
+        addToSyncQueue('note_templates', 'update', updated)
+        return updated
+      },
+
+      deleteNoteTemplate: (id) => {
+        if (!get().noteTemplates.some((template) => template.id === id)) return
+        set((state) => ({
+          noteTemplates: state.noteTemplates.filter((template) => template.id !== id),
+        }))
+        addToSyncQueue('note_templates', 'delete', { id })
+      },
+
+      createNoteFromTemplate: (templateId, title) => {
+        const template = get().noteTemplates.find((candidate) => candidate.id === templateId)
+        if (!template) throw new Error('Template not found')
+        return get().createNote(createNoteInputFromTemplate(template, title))
+      },
+
       importWorkspaceBackup: async (backup) => runWorkspaceTransition(async () => {
         const current = get()
         if (!current.cacheOwnerId || current.hydratedWorkspaceOwnerId !== current.cacheOwnerId) {
@@ -452,12 +606,16 @@ export const useNotesStore = create(
           notes: [...imported.notes, ...current.notes],
           folders: [...current.folders, ...imported.folders],
           tags: [...current.tags, ...imported.tags],
+          savedViews: [...current.savedViews, ...imported.savedViews],
+          noteTemplates: [...imported.noteTemplates, ...current.noteTemplates],
           selectedNoteId: imported.notes[0]?.id || current.selectedNoteId,
         }
         const queueEntries = [
           ...imported.notes.map((data) => ({ table: 'notes', operation: 'insert', data })),
           ...imported.folders.map((data) => ({ table: 'folders', operation: 'insert', data })),
           ...imported.tags.map((data) => ({ table: 'tags', operation: 'insert', data })),
+          ...imported.savedViews.map((data) => ({ table: 'saved_views', operation: 'insert', data })),
+          ...imported.noteTemplates.map((data) => ({ table: 'note_templates', operation: 'insert', data })),
         ].map((entry) => ({
           ...entry,
           ownerId: current.cacheOwnerId,
@@ -494,6 +652,8 @@ export const useNotesStore = create(
           notes: imported.notes.length,
           folders: imported.folders.length,
           tags: imported.tags.length,
+          savedViews: imported.savedViews.length,
+          noteTemplates: imported.noteTemplates.length,
         }
       }),
 
@@ -695,6 +855,19 @@ export const useNotesStore = create(
                 (now - new Date(note.deletedAt).getTime()) > RETENTION_MS)
             ),
           }))
+        }
+
+        // Enforce the same retention in the cloud even when this browser no
+        // longer holds the deleted row in its cache. The RPC is tenant-scoped
+        // with auth.uid() and cascades versions/shares through foreign keys.
+        if (isBackendConfigured() && user && !user.isLocal) {
+          void backend.rpc('purge_my_expired_trash', {
+            p_retention_days: retentionDays,
+          }).then(({ error }) => {
+            if (error) {
+              set({ lastSyncError: error.message || 'Cloud trash cleanup failed' })
+            }
+          })
         }
       },
 
@@ -1128,8 +1301,22 @@ export const useNotesStore = create(
       },
       setSelectedNote: (id) => set({ selectedNoteId: id }),
       setSelectedNoteId: (id) => set({ selectedNoteId: id }),
-      setSelectedFolder: (id) => set({ selectedFolderId: id, selectedTagFilter: null }),
-      setSelectedTagFilter: (tag) => set({ selectedTagFilter: tag, selectedFolderId: null }),
+      setSelectedFolder: (id) => set({
+        selectedFolderId: id,
+        selectedTagFilter: null,
+        selectedSmartViewId: null,
+      }),
+      setSelectedTagFilter: (tag) => set({
+        selectedTagFilter: tag,
+        selectedFolderId: null,
+        selectedSmartViewId: null,
+      }),
+      setSelectedSmartView: (id) => set({
+        selectedSmartViewId: id,
+        selectedFolderId: null,
+        selectedTagFilter: null,
+        searchQuery: '',
+      }),
       setSearchQuery: (query) => set({ searchQuery: query }),
       setIsEditing: (editing) => set({ isEditing: editing }),
       setIsOnline: (online) => set({ isOnline: online }),
@@ -1329,6 +1516,161 @@ export const useNotesStore = create(
           const tagOperations = buildOperationIndex(pendingSyncItems, 'tags')
           const noteOperations = buildOperationIndex(pendingSyncItems, 'notes')
           let conflictCount = 0
+
+          const syncOwnedCollection = async ({ table, stateKey, toRemote, fromRemote }) => {
+            const operations = buildOperationIndex(pendingSyncItems, table)
+            const deletions = pendingSyncItems.filter(
+              (item) => item.table === table && item.operation === 'delete'
+            )
+            for (const item of deletions) {
+              const { error } = await backend
+                .from(table)
+                .delete()
+                .eq('id', item.data.id)
+                .eq('user_id', user.id)
+              if (error) throw error
+              await removeSyncItem(item.id)
+            }
+
+            const { data: initialRemote, error: fetchError } = await backend
+              .from(table)
+              .select('*')
+              .eq('user_id', user.id)
+            if (fetchError) throw fetchError
+
+            const remoteById = new Map((initialRemote || []).map((record) => [record.id, record]))
+            const remoteIds = new Set(remoteById.keys())
+            const discardedRemoteDeletionIds = new Set()
+            const localRecords = get()[stateKey] || []
+
+            for (const record of localRecords.filter(
+              (candidate) => candidate.syncStatus === SyncStatus.PENDING
+            )) {
+              if (!shouldUploadPendingRecord(record, remoteIds, operations, SyncStatus.PENDING)) {
+                discardedRemoteDeletionIds.add(record.id)
+                continue
+              }
+
+              const remoteRecord = remoteById.get(record.id)
+              if (remoteRecord && isRemoteNewer(record.updatedAt, remoteRecord.updated_at)) {
+                const remoteData = fromRemote(remoteRecord)
+                set((state) => ({
+                  [stateKey]: state[stateKey].map((current) =>
+                    current.id === record.id && current.updatedAt === record.updatedAt
+                      ? remoteData
+                      : current
+                  ),
+                }))
+                conflictCount++
+                continue
+              }
+
+              const { error } = await backend.from(table).upsert(toRemote(record, user.id)).select()
+              if (error) throw error
+              set((state) => ({
+                [stateKey]: state[stateKey].map((current) =>
+                  current.id === record.id && current.updatedAt === record.updatedAt
+                    ? { ...current, syncStatus: SyncStatus.SYNCED }
+                    : current
+                ),
+              }))
+            }
+
+            const { data: refreshedRemote, error: refreshedError } = await backend
+              .from(table)
+              .select('*')
+              .eq('user_id', user.id)
+            if (refreshedError) throw refreshedError
+
+            const deletedIds = new Set(deletions.map((item) => item.data.id))
+            const refreshedById = new Map(
+              (refreshedRemote || [])
+                .filter((record) => !deletedIds.has(record.id))
+                .map((record) => [record.id, record])
+            )
+
+            set((state) => {
+              const reconciled = []
+              for (const localRecord of state[stateKey]) {
+                if (
+                  deletedIds.has(localRecord.id) ||
+                  discardedRemoteDeletionIds.has(localRecord.id)
+                ) continue
+                const remoteRecord = refreshedById.get(localRecord.id)
+                if (localRecord.syncStatus === SyncStatus.PENDING) {
+                  reconciled.push(localRecord)
+                  refreshedById.delete(localRecord.id)
+                } else if (remoteRecord) {
+                  reconciled.push(fromRemote(remoteRecord))
+                  refreshedById.delete(localRecord.id)
+                }
+              }
+              for (const remoteRecord of refreshedById.values()) {
+                reconciled.push(fromRemote(remoteRecord))
+              }
+              return { [stateKey]: reconciled }
+            })
+          }
+
+          await syncOwnedCollection({
+            table: 'saved_views',
+            stateKey: 'savedViews',
+            toRemote: (view, userId) => ({
+              id: view.id,
+              user_id: userId,
+              name: view.name,
+              icon: view.icon || 'ListFilter',
+              color: view.color || '#0f766e',
+              criteria: view.criteria,
+              sort_order: view.order ?? null,
+              created_at: view.createdAt,
+              updated_at: view.updatedAt,
+            }),
+            fromRemote: (view) => ({
+              id: view.id,
+              name: view.name,
+              icon: view.icon,
+              color: view.color,
+              criteria: view.criteria,
+              order: view.sort_order,
+              createdAt: view.created_at,
+              updatedAt: view.updated_at,
+              syncStatus: SyncStatus.SYNCED,
+            }),
+          })
+
+          await syncOwnedCollection({
+            table: 'note_templates',
+            stateKey: 'noteTemplates',
+            toRemote: (template, userId) => ({
+              id: template.id,
+              user_id: userId,
+              name: template.name,
+              description: template.description || '',
+              note_type: template.noteType || 'standard',
+              title_template: template.titleTemplate || template.name,
+              content: template.content || '',
+              note_data: template.noteData ?? null,
+              tags: template.tags || [],
+              favorite: Boolean(template.favorite),
+              created_at: template.createdAt,
+              updated_at: template.updatedAt,
+            }),
+            fromRemote: (template) => ({
+              id: template.id,
+              name: template.name,
+              description: template.description,
+              noteType: template.note_type,
+              titleTemplate: template.title_template,
+              content: template.content,
+              noteData: template.note_data,
+              tags: template.tags || [],
+              favorite: template.favorite,
+              createdAt: template.created_at,
+              updatedAt: template.updated_at,
+              syncStatus: SyncStatus.SYNCED,
+            }),
+          })
           
           const folderDeletions = pendingSyncItems.filter(
             item => item.table === 'folders' && item.operation === 'delete'
@@ -1834,14 +2176,24 @@ export const useNotesStore = create(
        * global search can never disagree about what matches.
        */
       getFilteredNotes: () => {
-        const { notes, selectedFolderId, selectedTagFilter, searchQuery } = get()
+        const {
+          notes,
+          savedViews,
+          selectedFolderId,
+          selectedTagFilter,
+          selectedSmartViewId,
+          searchQuery,
+        } = get()
+        const savedView = savedViews.find((view) => view.id === selectedSmartViewId)
         const filtered = filterNotes(notes, {
           folderId: selectedFolderId,
           tagFilter: selectedTagFilter,
           query: searchQuery,
+          scope: savedView ? getSmartViewScope(savedView) : 'active',
         })
+        const viewFiltered = filterBySmartView(filtered, savedView)
 
-        return filtered.sort((a, b) => {
+        return viewFiltered.sort((a, b) => {
           if (a.pinned !== b.pinned) return a.pinned ? -1 : 1
           if (a.starred !== b.starred) return a.starred ? -1 : 1
           return new Date(b.updatedAt) - new Date(a.updatedAt)
@@ -2066,6 +2418,8 @@ export const useNotesStore = create(
           notes: state.notes,
           folders: state.folders,
           tags: state.tags,
+          savedViews: state.savedViews,
+          noteTemplates: state.noteTemplates,
         }
       },
       onRehydrateStorage: () => (state) => {
@@ -2131,9 +2485,12 @@ useNotesStore.subscribe((state, previousState) => {
     state.notes !== previousState.notes ||
     state.folders !== previousState.folders ||
     state.tags !== previousState.tags ||
+    state.savedViews !== previousState.savedViews ||
+    state.noteTemplates !== previousState.noteTemplates ||
     state.selectedNoteId !== previousState.selectedNoteId ||
     state.selectedFolderId !== previousState.selectedFolderId ||
     state.selectedTagFilter !== previousState.selectedTagFilter ||
+    state.selectedSmartViewId !== previousState.selectedSmartViewId ||
     state.searchQuery !== previousState.searchQuery ||
     state.lastSyncTime !== previousState.lastSyncTime ||
     state.isNewUser !== previousState.isNewUser
@@ -2191,6 +2548,9 @@ export const useUIStore = create(
       shortcutsModalOpen: false,
       noteTypesModalOpen: false,
       tasksViewOpen: false,
+      smartViewModalOpen: false,
+      smartViewEditingId: null,
+      templateSaveOpen: false,
       helpModalOpen: false,
       privacyModalOpen: false,
       termsModalOpen: false,
@@ -2249,6 +2609,11 @@ export const useUIStore = create(
   setShortcutsModalOpen: (open) => set({ shortcutsModalOpen: open }),
   setNoteTypesModalOpen: (open) => set({ noteTypesModalOpen: open }),
   setTasksViewOpen: (open) => set({ tasksViewOpen: open }),
+  setSmartViewModalOpen: (open, editingId = null) => set({
+    smartViewModalOpen: open,
+    smartViewEditingId: open ? editingId : null,
+  }),
+  setTemplateSaveOpen: (open) => set({ templateSaveOpen: open }),
   setHelpModalOpen: (open) => set({ helpModalOpen: open }),
   setPrivacyModalOpen: (open) => set({ privacyModalOpen: open }),
   setMobileEditorOpen: (open) => set({ mobileEditorOpen: open, mobileView: open ? 'editor' : 'notes' }),

@@ -297,10 +297,18 @@ export default function VersionHistoryModal() {
     return `${words} word${words === 1 ? '' : 's'}`
   }
 
+  const getVersionKind = (version) => {
+    if (version.changeKind === 'title') return 'Title checkpoint'
+    if (version.changeKind === 'content') return 'Content checkpoint'
+    if (version.changeKind === 'structured') return 'Workspace checkpoint'
+    if (version.changeKind === 'mixed') return 'Multi-part checkpoint'
+    return version.source === 'local' ? 'On-device checkpoint' : 'Editing checkpoint'
+  }
+
   const footer = (
     <>
       <p className="mr-auto text-ui-sm text-content-muted" role="status" aria-live="polite">
-        {versions.length} version{versions.length === 1 ? '' : 's'} saved
+        {versions.length} recovery {versions.length === 1 ? 'point' : 'points'} · up to 30 per note
       </p>
       <Button variant="ghost" onClick={handleClose}>
         {t('common.close', 'Close')}
@@ -323,7 +331,7 @@ export default function VersionHistoryModal() {
       <Modal
         open={versionHistoryOpen}
         onClose={handleClose}
-        title="Version History"
+        title="Version history"
         description={note?.title}
         icon={History}
         size="3xl"
@@ -397,7 +405,7 @@ export default function VersionHistoryModal() {
                       >
                         <span className="min-w-0 flex-1">
                           <span className="block text-ui-md font-medium text-content">
-                            Version {versionNumber}
+                            Version {versionNumber} · {getVersionKind(version)}
                           </span>
                           <span className="mt-0.5 flex items-center gap-1.5 text-ui-xs text-content-muted">
                             <Clock className="h-3.5 w-3.5" aria-hidden="true" />

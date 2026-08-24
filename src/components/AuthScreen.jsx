@@ -5,13 +5,13 @@ import {
   ArrowRight,
   Bell,
   CheckCircle2,
-  Clock3,
   Eye,
   EyeOff,
   Filter,
   FolderOpen,
   HardDrive,
   LayoutGrid,
+  ListFilter,
   Lock,
   Mail,
   MoreHorizontal,
@@ -77,7 +77,7 @@ function BrandMark({ compact = false }) {
           QuickNotes
         </span>
         {!compact && (
-          <span className="block text-ui-sm font-medium text-white/55">A calmer writing workspace</span>
+          <span className="block text-ui-sm font-medium text-white/70">A calmer writing workspace</span>
         )}
       </span>
     </div>
@@ -125,7 +125,15 @@ function WorkspacePreview() {
               {count && <span className="rounded bg-white/10 px-1 text-[6px]">{count}</span>}
             </div>
           ))}
-          <p className="mb-1 mt-2.5 px-1.5 text-[6px] font-bold uppercase tracking-[0.14em] text-nav-subtle">
+          <p className="mb-1 mt-2 px-1.5 text-[6px] font-bold uppercase tracking-[0.14em] text-nav-subtle">
+            Smart views
+          </p>
+          <div className="flex h-[18px] items-center gap-1.5 px-1.5 text-[7px] text-nav-muted">
+            <ListFilter className="h-2.5 w-2.5 text-emerald-300" />
+            <span className="flex-1">Recent work</span>
+            <span className="rounded bg-white/10 px-1 text-[6px]">5</span>
+          </div>
+          <p className="mb-1 mt-2 px-1.5 text-[6px] font-bold uppercase tracking-[0.14em] text-nav-subtle">
             Folders
           </p>
           {['Work', 'Personal', 'Ideas'].map((label, index) => (
@@ -186,35 +194,24 @@ function WorkspacePreview() {
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col bg-white">
-          <div className="flex h-9 shrink-0 items-center border-b border-slate-200 px-3 text-[6px] text-slate-500">
-            <span className="flex flex-1 items-center gap-1 font-semibold text-emerald-700">
+          <div className="qn-auth-preview-banner grid h-9 shrink-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center px-3 text-[6px] text-white">
+            <span className="flex min-w-0 items-center gap-1 font-semibold text-white/75">
               <HardDrive className="h-2.5 w-2.5" />
               Saved locally
             </span>
-            <Search className="mr-2 h-3 w-3" />
-            <Bell className="mr-2 h-3 w-3" />
-            <Send className="mr-2 h-3 w-3" />
-            <span className="flex h-5 w-5 items-center justify-center rounded-[6px] bg-emerald-50 text-emerald-700">
-              <Star className="h-3 w-3 fill-emerald-100" />
+            <p className="max-w-[160px] truncate px-2 text-center text-[10px] font-bold text-white">
+              Welcome to QuickNotes
+            </p>
+            <span className="flex min-w-0 items-center justify-end gap-1 text-white/85">
+              <Star className="h-3 w-3 fill-amber-300 text-amber-300" />
+              <Pin className="h-3 w-3" />
+              <FolderOpen className="h-3 w-3" />
+              <Tag className="h-3 w-3" />
+              <Search className="h-3 w-3" />
+              <Bell className="h-3 w-3" />
+              <Send className="h-3 w-3" />
+              <MoreHorizontal className="h-3 w-3" />
             </span>
-            <MoreHorizontal className="ml-2 h-3 w-3" />
-          </div>
-
-          <div className="qn-document-header relative px-3.5 py-2">
-            <div className="flex items-start gap-2">
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-[12px] font-bold">Welcome to QuickNotes</p>
-                <div className="qn-note-metadata mt-1.5 flex items-center gap-2 text-[6px]">
-                  <span className="flex items-center gap-1"><Clock3 className="h-2.5 w-2.5" />Just now</span>
-                  <span className="flex items-center gap-1"><FolderOpen className="h-2.5 w-2.5" />No folder</span>
-                  <span className="flex items-center gap-1"><Tag className="h-2.5 w-2.5" />2 tags</span>
-                  <span className="rounded border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-blue-700">#welcome</span>
-                </div>
-              </div>
-              <span className="qn-icon-button flex h-6 w-6 items-center justify-center rounded-[6px]">
-                <Pin className="h-3 w-3" />
-              </span>
-            </div>
           </div>
 
           <div className="flex h-5 shrink-0 items-end gap-3 border-y border-slate-200 bg-slate-50 px-3 text-[6px] font-medium text-slate-600">
@@ -866,7 +863,7 @@ export default function AuthScreen() {
             <h1 className="max-w-[680px] text-[42px] font-bold leading-[1.04] tracking-[-0.045em] xl:text-[52px]">
               Make room for the ideas that matter.
             </h1>
-            <p className="mt-5 max-w-[590px] text-[16px] leading-7 text-white/60">
+            <p className="mt-5 max-w-[590px] text-[16px] leading-7 text-white/72">
               A focused note workspace with the depth of a document editor and the speed of a
               quick capture tool.
             </p>
@@ -878,12 +875,12 @@ export default function AuthScreen() {
             {FEATURE_POINTS.map(({ icon: Icon, title, description }) => (
               <div key={title} className="min-w-0">
                 <div className="mb-2 flex items-center gap-2">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-[8px] bg-white/[0.08] text-accent-text">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-[8px] bg-white/[0.1] text-white/85 ring-1 ring-inset ring-white/10">
                     <Icon className="h-3.5 w-3.5" aria-hidden="true" />
                   </span>
                   <p className="text-ui-md font-semibold text-white/90">{title}</p>
                 </div>
-                <p className="text-ui-sm leading-[18px] text-white/40">{description}</p>
+                <p className="text-ui-sm leading-[18px] text-white/62">{description}</p>
               </div>
             ))}
           </div>

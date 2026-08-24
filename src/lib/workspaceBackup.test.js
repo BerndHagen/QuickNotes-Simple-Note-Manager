@@ -21,7 +21,7 @@ describe('workspace backups', () => {
 
     expect(backup).toMatchObject({
       format: WORKSPACE_BACKUP_FORMAT,
-      schemaVersion: 1,
+      schemaVersion: 2,
       exportedAt: '2026-08-01T10:00:00.000Z',
     })
     expect(backup.notes[0]).not.toHaveProperty('syncStatus')
@@ -35,7 +35,7 @@ describe('workspace backups', () => {
     })
     expect(() => parseWorkspaceBackup('{bad json')).toThrow('valid JSON')
     expect(() => parseWorkspaceBackup({ notes: 'wrong' })).toThrow('notes list')
-    expect(() => parseWorkspaceBackup({ schemaVersion: 2, notes: [] })).toThrow('newer')
+    expect(() => parseWorkspaceBackup({ schemaVersion: 3, notes: [] })).toThrow('newer')
   })
 
   it('merges safely, remaps hierarchy and internal links, and preserves structured data', () => {

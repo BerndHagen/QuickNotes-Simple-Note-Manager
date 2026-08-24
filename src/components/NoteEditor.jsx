@@ -15,6 +15,7 @@ import {
   Image as ImageIcon,
   Info,
   Link2,
+  LayoutTemplate,
   Mic,
   MoreVertical,
   Pin,
@@ -97,6 +98,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
     voiceInputActive,
     setVoiceInputActive,
     setShareModalOpen,
+    setTemplateSaveOpen,
     showNoteStatistics,
     confirmBeforeDelete,
   } = useUIStore()
@@ -716,6 +718,11 @@ export default function NoteEditor({ onBack, showBack = false }) {
             {t('editor.duplicate', 'Duplicate note')}
           </MenuItem>
         )}
+        {!isShared && (
+          <MenuItem icon={LayoutTemplate} onClick={() => { setTemplateSaveOpen(true); setMenuOpen(false) }}>
+            Save as template
+          </MenuItem>
+        )}
         {cloudEnabled && !isShared && (
           <MenuItem icon={Share2} onClick={() => { setShareModalOpen(true, note.id); setMenuOpen(false) }}>
             {t('editor.share', 'Share note')}
@@ -952,6 +959,11 @@ export default function NoteEditor({ onBack, showBack = false }) {
           {!isShared && (
             <MenuItem icon={Copy} onClick={() => { duplicateNote(note.id); setSpecializedContextMenu(null) }}>
               {t('editor.duplicate', 'Duplicate note')}
+            </MenuItem>
+          )}
+          {!isShared && (
+            <MenuItem icon={LayoutTemplate} onClick={() => { setTemplateSaveOpen(true); setSpecializedContextMenu(null) }}>
+              Save as template
             </MenuItem>
           )}
           <MenuItem icon={Download} onClick={() => { setExportModalOpen(true); setSpecializedContextMenu(null) }}>

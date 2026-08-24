@@ -106,6 +106,39 @@ test.describe('enterprise UI maturity regressions', () => {
     expect(tabsBackground).not.toBe(surface.backgroundColor)
   })
 
+  test('keeps project creation controls readable on every column', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await signIn(page)
+    const editor = await createFocusedWorkspace(page, {
+      type: 'Project Board',
+      starter: 'Product launch',
+      title: 'Accessible launch plan',
+      className: '.qn-type-project',
+    })
+
+    const addButtons = editor.getByRole('button', { name: /^Add task to / })
+    await expect(addButtons).toHaveCount(4)
+    const ratios = await addButtons.evaluateAll((buttons) => {
+      const rgb = (value) => value.match(/[\d.]+/g).slice(0, 3).map(Number)
+      const luminance = (value) => {
+        const channels = rgb(value).map((channel) => {
+          const normalized = channel / 255
+          return normalized <= 0.04045
+            ? normalized / 12.92
+            : ((normalized + 0.055) / 1.055) ** 2.4
+        })
+        return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722
+      }
+      return buttons.map((button) => {
+        const style = getComputedStyle(button)
+        const foreground = luminance(style.color)
+        const background = luminance(style.backgroundColor)
+        return (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05)
+      })
+    })
+    expect(ratios.every((ratio) => ratio >= 4.5)).toBe(true)
+  })
+
   test('keeps mobile task copy readable and places secondary actions on their own row', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 })
     const errors = collectErrors(page)

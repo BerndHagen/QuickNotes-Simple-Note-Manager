@@ -10,6 +10,7 @@ import {
   Keyboard,
   Kanban,
   ListChecks,
+  ListFilter,
   LogOut,
   Monitor,
   Moon,
@@ -28,6 +29,8 @@ import { getFolderIcon } from '../lib/folderIcons'
 import { isBackendConfigured } from '../lib/backend'
 import { createDailyNoteInput, findDailyNote } from '../lib/dailyNotes'
 import { collectWorkspaceTasks, getTaskSummary } from '../lib/workspaceTasks'
+import { filterNotes } from '../lib/filterNotes'
+import { filterBySmartView, getSmartViewScope } from '../lib/smartViews'
 import { Avatar, Menu, MenuItem, MenuSeparator, TagChip } from './ui'
 import { FolderDialog, ConfirmDialog } from './FolderDialogs'
 import { getDefaultData, NOTE_TYPES } from './editors/noteTypes'
@@ -113,15 +116,18 @@ export default function Sidebar({ onNavigate }) {
   const {
     folders,
     tags,
+    savedViews,
     notes,
     selectedNoteId,
     selectedFolderId,
     selectedTagFilter,
+    selectedSmartViewId,
     createFolder,
     updateFolder,
     deleteFolder,
     setSelectedFolder,
     setSelectedTagFilter,
+    setSelectedSmartView,
     createNote,
     setSelectedNote,
     user,
@@ -143,9 +149,10 @@ export default function Sidebar({ onNavigate }) {
     setSharedNotesViewOpen,
     setHelpModalOpen,
     setShortcutsModalOpen,
+    setSmartViewModalOpen,
   } = useUIStore()
 
-  const [sections, setSections] = useState({ folders: true, tags: true })
+  const [sections, setSections] = useState({ smartViews: true, folders: true, tags: true })
   const [folderDialog, setFolderDialog] = useState(null)
   const [folderMenu, setFolderMenu] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
@@ -187,6 +194,10 @@ export default function Sidebar({ onNavigate }) {
     [notes]
   )
   const dailyNote = useMemo(() => findDailyNote(notes), [notes])
+  const smartViewCounts = useMemo(() => new Map(savedViews.map((view) => {
+    const scoped = filterNotes(notes, { scope: getSmartViewScope(view) })
+    return [view.id, filterBySmartView(scoped, view).length]
+  })), [notes, savedViews])
 
   const go = (fn) => () => {
     fn()
@@ -208,7 +219,7 @@ export default function Sidebar({ onNavigate }) {
 
   const accountName = user?.username || user?.user_metadata?.username || 'Account'
   const accountDetail = user?.isLocal ? t('auth.localWorkspace', 'Saved on this device') : user?.email
-  const isAllNotes = !selectedFolderId && !selectedTagFilter && selectedNoteId !== dailyNote?.id
+  const isAllNotes = !selectedFolderId && !selectedTagFilter && !selectedSmartViewId && selectedNoteId !== dailyNote?.id
   const cloudEnabled = isBackendConfigured()
 
   const openToday = () => {
@@ -325,6 +336,52 @@ export default function Sidebar({ onNavigate }) {
             />
           </li>
         </ul>
+
+        <section aria-label="Smart views">
+          <SectionHeader
+            label="Smart views"
+            expanded={sections.smartViews}
+            onToggle={() => setSections((state) => ({ ...state, smartViews: !state.smartViews }))}
+            action={
+              <NavIconButton
+                icon={Plus}
+                label="New smart view"
+                onClick={go(() => setSmartViewModalOpen(true))}
+              />
+            }
+          />
+          {sections.smartViews && (
+            <ul className="mt-1 space-y-0.5">
+              {savedViews.length === 0 && (
+                <li className="px-2.5 py-1.5 text-ui-md text-nav-subtle">
+                  Live collections appear here
+                </li>
+              )}
+              {[...savedViews]
+                .sort((a, b) => (a.order ?? 9999) - (b.order ?? 9999))
+                .map((view) => (
+                  <li key={view.id}>
+                    <NavItem
+                      icon={ListFilter}
+                      iconColor={view.color}
+                      label={view.name}
+                      count={smartViewCounts.get(view.id) || 0}
+                      selected={selectedSmartViewId === view.id}
+                      onClick={go(() => setSelectedSmartView(view.id))}
+                      trailing={
+                        <NavIconButton
+                          icon={Pencil}
+                          label={`Edit ${view.name}`}
+                          onClick={go(() => setSmartViewModalOpen(true, view.id))}
+                          className="qn-nav-row-action absolute right-1.5 bg-[rgba(8,61,49,0.92)] opacity-0 backdrop-blur-sm focus-visible:opacity-100 group-hover:opacity-100"
+                        />
+                      }
+                    />
+                  </li>
+                ))}
+            </ul>
+          )}
+        </section>
 
         {/* Folders */}
         <section aria-label={t('sidebar.folders')}>
@@ -584,6 +641,7 @@ export default function Sidebar({ onNavigate }) {
         confirmLabel={t('common.delete', 'Delete folder')}
         cancelLabel={t('common.cancel', 'Cancel')}
       />
+
     </nav>
   )
 }

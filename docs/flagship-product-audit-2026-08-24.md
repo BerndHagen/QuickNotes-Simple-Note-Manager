@@ -38,17 +38,17 @@ Official references are listed at the end of this document.
 | Product system | Current assessment | Evidence and decision |
 | --- | --- | --- |
 | Capture | Strong but fragmented | Rich notes, quick notes, seven focused workspace types, images, dictation, import, and starters exist. This pass adds a one-click Today entry point. A browser clipper, scan-to-note flow, and share-target capture remain absent. |
-| Retrieval | Materially improved in this pass | Search already covered ordinary HTML, titles, and tags, but the global dialog skipped structured workspace data. It now uses the same structured search projection as the note list and adds type filters for documents, tasks, projects, meetings, journals, and weekly plans. OCR, attachment indexing, and saved compound searches remain absent. |
+| Retrieval | Materially improved in this pass | Search covers ordinary HTML, titles, tags, and structured workspace data, with type filters for documents, tasks, projects, meetings, journals, and weekly plans. Smart Views now persist up to twelve compound rules with all/any matching, scope, sort order, live counts, mobile navigation, offline support, cloud sync, and backup/restore. OCR and attachment indexing remain absent. |
 | Daily planning | Materially improved in this pass | Today creates or reopens exactly one local-date journal and preserves the journal's full structured workspace. Creation is explicitly workspace-level so browsing a folder cannot silently misfile the daily note. |
 | Tasks | Materially improved in this pass | My Tasks now aggregates document checklists, task lists and subtasks, project tasks and milestones, meeting actions, journal goals, and weekly work. It supports source navigation, direct completion, search, due/overdue/upcoming/completed filters, priorities, and recurrence. Recurring completion preserves history and creates the next occurrence. Reminders are not yet connected to individual structured tasks. |
-| Organization | Capable, not flagship-complete | Nested folders, tags, favorites, pinning, archive, Trash, duplicate detection, backlinks, note-type filtering, and sorting exist. Saved views / Smart Folders and user-defined properties are still missing, which becomes significant in large collections. |
+| Organization | Strong daily-use foundation | Nested folders, tags, favorites, pinning, archive, Trash, duplicate detection, backlinks, note-type filtering, and sorting are complemented by synced Smart Views. Rules cover text, title, tag, folder, note type, favorite, pin, task state, reminder state, and created/updated dates. User-defined property schemas and server pagination remain scale-oriented gaps. |
 | Editing | Broad and increasingly reliable | The document editor supports typography, semantic headings, lists, configurable checklists, links, images, callouts, tables, code, shapes, text boxes, dates, translation, page breaks, paper styles, paragraph geometry, rulers, tab stops, statistics, accessibility checks, history, dictation, focus mode, HTML source, and slash insertion. Pagination, page geometry, object clamping, and mobile header behavior have dedicated regression coverage. |
 | Tables and objects | Broad, with remaining depth work | Tables support row/column operations, movement, merge/split, header cells, and cell/table colour controls. Shapes and text boxes support direct drawing, sizing, position, rotation, wrapping, fill, border, and text. Formula columns, reusable table styles, attachment embeds, captions, and cross-note object reuse remain absent. |
 | Sharing | Useful but narrower than mature team products | View/edit sharing, invitations, provenance, live shared-note updates, and permission-aware backend policies exist. Comments, mentions, assignments, presence, suggestion mode, and activity history are not implemented. |
-| Offline and sync | Architecturally strong, remotely unverified in this session | IndexedDB, an explicit sync queue, conflict reconciliation, local-save status, backups, and optional Supabase sync exist. The active tool environment did not expose the Supabase database connector, so live migration state, storage policy, multi-device conflict behavior, and real network recovery were not guessed or claimed as verified. |
+| Offline and sync | Live backend verified in this pass | IndexedDB, an explicit sync queue, conflict reconciliation, local-save status, backups, and Supabase sync cover notes, folders, tags, Smart Views, and templates. The linked production project's migrations, tables, RLS policies, grants, functions, triggers, indexes, advisors, and real tenant isolation were inspected directly. Browser-disconnect and queued-reconnect behavior also retain regression coverage. |
 | Files and scanning | Largest daily-use gap | Images are supported, but generic file/PDF attachments do not yet have a complete storage, offline-cache, quota, validation, deletion, preview, export, sharing, and recovery lifecycle. OCR and document scanning are also absent. This is a product system, not an Insert-menu label. |
 | Privacy and recovery | Solid foundation, incomplete high-end privacy | Trash, archive, version history, backups, validation, sanitization, RLS migrations, and share hardening exist. Locked notes and end-to-end encryption remain absent and must include key recovery, search/index behavior, sharing restrictions, and version-history rules. |
-| Extensibility | Limited | Workspace starters and extensive editor preferences exist, but user-authored templates, plugins, automation, an API, and importable theme packs do not. |
+| Extensibility | Materially improved in this pass | User-authored templates can preserve rich documents or structured workspaces, tags, and note type, support title/date/time variables, favorites, offline use, cloud sync, and backup/restore. Plugins, automation, a public API, and importable theme packs remain absent. |
 | Mobile | Core editor issues addressed; specialist workflows still need expansion | The note header now has one back control and editable title, the title is geometrically centered, tabs and actions are reachable, the task center fits the viewport, and the editor no longer globally suppresses native context menus. Rulers remain desktop-only by design. Scan, stylus, widgets, and platform share extensions remain absent. |
 
 ## Editor tool audit
@@ -82,6 +82,44 @@ user intent, not implementation type.
    filters.
 6. Restored native context-menu behavior for text selection, copy/paste,
    spelling, password managers, and accessibility tools.
+7. Added Smart Views as a complete organization system: persisted compound
+   rules, all/any matching, scope, sorting, live counts, mobile navigation,
+   editing, safe deletion, offline persistence, cloud sync, and backup/restore.
+8. Added reusable user templates for rich documents and every structured
+   workspace, including tags, favorites, and `{{title}}`, `{{date}}`, and
+   `{{time}}` variables.
+9. Audited the live Supabase project and introduced tenant-isolated Smart View
+   and template tables, explicit history policies, richer recovery metadata,
+   retry-safe adjacent version de-duplication, active-note indexes, and a
+   tenant-scoped expired-Trash purge procedure.
+10. Updated authentication with the supplied production artwork, rebuilt its
+    miniature workspace to match the current single-bar editor and Smart Views,
+    increased low-contrast hero and Project Board controls, and regenerated the
+    repository's deployment-path screenshots, including Smart Views and reusable
+    templates.
+
+## Live database audit
+
+The `note_versions` rows are recovery checkpoints, not separately saved notes.
+At audit time the live project had 30 note rows and 187 historical checkpoints.
+Every checkpoint referenced an existing note; none was orphaned, and no two
+consecutive checkpoints were identical. A few non-consecutive states were the
+result of a document later returning to an earlier state, which is useful
+history rather than corrupt duplication. History remains capped at 30
+checkpoints per note.
+
+The `vampyrusnoctis` account had seven active note rows. The two unexpected
+rows, `MixForge Audio Software` and `New Note`, were moved to Trash rather than
+hard-deleted. The active collection now contains exactly the five notes named
+by the account owner, while both cleanup actions remain recoverable.
+
+The live migration ledger was reconciled with the repository without replaying
+equivalent historical migrations. All public tables have RLS, tenant-isolation
+checks passed for both accounts and accepted shares, database lint and the
+performance advisor are clean, and no Edge Functions are deployed. The sole
+remaining security-advisor warning is Supabase Auth leaked-password protection;
+it must be enabled in the project's Auth password-security settings on a plan
+that supports it.
 
 ## Flagship delivery sequence
 
@@ -91,10 +129,7 @@ gaps.
 
 ### P0: daily trust and organization
 
-- Saved views / Smart Folders with persisted compound rules, counts, editing,
-  empty states, mobile navigation, backup/export, and migration coverage.
 - Per-task reminders and recurrence exceptions connected to the task center.
-- User-defined reusable templates for documents and structured workspaces.
 - Scale work: cached indexing, result totals, and server pagination where a
   synced collection exceeds the client-side operating envelope.
 
@@ -126,17 +161,19 @@ gaps.
 
 The release gate for this pass includes lint, unit/integration tests, production
 build, production-bundle browser workflows, mobile viewport checks, axe WCAG
-A/AA scans, deployment validation, and diff hygiene. A compiling build alone is
-not treated as completion. Remote Supabase behavior is reported separately and
-must not be marked verified until a connector or staging environment is
-available.
+A/AA scans, deployment validation, diff hygiene, and direct live Supabase
+verification. A compiling build alone is not treated as completion. Database
+checks included migrations, schema lint, security/performance advisors,
+owner/collaborator RLS simulation, version-trigger behavior in a rolled-back
+transaction, and post-cleanup account counts.
 
 ## Official sources reviewed
 
 - Microsoft OneNote: [search notes](https://support.microsoft.com/en-us/OneNote/onenote-help-and-learning/search-notes-in-onenote), [take and format notes](https://support.microsoft.com/en-us/onenote/take-and-format-notes), and [insert or attach files](https://support.microsoft.com/en-US/OneNote/onenote-help-and-learning/insert-or-attach-files-to-notes)
-- Evernote: [Tasks overview](https://help.evernote.com/hc/en-us/articles/1500003792141-Tasks-Overview), [search](https://help.evernote.com/hc/en-us/articles/209005647-Find-what-you-need), and [clip formats](https://help.evernote.com/hc/en-us/articles/209125827-Clip-formats)
-- Obsidian: [Daily notes](https://obsidian.md/help/plugins/daily-notes), [Templates](https://obsidian.md/help/plugins/templates), [Backlinks](https://obsidian.md/help/plugins/backlinks), and [Canvas](https://obsidian.md/help/plugins/canvas)
+- Evernote: [Tasks overview](https://help.evernote.com/hc/en-us/articles/1500003792141-Tasks-Overview), [search](https://help.evernote.com/hc/en-us/articles/209005647-Find-what-you-need), [saved searches](https://help.evernote.com/hc/en-us/articles/209005267-Saved-searches), and [clip formats](https://help.evernote.com/hc/en-us/articles/209125827-Clip-formats)
+- Obsidian: [Daily notes](https://obsidian.md/help/plugins/daily-notes), [Templates](https://obsidian.md/help/plugins/templates), [Bases](https://obsidian.md/help/bases), [Properties](https://obsidian.md/help/properties), [Backlinks](https://obsidian.md/help/plugins/backlinks), and [Canvas](https://obsidian.md/help/plugins/canvas)
 - Joplin: [product help](https://joplinapp.org/help/), [note history](https://joplinapp.org/help/apps/note_history/), and [OCR](https://joplinapp.org/help/apps/ocr/)
 - Notion: [database properties](https://www.notion.com/help/database-properties), [views, filters, and sorts](https://www.notion.com/help/views-filters-and-sorts), and [offline pages](https://www.notion.com/en-gb/help/use-pages-offline)
 - Google Keep: [create and edit notes](https://support.google.com/keep/answer/2888240?co=GENIE.Platform%3DDesktop&hl=en) and [share notes](https://support.google.com/keep/answer/6101196?co=GENIE.Platform%3DAndroid&hl=en)
 - Apple Notes: [Smart Folders](https://support.apple.com/guide/notes/use-smart-folders-apd58edc7964/mac), [links between notes](https://support.apple.com/en-gb/guide/notes/apde615d29c2/mac), and [scan documents](https://support.apple.com/en-gb/108963)
+- Supabase: [password security](https://supabase.com/docs/guides/auth/password-security) and [Auth configuration API](https://supabase.com/docs/reference/api/v1-update-auth-service-config)

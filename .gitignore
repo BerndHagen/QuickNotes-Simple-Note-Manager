@@ -40,3 +40,4 @@ playwright-report/
 .scratch/
 coverage/
 .agents/
+supabase/.temp/

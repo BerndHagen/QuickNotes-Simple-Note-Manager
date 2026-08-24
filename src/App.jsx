@@ -30,6 +30,8 @@ const MOBILE_HISTORY_SURFACE_KEYS = [
   'helpModalOpen',
   'noteTypesModalOpen',
   'tasksViewOpen',
+  'smartViewModalOpen',
+  'templateSaveOpen',
   'shortcutsModalOpen',
   'archiveViewOpen',
   'globalSearchOpen',
@@ -71,6 +73,8 @@ const SharedNotesView = lazy(() => import('./components/SharedNotesView'))
 const KeyboardShortcutsModal = lazy(() => import('./components/KeyboardShortcutsModal'))
 const NoteTypesModal = lazy(() => import('./components/NoteTypesModal'))
 const TasksView = lazy(() => import('./components/TasksView'))
+const SmartViewModal = lazy(() => import('./components/SmartViewModal'))
+const SaveTemplateModal = lazy(() => import('./components/SaveTemplateModal'))
 const HelpModal = lazy(() => import('./components/HelpModal'))
 const PrivacyModal = lazy(() => import('./components/PrivacyModal'))
 const TermsModal = lazy(() => import('./components/TermsModal'))
@@ -157,6 +161,8 @@ export default function App() {
     shortcutsModalOpen,
     noteTypesModalOpen,
     tasksViewOpen,
+    smartViewModalOpen,
+    templateSaveOpen,
     helpModalOpen,
     privacyModalOpen,
     termsModalOpen,
@@ -628,6 +634,8 @@ export default function App() {
             <NoteTypesModal onCreated={() => isCompact && setMobileView('editor')} />
           )}
           {tasksViewOpen && <TasksView />}
+          {smartViewModalOpen && <SmartViewModal />}
+          {templateSaveOpen && <SaveTemplateModal />}
           {helpModalOpen && <HelpModal />}
           {privacyModalOpen && <PrivacyModal />}
           {termsModalOpen && <TermsModal />}

@@ -110,7 +110,7 @@ test.describe('note transfer dialogs', () => {
     })
 
     await dialog.getByRole('button', { name: /^import 1 file$/i }).click()
-    await expect(dialog.getByText(/1 notes, 1 folders, and 1 tags/i)).toBeVisible()
+    await expect(dialog.getByText(/1 note, 1 folder, and 1 tag/i)).toBeVisible()
     await dialog.getByRole('button', { name: /^done$/i }).click()
 
     const restoredNote = page.getByRole('button', { name: /restored from backup/i }).first()

@@ -53,4 +53,22 @@ test.describe('authentication entry', () => {
     await expect(username).toHaveAttribute('aria-invalid', 'true')
     await expect(page.getByRole('alert').first()).toContainText('Username is required')
   })
+
+  test('loads the branded background and shows the current editor hierarchy', async ({ page, request }) => {
+    await page.setViewportSize({ width: 1920, height: 1080 })
+    const authPage = page.locator('.qn-auth-page')
+    const background = await authPage.evaluate((element) => getComputedStyle(element).backgroundImage)
+    expect(background).toContain('quicknotes-auth-background.png')
+
+    const assetUrl = new URL('quicknotes-auth-background.png', page.url()).toString()
+    const response = await request.get(assetUrl)
+    expect(response.ok()).toBe(true)
+    expect(response.headers()['content-type']).toContain('image/png')
+    expect((await response.body()).byteLength).toBeGreaterThan(1_000_000)
+
+    const preview = page.locator('.qn-auth-preview')
+    await expect(preview.locator('.qn-auth-preview-banner')).toHaveCount(1)
+    await expect(preview.getByText('Smart views', { exact: true })).toBeVisible()
+    await expect(preview.getByText('Recent work', { exact: true })).toBeVisible()
+  })
 })

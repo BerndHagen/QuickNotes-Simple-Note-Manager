@@ -697,7 +697,7 @@ html {
     url('/quicknotes-auth-background.png');
   background-position: center;
   background-repeat: repeat;
-  background-size: 360px 360px;
+  background-size: 520px 520px;
   isolation: isolate;
 }
 
@@ -709,7 +709,7 @@ html {
   z-index: 0;
   inset: 0;
   pointer-events: none;
-  background: linear-gradient(90deg, rgba(232, 239, 236, 0.18), transparent 28%, transparent 72%, rgba(232, 239, 236, 0.18));
+  background: linear-gradient(90deg, rgba(232, 239, 236, 0.1), transparent 28%, transparent 72%, rgba(232, 239, 236, 0.1));
 }
 
 /* The centre veil protects form contrast without hiding the line artwork. */
@@ -719,7 +719,7 @@ html {
   z-index: 0;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(ellipse 64% 86% at 50% 48%, rgba(255, 255, 255, 0.42), transparent 78%);
+  background: radial-gradient(ellipse 64% 86% at 50% 48%, rgba(255, 255, 255, 0.28), transparent 78%);
 }
 
 .dark .qn-auth-page {

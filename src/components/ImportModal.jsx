@@ -22,6 +22,20 @@ const MAX_TOTAL_IMPORT_SIZE = 25 * 1024 * 1024
 const MAX_IMPORT_FILES = 100
 const SUPPORTED_EXTENSIONS = new Set(['json', 'md', 'markdown', 'txt', 'html', 'htm'])
 
+const describeWorkspaceImport = (counts) => {
+  const quantity = (count, singular, plural = `${singular}s`) => (
+    `${count} ${count === 1 ? singular : plural}`
+  )
+  const parts = [
+    quantity(counts.notes, 'note'),
+    quantity(counts.folders, 'folder'),
+    quantity(counts.tags, 'tag'),
+  ]
+  if (counts.savedViews > 0) parts.push(quantity(counts.savedViews, 'smart view'))
+  if (counts.noteTemplates > 0) parts.push(quantity(counts.noteTemplates, 'template'))
+  return `${parts.slice(0, -1).join(', ')}, and ${parts.at(-1)}`
+}
+
 const decodeTextEntities = (value) => String(value || '').replace(
   /&(?:#(\d+)|#x([\da-f]+)|(amp|lt|gt|quot|apos|#39));/gi,
   (match, decimal, hex, name) => {
@@ -232,7 +246,7 @@ export default function ImportModal() {
         let description
         if (parsed.kind === 'workspace') {
           const counts = await importWorkspaceBackup(parsed.backup)
-          description = `${counts.notes} notes, ${counts.folders} folders, and ${counts.tags} tags`
+          description = describeWorkspaceImport(counts)
         } else {
           createNote({
             title: parsed.title,

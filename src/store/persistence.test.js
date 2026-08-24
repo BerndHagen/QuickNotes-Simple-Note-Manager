@@ -244,7 +244,13 @@ describe('owner-scoped offline workspace persistence', () => {
       }],
     })
 
-    expect(counts).toEqual({ notes: 1, folders: 1, tags: 1 })
+    expect(counts).toEqual({
+      notes: 1,
+      folders: 1,
+      tags: 1,
+      savedViews: 0,
+      noteTemplates: 0,
+    })
     const state = useNotesStore.getState()
     expect(state.notes[0]).toMatchObject({
       title: 'Imported note',

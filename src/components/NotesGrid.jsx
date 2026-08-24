@@ -19,6 +19,12 @@ import {
 import { useNotesStore, useUIStore } from '../store'
 import { formatDate, htmlToPlainText, truncateText, getNoteTypePreview } from '../lib/utils'
 import { filterNotes } from '../lib/filterNotes'
+import {
+  deriveNoteDefaultsFromSmartView,
+  filterBySmartView,
+  getSmartViewScope,
+  getSmartViewSort,
+} from '../lib/smartViews'
 import { useTranslation } from '../lib/useTranslation'
 import SortDropdown, { sortNotes } from './SortDropdown'
 import { ConfirmDialog } from './FolderDialogs'
@@ -210,14 +216,17 @@ export default function NotesGrid({ sidebarToggle }) {
   const {
     notes,
     folders,
+    savedViews,
     selectedNoteId,
     selectedFolderId,
     selectedTagFilter,
+    selectedSmartViewId,
     searchQuery,
     setSearchQuery,
     setSelectedNote,
     createNote,
     deleteNote,
+    updateSavedView,
   } = useNotesStore()
 
   const { currentSort, setCurrentSort, sidebarOpen, viewMode, setViewMode } = useUIStore()
@@ -233,14 +242,18 @@ export default function NotesGrid({ sidebarToggle }) {
     }
   }, [selectedNoteId])
 
+  const selectedSmartView = savedViews.find((view) => view.id === selectedSmartViewId)
+  const activeSort = selectedSmartView ? getSmartViewSort(selectedSmartView) : currentSort
+
   const filteredNotes = useMemo(() => {
     const result = filterNotes(notes, {
       folderId: selectedFolderId,
       tagFilter: selectedTagFilter,
       query: searchQuery,
+      scope: selectedSmartView ? getSmartViewScope(selectedSmartView) : 'active',
     })
-    return sortNotes(result, currentSort)
-  }, [notes, selectedFolderId, selectedTagFilter, searchQuery, currentSort])
+    return sortNotes(filterBySmartView(result, selectedSmartView), activeSort)
+  }, [notes, selectedFolderId, selectedTagFilter, searchQuery, selectedSmartView, activeSort])
 
   const handleNoteClick = (note) => {
     setSelectedNote(note.id)
@@ -257,11 +270,13 @@ export default function NotesGrid({ sidebarToggle }) {
       title: t('notes.newNote'),
       content: '',
       folderId: selectedFolderId,
+      ...deriveNoteDefaultsFromSmartView(selectedSmartView),
     })
     setShowingEditor(true)
   }
 
   const getTitle = () => {
+    if (selectedSmartView) return selectedSmartView.name
     if (selectedTagFilter === '__starred__') return t('sidebar.favorites')
     if (selectedTagFilter) return `#${selectedTagFilter}`
     if (selectedFolderId) {
@@ -313,7 +328,18 @@ export default function NotesGrid({ sidebarToggle }) {
             </h2>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <SortDropdown currentSort={currentSort} onSortChange={setCurrentSort} />
+            <SortDropdown
+              currentSort={activeSort}
+              onSortChange={(sort) => {
+                if (selectedSmartView) {
+                  updateSavedView(selectedSmartView.id, {
+                    criteria: { ...selectedSmartView.criteria, sort },
+                  })
+                } else {
+                  setCurrentSort(sort)
+                }
+              }}
+            />
             <Button
               size="sm"
               variant="primary"

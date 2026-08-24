@@ -279,9 +279,9 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitl
                       <button
                         onClick={() => setShowAddTask(column.id)}
                         aria-label={`Add task to ${column.name}`}
-                        className="qn-square-control flex h-8 w-8 items-center justify-center rounded-control text-content-muted transition-colors hover:bg-surface-active hover:text-content"
+                        className="qn-square-control flex h-8 w-8 items-center justify-center rounded-control border border-accent bg-accent text-accent-on shadow-xs transition-colors hover:bg-accent-hover"
                       >
-                        <Plus className="w-4 h-4 text-content-muted" />
+                        <Plus className="h-4 w-4" />
                       </button>
                     </div>
                     <div className="qn-project-column-body flex-1 overflow-y-auto space-y-2 bg-surface-raised p-2">

@@ -41,6 +41,12 @@ import { useNotesStore, useUIStore } from '../store'
 import { useTranslation } from '../lib/useTranslation'
 import { groupNotesByDate } from '../lib/utils'
 import { filterNotes, STARRED_FILTER } from '../lib/filterNotes'
+import {
+  deriveNoteDefaultsFromSmartView,
+  filterBySmartView,
+  getSmartViewScope,
+  getSmartViewSort,
+} from '../lib/smartViews'
 import SortDropdown, { sortNotes } from './SortDropdown'
 import NotePreviewPopover from './NotePreviewPopover'
 import NoteCard from './NoteCard'
@@ -218,14 +224,17 @@ export default function NotesList({ sidebarToggle, onOpenNote }) {
     notes,
     folders,
     tags,
+    savedViews,
     selectedNoteId,
     selectedFolderId,
     selectedTagFilter,
+    selectedSmartViewId,
     searchQuery,
     setSearchQuery,
     setSelectedNote,
     createNote,
     reorderNotes,
+    updateSavedView,
   } = useNotesStore()
 
   const {
@@ -253,19 +262,23 @@ export default function NotesList({ sidebarToggle, onOpenNote }) {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   )
 
+  const selectedSmartView = savedViews.find((view) => view.id === selectedSmartViewId)
+  const activeSort = selectedSmartView ? getSmartViewSort(selectedSmartView) : currentSort
+
   const visibleNotes = useMemo(() => {
     const filtered = filterNotes(notes, {
       folderId: selectedFolderId,
       tagFilter: selectedTagFilter,
       query: searchQuery,
+      scope: selectedSmartView ? getSmartViewScope(selectedSmartView) : 'active',
     })
-    return sortNotes(filtered, currentSort)
-  }, [notes, selectedFolderId, selectedTagFilter, searchQuery, currentSort])
+    return sortNotes(filterBySmartView(filtered, selectedSmartView), activeSort)
+  }, [notes, selectedFolderId, selectedTagFilter, searchQuery, selectedSmartView, activeSort])
 
   const groups = useMemo(
     () =>
       groupNotesByDate(visibleNotes, {
-        sort: currentSort,
+        sort: activeSort,
         labels: {
           pinned: t('notes.pinned', 'Pinned'),
           today: t('notes.today', 'Today'),
@@ -274,13 +287,13 @@ export default function NotesList({ sidebarToggle, onOpenNote }) {
           earlier: t('notes.earlier', 'Earlier'),
         },
       }),
-    [visibleNotes, currentSort, t]
+    [visibleNotes, activeSort, t]
   )
 
   useEffect(() => {
     setSelectedIds(new Set())
     setLastClickedId(null)
-  }, [selectedFolderId, selectedTagFilter, searchQuery])
+  }, [selectedFolderId, selectedTagFilter, selectedSmartViewId, searchQuery])
 
   const handleNoteClick = useCallback(
     (e, note, index) => {
@@ -348,20 +361,26 @@ export default function NotesList({ sidebarToggle, onOpenNote }) {
   )
 
   const handleCreateNote = () => {
-    createNote({ title: t('notes.newNote'), content: '', folderId: selectedFolderId })
+    createNote({
+      title: t('notes.newNote'),
+      content: '',
+      folderId: selectedFolderId,
+      ...deriveNoteDefaultsFromSmartView(selectedSmartView),
+    })
     onOpenNote?.()
   }
 
   const title = useMemo(() => {
+    if (selectedSmartView) return selectedSmartView.name
     if (selectedTagFilter === STARRED_FILTER) return t('sidebar.favorites')
     if (selectedTagFilter) return `#${selectedTagFilter}`
     if (selectedFolderId) {
       return folders.find((f) => f.id === selectedFolderId)?.name || t('sidebar.folders')
     }
     return t('sidebar.allNotes')
-  }, [selectedTagFilter, selectedFolderId, folders, t])
+  }, [selectedSmartView, selectedTagFilter, selectedFolderId, folders, t])
 
-  const isManualSort = currentSort === 'manual'
+  const isManualSort = activeSort === 'manual'
   let flatIndex = -1
 
   const renderCard = (note, dragHandle, dragProps) => {
@@ -439,7 +458,18 @@ export default function NotesList({ sidebarToggle, onOpenNote }) {
           <span className="shrink-0 rounded-full bg-surface-sunken px-2 py-0.5 text-ui-xs font-medium tabular-nums text-content-muted">
             {visibleNotes.length}
           </span>
-          <SortDropdown currentSort={currentSort} onSortChange={setCurrentSort} />
+          <SortDropdown
+            currentSort={activeSort}
+            onSortChange={(sort) => {
+              if (selectedSmartView) {
+                updateSavedView(selectedSmartView.id, {
+                  criteria: { ...selectedSmartView.criteria, sort },
+                })
+              } else {
+                setCurrentSort(sort)
+              }
+            }}
+          />
           <IconButton
             icon={Sparkles}
             label="Create workspace"

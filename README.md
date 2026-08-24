@@ -384,7 +384,7 @@ backend.channel('name').on('postgres_changes', filter, callback).subscribe()
 | Function | Purpose |
 |----------|---------|
 | `backend.auth.*` | Authentication (signup, login, logout, session, password reset) |
-| `backend.from(table)` | Query builder: read/write for `notes`, `folders`, `tags`; read-only for `note_versions`, `shared_notes`, `accepted_shares` |
+| `backend.from(table)` | RLS-protected query builder for notes, folders, tags, Smart Views, templates, history, and sharing data |
 | `backend.channel()` | Realtime subscriptions for live collaboration |
 | `createShareLink()` | Create share invitation for a note |
 | `acceptShare()` | Accept a share invitation |
@@ -396,6 +396,7 @@ backend.channel('name').on('postgres_changes', filter, callback).subscribe()
 | `updateSharedNote()` | Apply a collaborator edit through the restricted RPC |
 | `subscribeToSharedNoteContent()` | Subscribe to realtime changes on a shared note |
 | `getRemoteNoteVersions()` | Fetch remote version history for a note |
+| `purgeMyExpiredTrash(days)` | Permanently remove only the signed-in user's Trash items older than the chosen retention period |
 | `deleteUserAccount()` | Delete user account and all associated data via RPC |
 | `isBackendConfigured()` | Check if Supabase credentials are set |
 | `getRedirectUrl()` | Get OAuth redirect URL (handles localhost vs production) |
@@ -447,7 +448,7 @@ Core data store for notes, folders, tags, and sync logic.
 
 | State / Action | Description |
 |---------------|-------------|
-| `notes`, `folders`, `tags` | Core data arrays |
+| `notes`, `folders`, `tags`, `savedViews`, `noteTemplates` | Core data and reusable organization arrays |
 | `selectedNoteId`, `selectedFolderId`, `selectedTagFilter` | Current selection state |
 | `searchQuery` | Current search filter |
 | `user`, `isAuthChecked` | Authentication state |
@@ -701,6 +702,8 @@ supabase db push
 | `folders` | Folder hierarchy with name, icon, color, parent_id |
 | `tags` | Tag definitions with name and color |
 | `note_versions` | Version history (max 30 per note, auto-created on content change) |
+| `saved_views` | User-owned Smart View definitions with validated compound rules, scope, sort order, and display colour |
+| `note_templates` | User-owned reusable rich or structured note templates with tags, favorite state, and variables |
 | `shared_notes` | Share invitations with permission levels and status |
 | `accepted_shares` | Denormalized accepted shares for fast access |
 
@@ -727,6 +730,7 @@ note type, and structured note data. Direct updates remain owner-only.
 | `update_shared_note(note_id, patch)` | Apply an allow-listed collaborator edit |
 | `get_pending_share_invitations()` | Return safe invitation metadata for the signed-in recipient |
 | `delete_user_account()` | Permanently delete user account and all associated data |
+| `purge_my_expired_trash(retention_days)` | Tenant-scoped hard deletion of the signed-in user's expired Trash rows |
 
 ### Triggers
 
@@ -968,5 +972,13 @@ If you'd like a preview of QuickNotes before trying it out, the screenshots belo
   <tr>
     <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/screenshot-workspaces.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/screenshot-workspaces.png" alt="QuickNotes Workspace Picker" width="450"></a></td>
     <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/screenshot-shapes.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/screenshot-shapes.png" alt="QuickNotes Document Shapes" width="450"></a></td>
+  </tr>
+  <tr>
+    <th>QuickNotes - Smart Views</th>
+    <th>QuickNotes - Reusable Templates</th>
+  </tr>
+  <tr>
+    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/screenshot-smart-views.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/screenshot-smart-views.png" alt="QuickNotes Smart View" width="450"></a></td>
+    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/screenshot-templates.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/screenshot-templates.png" alt="QuickNotes reusable templates" width="450"></a></td>
   </tr>
 </table>

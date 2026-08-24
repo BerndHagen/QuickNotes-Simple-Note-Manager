@@ -319,7 +319,7 @@ export const getRemoteNoteVersions = async (noteId) => {
   
   const { data, error } = await backend
     .from('note_versions')
-    .select('id, note_id, title, content, note_type, note_data, created_at')
+    .select('id, note_id, title, content, note_type, note_data, change_kind, changed_fields, snapshot_hash, created_at')
     .eq('note_id', noteId)
     .order('created_at', { ascending: false })
     .limit(30)
@@ -333,6 +333,9 @@ export const getRemoteNoteVersions = async (noteId) => {
     content: v.content,
     noteType: v.note_type || 'standard',
     noteData: v.note_data,
+    changeKind: v.change_kind || 'edit',
+    changedFields: v.changed_fields || [],
+    snapshotHash: v.snapshot_hash,
     createdAt: v.created_at,
     source: 'remote',
   }))

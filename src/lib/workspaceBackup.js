@@ -2,11 +2,13 @@ import { MAX_FOLDER_NAME_LENGTH, limitNoteTitle, normalizeTagName } from './data
 import { sanitizeNoteHtml } from './sanitizeHtml'
 
 export const WORKSPACE_BACKUP_FORMAT = 'quicknotes-workspace-backup'
-export const WORKSPACE_BACKUP_VERSION = 1
+export const WORKSPACE_BACKUP_VERSION = 2
 
 const MAX_BACKUP_NOTES = 10_000
 const MAX_BACKUP_FOLDERS = 1_000
 const MAX_BACKUP_TAGS = 1_000
+const MAX_BACKUP_SAVED_VIEWS = 250
+const MAX_BACKUP_TEMPLATES = 500
 const MAX_JSON_DEPTH = 40
 const MAX_JSON_NODES = 100_000
 const NOTE_TYPES = new Set([
@@ -70,7 +72,10 @@ const copyNoteForBackup = (note) => ({
   updatedAt: note.updatedAt || null,
 })
 
-export function createWorkspaceBackup({ notes = [], folders = [], tags = [] }, exportedAt) {
+export function createWorkspaceBackup(
+  { notes = [], folders = [], tags = [], savedViews = [], noteTemplates = [] },
+  exportedAt
+) {
   return {
     format: WORKSPACE_BACKUP_FORMAT,
     schemaVersion: WORKSPACE_BACKUP_VERSION,
@@ -91,6 +96,29 @@ export function createWorkspaceBackup({ notes = [], folders = [], tags = [] }, e
       color: tag.color || '#6b7280',
       createdAt: tag.createdAt || null,
       updatedAt: tag.updatedAt || null,
+    })),
+    savedViews: savedViews.map((view) => ({
+      id: view.id,
+      name: view.name || '',
+      icon: view.icon || 'ListFilter',
+      color: view.color || '#0f766e',
+      criteria: cloneJsonValue(view.criteria),
+      order: Number.isFinite(view.order) ? view.order : null,
+      createdAt: view.createdAt || null,
+      updatedAt: view.updatedAt || null,
+    })),
+    noteTemplates: noteTemplates.map((template) => ({
+      id: template.id,
+      name: template.name || '',
+      description: template.description || '',
+      noteType: template.noteType || 'standard',
+      titleTemplate: template.titleTemplate || template.name || 'Untitled note',
+      content: template.content || '',
+      noteData: cloneJsonValue(template.noteData ?? null),
+      tags: Array.isArray(template.tags) ? [...template.tags] : [],
+      favorite: Boolean(template.favorite),
+      createdAt: template.createdAt || null,
+      updatedAt: template.updatedAt || null,
     })),
   }
 }
@@ -125,11 +153,19 @@ export function parseWorkspaceBackup(source) {
   if (backup.tags != null && !Array.isArray(backup.tags)) {
     throw new Error('The backup tag list is invalid.')
   }
+  if (backup.savedViews != null && !Array.isArray(backup.savedViews)) {
+    throw new Error('The backup smart view list is invalid.')
+  }
+  if (backup.noteTemplates != null && !Array.isArray(backup.noteTemplates)) {
+    throw new Error('The backup template list is invalid.')
+  }
 
   const parsed = {
     notes: backup.notes,
     folders: backup.folders || [],
     tags: backup.tags || [],
+    savedViews: backup.savedViews || [],
+    noteTemplates: backup.noteTemplates || [],
   }
   if (parsed.notes.length > MAX_BACKUP_NOTES) {
     throw new Error(`A backup can contain at most ${MAX_BACKUP_NOTES.toLocaleString()} notes.`)
@@ -140,7 +176,19 @@ export function parseWorkspaceBackup(source) {
   if (parsed.tags.length > MAX_BACKUP_TAGS) {
     throw new Error(`A backup can contain at most ${MAX_BACKUP_TAGS.toLocaleString()} tags.`)
   }
-  if (parsed.notes.length + parsed.folders.length + parsed.tags.length === 0) {
+  if (parsed.savedViews.length > MAX_BACKUP_SAVED_VIEWS) {
+    throw new Error(`A backup can contain at most ${MAX_BACKUP_SAVED_VIEWS} smart views.`)
+  }
+  if (parsed.noteTemplates.length > MAX_BACKUP_TEMPLATES) {
+    throw new Error(`A backup can contain at most ${MAX_BACKUP_TEMPLATES} templates.`)
+  }
+  if (
+    parsed.notes.length +
+    parsed.folders.length +
+    parsed.tags.length +
+    parsed.savedViews.length +
+    parsed.noteTemplates.length === 0
+  ) {
     throw new Error('The backup is empty.')
   }
   return parsed
@@ -217,6 +265,8 @@ export function prepareWorkspaceImport(
   const backup = parseWorkspaceBackup(source)
   const sourceFolders = collectUniqueRecords(backup.folders, 'folder')
   const sourceNotes = collectUniqueRecords(backup.notes, 'note')
+  const sourceViews = collectUniqueRecords(backup.savedViews, 'smart view')
+  const sourceTemplates = collectUniqueRecords(backup.noteTemplates, 'template')
   const timestamp = validDate(now) || new Date().toISOString()
   const nextId = () => {
     const id = createId()
@@ -315,5 +365,52 @@ export function prepareWorkspaceImport(
     syncStatus: 'pending',
   }))
 
-  return { notes, folders, tags }
+  const usedViewNames = new Set(
+    (existingWorkspace.savedViews || []).map((view) => String(view.name || '').trim().toLowerCase())
+  )
+  const savedViews = sourceViews.map((view, index) => {
+    const criteria = cloneJsonValue(view.criteria || { match: 'all', scope: 'active', rules: [] })
+    if (Array.isArray(criteria?.rules)) {
+      criteria.rules = criteria.rules.map((rule) => (
+        rule?.field === 'folder' && typeof rule.value === 'string'
+          ? { ...rule, value: folderIdMap.get(rule.value) || '' }
+          : rule
+      ))
+    }
+    return {
+      id: nextId(),
+      name: uniqueFolderName(view.name || 'Imported smart view', usedViewNames).slice(0, 80),
+      icon: typeof view.icon === 'string' ? view.icon.slice(0, 50) || 'ListFilter' : 'ListFilter',
+      color: safeColor(view.color, '#0f766e'),
+      criteria,
+      order: Number.isFinite(view.order) ? view.order : index,
+      createdAt: validDate(view.createdAt, timestamp),
+      updatedAt: timestamp,
+      syncStatus: 'pending',
+    }
+  })
+
+  const usedTemplateNames = new Set(
+    (existingWorkspace.noteTemplates || []).map((template) => String(template.name || '').trim().toLowerCase())
+  )
+  const noteTemplates = sourceTemplates.map((template) => ({
+    id: nextId(),
+    name: uniqueFolderName(template.name || 'Imported template', usedTemplateNames).slice(0, 80),
+    description: String(template.description || '').slice(0, 500),
+    noteType: NOTE_TYPES.has(template.noteType) ? template.noteType : 'standard',
+    titleTemplate: limitNoteTitle(template.titleTemplate, template.name || 'Untitled note'),
+    content: sanitizeNoteHtml(template.content || ''),
+    noteData: cloneJsonValue(template.noteData ?? null),
+    tags: Array.isArray(template.tags)
+      ? [...new Set(template.tags.map((tag) => {
+          try { return normalizeTagName(tag) } catch { return null }
+        }).filter(Boolean))].slice(0, 50)
+      : [],
+    favorite: Boolean(template.favorite),
+    createdAt: validDate(template.createdAt, timestamp),
+    updatedAt: timestamp,
+    syncStatus: 'pending',
+  }))
+
+  return { notes, folders, tags, savedViews, noteTemplates }
 }

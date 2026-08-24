@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url'
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const outputDir = path.join(projectRoot, 'images')
-const baseUrl = (process.env.QN_SCREENSHOT_URL || 'http://127.0.0.1:4173').replace(/\/$/, '')
+const baseUrl = `${(process.env.QN_SCREENSHOT_URL || 'http://127.0.0.1:4173').replace(/\/+$/, '')}/`
 const viewport = { width: 1920, height: 1080 }
 
 await mkdir(outputDir, { recursive: true })
@@ -127,6 +127,41 @@ async function captureWorkspaceAndShapes() {
   await context.close()
 }
 
+async function captureSmartViews() {
+  const context = await browser.newContext({ viewport })
+  const page = await context.newPage()
+  await openLocalWorkspace(page)
+  await page.getByRole('button', { name: 'New smart view' }).click()
+  const dialog = page.getByRole('dialog', { name: 'New smart view' })
+  await dialog.getByLabel('Name').fill('Recently edited')
+  await dialog.getByLabel('Rule 1 field').selectOption('updatedAt')
+  await dialog.getByLabel('Rule 1 value').fill('30')
+  await dialog.getByRole('button', { name: 'Create view' }).click()
+  await expect(page.getByRole('heading', { name: 'Recently edited' })).toBeVisible()
+  await save(page, 'screenshot-smart-views.png')
+  await context.close()
+}
+
+async function captureTemplates() {
+  const context = await browser.newContext({ viewport })
+  const page = await context.newPage()
+  await openLocalWorkspace(page)
+  await page.getByRole('button', { name: 'More actions', exact: true }).click()
+  await page.getByRole('menuitem', { name: 'Save as template' }).click()
+  const saveDialog = page.getByRole('dialog', { name: 'Save as template' })
+  await saveDialog.getByLabel('Template name').fill('Team handbook')
+  await saveDialog.getByLabel('Description').fill('Reusable onboarding reference')
+  await saveDialog.getByRole('button', { name: 'Save template' }).click()
+  await page.getByRole('button', { name: 'Create workspace' }).click()
+  const picker = page.getByRole('dialog', { name: 'New workspace' })
+  const myTemplates = picker.getByRole('button', { name: 'My templates', exact: true })
+  await myTemplates.click()
+  await expect(myTemplates).toHaveAttribute('aria-pressed', 'true')
+  await expect(picker.getByRole('button', { name: /Team handbook/i })).toBeVisible()
+  await save(page, 'screenshot-templates.png')
+  await context.close()
+}
+
 try {
   await captureStartup()
   await captureEditorAndSearch()
@@ -152,9 +187,11 @@ try {
     'Enterprise launch plan',
     '.qn-type-project',
   )
+  await captureSmartViews()
+  await captureTemplates()
   await captureMobileFocused()
 } finally {
   await browser.close()
 }
 
-console.log(`Updated nine repository screenshots in ${outputDir}`)
+console.log(`Updated eleven repository screenshots in ${outputDir}`)

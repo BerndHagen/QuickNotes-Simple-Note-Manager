@@ -2,7 +2,10 @@ import { useMemo, useRef, useState } from 'react'
 import {
   ArrowRight,
   Check,
+  LayoutTemplate,
   Search,
+  Star,
+  Trash2,
   Sparkles,
 } from 'lucide-react'
 import { useUIStore, useNotesStore } from '../store'
@@ -16,12 +19,20 @@ import {
 } from './editors'
 import { Button, Input, Modal } from './ui'
 import { MAX_NOTE_TITLE_LENGTH } from '../lib/dataValidation'
+import { applyTemplateVariables } from '../lib/noteTemplates'
+import { ConfirmDialog } from './FolderDialogs'
 
 const types = Object.values(NOTE_TYPE_CONFIG)
 
 export default function NoteTypesModal({ onCreated }) {
   const { noteTypesModalOpen, setNoteTypesModalOpen } = useUIStore()
-  const { createNote } = useNotesStore()
+  const {
+    createNote,
+    noteTemplates,
+    createNoteFromTemplate,
+    updateNoteTemplate,
+    deleteNoteTemplate,
+  } = useNotesStore()
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [query, setQuery] = useState('')
   const [selectedType, setSelectedType] = useState(NOTE_TYPES.STANDARD)
@@ -29,17 +40,51 @@ export default function NoteTypesModal({ onCreated }) {
     NOTE_TYPE_STARTERS[NOTE_TYPES.STANDARD][0].id
   )
   const [title, setTitle] = useState(NOTE_TYPE_STARTERS[NOTE_TYPES.STANDARD][0].title)
+  const [selectedTemplateId, setSelectedTemplateId] = useState(null)
+  const [confirmTemplateDelete, setConfirmTemplateDelete] = useState(false)
   const searchRef = useRef(null)
 
-  const config = NOTE_TYPE_CONFIG[selectedType]
-  const starters = NOTE_TYPE_STARTERS[selectedType] || []
+  const selectedTemplate = noteTemplates.find((template) => template.id === selectedTemplateId)
+  const baseConfig = NOTE_TYPE_CONFIG[selectedType]
+  const config = selectedTemplate
+    ? {
+        ...baseConfig,
+        name: selectedTemplate.name,
+        shortName: 'template',
+        category: 'my template',
+        description: selectedTemplate.description || `Reusable ${baseConfig.shortName.toLowerCase()} structure`,
+        bestFor: selectedTemplate.description || 'A reusable workspace saved from one of your own notes.',
+        features: [baseConfig.name, `${selectedTemplate.tags?.length || 0} inherited tags`, 'Synced across devices'],
+        icon: LayoutTemplate,
+      }
+    : baseConfig
+  const starters = selectedTemplate
+    ? [{ id: 'custom-template', name: selectedTemplate.name, description: selectedTemplate.description || 'Your saved content and structure' }]
+    : NOTE_TYPE_STARTERS[selectedType] || []
   const activeStarter =
     starters.find((starter) => starter.id === selectedStarter) || starters[0]
 
   const filteredTypes = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
 
-    return types.filter((type) => {
+    const customTypes = noteTemplates.map((template) => ({
+      id: `template:${template.id}`,
+      templateId: template.id,
+      name: template.name,
+      shortName: 'template',
+      description: template.description || `Reusable ${NOTE_TYPE_CONFIG[template.noteType]?.shortName.toLowerCase() || 'note'} structure`,
+      bestFor: template.description || '',
+      category: 'mine',
+      features: [NOTE_TYPE_CONFIG[template.noteType]?.name || 'Document', ...(template.tags || [])],
+      keywords: ['custom', 'template'],
+      icon: LayoutTemplate,
+      color: NOTE_TYPE_CONFIG[template.noteType]?.color || '#0f766e',
+      favorite: template.favorite,
+    })).sort((a, b) => Number(b.favorite) - Number(a.favorite) || a.name.localeCompare(b.name))
+
+    const availableTypes = [...customTypes, ...types]
+
+    return availableTypes.filter((type) => {
       const matchesCategory =
         selectedCategory === 'all' || type.category === selectedCategory
       const haystack = [
@@ -53,9 +98,23 @@ export default function NoteTypesModal({ onCreated }) {
 
       return matchesCategory && (!normalizedQuery || haystack.includes(normalizedQuery))
     })
-  }, [query, selectedCategory])
+  }, [noteTemplates, query, selectedCategory])
 
   const selectType = (typeId) => {
+    if (typeId.startsWith('template:')) {
+      const template = noteTemplates.find((candidate) => `template:${candidate.id}` === typeId)
+      if (!template) return
+      setSelectedTemplateId(template.id)
+      setSelectedType(template.noteType || NOTE_TYPES.STANDARD)
+      setSelectedStarter('custom-template')
+      setTitle(
+        template.titleTemplate?.includes('{{title}}')
+          ? template.name
+          : applyTemplateVariables(template.titleTemplate || template.name, { title: template.name })
+      )
+      return
+    }
+    setSelectedTemplateId(null)
     const starter = NOTE_TYPE_STARTERS[typeId]?.[0]
     setSelectedType(typeId)
     setSelectedStarter(starter?.id || 'blank')
@@ -71,12 +130,16 @@ export default function NoteTypesModal({ onCreated }) {
 
   const createSelectedNote = () => {
     const cleanTitle = title.trim() || activeStarter?.title || config.name
-    createNote({
-      title: cleanTitle,
-      content: getStarterContent(selectedType, selectedStarter),
-      noteType: selectedType,
-      noteData: getStarterData(selectedType, selectedStarter),
-    })
+    if (selectedTemplate) {
+      createNoteFromTemplate(selectedTemplate.id, cleanTitle)
+    } else {
+      createNote({
+        title: cleanTitle,
+        content: getStarterContent(selectedType, selectedStarter),
+        noteType: selectedType,
+        noteData: getStarterData(selectedType, selectedStarter),
+      })
+    }
     close()
     onCreated?.()
   }
@@ -139,7 +202,7 @@ export default function NoteTypesModal({ onCreated }) {
               className="mt-3 flex gap-1.5 overflow-x-auto pb-1"
               aria-label="Filter note types"
             >
-              {CATEGORIES.map((category) => {
+              {[{ id: 'all', name: 'All' }, ...(noteTemplates.length ? [{ id: 'mine', name: 'My templates' }] : []), ...CATEGORIES.filter((category) => category.id !== 'all')].map((category) => {
                 const active = selectedCategory === category.id
                 return (
                   <button
@@ -172,7 +235,9 @@ export default function NoteTypesModal({ onCreated }) {
             ) : (
               filteredTypes.map((type) => {
                 const Icon = type.icon
-                const active = selectedType === type.id
+                const active = type.templateId
+                  ? selectedTemplateId === type.templateId
+                  : !selectedTemplateId && selectedType === type.id
                 return (
                   <button
                     key={type.id}
@@ -206,6 +271,9 @@ export default function NoteTypesModal({ onCreated }) {
                         {type.description}
                       </span>
                     </span>
+                    {type.favorite && (
+                      <Star className="mt-1 h-3.5 w-3.5 shrink-0 fill-current text-amber-500" aria-label="Favourite template" />
+                    )}
                     {active && (
                       <Check
                         className="mt-1 h-4 w-4 shrink-0 text-accent-text"
@@ -247,6 +315,26 @@ export default function NoteTypesModal({ onCreated }) {
                   </span>
                 ))}
               </div>
+              {selectedTemplate && (
+                <div className="mt-4 flex flex-wrap gap-2 border-t border-subtle pt-4">
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    icon={Star}
+                    onClick={() => updateNoteTemplate(selectedTemplate.id, { favorite: !selectedTemplate.favorite })}
+                  >
+                    {selectedTemplate.favorite ? 'Unpin template' : 'Pin template'}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="danger-ghost"
+                    icon={Trash2}
+                    onClick={() => setConfirmTemplateDelete(true)}
+                  >
+                    Delete template
+                  </Button>
+                </div>
+              )}
             </div>
 
             <div className="space-y-6 px-5 py-5 sm:px-7 sm:py-6">
@@ -334,7 +422,9 @@ export default function NoteTypesModal({ onCreated }) {
                   Built as a real workspace
                 </div>
                 <p className="mt-1.5 text-ui-sm leading-relaxed text-content-muted">
-                  {selectedType === NOTE_TYPES.STANDARD
+                  {selectedTemplate
+                    ? 'Creates a fresh note from your saved content, structured fields, tags, and title variables.'
+                    : selectedType === NOTE_TYPES.STANDARD
                     ? 'Uses the complete document editor with formatting, tables, tasks, links, media, and focus tools.'
                     : `Uses a dedicated ${config.shortName.toLowerCase()} editor with structured data, meaningful progress, and export support.`}
                 </p>
@@ -342,6 +432,19 @@ export default function NoteTypesModal({ onCreated }) {
             </div>
         </section>
       </div>
+      <ConfirmDialog
+        open={confirmTemplateDelete}
+        onClose={() => setConfirmTemplateDelete(false)}
+        onConfirm={() => {
+          deleteNoteTemplate(selectedTemplate.id)
+          setConfirmTemplateDelete(false)
+          selectType(NOTE_TYPES.STANDARD)
+        }}
+        icon={Trash2}
+        title="Delete template?"
+        description="Existing notes created from this template are not affected."
+        confirmLabel="Delete template"
+      />
     </Modal>
   )
 }

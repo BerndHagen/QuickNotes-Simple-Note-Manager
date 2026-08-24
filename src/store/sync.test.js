@@ -10,6 +10,8 @@ const backendHarness = vi.hoisted(() => ({
     folders: [],
     tags: [],
     notes: [],
+    saved_views: [],
+    note_templates: [],
   },
 }))
 
@@ -150,9 +152,12 @@ const resetStore = (overrides = {}) => {
     notes: [],
     folders: [],
     tags: [],
+    savedViews: [],
+    noteTemplates: [],
     selectedNoteId: null,
     selectedFolderId: null,
     selectedTagFilter: null,
+    selectedSmartViewId: null,
     searchQuery: '',
     isSyncing: false,
     lastSyncTime: null,
@@ -181,6 +186,8 @@ describe('cloud synchronization reconciliation', () => {
     backendHarness.tables.folders = []
     backendHarness.tables.tags = []
     backendHarness.tables.notes = []
+    backendHarness.tables.saved_views = []
+    backendHarness.tables.note_templates = []
     backend.auth.signOut.mockClear()
     Object.defineProperty(navigator, 'onLine', { configurable: true, value: true })
     resetStore()
@@ -233,6 +240,99 @@ describe('cloud synchronization reconciliation', () => {
     )
     expect(useNotesStore.getState().notes[0].syncStatus).toBe(SyncStatus.SYNCED)
     expect(await getPendingSyncItems()).toEqual([])
+  })
+
+  it('syncs Smart Views and reusable templates as tenant-owned collections', async () => {
+    const savedView = {
+      id: 'view-1',
+      name: 'Recent projects',
+      icon: 'ListFilter',
+      color: '#0f766e',
+      criteria: {
+        match: 'all',
+        scope: 'active',
+        sort: 'updated-desc',
+        rules: [{ id: 'rule-1', field: 'noteType', operator: 'is', value: 'project' }],
+      },
+      order: 0,
+      createdAt: timestamp(0),
+      updatedAt: timestamp(10),
+      syncStatus: SyncStatus.PENDING,
+    }
+    const template = {
+      id: 'template-1',
+      name: 'Project kickoff',
+      description: 'Reusable delivery plan',
+      noteType: 'project',
+      titleTemplate: '{{date}} · Project kickoff',
+      content: '',
+      noteData: { columns: [] },
+      tags: ['project'],
+      favorite: true,
+      createdAt: timestamp(0),
+      updatedAt: timestamp(10),
+      syncStatus: SyncStatus.PENDING,
+    }
+    resetStore({ savedViews: [savedView], noteTemplates: [template] })
+    await addToSyncQueue('saved_views', 'insert', savedView)
+    await addToSyncQueue('note_templates', 'insert', template)
+
+    expect(await useNotesStore.getState().syncWithBackend()).toBe(true)
+
+    expect(writesFor('saved_views')).toHaveLength(1)
+    expect(backendHarness.tables.saved_views[0]).toEqual(expect.objectContaining({
+      id: savedView.id,
+      user_id: 'user-1',
+      name: savedView.name,
+    }))
+    expect(writesFor('note_templates')).toHaveLength(1)
+    expect(backendHarness.tables.note_templates[0]).toEqual(expect.objectContaining({
+      id: template.id,
+      user_id: 'user-1',
+      note_type: 'project',
+    }))
+    expect(useNotesStore.getState().savedViews[0].syncStatus).toBe(SyncStatus.SYNCED)
+    expect(useNotesStore.getState().noteTemplates[0].syncStatus).toBe(SyncStatus.SYNCED)
+    expect(await getPendingSyncItems()).toEqual([])
+  })
+
+  it('downloads cloud Smart Views and templates into an empty local workspace', async () => {
+    backendHarness.tables.saved_views = [{
+      id: 'view-cloud',
+      user_id: 'user-1',
+      name: 'Cloud view',
+      icon: 'ListFilter',
+      color: '#2563eb',
+      criteria: { match: 'all', scope: 'active', sort: 'updated-desc', rules: [] },
+      sort_order: 2,
+      created_at: timestamp(0),
+      updated_at: timestamp(20),
+    }]
+    backendHarness.tables.note_templates = [{
+      id: 'template-cloud',
+      user_id: 'user-1',
+      name: 'Cloud template',
+      description: 'Synced elsewhere',
+      note_type: 'standard',
+      title_template: '{{date}} · Notes',
+      content: '<p>Agenda</p>',
+      note_data: null,
+      tags: ['meeting'],
+      favorite: false,
+      created_at: timestamp(0),
+      updated_at: timestamp(20),
+    }]
+
+    expect(await useNotesStore.getState().syncWithBackend()).toBe(true)
+
+    expect(useNotesStore.getState().savedViews).toEqual([
+      expect.objectContaining({ id: 'view-cloud', name: 'Cloud view', order: 2 }),
+    ])
+    expect(useNotesStore.getState().noteTemplates).toEqual([
+      expect.objectContaining({ id: 'template-cloud', content: '<p>Agenda</p>' }),
+    ])
+    expect(writesFor('saved_views')).toEqual([])
+    expect(writesFor('note_templates')).toEqual([])
   })
 
   it('does not recreate clean folders or tags deleted by another client', async () => {
