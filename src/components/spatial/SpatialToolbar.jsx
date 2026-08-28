@@ -141,7 +141,7 @@ export default function SpatialToolbar({
         </select>
       </label>
       <div className="qn-spatial-tool-separator" />
-      <label className="qn-spatial-color" title="Ink color">
+      <label className="qn-spatial-color" title="Ink color" style={{ backgroundColor: brush.color }}>
         <span className="qn-sr-only">Ink color</span>
         <input
           type="color"

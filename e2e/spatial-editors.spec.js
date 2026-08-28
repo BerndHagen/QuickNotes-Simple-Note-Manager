@@ -80,6 +80,13 @@ test.describe('Paper and Canvas spatial editors', () => {
     const title = `Paper E2E ${Date.now()}`
     await createSpatialNote(page, 'Paper', title)
 
+    const inkColor = page.getByLabel('Ink color')
+    const inkSwatch = page.locator('.qn-spatial-color')
+    await expect(inkSwatch).toHaveCSS('border-radius', '50%')
+    await expect(inkColor).toHaveCSS('opacity', '0')
+    await inkColor.fill('#c026d3')
+    await expect(inkSwatch).toHaveCSS('background-color', 'rgb(192, 38, 211)')
+
     const paper = page.getByRole('application', { name: /page 1/i })
     const box = await paper.boundingBox()
     await page.mouse.move(box.x + 90, box.y + 100)

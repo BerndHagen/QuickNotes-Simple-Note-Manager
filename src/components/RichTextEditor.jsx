@@ -1782,7 +1782,7 @@ function PortalDropdown({ isOpen, anchorRef, children, onClose, align = 'left', 
       ref={dropdownRef}
       role="dialog"
       aria-label={label}
-      className="fixed z-[99999] overflow-y-auto overscroll-contain rounded-2xl border border-subtle bg-surface-raised p-1 shadow-xl shadow-black/5 backdrop-blur-xl dark:shadow-black/20"
+      className="fixed z-[99999] overflow-x-hidden overflow-y-auto overscroll-contain rounded-2xl border border-subtle bg-surface-raised p-1 shadow-xl shadow-black/5 backdrop-blur-xl dark:shadow-black/20"
       style={style}
       onMouseDown={(e) => e.stopPropagation()}
     >
@@ -2593,7 +2593,7 @@ function EditorToolbar({
           <Palette className="w-4 h-4" />
         </DropdownButton>
         <PortalDropdown isOpen={showColorPicker} anchorRef={colorPickerRef} onClose={() => setShowColorPicker(false)}>
-          <div className="w-[224px] p-2">
+          <div className="w-[240px] p-2">
             <div className="grid grid-cols-8 gap-1">
               {textColors.map((color) => {
                 const isActive = editor.getAttributes('textStyle').color === color
@@ -2636,20 +2636,20 @@ function EditorToolbar({
             </button>
             <div className="pt-3 mt-3 border-t border-subtle">
               <label className="block mb-2 text-xs font-medium text-content-muted">Custom Color</label>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2">
                 <input
                   type="color"
                   aria-label="Choose custom text color"
                   value={customColor}
                   onChange={(e) => setCustomColor(e.target.value)}
-                  className="qn-format-colour h-8 w-10 cursor-pointer rounded border border-subtle"
+                  className="qn-format-colour h-8 w-10 shrink-0 cursor-pointer rounded border border-subtle"
                 />
                 <input
                   type="text"
                   aria-label="Custom text color value"
                   value={customColor}
                   onChange={(e) => setCustomColor(e.target.value)}
-                  className="flex-1 px-2 py-1 text-xs text-content bg-white border border-subtle rounded dark:bg-surface-sunken dark:text-white"
+                  className="min-w-0 flex-1 rounded border border-subtle bg-white px-2 py-1 text-xs text-content dark:bg-surface-sunken dark:text-white"
                   placeholder="#000000"
                 />
                 <button
@@ -2658,7 +2658,7 @@ function EditorToolbar({
                     editor.chain().focus().setColor(customColor).run()
                     setShowColorPicker(false)
                   }}
-                  className="qn-touch-target rounded bg-accent px-3 py-1 text-xs text-accent-on hover:bg-accent-hover"
+                  className="qn-touch-target shrink-0 rounded bg-accent px-3 py-1 text-xs text-accent-on hover:bg-accent-hover"
                 >
                   Apply
                 </button>
@@ -2673,7 +2673,7 @@ function EditorToolbar({
           <Highlighter className="w-4 h-4" />
         </DropdownButton>
         <PortalDropdown isOpen={showHighlightPicker} anchorRef={highlightPickerRef} onClose={() => setShowHighlightPicker(false)}>
-          <div className="w-[224px] p-2">
+          <div className="w-[240px] p-2">
             <div className="grid grid-cols-8 gap-1">
               {highlightColors.map((color) => {
                 const isActive = editor.isActive('highlight', { color })
@@ -2716,20 +2716,20 @@ function EditorToolbar({
             </button>
             <div className="pt-3 mt-3 border-t border-subtle">
               <label className="block mb-2 text-xs font-medium text-content-muted">Custom Highlight</label>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2">
                 <input
                   type="color"
                   aria-label="Choose custom highlight color"
                   value={customHighlight}
                   onChange={(e) => setCustomHighlight(e.target.value)}
-                  className="qn-format-colour h-8 w-10 cursor-pointer rounded border border-subtle"
+                  className="qn-format-colour h-8 w-10 shrink-0 cursor-pointer rounded border border-subtle"
                 />
                 <input
                   type="text"
                   aria-label="Custom highlight color value"
                   value={customHighlight}
                   onChange={(e) => setCustomHighlight(e.target.value)}
-                  className="flex-1 px-2 py-1 text-xs text-content bg-white border border-subtle rounded dark:bg-surface-sunken dark:text-white"
+                  className="min-w-0 flex-1 rounded border border-subtle bg-white px-2 py-1 text-xs text-content dark:bg-surface-sunken dark:text-white"
                   placeholder="#fef08a"
                 />
                 <button
@@ -2738,7 +2738,7 @@ function EditorToolbar({
                     editor.chain().focus().toggleHighlight({ color: customHighlight }).run()
                     setShowHighlightPicker(false)
                   }}
-                  className="qn-touch-target rounded bg-accent px-3 py-1 text-xs text-accent-on hover:bg-accent-hover"
+                  className="qn-touch-target shrink-0 rounded bg-accent px-3 py-1 text-xs text-accent-on hover:bg-accent-hover"
                 >
                   Apply
                 </button>

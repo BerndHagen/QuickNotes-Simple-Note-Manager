@@ -456,6 +456,29 @@ test.describe('large desktop', () => {
 test.describe('desktop editor tools', () => {
   test.use({ viewport: { width: 1280, height: 800 } })
 
+  test('fits the color palette without internal scrollbars or clipped actions', async ({ page }) => {
+    await signIn(page)
+    await page.getByRole('button', { name: /new note/i }).first().click()
+    await page.getByRole('tab', { name: 'Home' }).click()
+    await page.getByRole('button', { name: 'Text Color' }).click()
+
+    const palette = page.getByRole('dialog', { name: 'Formatting options' })
+    await expect(palette).toBeVisible()
+    const metrics = await palette.evaluate((element) => ({
+      clientWidth: element.clientWidth,
+      clientHeight: element.clientHeight,
+      scrollWidth: element.scrollWidth,
+      scrollHeight: element.scrollHeight,
+    }))
+    expect(metrics.scrollWidth).toBeLessThanOrEqual(metrics.clientWidth + 1)
+    expect(metrics.scrollHeight).toBeLessThanOrEqual(metrics.clientHeight + 1)
+
+    const paletteBox = await palette.boundingBox()
+    const applyBox = await palette.getByRole('button', { name: 'Apply' }).boundingBox()
+    expect(applyBox.x + applyBox.width).toBeLessThanOrEqual(paletteBox.x + paletteBox.width)
+    expect(applyBox.y + applyBox.height).toBeLessThanOrEqual(paletteBox.y + paletteBox.height)
+  })
+
   test('keeps every formatting tool in one horizontally reachable row', async ({ page }) => {
     await signIn(page)
     await page.getByRole('button', { name: /new note/i }).first().click()
