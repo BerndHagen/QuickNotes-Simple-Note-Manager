@@ -154,6 +154,29 @@ describe('Modal', () => {
     fallback.remove()
   })
 
+  it('skips hidden fallback controls when more than one shell toggle exists', async () => {
+    const hiddenRegion = document.createElement('div')
+    const hiddenFallback = document.createElement('button')
+    const visibleFallback = document.createElement('button')
+    hiddenRegion.style.display = 'none'
+    hiddenFallback.setAttribute('data-dialog-return-focus', '')
+    visibleFallback.setAttribute('data-dialog-return-focus', '')
+    hiddenRegion.appendChild(hiddenFallback)
+    document.body.append(hiddenRegion, visibleFallback)
+
+    const { unmount } = render(
+      <Modal open onClose={() => {}} title="T">
+        <input aria-label="field" />
+      </Modal>
+    )
+    await waitFor(() => expect(screen.getByLabelText('field')).toHaveFocus())
+    unmount()
+
+    await waitFor(() => expect(visibleFallback).toHaveFocus())
+    hiddenRegion.remove()
+    visibleFallback.remove()
+  })
+
   it('locks background scrolling while open', async () => {
     const { unmount } = renderModal()
     expect(document.body.style.overflow).toBe('hidden')

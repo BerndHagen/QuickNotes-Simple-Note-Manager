@@ -15,13 +15,13 @@ for (const viewport of VIEWPORTS) {
     test('keeps dialog actions reachable inside the viewport', async ({ page }) => {
       await signIn(page)
 
-      // The sidebar is a drawer below 1024px; open it before using it.
-      if (viewport.width < 1024) {
+      // The sidebar is a drawer at tablet widths; open it before using it.
+      if (viewport.width < 1200) {
         await page.getByRole('button', { name: /show navigation/i }).first().click()
       }
       await page.getByRole('button', { name: /^settings$/i }).first().click()
 
-      if (viewport.width < 1024) {
+      if (viewport.width < 1200) {
         await expect(page.getByRole('dialog', { name: 'Navigation' })).toHaveCount(0)
       }
       const dialog = page.getByRole('dialog', { name: 'Settings' })
@@ -67,8 +67,41 @@ test.describe('desktop application boundary', () => {
 
     const sidebar = await page.locator('#qn-sidebar').boundingBox()
     expect(sidebar.x).toBe(0)
-    expect(sidebar.y).toBe(0)
-    expect(sidebar.height).toBe(900)
+    expect(sidebar.y).toBe(48)
+    expect(sidebar.height).toBe(852)
+  })
+
+  test('persists the collection width and exposes real shell controls', async ({ page }) => {
+    await signIn(page)
+
+    const collection = page.locator('#qn-collection-pane')
+    const separator = page.getByRole('separator', { name: 'Resize note list' })
+    await separator.press('End')
+    await expect(separator).toHaveAttribute('aria-valuenow', '420')
+    await page.reload({ waitUntil: 'domcontentloaded' })
+    await expect(collection).toHaveCSS('width', '420px')
+
+    await page.getByRole('button', { name: 'Hide note list' }).click()
+    await expect(collection).toHaveCount(0)
+    await page.getByRole('button', { name: 'Show note list' }).click()
+    await expect(collection).toBeVisible()
+
+    await page.getByRole('button', { name: 'Show inspector' }).click()
+    await expect(page.getByRole('complementary', { name: 'Inspector' })).toBeVisible()
+  })
+
+  test('persists the docked navigation preference without opening tablet drawers', async ({ page }) => {
+    await signIn(page)
+
+    const navigation = page.getByRole('navigation', { name: 'Workspace' })
+    await page.getByRole('button', { name: 'Hide navigation' }).click()
+    await expect(navigation).toBeHidden()
+    await page.reload({ waitUntil: 'domcontentloaded' })
+    await expect(navigation).toBeHidden()
+
+    await page.setViewportSize({ width: 1024, height: 768 })
+    await expect(page.getByRole('dialog', { name: 'Navigation' })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Show navigation' }).first()).toBeVisible()
   })
 })
 
@@ -124,7 +157,9 @@ test.describe('small-screen settings', () => {
     await page.getByRole('button', { name: /^settings$/i }).first().click()
 
     const dialog = page.getByRole('dialog', { name: 'Settings' })
+    await expect(dialog).toBeVisible()
     const sections = dialog.getByRole('navigation', { name: 'Settings sections' })
+    await expect(sections).toBeVisible()
     const sectionButtons = sections.getByRole('button')
     const sectionCount = await sectionButtons.count()
 

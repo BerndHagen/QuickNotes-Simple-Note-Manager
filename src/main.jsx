@@ -78,6 +78,7 @@ import '@fontsource/ubuntu/latin-700.css'
 import '@fontsource/work-sans/latin-400.css'
 import '@fontsource/work-sans/latin-700.css'
 import './index.css'
+import './spatial.css'
 
 import { Toaster } from 'react-hot-toast'
 

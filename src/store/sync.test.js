@@ -98,6 +98,11 @@ vi.mock('../lib/backend', () => {
   }
 })
 
+vi.mock('../lib/capture/cloud', () => ({
+  CAPTURE_RESOURCE_QUEUE_TABLE: 'capture_resources',
+  syncCaptureCloud: vi.fn(async () => ({ skipped: false })),
+}))
+
 import {
   addToSyncQueue,
   clearLocalData,
@@ -162,6 +167,10 @@ const resetStore = (overrides = {}) => {
     isSyncing: false,
     lastSyncTime: null,
     lastSyncError: null,
+    catalogConflicts: [],
+    collaborationConflict: null,
+    collaborationConflicts: [],
+    hydratedWorkspaceOwnerId: 'user-1',
     isOnline: true,
     user: { id: 'user-1', isLocal: false },
     sharedNotes: [],
@@ -221,7 +230,7 @@ describe('cloud synchronization reconciliation', () => {
     expect(writesFor('notes')).toEqual([])
   })
 
-  it('keeps a newer cloud update instead of uploading stale offline content', async () => {
+  it('requires an explicit choice instead of discarding stale offline content', async () => {
     const note = localNote({ syncStatus: SyncStatus.PENDING })
     resetStore({ notes: [note] })
     backendHarness.tables.notes = [remoteNote()]
@@ -231,9 +240,73 @@ describe('cloud synchronization reconciliation', () => {
     expect(await useNotesStore.getState().syncWithBackend()).toBe(true)
 
     expect(useNotesStore.getState().notes[0]).toEqual(
+      expect.objectContaining({ title: 'Local note', syncStatus: SyncStatus.CONFLICT })
+    )
+    expect(useNotesStore.getState().collaborationConflict).toEqual(expect.objectContaining({
+      kind: 'owned',
+      noteId: note.id,
+      remote: expect.objectContaining({ title: 'Cloud note' }),
+    }))
+    expect(writesFor('notes')).toEqual([])
+    expect(await getPendingSyncItems()).toHaveLength(1)
+    expect(await db.notes.get(note.id)).toEqual(expect.objectContaining({
+      title: 'Local note',
+      syncStatus: SyncStatus.CONFLICT,
+    }))
+
+    await expect(useNotesStore.getState().resolveCollaborationConflict('incoming')).resolves.toBe(true)
+    expect(useNotesStore.getState().notes[0]).toEqual(
       expect.objectContaining({ title: 'Cloud note', syncStatus: SyncStatus.SYNCED })
     )
-    expect(writesFor('notes')).toEqual([])
+    expect(await getPendingSyncItems()).toEqual([])
+    expect(await db.noteVersions.where('noteId').equals(note.id).count()).toBe(1)
+  })
+
+  it('keeps an update-only note after a remote deletion until the user accepts it', async () => {
+    const note = localNote({ syncStatus: SyncStatus.PENDING })
+    resetStore({ notes: [note], selectedNoteId: note.id })
+    await db.notes.put(note)
+    await addToSyncQueue('notes', 'update', note)
+
+    expect(await useNotesStore.getState().syncWithBackend()).toBe(true)
+
+    expect(useNotesStore.getState().notes[0]).toEqual(expect.objectContaining({
+      title: 'Local note',
+      syncStatus: SyncStatus.CONFLICT,
+    }))
+    expect(useNotesStore.getState().collaborationConflict).toEqual(expect.objectContaining({
+      kind: 'owned',
+      noteId: note.id,
+      remote: null,
+    }))
+    expect(await db.notes.get(note.id)).toBeDefined()
+    expect(await getPendingSyncItems()).toHaveLength(1)
+
+    await expect(useNotesStore.getState().resolveCollaborationConflict('incoming')).resolves.toBe(true)
+    expect(useNotesStore.getState().notes).toEqual([])
+    expect(useNotesStore.getState().selectedNoteId).toBeNull()
+    expect(await db.notes.get(note.id)).toBeUndefined()
+    expect(await getPendingSyncItems()).toEqual([])
+    expect(await db.noteVersions.where('noteId').equals(note.id).count()).toBe(1)
+  })
+
+  it('reconstructs a remote-deletion conflict after reload and can intentionally restore local', async () => {
+    const note = localNote({ syncStatus: SyncStatus.CONFLICT })
+    resetStore({ notes: [note], collaborationConflict: null, collaborationConflicts: [] })
+    await db.notes.put(note)
+    await addToSyncQueue('notes', 'update', note)
+
+    expect(await useNotesStore.getState().syncWithBackend()).toBe(true)
+    expect(useNotesStore.getState().collaborationConflict).toEqual(expect.objectContaining({
+      noteId: note.id,
+      remote: null,
+    }))
+
+    await expect(useNotesStore.getState().resolveCollaborationConflict('local')).resolves.toBe(true)
+    expect(backendHarness.tables.notes).toEqual([
+      expect.objectContaining({ id: note.id, title: note.title }),
+    ])
+    expect(useNotesStore.getState().notes[0].syncStatus).toBe(SyncStatus.SYNCED)
     expect(await getPendingSyncItems()).toEqual([])
   })
 
@@ -251,6 +324,64 @@ describe('cloud synchronization reconciliation', () => {
     )
     expect(useNotesStore.getState().notes[0].syncStatus).toBe(SyncStatus.SYNCED)
     expect(await getPendingSyncItems()).toEqual([])
+  })
+
+  it('retains a newer note mutation queued while an older upload is in flight', async () => {
+    const note = localNote({ syncStatus: SyncStatus.PENDING })
+    resetStore({ notes: [note] })
+    await db.notes.put(note)
+    await addToSyncQueue('notes', 'insert', note)
+
+    backendHarness.onExecute = async ({ table, operation }) => {
+      if (table !== 'notes' || operation !== 'upsert') return
+      backendHarness.onExecute = null
+      const edited = {
+        ...note,
+        title: 'Edited during upload',
+        // Two writes can legitimately share one millisecond. Sync must use
+        // mutation identity rather than timestamps to distinguish them.
+        updatedAt: note.updatedAt,
+        syncStatus: SyncStatus.PENDING,
+      }
+      useNotesStore.setState({ notes: [edited] })
+      await db.notes.put(edited)
+      await addToSyncQueue('notes', 'update', edited)
+    }
+
+    expect(await useNotesStore.getState().syncWithBackend()).toBe(true)
+
+    expect(useNotesStore.getState().notes[0]).toEqual(expect.objectContaining({
+      title: 'Edited during upload',
+      syncStatus: SyncStatus.PENDING,
+    }))
+    expect(await getPendingSyncItems()).toEqual([
+      expect.objectContaining({
+        table: 'notes',
+        operation: 'insert',
+        data: expect.objectContaining({ title: 'Edited during upload' }),
+      }),
+    ])
+  })
+
+  it('rolls back the canonical note when its outbox write fails', async () => {
+    const note = localNote()
+    resetStore({ notes: [note] })
+    await db.notes.put(note)
+    const add = vi.spyOn(db.syncQueue, 'add').mockRejectedValueOnce(new Error('quota exceeded'))
+
+    await expect(
+      useNotesStore.getState().updateNote(note.id, { title: 'Must not partially persist' })
+    ).rejects.toThrow('quota exceeded')
+    add.mockRestore()
+
+    expect(await db.notes.get(note.id)).toEqual(expect.objectContaining({
+      title: 'Local note',
+      syncStatus: SyncStatus.SYNCED,
+    }))
+    expect(await getPendingSyncItems()).toEqual([])
+    expect(useNotesStore.getState().persistenceError).toEqual(expect.objectContaining({
+      source: 'indexeddb',
+    }))
   })
 
   it('syncs Smart Views and reusable templates as tenant-owned collections', async () => {
@@ -376,7 +507,7 @@ describe('cloud synchronization reconciliation', () => {
     expect(writesFor('tags')).toEqual([])
   })
 
-  it('keeps a newer cloud folder instead of overwriting it with a stale edit', async () => {
+  it('requires an explicit choice instead of discarding a stale folder edit', async () => {
     const folder = {
       id: 'folder-1',
       name: 'Stale local name',
@@ -404,9 +535,163 @@ describe('cloud synchronization reconciliation', () => {
     expect(await useNotesStore.getState().syncWithBackend()).toBe(true)
 
     expect(useNotesStore.getState().folders).toEqual([
-      expect.objectContaining({ name: 'New cloud name', syncStatus: SyncStatus.SYNCED }),
+      expect.objectContaining({ name: 'Stale local name', syncStatus: SyncStatus.CONFLICT }),
+    ])
+    expect(useNotesStore.getState().catalogConflicts).toEqual([
+      expect.objectContaining({
+        table: 'folders',
+        recordId: folder.id,
+        remote: expect.objectContaining({ name: 'New cloud name' }),
+      }),
     ])
     expect(writesFor('folders')).toEqual([])
+    expect(await getPendingSyncItems()).toHaveLength(1)
+
+    await expect(useNotesStore.getState().resolveCatalogConflict('incoming')).resolves.toBe(true)
+    expect(useNotesStore.getState().folders).toEqual([
+      expect.objectContaining({ name: 'New cloud name', syncStatus: SyncStatus.SYNCED }),
+    ])
+    expect(useNotesStore.getState().catalogConflicts).toEqual([])
+    expect(await getPendingSyncItems()).toEqual([])
+  })
+
+  it('requires review for a folder edit that meets a remote deletion', async () => {
+    const folder = {
+      id: 'folder-1',
+      name: 'Offline rename',
+      parentId: null,
+      createdAt: timestamp(0),
+      updatedAt: timestamp(10),
+      syncStatus: SyncStatus.PENDING,
+    }
+    resetStore({ folders: [folder], selectedFolderId: folder.id })
+    await db.folders.put(folder)
+    await addToSyncQueue('folders', 'update', folder)
+
+    expect(await useNotesStore.getState().syncWithBackend()).toBe(true)
+    expect(useNotesStore.getState().folders[0]).toEqual(expect.objectContaining({
+      name: 'Offline rename',
+      syncStatus: SyncStatus.CONFLICT,
+    }))
+    expect(useNotesStore.getState().catalogConflicts[0]).toEqual(expect.objectContaining({
+      table: 'folders',
+      recordId: folder.id,
+      remote: null,
+    }))
+    expect(await db.folders.get(folder.id)).toBeDefined()
+    expect(await getPendingSyncItems()).toHaveLength(1)
+
+    await expect(useNotesStore.getState().resolveCatalogConflict('incoming')).resolves.toBe(true)
+    expect(useNotesStore.getState().folders).toEqual([])
+    expect(await db.folders.get(folder.id)).toBeUndefined()
+    expect(await getPendingSyncItems()).toEqual([])
+  })
+
+  it('intentionally recreates a deleted Smart View only after choosing the local version', async () => {
+    const savedView = {
+      id: 'view-deleted-remotely',
+      name: 'Offline view edit',
+      icon: 'ListFilter',
+      color: '#0f766e',
+      criteria: { match: 'all', scope: 'active', sort: 'updated-desc', rules: [] },
+      order: 0,
+      createdAt: timestamp(0),
+      updatedAt: timestamp(10),
+      syncStatus: SyncStatus.PENDING,
+    }
+    resetStore({ savedViews: [savedView] })
+    await addToSyncQueue('saved_views', 'update', savedView)
+
+    expect(await useNotesStore.getState().syncWithBackend()).toBe(true)
+    expect(useNotesStore.getState().catalogConflicts[0]).toEqual(expect.objectContaining({
+      table: 'saved_views',
+      remote: null,
+    }))
+    expect(writesFor('saved_views')).toEqual([])
+
+    await expect(useNotesStore.getState().resolveCatalogConflict('local')).resolves.toBe(true)
+    expect(backendHarness.tables.saved_views).toEqual([
+      expect.objectContaining({ id: savedView.id, name: savedView.name }),
+    ])
+    expect(useNotesStore.getState().savedViews[0].syncStatus).toBe(SyncStatus.SYNCED)
+  })
+
+  it('preserves a stale Smart View until the user resolves its cloud conflict', async () => {
+    const savedView = {
+      id: 'view-1',
+      name: 'Local criteria',
+      icon: 'ListFilter',
+      color: '#0f766e',
+      criteria: { match: 'all', scope: 'active', sort: 'updated-desc', rules: [] },
+      order: 0,
+      createdAt: timestamp(0),
+      updatedAt: timestamp(10),
+      syncStatus: SyncStatus.PENDING,
+    }
+    resetStore({ savedViews: [savedView] })
+    backendHarness.tables.saved_views = [{
+      id: savedView.id,
+      user_id: 'user-1',
+      name: 'Cloud criteria',
+      icon: 'ListFilter',
+      color: '#2563eb',
+      criteria: { match: 'any', scope: 'active', sort: 'title-asc', rules: [] },
+      sort_order: 0,
+      created_at: timestamp(0),
+      updated_at: timestamp(20),
+    }]
+    await addToSyncQueue('saved_views', 'update', savedView)
+
+    expect(await useNotesStore.getState().syncWithBackend()).toBe(true)
+
+    expect(useNotesStore.getState().savedViews[0]).toEqual(expect.objectContaining({
+      name: 'Local criteria',
+      syncStatus: SyncStatus.CONFLICT,
+    }))
+    expect(useNotesStore.getState().catalogConflicts).toEqual([
+      expect.objectContaining({ table: 'saved_views', recordId: savedView.id }),
+    ])
+    expect(await getPendingSyncItems()).toHaveLength(1)
+
+    await expect(useNotesStore.getState().resolveCatalogConflict('local')).resolves.toBe(true)
+    expect(useNotesStore.getState().catalogConflicts).toEqual([])
+    expect(backendHarness.tables.saved_views[0].name).toBe('Local criteria')
+  })
+
+  it('does not discard a tag edit made while synchronization is running', async () => {
+    const tag = {
+      id: 'tag-1',
+      name: 'before-sync',
+      color: '#123456',
+      createdAt: timestamp(0),
+      updatedAt: timestamp(10),
+      syncStatus: SyncStatus.PENDING,
+    }
+    resetStore({ tags: [tag] })
+    backendHarness.tables.tags = [{
+      id: tag.id,
+      user_id: 'user-1',
+      name: tag.name,
+      color: tag.color,
+      created_at: timestamp(0),
+      updated_at: timestamp(5),
+    }]
+    await db.tags.put(tag)
+    await addToSyncQueue('tags', 'update', tag)
+    backendHarness.onExecute = ({ table, operation }) => {
+      if (table !== 'tags' || operation !== 'upsert') return
+      backendHarness.onExecute = null
+      useNotesStore.getState().updateTag(tag.id, { name: 'during-sync' })
+    }
+
+    expect(await useNotesStore.getState().syncWithBackend()).toBe(true)
+
+    expect(useNotesStore.getState().tags).toEqual([
+      expect.objectContaining({ name: 'during-sync', syncStatus: SyncStatus.PENDING }),
+    ])
+    expect((await getPendingSyncItems()).some(
+      (item) => item.table === 'tags' && item.data.name === 'during-sync'
+    )).toBe(true)
   })
 
   it('does not discard a folder edit made while synchronization is running', async () => {

@@ -7,6 +7,7 @@ const isAlreadyRunningError = (error) => error?.name === 'InvalidStateError'
 export default function VoiceInput({ onTranscript, isActive, onToggle }) {
   const [isListening, setIsListening] = useState(false)
   const [isSupported, setIsSupported] = useState(true)
+  const [transferConfirmed, setTransferConfirmed] = useState(false)
   const [interimTranscript, setInterimTranscript] = useState('')
   const recognitionRef = useRef(null)
   const onTranscriptRef = useRef(onTranscript)
@@ -121,8 +122,6 @@ export default function VoiceInput({ onTranscript, isActive, onToggle }) {
 
     recognitionRef.current = recognition
 
-    if (activeRef.current) startRecognition(true)
-
     return () => {
       disposedRef.current = true
       activeRef.current = false
@@ -139,13 +138,13 @@ export default function VoiceInput({ onTranscript, isActive, onToggle }) {
   useEffect(() => {
     if (!recognitionRef.current || !isSupported) return
 
-    if (isActive) {
+    if (isActive && transferConfirmed) {
       if (!isListening && !manuallyPausedRef.current) startRecognition(true)
-    } else {
+    } else if (!isActive) {
       pauseRecognition()
       setInterimTranscript('')
     }
-  }, [isActive, isListening, isSupported, pauseRecognition, startRecognition])
+  }, [isActive, isListening, isSupported, pauseRecognition, startRecognition, transferConfirmed])
 
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -179,6 +178,48 @@ export default function VoiceInput({ onTranscript, isActive, onToggle }) {
           </button>
         </div>
       </div>
+    )
+  }
+
+  if (!transferConfirmed) {
+    return (
+      <section
+        role="dialog"
+        aria-labelledby="qn-voice-privacy-title"
+        aria-describedby="qn-voice-privacy-description"
+        className="fixed bottom-4 left-4 right-4 z-50 overflow-hidden rounded-dialog border border-subtle bg-surface-raised shadow-dialog sm:bottom-8 sm:left-auto sm:right-8 sm:w-[360px]"
+      >
+        <div className="qn-dialog-header border-b border-subtle px-4 py-3">
+          <h2 id="qn-voice-privacy-title" className="text-sm font-semibold text-content">Start browser voice input?</h2>
+        </div>
+        <div className="space-y-3 p-4">
+          <p id="qn-voice-privacy-description" className="text-sm leading-relaxed text-content-muted">
+            Your microphone audio is handled by the browser&apos;s speech-recognition service. Depending on the browser and operating system, that service may process audio online. QuickNotes receives the resulting text and does not save this dictation audio.
+          </p>
+          <p className="border-l-2 border-accent px-3 text-xs leading-relaxed text-content-subtle">
+            This confirmation applies only to this voice-input session.
+          </p>
+          <div className="flex justify-end gap-2 border-t border-subtle pt-3">
+            <button
+              type="button"
+              onClick={() => onToggleRef.current?.(false)}
+              className="qn-touch-target rounded-control px-3 text-sm font-medium text-content-muted hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setTransferConfirmed(true)
+                startRecognition(true)
+              }}
+              className="qn-touch-target rounded-control bg-accent px-3 text-sm font-semibold text-on-accent hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+            >
+              Start voice input
+            </button>
+          </div>
+        </div>
+      </section>
     )
   }
 

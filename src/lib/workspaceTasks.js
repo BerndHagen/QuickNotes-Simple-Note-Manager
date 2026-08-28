@@ -1,4 +1,5 @@
 import { toggleTaskWithRecurrence } from './taskRecurrence'
+import { normalizeTaskSource } from './taskSources'
 
 const DAY_KEYS = [
   'monday',
@@ -57,6 +58,7 @@ const taskRecord = (note, task, details) => ({
   canToggle: details.canToggle !== false,
   sourceUpdatedAt: note.updatedAt || note.createdAt || '',
   starred: Boolean(task?.starred),
+  sourceReference: normalizeTaskSource(task?.source),
 })
 
 const getRichTextTasks = (note) => {

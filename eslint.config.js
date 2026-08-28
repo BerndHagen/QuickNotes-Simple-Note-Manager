@@ -14,6 +14,8 @@ export default [
       '.scratch/**',
       '.agents/**',
       'public/sw.js',
+      'public/vendor/**',
+      '.tmp-trace-intelligence-2/**',
       'test-results/**',
       'vendor/**',
       '.eslintrc.cjs',

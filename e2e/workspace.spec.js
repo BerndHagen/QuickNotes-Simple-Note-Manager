@@ -7,7 +7,9 @@ test.describe('workspace', () => {
     await signIn(page)
 
     await expect(page.getByRole('navigation', { name: 'Workspace' })).toBeVisible()
-    await expect(page.getByRole('button', { name: /all notes/i })).toBeVisible()
+    await expect(
+      page.getByRole('navigation', { name: 'Workspace' }).getByRole('button', { name: /^all notes/i })
+    ).toBeVisible()
     expect(errors).toEqual([])
   })
 
@@ -38,8 +40,11 @@ test.describe('workspace', () => {
     await page.getByRole('menuitem', { name: /close workspace/i }).click()
 
     const localEntry = page.getByRole('button', { name: /use a private local workspace/i })
-    if (await localEntry.isVisible().catch(() => false)) await localEntry.click()
-    await page.getByRole('button', { name: /continue to my workspace/i }).click()
+    await expect(localEntry).toBeVisible()
+    await localEntry.click()
+    const continueButton = page.getByRole('button', { name: /continue to my workspace/i })
+    await expect(continueButton).toBeVisible()
+    await continueButton.click()
 
     await expect(page.getByRole('button', { name: new RegExp(title, 'i') }).first()).toBeVisible()
   })
@@ -211,7 +216,10 @@ test.describe('workspace', () => {
 
     const bold = page.getByRole('button', { name: /^bold$/i })
     await bold.focus()
+    await expect(bold).toBeFocused()
     await page.keyboard.press('Enter')
+    await expect(bold).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.locator('.ProseMirror').first()).toBeFocused()
     await page.keyboard.type('keyboard bold')
 
     await expect(page.locator('.ProseMirror strong')).toContainText('keyboard bold')

@@ -1,8 +1,19 @@
 import { useCallback, useEffect, useState } from 'react'
-import { AlertCircle, Bell, Calendar, Check, Clock, Plus, Trash2 } from 'lucide-react'
+import { AlertCircle, Bell, Calendar, Check, Clock, Plus, TimerReset, Trash2, X } from 'lucide-react'
+import toast from 'react-hot-toast'
 import { useNotesStore, useUIStore } from '../store'
 import { useTranslation } from '../lib/useTranslation'
-import { getNextReminderDate } from '../lib/reminders'
+import {
+  completeReminder,
+  createReminder,
+  dismissReminder,
+  normalizeReminder,
+  normalizeReminderSource,
+  REMINDER_STATUSES,
+  reminderSourcesEqual,
+  snoozeReminder,
+  triggerReminder,
+} from '../lib/reminders'
 import { Badge, Button, Field, IconButton, Input, Modal, Select } from './ui'
 
 const toDateInputValue = (date) => {
@@ -21,7 +32,9 @@ const getDefaultReminderDate = () => {
 const getReminderStatus = (reminder) => {
   const now = new Date()
   const reminderTime = new Date(reminder.datetime)
-  if (reminder.notified) return 'sent'
+  if (reminder.status === REMINDER_STATUSES.COMPLETED) return 'completed'
+  if (reminder.status === REMINDER_STATUSES.DISMISSED) return 'dismissed'
+  if (reminder.status === REMINDER_STATUSES.TRIGGERED) return 'due'
   if (reminderTime <= now) return 'overdue'
 
   const hoursUntilReminder = (reminderTime - now) / (1000 * 60 * 60)
@@ -31,7 +44,9 @@ const getReminderStatus = (reminder) => {
 }
 
 const STATUS_PRESENTATION = {
-  sent: { tone: 'success', icon: Check, fallback: 'Sent' },
+  completed: { tone: 'success', icon: Check, fallback: 'Completed' },
+  dismissed: { tone: 'neutral', icon: X, fallback: 'Dismissed' },
+  due: { tone: 'danger', icon: Bell, fallback: 'Due' },
   overdue: { tone: 'danger', icon: AlertCircle, fallback: 'Overdue' },
   soon: { tone: 'warning', icon: Bell, fallback: 'Due soon' },
   today: { tone: 'warning', icon: Bell, fallback: 'Today' },
@@ -39,7 +54,7 @@ const STATUS_PRESENTATION = {
 }
 
 export default function ReminderModal() {
-  const { reminderModalOpen, setReminderModalOpen, reminderNoteId } = useUIStore()
+  const { reminderModalOpen, setReminderModalOpen, reminderNoteId, reminderTarget } = useUIStore()
   const { notes, updateNote, getSelectedNote } = useNotesStore()
   const { t, language } = useTranslation()
   const [date, setDate] = useState(getDefaultReminderDate)
@@ -52,6 +67,13 @@ export default function ReminderModal() {
   const note = reminderNoteId
     ? notes.find((candidate) => candidate.id === reminderNoteId)
     : getSelectedNote()
+  const targetSource = normalizeReminderSource(reminderTarget, note?.id)
+  const visibleReminders = reminders.filter((reminder) => reminderSourcesEqual(reminder.source, targetSource))
+  const sourceTitle = targetSource.type === 'task'
+    ? targetSource.label || 'Task'
+    : targetSource.type === 'anchor'
+      ? targetSource.label || 'Anchored content'
+      : note?.title
 
   const resetForm = useCallback(() => {
     setDate(getDefaultReminderDate())
@@ -67,7 +89,7 @@ export default function ReminderModal() {
   }, [resetForm, setReminderModalOpen])
 
   useEffect(() => {
-    setReminders(note?.reminders || [])
+    setReminders((note?.reminders || []).map((reminder) => normalizeReminder(reminder, note?.id)).filter(Boolean))
   }, [note?.id, note?.reminders])
 
   useEffect(() => {
@@ -82,11 +104,10 @@ export default function ReminderModal() {
         if (!candidate.reminders?.length) return
 
         let changed = false
-        const updatedReminders = candidate.reminders.map((reminder) => {
-          if (reminder.notified) return reminder
-
-          const reminderTime = new Date(reminder.datetime)
-          if (reminderTime > now) return reminder
+        const updatedReminders = candidate.reminders.map((value) => {
+          const reminder = normalizeReminder(value, candidate.id)
+          if (!reminder || reminder.status !== REMINDER_STATUSES.SCHEDULED) return reminder || value
+          if (new Date(reminder.datetime) > now) return reminder
 
           if ('Notification' in window && Notification.permission === 'granted') {
             new Notification('QuickNotes Reminder', {
@@ -97,20 +118,7 @@ export default function ReminderModal() {
           }
 
           changed = true
-          const nextDate = getNextReminderDate(
-            reminder.datetime,
-            reminder.repeat,
-            now,
-            reminder.repeatDay
-          )
-          return nextDate
-            ? {
-                ...reminder,
-                datetime: nextDate.toISOString(),
-                notified: false,
-                lastTriggeredAt: now.toISOString(),
-              }
-            : { ...reminder, notified: true, lastTriggeredAt: now.toISOString() }
+          return triggerReminder(reminder, now)
         })
 
         if (changed) void updateNote(candidate.id, { reminders: updatedReminders })
@@ -195,27 +203,53 @@ export default function ReminderModal() {
       }
     }
 
-    const newReminder = {
-      id: `reminder_${Date.now()}`,
+    const newReminder = createReminder({
+      noteId: note.id,
+      source: targetSource,
+      title: sourceTitle,
       datetime: datetime.toISOString(),
       repeat,
-      ...(repeat === 'monthly' ? { repeatDay: datetime.getDate() } : {}),
-      notified: false,
-      createdAt: new Date().toISOString(),
-    }
+    })
 
     const updatedReminders = [...reminders, newReminder]
     setReminders(updatedReminders)
-    void updateNote(note.id, { reminders: updatedReminders })
+    try {
+      await updateNote(note.id, { reminders: updatedReminders })
+    } catch {
+      setReminders(reminders)
+      toast.error('The reminder could not be saved')
+      return
+    }
     setDate(getDefaultReminderDate())
     setTime('09:00')
     setRepeat('none')
   }
 
-  const handleDeleteReminder = (reminderId) => {
+  const handleDeleteReminder = async (reminderId) => {
+    if (!note) return
+    const previous = reminders
     const updatedReminders = reminders.filter((reminder) => reminder.id !== reminderId)
     setReminders(updatedReminders)
-    if (note) void updateNote(note.id, { reminders: updatedReminders })
+    try {
+      await updateNote(note.id, { reminders: updatedReminders })
+    } catch {
+      setReminders(previous)
+      toast.error('The reminder could not be deleted')
+    }
+  }
+
+  const transitionReminder = async (reminderId, transition, successMessage) => {
+    if (!note) return
+    const previous = reminders
+    const updatedReminders = reminders.map((reminder) => reminder.id === reminderId ? transition(reminder) : reminder)
+    setReminders(updatedReminders)
+    try {
+      await updateNote(note.id, { reminders: updatedReminders })
+      toast.success(successMessage)
+    } catch {
+      setReminders(previous)
+      toast.error('The reminder could not be updated')
+    }
   }
 
   const notificationsDenied =
@@ -228,7 +262,7 @@ export default function ReminderModal() {
       open={reminderModalOpen}
       onClose={closeModal}
       title={t('reminders.title')}
-      description={t('reminders.subtitle', 'Set reminders for your notes')}
+      description={targetSource.type === 'task' ? 'Schedule, snooze, or complete a reminder linked to this task.' : t('reminders.subtitle', 'Set reminders for your notes')}
       icon={Bell}
       size="md"
     >
@@ -236,7 +270,8 @@ export default function ReminderModal() {
         {note ? (
           <div className="rounded-card border border-subtle bg-surface-sunken px-3 py-2.5">
             <p className="text-ui-sm text-content-muted">{t('reminders.remindersFor')}</p>
-            <p className="truncate text-ui-lg font-medium text-content">{note.title}</p>
+            <p className="truncate text-ui-lg font-medium text-content">{sourceTitle || note.title}</p>
+            {targetSource.type !== 'note' && <p className="truncate text-ui-xs text-content-subtle">In {note.title}</p>}
           </div>
         ) : (
           <div role="alert" className="rounded-card border border-danger-border bg-danger-soft p-3 text-ui-md text-danger-text">
@@ -319,7 +354,7 @@ export default function ReminderModal() {
             {t('reminders.scheduled', 'Scheduled reminders')}
           </h3>
 
-          {reminders.length === 0 ? (
+          {visibleReminders.length === 0 ? (
             <div className="rounded-card border border-dashed border-subtle py-7 text-center text-content-muted">
               <Bell className="mx-auto mb-2 h-9 w-9 opacity-35" aria-hidden="true" />
               <p className="text-ui-md font-medium">{t('reminders.noReminders')}</p>
@@ -327,7 +362,7 @@ export default function ReminderModal() {
             </div>
           ) : (
             <ul className="max-h-64 space-y-2 overflow-y-auto overscroll-contain pr-1" aria-live="polite">
-              {[...reminders]
+              {[...visibleReminders]
                 .sort((first, second) => new Date(first.datetime) - new Date(second.datetime))
                 .map((reminder) => {
                   const status = getReminderStatus(reminder)
@@ -352,7 +387,32 @@ export default function ReminderModal() {
                             {t('reminders.repeats')} {getRepeatLabel(reminder.repeat)}
                           </p>
                         )}
+                        {reminder.status === REMINDER_STATUSES.SCHEDULED && reminder.snoozedFrom && (
+                          <p className="mt-0.5 text-ui-xs text-content-subtle">Snoozed</p>
+                        )}
                       </div>
+                      {[REMINDER_STATUSES.TRIGGERED, REMINDER_STATUSES.SCHEDULED].includes(reminder.status) && (
+                        <div className="flex shrink-0 items-center gap-1">
+                          <IconButton
+                            icon={TimerReset}
+                            size="sm"
+                            label={`Snooze ${formattedDate} for 10 minutes`}
+                            onClick={() => void transitionReminder(reminder.id, (value) => snoozeReminder(value, 10), 'Reminder snoozed for 10 minutes')}
+                          />
+                          <IconButton
+                            icon={Check}
+                            size="sm"
+                            label={`Complete reminder for ${formattedDate}`}
+                            onClick={() => void transitionReminder(reminder.id, (value) => completeReminder(value), reminder.repeat === 'none' ? 'Reminder completed' : 'Next reminder scheduled')}
+                          />
+                          <IconButton
+                            icon={X}
+                            size="sm"
+                            label={`Dismiss reminder for ${formattedDate}`}
+                            onClick={() => void transitionReminder(reminder.id, (value) => dismissReminder(value), reminder.repeat === 'none' ? 'Reminder dismissed' : 'Current reminder dismissed')}
+                          />
+                        </div>
+                      )}
                       <IconButton
                         icon={Trash2}
                         size="sm"

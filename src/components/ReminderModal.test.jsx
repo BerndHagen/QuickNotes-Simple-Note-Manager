@@ -26,6 +26,7 @@ describe('ReminderModal', () => {
     useUIStore.setState({
       reminderModalOpen: true,
       reminderNoteId: 'note-1',
+      reminderTarget: null,
       language: 'en',
     })
 
@@ -84,5 +85,40 @@ describe('ReminderModal', () => {
 
     const [, update] = updateNote.mock.calls.at(-1)
     expect(update).toEqual({ reminders: [] })
+  })
+
+  it('persists a stable task identity when scheduled from the task center', async () => {
+    useUIStore.setState({
+      reminderTarget: {
+        type: 'task',
+        noteId: 'note-1',
+        taskId: 'action-7',
+        taskKind: 'meeting-action',
+        label: 'Send the reviewed summary',
+      },
+    })
+    const user = userEvent.setup()
+    render(<ReminderModal />)
+
+    expect(screen.getByRole('dialog', { name: 'Reminders' })).toHaveAccessibleDescription(
+      'Schedule, snooze, or complete a reminder linked to this task.'
+    )
+    await user.clear(screen.getByLabelText('Date'))
+    await user.type(screen.getByLabelText('Date'), '2099-02-03')
+    await user.click(screen.getByRole('button', { name: 'Add Reminder' }))
+
+    await waitFor(() => expect(updateNote).toHaveBeenCalled())
+    const [, update] = updateNote.mock.calls.at(-1)
+    expect(update.reminders[0]).toMatchObject({
+      schemaVersion: 2,
+      title: 'Send the reviewed summary',
+      status: 'scheduled',
+      source: {
+        type: 'task',
+        noteId: 'note-1',
+        taskId: 'action-7',
+        taskKind: 'meeting-action',
+      },
+    })
   })
 })

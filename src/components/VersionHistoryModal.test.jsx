@@ -15,7 +15,10 @@ const mocks = vi.hoisted(() => ({
   toastError: vi.fn(),
 }))
 
-vi.mock('../lib/db', () => ({ getNoteVersions: mocks.getNoteVersions }))
+vi.mock('../lib/db', async (importOriginal) => ({
+  ...await importOriginal(),
+  getNoteVersions: mocks.getNoteVersions,
+}))
 vi.mock('../lib/backend', () => ({
   getRemoteNoteVersions: mocks.getRemoteNoteVersions,
   isBackendConfigured: mocks.isBackendConfigured,

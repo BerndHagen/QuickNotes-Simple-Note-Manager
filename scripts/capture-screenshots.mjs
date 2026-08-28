@@ -1,4 +1,4 @@
-/* global console, process */
+/* global console, document, process */
 
 import { chromium, expect } from '@playwright/test'
 import { mkdir } from 'node:fs/promises'
@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url'
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const outputDir = path.join(projectRoot, 'images')
 const baseUrl = `${(process.env.QN_SCREENSHOT_URL || 'http://127.0.0.1:4173').replace(/\/+$/, '')}/`
-const viewport = { width: 1920, height: 1080 }
+const viewport = { width: 1440, height: 900 }
 
 await mkdir(outputDir, { recursive: true })
 const browser = await chromium.launch({ headless: true })
@@ -27,192 +27,179 @@ async function openLocalWorkspace(page) {
 }
 
 async function save(page, name) {
-  // Playwright's default caret-hiding pass briefly disturbs ProseMirror node
-  // views while a screenshot is rasterised. Keep the real editor state so
-  // contextual object controls are captured exactly as users see them.
-  await page.screenshot({ path: path.join(outputDir, name), fullPage: true, caret: 'initial' })
+  await page.evaluate(() => document.fonts.ready)
+  await page.waitForTimeout(180)
+  await page.screenshot({
+    path: path.join(outputDir, name),
+    animations: 'disabled',
+    caret: 'initial',
+  })
 }
 
-async function createFocused(page, type, starter, title, className) {
+async function createDocument(page) {
+  await page.getByRole('button', { name: /new note/i }).first().click()
+  const title = page.getByLabel('Note title')
+  await title.fill('Release planning')
+  await title.blur()
+  const editor = page.locator('.ProseMirror').first()
+  await editor.fill([
+    'QuickNotes 3.0 release planning',
+    '',
+    'Today',
+    'Review the final workspace build and confirm the release notes.',
+    'Check Document, Paper, Canvas, search, backup, and the Meeting workflow.',
+    '',
+    'Decision log',
+    'Keep provider-backed features unavailable until a real capability is configured.',
+  ].join('\n'))
+  await expect(page.getByText(/saved/i).first()).toBeVisible({ timeout: 15_000 })
+  return editor
+}
+
+async function createSpatial(page, type, title) {
   await page.getByRole('button', { name: 'Create workspace' }).click()
   const dialog = page.getByRole('dialog', { name: /new workspace/i })
-  await dialog
-    .locator('section[aria-label="Workspace types"]')
+  await dialog.locator('section[aria-label="Workspace types"]')
     .getByRole('button', { name: new RegExp(`^${type}`, 'i') })
     .click()
-  await dialog.getByText(starter, { exact: true }).click()
   await dialog.getByLabel('Note title').fill(title)
   await dialog.getByRole('button', { name: /^Create / }).click()
-  const editor = page.locator(className)
-  if (!(await editor.isVisible().catch(() => false))) {
-    await page.locator('.note-card', { hasText: title }).click()
-  }
-  await editor.waitFor({ state: 'visible' })
-  await expect(editor.locator('.qn-type-hero input').first()).toHaveValue(title)
+  const workspace = page.getByRole('application', {
+    name: new RegExp(type === 'Paper' ? 'Page 1' : 'Infinite canvas', 'i'),
+  })
+  await workspace.waitFor({ state: 'visible' })
+  return workspace
 }
 
-async function captureStartup() {
-  const context = await browser.newContext({ viewport })
-  const page = await context.newPage()
-  await page.goto(baseUrl, { waitUntil: 'networkidle' })
-  await expect(page.getByRole('button', { name: /use a private local workspace/i })).toBeEnabled()
-  await save(page, 'screenshot-startup.png')
-  await context.close()
-}
-
-async function captureEditorAndSearch() {
-  const context = await browser.newContext({ viewport })
-  const page = await context.newPage()
-  await openLocalWorkspace(page)
-  await page.locator('.ProseMirror').waitFor({ state: 'visible' })
-  await save(page, 'screenshot-editor.png')
-  await page.keyboard.press('Control+k')
-  await page.getByRole('dialog', { name: /global search/i }).waitFor({ state: 'visible' })
-  await save(page, 'screenshot-search.png')
-  await context.close()
-}
-
-async function captureDarkWorkspaceAndSettings() {
-  const context = await browser.newContext({ viewport })
-  const page = await context.newPage()
-  await openLocalWorkspace(page)
-
-  await page.getByRole('button', { name: /^settings$/i }).first().click()
-  const settings = page.getByRole('dialog', { name: 'Settings' })
-  await settings.getByRole('button', { name: 'Dark', exact: true }).click()
-  await expect(page.locator('html')).toHaveClass(/dark/)
-  // Theme-aware controls animate their colour tokens; capture the settled
-  // palette rather than the first transitional frame after toggling.
-  await page.waitForTimeout(250)
-  await save(page, 'screenshot-settings-dark.png')
-
-  await settings.getByRole('button', { name: /close settings/i }).click()
-  await page.locator('.ProseMirror').waitFor({ state: 'visible' })
-  await save(page, 'screenshot-editor-dark.png')
-  await context.close()
-}
-
-async function captureFocused(name, type, starter, title, className) {
-  const context = await browser.newContext({ viewport })
-  const page = await context.newPage()
-  await openLocalWorkspace(page)
-  await createFocused(page, type, starter, title, className)
-  await save(page, name)
-  await context.close()
-}
-
-async function captureMobileFocused() {
-  const context = await browser.newContext({ viewport: { width: 390, height: 844 } })
-  const page = await context.newPage()
-  await openLocalWorkspace(page)
-  await createFocused(
-    page,
-    'Task List',
-    'Daily priorities',
-    'Mobile delivery priorities',
-    '.qn-type-todo',
-  )
-  await save(page, 'screenshot-tasks-mobile.png')
-  await context.close()
-}
-
-async function captureWorkspaceAndShapes() {
-  const context = await browser.newContext({ viewport })
-  const page = await context.newPage()
-  await openLocalWorkspace(page)
-
-  await page.getByRole('button', { name: 'Create workspace' }).click()
-  await page.getByRole('dialog', { name: /new workspace/i }).waitFor({ state: 'visible' })
-  await save(page, 'screenshot-workspaces.png')
-  await page.keyboard.press('Escape')
-
-  await page.getByRole('heading', { name: 'Welcome to QuickNotes' }).click()
-  await page.getByRole('tab', { name: 'Insert' }).click()
-  await page.getByRole('button', { name: 'More shapes' }).click()
-  await page.getByRole('dialog', { name: 'Insert a shape' })
-    .getByRole('button', { name: 'Insert right arrow' })
-    .first()
-    .click()
-  const drawLayer = page.getByRole('application', { name: 'Draw shape on the page' })
-  const drawBox = await drawLayer.boundingBox()
-  await page.mouse.move(drawBox.x + 160, drawBox.y + 110)
+async function drawStroke(page, points) {
+  await page.mouse.move(points[0].x, points[0].y)
   await page.mouse.down()
-  await page.mouse.move(drawBox.x + 480, drawBox.y + 270, { steps: 8 })
+  for (const point of points.slice(1)) {
+    await page.mouse.move(point.x, point.y, { steps: 5 })
+  }
   await page.mouse.up()
-  const shape = page.locator('.qn-shape').last()
-  await shape.locator('.qn-shape__surface').click()
-  await page.getByRole('button', { name: 'Layout options' }).click()
-  await page.getByRole('dialog', { name: 'Shape layout options' }).waitFor({ state: 'visible' })
-  await save(page, 'screenshot-shapes.png')
-  await context.close()
 }
 
-async function captureSmartViews() {
+async function captureDocumentAndSearch() {
   const context = await browser.newContext({ viewport })
   const page = await context.newPage()
   await openLocalWorkspace(page)
-  await page.getByRole('button', { name: 'New smart view' }).click()
-  const dialog = page.getByRole('dialog', { name: 'New smart view' })
-  await dialog.getByLabel('Name').fill('Recently edited')
-  await dialog.getByLabel('Rule 1 field').selectOption('updatedAt')
-  await dialog.getByLabel('Rule 1 value').fill('30')
-  await dialog.getByRole('button', { name: 'Create view' }).click()
-  await expect(page.getByRole('heading', { name: 'Recently edited' })).toBeVisible()
-  await save(page, 'screenshot-smart-views.png')
+  await createDocument(page)
+  await save(page, 'quicknotes-3-document.png')
+
+  await page.getByRole('button', { name: 'Search all notes' }).click()
+  const search = page.getByRole('dialog', { name: /global search/i })
+  await search.getByRole('combobox').fill('release planning')
+  await expect(search.getByRole('option', { name: /Release planning/i })).toBeVisible({ timeout: 15_000 })
+  await save(page, 'quicknotes-3-search.png')
   await context.close()
 }
 
-async function captureTemplates() {
+async function capturePaper() {
   const context = await browser.newContext({ viewport })
   const page = await context.newPage()
   await openLocalWorkspace(page)
-  await page.getByRole('button', { name: 'More actions', exact: true }).click()
-  await page.getByRole('menuitem', { name: 'Save as template' }).click()
-  const saveDialog = page.getByRole('dialog', { name: 'Save as template' })
-  await saveDialog.getByLabel('Template name').fill('Team handbook')
-  await saveDialog.getByLabel('Description').fill('Reusable onboarding reference')
-  await saveDialog.getByRole('button', { name: 'Save template' }).click()
+  const paper = await createSpatial(page, 'Paper', 'Field notes')
+  await page.getByLabel('Paper pattern').selectOption('dot')
+  const box = await paper.boundingBox()
+
+  await page.getByRole('button', { name: 'Highlighter (H)' }).click()
+  await drawStroke(page, [
+    { x: box.x + 115, y: box.y + 170 },
+    { x: box.x + 280, y: box.y + 170 },
+    { x: box.x + 455, y: box.y + 170 },
+  ])
+  await page.getByRole('button', { name: 'Pen (P)' }).click()
+  await drawStroke(page, [
+    { x: box.x + 115, y: box.y + 120 },
+    { x: box.x + 155, y: box.y + 95 },
+    { x: box.x + 200, y: box.y + 125 },
+    { x: box.x + 245, y: box.y + 90 },
+    { x: box.x + 295, y: box.y + 120 },
+  ])
+  await drawStroke(page, [
+    { x: box.x + 120, y: box.y + 250 },
+    { x: box.x + 210, y: box.y + 225 },
+    { x: box.x + 310, y: box.y + 255 },
+    { x: box.x + 420, y: box.y + 220 },
+  ])
+  await drawStroke(page, [
+    { x: box.x + 120, y: box.y + 335 },
+    { x: box.x + 210, y: box.y + 320 },
+    { x: box.x + 300, y: box.y + 345 },
+    { x: box.x + 395, y: box.y + 325 },
+  ])
+  await expect(page.getByLabel('Paper editor').getByText('Saved on this device')).toBeVisible({ timeout: 15_000 })
+  await save(page, 'quicknotes-3-paper.png')
+  await context.close()
+}
+
+async function captureCanvas() {
+  const context = await browser.newContext({ viewport })
+  const page = await context.newPage()
+  await openLocalWorkspace(page)
+  const canvas = await createSpatial(page, 'Canvas', 'Project map')
+  const box = await canvas.boundingBox()
+
+  await page.getByRole('button', { name: 'Rectangle' }).click()
+  await drawStroke(page, [
+    { x: box.x + 120, y: box.y + 120 },
+    { x: box.x + 340, y: box.y + 235 },
+  ])
+  await page.getByRole('button', { name: 'Arrow' }).click()
+  await drawStroke(page, [
+    { x: box.x + 345, y: box.y + 180 },
+    { x: box.x + 485, y: box.y + 270 },
+  ])
+  await page.getByRole('button', { name: 'Sticky note' }).click()
+  await page.mouse.click(box.x + 510, box.y + 220)
+  const sticky = page.getByLabel('Sticky note text')
+  await sticky.fill('Review the release boundary')
+  await sticky.press('Control+Enter')
+  await page.getByRole('button', { name: 'Index card' }).click()
+  await page.mouse.click(box.x + 180, box.y + 350)
+  const card = page.getByLabel('Index card text')
+  await card.fill('Document\nPaper\nCanvas\nSearch')
+  await card.press('Control+Enter')
+  await page.getByRole('button', { name: 'Pen (P)' }).click()
+  await drawStroke(page, [
+    { x: box.x + 470, y: box.y + 410 },
+    { x: box.x + 525, y: box.y + 385 },
+    { x: box.x + 580, y: box.y + 420 },
+    { x: box.x + 640, y: box.y + 385 },
+  ])
+  await expect(page.getByLabel('Canvas editor').getByText('Saved on this device')).toBeVisible({ timeout: 15_000 })
+  await save(page, 'quicknotes-3-canvas.png')
+  await context.close()
+}
+
+async function captureMeeting() {
+  const context = await browser.newContext({ viewport })
+  const page = await context.newPage()
+  await openLocalWorkspace(page)
   await page.getByRole('button', { name: 'Create workspace' }).click()
-  const picker = page.getByRole('dialog', { name: 'New workspace' })
-  const myTemplates = picker.getByRole('button', { name: 'My templates', exact: true })
-  await myTemplates.click()
-  await expect(myTemplates).toHaveAttribute('aria-pressed', 'true')
-  await expect(picker.getByRole('button', { name: /Team handbook/i })).toBeVisible()
-  await save(page, 'screenshot-templates.png')
+  const dialog = page.getByRole('dialog', { name: /new workspace/i })
+  await dialog.locator('section[aria-label="Workspace types"]')
+    .getByRole('button', { name: /^Meeting Workspace/i })
+    .click()
+  await dialog.getByText('Team sync', { exact: true }).click()
+  await dialog.getByLabel('Note title').fill('Quarterly planning')
+  await dialog.getByRole('button', { name: /^Create meeting/i }).click()
+  const meeting = page.locator('.qn-type-meeting')
+  await meeting.waitFor({ state: 'visible' })
+  await meeting.getByRole('button', { name: /^Capture/i }).click()
+  await expect(meeting.getByText('Meeting capture', { exact: true })).toBeVisible()
+  await save(page, 'quicknotes-3-meeting.png')
   await context.close()
 }
 
 try {
-  await captureStartup()
-  await captureEditorAndSearch()
-  await captureDarkWorkspaceAndSettings()
-  await captureWorkspaceAndShapes()
-  await captureFocused(
-    'screenshot-tasks.png',
-    'Task List',
-    'Daily priorities',
-    'Delivery priorities',
-    '.qn-type-todo',
-  )
-  await captureFocused(
-    'screenshot-meeting.png',
-    'Meeting Workspace',
-    'Team sync',
-    'Quarterly planning sync',
-    '.qn-type-meeting',
-  )
-  await captureFocused(
-    'screenshot-board.png',
-    'Project Board',
-    'Product launch',
-    'Enterprise launch plan',
-    '.qn-type-project',
-  )
-  await captureSmartViews()
-  await captureTemplates()
-  await captureMobileFocused()
+  await captureDocumentAndSearch()
+  await capturePaper()
+  await captureCanvas()
+  await captureMeeting()
 } finally {
   await browser.close()
 }
 
-console.log(`Updated thirteen repository screenshots in ${outputDir}`)
+console.log(`Updated five QuickNotes 3.0 screenshots in ${outputDir}`)

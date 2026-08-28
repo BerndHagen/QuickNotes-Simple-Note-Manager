@@ -53,9 +53,9 @@
   --qn-overlay: rgba(15, 23, 42, 0.45);
 
   /* --- Navigation rail --------------------------------------
-     In light mode the deep brand surface anchors the window and lets the
-     note list and editor read as paper. Dark mode overrides this family with
-     neutral charcoal so large green regions never compete with the canvas.
+     The deep brand surface anchors the window in both themes and lets the
+     neutral note list and editor read as paper without spreading green into
+     utility or content surfaces.
 
      The rail is painted with `.qn-nav-surface`; `--qn-nav-bg` is its flat
      equivalent and remains useful to menus and row-action backplates.
@@ -81,7 +81,7 @@
   --qn-border-strong: #c3c8d1;
 
   /* --- Text ------------------------------------------------- */
-  /* Contrast ratios are measured against --qn-surface-panel (#f7f8fa),
+  /* Contrast ratios are measured against --qn-surface-panel (#f1f5f3),
      the lightest background any of these sit on:
        text         #111827  16.1:1
        text-muted   #56606d   6.0:1
@@ -146,9 +146,10 @@
   --qn-radius-2xl: 20px;
   --qn-radius-full: 9999px;
   /* semantic */
-  /* One product radius for fields, cards and windows. Pills stay fully round. */
-  --qn-radius-control: var(--qn-radius-lg);
-  --qn-radius-card: var(--qn-radius-lg);
+  /* Controls stay modest, work surfaces stay nearly square, and only floating
+     dialogs receive the larger treatment. Pills remain explicitly full. */
+  --qn-radius-control: var(--qn-radius-sm);
+  --qn-radius-card: var(--qn-radius-md);
   --qn-radius-dialog: var(--qn-radius-lg);
 
   /* --- Elevation -------------------------------------------- */
@@ -178,6 +179,8 @@
   --qn-sidebar-width: 264px;
   --qn-list-width: 336px;
   --qn-list-width-wide: 380px;
+  --qn-inspector-width: 300px;
+  --qn-top-chrome-height: 48px;
   /* Caps line length in the editor so text stays readable on
      1920px displays instead of stretching edge to edge. */
   --qn-measure: 76ch;
@@ -233,8 +236,8 @@
   --qn-text-inverted: #0b0f14;
   --qn-text-on-brand: #0b0f14;
 
-  --qn-nav-bg: #131820;
-  --qn-nav-bg-raised: #1b222c;
+  --qn-nav-bg: #082e27;
+  --qn-nav-bg-raised: #0d3b31;
   --qn-nav-border: rgba(203, 213, 225, 0.14);
   --qn-nav-text: #edf1f5;
   --qn-nav-text-muted: #b7c0cb;
@@ -251,11 +254,11 @@
   --qn-accent-soft-hover: rgba(119, 169, 152, 0.22);
   --qn-accent-border: rgba(119, 169, 152, 0.34);
 
-  --qn-banner: #131820;
-  --qn-banner-from: #1b222c;
-  --qn-banner-via: #151b23;
-  --qn-banner-to: #10151c;
-  --qn-banner-accent: #222b36;
+  --qn-banner: #07372c;
+  --qn-banner-from: #0d4739;
+  --qn-banner-via: #0a3b31;
+  --qn-banner-to: #072d27;
+  --qn-banner-accent: #124b3e;
   --qn-banner-text: #edf1f5;
   --qn-banner-text-muted: rgba(237, 241, 245, 0.66);
   --qn-banner-border: rgba(255, 255, 255, 0.08);

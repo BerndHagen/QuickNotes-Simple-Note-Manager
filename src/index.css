@@ -652,6 +652,11 @@ html {
   background-color: var(--qn-surface-hover);
 }
 
+.note-card[aria-current='true'],
+.note-card[aria-current='true']:hover {
+  background-color: var(--qn-accent-soft);
+}
+
 .dark .note-card:hover {
   background-color: var(--qn-surface-hover);
 }
@@ -787,9 +792,8 @@ html {
     radial-gradient(58% 38% at 0% 100%, rgba(52, 211, 153, 0.035) 0%, transparent 76%);
 }
 
-/* In light mode the sign-in hero and navigation rail share one branded
-   material. Dark mode replaces its hue below with a neutral charcoal stack,
-   retaining only the subtle contour depth.
+/* The authentication hero may use the more expressive brand material. The
+   signed-in navigation rail is deliberately flat and quiet.
 
    The only difference is stacking. The hero lifts its own content with `z-10`,
    while the rail keeps its decoration behind unpositioned children by pushing
@@ -810,6 +814,11 @@ html {
 
 .qn-nav-surface {
   overflow: hidden;
+  background: var(--qn-nav-bg);
+}
+
+.dark .qn-nav-surface {
+  background: var(--qn-nav-bg);
 }
 
 .qn-auth-hero::before,
@@ -881,7 +890,20 @@ html {
 /* Keep the rail's decoration behind its unpositioned children. */
 .qn-nav-surface::before,
 .qn-nav-surface::after {
+  display: none;
   z-index: -1;
+}
+
+@media (min-width: 1200px) {
+  .qn-sidebar-close {
+    display: none;
+  }
+}
+
+@media (max-width: 1199px) {
+  .qn-sidebar-scroll {
+    padding-top: 0.5rem;
+  }
 }
 
 .qn-nav-row-action {
@@ -1443,6 +1465,16 @@ html {
   background-color: transparent !important;
 }
 
+.qn-focus-header {
+  border-color: var(--qn-banner-border);
+  background: var(--qn-banner);
+  color: var(--qn-banner-text);
+}
+
+.qn-focus-header :where(select, button):focus-visible {
+  outline-color: #ffffff;
+}
+
 
 /* ============================================================
    Responsive behaviour
@@ -1511,16 +1543,25 @@ body {
   border-radius: var(--qn-radius-control) !important;
 }
 
-@media (max-width: 1023px) {
+@media (min-width: 768px) and (max-width: 1199px) {
   .qn-sidebar-frame {
-    top: env(safe-area-inset-top);
+    top: calc(env(safe-area-inset-top) + var(--qn-top-chrome-height));
     right: auto;
     bottom: env(safe-area-inset-bottom);
     left: env(safe-area-inset-left);
   }
+
+  .qn-sidebar-scrim {
+    top: calc(env(safe-area-inset-top) + var(--qn-top-chrome-height));
+  }
 }
 
 @media (max-width: 767px) {
+  .qn-sidebar-frame,
+  .qn-sidebar-scrim {
+    top: env(safe-area-inset-top);
+  }
+
   .qn-ribbon-mobile-action {
     display: inline-flex !important;
   }
@@ -2627,6 +2668,125 @@ body {
   container-type: inline-size;
 }
 
+.qn-top-chrome {
+  position: relative;
+  z-index: var(--qn-z-sticky);
+  box-shadow: inset 0 -1px 0 rgb(0 0 0 / 16%);
+}
+
+.qn-top-chrome :where(button, input):focus-visible {
+  outline-color: #ffffff;
+  outline-offset: -2px;
+}
+
+.qn-top-search,
+.qn-top-search kbd {
+  border-radius: var(--qn-radius-sm);
+}
+
+.qn-top-sync {
+  color: var(--qn-banner-text-muted) !important;
+}
+
+.qn-top-sync:hover {
+  background: var(--qn-banner-hover) !important;
+  color: var(--qn-banner-text) !important;
+}
+
+.qn-top-new {
+  min-width: 4rem;
+  color: #07372c !important;
+}
+
+.qn-pane-resizer {
+  position: absolute;
+  z-index: calc(var(--qn-z-sticky) + 1);
+  top: 0;
+  bottom: 0;
+  width: 7px;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.qn-pane-resizer--right {
+  right: -4px;
+}
+
+.qn-pane-resizer--left {
+  left: -4px;
+}
+
+.qn-pane-resizer::after {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  left: 3px;
+  width: 1px;
+  background: transparent;
+  transition: background-color var(--qn-duration-fast) var(--qn-ease);
+}
+
+.qn-pane-resizer:hover::after,
+.qn-pane-resizer:focus-visible::after {
+  background: var(--qn-accent);
+}
+
+.qn-pane-resizer:focus-visible {
+  outline: 0;
+}
+
+.qn-inspector-heading {
+  margin-bottom: 0.4rem;
+  color: var(--qn-text-subtle);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.qn-inspector-list {
+  border-top: 1px solid var(--qn-border-subtle);
+}
+
+.qn-inspector-list > div {
+  display: grid;
+  grid-template-columns: minmax(5rem, 0.8fr) minmax(0, 1.2fr);
+  gap: 0.75rem;
+  padding-block: 0.5rem;
+  border-bottom: 1px solid var(--qn-border-subtle);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.qn-inspector-list dt {
+  color: var(--qn-text-subtle);
+}
+
+.qn-inspector-list dd {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--qn-text);
+  font-weight: 500;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qn-paper-surface {
+  isolation: isolate;
+}
+
+.qn-canvas-surface {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background-color: var(--qn-surface-workbench);
+  background-image: radial-gradient(var(--qn-border-subtle) 0.75px, transparent 0.75px);
+  background-size: 20px 20px;
+}
+
 .qn-idea-category-select {
   display: none;
 }
@@ -2947,6 +3107,52 @@ body {
 
 .qn-ribbon-note-bar button:disabled {
   color: rgb(255 255 255 / 44%) !important;
+}
+
+/* The application chrome now owns the continuous green identity bar. On
+   desktop this row becomes the document workspace header; mobile keeps the
+   compact green note bar because the global chrome is intentionally absent. */
+@media (min-width: 768px) {
+  .qn-ribbon-note-bar {
+    border-bottom: 1px solid var(--qn-border-subtle);
+    background: var(--qn-surface-raised);
+    box-shadow: none;
+    color: var(--qn-text);
+  }
+
+  .qn-ribbon-title input {
+    color: var(--qn-text);
+    caret-color: var(--qn-text);
+  }
+
+  .qn-ribbon-title input::placeholder {
+    color: var(--qn-text-subtle);
+  }
+
+  .qn-ribbon-title input:hover,
+  .qn-ribbon-title input:focus {
+    background: var(--qn-surface-hover);
+  }
+
+  .qn-ribbon-note-bar button {
+    color: var(--qn-text-muted) !important;
+  }
+
+  .qn-ribbon-note-bar button:hover,
+  .qn-ribbon-note-bar button[aria-pressed='true'],
+  .qn-ribbon-note-bar button[aria-expanded='true'] {
+    background: var(--qn-surface-hover) !important;
+    color: var(--qn-text) !important;
+  }
+
+  .qn-ribbon-note-bar button[data-tone='favorite'][aria-pressed='true'] {
+    background: var(--qn-warning-soft) !important;
+    color: var(--qn-warning) !important;
+  }
+
+  .qn-ribbon-note-bar :where(button, input):focus-visible {
+    outline-color: var(--qn-focus-ring);
+  }
 }
 
 @media (max-width: 767px) {
@@ -3414,7 +3620,7 @@ body {
   }
 }
 
-@container (max-width: 700px) {
+@container (max-width: 900px) {
   .qn-ribbon-title {
     width: min(52vw, 22rem);
   }
@@ -3429,7 +3635,7 @@ body {
 
 }
 
-@container (max-width: 520px) {
+@container (max-width: 620px) {
   .qn-ribbon-primary-action {
     display: none !important;
   }

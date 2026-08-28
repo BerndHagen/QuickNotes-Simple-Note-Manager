@@ -1,4 +1,4 @@
-/* global URL, console, document, navigator, window */
+/* global CustomEvent, URL, console, document, navigator, window */
 
 (() => {
   'use strict'
@@ -24,6 +24,32 @@
   window.addEventListener('load', () => {
     navigator.serviceWorker.register(new URL('sw.js', baseUrl), {
       updateViaCache: 'none',
+    }).then(registration => {
+      let activatingRequested = false
+      const announceWaiting = () => {
+        if (!registration.waiting) return
+        window.dispatchEvent(new CustomEvent('quicknotes:update-ready'))
+      }
+
+      announceWaiting()
+      registration.addEventListener('updatefound', () => {
+        const installing = registration.installing
+        if (!installing) return
+        installing.addEventListener('statechange', () => {
+          if (installing.state === 'installed' && navigator.serviceWorker.controller) {
+            announceWaiting()
+          }
+        })
+      })
+
+      window.addEventListener('quicknotes:activate-update', () => {
+        if (!registration.waiting) return
+        activatingRequested = true
+        registration.waiting.postMessage({ type: 'SKIP_WAITING' })
+      })
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (activatingRequested) window.location.reload()
+      })
     }).catch(error => {
       console.warn('[QuickNotes] Offline support could not be initialized.', error)
     })

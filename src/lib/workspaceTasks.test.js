@@ -76,4 +76,28 @@ describe('workspace task aggregation', () => {
     ])
     expect(sorted.map((task) => task.title)).toEqual(['Soon', 'No date', 'Complete'])
   })
+
+  it('exposes a validated capture source without creating another task kind', () => {
+    const [task] = collectWorkspaceTasks([note({
+      noteData: {
+        tasks: [{
+          id: 'captured',
+          text: 'Send proposal',
+          source: {
+            schemaVersion: 1,
+            kind: 'recognizedContent',
+            noteId: 'paper-note',
+            recognitionId: 'recognition-1',
+            recognitionType: 'handwriting',
+            sourceKind: 'ink',
+            objectId: 'stroke-1',
+            pageId: 'page-1',
+          },
+        }],
+      },
+    })])
+
+    expect(task.kind).toBe('todo')
+    expect(task.sourceReference).toMatchObject({ noteId: 'paper-note', objectId: 'stroke-1' })
+  })
 })

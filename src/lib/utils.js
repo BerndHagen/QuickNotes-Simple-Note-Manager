@@ -263,6 +263,8 @@ export const htmlToPlainText = (html) => {
  * Returns null if no special preview is available (fallback to content-based preview).
  */
 export const getNoteTypePreview = (note, maxLength = 100) => {
+  if (note.noteType === 'paper') return 'Paper workspace'
+  if (note.noteType === 'canvas') return 'Spatial canvas'
   const data = note.noteData
   if (!data || !note.noteType || note.noteType === 'standard') return null
 

@@ -27,23 +27,44 @@ import {
   ExternalLink,
   Github,
   FileText,
+  ScanText,
   Clock,
   HardDrive
 } from 'lucide-react'
 import { useUIStore, useNotesStore, useThemeStore } from '../store'
+import { getWorkspaceNoteVersionBackupData } from '../lib/db'
 import {
   backend,
   deleteUserAccount,
   getMyUsername,
+  getRemoteWorkspaceNoteVersions,
   getRedirectUrl,
   isBackendConfigured,
   updateMyUsername,
 } from '../lib/backend'
 import { getAuthErrorMessage, validateNewPassword } from '../lib/authValidation'
 import { setLocalWorkspaceName } from '../lib/localSession'
-import { createWorkspaceBackup } from '../lib/workspaceBackup'
+import {
+  createWorkspaceArchive,
+  mergeWorkspaceNoteVersionsForBackup,
+  WORKSPACE_ARCHIVE_EXTENSION,
+} from '../lib/workspaceBackup'
+import { getSpatialBackupData } from '../lib/spatial/repository'
+import { getAnnotationBackupData } from '../lib/spatial/annotations'
+import { getWorkspaceResourceArchiveData } from '../lib/resources/repository'
+import { auditLocalDataIntegrity } from '../lib/resources/integrity'
+import {
+  getIntelligenceSettings,
+  getRecognizedContentBackupData,
+  saveIntelligenceSettings,
+} from '../lib/intelligence/repository'
 import { normalizeWebUrl } from '../lib/webUrls'
 import { normalizeUsername, validateUsername } from '../lib/usernames'
+import {
+  formatStorageBytes,
+  getBrowserStorageHealth,
+  requestBrowserStoragePersistence,
+} from '../lib/storageHealth'
 import { APP_VERSION } from '../lib/appVersion'
 import { useTranslation, LANGUAGES } from '../lib/useTranslation'
 import toast from 'react-hot-toast'
@@ -126,9 +147,64 @@ export default function SettingsModal() {
   const [isDeletingAccount, setIsDeletingAccount] = useState(false)
   const [confirmClearData, setConfirmClearData] = useState(false)
   const [isSigningOut, setIsSigningOut] = useState(false)
+  const [intelligenceSettings, setIntelligenceSettings] = useState(null)
+  const [intelligenceSettingsError, setIntelligenceSettingsError] = useState(null)
+  const [savingIntelligenceSettings, setSavingIntelligenceSettings] = useState(false)
+  const [storageHealth, setStorageHealth] = useState(null)
+  const [storageHealthError, setStorageHealthError] = useState('')
+  const [requestingPersistence, setRequestingPersistence] = useState(false)
+  const [integrityReport, setIntegrityReport] = useState(null)
+  const [integrityError, setIntegrityError] = useState('')
+  const [checkingIntegrity, setCheckingIntegrity] = useState(false)
   const avatarUrlRef = useRef(null)
 
   const cloudEnabled = isBackendConfigured()
+  const intelligenceOwnerId = cacheOwnerId || (user?.isLocal ? 'local' : user?.id)
+
+  useEffect(() => {
+    if (!settingsOpen || !intelligenceOwnerId) return undefined
+    let active = true
+    setIntelligenceSettingsError(null)
+    getIntelligenceSettings(intelligenceOwnerId)
+      .then((value) => {
+        if (active) setIntelligenceSettings(value)
+      })
+      .catch((error) => {
+        if (active) {
+          setIntelligenceSettings(null)
+          setIntelligenceSettingsError(error?.message || 'Recognition privacy settings could not be loaded.')
+        }
+      })
+    return () => { active = false }
+  }, [intelligenceOwnerId, settingsOpen])
+
+  useEffect(() => {
+    if (!settingsOpen || activeTab !== 'data' || !intelligenceOwnerId) return undefined
+    let active = true
+    setStorageHealthError('')
+    setIntegrityError('')
+    setCheckingIntegrity(true)
+    getBrowserStorageHealth()
+      .then((health) => {
+        if (active) setStorageHealth(health)
+      })
+      .catch((error) => {
+        if (active) setStorageHealthError(error?.message || 'Storage information is unavailable.')
+      })
+    auditLocalDataIntegrity(intelligenceOwnerId)
+      .then((report) => {
+        if (active) setIntegrityReport(report)
+      })
+      .catch((error) => {
+        if (active) setIntegrityError(error?.message || 'Local data integrity could not be checked.')
+      })
+      .finally(() => {
+        if (active) setCheckingIntegrity(false)
+      })
+    return () => {
+      active = false
+    }
+  }, [activeTab, intelligenceOwnerId, settingsOpen])
 
   useEffect(() => {
     if (!settingsOpen || !cloudEnabled || !user || user.isLocal) return
@@ -156,10 +232,62 @@ export default function SettingsModal() {
     ...(cloudEnabled && !user?.isLocal
       ? [{ id: 'sync', label: t('settings.sync'), icon: Cloud }]
       : []),
+    { id: 'recognition', label: 'Recognition', icon: ScanText },
     { id: 'data', label: t('settings.data'), icon: Database },
     { id: 'shortcuts', label: t('settings.shortcuts'), icon: Keyboard },
     { id: 'about', label: t('settings.aboutTab'), icon: Info },
   ]
+
+  const handleIntelligenceSettingsChange = async (patch) => {
+    if (!intelligenceOwnerId || !intelligenceSettings || savingIntelligenceSettings) return
+    setSavingIntelligenceSettings(true)
+    setIntelligenceSettingsError(null)
+    try {
+      const saved = await saveIntelligenceSettings({
+        ...intelligenceSettings,
+        ...patch,
+        // External content transfer always requires confirmation at the point of use.
+        confirmExternalEveryTime: true,
+      }, intelligenceOwnerId)
+      setIntelligenceSettings(saved)
+      toast.success('Recognition privacy setting saved')
+    } catch (error) {
+      const message = error?.message || 'Recognition privacy settings could not be saved.'
+      setIntelligenceSettingsError(message)
+      toast.error(message)
+    } finally {
+      setSavingIntelligenceSettings(false)
+    }
+  }
+
+  const handleRequestStoragePersistence = async () => {
+    setRequestingPersistence(true)
+    setStorageHealthError('')
+    try {
+      const granted = await requestBrowserStoragePersistence()
+      setStorageHealth(await getBrowserStorageHealth())
+      if (!granted) {
+        setStorageHealthError('The browser did not grant protected storage. Keep regular workspace backups.')
+      }
+    } catch (error) {
+      setStorageHealthError(error?.message || 'Protected storage could not be requested.')
+    } finally {
+      setRequestingPersistence(false)
+    }
+  }
+
+  const handleIntegrityCheck = async () => {
+    if (!intelligenceOwnerId || checkingIntegrity) return
+    setCheckingIntegrity(true)
+    setIntegrityError('')
+    try {
+      setIntegrityReport(await auditLocalDataIntegrity(intelligenceOwnerId))
+    } catch (error) {
+      setIntegrityError(error?.message || 'Local data integrity could not be checked.')
+    } finally {
+      setCheckingIntegrity(false)
+    }
+  }
 
   const handleLogin = async (e) => {
     e.preventDefault()
@@ -366,23 +494,46 @@ export default function SettingsModal() {
     }
   }
 
-  const handleExportData = () => {
+  const handleExportData = async () => {
     try {
-      const backup = createWorkspaceBackup({ notes, folders, tags, savedViews, noteTemplates })
-      const blob = new Blob([JSON.stringify(backup, null, 2)], {
-        type: 'application/json;charset=utf-8',
+      const noteIds = notes.map((note) => note.id)
+      const remoteHistory = cloudEnabled && user?.id && !user?.isLocal
+        ? getRemoteWorkspaceNoteVersions(noteIds).catch(() => {
+            throw new Error('The complete cloud version history could not be loaded. Reconnect and try the backup again; no partial archive was downloaded.')
+          })
+        : Promise.resolve([])
+      const [spatial, annotations, resources, recognizedContent, localNoteVersions, remoteNoteVersions] = await Promise.all([
+        getSpatialBackupData(noteIds),
+        getAnnotationBackupData(noteIds),
+        getWorkspaceResourceArchiveData(noteIds),
+        getRecognizedContentBackupData(noteIds),
+        getWorkspaceNoteVersionBackupData(noteIds),
+        remoteHistory,
+      ])
+      const noteVersions = mergeWorkspaceNoteVersionsForBackup(localNoteVersions, remoteNoteVersions)
+      const blob = await createWorkspaceArchive({
+        notes,
+        noteVersions,
+        folders,
+        tags,
+        savedViews,
+        noteTemplates,
+        ...spatial,
+        ...annotations,
+        ...resources,
+        recognizedContent,
       })
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
-      link.download = `quicknotes-backup-${new Date().toISOString().split('T')[0]}.json`
+      link.download = `quicknotes-backup-${new Date().toISOString().split('T')[0]}.${WORKSPACE_ARCHIVE_EXTENSION}`
       document.body.appendChild(link)
       link.click()
       link.remove()
       URL.revokeObjectURL(url)
       toast.success(t('settings.toastDataExported'))
-    } catch {
-      toast.error('The workspace backup could not be created.')
+    } catch (error) {
+      toast.error(error?.message || 'The workspace backup could not be created.')
     }
   }
 
@@ -1257,8 +1408,158 @@ export default function SettingsModal() {
                 </div>
               </div>
             )}
+            {activeTab === 'recognition' && (
+              <div className="space-y-6">
+                <div>
+                  <h4 className="text-sm font-medium text-content">Recognition and intelligent features</h4>
+                  <p className="mt-1 text-sm leading-relaxed text-content-muted">
+                    Choose which processing locations QuickNotes may use for handwriting, OCR, PDF text, transcription, and future intelligent tools.
+                  </p>
+                </div>
+
+                {intelligenceSettingsError && (
+                  <div role="alert" className="border-l-2 border-red-500 bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">
+                    {intelligenceSettingsError}
+                  </div>
+                )}
+
+                {!intelligenceSettings && !intelligenceSettingsError ? (
+                  <p role="status" className="text-sm text-content-muted">Loading recognition privacy settings…</p>
+                ) : intelligenceSettings && (
+                  <div className="space-y-5">
+                    <div>
+                      <SegmentedControl
+                        label="Allowed recognition processing"
+                        value={intelligenceSettings.mode}
+                        onChange={(mode) => handleIntelligenceSettingsChange({ mode })}
+                        options={[
+                          { value: 'off', label: 'Off' },
+                          { value: 'localOnly', label: 'Local only' },
+                          { value: 'externalAllowed', label: 'External' },
+                        ]}
+                      />
+                      <p className="mt-2 text-xs leading-relaxed text-content-subtle" aria-live="polite">
+                        {intelligenceSettings.mode === 'off' && 'Recognition providers are disabled. Existing recognized text and your source material remain available.'}
+                        {intelligenceSettings.mode === 'localOnly' && 'Only processing that stays inside this browser is allowed.'}
+                        {intelligenceSettings.mode === 'externalAllowed' && 'External providers may be offered, but each transfer still requires a separate confirmation.'}
+                      </p>
+                    </div>
+
+                    <div className="border-y border-subtle">
+                      <div className="grid grid-cols-[7.5rem_1fr] gap-3 border-b border-subtle py-3 text-sm">
+                        <span className="font-medium text-content">Local</span>
+                        <span className="text-content-muted">Runs in this browser. Source content is not sent to a recognition service.</span>
+                      </div>
+                      <div className="grid grid-cols-[7.5rem_1fr] gap-3 border-b border-subtle py-3 text-sm">
+                        <span className="font-medium text-content">Browser-managed</span>
+                        <span className="text-content-muted">The browser or operating system chooses where processing happens. QuickNotes asks before starting.</span>
+                      </div>
+                      <div className="grid grid-cols-[7.5rem_1fr] gap-3 py-3 text-sm">
+                        <span className="font-medium text-content">External</span>
+                        <span className="text-content-muted">Content leaves the device for a configured provider. QuickNotes always shows the source and asks before every transfer.</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3 border-l-2 border-accent px-3 py-1.5">
+                      <Shield className="mt-0.5 h-4 w-4 shrink-0 text-accent-text" aria-hidden="true" />
+                      <p className="text-sm leading-relaxed text-content-muted">
+                        Image OCR and PDF extraction currently use local providers. Changing this setting never uploads existing notes, attachments, ink, or recordings.
+                      </p>
+                    </div>
+
+                    {savingIntelligenceSettings && (
+                      <p role="status" aria-live="polite" className="text-xs text-content-subtle">Saving privacy setting…</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
             {activeTab === 'data' && (
               <div className="space-y-6">
+                <div className="space-y-3">
+                  <h4 className="flex items-center gap-2 text-sm font-medium text-content">
+                    <HardDrive className="h-4 w-4 text-content-muted" aria-hidden="true" />
+                    Browser storage
+                  </h4>
+                  {!storageHealth && !storageHealthError && (
+                    <p role="status" className="text-sm text-content-muted">Checking this browser…</p>
+                  )}
+                  {storageHealth && !storageHealth.supported && (
+                    <p className="text-sm text-content-muted">This browser does not expose storage estimates or persistence controls.</p>
+                  )}
+                  {storageHealth?.supported && (
+                    <div className="space-y-2 text-sm text-content-muted">
+                      <p>
+                        This origin uses {formatStorageBytes(storageHealth.usage)} of an estimated {formatStorageBytes(storageHealth.quota)}.
+                      </p>
+                      {storageHealth.ratio !== null && storageHealth.ratio >= 0.8 && (
+                        <p role="alert" className="flex gap-2 border border-warning-border bg-warning-soft p-2 text-warning-text">
+                          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                          Browser storage is over 80% full. Export a workspace backup before adding large PDFs, images, or recordings.
+                        </p>
+                      )}
+                      <p>
+                        {storageHealth.persisted === true
+                          ? 'Protected storage is granted. The browser is less likely to evict local data automatically, but backups are still required.'
+                          : 'Protected storage is not granted. The browser may evict local data under storage pressure.'}
+                      </p>
+                      {storageHealth.persisted !== true && storageHealth.canRequestPersistence && (
+                        <button
+                          type="button"
+                          disabled={requestingPersistence}
+                          aria-busy={requestingPersistence || undefined}
+                          onClick={() => void handleRequestStoragePersistence()}
+                          className="flex min-h-9 items-center gap-2 rounded-control border border-subtle bg-surface-sunken px-3 font-medium text-content hover:bg-surface-hover disabled:opacity-60"
+                        >
+                          <Shield className="h-4 w-4" aria-hidden="true" />
+                          {requestingPersistence ? 'Requesting…' : 'Protect offline data'}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  {storageHealthError && <p role="alert" className="text-sm text-warning-text">{storageHealthError}</p>}
+                </div>
+
+                <div className="border-t border-subtle" />
+                <div className="space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <h4 className="flex items-center gap-2 text-sm font-medium text-content">
+                      <Shield className="h-4 w-4 text-content-muted" aria-hidden="true" />
+                      Local data integrity
+                    </h4>
+                    <button
+                      type="button"
+                      disabled={checkingIntegrity}
+                      aria-busy={checkingIntegrity || undefined}
+                      onClick={() => void handleIntegrityCheck()}
+                      className="min-h-9 rounded-control border border-subtle bg-surface-sunken px-3 text-sm font-medium text-content hover:bg-surface-hover disabled:opacity-60"
+                    >
+                      {checkingIntegrity ? 'Checking…' : 'Check again'}
+                    </button>
+                  </div>
+                  {!integrityReport && checkingIntegrity && <p role="status" className="text-sm text-content-muted">Inspecting attachment and spatial references…</p>}
+                  {integrityReport?.issueCount === 0 && (
+                    <p role="status" className="text-sm text-content-muted">No broken canonical resource or spatial references were detected in this workspace.</p>
+                  )}
+                  {integrityReport?.issueCount > 0 && (
+                    <div role="alert" className="border border-warning-border bg-warning-soft p-3 text-sm text-warning-text">
+                      <p className="font-medium text-content">{integrityReport.issueCount} local data issue{integrityReport.issueCount === 1 ? '' : 's'} detected</p>
+                      <ul className="mt-2 list-disc space-y-1 pl-5 text-xs">
+                        {integrityReport.issues.missingResourceMetadata.count > 0 && <li>{integrityReport.issues.missingResourceMetadata.count} attachment reference(s) have missing metadata.</li>}
+                        {integrityReport.issues.missingResourcePayloads.count > 0 && <li>{integrityReport.issues.missingResourcePayloads.count} attachment(s) have missing original payloads.</li>}
+                        {integrityReport.issues.payloadsWithoutMetadata.count > 0 && <li>{integrityReport.issues.payloadsWithoutMetadata.count} payload(s) have no metadata.</li>}
+                        {integrityReport.issues.unreferencedResources.count > 0 && <li>{integrityReport.issues.unreferencedResources.count} resource(s) currently have no live reference.</li>}
+                        {integrityReport.issues.referencesToMissingNotes.count > 0 && <li>{integrityReport.issues.referencesToMissingNotes.count} record(s) reference missing notes.</li>}
+                        {integrityReport.issues.detachedSpatialRows.count > 0 && <li>{integrityReport.issues.detachedSpatialRows.count} spatial row(s) have a missing parent.</li>}
+                        {integrityReport.issues.detachedRecordingChunks.count > 0 && <li>{integrityReport.issues.detachedRecordingChunks.count} recording chunk(s) have no recovery session.</li>}
+                      </ul>
+                      <p className="mt-2 text-xs">QuickNotes does not automatically delete these records. Export a backup before removing broken references or clearing browser data.</p>
+                    </div>
+                  )}
+                  {integrityError && <p role="alert" className="text-sm text-warning-text">{integrityError}</p>}
+                </div>
+
+                <div className="border-t border-subtle" />
                 <div className="space-y-3">
                   <h4 className="text-sm font-medium text-content">
                     {t('settings.exportData')}

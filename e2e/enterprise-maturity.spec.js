@@ -38,7 +38,7 @@ test.describe('enterprise UI maturity regressions', () => {
   })
 
   test('uses one gold Lucide favourite treatment in list, editor, and grid views', async ({ page }) => {
-    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.setViewportSize({ width: 1920, height: 1080 })
     await signIn(page)
 
     const listStar = page.locator('.note-card').filter({ hasText: 'Welcome to QuickNotes' })
@@ -54,7 +54,7 @@ test.describe('enterprise UI maturity regressions', () => {
     await expect(page.getByText('⭐', { exact: false })).toHaveCount(0)
   })
 
-  test('uses one product radius for fields, note cards and application windows', async ({ page }) => {
+  test('uses restrained radius tiers for controls, rows and application windows', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 })
     await signIn(page)
 
@@ -64,8 +64,8 @@ test.describe('enterprise UI maturity regressions', () => {
       search.evaluate((element) => getComputedStyle(element).borderRadius),
       card.evaluate((element) => getComputedStyle(element).borderRadius),
     ])
-    expect(searchRadius).toBe('12px')
-    expect(cardRadius).toBe(searchRadius)
+    expect(searchRadius).toBe('6px')
+    expect(cardRadius).toBe('0px')
 
     await page.getByRole('button', { name: /^settings$/i }).first().click()
     const settings = page.getByRole('dialog', { name: 'Settings' })
@@ -73,7 +73,7 @@ test.describe('enterprise UI maturity regressions', () => {
     const windowRadius = await settings.locator('.qn-settings-shell').evaluate(
       (element) => getComputedStyle(element).borderRadius
     )
-    expect(windowRadius).toBe(searchRadius)
+    expect(windowRadius).toBe('12px')
   })
 
   test('centers every window icon against its title block on a neutral header', async ({ page }) => {
@@ -146,15 +146,23 @@ test.describe('enterprise UI maturity regressions', () => {
     await expect.poll(() => newNote.evaluate((element) => getComputedStyle(element).backgroundColor)).not.toBe(restingBackground)
   })
 
-  test('uses one restrained brand bar and a neutral command surface', async ({ page }) => {
+  test('uses continuous brand chrome and a neutral document command surface', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 })
     await signIn(page)
 
+    const applicationBar = page.locator('.qn-top-chrome')
     const header = page.locator('.qn-ribbon-note-bar')
     const tabs = page.locator('.qn-ribbon-tabs')
     await expect(header).toBeVisible()
     await expect(tabs).toBeVisible()
-    const surface = await header.evaluate((element) => {
+    const applicationSurface = await applicationBar.evaluate((element) => {
+      const style = getComputedStyle(element)
+      return {
+        backgroundColor: style.backgroundColor,
+        backgroundImage: style.backgroundImage,
+      }
+    })
+    const documentSurface = await header.evaluate((element) => {
       const style = getComputedStyle(element)
       return {
         backgroundColor: style.backgroundColor,
@@ -164,14 +172,15 @@ test.describe('enterprise UI maturity regressions', () => {
     })
     const tabsBackground = await tabs.evaluate((element) => getComputedStyle(element).backgroundColor)
 
-    expect(surface.backgroundImage).toContain('linear-gradient')
-    expect(surface.backgroundImage).not.toContain('url(')
-    expect(surface.backgroundColor).toBe('rgb(11, 74, 56)')
-    expect(surface.color).toBe('rgb(255, 255, 255)')
-    expect(tabsBackground).not.toBe(surface.backgroundColor)
+    expect(applicationSurface.backgroundImage).toBe('none')
+    expect(applicationSurface.backgroundColor).toBe('rgb(11, 74, 56)')
+    expect(documentSurface.backgroundImage).toBe('none')
+    expect(documentSurface.backgroundColor).toBe('rgb(255, 255, 255)')
+    expect(documentSurface.color).not.toBe('rgb(255, 255, 255)')
+    expect(tabsBackground).not.toBe(applicationSurface.backgroundColor)
   })
 
-  test('uses neutral dark chrome while reserving green for interaction states', async ({ page }) => {
+  test('keeps the green identity in dark chrome and neutral utility surfaces', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 })
     await signIn(page)
 
@@ -187,13 +196,15 @@ test.describe('enterprise UI maturity regressions', () => {
     await expect(selectedSection).not.toHaveCSS('background-color', 'rgb(17, 23, 30)')
 
     await settings.getByRole('button', { name: /close settings/i }).click()
+    const applicationBar = page.locator('.qn-top-chrome')
     const rail = page.locator('.qn-nav-surface').first()
     const titleBar = page.locator('.qn-ribbon-note-bar')
     const newNote = page.getByRole('button', { name: 'New note', exact: true }).first()
 
-    await expect(rail).toHaveCSS('background-color', 'rgb(19, 24, 32)')
+    await expect(applicationBar).toHaveCSS('background-color', 'rgb(7, 55, 44)')
+    await expect(rail).toHaveCSS('background-color', 'rgb(8, 46, 39)')
     await expect(rail).toHaveCSS('background-image', 'none')
-    await expect(titleBar).toHaveCSS('background-color', 'rgb(19, 24, 32)')
+    await expect(titleBar).toHaveCSS('background-color', 'rgb(22, 28, 37)')
     await expect(newNote).toHaveCSS('background-color', 'rgb(38, 49, 61)')
 
     await newNote.hover()

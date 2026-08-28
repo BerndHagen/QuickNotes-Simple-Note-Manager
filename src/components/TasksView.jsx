@@ -1,14 +1,18 @@
 import { useMemo, useState } from 'react'
 import {
   AlertTriangle,
+  Bell,
   CalendarDays,
   Check,
   CheckCircle2,
   ChevronRight,
   Circle,
+  ExternalLink,
   ListChecks,
   Plus,
   Search,
+  TimerReset,
+  X,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useNotesStore, useUIStore } from '../store'
@@ -19,6 +23,17 @@ import {
   sortWorkspaceTasks,
   toggleWorkspaceTask,
 } from '../lib/workspaceTasks'
+import { taskSourceToKnowledgeTarget } from '../lib/taskSources'
+import {
+  collectWorkspaceReminders,
+  completeReminder,
+  dismissReminder,
+  normalizeReminder,
+  REMINDER_STATUSES,
+  reminderSourceForTask,
+  reminderSourceToKnowledgeTarget,
+  snoozeReminder,
+} from '../lib/reminders'
 import { getDefaultData, NOTE_TYPES } from './editors/noteTypes'
 import { Button, EmptyState, Input, Modal } from './ui'
 
@@ -72,6 +87,39 @@ const matchesFilter = (task, filter, today) => {
   return true
 }
 
+const dateTimeKey = (value) => {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+const matchesReminderFilter = (reminder, filter, today, now) => {
+  const active = [REMINDER_STATUSES.SCHEDULED, REMINDER_STATUSES.TRIGGERED].includes(reminder.status)
+  const dueKey = dateTimeKey(reminder.datetime)
+  const dueTime = Date.parse(reminder.datetime)
+  if (filter === 'open') return active
+  if (filter === 'today') return active && dueKey === today
+  if (filter === 'upcoming') return active && dueKey > today
+  if (filter === 'overdue') return active && Number.isFinite(dueTime) && dueTime < now && dueKey < today
+  if (filter === 'completed') return [REMINDER_STATUSES.COMPLETED, REMINDER_STATUSES.DISMISSED].includes(reminder.status)
+  return true
+}
+
+const formatReminderDate = (value) => {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return 'Invalid date'
+  return new Intl.DateTimeFormat(undefined, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date)
+}
+
 function SummaryItem({ label, value, tone = 'neutral' }) {
   const toneClass = tone === 'danger'
     ? 'text-danger-text'
@@ -90,9 +138,11 @@ export default function TasksView() {
   const tasksViewOpen = useUIStore((state) => state.tasksViewOpen)
   const setTasksViewOpen = useUIStore((state) => state.setTasksViewOpen)
   const setMobileView = useUIStore((state) => state.setMobileView)
+  const setReminderModalOpen = useUIStore((state) => state.setReminderModalOpen)
   const notes = useNotesStore((state) => state.notes)
   const updateNote = useNotesStore((state) => state.updateNote)
   const setSelectedNote = useNotesStore((state) => state.setSelectedNote)
+  const navigateToKnowledgeTarget = useNotesStore((state) => state.navigateToKnowledgeTarget)
   const createNote = useNotesStore((state) => state.createNote)
   const [filter, setFilter] = useState('open')
   const [query, setQuery] = useState('')
@@ -100,6 +150,7 @@ export default function TasksView() {
   const today = getTodayKey()
 
   const allTasks = useMemo(() => sortWorkspaceTasks(collectWorkspaceTasks(notes)), [notes])
+  const allReminders = useMemo(() => collectWorkspaceReminders(notes), [notes])
   const summary = useMemo(() => getTaskSummary(allTasks, today), [allTasks, today])
   const visibleTasks = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
@@ -111,10 +162,50 @@ export default function TasksView() {
         .some((value) => value.toLowerCase().includes(normalizedQuery))
     })
   }, [allTasks, filter, query, today])
+  const visibleReminders = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase()
+    const now = Date.now()
+    return allReminders.filter((reminder) => {
+      if (!matchesReminderFilter(reminder, filter, today, now)) return false
+      if (!normalizedQuery) return true
+      return [reminder.title, reminder.noteTitle, reminder.sourceLabel]
+        .filter(Boolean)
+        .some((value) => value.toLowerCase().includes(normalizedQuery))
+    })
+  }, [allReminders, filter, query, today])
+  const dueReminderCount = allReminders.filter((reminder) =>
+    [REMINDER_STATUSES.SCHEDULED, REMINDER_STATUSES.TRIGGERED].includes(reminder.status) &&
+    Date.parse(reminder.datetime) <= Date.now()
+  ).length
 
   const close = () => setTasksViewOpen(false)
   const openSource = (task) => {
     setSelectedNote(task.noteId)
+    setMobileView('editor')
+    close()
+  }
+
+  const openCaptureSource = (task) => {
+    const target = taskSourceToKnowledgeTarget(task.sourceReference)
+    const sourceNote = target && notes.find((note) => note.id === target.noteId)
+    if (!target || !sourceNote || sourceNote.deleted) {
+      toast.error('The original capture is no longer available in this workspace')
+      return
+    }
+    if (!navigateToKnowledgeTarget(target)) {
+      toast.error('The original capture is no longer accessible')
+      return
+    }
+    setMobileView('editor')
+    close()
+  }
+
+  const openReminderSource = (reminder) => {
+    const target = reminderSourceToKnowledgeTarget(reminder.source)
+    if (!target || !navigateToKnowledgeTarget(target)) {
+      toast.error('The reminder source is no longer accessible')
+      return
+    }
     setMobileView('editor')
     close()
   }
@@ -134,6 +225,21 @@ export default function TasksView() {
       toast.error('The task could not be updated')
     } finally {
       setUpdatingKey(null)
+    }
+  }
+
+  const transitionReminder = async (descriptor, transition) => {
+    const sourceNote = notes.find((note) => note.id === descriptor.noteId)
+    if (!sourceNote) return
+    const values = Array.isArray(sourceNote.reminders) ? sourceNote.reminders : []
+    const reminders = values.map((value) => {
+      const reminder = normalizeReminder(value, sourceNote.id)
+      return reminder?.id === descriptor.id ? transition(reminder) : reminder || value
+    })
+    try {
+      await updateNote(sourceNote.id, { reminders })
+    } catch {
+      toast.error('The reminder could not be updated')
     }
   }
 
@@ -161,7 +267,7 @@ export default function TasksView() {
       footer={(
         <>
           <span className="mr-auto hidden text-ui-sm text-content-muted sm:block" role="status" aria-live="polite">
-            {visibleTasks.length} task{visibleTasks.length === 1 ? '' : 's'} shown
+            {visibleTasks.length} task{visibleTasks.length === 1 ? '' : 's'} and {visibleReminders.length} reminder{visibleReminders.length === 1 ? '' : 's'} shown
           </span>
           <Button variant="ghost" className="hidden sm:inline-flex" onClick={close}>Close</Button>
           <Button variant="primary" icon={Plus} className="w-full sm:w-auto" onClick={createTaskList}>New task list</Button>
@@ -175,6 +281,7 @@ export default function TasksView() {
             <SummaryItem label="Due today" value={summary.today} />
             <SummaryItem label="Overdue" value={summary.overdue} tone={summary.overdue ? 'danger' : 'neutral'} />
             <SummaryItem label="Completed" value={summary.completed} />
+            <SummaryItem label="Reminders due" value={dueReminderCount} tone={dueReminderCount ? 'danger' : 'neutral'} />
           </div>
         </section>
 
@@ -210,7 +317,7 @@ export default function TasksView() {
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-          {visibleTasks.length === 0 ? (
+          {visibleTasks.length === 0 && visibleReminders.length === 0 ? (
             <EmptyState
               icon={filter === 'completed' ? CheckCircle2 : ListChecks}
               title={query ? 'No matching tasks' : filter === 'open' ? 'You are caught up' : `No ${filter} tasks`}
@@ -222,7 +329,40 @@ export default function TasksView() {
               ) : null}
             />
           ) : (
-            <ul className="divide-y divide-[var(--qn-border-subtle)]" aria-label="Workspace tasks">
+            <>
+            {visibleReminders.length > 0 && (
+              <section aria-labelledby="qn-task-center-reminders" className="border-b border-subtle bg-surface-raised">
+                <h2 id="qn-task-center-reminders" className="border-b border-subtle px-5 py-2 text-ui-xs font-semibold uppercase tracking-wide text-content-muted">Reminders</h2>
+                <ul className="divide-y divide-[var(--qn-border-subtle)]">
+                  {visibleReminders.map((reminder) => {
+                    const active = [REMINDER_STATUSES.SCHEDULED, REMINDER_STATUSES.TRIGGERED].includes(reminder.status)
+                    return (
+                      <li key={`${reminder.noteId}:${reminder.id}`} className="flex items-start gap-3 px-4 py-3 hover:bg-surface-hover sm:px-5">
+                        <Bell className={`mt-1 h-4 w-4 shrink-0 ${reminder.status === REMINDER_STATUSES.TRIGGERED ? 'text-danger-text' : 'text-accent-text'}`} aria-hidden="true" />
+                        <button type="button" className="min-w-0 flex-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--qn-focus-ring)]" onClick={() => openReminderSource(reminder)}>
+                          <span className="block text-ui-md font-medium text-content">{reminder.title || reminder.sourceLabel}</span>
+                          <span className="mt-1 block text-ui-xs text-content-muted">{reminder.noteTitle} · {formatReminderDate(reminder.datetime)}{reminder.repeat !== 'none' ? ` · Repeats ${reminder.repeat}` : ''}</span>
+                        </button>
+                        {active && (
+                          <div className="flex shrink-0 items-center gap-1">
+                            <button type="button" className="qn-touch-target flex h-9 w-9 items-center justify-center rounded-control text-content-muted hover:bg-surface-hover" aria-label={`Snooze ${reminder.title || reminder.sourceLabel} for 10 minutes`} onClick={() => void transitionReminder(reminder, (value) => snoozeReminder(value, 10))}>
+                              <TimerReset className="h-4 w-4" aria-hidden="true" />
+                            </button>
+                            <button type="button" className="qn-touch-target flex h-9 w-9 items-center justify-center rounded-control text-success-text hover:bg-success-soft" aria-label={`Complete ${reminder.title || reminder.sourceLabel}`} onClick={() => void transitionReminder(reminder, (value) => completeReminder(value))}>
+                              <Check className="h-4 w-4" aria-hidden="true" />
+                            </button>
+                            <button type="button" className="qn-touch-target flex h-9 w-9 items-center justify-center rounded-control text-content-muted hover:bg-surface-hover" aria-label={`Dismiss ${reminder.title || reminder.sourceLabel}`} onClick={() => void transitionReminder(reminder, (value) => dismissReminder(value))}>
+                              <X className="h-4 w-4" aria-hidden="true" />
+                            </button>
+                          </div>
+                        )}
+                      </li>
+                    )
+                  })}
+                </ul>
+              </section>
+            )}
+            {visibleTasks.length > 0 && <ul className="divide-y divide-[var(--qn-border-subtle)]" aria-label="Workspace tasks">
               {visibleTasks.map((task) => {
                 const overdue = !task.completed && task.dueDate && task.dueDate < today
                 const dueToday = !task.completed && task.dueDate === today
@@ -279,11 +419,35 @@ export default function TasksView() {
                       </span>
                     </button>
 
+                    {task.sourceReference && (
+                      <button
+                        type="button"
+                        onClick={() => openCaptureSource(task)}
+                        className="qn-touch-target -my-1 inline-flex h-9 shrink-0 items-center gap-1.5 rounded-control px-2 text-ui-xs font-medium text-accent-text hover:bg-accent-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--qn-focus-ring)]"
+                        aria-label={`Open original capture for ${task.title}`}
+                        title="Open original capture"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+                        <span className="hidden lg:inline">Source</span>
+                      </button>
+                    )}
+                    {!task.completed && (
+                      <button
+                        type="button"
+                        onClick={() => setReminderModalOpen(true, task.noteId, reminderSourceForTask(task))}
+                        className="qn-touch-target -my-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-control text-content-muted hover:bg-surface-hover hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--qn-focus-ring)]"
+                        aria-label={`Set reminder for ${task.title}`}
+                        title="Set reminder"
+                      >
+                        <Bell className="h-3.5 w-3.5" aria-hidden="true" />
+                      </button>
+                    )}
                     <ChevronRight className="mt-2 h-4 w-4 shrink-0 text-content-subtle transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
                   </li>
                 )
               })}
-            </ul>
+            </ul>}
+            </>
           )}
         </div>
       </div>

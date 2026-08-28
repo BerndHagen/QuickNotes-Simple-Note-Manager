@@ -13,11 +13,20 @@ export function useSyncStatus() {
   const isSyncing = useNotesStore((s) => s.isSyncing)
   const lastSyncTime = useNotesStore((s) => s.lastSyncTime)
   const lastSyncError = useNotesStore((s) => s.lastSyncError)
+  const persistenceError = useNotesStore((s) => s.persistenceError)
   const isLocalWorkspace = useNotesStore((s) => !!s.user?.isLocal)
   const pendingCount = useNotesStore(
     (s) => s.notes.filter((n) => n.syncStatus === 'pending').length
   )
 
+  if (persistenceError?.source === 'indexeddb') {
+    return {
+      state: 'storage-error',
+      pendingCount,
+      lastSyncTime,
+      persistenceError,
+    }
+  }
   // A local workspace never uploads, so a pending queue is not a backlog.
   if (!isBackendConfigured() || isLocalWorkspace) {
     return { state: 'local', pendingCount: 0, lastSyncTime }
@@ -36,6 +45,7 @@ const CONFIG = {
   pending: { icon: RefreshCw, tone: 'text-warning-text', key: 'sync.pending', fallback: 'Unsynced changes' },
   offline: { icon: CloudOff, tone: 'text-content-subtle', key: 'sync.offline', fallback: 'Offline' },
   error: { icon: AlertTriangle, tone: 'text-danger-text', key: 'sync.error', fallback: 'Sync failed' },
+  'storage-error': { icon: AlertTriangle, tone: 'text-danger-text', key: 'sync.storageError', fallback: 'Local save failed' },
 }
 
 /**
@@ -46,17 +56,19 @@ const CONFIG = {
  */
 export function SyncStatusPill({ className = '' }) {
   const { t } = useTranslation()
-  const { state, pendingCount, lastSyncTime, lastSyncError } = useSyncStatus()
+  const { state, pendingCount, lastSyncTime, lastSyncError, persistenceError } = useSyncStatus()
   const syncWithBackend = useNotesStore((s) => s.syncWithBackend)
   const config = CONFIG[state]
   const Icon = config.icon
   const translatedLabel = t(config.key)
   const label =
     !translatedLabel || translatedLabel === config.key ? config.fallback : translatedLabel
-  const canSync = state !== 'local' && state !== 'offline' && state !== 'syncing'
+  const canSync = !['local', 'offline', 'syncing', 'storage-error'].includes(state)
 
   const title =
-    state === 'local'
+    state === 'storage-error'
+      ? `${label}: ${persistenceError?.detail || persistenceError?.message || 'Browser storage rejected the write'}`
+      : state === 'local'
       ? t('sync.localHint', 'Notes are saved privately in this browser')
       : state === 'offline'
       ? t('sync.offlineHint', 'Changes are saved locally and will sync when you reconnect')
@@ -96,9 +108,19 @@ export function SaveStatus({ note, className = '' }) {
   const { t } = useTranslation()
   const isLocalWorkspace = useNotesStore((state) => Boolean(state.user?.isLocal))
   const sync = useSyncStatus()
+  const persistenceError = useNotesStore((state) => state.persistenceError)
   const pending = note?.syncStatus === 'pending'
 
   if (!note) return null
+
+  if (persistenceError?.source === 'indexeddb') {
+    return (
+      <span className={`inline-flex items-center gap-1.5 text-ui-sm text-danger-text ${className}`}>
+        <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
+        <span role="alert">{t('editor.localSaveFailed', 'Local save failed')}</span>
+      </span>
+    )
+  }
 
   if (!isBackendConfigured() || isLocalWorkspace) {
     return (

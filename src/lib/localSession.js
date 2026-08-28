@@ -6,7 +6,7 @@
  * lands the user back in the workspace they chose, with no network round-trip.
  */
 
-const LOCAL_SESSION_KEY = 'quicknotes-local-session'
+export const LOCAL_SESSION_KEY = 'quicknotes-local-session'
 const LOCAL_WORKSPACE_NAME_KEY = 'quicknotes-local-name'
 const DEFAULT_LOCAL_WORKSPACE_NAME = 'My workspace'
 
@@ -55,4 +55,25 @@ export const startLocalSession = () => {
 
 export const endLocalSession = () => {
   window.localStorage.removeItem(LOCAL_SESSION_KEY)
+}
+
+/**
+ * Observe local-workspace sign-in/out performed by another tab. The browser
+ * deliberately does not dispatch a storage event back to the tab that made
+ * the change, so the initiating tab continues to use its normal synchronous
+ * login/logout path.
+ */
+export const subscribeToLocalSession = (listener) => {
+  if (typeof window === 'undefined') return () => {}
+
+  const handleStorage = (event) => {
+    if (
+      (event.storageArea && event.storageArea !== window.localStorage) ||
+      event.key !== LOCAL_SESSION_KEY
+    ) return
+    listener(event.newValue === 'active')
+  }
+
+  window.addEventListener('storage', handleStorage)
+  return () => window.removeEventListener('storage', handleStorage)
 }

@@ -70,6 +70,11 @@ export default function NoteStatistics({ note }) {
 
   if (!stats) return null
   const isSpecialized = note.noteType && note.noteType !== 'standard'
+  const workspaceLabel = note.noteType === 'paper'
+    ? 'Paper note'
+    : note.noteType === 'canvas'
+      ? 'Spatial canvas'
+      : 'Structured workspace'
 
   /* Metrics scroll horizontally inside their own track on narrow screens; the
      save state stays pinned so it is never scrolled out of reach. The track
@@ -78,7 +83,7 @@ export default function NoteStatistics({ note }) {
     <footer className="qn-note-statistics qn-safe-bottom flex shrink-0 items-center gap-3 border-t border-subtle bg-surface px-3 py-2 sm:px-5">
       {isSpecialized ? (
         <span className="min-w-0 flex-1 text-ui-sm text-content-subtle">
-          Structured workspace
+          {workspaceLabel}
         </span>
       ) : (
         <ul

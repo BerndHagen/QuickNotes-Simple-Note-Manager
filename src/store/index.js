@@ -4,15 +4,26 @@ import { generateId, repairMojibake } from '../lib/utils'
 import { filterNotes, STARRED_FILTER } from '../lib/filterNotes'
 import {
   addToSyncQueue,
+  acknowledgeSyncItem,
   adoptLegacyWorkspaceRecords,
   db,
+  deleteFolderOffline,
+  deleteNoteOffline,
+  deleteNoteSyncSnapshot,
+  permanentlyDeleteNoteOffline,
+  deleteTagOffline,
   deleteWorkspaceData,
   getPendingSyncItems,
   getWorkspaceCache,
   getWorkspaceSnapshot,
-  removeSyncItem,
+  notifyCanonicalContentPersisted,
   replaceWorkspaceCache,
   saveNoteOffline,
+  saveNoteSyncSnapshot,
+  saveNoteVersion,
+  saveCatalogRecordOffline,
+  saveTagRenameOffline,
+  saveWorkspaceCatalogMutation,
   saveWorkspaceSnapshot,
   setActiveWorkspaceOwner,
   SyncStatus,
@@ -33,7 +44,21 @@ import {
   shouldUploadPendingRecord,
 } from '../lib/syncReconciliation'
 import { prepareWorkspaceImport } from '../lib/workspaceBackup'
+import { partitionRecoverableNotes } from '../lib/recovery'
 import { createNoteInputFromTemplate } from '../lib/noteTemplates'
+import {
+  addContentDescriptorToNoteData,
+  extractContentDescriptorFromNoteData,
+  normalizeContentDescriptor,
+} from '../lib/contentModel'
+import { duplicateSpatialWorkspace } from '../lib/spatial/repository'
+import { duplicateNoteAnnotations } from '../lib/spatial/annotations'
+import { duplicateNoteResourceLinks } from '../lib/resources/repository'
+import { activateIntelligenceJobOwner } from '../lib/intelligence/service'
+import { syncSpatialQueue } from '../lib/spatial/cloud'
+import { syncAnnotationQueue } from '../lib/spatial/annotationCloud'
+import { CAPTURE_RESOURCE_QUEUE_TABLE, syncCaptureCloud } from '../lib/capture/cloud'
+import { purgeSharedNoteCache, purgeSharedNoteCaches } from '../lib/collaboration/cache'
 import {
   filterBySmartView,
   getSmartViewScope,
@@ -41,9 +66,91 @@ import {
 } from '../lib/smartViews'
 import toast from 'react-hot-toast'
 const WELCOME_TITLE = 'Welcome to QuickNotes'
+const MAX_KNOWLEDGE_HISTORY = 100
+
+const normalizeKnowledgeTarget = (target) => {
+  if (typeof target === 'string') target = { noteId: target }
+  const noteId = typeof target?.noteId === 'string' ? target.noteId : ''
+  if (!noteId) return null
+  const normalized = {
+    noteId,
+    anchorId: typeof target.anchorId === 'string' && target.anchorId ? target.anchorId : null,
+    objectId: typeof target.objectId === 'string' && target.objectId ? target.objectId : null,
+  }
+  if (typeof target.recognitionId === 'string' && target.recognitionId) normalized.recognitionId = target.recognitionId
+  if (typeof target.resourceId === 'string' && target.resourceId) normalized.resourceId = target.resourceId
+  if (typeof target.pageId === 'string' && target.pageId) normalized.pageId = target.pageId
+  if (Number.isInteger(target.pageNumber) && target.pageNumber > 0) normalized.pageNumber = target.pageNumber
+  if (Number.isFinite(target.timeMs) && target.timeMs >= 0) normalized.timeMs = target.timeMs
+  if (target.region && ['x', 'y', 'width', 'height'].every((key) => Number.isFinite(target.region[key]))) {
+    normalized.region = { x: target.region.x, y: target.region.y, width: target.region.width, height: target.region.height }
+  }
+  return normalized
+}
+
+const sameKnowledgeTarget = (left, right) =>
+  left?.noteId === right?.noteId &&
+  (left?.anchorId || null) === (right?.anchorId || null) &&
+  (left?.objectId || null) === (right?.objectId || null) &&
+  (left?.recognitionId || null) === (right?.recognitionId || null) &&
+  (left?.resourceId || null) === (right?.resourceId || null) &&
+  (left?.pageId || null) === (right?.pageId || null) &&
+  (left?.pageNumber || null) === (right?.pageNumber || null) &&
+  (left?.timeMs ?? null) === (right?.timeMs ?? null)
+
+const selectKnowledgeTargetState = (state, target) => {
+  const next = normalizeKnowledgeTarget(target)
+  if (!next) return { selectedNoteId: null }
+  const navigation = state.knowledgeNavigation
+  const selectedTarget = normalizeKnowledgeTarget(state.selectedNoteId)
+  const current = selectedTarget?.noteId === navigation.current?.noteId
+    ? navigation.current
+    : selectedTarget
+  const back = !current || sameKnowledgeTarget(current, next)
+    ? navigation.back
+    : [...navigation.back, current].slice(-MAX_KNOWLEDGE_HISTORY)
+  const token = navigation.token + 1
+  return {
+    selectedNoteId: next.noteId,
+    knowledgeNavigation: {
+      current: next,
+      back,
+      forward: [],
+      pending: { ...next, token },
+      token,
+    },
+  }
+}
+
+const normalizeSharedNoteRecord = (note, permission = 'view') => {
+  if (!note) return null
+  const noteType = note.note_type || 'standard'
+  const descriptor = extractContentDescriptorFromNoteData(noteType, note.note_data)
+  return {
+    id: note.id,
+    title: note.title,
+    content: note.content,
+    userId: note.user_id,
+    folderId: note.folder_id,
+    tags: note.tags || [],
+    starred: note.starred || false,
+    pinned: note.pinned || false,
+    deleted: note.deleted || false,
+    archived: note.archived || false,
+    noteType,
+    noteData: descriptor.noteData,
+    contentKind: descriptor.contentKind,
+    contentSchemaVersion: descriptor.contentSchemaVersion,
+    createdAt: note.created_at,
+    updatedAt: note.updated_at,
+    isShared: true,
+    sharePermission: permission,
+  }
+}
 
 const emptyWorkspace = () => ({
   notes: [],
+  corruptedNotes: [],
   folders: [],
   tags: [],
   savedViews: [],
@@ -58,7 +165,13 @@ const emptyWorkspace = () => ({
 })
 
 const selectWorkspaceSnapshot = (state) => ({
-  notes: state.notes,
+  // Isolated rows remain in the canonical snapshot so routine saves cannot
+  // silently discard data this build cannot render. They are excluded only
+  // from the active library and cloud sync.
+  notes: [
+    ...state.notes,
+    ...(state.corruptedNotes || []).map((record) => record.raw),
+  ],
   folders: state.folders,
   tags: state.tags,
   savedViews: state.savedViews,
@@ -77,8 +190,10 @@ const normalizeWorkspaceSnapshot = (snapshot) => {
     Array.isArray(records)
       ? records.filter((record) => record && typeof record.id === 'string')
       : []
+  const partitionedNotes = partitionRecoverableNotes(snapshot?.notes)
   const workspace = {
-    notes: validRecords(snapshot?.notes),
+    notes: partitionedNotes.notes,
+    corruptedNotes: partitionedNotes.corruptedNotes,
     folders: validRecords(snapshot?.folders),
     tags: validRecords(snapshot?.tags),
     savedViews: validRecords(snapshot?.savedViews),
@@ -106,7 +221,50 @@ const normalizeWorkspaceSnapshot = (snapshot) => {
   return workspace
 }
 
+const SYNC_DIRTY_STATUSES = new Set([
+  SyncStatus.PENDING,
+  SyncStatus.CONFLICT,
+  SyncStatus.ERROR,
+])
+
+const recordsHaveSameContent = (left, right) => {
+  if (!left || !right) return left === right
+  const normalize = (record) => Object.fromEntries(
+    Object.entries(record)
+      .filter(([key]) => key !== 'syncStatus')
+      .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey))
+  )
+  return JSON.stringify(normalize(left)) === JSON.stringify(normalize(right))
+}
+
+const enqueueCollaborationConflict = (state, conflict) => {
+  const conflicts = [
+    ...(state.collaborationConflicts || []).filter(
+      (candidate) => candidate.noteId !== conflict.noteId
+    ),
+    conflict,
+  ]
+  return {
+    collaborationConflicts: conflicts,
+    // Retained as a compatibility alias for older selectors and persisted
+    // test fixtures. New UI resolves the conflict for its own note from the
+    // full queue so simultaneous note conflicts cannot overwrite each other.
+    collaborationConflict: conflicts[0] || null,
+  }
+}
+
+const clearCollaborationConflict = (state, noteId) => {
+  const conflicts = (state.collaborationConflicts || []).filter(
+    (candidate) => candidate.noteId !== noteId
+  )
+  return {
+    collaborationConflicts: conflicts,
+    collaborationConflict: conflicts[0] || null,
+  }
+}
+
 const workspaceWrites = new Map()
+const externalNoteBaselines = new Map()
 let workspaceTransitionChain = Promise.resolve()
 let backendSyncPromise = null
 let deferredPersistenceFailure = null
@@ -114,6 +272,35 @@ let reportPersistenceFailure = (error, source) => {
   deferredPersistenceFailure = { error, source }
 }
 let localStorageFailureReported = false
+
+const persistNoteMutation = (note, operation = 'update') => {
+  void saveNoteOffline(note, operation).catch((error) => {
+    reportPersistenceFailure(error, 'indexeddb')
+  })
+}
+
+const persistCatalogRecordMutation = (table, record, operation = 'update') => {
+  void saveCatalogRecordOffline(table, record, operation).catch((error) => {
+    reportPersistenceFailure(error, 'indexeddb')
+  })
+}
+
+const reportCatalogGraphMutation = (promise) => {
+  void promise.catch((error) => reportPersistenceFailure(error, 'indexeddb'))
+}
+
+const persistWorkspaceCatalogMutation = (get, table, operation, data) => {
+  const state = get()
+  void saveWorkspaceCatalogMutation(
+    state.cacheOwnerId,
+    selectWorkspaceSnapshot(state),
+    table,
+    operation,
+    data
+  ).catch((error) => {
+    reportPersistenceFailure(error, 'indexeddb')
+  })
+}
 
 const queueWorkspaceSnapshot = (ownerId, workspace) => {
   if (!ownerId) return Promise.resolve(null)
@@ -171,6 +358,12 @@ const runBackendSync = (transition) => {
   return syncPromise
 }
 
+const withWorkspaceSyncLock = async (ownerId, transition) => {
+  const lockManager = globalThis.navigator?.locks
+  if (!ownerId || typeof lockManager?.request !== 'function') return transition()
+  return lockManager.request(`quicknotes-sync:${ownerId}`, { mode: 'exclusive' }, transition)
+}
+
 const safePersistStorage = createJSONStorage(() => ({
   getItem: (name) => {
     try {
@@ -201,6 +394,7 @@ const safePersistStorage = createJSONStorage(() => ({
 
 const hasWorkspaceContent = (workspace) =>
   workspace.notes.length > 0 ||
+  workspace.corruptedNotes.length > 0 ||
   workspace.folders.length > 0 ||
   workspace.tags.length > 0 ||
   workspace.savedViews.length > 0 ||
@@ -228,11 +422,13 @@ const activateWorkspace = async (set, get, user, ownerId, { adoptUnowned = false
   ) {
     setActiveWorkspaceOwner(ownerId)
     set({ user })
+    await activateIntelligenceJobOwner(ownerId)
     return true
   }
 
   try {
     if (current.cacheOwnerId && current.cacheOwnerId !== ownerId) {
+      await purgeSharedNoteCaches(current.sharedNotes, current.cacheOwnerId)
       if (current.hydratedWorkspaceOwnerId === current.cacheOwnerId) {
         const saved = await persistCurrentWorkspace(get)
         if (!saved) return false
@@ -270,6 +466,7 @@ const activateWorkspace = async (set, get, user, ownerId, { adoptUnowned = false
 
     setActiveWorkspaceOwner(ownerId)
     await replaceWorkspaceCache(workspace)
+    externalNoteBaselines.clear()
     set({
       ...workspace,
       user,
@@ -277,7 +474,15 @@ const activateWorkspace = async (set, get, user, ownerId, { adoptUnowned = false
       hydratedWorkspaceOwnerId: ownerId,
       sharedNotes: [],
       pendingShares: [],
+      knowledgeNavigation: {
+        current: workspace.selectedNoteId ? { noteId: workspace.selectedNoteId, anchorId: null, objectId: null } : null,
+        back: [],
+        forward: [],
+        pending: null,
+        token: 0,
+      },
     })
+    await activateIntelligenceJobOwner(ownerId)
     await queueWorkspaceSnapshot(ownerId, workspace)
     return true
   } catch (error) {
@@ -293,7 +498,7 @@ const createStarterContent = () => {
     content: `<p>This note is yours to edit or delete. It covers the parts of QuickNotes that are not obvious from looking at the screen.</p>
 
 <h2>Finding your way around</h2>
-<p>Three panes, left to right: the <strong>rail</strong> for navigation, the <strong>list</strong> of notes in the current view, and the <strong>editor</strong>. Below 1024px the rail becomes a drawer and the list and editor take turns, so the same workspace works on a phone.</p>
+<p>Three panes, left to right: the <strong>rail</strong> for navigation, the <strong>list</strong> of notes in the current view, and the <strong>editor</strong>. On tablet and compact widths the rail becomes a drawer and the list and editor take turns, so the same workspace works on a phone.</p>
 <p>Everything saves as you type. The indicator in the sidebar footer tells you where your notes currently live \u2014 on this device only, or synced to your account.</p>
 
 <h2>Folders and tags do different jobs</h2>
@@ -399,6 +604,7 @@ export const useNotesStore = create(
   persist(
     (set, get) => ({
       notes: [],
+      corruptedNotes: [],
       folders: [],
       tags: [],
       savedViews: [],
@@ -423,6 +629,25 @@ export const useNotesStore = create(
       isNewUser: false,
       /** Transient realtime signal — deliberately not persisted. */
       externalUpdate: { noteId: null, token: 0 },
+      /** Unsaved shared-note drafts and explicit inbound conflict review. */
+      sharedDraftRevisions: {},
+      collaborationConflict: null,
+      collaborationConflicts: [],
+      /**
+       * Owner-catalog conflicts are transient prompts backed by the durable
+       * local row and outbox. Reloading safely redetects them from those two
+       * sources; the incoming cloud snapshot is never treated as canonical
+       * until the user chooses it.
+       */
+      catalogConflicts: [],
+      /** Session-local navigation; note and index persistence stay separate. */
+      knowledgeNavigation: {
+        current: null,
+        back: [],
+        forward: [],
+        pending: null,
+        token: 0,
+      },
 
       initializeStarterContent: () => {
         const { welcomeNote, starterFolders, starterTags } = createStarterContent()
@@ -435,23 +660,22 @@ export const useNotesStore = create(
           isNewUser: true,
         })
 
-        saveNoteOffline(welcomeNote)
-        addToSyncQueue('notes', 'insert', welcomeNote)
+        persistNoteMutation(welcomeNote, 'insert')
         
         starterFolders.forEach(folder => {
-          db.folders.put(folder)
-          addToSyncQueue('folders', 'insert', folder)
+          persistCatalogRecordMutation('folders', folder, 'insert')
         })
         
         starterTags.forEach(tag => {
-          db.tags.put(tag)
-          addToSyncQueue('tags', 'insert', tag)
+          persistCatalogRecordMutation('tags', tag, 'insert')
         })
       },
 
 
       createNote: (note = {}) => {
         const hasExplicitFolder = Object.prototype.hasOwnProperty.call(note, 'folderId')
+        const noteType = note.noteType || 'standard'
+        const contentDescriptor = normalizeContentDescriptor({ ...note, noteType })
         const newNote = {
           id: generateId(),
           title: limitNoteTitle(note.title),
@@ -460,8 +684,9 @@ export const useNotesStore = create(
           tags: note.tags || [],
           starred: Boolean(note.starred),
           pinned: Boolean(note.pinned),
-          noteType: note.noteType || 'standard',
+          noteType,
           noteData: note.noteData || null,
+          ...contentDescriptor,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           syncStatus: SyncStatus.PENDING,
@@ -469,12 +694,11 @@ export const useNotesStore = create(
 
         set((state) => ({
           notes: [newNote, ...state.notes],
-          selectedNoteId: newNote.id,
+          ...selectKnowledgeTargetState(state, { noteId: newNote.id }),
           isEditing: true,
         }))
 
-        saveNoteOffline(newNote)
-        addToSyncQueue('notes', 'insert', newNote)
+        persistNoteMutation(newNote, 'insert')
 
         return newNote
       },
@@ -503,7 +727,7 @@ export const useNotesStore = create(
           selectedFolderId: null,
           selectedTagFilter: null,
         }))
-        addToSyncQueue('saved_views', 'insert', savedView)
+        persistWorkspaceCatalogMutation(get, 'saved_views', 'insert', savedView)
         return savedView
       },
 
@@ -528,7 +752,7 @@ export const useNotesStore = create(
         set((state) => ({
           savedViews: state.savedViews.map((view) => view.id === id ? updated : view),
         }))
-        addToSyncQueue('saved_views', 'update', updated)
+        persistWorkspaceCatalogMutation(get, 'saved_views', 'update', updated)
         return updated
       },
 
@@ -538,7 +762,7 @@ export const useNotesStore = create(
           savedViews: state.savedViews.filter((view) => view.id !== id),
           selectedSmartViewId: state.selectedSmartViewId === id ? null : state.selectedSmartViewId,
         }))
-        addToSyncQueue('saved_views', 'delete', { id })
+        persistWorkspaceCatalogMutation(get, 'saved_views', 'delete', { id })
       },
 
       createNoteTemplate: (input = {}) => {
@@ -563,7 +787,7 @@ export const useNotesStore = create(
           syncStatus: SyncStatus.PENDING,
         }
         set((state) => ({ noteTemplates: [template, ...state.noteTemplates] }))
-        addToSyncQueue('note_templates', 'insert', template)
+        persistWorkspaceCatalogMutation(get, 'note_templates', 'insert', template)
         return template
       },
 
@@ -588,7 +812,7 @@ export const useNotesStore = create(
         set((state) => ({
           noteTemplates: state.noteTemplates.map((template) => template.id === id ? updated : template),
         }))
-        addToSyncQueue('note_templates', 'update', updated)
+        persistWorkspaceCatalogMutation(get, 'note_templates', 'update', updated)
         return updated
       },
 
@@ -597,7 +821,7 @@ export const useNotesStore = create(
         set((state) => ({
           noteTemplates: state.noteTemplates.filter((template) => template.id !== id),
         }))
-        addToSyncQueue('note_templates', 'delete', { id })
+        persistWorkspaceCatalogMutation(get, 'note_templates', 'delete', { id })
       },
 
       createNoteFromTemplate: (templateId, title) => {
@@ -612,7 +836,23 @@ export const useNotesStore = create(
           throw new Error('Open a workspace before importing a backup.')
         }
 
-        const imported = prepareWorkspaceImport(backup, current, { createId: generateId })
+        const imported = await prepareWorkspaceImport(backup, current, { createId: generateId })
+        for (const collection of [
+          imported.spatialDocuments,
+          imported.spatialPages,
+          imported.spatialObjects,
+          imported.spatialAnnotations,
+          imported.spatialAnnotationPages,
+          imported.spatialAnnotationObjects,
+          imported.resources,
+          imported.canonicalResources,
+          imported.noteResources,
+          imported.resourceBlobs,
+          imported.recognizedContent,
+          imported.noteVersions,
+        ]) {
+          for (const record of collection) record.ownerId = current.cacheOwnerId
+        }
         const workspace = {
           ...selectWorkspaceSnapshot(current),
           notes: [...imported.notes, ...current.notes],
@@ -628,24 +868,51 @@ export const useNotesStore = create(
           ...imported.tags.map((data) => ({ table: 'tags', operation: 'insert', data })),
           ...imported.savedViews.map((data) => ({ table: 'saved_views', operation: 'insert', data })),
           ...imported.noteTemplates.map((data) => ({ table: 'note_templates', operation: 'insert', data })),
+          ...imported.canonicalResources.map((data) => ({ table: CAPTURE_RESOURCE_QUEUE_TABLE, operation: 'insert', data })),
+          ...imported.noteResources.map((data) => ({ table: 'note_resources', operation: 'insert', data })),
+          ...imported.recognizedContent.map((data) => ({ table: 'recognized_content', operation: 'insert', data })),
         ].map((entry) => ({
           ...entry,
           ownerId: current.cacheOwnerId,
           timestamp: new Date().toISOString(),
+          mutationId: generateId(),
         }))
 
         try {
           await db.transaction(
             'rw',
             db.notes,
+            db.noteVersions,
             db.folders,
             db.tags,
             db.syncQueue,
             db.workspaceSnapshots,
+            db.spatialDocuments,
+            db.spatialPages,
+            db.spatialObjects,
+            db.spatialAnnotations,
+            db.spatialAnnotationPages,
+            db.spatialAnnotationObjects,
+            db.resources,
+            db.noteResources,
+            db.resourceBlobs,
+            db.recognizedContent,
             async () => {
               if (imported.notes.length > 0) await db.notes.bulkPut(imported.notes)
+              if (imported.noteVersions.length > 0) await db.noteVersions.bulkAdd(imported.noteVersions)
               if (imported.folders.length > 0) await db.folders.bulkPut(imported.folders)
               if (imported.tags.length > 0) await db.tags.bulkPut(imported.tags)
+              if (imported.spatialDocuments.length > 0) await db.spatialDocuments.bulkPut(imported.spatialDocuments)
+              if (imported.spatialPages.length > 0) await db.spatialPages.bulkPut(imported.spatialPages)
+              if (imported.spatialObjects.length > 0) await db.spatialObjects.bulkPut(imported.spatialObjects)
+              if (imported.spatialAnnotations.length > 0) await db.spatialAnnotations.bulkPut(imported.spatialAnnotations)
+              if (imported.spatialAnnotationPages.length > 0) await db.spatialAnnotationPages.bulkPut(imported.spatialAnnotationPages)
+              if (imported.spatialAnnotationObjects.length > 0) await db.spatialAnnotationObjects.bulkPut(imported.spatialAnnotationObjects)
+              if (imported.resources.length > 0) await db.resources.bulkPut(imported.resources)
+              if (imported.canonicalResources.length > 0) await db.resources.bulkPut(imported.canonicalResources)
+              if (imported.noteResources.length > 0) await db.noteResources.bulkPut(imported.noteResources)
+              if (imported.resourceBlobs.length > 0) await db.resourceBlobs.bulkPut(imported.resourceBlobs)
+              if (imported.recognizedContent.length > 0) await db.recognizedContent.bulkPut(imported.recognizedContent)
               if (queueEntries.length > 0) await db.syncQueue.bulkAdd(queueEntries)
               await db.workspaceSnapshots.put({
                 ...workspace,
@@ -692,6 +959,21 @@ export const useNotesStore = create(
               ? { ...share, notes: { ...share.notes, ...updates } }
               : share
           ),
+          sharedDraftRevisions: state.sharedNotes.some((share) => share.notes?.id === id)
+            ? {
+                ...state.sharedDraftRevisions,
+                [id]: { revision: (state.sharedDraftRevisions[id]?.revision || 0) + 1, dirty: true },
+              }
+            : state.sharedDraftRevisions,
+        }))
+      },
+
+      markSpatialNotePersisted: (id, updatedAt) => {
+        set((state) => ({
+          notes: state.notes.map((note) => note.id === id ? { ...note, updatedAt } : note),
+          sharedNotes: state.sharedNotes.map((share) =>
+            share.notes?.id === id ? { ...share, notes: { ...share.notes, updatedAt } } : share
+          ),
         }))
       },
 
@@ -709,6 +991,7 @@ export const useNotesStore = create(
             throw new Error('You do not have permission to edit this shared note')
           }
           
+          const draftRevision = get().sharedDraftRevisions[id]?.revision || 0
           const { updateSharedNote } = await import('../lib/backend')
           await updateSharedNote(id, normalizedUpdates)
           
@@ -718,6 +1001,9 @@ export const useNotesStore = create(
                 ? { ...share, notes: { ...share.notes, ...normalizedUpdates, updatedAt: new Date().toISOString() } }
                 : share
             ),
+            sharedDraftRevisions: state.sharedDraftRevisions[id]?.revision === draftRevision
+              ? { ...state.sharedDraftRevisions, [id]: { revision: draftRevision, dirty: false } }
+              : state.sharedDraftRevisions,
           }))
           
           return
@@ -737,8 +1023,13 @@ export const useNotesStore = create(
 
         const note = get().notes.find((n) => n.id === id)
         if (note) {
-          saveNoteOffline({ ...note, ...updatedNote })
-          addToSyncQueue('notes', 'update', { id, ...updatedNote })
+          try {
+            await saveNoteOffline({ ...note, ...updatedNote })
+            set({ persistenceError: null })
+          } catch (error) {
+            reportPersistenceFailure(error, 'indexeddb')
+            throw error
+          }
         }
       },
 
@@ -767,16 +1058,7 @@ export const useNotesStore = create(
 
         const note = get().notes.find((n) => n.id === id)
         if (note) {
-          saveNoteOffline(note)
-          addToSyncQueue('notes', 'update', { id, deleted: true, deletedAt, updatedAt: deletedAt })
-
-          if (isBackendConfigured()) {
-            const { user } = get()
-            if (user) {
-              backend.from('notes').update({ deleted: true, deleted_at: new Date().toISOString(), updated_at: new Date().toISOString() })
-                .eq('id', id).eq('user_id', user.id).then(() => {})
-            }
-          }
+          persistNoteMutation(note)
         }
       },
 
@@ -801,45 +1083,47 @@ export const useNotesStore = create(
 
         const note = get().notes.find((n) => n.id === id)
         if (note) {
-          saveNoteOffline(note)
-          addToSyncQueue('notes', 'update', { id, deleted: false, deletedAt: null, updatedAt: restoredAt })
-
-          if (isBackendConfigured()) {
-            const { user } = get()
-            if (user) {
-              backend.from('notes').update({ deleted: false, deleted_at: null, updated_at: new Date().toISOString() })
-                .eq('id', id).eq('user_id', user.id).then(() => {})
-            }
-          }
+          persistNoteMutation(note)
         }
       },
 
-      permanentlyDeleteNote: (id) => {
-        if (!get().notes.some((note) => note.id === id)) return
-        set((state) => ({
-          notes: state.notes.filter((note) => note.id !== id),
-          selectedNoteId:
-            state.selectedNoteId === id
-              ? state.notes.find((n) => n.id !== id && !n.deleted)?.id || null
+      permanentlyDeleteNote: async (id) => {
+        const current = get()
+        if (!current.notes.some((note) => note.id === id)) return false
+        const notes = current.notes.filter((note) => note.id !== id)
+        const selectedNoteId = current.selectedNoteId === id
+          ? notes.find((note) => !note.deleted)?.id || null
+          : current.selectedNoteId
+        const workspace = selectWorkspaceSnapshot({ ...current, notes, selectedNoteId })
+        try {
+          const deleted = await permanentlyDeleteNoteOffline(id, workspace)
+          if (!deleted) return false
+          set((state) => ({
+            notes: state.notes.filter((note) => note.id !== id),
+            selectedNoteId: state.selectedNoteId === id
+              ? state.notes.find((note) => note.id !== id && !note.deleted)?.id || null
               : state.selectedNoteId,
-        }))
-
-        db.notes.delete(id)
-        addToSyncQueue('notes', 'delete', { id })
-
-        if (isBackendConfigured()) {
-          const { user } = get()
-          if (user) {
-            backend.from('notes').delete().eq('id', id).eq('user_id', user.id)
-              .then(() => {})
+            persistenceError: null,
+          }))
+          try {
+            await queueWorkspaceSnapshot(current.cacheOwnerId, selectWorkspaceSnapshot(get()))
+          } catch (error) {
+            // The atomic deletion transaction already stored a recoverable
+            // snapshot. Report a later mirror-refresh failure without
+            // misrepresenting the completed deletion as rolled back.
+            reportPersistenceFailure(error, 'indexeddb')
           }
+          return true
+        } catch (error) {
+          reportPersistenceFailure(error, 'indexeddb')
+          return false
         }
       },
 
       /**
        * Auto-delete notes that have been in trash for more than 30 days.
        */
-      cleanupExpiredTrash: () => {
+      cleanupExpiredTrash: async () => {
         const retentionDays = useUIStore.getState().trashRetentionDays ?? 30
         const RETENTION_MS = retentionDays * 24 * 60 * 60 * 1000
         const now = Date.now()
@@ -852,21 +1136,13 @@ export const useNotesStore = create(
         
         if (expired.length > 0) {
           for (const note of expired) {
-            db.notes.delete(note.id)
-            addToSyncQueue('notes', 'delete', { id: note.id })
-
-            if (isBackendConfigured() && user) {
-              backend.from('notes').delete().eq('id', note.id).eq('user_id', user.id)
-                .then(() => {})
+            try {
+              await get().permanentlyDeleteNote(note.id)
+            } catch {
+              // The note remains visible and durable; persistence reporting is
+              // handled by permanentlyDeleteNote and later rows can still run.
             }
           }
-          
-          set((state) => ({
-            notes: state.notes.filter(note => 
-              !(note.deleted && note.deletedAt && 
-                (now - new Date(note.deletedAt).getTime()) > RETENTION_MS)
-            ),
-          }))
         }
 
         // Enforce the same retention in the cloud even when this browser no
@@ -899,8 +1175,7 @@ export const useNotesStore = create(
 
         const note = get().notes.find((n) => n.id === id)
         if (note) {
-          saveNoteOffline(note)
-          addToSyncQueue('notes', 'update', { id, starred: note.starred })
+          persistNoteMutation(note)
         }
       },
 
@@ -920,8 +1195,7 @@ export const useNotesStore = create(
 
         const note = get().notes.find((n) => n.id === id)
         if (note) {
-          saveNoteOffline(note)
-          addToSyncQueue('notes', 'update', { id, pinned: note.pinned })
+          persistNoteMutation(note)
         }
       },
 
@@ -937,8 +1211,7 @@ export const useNotesStore = create(
                 updatedAt: now,
                 syncStatus: SyncStatus.PENDING,
               }
-              saveNoteOffline(updatedNote)
-              addToSyncQueue('notes', 'update', { id: note.id, order: newOrder })
+              persistNoteMutation(updatedNote)
               return updatedNote
             }
             return note
@@ -969,8 +1242,7 @@ export const useNotesStore = create(
 
         const note = get().notes.find((n) => n.id === id)
         if (note) {
-          saveNoteOffline({ ...note, archived: true, archivedAt: new Date().toISOString() })
-          addToSyncQueue('notes', 'update', { id, archived: true })
+          persistNoteMutation(note)
         }
       },
 
@@ -991,8 +1263,7 @@ export const useNotesStore = create(
 
         const note = get().notes.find((n) => n.id === id)
         if (note) {
-          saveNoteOffline({ ...note, archived: false, archivedAt: null })
-          addToSyncQueue('notes', 'update', { id, archived: false })
+          persistNoteMutation(note)
         }
       },
 
@@ -1016,11 +1287,20 @@ export const useNotesStore = create(
 
         set((state) => ({
           notes: [duplicate, ...state.notes],
-          selectedNoteId: duplicate.id,
+          ...selectKnowledgeTargetState(state, { noteId: duplicate.id }),
         }))
 
-        saveNoteOffline(duplicate)
-        addToSyncQueue('notes', 'insert', duplicate)
+        persistNoteMutation(duplicate, 'insert')
+        void (async () => {
+          if (duplicate.contentKind === 'paper' || duplicate.contentKind === 'canvas') {
+            await duplicateSpatialWorkspace(id, duplicate.id)
+          }
+          await duplicateNoteResourceLinks(id, duplicate.id)
+          await duplicateNoteAnnotations(id, duplicate.id)
+        })().catch((error) => {
+          reportPersistenceFailure(error, 'indexeddb')
+        })
+        return duplicate
       },
 
       moveNote: (noteId, folderId) => {
@@ -1039,8 +1319,7 @@ export const useNotesStore = create(
 
         const note = get().notes.find((n) => n.id === noteId)
         if (note) {
-          saveNoteOffline(note)
-          addToSyncQueue('notes', 'update', { id: noteId, folderId })
+          persistNoteMutation(note)
         }
       },
 
@@ -1061,8 +1340,7 @@ export const useNotesStore = create(
           folders: [...state.folders, newFolder],
         }))
 
-        db.folders.put(newFolder)
-        addToSyncQueue('folders', 'insert', newFolder)
+        persistCatalogRecordMutation('folders', newFolder, 'insert')
 
         return newFolder
       },
@@ -1087,8 +1365,7 @@ export const useNotesStore = create(
 
         const folder = get().folders.find((f) => f.id === id)
         if (folder) {
-          db.folders.put(folder)
-          addToSyncQueue('folders', 'update', { id, ...normalizedUpdates })
+          persistCatalogRecordMutation('folders', folder)
         }
       },
 
@@ -1127,29 +1404,19 @@ export const useNotesStore = create(
             state.selectedFolderId === id ? null : state.selectedFolderId,
         }))
 
-        for (const note of affectedNotes) {
-          const updated = { ...note, folderId: null, updatedAt: now, syncStatus: SyncStatus.PENDING }
-          saveNoteOffline(updated)
-          addToSyncQueue('notes', 'update', { id: note.id, folderId: null, updatedAt: now })
-        }
-
-        for (const child of affectedChildren) {
-          const updated = {
+        const updatedNotes = affectedNotes.map((note) => ({
+          ...note,
+          folderId: null,
+          updatedAt: now,
+          syncStatus: SyncStatus.PENDING,
+        }))
+        const updatedChildren = affectedChildren.map((child) => ({
             ...child,
             parentId: folder.parentId || null,
             updatedAt: now,
             syncStatus: SyncStatus.PENDING,
-          }
-          db.folders.put(updated)
-          addToSyncQueue('folders', 'update', {
-            id: child.id,
-            parentId: updated.parentId,
-            updatedAt: now,
-          })
-        }
-
-        db.folders.delete(id)
-        addToSyncQueue('folders', 'delete', { id })
+        }))
+        reportCatalogGraphMutation(deleteFolderOffline(id, updatedNotes, updatedChildren))
       },
 
       createTag: (tag) => {
@@ -1173,8 +1440,7 @@ export const useNotesStore = create(
           tags: [...state.tags, newTag],
         }))
 
-        db.tags.put(newTag)
-        addToSyncQueue('tags', 'insert', newTag)
+        persistCatalogRecordMutation('tags', newTag, 'insert')
 
         return newTag
       },
@@ -1202,6 +1468,7 @@ export const useNotesStore = create(
           ),
         }))
 
+        let renamedNotes = []
         if (normalizedUpdates.name && normalizedUpdates.name !== oldTag.name) {
           const now = new Date().toISOString()
           set((state) => ({
@@ -1221,16 +1488,14 @@ export const useNotesStore = create(
               state.selectedTagFilter === oldTag.name ? normalizedUpdates.name : state.selectedTagFilter,
           }))
 
-          const affectedNotes = get().notes.filter(n => n.tags?.includes(normalizedUpdates.name))
-          for (const note of affectedNotes) {
-            saveNoteOffline(note)
-            addToSyncQueue('notes', 'update', { id: note.id, tags: note.tags })
-          }
+          renamedNotes = get().notes.filter(n => n.tags?.includes(normalizedUpdates.name))
         }
 
-        db.tags.put(updatedTag)
-        const { syncStatus: _s, ...tagDataForSync } = updatedTag
-        addToSyncQueue('tags', 'update', tagDataForSync)
+        if (renamedNotes.length > 0) {
+          reportCatalogGraphMutation(saveTagRenameOffline(updatedTag, renamedNotes))
+        } else {
+          persistCatalogRecordMutation('tags', updatedTag)
+        }
       },
 
       deleteTag: (id) => {
@@ -1258,16 +1523,8 @@ export const useNotesStore = create(
             state.selectedTagFilter === tag.name ? null : state.selectedTagFilter,
         }))
         
-        for (const noteId of affectedNoteIds) {
-          const note = get().notes.find(n => n.id === noteId)
-          if (note) {
-            saveNoteOffline(note)
-            addToSyncQueue('notes', 'update', { id: noteId, tags: note.tags })
-          }
-        }
-
-        db.tags.delete(id)
-        addToSyncQueue('tags', 'delete', { id })
+        const updatedNotes = get().notes.filter((note) => affectedNoteIds.includes(note.id))
+        reportCatalogGraphMutation(deleteTagOffline(id, updatedNotes))
       },
 
       addTagToNote: (noteId, tagName) => {
@@ -1286,8 +1543,7 @@ export const useNotesStore = create(
 
         const note = get().notes.find((n) => n.id === noteId)
         if (note) {
-          saveNoteOffline(note)
-          addToSyncQueue('notes', 'update', { id: noteId, tags: note.tags })
+          persistNoteMutation(note)
         }
       },
 
@@ -1307,12 +1563,91 @@ export const useNotesStore = create(
 
         const note = get().notes.find((n) => n.id === noteId)
         if (note) {
-          saveNoteOffline(note)
-          addToSyncQueue('notes', 'update', { id: noteId, tags: note.tags })
+          persistNoteMutation(note)
         }
       },
-      setSelectedNote: (id) => set({ selectedNoteId: id }),
-      setSelectedNoteId: (id) => set({ selectedNoteId: id }),
+      navigateToKnowledgeTarget: (target, options = {}) => {
+        const next = normalizeKnowledgeTarget(target)
+        if (!next) {
+          set({ selectedNoteId: null })
+          return false
+        }
+        const available = get().notes.some((note) => note.id === next.noteId) ||
+          get().sharedNotes.some((share) => share.notes?.id === next.noteId)
+        if (!available) return false
+        set((state) => {
+          const navigation = state.knowledgeNavigation
+          const current = navigation.current || normalizeKnowledgeTarget(state.selectedNoteId)
+          const back = options.replace || !current || sameKnowledgeTarget(current, next)
+            ? navigation.back
+            : [...navigation.back, current].slice(-MAX_KNOWLEDGE_HISTORY)
+          const token = navigation.token + 1
+          return {
+            selectedNoteId: next.noteId,
+            knowledgeNavigation: {
+              current: next,
+              back,
+              forward: options.replace ? navigation.forward : [],
+              pending: { ...next, token },
+              token,
+            },
+          }
+        })
+        return true
+      },
+      navigateKnowledgeBack: () => {
+        const previous = get().knowledgeNavigation.back.at(-1)
+        if (!previous) return false
+        set((state) => {
+          const current = state.knowledgeNavigation.current || normalizeKnowledgeTarget(state.selectedNoteId)
+          const token = state.knowledgeNavigation.token + 1
+          return {
+            selectedNoteId: previous.noteId,
+            knowledgeNavigation: {
+              current: previous,
+              back: state.knowledgeNavigation.back.slice(0, -1),
+              forward: current
+                ? [current, ...state.knowledgeNavigation.forward].slice(0, MAX_KNOWLEDGE_HISTORY)
+                : state.knowledgeNavigation.forward,
+              pending: { ...previous, token },
+              token,
+            },
+          }
+        })
+        return true
+      },
+      navigateKnowledgeForward: () => {
+        const next = get().knowledgeNavigation.forward[0]
+        if (!next) return false
+        set((state) => {
+          const current = state.knowledgeNavigation.current || normalizeKnowledgeTarget(state.selectedNoteId)
+          const token = state.knowledgeNavigation.token + 1
+          return {
+            selectedNoteId: next.noteId,
+            knowledgeNavigation: {
+              current: next,
+              back: current
+                ? [...state.knowledgeNavigation.back, current].slice(-MAX_KNOWLEDGE_HISTORY)
+                : state.knowledgeNavigation.back,
+              forward: state.knowledgeNavigation.forward.slice(1),
+              pending: { ...next, token },
+              token,
+            },
+          }
+        })
+        return true
+      },
+      consumeKnowledgeNavigation: (token) => set((state) => ({
+        knowledgeNavigation: state.knowledgeNavigation.pending?.token === token
+          ? { ...state.knowledgeNavigation, pending: null }
+          : state.knowledgeNavigation,
+      })),
+      setSelectedNote: (id) => id
+        ? get().navigateToKnowledgeTarget({ noteId: id })
+        : set({ selectedNoteId: null }),
+      setSelectedNoteId: (id) => id
+        ? get().navigateToKnowledgeTarget({ noteId: id })
+        : set({ selectedNoteId: null }),
       setSelectedFolder: (id) => set({
         selectedFolderId: id,
         selectedTagFilter: null,
@@ -1366,7 +1701,10 @@ export const useNotesStore = create(
             if (!saved) return false
           }
 
+          await purgeSharedNoteCaches(get().sharedNotes, get().cacheOwnerId)
+
           setActiveWorkspaceOwner(null)
+          await activateIntelligenceJobOwner(null)
           await replaceWorkspaceCache(emptyWorkspace())
           set({
             ...emptyWorkspace(),
@@ -1390,6 +1728,7 @@ export const useNotesStore = create(
           if (get().cacheOwnerId === ownerId) {
             const nextOwnerId = deactivate ? null : ownerId
             setActiveWorkspaceOwner(nextOwnerId)
+            await activateIntelligenceJobOwner(nextOwnerId)
             set({
               ...emptyWorkspace(),
               ...(deactivate ? { user: null } : {}),
@@ -1484,7 +1823,8 @@ export const useNotesStore = create(
       setSyncing: (syncing) => set({ isSyncing: syncing }),
       setLastSyncTime: (time) => set({ lastSyncTime: time }),
 
-      syncWithBackend: (options = {}) => runBackendSync(async () => {
+      syncWithBackend: (options = {}) => runBackendSync(() =>
+        withWorkspaceSyncLock(get().cacheOwnerId, async () => {
         const notify = options?.notify === true
         const { isSyncing } = get()
         if (isSyncing) return false
@@ -1528,7 +1868,47 @@ export const useNotesStore = create(
           const folderOperations = buildOperationIndex(pendingSyncItems, 'folders')
           const tagOperations = buildOperationIndex(pendingSyncItems, 'tags')
           const noteOperations = buildOperationIndex(pendingSyncItems, 'notes')
+          const conflictedNoteIds = new Set()
+          const conflictedCatalogKeys = new Set()
+          const catalogConflictWrites = []
           let conflictCount = 0
+
+          const markCatalogConflict = async ({ table, stateKey, local, remote }) => {
+            const key = `${table}:${local.id}`
+            conflictedCatalogKeys.add(key)
+            const conflicted = { ...local, syncStatus: SyncStatus.CONFLICT }
+            const conflict = {
+              table,
+              stateKey,
+              recordId: local.id,
+              localUpdatedAt: local.updatedAt || null,
+              remote,
+              detectedAt: new Date().toISOString(),
+              queueSnapshots: pendingSyncItems.filter(
+                (item) => item.table === table && item.data?.id === local.id
+              ),
+            }
+            let applied = false
+            set((state) => {
+              if (!state[stateKey].includes(local)) return state
+              applied = true
+              return {
+                [stateKey]: state[stateKey].map((current) =>
+                  current === local ? conflicted : current
+                ),
+                catalogConflicts: [
+                  ...state.catalogConflicts.filter(
+                    (current) => !(current.table === table && current.recordId === local.id)
+                  ),
+                  conflict,
+                ],
+              }
+            })
+            if (!applied) return false
+            if (table === 'folders') await db.folders.put(conflicted)
+            if (table === 'tags') await db.tags.put(conflicted)
+            return true
+          }
 
           const syncOwnedCollection = async ({ table, stateKey, toRemote, fromRemote }) => {
             const operations = buildOperationIndex(pendingSyncItems, table)
@@ -1542,7 +1922,7 @@ export const useNotesStore = create(
                 .eq('id', item.data.id)
                 .eq('user_id', user.id)
               if (error) throw error
-              await removeSyncItem(item.id)
+              await acknowledgeSyncItem(item)
             }
 
             const { data: initialRemote, error: fetchError } = await backend
@@ -1553,27 +1933,39 @@ export const useNotesStore = create(
 
             const remoteById = new Map((initialRemote || []).map((record) => [record.id, record]))
             const remoteIds = new Set(remoteById.keys())
-            const discardedRemoteDeletionIds = new Set()
             const localRecords = get()[stateKey] || []
 
             for (const record of localRecords.filter(
-              (candidate) => candidate.syncStatus === SyncStatus.PENDING
+              (candidate) => [SyncStatus.PENDING, SyncStatus.CONFLICT].includes(candidate.syncStatus)
             )) {
+              const existingConflict = get().catalogConflicts.find(
+                (conflict) => conflict.table === table && conflict.recordId === record.id
+              )
+              if (record.syncStatus === SyncStatus.CONFLICT) {
+                if (existingConflict) {
+                  conflictedCatalogKeys.add(`${table}:${record.id}`)
+                } else {
+                  const remoteRecord = remoteById.get(record.id)
+                  await markCatalogConflict({
+                    table,
+                    stateKey,
+                    local: record,
+                    remote: remoteRecord ? fromRemote(remoteRecord) : null,
+                  })
+                  conflictCount++
+                }
+                continue
+              }
               if (!shouldUploadPendingRecord(record, remoteIds, operations, SyncStatus.PENDING)) {
-                discardedRemoteDeletionIds.add(record.id)
+                await markCatalogConflict({ table, stateKey, local: record, remote: null })
+                conflictCount++
                 continue
               }
 
               const remoteRecord = remoteById.get(record.id)
               if (remoteRecord && isRemoteNewer(record.updatedAt, remoteRecord.updated_at)) {
                 const remoteData = fromRemote(remoteRecord)
-                set((state) => ({
-                  [stateKey]: state[stateKey].map((current) =>
-                    current.id === record.id && current.updatedAt === record.updatedAt
-                      ? remoteData
-                      : current
-                  ),
-                }))
+                await markCatalogConflict({ table, stateKey, local: record, remote: remoteData })
                 conflictCount++
                 continue
               }
@@ -1605,12 +1997,9 @@ export const useNotesStore = create(
             set((state) => {
               const reconciled = []
               for (const localRecord of state[stateKey]) {
-                if (
-                  deletedIds.has(localRecord.id) ||
-                  discardedRemoteDeletionIds.has(localRecord.id)
-                ) continue
+                if (deletedIds.has(localRecord.id)) continue
                 const remoteRecord = refreshedById.get(localRecord.id)
-                if (localRecord.syncStatus === SyncStatus.PENDING) {
+                if ([SyncStatus.PENDING, SyncStatus.CONFLICT].includes(localRecord.syncStatus)) {
                   reconciled.push(localRecord)
                   refreshedById.delete(localRecord.id)
                 } else if (remoteRecord) {
@@ -1695,7 +2084,7 @@ export const useNotesStore = create(
               .eq('id', item.data.id)
               .eq('user_id', user.id)
             if (error) throw error
-            await removeSyncItem(item.id)
+            await acknowledgeSyncItem(item)
           }
           
           const tagDeletions = pendingSyncItems.filter(
@@ -1708,7 +2097,7 @@ export const useNotesStore = create(
               .eq('id', item.data.id)
               .eq('user_id', user.id)
             if (error) throw error
-            await removeSyncItem(item.id)
+            await acknowledgeSyncItem(item)
           }
 
           const { data: initialRemoteFolders, error: folderFetchError } = await backend
@@ -1737,26 +2126,78 @@ export const useNotesStore = create(
 
           const foldersToUpload = localFolders.filter(
             (folder) => {
-              if (
-                folderIdRemap.has(folder.id) ||
-                !shouldUploadPendingRecord(
-                  folder,
-                  initialRemoteFolderIds,
-                  folderOperations,
-                  SyncStatus.PENDING
+              const remoteFolder = initialRemoteFoldersById.get(folder.id)
+              if (folder.syncStatus === SyncStatus.CONFLICT) {
+                const existingConflict = get().catalogConflicts.find(
+                  (conflict) => conflict.table === 'folders' && conflict.recordId === folder.id
                 )
-              ) {
+                if (existingConflict) {
+                  conflictedCatalogKeys.add(`folders:${folder.id}`)
+                } else {
+                  catalogConflictWrites.push(markCatalogConflict({
+                    table: 'folders',
+                    stateKey: 'folders',
+                    local: folder,
+                    remote: remoteFolder ? {
+                      id: remoteFolder.id,
+                      name: remoteFolder.name,
+                      icon: remoteFolder.icon || 'Folder',
+                      color: remoteFolder.color || '#10b981',
+                      parentId: remoteFolder.parent_id || null,
+                      createdAt: remoteFolder.created_at,
+                      updatedAt: remoteFolder.updated_at || remoteFolder.created_at,
+                      syncStatus: SyncStatus.SYNCED,
+                    } : null,
+                  }))
+                  conflictCount++
+                }
+                return false
+              }
+              if (folderIdRemap.has(folder.id)) return false
+              if (!shouldUploadPendingRecord(
+                   folder,
+                   initialRemoteFolderIds,
+                   folderOperations,
+                   SyncStatus.PENDING
+              )) {
+                if (folder.syncStatus === SyncStatus.PENDING) {
+                  catalogConflictWrites.push(markCatalogConflict({
+                    table: 'folders',
+                    stateKey: 'folders',
+                    local: folder,
+                    remote: null,
+                  }))
+                  conflictCount++
+                }
                 return false
               }
 
-              const remoteFolder = initialRemoteFoldersById.get(folder.id)
               if (remoteFolder && isRemoteNewer(folder.updatedAt, remoteFolder.updated_at)) {
+                const remoteData = {
+                  id: remoteFolder.id,
+                  name: remoteFolder.name,
+                  icon: remoteFolder.icon || 'Folder',
+                  color: remoteFolder.color || '#10b981',
+                  parentId: remoteFolder.parent_id || null,
+                  createdAt: remoteFolder.created_at,
+                  updatedAt: remoteFolder.updated_at || remoteFolder.created_at,
+                  syncStatus: SyncStatus.SYNCED,
+                }
+                catalogConflictWrites.push(markCatalogConflict({
+                  table: 'folders',
+                  stateKey: 'folders',
+                  local: folder,
+                  remote: remoteData,
+                }))
                 conflictCount++
                 return false
               }
               return true
             }
           )
+          if (catalogConflictWrites.length > 0) {
+            await Promise.all(catalogConflictWrites.splice(0))
+          }
           
           for (const folder of foldersToUpload) {
             const folderData = {
@@ -1821,7 +2262,7 @@ export const useNotesStore = create(
                 (!folderSnapshotTimes.has(currentFolder.id) ||
                   folderSnapshotTimes.get(currentFolder.id) !== currentFolder.updatedAt)
 
-              if (changedDuringSync) {
+              if (changedDuringSync || currentFolder.syncStatus === SyncStatus.CONFLICT) {
                 reconciledFolders.push(
                   remappedId ? { ...currentFolder, id: remappedId } : currentFolder
                 )
@@ -1883,15 +2324,75 @@ export const useNotesStore = create(
           const localTags = get().tags
           const remoteTagNames = new Set((initialRemoteTags || []).map((tag) => tag.name.toLowerCase()))
           const remoteTagIds = new Set((initialRemoteTags || []).map((tag) => tag.id))
+          const initialRemoteTagsById = new Map(
+            (initialRemoteTags || []).map((tag) => [tag.id, tag])
+          )
+          const tagSnapshotTimes = new Map(localTags.map((tag) => [tag.id, tag.updatedAt]))
           const tagsToUpload = localTags.filter(tag => {
+            const remoteTag = initialRemoteTagsById.get(tag.id)
+            if (tag.syncStatus === SyncStatus.CONFLICT) {
+              const existingConflict = get().catalogConflicts.find(
+                (conflict) => conflict.table === 'tags' && conflict.recordId === tag.id
+              )
+              if (existingConflict) {
+                conflictedCatalogKeys.add(`tags:${tag.id}`)
+              } else {
+                catalogConflictWrites.push(markCatalogConflict({
+                  table: 'tags',
+                  stateKey: 'tags',
+                  local: tag,
+                  remote: remoteTag ? {
+                    id: remoteTag.id,
+                    name: remoteTag.name,
+                    color: remoteTag.color || '#3b82f6',
+                    createdAt: remoteTag.created_at,
+                    updatedAt: remoteTag.updated_at || remoteTag.created_at,
+                    syncStatus: SyncStatus.SYNCED,
+                  } : null,
+                }))
+                conflictCount++
+              }
+              return false
+            }
             if (!shouldUploadPendingRecord(
               tag,
               remoteTagIds,
               tagOperations,
               SyncStatus.PENDING
-            )) return false
+            )) {
+              if (tag.syncStatus === SyncStatus.PENDING) {
+                catalogConflictWrites.push(markCatalogConflict({
+                  table: 'tags',
+                  stateKey: 'tags',
+                  local: tag,
+                  remote: null,
+                }))
+                conflictCount++
+              }
+              return false
+            }
+            if (remoteTag?.updated_at && isRemoteNewer(tag.updatedAt, remoteTag.updated_at)) {
+              catalogConflictWrites.push(markCatalogConflict({
+                table: 'tags',
+                stateKey: 'tags',
+                local: tag,
+                remote: {
+                  id: remoteTag.id,
+                  name: remoteTag.name,
+                  color: remoteTag.color || '#3b82f6',
+                  createdAt: remoteTag.created_at,
+                  updatedAt: remoteTag.updated_at || remoteTag.created_at,
+                  syncStatus: SyncStatus.SYNCED,
+                },
+              }))
+              conflictCount++
+              return false
+            }
             return remoteTagIds.has(tag.id) || !remoteTagNames.has(tag.name.toLowerCase())
           })
+          if (catalogConflictWrites.length > 0) {
+            await Promise.all(catalogConflictWrites.splice(0))
+          }
           
           for (const tag of tagsToUpload) {
             const tagData = {
@@ -1900,6 +2401,7 @@ export const useNotesStore = create(
               name: tag.name,
               color: tag.color || '#3b82f6',
               created_at: tag.createdAt || new Date().toISOString(),
+              updated_at: tag.updatedAt || tag.createdAt || new Date().toISOString(),
             }
             
             const { error } = await backend
@@ -1921,21 +2423,45 @@ export const useNotesStore = create(
             name: tag.name,
             color: tag.color || '#3b82f6',
             createdAt: tag.created_at,
+            updatedAt: tag.updated_at || tag.created_at,
             syncStatus: SyncStatus.SYNCED,
           }))
-          const canonicalTagIds = new Set(canonicalTags.map((tag) => tag.id))
-          const staleTagIds = localTags
-            .filter((tag) => !canonicalTagIds.has(tag.id))
-            .map((tag) => tag.id)
-          set({ tags: canonicalTags })
+          const deletedTagIds = new Set(tagDeletions.map((item) => item.data.id))
+          const canonicalTagsById = new Map(canonicalTags.map((tag) => [tag.id, tag]))
+          set((state) => {
+            const reconciledTags = []
+            for (const currentTag of state.tags) {
+              if (deletedTagIds.has(currentTag.id)) continue
+              const changedDuringSync =
+                currentTag.syncStatus === SyncStatus.PENDING &&
+                (!tagSnapshotTimes.has(currentTag.id) ||
+                  tagSnapshotTimes.get(currentTag.id) !== currentTag.updatedAt)
+              if (changedDuringSync || currentTag.syncStatus === SyncStatus.CONFLICT) {
+                reconciledTags.push(currentTag)
+                canonicalTagsById.delete(currentTag.id)
+                continue
+              }
+              const canonical = canonicalTagsById.get(currentTag.id)
+              if (canonical) {
+                reconciledTags.push(canonical)
+                canonicalTagsById.delete(currentTag.id)
+              }
+            }
+            reconciledTags.push(...canonicalTagsById.values())
+            return { tags: reconciledTags }
+          })
+          const reconciledTags = get().tags
+          const reconciledTagIds = new Set(reconciledTags.map((tag) => tag.id))
+          const persistedTagIds = await db.tags.toCollection().primaryKeys()
+          const staleTagIds = persistedTagIds.filter((tagId) => !reconciledTagIds.has(tagId))
           await db.transaction('rw', db.tags, async () => {
             if (staleTagIds.length > 0) await db.tags.bulkDelete(staleTagIds)
-            if (canonicalTags.length > 0) await db.tags.bulkPut(canonicalTags)
+            if (reconciledTags.length > 0) await db.tags.bulkPut(reconciledTags)
           })
 
           const toSnakeCase = (note) => {
             // Merge reminders array into note_data JSONB for Supabase persistence
-            const baseNoteData = note.noteData || {}
+            const baseNoteData = addContentDescriptorToNoteData(note.noteData, note)
             const remindersData = note.reminders?.length ? { reminders: note.reminders } : {}
             const mergedNoteData = { ...baseNoteData, ...remindersData }
             const hasNoteData = Object.keys(mergedNoteData).length > 0
@@ -1973,7 +2499,8 @@ export const useNotesStore = create(
 
           const toCamelCase = (note) => {
             // Extract reminders from note_data JSONB, rest goes to noteData
-            const rawNoteData = note.note_data || {}
+            const descriptor = extractContentDescriptorFromNoteData(note.note_type || 'standard', note.note_data)
+            const rawNoteData = descriptor.noteData || {}
             const { reminders: remindersFromData, ...restNoteData } = rawNoteData
             const hasRestData = Object.keys(restNoteData).length > 0
 
@@ -1995,6 +2522,8 @@ export const useNotesStore = create(
               order: note.sort_order ?? null,
               noteType: note.note_type || 'standard',
               noteData: hasRestData ? restNoteData : null,
+              contentKind: descriptor.contentKind,
+              contentSchemaVersion: descriptor.contentSchemaVersion,
               createdAt: note.created_at,
               updatedAt: note.updated_at,
               syncStatus: SyncStatus.SYNCED,
@@ -2012,7 +2541,7 @@ export const useNotesStore = create(
               .eq('id', item.data.id)
               .eq('user_id', user.id)
             if (error) throw error
-            await removeSyncItem(item.id)
+            await acknowledgeSyncItem(item)
           }
 
           const { data: initialRemoteNotes, error: initialNoteFetchError } = await backend
@@ -2026,38 +2555,78 @@ export const useNotesStore = create(
             (initialRemoteNotes || []).map((note) => [note.id, note])
           )
           const initialRemoteNoteIds = new Set(initialRemoteById.keys())
-          const discardedRemoteDeletionIds = new Set()
-          const pendingNotes = get().notes.filter(
-            (note) => note.syncStatus === SyncStatus.PENDING
+          const pendingNotes = get().notes.filter((note) =>
+            [SyncStatus.PENDING, SyncStatus.CONFLICT].includes(note.syncStatus)
           )
 
           let syncedCount = 0
           let errorCount = 0
           for (const note of pendingNotes) {
+            const remoteNote = initialRemoteById.get(note.id)
+            if (note.syncStatus === SyncStatus.CONFLICT) {
+              const remoteData = remoteNote ? toCamelCase(remoteNote) : null
+              conflictedNoteIds.add(note.id)
+              set((state) => enqueueCollaborationConflict(state, {
+                  kind: 'owned',
+                  noteId: note.id,
+                  localUpdatedAt: note.updatedAt,
+                  remote: remoteData,
+                  receivedAt: new Date().toISOString(),
+                }))
+              conflictCount++
+              continue
+            }
             if (!shouldUploadPendingRecord(
               note,
               initialRemoteNoteIds,
               noteOperations,
               SyncStatus.PENDING
             )) {
-              discardedRemoteDeletionIds.add(note.id)
+              const conflicted = { ...note, syncStatus: SyncStatus.CONFLICT }
+              conflictedNoteIds.add(note.id)
+              let conflictApplied = false
+              set((state) => {
+                if (!state.notes.includes(note)) return state
+                conflictApplied = true
+                return {
+                  notes: state.notes.map((current) => current === note ? conflicted : current),
+                  ...enqueueCollaborationConflict(state, {
+                    kind: 'owned',
+                    noteId: note.id,
+                    localUpdatedAt: note.updatedAt,
+                    remote: null,
+                    receivedAt: new Date().toISOString(),
+                  }),
+                }
+              })
+              if (conflictApplied) await saveNoteSyncSnapshot(conflicted)
+              conflictCount++
               continue
             }
 
-            const remoteNote = initialRemoteById.get(note.id)
             if (remoteNote && isRemoteNewer(note.updatedAt, remoteNote.updated_at)) {
               const remoteData = toCamelCase(remoteNote)
               if (note.order !== undefined && note.order !== null && remoteData.order === null) {
                 remoteData.order = note.order
               }
-              set((state) => ({
-                notes: state.notes.map((current) =>
-                  current.id === note.id && current.updatedAt === note.updatedAt
-                    ? remoteData
-                    : current
-                ),
-              }))
-              await db.notes.put(remoteData)
+              const conflicted = { ...note, syncStatus: SyncStatus.CONFLICT }
+              conflictedNoteIds.add(note.id)
+              let conflictApplied = false
+              set((state) => {
+                if (!state.notes.includes(note)) return state
+                conflictApplied = true
+                return {
+                  notes: state.notes.map((current) => current === note ? conflicted : current),
+                  ...enqueueCollaborationConflict(state, {
+                    kind: 'owned',
+                    noteId: note.id,
+                    localUpdatedAt: note.updatedAt,
+                    remote: remoteData,
+                    receivedAt: new Date().toISOString(),
+                  }),
+                }
+              })
+              if (conflictApplied) await saveNoteSyncSnapshot(conflicted)
               conflictCount++
               continue
             }
@@ -2071,7 +2640,7 @@ export const useNotesStore = create(
               syncedCount++
               set((state) => ({
                 notes: state.notes.map((current) =>
-                  current.id === note.id && current.updatedAt === note.updatedAt
+                  current === note
                     ? { ...current, syncStatus: SyncStatus.SYNCED }
                     : current
                 ),
@@ -2080,6 +2649,10 @@ export const useNotesStore = create(
               errorCount++
             }
           }
+
+          await syncSpatialQueue(user.id)
+          await syncAnnotationQueue(user.id)
+          await syncCaptureCloud(user.id)
 
           const { data: remoteNotes, error: fetchError } = await backend
             .from('notes')
@@ -2100,15 +2673,12 @@ export const useNotesStore = create(
             const reconciledNotes = []
 
             for (const localNote of state.notes) {
-              if (
-                deletedNoteIds.has(localNote.id) ||
-                discardedRemoteDeletionIds.has(localNote.id)
-              ) {
+              if (deletedNoteIds.has(localNote.id)) {
                 continue
               }
 
               const remoteNote = remoteNotesById.get(localNote.id)
-              if (localNote.syncStatus === SyncStatus.PENDING) {
+              if ([SyncStatus.PENDING, SyncStatus.CONFLICT].includes(localNote.syncStatus)) {
                 reconciledNotes.push(localNote)
                 remoteNotesById.delete(localNote.id)
                 continue
@@ -2139,8 +2709,12 @@ export const useNotesStore = create(
           const removedNoteIds = localNoteIdsBeforeReconciliation.filter(
             (id) => !reconciledNoteIds.has(id)
           )
-          if (removedNoteIds.length > 0) await db.notes.bulkDelete(removedNoteIds)
-          if (get().notes.length > 0) await db.notes.bulkPut(get().notes)
+          if (removedNoteIds.length > 0) {
+            await Promise.all(removedNoteIds.map((id) => deleteNoteSyncSnapshot(id)))
+          }
+          if (get().notes.length > 0) {
+            await Promise.all(get().notes.map((note) => saveNoteSyncSnapshot(note)))
+          }
 
           await get().loadSharedNotes()
 
@@ -2152,8 +2726,12 @@ export const useNotesStore = create(
           // created while network requests were in flight belong to the next
           // run and must remain queued.
           for (const item of pendingSyncItems) {
-            if (item.operation !== 'delete') {
-              await removeSyncItem(item.id)
+            if (
+              item.operation !== 'delete' &&
+              !(item.table === 'notes' && conflictedNoteIds.has(item.data?.id)) &&
+              !conflictedCatalogKeys.has(`${item.table}:${item.data?.id}`)
+            ) {
+              await acknowledgeSyncItem(item)
             }
           }
 
@@ -2173,6 +2751,7 @@ export const useNotesStore = create(
           } else if (syncToast) {
             toast.dismiss(syncToast)
           }
+          notifyCanonicalContentPersisted()
           return true
         } catch (error) {
           const message = error.message || 'Unknown synchronization error'
@@ -2182,7 +2761,8 @@ export const useNotesStore = create(
         } finally {
           set({ isSyncing: false })
         }
-      }),
+        })
+      ),
 
       /**
        * Delegates to the shared filter so the store, the note list and
@@ -2223,19 +2803,377 @@ export const useNotesStore = create(
        * collaborators would overwrite each other. The "this came from the
        * server" signal lives in transient state, never in the note.
        */
+      applyExternalWorkspaceMutation: async (mutation = {}) => {
+        const { ownerId, noteId = null } = mutation
+        if (!ownerId || get().cacheOwnerId !== ownerId || get().hydratedWorkspaceOwnerId !== ownerId) {
+          return false
+        }
+
+        if (noteId) {
+          const carriesRecord = Object.hasOwn(mutation, 'record')
+          const durable = carriesRecord
+            ? mutation.record
+            : await db.notes.get(noteId)
+          if (durable !== null && durable !== undefined && durable?.id !== noteId) return false
+          const state = get()
+          if (state.cacheOwnerId !== ownerId) return false
+          const local = state.notes.find((note) => note.id === noteId) || null
+          const externalBaseline = externalNoteBaselines.get(noteId) || null
+
+          if (local && durable && recordsHaveSameContent(local, durable)) {
+            externalNoteBaselines.set(noteId, structuredClone(durable))
+            if (local.syncStatus !== durable.syncStatus) {
+              set((current) => ({
+                notes: current.notes.map((note) => note.id === noteId ? durable : note),
+              }))
+            }
+            return true
+          }
+
+          const locallyDiverged = local && SYNC_DIRTY_STATUSES.has(local.syncStatus) && (
+            !externalBaseline || !recordsHaveSameContent(local, externalBaseline)
+          )
+          if (locallyDiverged) {
+            // IndexedDB already contains the other tab's committed version.
+            // Preserve this tab's divergent state as a recovery checkpoint
+            // before asking the user which canonical version should win.
+            await saveNoteVersion(local.id, local.content, local.title, local.noteData, local.noteType)
+            const conflict = {
+              kind: 'owned',
+              source: 'tab',
+              noteId,
+              localUpdatedAt: local.updatedAt,
+              remote: durable ? structuredClone(durable) : null,
+              receivedAt: new Date().toISOString(),
+            }
+            set((current) => {
+              const latest = current.notes.find((note) => note.id === noteId)
+              if (!latest || !recordsHaveSameContent(latest, local)) return current
+              return {
+                notes: current.notes.map((note) =>
+                  note.id === noteId ? { ...note, syncStatus: SyncStatus.CONFLICT } : note
+                ),
+                ...enqueueCollaborationConflict(current, conflict),
+              }
+            })
+            return true
+          }
+
+          set((current) => {
+            if (current.cacheOwnerId !== ownerId) return current
+            const withoutNote = current.notes.filter((note) => note.id !== noteId)
+            const notes = durable ? [durable, ...withoutNote] : withoutNote
+            const selectedNoteId = current.selectedNoteId === noteId && !durable
+              ? notes.find((note) => !note.deleted && !note.archived)?.id || null
+              : current.selectedNoteId
+            return {
+              notes,
+              selectedNoteId,
+              ...clearCollaborationConflict(current, noteId),
+              externalUpdate: { noteId, token: current.externalUpdate.token + 1 },
+            }
+          })
+          if (durable) externalNoteBaselines.set(noteId, structuredClone(durable))
+          else externalNoteBaselines.delete(noteId)
+          return true
+        }
+
+        const [durableFolders, durableTags, snapshot] = await Promise.all([
+          db.folders.toArray(),
+          db.tags.toArray(),
+          getWorkspaceSnapshot(ownerId),
+        ])
+        const current = get()
+        if (current.cacheOwnerId !== ownerId) return false
+
+        const sources = [
+          ['folders', 'folders', durableFolders],
+          ['tags', 'tags', durableTags],
+          ['saved_views', 'savedViews', snapshot?.savedViews || []],
+          ['note_templates', 'noteTemplates', snapshot?.noteTemplates || []],
+        ]
+        const updates = {}
+        const conflicts = [...current.catalogConflicts]
+
+        for (const [table, stateKey, remoteRecords] of sources) {
+          const remoteById = new Map(remoteRecords.map((record) => [record.id, record]))
+          const localById = new Map(current[stateKey].map((record) => [record.id, record]))
+          const next = []
+          for (const localRecord of current[stateKey]) {
+            const remoteRecord = remoteById.get(localRecord.id) || null
+            if (remoteRecord && recordsHaveSameContent(localRecord, remoteRecord)) {
+              next.push(remoteRecord)
+            } else if (SYNC_DIRTY_STATUSES.has(localRecord.syncStatus)) {
+              next.push({ ...localRecord, syncStatus: SyncStatus.CONFLICT })
+              conflicts.push({
+                table,
+                stateKey,
+                recordId: localRecord.id,
+                localUpdatedAt: localRecord.updatedAt || null,
+                remote: remoteRecord ? structuredClone(remoteRecord) : null,
+                detectedAt: new Date().toISOString(),
+                queueSnapshots: [],
+                source: 'tab',
+              })
+            } else if (remoteRecord) {
+              next.push(remoteRecord)
+            }
+            remoteById.delete(localRecord.id)
+          }
+          for (const remoteRecord of remoteById.values()) {
+            if (!localById.has(remoteRecord.id)) next.push(remoteRecord)
+          }
+          updates[stateKey] = next
+        }
+
+        const uniqueConflicts = conflicts.filter((conflict, index, all) =>
+          all.findLastIndex((candidate) =>
+            candidate.table === conflict.table && candidate.recordId === conflict.recordId
+          ) === index
+        )
+        set({
+          ...updates,
+          catalogConflicts: uniqueConflicts,
+          externalUpdate: { noteId: null, token: current.externalUpdate.token + 1 },
+        })
+        return true
+      },
+
       applyExternalUpdate: (id, patch) => {
+        let applied = false
+        set((state) => {
+          const shared = state.sharedNotes.find((share) => share.notes?.id === id)
+          const local = shared?.notes
+          const dirty = Boolean(state.sharedDraftRevisions[id]?.dirty)
+          const comparableKeys = ['title', 'content', 'noteType', 'noteData'].filter((key) => Object.hasOwn(patch, key))
+          const matchesLocal = local && comparableKeys.every(
+            (key) => JSON.stringify(local[key] ?? null) === JSON.stringify(patch[key] ?? null)
+          )
+          if (shared && dirty && !matchesLocal) {
+            return enqueueCollaborationConflict(state, {
+                noteId: id,
+                remote: structuredClone(patch),
+                receivedAt: new Date().toISOString(),
+              })
+          }
+          applied = true
+          return {
+            notes: state.notes.map((note) =>
+              note.id === id ? { ...note, ...patch, syncStatus: SyncStatus.SYNCED } : note
+            ),
+            sharedNotes: state.sharedNotes.map((share) =>
+              share.notes?.id === id ? { ...share, notes: { ...share.notes, ...patch } } : share
+            ),
+            sharedDraftRevisions: shared
+              ? { ...state.sharedDraftRevisions, [id]: { revision: state.sharedDraftRevisions[id]?.revision || 0, dirty: false } }
+              : state.sharedDraftRevisions,
+            ...clearCollaborationConflict(state, id),
+            externalUpdate: { noteId: id, token: state.externalUpdate.token + 1 },
+          }
+        })
+
+        if (applied) {
+          const note = get().notes.find((candidate) => candidate.id === id)
+          if (note) void db.notes.put({ ...note }).then(() => notifyCanonicalContentPersisted(id))
+        }
+      },
+
+      resolveCollaborationConflict: async (choice, noteId = null) => {
+        const conflict = noteId
+          ? (get().collaborationConflicts || []).find((candidate) => candidate.noteId === noteId)
+          : (get().collaborationConflicts || [])[0] || get().collaborationConflict
+        if (!conflict) return false
+        if (conflict.kind === 'owned') {
+          const current = get().notes.find((note) => note.id === conflict.noteId)
+          if (!current) throw new Error('The conflicting note is no longer available.')
+          if (!['incoming', 'local'].includes(choice)) {
+            throw new Error('Choose either the local or incoming note version.')
+          }
+
+          if (conflict.source === 'tab') {
+            if (current.updatedAt !== conflict.localUpdatedAt) {
+              throw new Error('The local note changed after the conflict was detected. Review the conflict again.')
+            }
+            if (choice === 'incoming') {
+              if (conflict.remote) await saveNoteOffline(conflict.remote, 'update')
+              else await deleteNoteOffline(current.id)
+              if (conflict.remote) externalNoteBaselines.set(current.id, structuredClone(conflict.remote))
+              else externalNoteBaselines.delete(current.id)
+              set((state) => {
+                const notes = conflict.remote
+                  ? state.notes.map((note) => note.id === current.id ? conflict.remote : note)
+                  : state.notes.filter((note) => note.id !== current.id)
+                return {
+                  notes,
+                  selectedNoteId: !conflict.remote && state.selectedNoteId === current.id
+                    ? notes.find((note) => !note.deleted && !note.archived)?.id || null
+                    : state.selectedNoteId,
+                  ...clearCollaborationConflict(state, current.id),
+                  externalUpdate: { noteId: current.id, token: state.externalUpdate.token + 1 },
+                }
+              })
+              return true
+            }
+            const remoteTime = conflict.remote ? new Date(conflict.remote.updatedAt).getTime() : 0
+            const chosenAt = new Date(Math.max(
+              Date.now(),
+              Number.isFinite(remoteTime) ? remoteTime + 3000 : 0
+            )).toISOString()
+            const chosen = { ...current, updatedAt: chosenAt, syncStatus: SyncStatus.PENDING }
+            externalNoteBaselines.delete(current.id)
+            set((state) => ({
+              notes: state.notes.map((note) => note.id === current.id ? chosen : note),
+              ...clearCollaborationConflict(state, current.id),
+            }))
+            await saveNoteOffline(chosen, conflict.remote ? 'update' : 'insert')
+            if (get().user?.isLocal) return true
+            return get().syncWithBackend({ notify: true })
+          }
+
+          if (choice === 'incoming') {
+            if (current.updatedAt !== conflict.localUpdatedAt) {
+              throw new Error('The local note changed after the conflict was detected. Review the conflict again.')
+            }
+            await saveNoteVersion(
+              current.id,
+              current.content,
+              current.title,
+              current.noteData,
+              current.noteType
+            )
+            await db.transaction('rw', db.notes, db.syncQueue, async () => {
+              const durable = await db.notes.get(current.id)
+              if (durable?.updatedAt !== conflict.localUpdatedAt) {
+                throw new Error('The durable note changed after the conflict was detected.')
+              }
+              if (conflict.remote) await db.notes.put(conflict.remote)
+              else await db.notes.delete(current.id)
+              const queued = await db.syncQueue
+                .filter((item) => item.table === 'notes' && item.data?.id === current.id)
+                .toArray()
+              if (queued.length > 0) await db.syncQueue.bulkDelete(queued.map((item) => item.id))
+            })
+            set((state) => {
+              const notes = conflict.remote
+                ? state.notes.map((note) => note.id === current.id ? conflict.remote : note)
+                : state.notes.filter((note) => note.id !== current.id)
+              return {
+                notes,
+                selectedNoteId: !conflict.remote && state.selectedNoteId === current.id
+                  ? notes.find((note) => !note.deleted && !note.archived)?.id || null
+                  : state.selectedNoteId,
+                ...clearCollaborationConflict(state, current.id),
+                externalUpdate: { noteId: current.id, token: state.externalUpdate.token + 1 },
+              }
+            })
+            notifyCanonicalContentPersisted(current.id)
+            return true
+          }
+          const remoteTime = conflict.remote ? new Date(conflict.remote.updatedAt).getTime() : 0
+          const chosenAt = new Date(Math.max(Date.now(), Number.isFinite(remoteTime) ? remoteTime + 3000 : 0)).toISOString()
+          const chosen = { ...current, updatedAt: chosenAt, syncStatus: SyncStatus.PENDING }
+          set((state) => ({
+            notes: state.notes.map((note) => note.id === current.id ? chosen : note),
+            ...clearCollaborationConflict(state, current.id),
+          }))
+          await saveNoteOffline(chosen, conflict.remote ? 'update' : 'insert')
+          return get().syncWithBackend({ notify: true })
+        }
+        if (choice === 'incoming') {
+          set((state) => ({
+            sharedNotes: state.sharedNotes.map((share) => share.notes?.id === conflict.noteId
+              ? { ...share, notes: { ...share.notes, ...conflict.remote } }
+              : share),
+            sharedDraftRevisions: {
+              ...state.sharedDraftRevisions,
+              [conflict.noteId]: { revision: state.sharedDraftRevisions[conflict.noteId]?.revision || 0, dirty: false },
+            },
+            ...clearCollaborationConflict(state, conflict.noteId),
+            externalUpdate: { noteId: conflict.noteId, token: state.externalUpdate.token + 1 },
+          }))
+          return true
+        }
+        if (choice !== 'local') throw new Error('Choose either the local or incoming shared-note version.')
+        const note = get().sharedNotes.find((share) => share.notes?.id === conflict.noteId)?.notes
+        if (!note) throw new Error('This shared note is no longer accessible.')
+        await get().updateNote(conflict.noteId, {
+          title: note.title,
+          content: note.content,
+          noteType: note.noteType,
+          noteData: note.noteData,
+        })
+        set((state) => clearCollaborationConflict(state, conflict.noteId))
+        return true
+      },
+
+      resolveCatalogConflict: async (choice) => {
+        const conflict = get().catalogConflicts[0]
+        if (!conflict) return false
+        if (!['incoming', 'local'].includes(choice)) {
+          throw new Error('Choose either the local or incoming catalog version.')
+        }
+
+        const current = get()[conflict.stateKey]?.find(
+          (record) => record.id === conflict.recordId
+        )
+        if (!current) throw new Error('The conflicting catalog item is no longer available.')
+        if (current.updatedAt !== conflict.localUpdatedAt) {
+          set((state) => ({
+            catalogConflicts: state.catalogConflicts.filter(
+              (candidate) => !(
+                candidate.table === conflict.table &&
+                candidate.recordId === conflict.recordId
+              )
+            ),
+          }))
+          throw new Error('The local item changed after the conflict was detected. Synchronize again to review the current versions.')
+        }
+
+        const nextRecord = choice === 'incoming'
+          ? conflict.remote
+          : {
+              ...current,
+              updatedAt: new Date(Math.max(
+                Date.now(),
+                (conflict.remote ? new Date(conflict.remote.updatedAt).getTime() || 0 : 0) + 3000
+              )).toISOString(),
+              syncStatus: SyncStatus.PENDING,
+            }
+
         set((state) => ({
-          notes: state.notes.map((note) =>
-            note.id === id ? { ...note, ...patch, syncStatus: SyncStatus.SYNCED } : note
+          [conflict.stateKey]: nextRecord
+            ? state[conflict.stateKey].map((record) =>
+                record.id === conflict.recordId ? nextRecord : record
+              )
+            : state[conflict.stateKey].filter((record) => record.id !== conflict.recordId),
+          catalogConflicts: state.catalogConflicts.filter(
+            (candidate) => !(
+              candidate.table === conflict.table &&
+              candidate.recordId === conflict.recordId
+            )
           ),
-          sharedNotes: state.sharedNotes.map((share) =>
-            share.notes?.id === id ? { ...share, notes: { ...share.notes, ...patch } } : share
-          ),
-          externalUpdate: { noteId: id, token: get().externalUpdate.token + 1 },
         }))
 
-        const note = get().notes.find((n) => n.id === id)
-        if (note) db.notes.put({ ...note })
+        if (conflict.table === 'folders') {
+          if (nextRecord) await db.folders.put(nextRecord)
+          else await db.folders.delete(conflict.recordId)
+        }
+        if (conflict.table === 'tags') {
+          if (nextRecord) await db.tags.put(nextRecord)
+          else await db.tags.delete(conflict.recordId)
+        }
+        await queueWorkspaceSnapshot(get().cacheOwnerId, selectWorkspaceSnapshot(get()))
+        notifyCanonicalContentPersisted(null, get().cacheOwnerId)
+
+        if (choice === 'incoming') {
+          for (const snapshot of conflict.queueSnapshots || []) {
+            await acknowledgeSyncItem(snapshot)
+          }
+          return true
+        }
+
+        await addToSyncQueue(conflict.table, conflict.remote ? 'update' : 'insert', nextRecord)
+        return get().syncWithBackend({ notify: true })
       },
 
       getSelectedNote: () => {
@@ -2275,24 +3213,7 @@ export const useNotesStore = create(
             created_at: acceptedShare.created_at,
             owner_id: share.shared_by || invitation?.owner_id || share.notes?.user_id,
             owner_name: invitation?.owner_name || invitation?.shared_by || '',
-            notes: share.notes ? {
-              id: share.notes.id,
-              title: share.notes.title,
-              content: share.notes.content,
-              userId: share.notes.user_id,
-              createdAt: share.notes.created_at,
-              updatedAt: share.notes.updated_at,
-              folderId: share.notes.folder_id,
-              tags: share.notes.tags || [],
-              starred: share.notes.starred || false,
-              pinned: share.notes.pinned || false,
-              deleted: share.notes.deleted || false,
-              archived: share.notes.archived || false,
-              noteType: share.notes.note_type || 'standard',
-              noteData: share.notes.note_data || null,
-              isShared: true,
-              sharePermission: acceptedShare.permission || 'view',
-            } : null
+            notes: normalizeSharedNoteRecord(share.notes, acceptedShare.permission || 'view')
           }
           
           if (newSharedNote.notes && newSharedNote.notes.id) {
@@ -2349,11 +3270,20 @@ export const useNotesStore = create(
 
       leaveSharedNote: async (noteId) => {
         try {
+          const share = get().sharedNotes.find((candidate) => candidate.note_id === noteId)
           const { leaveSharedNote } = await import('../lib/backend')
           await leaveSharedNote(noteId)
+
+          await purgeSharedNoteCache(
+            noteId,
+            share?.owner_id || share?.notes?.userId || share?.notes?.user_id,
+            get().cacheOwnerId
+          )
           
           set((state) => ({
-            sharedNotes: state.sharedNotes.filter(s => s.note_id !== noteId)
+            sharedNotes: state.sharedNotes.filter(s => s.note_id !== noteId),
+            selectedNoteId: state.selectedNoteId === noteId ? null : state.selectedNoteId,
+            ...clearCollaborationConflict(state, noteId),
           }))
           
           toast.success('Left shared note')
@@ -2377,24 +3307,7 @@ export const useNotesStore = create(
           
           const normalizedShared = (shared || []).map(share => ({
             ...share,
-            notes: share.notes ? {
-              id: share.notes.id,
-              title: share.notes.title,
-              content: share.notes.content,
-              userId: share.notes.user_id,
-              folderId: share.notes.folder_id,
-              tags: share.notes.tags || [],
-              starred: share.notes.starred || false,
-              pinned: share.notes.pinned || false,
-              deleted: share.notes.deleted || false,
-              archived: share.notes.archived || false,
-              noteType: share.notes.note_type || 'standard',
-              noteData: share.notes.note_data || null,
-              createdAt: share.notes.created_at,
-              updatedAt: share.notes.updated_at,
-              isShared: true,
-              sharePermission: share.permission || 'view',
-            } : null
+            notes: normalizeSharedNoteRecord(share.notes, share.permission || 'view')
           }))
           
           const normalizedPending = (pending || []).map(share => ({
@@ -2406,10 +3319,25 @@ export const useNotesStore = create(
               userId: share.notes.user_id,
             } : null
           }))
+
+          const remoteShareKeys = new Set(normalizedShared.map((share) => `${share.note_id}:${share.owner_id || share.notes?.userId || ''}`))
+          const revokedShares = get().sharedNotes.filter((share) => !remoteShareKeys.has(
+            `${share.note_id}:${share.owner_id || share.notes?.userId || share.notes?.user_id || ''}`
+          ))
+          await purgeSharedNoteCaches(revokedShares, user.id)
+          const revokedNoteIds = new Set(revokedShares.map((share) => share.note_id))
           
-          set({
-            sharedNotes: normalizedShared,
-            pendingShares: normalizedPending,
+          set((state) => {
+            const collaborationConflicts = (state.collaborationConflicts || []).filter(
+              (conflict) => !revokedNoteIds.has(conflict.noteId)
+            )
+            return {
+              sharedNotes: normalizedShared,
+              pendingShares: normalizedPending,
+              selectedNoteId: revokedNoteIds.has(state.selectedNoteId) ? null : state.selectedNoteId,
+              collaborationConflicts,
+              collaborationConflict: collaborationConflicts[0] || null,
+            }
           })
         } catch (error) {
           toast.error(`Could not load shared notes: ${error.message || 'Unknown error'}`)
@@ -2429,6 +3357,7 @@ export const useNotesStore = create(
         return {
           ...metadata,
           notes: state.notes,
+          corruptedNotes: state.corruptedNotes,
           folders: state.folders,
           tags: state.tags,
           savedViews: state.savedViews,
@@ -2496,6 +3425,7 @@ useNotesStore.subscribe((state, previousState) => {
 
   const workspaceChanged =
     state.notes !== previousState.notes ||
+    state.corruptedNotes !== previousState.corruptedNotes ||
     state.folders !== previousState.folders ||
     state.tags !== previousState.tags ||
     state.savedViews !== previousState.savedViews ||
@@ -2531,7 +3461,11 @@ export const useUIStore = create(
   persist(
     (set) => ({
       sidebarOpen: true,
+      desktopSidebarOpen: true,
       notesListWidth: 320,
+      notesListOpen: true,
+      inspectorOpen: false,
+      inspectorWidth: 300,
       quickNoteOpen: false,
       settingsOpen: false,
       shareModalOpen: false,
@@ -2541,6 +3475,7 @@ export const useUIStore = create(
       importModalOpen: false,
       reminderModalOpen: false,
       reminderNoteId: null,
+      reminderTarget: null,
       showTrash: false,
       findReplaceOpen: false,
       noteLinkPopoverOpen: false,
@@ -2561,6 +3496,7 @@ export const useUIStore = create(
       shortcutsModalOpen: false,
       noteTypesModalOpen: false,
       tasksViewOpen: false,
+      todayViewToken: 0,
       smartViewModalOpen: false,
       smartViewEditingId: null,
       templateSaveOpen: false,
@@ -2591,14 +3527,24 @@ export const useUIStore = create(
   
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
+  setDesktopSidebarOpen: (open) => set({ desktopSidebarOpen: open }),
   setNotesListWidth: (width) => set({ notesListWidth: width }),
+  setNotesListOpen: (open) => set({ notesListOpen: open }),
+  toggleNotesList: () => set((state) => ({ notesListOpen: !state.notesListOpen })),
+  setInspectorOpen: (open) => set({ inspectorOpen: open }),
+  toggleInspector: () => set((state) => ({ inspectorOpen: !state.inspectorOpen })),
+  setInspectorWidth: (width) => set({ inspectorWidth: width }),
   setQuickNoteOpen: (open) => set({ quickNoteOpen: open }),
   setSettingsOpen: (open) => set({ settingsOpen: open }),
   setShareModalOpen: (open, noteId = null) => set({ shareModalOpen: open, shareNoteId: noteId }),
   setSharedNotesViewOpen: (open) => set({ sharedNotesViewOpen: open }),
   setExportModalOpen: (open) => set({ exportModalOpen: open }),
   setImportModalOpen: (open) => set({ importModalOpen: open }),
-  setReminderModalOpen: (open, noteId = null) => set({ reminderModalOpen: open, reminderNoteId: noteId }),
+  setReminderModalOpen: (open, noteId = null, target = null) => set({
+    reminderModalOpen: open,
+    reminderNoteId: open ? noteId : null,
+    reminderTarget: open ? target : null,
+  }),
   setShowTrash: (show) => set({ showTrash: show }),
   setFindReplaceOpen: (open) => set({ findReplaceOpen: open }),
   setNoteLinkPopoverOpen: (open, position = null) => set({ 
@@ -2622,6 +3568,7 @@ export const useUIStore = create(
   setShortcutsModalOpen: (open) => set({ shortcutsModalOpen: open }),
   setNoteTypesModalOpen: (open) => set({ noteTypesModalOpen: open }),
   setTasksViewOpen: (open) => set({ tasksViewOpen: open }),
+  openTodayAgenda: () => set((state) => ({ todayViewToken: state.todayViewToken + 1 })),
   setSmartViewModalOpen: (open, editingId = null) => set({
     smartViewModalOpen: open,
     smartViewEditingId: open ? editingId : null,
@@ -2667,7 +3614,11 @@ export const useUIStore = create(
       partialize: (state) => ({ 
         language: state.language,
         currentSort: state.currentSort,
+        desktopSidebarOpen: state.desktopSidebarOpen,
         notesListWidth: state.notesListWidth,
+        notesListOpen: state.notesListOpen,
+        inspectorOpen: state.inspectorOpen,
+        inspectorWidth: state.inspectorWidth,
         viewMode: state.viewMode,
         autoSync: state.autoSync,
         syncInterval: state.syncInterval,

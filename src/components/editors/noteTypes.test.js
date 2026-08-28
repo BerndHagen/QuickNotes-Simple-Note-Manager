@@ -97,7 +97,8 @@ describe('professional note type contracts', () => {
       expect(config.description.length).toBeGreaterThan(30)
       expect(config.bestFor.length).toBeGreaterThan(30)
       expect(config.features).toHaveLength(4)
-      expect(NOTE_TYPE_STARTERS[type].length).toBeGreaterThanOrEqual(4)
+      const minimumStarters = [NOTE_TYPES.PAPER, NOTE_TYPES.CANVAS].includes(type) ? 1 : 4
+      expect(NOTE_TYPE_STARTERS[type].length).toBeGreaterThanOrEqual(minimumStarters)
       expect(NOTE_TYPE_STARTERS[type].some((starter) => starter.id === 'blank')).toBe(true)
     })
   })
@@ -179,7 +180,7 @@ describe('professional note type contracts', () => {
     specializedTypes.forEach((type) => {
       NOTE_TYPE_STARTERS[type].forEach((starter) => {
         const data = getStarterData(type, starter.id)
-        expect(data).toBeTruthy()
+        if (![NOTE_TYPES.PAPER, NOTE_TYPES.CANVAS].includes(type)) expect(data).toBeTruthy()
       })
     })
   })
@@ -234,14 +235,24 @@ describe('professional note type contracts', () => {
       time: '09:30',
       attendees: ['Alex'],
       agenda: ['Review progress'],
-      actionItems: [{ text: 'Send recap', assignee: 'Alex' }],
+      actionItems: [{
+        text: 'Send recap',
+        assignee: 'Alex',
+        priority: 'high',
+        source: { schemaVersion: 1, kind: 'recognizedContent', recognitionId: 'recognition-1' },
+      }],
       decisions: ['Proceed with option B'],
     })
 
     expect(meeting.startTime).toBe('09:30')
     expect(meeting.attendees[0]).toMatchObject({ name: 'Alex', present: true })
     expect(meeting.agenda[0].topic).toBe('Review progress')
-    expect(meeting.actionItems[0]).toMatchObject({ task: 'Send recap', owner: 'Alex' })
+    expect(meeting.actionItems[0]).toMatchObject({
+      task: 'Send recap',
+      owner: 'Alex',
+      priority: 'high',
+      source: { recognitionId: 'recognition-1' },
+    })
     expect(meeting.decisions[0].text).toBe('Proceed with option B')
 
     const shopping = normalizeNoteData(NOTE_TYPES.SHOPPING, {

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Archive,
+  AlertTriangle,
   ArrowLeft,
   Bell,
   ChevronDown,
@@ -17,7 +18,9 @@ import {
   Link2,
   LayoutTemplate,
   Mic,
+  MessageSquare,
   MoreVertical,
+  Paperclip,
   Pin,
   Send,
   Plus,
@@ -55,6 +58,9 @@ import { IconButton, Input, Menu, MenuItem, MenuSeparator, EmptyState } from './
 import { ConfirmDialog } from './FolderDialogs'
 import { isBackendConfigured } from '../lib/backend'
 import toast from 'react-hot-toast'
+import ResourceManagerModal from './resources/ResourceManagerModal'
+import { taskSourceToKnowledgeTarget } from '../lib/taskSources'
+import NoteCommentsModal from './collaboration/NoteCommentsModal'
 
 import {
   hasSpecializedEditor,
@@ -68,6 +74,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
   const {
     folders,
     tags,
+    user,
     getSelectedNote,
     updateNote,
     updateNoteDraft,
@@ -81,6 +88,12 @@ export default function NoteEditor({ onBack, showBack = false }) {
     createTag,
     archiveNote,
     externalUpdate,
+    collaborationConflict,
+    collaborationConflicts = [],
+    resolveCollaborationConflict,
+    knowledgeNavigation = { pending: null },
+    consumeKnowledgeNavigation = () => {},
+    navigateToKnowledgeTarget = (target) => useNotesStore.getState().setSelectedNote(target.noteId),
   } = useNotesStore()
 
   const {
@@ -101,9 +114,12 @@ export default function NoteEditor({ onBack, showBack = false }) {
     setTemplateSaveOpen,
     showNoteStatistics,
     confirmBeforeDelete,
+    todayViewToken,
   } = useUIStore()
 
   const note = getSelectedNote()
+  const noteConflict = collaborationConflicts.find((conflict) => conflict.noteId === note?.id)
+    || (collaborationConflict?.noteId === note?.id ? collaborationConflict : null)
   const backlinks = useBacklinks(note?.id)
   useNoteLinkHandler()
   useRealtimeCollaboration(note?.id)
@@ -119,6 +135,8 @@ export default function NoteEditor({ onBack, showBack = false }) {
   const [editorRef, setEditorRef] = useState(null)
   const [specializedContextMenu, setSpecializedContextMenu] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [resourceManagerOpen, setResourceManagerOpen] = useState(false)
+  const [commentsOpen, setCommentsOpen] = useState(false)
 
   const menuButtonRef = useRef(null)
   const tagButtonRef = useRef(null)
@@ -188,7 +206,16 @@ export default function NoteEditor({ onBack, showBack = false }) {
   useEffect(() => {
     if (noteTitle !== undefined) setTitle(noteTitle || '')
     setNoteDetailsOpen(false)
+    setResourceManagerOpen(false)
+    setCommentsOpen(false)
   }, [noteId, noteTitle])
+
+  useEffect(() => {
+    const target = knowledgeNavigation.pending
+    if (target && target.noteId === noteId && target.resourceId && !target.objectId) {
+      setResourceManagerOpen(true)
+    }
+  }, [knowledgeNavigation.pending, noteId])
 
   useEffect(() => {
     const tracker = versionTrackerRef.current
@@ -261,8 +288,17 @@ export default function NoteEditor({ onBack, showBack = false }) {
     const newTitle = e.target.value
     recordVersionChange({ title: newTitle })
     setTitle(newTitle)
-    if (noteId) debouncedTitleUpdate(noteId, newTitle, noteTitle || '')
+    if (noteId) {
+      updateNoteDraft(noteId, { title: newTitle })
+      debouncedTitleUpdate(noteId, newTitle, noteTitle || '')
+    }
   }
+
+  useEffect(() => {
+    if (!noteConflict) return
+    debouncedTitleUpdate.cancel()
+    debouncedNoteDataUpdate.cancel()
+  }, [debouncedNoteDataUpdate, debouncedTitleUpdate, noteConflict])
 
   useEffect(() => {
     return () => {
@@ -273,7 +309,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
   }, [debouncedNoteDataUpdate, debouncedTitleUpdate, noteId])
 
   const handleContentChange = async (content) => {
-    if (!note) return
+    if (!note || noteConflict) return
     recordVersionChange({ content })
     try {
       await updateNote(note.id, { content })
@@ -283,7 +319,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
   }
 
   const handleContentDraft = (content) => {
-    if (!note?.id) return
+    if (!note?.id || noteConflict) return
     recordVersionChange({ content })
     updateNoteDraft(note.id, { content })
   }
@@ -325,8 +361,12 @@ export default function NoteEditor({ onBack, showBack = false }) {
   const currentFolder = note?.folderId ? folders.find((f) => f.id === note.folderId) : null
   const isShared = !!note?.isShared
   const isReadOnly = !!note?.isShared && note?.sharePermission === 'view'
+  const isSpatialShared = isShared && ['paper', 'canvas'].includes(note?.contentKind || note?.noteType)
+  const workspaceReadOnly = isReadOnly || isSpatialShared || Boolean(noteConflict)
+  const resourceReadOnly = isReadOnly || isShared
   const isSpecialized = hasSpecializedEditor(note?.noteType)
   const cloudEnabled = isBackendConfigured()
+  const commentsEnabled = cloudEnabled && Boolean(user?.id) && !user?.isLocal
 
   if (!note) {
     return (
@@ -374,19 +414,47 @@ export default function NoteEditor({ onBack, showBack = false }) {
           {showBacklinks && (
             <ul className="mt-1 space-y-0.5">
               {backlinks.map((bl) => (
-                <li key={bl.id}>
+                <li key={bl.linkId || bl.id}>
                   <button
                     type="button"
-                    onClick={() => useNotesStore.getState().setSelectedNote(bl.id)}
-                    className="qn-touch-target flex w-full items-center gap-2 rounded-control px-2 py-1 text-left text-ui-md text-content-muted transition-colors duration-fast hover:bg-surface-hover hover:text-content"
+                    disabled={bl.sourceDeleted}
+                    onClick={() => navigateToKnowledgeTarget({
+                      noteId: bl.sourceNoteId,
+                      anchorId: bl.sourceAnchorId,
+                      objectId: bl.sourceObjectId,
+                    })}
+                    className="qn-touch-target flex w-full items-center gap-2 rounded-control px-2 py-1 text-left text-ui-md text-content-muted transition-colors duration-fast hover:bg-surface-hover hover:text-content disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <FileText className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden="true" />
-                    <span className="truncate">{bl.title}</span>
+                    <span className="min-w-0">
+                      <span className="block truncate">{bl.title}</span>
+                      <span className="block truncate text-ui-xs text-content-subtle">{bl.sourceDeleted ? 'Source is in Trash' : bl.context}</span>
+                    </span>
                   </button>
                 </li>
               ))}
             </ul>
           )}
+        </div>
+      )}
+
+      {isSpatialShared && !isReadOnly && (
+        <div role="status" className="flex shrink-0 items-center gap-2 border-b border-subtle bg-surface-sunken px-4 py-2 text-ui-md text-content-muted">
+          <Eye className="h-4 w-4 shrink-0" aria-hidden="true" />
+          Shared Paper and Canvas surfaces are view-only; concurrent spatial editing is intentionally not claimed.
+        </div>
+      )}
+
+      {noteConflict && (
+        <div role="alert" className="flex shrink-0 flex-wrap items-center gap-2 border-b border-warning-border bg-warning-soft px-4 py-2 text-ui-md text-warning-text">
+          <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
+          <span className="mr-auto">{noteConflict.kind === 'owned'
+            ? noteConflict.remote
+              ? `This note changed ${noteConflict.source === 'tab' ? 'in another tab' : 'in the cloud'} while this tab had unsynced edits. Choose which version to keep; a recovery checkpoint preserves your local version.`
+              : 'This note was deleted on another device while this device had unsynced edits. Accept the deletion or restore your local version as a new cloud write.'
+            : 'Another editor changed this note while your local draft was unsaved. Choose which version to keep.'}</span>
+          <button type="button" className="rounded-control border border-warning-border px-2 py-1 font-medium hover:bg-surface-hover" onClick={() => void resolveCollaborationConflict('incoming', note.id)}>{noteConflict.remote ? 'Use incoming' : 'Accept deletion'}</button>
+          <button type="button" className="rounded-control bg-warning-text px-2 py-1 font-medium text-surface hover:opacity-90" onClick={() => void resolveCollaborationConflict('local', note.id)}>Keep mine</button>
         </div>
       )}
 
@@ -438,26 +506,27 @@ export default function NoteEditor({ onBack, showBack = false }) {
                             event.currentTarget.blur()
                           }
                         }}
-                        readOnly={isReadOnly}
+                        readOnly={workspaceReadOnly}
                         placeholder={t('editor.untitled', 'Untitled note')}
                         className={`h-9 w-full min-w-0 truncate rounded-control border border-transparent bg-transparent px-2 text-center text-ui-lg font-semibold outline-none transition-colors ${
                           isEditingTitle ? 'bg-white/12' : 'hover:bg-white/10'
-                        } ${isReadOnly ? 'cursor-default' : 'cursor-text'}`}
+                        } ${workspaceReadOnly ? 'cursor-default' : 'cursor-text'}`}
                       />
                     </div>
                     <div className="h-9 w-9 justify-self-end" aria-hidden="true" />
                   </div>
                 )}
                 <fieldset
-                  disabled={isReadOnly}
-                  aria-label={isReadOnly ? 'Read-only note workspace' : undefined}
+                  disabled={workspaceReadOnly}
+                  aria-label={workspaceReadOnly ? 'Read-only note workspace' : undefined}
                   className="min-h-0 min-w-0 flex-1 border-0 p-0"
                 >
                   <SpecializedEditor
                     key={note.id}
+                    note={note}
                     data={normalizedNoteData}
                     onChange={
-                      isReadOnly
+                      workspaceReadOnly
                         ? () => {}
                         : (newData) => {
                             recordVersionChange({ noteData: newData, title })
@@ -467,7 +536,18 @@ export default function NoteEditor({ onBack, showBack = false }) {
                     }
                     noteTitle={title}
                     onTitleChange={handleTitleChange}
-                    readOnly={isReadOnly}
+                    readOnly={workspaceReadOnly}
+                    navigationTarget={knowledgeNavigation.pending}
+                    onNavigationComplete={consumeKnowledgeNavigation}
+                    onOpenResources={() => setResourceManagerOpen(true)}
+                    onSetReminder={(target) => setReminderModalOpen(true, note.id, target)}
+                    onOpenCaptureSource={(source) => {
+                      const target = taskSourceToKnowledgeTarget(source)
+                      if (!target || !navigateToKnowledgeTarget(target)) {
+                        toast.error('The original capture is no longer accessible')
+                      }
+                    }}
+                    todayViewToken={todayViewToken}
                   />
                 </fieldset>
               </div>
@@ -483,8 +563,11 @@ export default function NoteEditor({ onBack, showBack = false }) {
             paperType={paperType}
             onPaperTypeChange={handlePaperTypeChange}
             onEditorReady={setEditorRef}
+            navigationTarget={knowledgeNavigation.pending}
+            onNavigationComplete={consumeKnowledgeNavigation}
             isExternalUpdate={isExternalUpdate}
             readOnly={isReadOnly}
+            editingBlocked={Boolean(noteConflict)}
             ribbonLeadingAction={showBack ? (
               <IconButton
                 icon={ArrowLeft}
@@ -515,11 +598,11 @@ export default function NoteEditor({ onBack, showBack = false }) {
                       event.currentTarget.blur()
                     }
                   }}
-                  readOnly={isReadOnly}
+                  readOnly={workspaceReadOnly}
                   placeholder={t('editor.untitled', 'Untitled note')}
                   className={`h-9 w-full min-w-0 truncate rounded-control border border-transparent bg-transparent px-2 text-center text-ui-lg font-semibold text-content outline-none transition-colors placeholder:text-content-subtle ${
                     isEditingTitle ? 'bg-surface-sunken' : 'hover:bg-surface-hover'
-                  } ${isReadOnly ? 'cursor-default' : 'cursor-text'}`}
+                  } ${workspaceReadOnly ? 'cursor-default' : 'cursor-text'}`}
                 />
               </div>
             )}
@@ -588,6 +671,22 @@ export default function NoteEditor({ onBack, showBack = false }) {
                   onClick={() => setFindReplaceOpen(!findReplaceOpen)}
                   className="qn-ribbon-secondary-action"
                 />
+                <IconButton
+                  icon={Paperclip}
+                  label="Attachments and recordings"
+                  active={resourceManagerOpen}
+                  onClick={() => setResourceManagerOpen(true)}
+                  className="qn-ribbon-secondary-action"
+                />
+                {commentsEnabled && (
+                  <IconButton
+                    icon={MessageSquare}
+                    label="Comments"
+                    active={commentsOpen}
+                    onClick={() => setCommentsOpen(true)}
+                    className="qn-ribbon-secondary-action"
+                  />
+                )}
                 {!isShared && (
                   <IconButton
                     icon={Bell}
@@ -735,6 +834,14 @@ export default function NoteEditor({ onBack, showBack = false }) {
           </MenuItem>
         )}
         <MenuSeparator />
+        {commentsEnabled && (
+          <MenuItem icon={MessageSquare} onClick={() => { setCommentsOpen(true); setMenuOpen(false) }}>
+            Comments
+          </MenuItem>
+        )}
+        <MenuItem icon={Paperclip} onClick={() => { setResourceManagerOpen(true); setMenuOpen(false) }}>
+          Attachments and recordings
+        </MenuItem>
         <MenuItem icon={Download} onClick={() => { setExportModalOpen(true); setMenuOpen(false) }}>
           {t('editor.export', 'Export')}
         </MenuItem>
@@ -925,6 +1032,21 @@ export default function NoteEditor({ onBack, showBack = false }) {
       {!isSpecialized && <ImageUploadModal editor={editorRef} />}
       {!isSpecialized && <LinkInsertModal editor={editorRef} />}
       {!isSpecialized && <HTMLEditorModal editor={editorRef} />}
+      <ResourceManagerModal
+        open={resourceManagerOpen}
+        onClose={() => setResourceManagerOpen(false)}
+        note={note}
+        readOnly={resourceReadOnly}
+        navigationTarget={knowledgeNavigation.pending}
+      />
+      <NoteCommentsModal
+        open={commentsOpen}
+        onClose={() => setCommentsOpen(false)}
+        note={note}
+        currentUserId={user?.id || null}
+        anchorId={knowledgeNavigation.pending?.anchorId || null}
+        objectId={knowledgeNavigation.pending?.objectId || null}
+      />
 
       <ConfirmDialog
         open={confirmDelete}
@@ -962,6 +1084,14 @@ export default function NoteEditor({ onBack, showBack = false }) {
               {t('editor.duplicate', 'Duplicate note')}
             </MenuItem>
           )}
+          {commentsEnabled && (
+            <MenuItem icon={MessageSquare} onClick={() => { setCommentsOpen(true); setSpecializedContextMenu(null) }}>
+              Comments
+            </MenuItem>
+          )}
+          <MenuItem icon={Paperclip} onClick={() => { setResourceManagerOpen(true); setSpecializedContextMenu(null) }}>
+            Attachments and recordings
+          </MenuItem>
           {!isShared && (
             <MenuItem icon={LayoutTemplate} onClick={() => { setTemplateSaveOpen(true); setSpecializedContextMenu(null) }}>
               Save as template

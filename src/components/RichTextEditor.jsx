@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useMemo, useState, useRef } from 'react'
+import { createContext, useContext, useEffect, useCallback, useMemo, useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useEditor, EditorContent, BubbleMenu } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
@@ -29,6 +29,7 @@ import PaginationExtension, { A4_RATIO, PAGE_GAP } from './PaginationExtension'
 import StyledTaskItem from './StyledTaskItem'
 import CalloutExtension from './CalloutExtension'
 import InvisibleCharactersExtension from './InvisibleCharactersExtension'
+import HeadingAnchorExtension from './HeadingAnchorExtension'
 import CustomTableCell from './CustomTableCell'
 import CustomTableHeader from './CustomTableHeader'
 import TableBubbleMenu from './TableBubbleMenu'
@@ -112,6 +113,7 @@ import { useUIStore } from '../store'
 import { updateEditorSettings, useEditorSettings } from './EditorSettingsModal'
 import { DEFAULT_EDITOR_FONT, EDITOR_FONT_GROUPS } from '../lib/editorFonts'
 import { paperStyles } from '../lib/paperStyles'
+import { PaperSurface } from './workspace/WorkspaceSurface'
 import { getSelectedTaskItems } from '../lib/checklistSelection'
 import { inspectEditorAccessibility } from '../lib/editorAccessibility'
 import toast from 'react-hot-toast'
@@ -150,6 +152,20 @@ const NoteAwareLink = Link.extend({
             ? { 'data-note-id': attributes['data-note-id'] }
             : {}
         ),
+      },
+      'data-note-anchor-id': {
+        default: null,
+        parseHTML: (element) => element.getAttribute('data-note-anchor-id'),
+        renderHTML: (attributes) => attributes['data-note-anchor-id']
+          ? { 'data-note-anchor-id': attributes['data-note-anchor-id'] }
+          : {},
+      },
+      'data-note-object-id': {
+        default: null,
+        parseHTML: (element) => element.getAttribute('data-note-object-id'),
+        renderHTML: (attributes) => attributes['data-note-object-id']
+          ? { 'data-note-object-id': attributes['data-note-object-id'] }
+          : {},
       },
     }
   },
@@ -921,8 +937,11 @@ export default function RichTextEditor({
   paperType = 'plain',
   onPaperTypeChange,
   onEditorReady,
+  navigationTarget = null,
+  onNavigationComplete,
   isExternalUpdate = false,
   readOnly = false,
+  editingBlocked = false,
   ribbonLeadingAction,
   ribbonTitle,
   ribbonActions,
@@ -1026,7 +1045,7 @@ export default function RichTextEditor({
   }, [])
 
   const editor = useEditor({
-    editable: !readOnly,
+    editable: !readOnly && !editingBlocked,
     extensions: [
       StarterKit.configure({
         codeBlock: false,
@@ -1089,6 +1108,7 @@ export default function RichTextEditor({
         inline: false,
         allowBase64: true,
       }),
+      HeadingAnchorExtension,
       CalloutExtension,
       TextBoxExtension,
       ShapeExtension,
@@ -1176,10 +1196,30 @@ export default function RichTextEditor({
   })
 
   useEffect(() => {
-    if (editor && onEditorReady) {
-      onEditorReady(editor)
+    if (editor) {
+      editor.commands.ensureHeadingAnchors?.()
+      onEditorReady?.(editor)
     }
   }, [editor, onEditorReady])
+
+  useEffect(() => {
+    if (!editor || !navigationTarget || navigationTarget.noteId !== noteId) return undefined
+    const frame = requestAnimationFrame(() => {
+      if (navigationTarget.anchorId) {
+        const escaped = typeof CSS !== 'undefined' && CSS.escape
+          ? CSS.escape(navigationTarget.anchorId)
+          : navigationTarget.anchorId.replace(/[^a-zA-Z0-9_-]/g, '\\$&')
+        const heading = editor.view.dom.querySelector(`[data-anchor-id="${escaped}"]`)
+        if (heading) {
+          heading.scrollIntoView({ block: 'center', behavior: 'smooth' })
+          const position = editor.view.posAtDOM(heading, 0)
+          editor.chain().focus().setTextSelection(position).run()
+        }
+      }
+      onNavigationComplete?.(navigationTarget.token)
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [editor, navigationTarget, noteId, onNavigationComplete])
 
   useEffect(() => {
     if (!editor) return undefined
@@ -1202,8 +1242,8 @@ export default function RichTextEditor({
   }, [editor])
 
   useEffect(() => {
-    if (editor && !editor.isDestroyed) editor.setEditable(!readOnly)
-  }, [editor, readOnly])
+    if (editor && !editor.isDestroyed) editor.setEditable(!readOnly && !editingBlocked)
+  }, [editor, editingBlocked, readOnly])
 
   useEffect(() => {
     const applySpellCheck = () => {
@@ -1500,7 +1540,7 @@ export default function RichTextEditor({
           {editorSettings.showRuler && !isCompactViewport && (
             <VerticalDocumentRuler editor={editor} containerRef={editorContainerRef} />
           )}
-          <div
+          <PaperSurface
             ref={editorContainerRef}
             data-editor-page
             data-document-width={editorSettings.documentWidth}
@@ -1514,7 +1554,7 @@ export default function RichTextEditor({
             style={paperStyle.style}
           >
             <EditorContent editor={editor} />
-          </div>
+          </PaperSurface>
         </div>
       </div>
 
@@ -1775,6 +1815,86 @@ function ImageToolbarButton() {
   )
 }
 
+const ToolbarActionContext = createContext(() => {})
+
+function ToolbarButton({ onClick, isActive, disabled, children, title, shortcut, className = '' }) {
+  const buttonRef = useRef(null)
+  const beforeActivate = useContext(ToolbarActionContext)
+  const activate = () => {
+    beforeActivate()
+    if (!disabled) onClick?.()
+  }
+
+  const button = (
+    <button
+      type="button"
+      ref={buttonRef}
+      onMouseDown={(event) => {
+        event.preventDefault()
+        event.stopPropagation()
+      }}
+      onClick={activate}
+      disabled={disabled}
+      aria-pressed={isActive || undefined}
+      aria-label={title}
+      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-control transition-colors duration-fast ${
+        isActive
+          ? 'bg-accent-soft text-accent-text'
+          : 'text-content-muted hover:bg-surface-hover hover:text-content'
+      } ${disabled ? 'cursor-not-allowed opacity-40' : ''} ${className}`}
+    >
+      {children}
+    </button>
+  )
+
+  if (!title) return button
+
+  return (
+    <PortalTooltip title={title} shortcut={shortcut} anchorRef={buttonRef}>
+      {button}
+    </PortalTooltip>
+  )
+}
+
+function DropdownButton({ children, isOpen, onClick, title, disabled, className = '' }) {
+  const buttonRef = useRef(null)
+  const button = (
+    <button
+      type="button"
+      ref={buttonRef}
+      disabled={disabled}
+      aria-label={title}
+      aria-expanded={isOpen}
+      aria-haspopup="dialog"
+      onMouseDown={(event) => {
+        event.preventDefault()
+        event.stopPropagation()
+      }}
+      onClick={() => {
+        if (!disabled) onClick?.()
+      }}
+      className={`flex items-center gap-1 rounded-lg p-1.5 transition-[background-color,color,box-shadow,opacity] duration-fast ${
+        disabled
+          ? 'opacity-30 cursor-not-allowed text-content-subtle dark:text-content-muted'
+          : isOpen
+            ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 shadow-sm'
+            : 'hover:bg-surface-hover text-content-muted hover:text-content dark:hover:text-content-subtle'
+      } ${className}`}
+    >
+      {children}
+      <ChevronDown className="w-3 h-3 opacity-50" />
+    </button>
+  )
+
+  if (!title || isOpen || disabled) return button
+
+  return (
+    <PortalTooltip title={title} anchorRef={buttonRef}>
+      {button}
+    </PortalTooltip>
+  )
+}
+
 function EditorToolbar({
   editor,
   noteId,
@@ -1907,7 +2027,7 @@ function EditorToolbar({
             extractedHeadings.push({
               level: node.attrs.level,
               text: text.trim(),
-              id: `heading-${extractedHeadings.length}`,
+              id: node.attrs.anchorId || `heading-${extractedHeadings.length}`,
             })
           }
         }
@@ -1929,15 +2049,19 @@ function EditorToolbar({
     }
   }, [editor, content])
 
-  const scrollToHeading = useCallback((headingIndex) => {
+  const scrollToHeading = useCallback((headingIdentity, headingIndex) => {
     if (!editor) return
     
     const editorElement = editor.view.dom
     const headingElements = editorElement.querySelectorAll('h1, h2, h3, h4, h5, h6')
+    const escapedIdentity = typeof CSS !== 'undefined' && CSS.escape
+      ? CSS.escape(headingIdentity)
+      : headingIdentity.replace(/[^a-zA-Z0-9_-]/g, '\\$&')
+    const headingElement = editorElement.querySelector(`[data-anchor-id="${escapedIdentity}"]`) || headingElements[headingIndex]
     
-    if (headingElements[headingIndex]) {
-      headingElements[headingIndex].scrollIntoView({ behavior: 'smooth', block: 'start' })
-      const pos = editor.view.posAtDOM(headingElements[headingIndex], 0)
+    if (headingElement) {
+      headingElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      const pos = editor.view.posAtDOM(headingElement, 0)
       editor.chain().focus().setTextSelection(pos).run()
     }
     
@@ -2203,93 +2327,16 @@ function EditorToolbar({
     editor.chain().focus().insertContent(value).run()
   }, [editor])
 
-  const ToolbarButton = ({ onClick, isActive, disabled, children, title, shortcut, className = '' }) => {
-    const buttonRef = useRef(null)
-    const activate = () => {
-      closeAllDropdowns()
-      if (!disabled) onClick?.()
-    }
-    
-    const button = (
-      <button
-        type="button"
-        ref={buttonRef}
-        onMouseDown={(e) => {
-          e.preventDefault()
-          e.stopPropagation()
-        }}
-        onClick={activate}
-        disabled={disabled}
-        aria-pressed={isActive || undefined}
-        aria-label={title}
-        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-control transition-colors duration-fast ${
- isActive
- ? 'bg-accent-soft text-accent-text'
-            : 'text-content-muted hover:bg-surface-hover hover:text-content'
-        } ${disabled ? 'cursor-not-allowed opacity-40' : ''} ${className}`}
-      >
-        {children}
-      </button>
-    )
-    
-    if (!title) return button
-    
-    return (
-      <PortalTooltip title={title} shortcut={shortcut} anchorRef={buttonRef}>
-        {button}
-      </PortalTooltip>
-    )
-  }
-
   const ToolbarDivider = () => (
     <div role="separator" aria-orientation="vertical" className="mx-1 h-5 w-px shrink-0 bg-[var(--qn-border-subtle)]" />
   )
 
-  const DropdownButton = ({ children, isOpen, onClick, title, disabled, className = '' }) => {
-    const buttonRef = useRef(null)
-    
-    const button = (
-      <button
-        type="button"
-        ref={buttonRef}
-        disabled={disabled}
-        aria-label={title}
-        aria-expanded={isOpen}
-        aria-haspopup="dialog"
-        onMouseDown={(e) => {
-          e.preventDefault()
-          e.stopPropagation()
-        }}
-        onClick={() => {
-          if (!disabled) onClick?.()
-        }}
-        className={`flex items-center gap-1 rounded-lg p-1.5 transition-[background-color,color,box-shadow,opacity] duration-fast ${
- disabled
- ? 'opacity-30 cursor-not-allowed text-content-subtle dark:text-content-muted'
-            : isOpen
-              ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 shadow-sm'
-              : 'hover:bg-surface-hover text-content-muted hover:text-content dark:hover:text-content-subtle'
-        } ${className}`}
-      >
-        {children}
-        <ChevronDown className="w-3 h-3 opacity-50" />
-      </button>
-    )
-    
-    if (!title || isOpen || disabled) return button
-    
-    return (
-      <PortalTooltip title={title} anchorRef={buttonRef}>
-        {button}
-      </PortalTooltip>
-    )
-  }
-
   return (
-    <div
-      className="editor-ribbon border-b border-subtle"
-      data-density={editorSettings.ribbonDensity}
-    >
+    <ToolbarActionContext.Provider value={closeAllDropdowns}>
+      <div
+        className="editor-ribbon border-b border-subtle"
+        data-density={editorSettings.ribbonDensity}
+      >
       <div className="qn-ribbon-note-bar grid min-h-11 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center px-2 sm:px-3">
         <div className="qn-ribbon-leading-action min-w-0 justify-self-start">
           {ribbonLeadingAction}
@@ -3260,7 +3307,7 @@ function EditorToolbar({
                   key={heading.id}
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => {
-                    scrollToHeading(index)
+                    scrollToHeading(heading.id, index)
                   }}
                   className="w-full px-3 py-2 text-left text-[13px] hover:bg-surface-hover flex items-center gap-2 rounded-lg transition-colors text-content-muted"
                   style={{ paddingLeft: `${(heading.level - 1) * 12 + 12}px` }}
@@ -3477,6 +3524,7 @@ function EditorToolbar({
       </div>
       </div>
       </div>
-    </div>
+      </div>
+    </ToolbarActionContext.Provider>
   )
 }

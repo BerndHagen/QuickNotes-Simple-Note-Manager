@@ -106,6 +106,7 @@ describe('archive and trash views', () => {
     const confirmation = screen.getByRole('dialog', { name: 'Permanently delete' })
     expect(confirmation).toHaveAccessibleDescription(/“Discarded draft”/)
 
+    expect(confirmation).toHaveAccessibleDescription(/wins over unreviewed edits from another device/i)
     await user.click(screen.getByRole('button', { name: 'Permanently delete', exact: true }))
     await waitFor(() => expect(permanentlyDeleteNote).toHaveBeenCalledWith('trash-1'))
   })

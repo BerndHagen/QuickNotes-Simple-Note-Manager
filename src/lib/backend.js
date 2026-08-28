@@ -15,6 +15,17 @@ export const isBackendConfigured = () => {
   }
 }
 
+export const getBackendResumableUploadEndpoint = () => {
+  if (!isBackendConfigured()) return ''
+
+  const url = new URL(SUPABASE_URL)
+  const hostedProject = url.hostname.match(/^([a-z0-9-]+)\.supabase\.co$/i)
+  if (hostedProject) {
+    return `${url.protocol}//${hostedProject[1]}.storage.supabase.co/storage/v1/upload/resumable`
+  }
+  return new URL('/storage/v1/upload/resumable', url).href
+}
+
 export const getRedirectUrl = () => {
   return new URL(import.meta.env.BASE_URL || '/', window.location.origin).href
 }
@@ -53,6 +64,7 @@ export const backend = isBackendConfigured()
           not: () => builder,
           or: () => builder,
           order: () => builder,
+          range: () => builder,
           limit: () => builder,
           single: () => ({
             then: (resolve) => resolve({ data: null, error: null }),
@@ -68,6 +80,16 @@ export const backend = isBackendConfigured()
         subscribe: () => ({ unsubscribe: () => {} }),
       }),
       removeChannel: async () => 'ok',
+      storage: {
+        from: () => ({
+          upload: async () => ({ data: null, error: new Error('Backend not configured. Check .env file.') }),
+          download: async () => ({ data: null, error: new Error('Backend not configured. Check .env file.') }),
+          remove: async () => ({ data: null, error: new Error('Backend not configured. Check .env file.') }),
+        }),
+      },
+      functions: {
+        invoke: async () => ({ data: null, error: new Error('Backend not configured. Check .env file.') }),
+      },
       rpc: async () => ({ data: null, error: new Error('Backend not configured. Check .env file.') }),
     }
 
@@ -97,6 +119,101 @@ export const subscribeToSharedNoteContent = (noteId, callback) => {
       backend.removeChannel(channel)
     },
   }
+}
+
+export const subscribeToSharedNoteAccess = (noteId, callback) => {
+  if (!isBackendConfigured()) return { unsubscribe: () => {} }
+
+  const channel = backend
+    .channel(`shared-access-${noteId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'accepted_shares',
+        filter: `note_id=eq.${noteId}`,
+      },
+      callback
+    )
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'shared_notes',
+        filter: `note_id=eq.${noteId}`,
+      },
+      callback
+    )
+    .subscribe()
+
+  return {
+    unsubscribe: () => {
+      backend.removeChannel(channel)
+    },
+  }
+}
+
+export const subscribeToNoteComments = (noteId, callback) => {
+  if (!noteId || !isBackendConfigured()) return { unsubscribe: () => {} }
+  const channel = backend
+    .channel(`note-comments-${noteId}`)
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'note_comments', filter: `note_id=eq.${noteId}` },
+      callback
+    )
+    .subscribe()
+  return { unsubscribe: () => { void backend.removeChannel(channel) } }
+}
+
+export const subscribeToCommentMentions = (userId, callback) => {
+  if (!userId || !isBackendConfigured()) return { unsubscribe: () => {} }
+  const channel = backend
+    .channel(`comment-mentions-${userId}`)
+    .on(
+      'postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'note_comment_mentions', filter: `recipient_id=eq.${userId}` },
+      callback
+    )
+    .subscribe()
+  return { unsubscribe: () => { void backend.removeChannel(channel) } }
+}
+
+export const getNoteParticipants = async (noteId) => {
+  if (!isBackendConfigured()) return []
+  const { data, error } = await backend.rpc('get_note_participants', { p_note_id: noteId })
+  if (error) throw error
+  return data || []
+}
+
+export const getNoteComments = async (noteId) => {
+  if (!isBackendConfigured()) return []
+  const { data, error } = await backend.rpc('get_note_comments', { p_note_id: noteId })
+  if (error) throw error
+  return data || []
+}
+
+export const createNoteComment = async ({ noteId, body, mentionedUserIds = [], anchorId = null, objectId = null }) => {
+  if (!isBackendConfigured()) throw new Error('Comments require a connected cloud workspace.')
+  const { data, error } = await backend.rpc('create_note_comment', {
+    p_note_id: noteId,
+    p_body: String(body || ''),
+    p_mentioned_user_ids: mentionedUserIds,
+    p_anchor_id: anchorId,
+    p_object_id: objectId,
+  })
+  if (error) throw error
+  return data
+}
+
+export const deleteNoteComment = async (commentId) => {
+  if (!isBackendConfigured()) throw new Error('Comments require a connected cloud workspace.')
+  const { data, error } = await backend.rpc('delete_note_comment', { p_comment_id: commentId })
+  if (error) throw error
+  if (!data) throw new Error('This comment is no longer available or cannot be removed.')
+  return true
 }
 
 export const createShareLink = async (noteId, email, permission = 'view') => {
@@ -339,4 +456,48 @@ export const getRemoteNoteVersions = async (noteId) => {
     createdAt: v.created_at,
     source: 'remote',
   }))
+}
+
+const remoteNoteVersion = (version) => ({
+  id: version.id,
+  noteId: version.note_id,
+  title: version.title,
+  content: version.content,
+  noteType: version.note_type || 'standard',
+  noteData: version.note_data,
+  changeKind: version.change_kind || 'edit',
+  changedFields: version.changed_fields || [],
+  snapshotHash: version.snapshot_hash,
+  createdAt: version.created_at,
+  source: 'remote',
+})
+
+/**
+ * Fetch every server-retained version for the notes in a workspace backup.
+ * Queries are bounded to keep URLs and responses manageable while RLS remains
+ * the authority over which version rows the active session may read.
+ */
+export const getRemoteWorkspaceNoteVersions = async (noteIds) => {
+  if (!isBackendConfigured()) return []
+  const ids = [...new Set((noteIds || []).filter((id) => typeof id === 'string' && id))]
+  if (ids.length === 0) return []
+  const rows = []
+  const noteChunkSize = 100
+  const pageSize = 1_000
+  for (let index = 0; index < ids.length; index += noteChunkSize) {
+    const chunk = ids.slice(index, index + noteChunkSize)
+    for (let offset = 0; ; offset += pageSize) {
+      const { data, error } = await backend
+        .from('note_versions')
+        .select('id, note_id, title, content, note_type, note_data, change_kind, changed_fields, snapshot_hash, created_at')
+        .in('note_id', chunk)
+        .order('created_at', { ascending: false })
+        .order('id', { ascending: false })
+        .range(offset, offset + pageSize - 1)
+      if (error) throw error
+      rows.push(...(data || []).map(remoteNoteVersion))
+      if (!data || data.length < pageSize) break
+    }
+  }
+  return rows
 }

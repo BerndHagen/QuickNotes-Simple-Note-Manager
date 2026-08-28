@@ -35,12 +35,12 @@ export default function TrashView() {
     trashedNotes.forEach((note) => restoreNote(note.id))
   }
 
-  const handleEmptyTrash = () => {
-    trashedNotes.forEach((note) => permanentlyDeleteNote(note.id))
+  const handleEmptyTrash = async () => {
+    for (const note of trashedNotes) await permanentlyDeleteNote(note.id)
   }
 
-  const handlePermanentDelete = () => {
-    if (deleteTarget?.id) permanentlyDeleteNote(deleteTarget.id)
+  const handlePermanentDelete = async () => {
+    if (deleteTarget?.id) await permanentlyDeleteNote(deleteTarget.id)
   }
 
   const countLabel = `${trashedNotes.length} ${trashedNotes.length === 1 ? 'note' : 'notes'} · ${t(
@@ -162,11 +162,12 @@ export default function TrashView() {
         onClose={() => setDeleteTarget(null)}
         onConfirm={deleteTarget?.all ? handleEmptyTrash : handlePermanentDelete}
         title={deleteTarget?.all ? t('trash.emptyTrash') : t('trash.permanentDelete')}
-        description={
-          deleteTarget?.all
+        description={(() => {
+          const baseDescription = deleteTarget?.all
             ? t('trash.emptyTrashConfirm')
             : `${t('trash.permanentDeleteConfirm')} “${deleteTarget?.title || ''}”`
-        }
+          return `${baseDescription} Confirmed permanent deletion wins over unreviewed edits from another device.`
+        })()}
         confirmLabel={deleteTarget?.all ? t('trash.emptyTrash') : t('trash.permanentDelete')}
       />
     </>

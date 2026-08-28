@@ -1,10 +1,11 @@
 import 'fake-indexeddb/auto'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { clearLocalData, db, getPendingSyncItems, SyncStatus } from '../lib/db'
+import { clearLocalData, db, getPendingSyncItems, setActiveWorkspaceOwner, SyncStatus } from '../lib/db'
 import { MAX_NOTE_TITLE_LENGTH } from '../lib/dataValidation'
 import { useNotesStore } from './index'
 
 const resetStore = (overrides = {}) => {
+  setActiveWorkspaceOwner(overrides.cacheOwnerId || 'local')
   useNotesStore.setState({
     notes: [],
     folders: [],
@@ -15,9 +16,14 @@ const resetStore = (overrides = {}) => {
     searchQuery: '',
     sharedNotes: [],
     pendingShares: [],
+    sharedDraftRevisions: {},
+    collaborationConflict: null,
+    collaborationConflicts: [],
     cacheOwnerId: 'local',
+    hydratedWorkspaceOwnerId: 'local',
     ...overrides,
   })
+
 }
 
 const waitForQueuedWrite = async (predicate) => {
@@ -34,6 +40,35 @@ describe('notes store data invariants', () => {
 
   afterEach(async () => {
     await clearLocalData()
+  })
+
+  it('requires an explicit choice when an inbound shared edit conflicts with a local draft', async () => {
+    const sharedNote = {
+      id: 'shared-note',
+      title: 'Shared plan',
+      content: '<p>Original</p>',
+      noteType: 'standard',
+      noteData: null,
+      isShared: true,
+      sharePermission: 'edit',
+    }
+    resetStore({
+      selectedNoteId: sharedNote.id,
+      sharedNotes: [{ id: 'share-a', note_id: sharedNote.id, permission: 'edit', notes: sharedNote }],
+    })
+
+    useNotesStore.getState().updateNoteDraft(sharedNote.id, { content: '<p>My unsaved draft</p>' })
+    useNotesStore.getState().applyExternalUpdate(sharedNote.id, {
+      content: '<p>Incoming collaborator edit</p>',
+      updatedAt: '2026-08-28T10:00:00.000Z',
+    })
+
+    expect(useNotesStore.getState().getSelectedNote().content).toBe('<p>My unsaved draft</p>')
+    expect(useNotesStore.getState().collaborationConflict).toMatchObject({ noteId: sharedNote.id })
+
+    await expect(useNotesStore.getState().resolveCollaborationConflict('incoming')).resolves.toBe(true)
+    expect(useNotesStore.getState().getSelectedNote().content).toBe('<p>Incoming collaborator edit</p>')
+    expect(useNotesStore.getState().collaborationConflict).toBeNull()
   })
 
   it('respects an explicit unfiled note even when a folder is selected', () => {
@@ -176,10 +211,36 @@ describe('notes store data invariants', () => {
     expect(cachedNote.updatedAt).toBe(stateNote.updatedAt)
   })
 
+  it('coalesces rapid delete and restore into one ordered durable mutation', async () => {
+    resetStore({
+      notes: [{
+        id: 'delete-restore',
+        title: 'Keep this note',
+        content: '<p>Canonical</p>',
+        tags: [],
+        deleted: false,
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+        syncStatus: SyncStatus.SYNCED,
+      }],
+    })
+
+    useNotesStore.getState().deleteNote('delete-restore')
+    useNotesStore.getState().restoreNote('delete-restore')
+
+    await vi.waitFor(async () => {
+      const queued = (await getPendingSyncItems()).filter((item) => item.data?.id === 'delete-restore')
+      expect(queued).toHaveLength(1)
+      expect(queued[0]).toMatchObject({ operation: 'update', data: { deleted: false, deletedAt: null } })
+    })
+    expect(useNotesStore.getState().notes[0]).toMatchObject({ deleted: false, deletedAt: null })
+    expect(await db.notes.get('delete-restore')).toMatchObject({ deleted: false, deletedAt: null })
+  })
+
   it('replaces a cloud insert with an idempotent delete when an offline note is removed', async () => {
     resetStore({ user: null })
     const created = useNotesStore.getState().createNote({ title: 'Never uploaded' })
-    useNotesStore.getState().permanentlyDeleteNote(created.id)
+    await useNotesStore.getState().permanentlyDeleteNote(created.id)
 
     await vi.waitFor(async () => {
       const queued = (await getPendingSyncItems()).filter((item) => item.data?.id === created.id)

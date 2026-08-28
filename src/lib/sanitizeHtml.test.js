@@ -25,6 +25,16 @@ describe('sanitizeNoteHtml', () => {
     expect(result).toContain('type="checkbox"')
     expect(result).toContain('<table>')
   })
+
+  it('preserves stable knowledge identities as inert data attributes', () => {
+    const result = sanitizeNoteHtml(
+      '<h2 data-anchor-id="heading-1">Plan</h2>' +
+      '<p><a class="note-link" href="#note/target?anchor=heading-2" data-note-id="target" data-note-anchor-id="heading-2">Target</a></p>'
+    )
+    expect(result).toContain('data-anchor-id="heading-1"')
+    expect(result).toContain('data-note-id="target"')
+    expect(result).toContain('data-note-anchor-id="heading-2"')
+  })
 })
 
 describe('escapeHtml', () => {

@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
+import { useLiveQuery } from 'dexie-react-hooks'
 import { EmptyState, buttonClasses } from '../ui'
 import {
+  Bell,
   Users,
   Plus,
   Trash2,
@@ -16,6 +18,8 @@ import {
   Target,
   FileText,
   Copy,
+  ExternalLink,
+  FileAudio,
   User
 } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -24,8 +28,75 @@ import { useLatestValue } from './useLatestValue'
 import { useEditorDataSync } from './useEditorDataSync'
 import FocusedNoteTitle from './FocusedNoteTitle'
 import WorkspaceMetrics from './WorkspaceMetrics'
+import { db, getActiveWorkspaceOwner } from '../../lib/db'
+import { listNoteResources } from '../../lib/resources/repository'
 
-export default function MeetingNotesEditor({ data, onChange, noteTitle, onTitleChange, readOnly }) {
+const formatCaptureDuration = (milliseconds) => {
+  const seconds = Math.max(0, Math.floor(Number(milliseconds) / 1000) || 0)
+  const minutes = Math.floor(seconds / 60)
+  return `${minutes}:${String(seconds % 60).padStart(2, '0')}`
+}
+
+function MeetingCapturePanel({ note, onOpenResources, readOnly }) {
+  const ownerId = getActiveWorkspaceOwner()
+  const capture = useLiveQuery(async () => {
+    if (!note?.id || !ownerId) return { recordings: [], transcriptCount: 0, correctedCount: 0 }
+    const [entries, recognition] = await Promise.all([
+      listNoteResources(note.id, { ownerId }),
+      db.recognizedContent.where('[ownerId+noteId]').equals([ownerId, note.id]).toArray(),
+    ])
+    const recordings = entries.filter((entry) => entry.resource?.kind === 'audio')
+    const resourceIds = new Set(recordings.map((entry) => entry.resource.id))
+    const transcript = recognition.filter((row) =>
+      row.type === 'transcript' &&
+      row.status !== 'superseded' &&
+      resourceIds.has(row.sourceResourceId)
+    )
+    return {
+      recordings,
+      transcriptCount: transcript.length,
+      correctedCount: transcript.filter((row) => row.userEdited).length,
+    }
+  }, [note?.id, ownerId], { recordings: [], transcriptCount: 0, correctedCount: 0 })
+  const totalDuration = capture.recordings.reduce((sum, entry) => sum + (entry.resource.durationMs || 0), 0)
+
+  return (
+    <div className="qn-workspace-panel mx-auto max-w-2xl">
+      <div className="border-b border-subtle px-5 py-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-title-sm font-semibold text-content">Meeting capture</h2>
+            <p className="mt-1 text-ui-sm text-content-muted">Record or attach audio, review its source-linked transcript, then add approved action items or decisions.</p>
+          </div>
+          <button type="button" onClick={onOpenResources} className={buttonClasses({ variant: 'primary' })}>
+            <FileAudio className="h-4 w-4" aria-hidden="true" />
+            {capture.recordings.length ? 'Open recordings' : readOnly ? 'View attachments' : 'Record or attach'}
+          </button>
+        </div>
+      </div>
+      <dl className="grid grid-cols-1 divide-y divide-[var(--qn-border-subtle)] sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+        <div className="px-5 py-4">
+          <dt className="text-ui-xs font-medium text-content-muted">Recordings</dt>
+          <dd className="mt-1 text-title-sm font-semibold tabular-nums text-content">{capture.recordings.length}</dd>
+        </div>
+        <div className="px-5 py-4">
+          <dt className="text-ui-xs font-medium text-content-muted">Recorded time</dt>
+          <dd className="mt-1 text-title-sm font-semibold tabular-nums text-content">{formatCaptureDuration(totalDuration)}</dd>
+        </div>
+        <div className="px-5 py-4">
+          <dt className="text-ui-xs font-medium text-content-muted">Transcript segments</dt>
+          <dd className="mt-1 text-title-sm font-semibold tabular-nums text-content">{capture.transcriptCount}</dd>
+          {capture.correctedCount > 0 && <dd className="mt-0.5 text-ui-xs text-content-subtle">{capture.correctedCount} corrected</dd>}
+        </div>
+      </dl>
+      <div className="border-t border-subtle bg-surface-sunken px-5 py-3 text-ui-xs text-content-muted">
+        Audio remains canonical. Transcript text is attributable derived content; adding an action or decision is always explicit.
+      </div>
+    </div>
+  )
+}
+
+export default function MeetingNotesEditor({ data, onChange, note, noteTitle, onTitleChange, readOnly, onOpenResources, onSetReminder, onOpenCaptureSource }) {
   const [meetingData, setMeetingData] = useState({
     date: data?.date || formatDateKey(),
     startTime: data?.startTime || '',
@@ -219,6 +290,7 @@ ${meetingData.notes}
     { id: 'attendees', label: 'Attendees', icon: Users, badge: stats.attendees },
     { id: 'agenda', label: 'Agenda', icon: Target, badge: stats.agendaItems },
     { id: 'notes', label: 'Notes', icon: MessageSquare },
+    { id: 'capture', label: 'Capture', icon: FileAudio },
     { id: 'actions', label: 'Action Items', icon: CheckCircle2, badge: stats.actionItems },
     { id: 'decisions', label: 'Decisions', icon: Target, badge: stats.decisions },
   ]
@@ -603,6 +675,9 @@ ${meetingData.notes}
             />
           </div>
         )}
+        {activeSection === 'capture' && (
+          <MeetingCapturePanel note={note} onOpenResources={onOpenResources} readOnly={readOnly} />
+        )}
         {activeSection === 'actions' && (
           <div className="qn-workspace-panel mx-auto max-w-2xl p-5">
             <div className="mb-4 p-4 rounded-xl bg-surface-sunken border border-subtle">
@@ -697,7 +772,32 @@ ${meetingData.notes}
                         )}
                       </div>
                     </div>
-                    
+                    {!readOnly && (
+                      <button
+                        type="button"
+                        onClick={() => onSetReminder?.({
+                          type: 'task',
+                          noteId: note?.id,
+                          taskId: item.id,
+                          taskKind: 'meeting-action',
+                          label: item.task,
+                        })}
+                        aria-label={`Set reminder for ${item.task}`}
+                        className="qn-square-control flex h-9 w-9 shrink-0 items-center justify-center rounded-control text-content-subtle hover:bg-surface-hover hover:text-content"
+                      >
+                        <Bell className="h-4 w-4" aria-hidden="true" />
+                      </button>
+                    )}
+                    {item.source && (
+                      <button
+                        type="button"
+                        onClick={() => onOpenCaptureSource?.(item.source)}
+                        aria-label={`Open transcript source for ${item.task}`}
+                        className="qn-square-control flex h-9 w-9 shrink-0 items-center justify-center rounded-control text-accent-text hover:bg-accent-soft"
+                      >
+                        <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                      </button>
+                    )}
                     <button
                       onClick={() => removeActionItem(item.id)}
                       aria-label={`Delete ${item.task}`}
@@ -755,6 +855,16 @@ ${meetingData.notes}
                         {new Date(decision.timestamp).toLocaleString('en-US')}
                       </div>
                     </div>
+                    {decision.source && (
+                      <button
+                        type="button"
+                        onClick={() => onOpenCaptureSource?.(decision.source)}
+                        aria-label={`Open transcript source for decision ${index + 1}`}
+                        className="qn-square-control flex h-9 w-9 shrink-0 items-center justify-center rounded-control text-accent-text hover:bg-accent-soft"
+                      >
+                        <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                      </button>
+                    )}
                     <button
                       onClick={() => removeDecision(decision.id)}
                       aria-label={`Delete decision ${index + 1}`}

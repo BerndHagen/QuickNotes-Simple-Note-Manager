@@ -1,5 +1,6 @@
 import { getSearchableText } from './filterNotes'
 import { collectWorkspaceTasks } from './workspaceTasks'
+import { getIndexedKnowledgeText } from './knowledge/service'
 
 export const SMART_VIEW_MAX_RULES = 12
 export const SMART_VIEW_FIELDS = Object.freeze({
@@ -113,7 +114,8 @@ export const matchesSmartViewRule = (note, rule, context = {}) => {
 
   switch (rule.field) {
     case SMART_VIEW_FIELDS.TEXT: {
-      const haystack = lower(`${note.title || ''} ${(note.tags || []).join(' ')} ${getSearchableText(note)}`)
+      const indexedText = getIndexedKnowledgeText(note.id)
+      const haystack = lower(indexedText || `${note.title || ''} ${(note.tags || []).join(' ')} ${getSearchableText(note)}`)
       const matched = haystack.includes(value)
       return rule.operator === 'not_contains' ? !matched : matched
     }

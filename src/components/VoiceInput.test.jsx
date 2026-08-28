@@ -73,6 +73,8 @@ describe('VoiceInput', () => {
       <VoiceInput isActive onTranscript={firstCallback} onToggle={() => {}} />
     )
     const recognition = FakeSpeechRecognition.instances[0]
+    expect(recognition.startCalls).toBe(0)
+    fireEvent.click(screen.getByRole('button', { name: 'Start voice input' }))
 
     rerender(<VoiceInput isActive onTranscript={latestCallback} onToggle={() => {}} />)
     act(() => recognition.emitFinal('Updated callback'))
@@ -84,6 +86,7 @@ describe('VoiceInput', () => {
   it('recovers from an unexpected end but stays stopped after a manual pause', () => {
     render(<VoiceInput isActive onTranscript={() => {}} onToggle={() => {}} />)
     const recognition = FakeSpeechRecognition.instances[0]
+    fireEvent.click(screen.getByRole('button', { name: 'Start voice input' }))
     const startsBeforeEnd = recognition.startCalls
 
     act(() => recognition.finishUnexpectedly())
@@ -102,6 +105,7 @@ describe('VoiceInput', () => {
       <VoiceInput isActive onTranscript={() => {}} onToggle={onToggle} />
     )
     const recognition = FakeSpeechRecognition.instances[0]
+    fireEvent.click(screen.getByRole('button', { name: 'Start voice input' }))
 
     fireEvent.keyDown(document, { key: 'Escape' })
     expect(onToggle).toHaveBeenCalledWith(false)

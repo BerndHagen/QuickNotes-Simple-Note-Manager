@@ -22,6 +22,7 @@ describe('SaveStatus', () => {
       isSyncing: false,
       lastSyncError: null,
       lastSyncTime: null,
+      persistenceError: null,
     })
   })
 
@@ -57,5 +58,18 @@ describe('SaveStatus', () => {
     }))
     rerender(<SaveStatus note={{ ...note, syncStatus: 'synced' }} />)
     expect(screen.getByText(/Synced|Synchronized/i)).toBeInTheDocument()
+  })
+
+  it('never claims a note is saved after IndexedDB rejected the write', () => {
+    useNotesStore.setState({
+      persistenceError: {
+        source: 'indexeddb',
+        message: 'Could not save',
+        detail: 'Quota exceeded',
+      },
+    })
+    render(<SaveStatus note={note} />)
+    expect(screen.getByRole('alert')).toHaveTextContent('Local save failed')
+    expect(screen.queryByText(/Saved locally/i)).not.toBeInTheDocument()
   })
 })

@@ -1,7 +1,7 @@
 {
   "name": "QuickNotes - Simple Note Manager",
   "short_name": "QuickNotes",
-  "description": "An offline-first note manager with rich text editing and optional cloud sync.",
+  "description": "A local-first writing, planning, and spatial note workspace with optional cloud sync.",
   "id": "./",
   "start_url": "./",
   "scope": "./",

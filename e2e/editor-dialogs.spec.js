@@ -123,8 +123,9 @@ test.describe('editor productivity objects', () => {
     await expect(page.locator('.editor-toolbar')).toBeVisible()
   })
 
-  test('uses one brand bar and geometrically centers the note title', async ({ page }) => {
+  test('uses continuous application chrome and geometrically centers the note title', async ({ page }) => {
     const chrome = await page.evaluate(() => {
+      const applicationBar = document.querySelector('.qn-top-chrome')
       const noteBar = document.querySelector('.qn-ribbon-note-bar')
       const title = document.querySelector('.qn-ribbon-title')
       const tabs = document.querySelector('.qn-ribbon-tabs')
@@ -137,6 +138,7 @@ test.describe('editor productivity objects', () => {
         centerDelta: Math.abs(
           noteBarBox.left + noteBarBox.width / 2 - (titleBox.left + titleBox.width / 2)
         ),
+        applicationBarBackground: getComputedStyle(applicationBar).backgroundColor,
         noteBarBackground: getComputedStyle(noteBar).backgroundColor,
         tabBackground: getComputedStyle(tabs).backgroundColor,
         activeTabColor: getComputedStyle(activeTab).color,
@@ -145,7 +147,9 @@ test.describe('editor productivity objects', () => {
     })
 
     expect(chrome.centerDelta).toBeLessThan(0.5)
-    expect(chrome.noteBarBackground).toBe('rgb(11, 74, 56)')
+    expect(chrome.applicationBarBackground).toBe('rgb(11, 74, 56)')
+    expect(chrome.noteBarBackground).toBe('rgb(255, 255, 255)')
+    expect(chrome.noteBarBackground).not.toBe(chrome.applicationBarBackground)
     expect(chrome.tabBackground).not.toBe(chrome.noteBarBackground)
     expect(chrome.activeTabColor).not.toBe(chrome.inactiveTabColor)
     expect(chrome.activeTabColor).not.toBe('rgb(255, 255, 255)')

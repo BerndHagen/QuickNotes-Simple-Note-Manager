@@ -8,6 +8,54 @@ const openSettings = async (page) => {
 }
 
 test.describe('mobile Safari workflows', () => {
+  test('keeps Paper focused, touch-sized, pannable, and durable on a phone', async ({ page }) => {
+    const errors = collectErrors(page)
+    await page.setViewportSize({ width: 390, height: 664 })
+    await signIn(page)
+    await page.getByRole('button', { name: 'Create workspace' }).tap()
+    const dialog = page.getByRole('dialog', { name: /new workspace/i })
+    await dialog.locator('section[aria-label="Workspace types"]')
+      .getByRole('button', { name: /^Paper/i })
+      .tap()
+    await dialog.getByLabel('Note title').fill('Mobile paper')
+    await dialog.getByRole('button', { name: /^Create / }).tap()
+    await page.locator('.note-card', { hasText: 'Mobile paper' }).tap()
+
+    const paper = page.getByRole('application', { name: /page 1/i })
+    await expect(paper).toBeVisible()
+    await expect(page.locator('.qn-spatial-titlebar')).toBeHidden()
+    await expect(page.locator('.qn-spatial-tool-group--objects')).toBeHidden()
+    await expect(page.getByLabel('Insert object')).toBeVisible()
+    const primaryTools = page.locator('.qn-spatial-tool-group').first().getByRole('button')
+    for (const tool of await primaryTools.all()) {
+      const box = await tool.boundingBox()
+      expect(box.width).toBeGreaterThanOrEqual(44)
+      expect(box.height).toBeGreaterThanOrEqual(44)
+    }
+
+    const paperBox = await paper.boundingBox()
+    await page.mouse.move(paperBox.x + 55, paperBox.y + 90)
+    await page.mouse.down()
+    await page.mouse.move(paperBox.x + 145, paperBox.y + 130, { steps: 8 })
+    await page.mouse.up()
+    await expect(page.getByText('Saved on this device')).toBeVisible()
+
+    const stage = page.locator('.qn-paper-stage')
+    await page.getByRole('button', { name: 'Pan (Space)' }).tap()
+    const scrollMetrics = await stage.evaluate((element) => ({ clientWidth: element.clientWidth, scrollWidth: element.scrollWidth }))
+    expect(scrollMetrics.scrollWidth).toBeGreaterThan(scrollMetrics.clientWidth)
+    await stage.evaluate((element) => { element.scrollLeft = 80 })
+    await expect.poll(() => stage.evaluate((element) => element.scrollLeft)).toBeGreaterThan(40)
+
+    await page.getByLabel('Paper pattern').selectOption('ruled')
+    await expect(page.getByRole('application', { name: /ruled warm paper/i })).toBeVisible()
+    await expect(page.getByLabel('Paper editor').getByText('Saved on this device')).toBeVisible()
+    await page.reload({ waitUntil: 'domcontentloaded' })
+    await expect(page.getByRole('application', { name: /ruled warm paper/i })).toBeVisible({ timeout: 30_000 })
+    await expectNoHorizontalOverflow(page)
+    expect(errors).toEqual([])
+  })
+
   test('opens a tapped note directly without leaving a preview tooltip over the editor', async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 568 })
     await signIn(page)

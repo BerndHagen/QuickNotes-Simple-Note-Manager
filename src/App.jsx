@@ -7,12 +7,23 @@ import AuthScreen from './components/AuthScreen'
 import { useNotesStore, useUIStore } from './store'
 import { onConnectionChange } from './lib/utils'
 import { backend, isBackendConfigured } from './lib/backend'
-import { createLocalUser, hasLocalSession } from './lib/localSession'
-import { useShareInvitations } from './lib/useCollaboration'
+import { createLocalUser, hasLocalSession, subscribeToLocalSession } from './lib/localSession'
+import { useCommentMentions, useShareInvitations } from './lib/useCollaboration'
 import { useAppShortcuts } from './lib/shortcuts'
 import { useLayoutMode } from './hooks/useBreakpoint'
-import { PanelLeft, CloudOff } from 'lucide-react'
+import { useKnowledgeIndexBridge } from './hooks/useKnowledgeIndex'
+import { parseInternalNoteHref } from './lib/knowledge/links'
+import { subscribeToCaptureCloud } from './lib/capture/cloud'
+import { subscribeToDatabaseLifecycle, subscribeToWorkspaceMutations } from './lib/db'
+import { AlertTriangle, PanelLeft, CloudOff, RefreshCw } from 'lucide-react'
 import { IconButton, Spinner, useEscapeKey, useFocusTrap } from './components/ui'
+import TopChrome from './components/workspace/TopChrome'
+import ResizablePane from './components/workspace/ResizablePane'
+import InspectorPane from './components/workspace/InspectorPane'
+import CatalogConflictBanner from './components/CatalogConflictBanner'
+import PersistenceErrorBanner from './components/PersistenceErrorBanner'
+import UpdateReadyBanner from './components/UpdateReadyBanner'
+import CorruptedDataBanner from './components/CorruptedDataBanner'
 
 const MOBILE_HISTORY_SURFACE_KEYS = [
   'focusModeOpen',
@@ -118,10 +129,13 @@ function EditorLoading() {
 }
 
 export default function App() {
+  useKnowledgeIndexBridge()
   const {
     notes,
+    sharedNotes,
     selectedNoteId,
     setSelectedNote,
+    navigateToKnowledgeTarget,
     setIsOnline,
     syncWithBackend,
     isOnline,
@@ -134,7 +148,17 @@ export default function App() {
   const {
     sidebarOpen,
     setSidebarOpen,
-    toggleSidebar,
+    desktopSidebarOpen,
+    setDesktopSidebarOpen,
+    notesListWidth,
+    setNotesListWidth,
+    notesListOpen,
+    toggleNotesList,
+    inspectorOpen,
+    setInspectorOpen,
+    toggleInspector,
+    inspectorWidth,
+    setInspectorWidth,
     setNoteTypesModalOpen,
     setFindReplaceOpen,
     setExportModalOpen,
@@ -176,14 +200,64 @@ export default function App() {
 
   const [isLoading, setIsLoading] = useState(true)
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false)
-  const { isCompact, isWide, sidebarIsOverlay } = useLayoutMode()
+  const [databaseLifecycle, setDatabaseLifecycle] = useState(null)
+  const [updateReady, setUpdateReady] = useState(false)
+  const { isCompact, isWide, isXWide, sidebarIsOverlay } = useLayoutMode()
   const sidebarToggleRef = useRef(null)
+  const mobileSidebarToggleRef = useRef(null)
   const sidebarRef = useRef(null)
   const mobileHistoryReadyRef = useRef(false)
   const sidebarOverlayOpen = Boolean(user && sidebarIsOverlay && sidebarOpen)
   const mobileHistorySurface = modalHistorySurface || (sidebarOverlayOpen ? 'sidebar' : null)
 
+  const toggleSidebar = useCallback(() => {
+    const nextOpen = !sidebarOpen
+    setSidebarOpen(nextOpen)
+    if (!sidebarIsOverlay) setDesktopSidebarOpen(nextOpen)
+  }, [setDesktopSidebarOpen, setSidebarOpen, sidebarIsOverlay, sidebarOpen])
+
   useShareInvitations()
+  useCommentMentions()
+
+  useEffect(() => subscribeToDatabaseLifecycle(setDatabaseLifecycle), [])
+
+  useEffect(() => subscribeToLocalSession((active) => {
+    const currentUser = useNotesStore.getState().user
+    if (active) {
+      // Never let a browser-only session replace an authenticated cloud
+      // account. A signed-out peer tab may join the local workspace.
+      if (!currentUser) void activateLocalUser(createLocalUser())
+      return
+    }
+
+    if (currentUser?.isLocal) {
+      // Persist the peer tab's in-memory draft before clearing its workspace.
+      // A failed write leaves the workspace open with the normal persistence
+      // error instead of pretending that sign-out completed safely.
+      void deactivateWorkspace()
+    }
+  }), [activateLocalUser, deactivateWorkspace])
+
+  useEffect(() => {
+    const ready = () => setUpdateReady(true)
+    window.addEventListener('quicknotes:update-ready', ready)
+    return () => window.removeEventListener('quicknotes:update-ready', ready)
+  }, [])
+
+  useEffect(() => {
+    if (!user) return undefined
+    return subscribeToWorkspaceMutations((mutation) => {
+      void useNotesStore.getState().applyExternalWorkspaceMutation(mutation).catch((error) => {
+        useNotesStore.setState({
+          persistenceError: {
+            source: 'indexeddb',
+            message: error?.message || 'Another tab changed this workspace, but the update could not be reviewed.',
+            occurredAt: new Date().toISOString(),
+          },
+        })
+      })
+    })
+  }, [user])
 
   useEffect(() => {
     if (!user || !sidebarIsOverlay) {
@@ -352,6 +426,24 @@ export default function App() {
   }, [user, isOnline, syncWithBackend])
 
   useEffect(() => {
+    if (!isOnline || !user || user.isLocal) return undefined
+    let refreshTimer = null
+    const subscription = subscribeToCaptureCloud(user.id, () => {
+      if (refreshTimer) clearTimeout(refreshTimer)
+      refreshTimer = setTimeout(() => {
+        const state = useNotesStore.getState()
+        if (!state.isSyncing && navigator.onLine && document.visibilityState === 'visible') {
+          void state.syncWithBackend()
+        }
+      }, 300)
+    })
+    return () => {
+      if (refreshTimer) clearTimeout(refreshTimer)
+      subscription.unsubscribe()
+    }
+  }, [user, isOnline])
+
+  useEffect(() => {
     if (!user || user.isLocal || !isOnline) return
     const { autoSync, syncInterval } = useUIStore.getState()
     if (!autoSync || !syncInterval) return
@@ -393,6 +485,17 @@ export default function App() {
       )
     }
   }, [setQuickNoteOpen, user])
+
+  useEffect(() => {
+    if (!user) return undefined
+    const openRoute = () => {
+      const target = parseInternalNoteHref(window.location.hash)
+      if (target?.noteId) navigateToKnowledgeTarget(target, { replace: true })
+    }
+    openRoute()
+    window.addEventListener('hashchange', openRoute)
+    return () => window.removeEventListener('hashchange', openRoute)
+  }, [navigateToKnowledgeTarget, notes, sharedNotes, user])
 
   useEffect(() => {
     if (!user || viewMode === 'grid' || selectedNoteId || notes.length === 0) return
@@ -461,14 +564,14 @@ export default function App() {
    * it must start closed — otherwise it covers the note list on load.
    */
   useEffect(() => {
-    setSidebarOpen(!sidebarIsOverlay)
-  }, [sidebarIsOverlay, setSidebarOpen])
+    setSidebarOpen(sidebarIsOverlay ? false : desktopSidebarOpen)
+  }, [desktopSidebarOpen, sidebarIsOverlay, setSidebarOpen])
 
   const closeSidebarAfterNavigation = useCallback(() => {
     if (!sidebarIsOverlay) return
     setSidebarOpen(false)
-    sidebarToggleRef.current?.focus()
-  }, [sidebarIsOverlay, setSidebarOpen])
+    ;(isCompact ? mobileSidebarToggleRef : sidebarToggleRef).current?.focus()
+  }, [isCompact, sidebarIsOverlay, setSidebarOpen])
 
   const closeSidebarOverlay = useCallback(() => {
     if (sidebarIsOverlay) setSidebarOpen(false)
@@ -484,6 +587,37 @@ export default function App() {
 
   useFocusTrap(sidebarRef, sidebarOverlayOpen)
   useEscapeKey(sidebarOverlayOpen, closeSidebarOverlay)
+
+  if (databaseLifecycle) {
+    const blocked = databaseLifecycle.type === 'blocked'
+    return (
+      <ThemeProvider>
+        <main className="flex min-h-[100dvh] items-center justify-center bg-app p-5 text-content">
+          <section role="alert" className="w-full max-w-xl border border-warning-border bg-surface-raised p-5 shadow-lg">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-warning-text" aria-hidden="true" />
+              <div className="min-w-0 flex-1">
+                <h1 className="text-ui-lg font-semibold">Reload QuickNotes to continue</h1>
+                <p className="mt-2 text-ui-md text-content-muted">
+                  {blocked
+                    ? 'Another open QuickNotes tab is preventing a required local database upgrade. Close or reload the other tab, then reload this one.'
+                    : 'A newer QuickNotes tab upgraded the local database. This tab stopped editing so it cannot save through an outdated schema.'}
+                </p>
+                <button
+                  type="button"
+                  className="mt-4 inline-flex min-h-9 items-center gap-2 rounded-control bg-accent px-3 font-medium text-on-accent hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                  onClick={() => window.location.reload()}
+                >
+                  <RefreshCw className="h-4 w-4" aria-hidden="true" />
+                  Reload application
+                </button>
+              </div>
+            </div>
+          </section>
+        </main>
+      </ThemeProvider>
+    )
+  }
 
   if (isLoading) {
     return (
@@ -519,12 +653,26 @@ export default function App() {
     )
   }
 
-  const showList = !isCompact || mobileView === 'notes'
+  const showList = isCompact ? mobileView === 'notes' : notesListOpen
   const showEditor = !isCompact || mobileView === 'editor'
+  const showInspector = viewMode !== 'grid' && isXWide && inspectorOpen && Boolean(selectedNoteId)
 
-  const sidebarToggle = (
+  const topSidebarToggle = (
     <IconButton
       ref={sidebarToggleRef}
+      icon={PanelLeft}
+      tone="onBanner"
+      label={sidebarOpen ? 'Hide navigation' : 'Show navigation'}
+      aria-expanded={sidebarOpen}
+      aria-controls="qn-sidebar"
+      data-dialog-return-focus
+      onClick={toggleSidebar}
+    />
+  )
+
+  const mobileSidebarToggle = (
+    <IconButton
+      ref={mobileSidebarToggleRef}
       icon={PanelLeft}
       label={sidebarOpen ? 'Hide navigation' : 'Show navigation'}
       aria-expanded={sidebarOpen}
@@ -534,88 +682,138 @@ export default function App() {
     />
   )
 
+  const notesList = (
+    <Suspense fallback={<EditorLoading />}>
+      <NotesList
+        sidebarToggle={isCompact ? mobileSidebarToggle : null}
+        onOpenNote={() => isCompact && setMobileView('editor')}
+      />
+    </Suspense>
+  )
+
   return (
     <ThemeProvider>
-      <div className="qn-workspace-frame flex h-[100dvh] overflow-hidden bg-app text-content">
+      <div className="qn-workspace-frame flex h-[100dvh] flex-col overflow-hidden bg-app text-content">
         <a href="#qn-main" className="qn-skip-link">
           Skip to content
         </a>
 
+        <TopChrome
+          inactive={sidebarOverlayOpen}
+          navigationToggle={topSidebarToggle}
+          collectionOpen={notesListOpen}
+          onToggleCollection={toggleNotesList}
+          showCollectionControl={viewMode !== 'grid'}
+          inspectorOpen={inspectorOpen}
+          onToggleInspector={toggleInspector}
+          showInspectorControl={viewMode !== 'grid' && isXWide && Boolean(selectedNoteId)}
+        />
+
+        <CatalogConflictBanner />
+        <PersistenceErrorBanner />
+        <CorruptedDataBanner />
+        <UpdateReadyBanner ready={updateReady} />
+
         {sidebarIsOverlay && sidebarOpen && (
           <div
-            className="fixed inset-0 z-drawer animate-fade-in bg-[var(--qn-overlay)]"
+            className="qn-sidebar-scrim fixed inset-x-0 bottom-0 z-drawer animate-fade-in bg-[var(--qn-overlay)]"
             onClick={() => setSidebarOpen(false)}
             aria-hidden="true"
           />
         )}
 
-        <div
-          ref={sidebarRef}
-          id="qn-sidebar"
-          /**
-           * A closed drawer is translated off-screen but still rendered, so
-           * without `inert` its buttons stay in the tab order and a keyboard
-           * user can focus controls they cannot see.
-           *
-           * `inert` takes a string because React 18 passes unknown
-           * attributes through verbatim.
-           */
-          inert={sidebarIsOverlay && !sidebarOpen ? '' : undefined}
-          aria-hidden={sidebarIsOverlay && !sidebarOpen ? 'true' : undefined}
-          role={sidebarOverlayOpen ? 'dialog' : undefined}
-          aria-modal={sidebarOverlayOpen ? 'true' : undefined}
-          aria-label={sidebarOverlayOpen ? 'Navigation' : undefined}
-          className={[
-            'qn-sidebar-frame shrink-0 border-r border-subtle transition-transform duration-base ease-qn-out',
-            sidebarIsOverlay
-              ? `fixed inset-y-0 left-0 z-drawer w-[min(84vw,var(--qn-sidebar-width))] shadow-lg ${
-                  sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-                }`
-              : `relative w-sidebar ${sidebarOpen ? '' : 'hidden'}`,
-          ].join(' ')}
-        >
-          <Sidebar onNavigate={closeSidebarAfterNavigation} />
-        </div>
+        <div className="flex min-h-0 flex-1">
+          <div
+            ref={sidebarRef}
+            id="qn-sidebar"
+            /**
+             * A closed drawer is translated off-screen but still rendered, so
+             * without `inert` its buttons stay in the tab order and a keyboard
+             * user can focus controls they cannot see.
+             *
+             * `inert` takes a string because React 18 passes unknown
+             * attributes through verbatim.
+             */
+            inert={sidebarIsOverlay && !sidebarOpen ? '' : undefined}
+            aria-hidden={sidebarIsOverlay && !sidebarOpen ? 'true' : undefined}
+            role={sidebarOverlayOpen ? 'dialog' : undefined}
+            aria-modal={sidebarOverlayOpen ? 'true' : undefined}
+            aria-label={sidebarOverlayOpen ? 'Navigation' : undefined}
+            className={[
+              'qn-sidebar-frame shrink-0 border-r border-subtle transition-transform duration-base ease-qn-out',
+              sidebarIsOverlay
+                ? `fixed bottom-0 left-0 z-drawer w-[min(84vw,var(--qn-sidebar-width))] shadow-lg ${
+                    sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+                  }`
+                : `relative w-sidebar ${sidebarOpen ? '' : 'hidden'}`,
+            ].join(' ')}
+          >
+            <Sidebar onNavigate={closeSidebarAfterNavigation} />
+          </div>
 
-        <div
-          id="qn-main"
-          tabIndex={-1}
-          inert={sidebarOverlayOpen ? '' : undefined}
-          aria-hidden={sidebarOverlayOpen ? 'true' : undefined}
-          className="flex min-w-0 flex-1 flex-col outline-none"
-        >
-          {viewMode === 'grid' ? (
-            <div className="min-h-0 flex-1 overflow-hidden">
-              <Suspense fallback={<EditorLoading />}>
-                <NotesGrid sidebarToggle={sidebarToggle} />
-              </Suspense>
-            </div>
-          ) : (
-            <div className="flex min-h-0 flex-1">
-              <div
-                className={[
-                  'qn-note-list-pane flex min-h-0 shrink-0 flex-col border-r border-subtle',
-                  isCompact ? 'w-full' : 'w-list 2xl:w-[var(--qn-list-width-wide)]',
-                  showList ? '' : 'hidden',
-                ].join(' ')}
-              >
-                <Suspense fallback={<EditorLoading />}>
-                  <NotesList
-                    sidebarToggle={isWide && sidebarOpen ? null : sidebarToggle}
-                    onOpenNote={() => isCompact && setMobileView('editor')}
-                  />
-                </Suspense>
-              </div>
-
-              <main className={`qn-editor-pane min-w-0 flex-1 ${showEditor ? 'flex' : 'hidden'}`}>
-                <ErrorBoundary>
+          <div
+            inert={sidebarOverlayOpen ? '' : undefined}
+            aria-hidden={sidebarOverlayOpen ? 'true' : undefined}
+            className="flex min-w-0 flex-1"
+          >
+            <div
+              id="qn-main"
+              tabIndex={-1}
+              className="flex min-w-0 flex-1 flex-col outline-none"
+            >
+              {viewMode === 'grid' ? (
+                <div className="min-h-0 flex-1 overflow-hidden">
                   <Suspense fallback={<EditorLoading />}>
-                    <NoteEditor onBack={returnToMobileNotes} showBack={isCompact} />
+                    <NotesGrid sidebarToggle={isCompact ? mobileSidebarToggle : null} />
                   </Suspense>
-                </ErrorBoundary>
-              </main>
+                </div>
+              ) : (
+                <div className="flex min-h-0 flex-1">
+                  {showList && (
+                    isCompact ? (
+                      <div id="qn-collection-pane" className="qn-note-list-pane flex min-h-0 w-full shrink-0 flex-col">
+                        {notesList}
+                      </div>
+                    ) : (
+                      <ResizablePane
+                        id="qn-collection-pane"
+                        label="note list"
+                        width={notesListWidth}
+                        minWidth={280}
+                        maxWidth={isWide ? 420 : 360}
+                        onResizeEnd={setNotesListWidth}
+                        className="qn-note-list-pane flex flex-col border-r border-subtle"
+                      >
+                        {notesList}
+                      </ResizablePane>
+                    )
+                  )}
+
+                  <main className={`qn-editor-pane min-w-0 flex-1 ${showEditor ? 'flex' : 'hidden'}`}>
+                    <ErrorBoundary>
+                      <Suspense fallback={<EditorLoading />}>
+                        <NoteEditor onBack={returnToMobileNotes} showBack={isCompact} />
+                      </Suspense>
+                    </ErrorBoundary>
+                  </main>
+                </div>
+              )}
             </div>
-          )}
+
+            {showInspector && (
+              <ResizablePane
+                label="inspector"
+                width={inspectorWidth}
+                minWidth={260}
+                maxWidth={380}
+                edge="left"
+                onResizeEnd={setInspectorWidth}
+                className="border-l border-subtle"
+              >
+                <InspectorPane onClose={() => setInspectorOpen(false)} />
+              </ResizablePane>
+            )}
+          </div>
         </div>
 
         <ReminderModal />

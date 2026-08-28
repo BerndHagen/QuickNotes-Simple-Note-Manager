@@ -15,6 +15,7 @@ import {
   Zap,
   Trophy,
   Target,
+  CalendarClock,
   X,
 } from 'lucide-react'
 import { formatDateKey, generateId, parseDateKey } from './noteTypes'
@@ -22,6 +23,7 @@ import { useLatestValue } from './useLatestValue'
 import { useEditorDataSync } from './useEditorDataSync'
 import FocusedNoteTitle from './FocusedNoteTitle'
 import WorkspaceMetrics from './WorkspaceMetrics'
+import TodayAgenda from '../workspace/TodayAgenda'
 const MOODS = [
   { id: 1, emoji: '\u{1F622}', label: 'Terrible', color: '#ef4444' },
   { id: 2, emoji: '\u{1F614}', label: 'Bad', color: '#f97316' },
@@ -44,7 +46,7 @@ const WEATHER = [
   { id: 'snowy', emoji: '\u2744\uFE0F', label: 'Snowy' },
 ]
 
-export default function JournalEditor({ data, onChange, noteTitle, onTitleChange, readOnly }) {
+export default function JournalEditor({ data, onChange, note, noteTitle, onTitleChange, readOnly, todayViewToken }) {
   const [journalData, setJournalData] = useState({
     date: data?.date || formatDateKey(),
     mood: data?.mood || null,
@@ -137,6 +139,12 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
   }
 
   const isToday = journalData.date === formatDateKey()
+  useEffect(() => {
+    if (todayViewToken && isToday) setActiveSection('today')
+  }, [isToday, todayViewToken])
+  useEffect(() => {
+    if (!isToday && activeSection === 'today') setActiveSection('morning')
+  }, [activeSection, isToday])
   const dateDisplay = parseDateKey(journalData.date).toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
@@ -154,6 +162,7 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
   )
 
   const sections = [
+    ...(isToday ? [{ id: 'today', label: 'Daily agenda', icon: CalendarClock }] : []),
     { id: 'morning', label: 'Morning', icon: Sun },
     { id: 'day', label: 'During the Day', icon: Cloud },
     { id: 'evening', label: 'Evening', icon: Moon },
@@ -222,6 +231,7 @@ export default function JournalEditor({ data, onChange, noteTitle, onTitleChange
         ))}
       </div>
       <div className="qn-workspace-canvas flex-1 overflow-y-auto p-4">
+        {activeSection === 'today' && isToday && <TodayAgenda currentNoteId={note?.id} />}
         {activeSection === 'morning' && (
           <div className="qn-workspace-panel mx-auto max-w-2xl space-y-6 p-5">
             <div>

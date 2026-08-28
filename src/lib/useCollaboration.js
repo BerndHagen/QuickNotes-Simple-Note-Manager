@@ -1,9 +1,18 @@
 import { useEffect, useRef } from 'react'
+import toast from 'react-hot-toast'
 import { useNotesStore } from '../store'
-import { backend, isBackendConfigured, subscribeToSharedNoteContent } from '../lib/backend'
+import {
+  backend,
+  isBackendConfigured,
+  subscribeToSharedNoteAccess,
+  subscribeToSharedNoteContent,
+  subscribeToCommentMentions,
+} from '../lib/backend'
 
 export const useRealtimeCollaboration = (noteId) => {
   const applyExternalUpdate = useNotesStore((s) => s.applyExternalUpdate)
+  const loadSharedNotes = useNotesStore((s) => s.loadSharedNotes)
+  const isShared = useNotesStore((s) => s.sharedNotes.some((share) => share.notes?.id === noteId))
   const channelRef = useRef(null)
   const lastUpdateRef = useRef(null)
 
@@ -30,6 +39,9 @@ export const useRealtimeCollaboration = (noteId) => {
         })
       }
     })
+    const accessChannel = isShared
+      ? subscribeToSharedNoteAccess(noteId, () => { void loadSharedNotes() })
+      : null
 
     channelRef.current = channel
 
@@ -37,9 +49,22 @@ export const useRealtimeCollaboration = (noteId) => {
       if (channelRef.current) {
         channelRef.current.unsubscribe()
       }
+      accessChannel?.unsubscribe()
       lastUpdateRef.current = null
     }
-  }, [noteId, applyExternalUpdate])
+  }, [noteId, applyExternalUpdate, isShared, loadSharedNotes])
+}
+
+export const useCommentMentions = () => {
+  const user = useNotesStore((state) => state.user)
+
+  useEffect(() => {
+    if (!user?.id || user.isLocal || !isBackendConfigured()) return undefined
+    const channel = subscribeToCommentMentions(user.id, () => {
+      toast.success('You were mentioned in a note comment.')
+    })
+    return () => channel.unsubscribe()
+  }, [user?.id, user?.isLocal])
 }
 
 export const useShareInvitations = () => {
@@ -54,15 +79,15 @@ export const useShareInvitations = () => {
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*',
           schema: 'public',
           table: 'shared_notes',
           filter: `email=eq.${user.email}`,
         },
-        () => {
+        (payload) => {
           void loadSharedNotes()
           
-          if ('Notification' in window && Notification.permission === 'granted') {
+          if (payload.eventType === 'INSERT' && 'Notification' in window && Notification.permission === 'granted') {
             try {
               new Notification('New note shared', {
                 body: 'Someone shared a note with you.',

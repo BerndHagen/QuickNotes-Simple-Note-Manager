@@ -55,7 +55,7 @@ const NoteCard = forwardRef(function NoteCard(
   const extraTags = (note.tags?.length || 0) - visibleTags.length
 
   return (
-    <li className={`group relative px-3 py-1 ${dragHandle ? 'qn-note-card--sortable' : ''}`}>
+    <li className={`group relative border-b border-subtle ${dragHandle ? 'qn-note-card--sortable' : ''}`}>
       <div className="relative">
         {dragHandle}
         <button
@@ -69,13 +69,13 @@ const NoteCard = forwardRef(function NoteCard(
           aria-current={isSelected ? 'true' : undefined}
           aria-pressed={isMultiSelected || undefined}
           className={[
-            'note-card relative flex w-full flex-col gap-1.5 rounded-card border text-left shadow-xs transition-[background-color,border-color,box-shadow] duration-fast',
-            compactMode ? 'px-3 py-2' : 'px-3.5 py-3',
+            'note-card relative flex w-full flex-col gap-1 border-l-[3px] text-left transition-[background-color,border-color] duration-fast',
+            compactMode ? 'px-3 py-1.5' : 'px-3 py-2.5',
             isSelected
-              ? 'border-strong bg-surface-raised shadow-md ring-1 ring-[var(--qn-border-strong)]'
+              ? 'border-l-accent bg-accent-soft'
               : isMultiSelected
-                ? 'border-[var(--qn-info-border)] bg-info-soft shadow-[inset_3px_0_0_var(--qn-info),var(--qn-shadow-xs)]'
-                : 'border-subtle bg-surface-raised hover:border-strong hover:shadow-sm',
+                ? 'border-l-info bg-info-soft'
+                : 'border-l-transparent bg-transparent hover:bg-surface-hover',
             isDragging ? 'opacity-50' : '',
           ].join(' ')}
         >
@@ -146,7 +146,7 @@ const NoteCard = forwardRef(function NoteCard(
             They enter and leave as one group, so an orphan icon never floats in
             the title corner. Persistent state is shown beside the title above. */}
         <div
-          className={`absolute right-1 flex items-center gap-0.5 rounded-control border border-subtle bg-surface-raised/95 p-0.5 opacity-100 shadow-xs transition-opacity duration-fast sm:pointer-events-none sm:opacity-0 sm:group-hover:pointer-events-auto sm:group-hover:opacity-100 sm:group-focus-within:pointer-events-auto sm:group-focus-within:opacity-100 ${compactMode ? 'top-1' : 'top-2'}`}
+          className={`absolute right-2 flex items-center gap-0.5 rounded-control bg-surface-raised p-0.5 opacity-100 transition-opacity duration-fast sm:pointer-events-none sm:opacity-0 sm:group-hover:pointer-events-auto sm:group-hover:opacity-100 sm:group-focus-within:pointer-events-auto sm:group-focus-within:opacity-100 ${compactMode ? 'top-1' : 'top-2'}`}
         >
           <button
             type="button"

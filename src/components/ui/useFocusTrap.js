@@ -32,9 +32,16 @@ export const getFocusable = (root) => {
 const canReceiveRestoredFocus = (element) => {
   if (!element || typeof element.focus !== 'function' || !document.contains(element)) return false
   if (!element.matches?.(FOCUSABLE)) return false
-  if (element.closest('[inert], [hidden], [aria-hidden="true"]')) return false
-  const style = element.ownerDocument?.defaultView?.getComputedStyle?.(element)
-  return !style || (style.display !== 'none' && style.visibility !== 'hidden')
+  for (let current = element; current; current = current.parentElement) {
+    if (
+      current.hasAttribute?.('inert') ||
+      current.hasAttribute?.('hidden') ||
+      current.getAttribute?.('aria-hidden') === 'true'
+    ) return false
+    const style = current.ownerDocument?.defaultView?.getComputedStyle?.(current)
+    if (style && (style.display === 'none' || style.visibility === 'hidden')) return false
+  }
+  return true
 }
 
 /**
@@ -96,7 +103,9 @@ export function useFocusTrap(ref, active, { initialFocusRef } = {}) {
       cancelAnimationFrame(focusFrame)
       node.removeEventListener('keydown', handleKeyDown)
       const previous = previouslyFocused.current
-      const fallback = document.querySelector('[data-dialog-return-focus]')
+      const fallback = Array.from(
+        document.querySelectorAll('[data-dialog-return-focus]')
+      ).find(canReceiveRestoredFocus)
       const toRestore = canReceiveRestoredFocus(previous)
         ? previous
         : canReceiveRestoredFocus(fallback)

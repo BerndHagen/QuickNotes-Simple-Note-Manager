@@ -6,6 +6,7 @@ import LegacyDialog from './ui/LegacyDialog'
 import DialogHeader from './ui/DialogHeader'
 import Button from './ui/Button'
 import { ConfirmDialog } from './FolderDialogs'
+import { getIndexedKnowledgeDocument } from '../lib/knowledge/service'
 
 const normalizeText = (value) => String(value ?? '').toLowerCase().replace(/\s+/g, ' ').trim()
 
@@ -40,6 +41,15 @@ const collectStructuredText = (value, key = '', output = []) => {
 }
 
 const getComparableContent = (note) => {
+  const indexed = getIndexedKnowledgeDocument(note?.id)
+  if (indexed) {
+    return normalizeText([
+      indexed.headingsText,
+      indexed.bodyText,
+      indexed.objectText,
+      indexed.resourceText,
+    ].filter(Boolean).join(' ')).slice(0, 1_000)
+  }
   const richText = normalizeText(stripNoteHtml(note?.content))
   if (richText) return richText.slice(0, 1_000)
   return normalizeText(collectStructuredText(note?.noteData).join(' ')).slice(0, 1_000)

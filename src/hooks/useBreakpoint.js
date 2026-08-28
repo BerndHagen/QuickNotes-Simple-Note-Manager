@@ -6,14 +6,14 @@ import { useEffect, useState } from 'react'
  * These are the three *layout modes* the workspace has, not arbitrary
  * device names:
  *   compact (<768)  — one pane at a time, sidebar is an overlay drawer
- *   medium  (<1024) — list + editor, sidebar is a dismissible drawer
- *   wide    (>=1024) — all three panes persistent
+ *   medium  (<1200) — list + editor, sidebar is a dismissible drawer
+ *   wide    (>=1200) — all three panes persistent
  */
 export const BREAKPOINTS = {
   compact: '(max-width: 767px)',
-  medium: '(min-width: 768px) and (max-width: 1023px)',
-  wide: '(min-width: 1024px)',
-  xwide: '(min-width: 1536px)',
+  medium: '(min-width: 768px) and (max-width: 1199px)',
+  wide: '(min-width: 1200px)',
+  xwide: '(min-width: 1440px)',
 }
 
 export function useMediaQuery(query) {

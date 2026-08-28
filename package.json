@@ -1,7 +1,7 @@
 {
   "name": "quicknotes",
   "private": true,
-  "version": "2.3.0",
+  "version": "3.0.0",
   "license": "GPL-3.0",
   "packageManager": "npm@10.9.4",
   "type": "module",
@@ -13,6 +13,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "benchmark:search": "node scripts/benchmark-search.mjs",
     "screenshots:update": "node scripts/capture-screenshots.mjs",
     "test:deployment": "npm run build && node scripts/validate-deployment.mjs",
     "validate:release-notes": "node scripts/validate-release-notes.mjs"
@@ -89,9 +90,13 @@
     "jspdf": "^4.2.1",
     "lowlight": "^3.1.0",
     "lucide-react": "^0.294.0",
+    "minisearch": "^7.2.0",
+    "pdfjs-dist": "^6.2.108",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hot-toast": "^2.4.1",
+    "tesseract.js": "^6.0.1",
+    "tus-js-client": "^4.3.1",
     "zustand": "^4.4.7"
   },
   "devDependencies": {

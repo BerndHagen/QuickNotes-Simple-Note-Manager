@@ -12,15 +12,20 @@ import { useTranslation } from '../lib/useTranslation'
 import { escapeHtml, sanitizeNoteHtml } from '../lib/sanitizeHtml'
 import { MAX_NOTE_TITLE_LENGTH, MAX_TAG_NAME_LENGTH } from '../lib/dataValidation'
 import { markdownToHtml } from '../lib/noteTransfer'
-import { parseWorkspaceBackup } from '../lib/workspaceBackup'
+import {
+  parseWorkspaceArchive,
+  parseWorkspaceBackup,
+  WORKSPACE_ARCHIVE_EXTENSION,
+} from '../lib/workspaceBackup'
 import LegacyDialog from './ui/LegacyDialog'
 import DialogHeader from './ui/DialogHeader'
 import Button from './ui/Button'
 
 const MAX_IMPORT_FILE_SIZE = 10 * 1024 * 1024
 const MAX_TOTAL_IMPORT_SIZE = 25 * 1024 * 1024
+const MAX_ARCHIVE_FILE_SIZE = 1100 * 1024 * 1024
 const MAX_IMPORT_FILES = 100
-const SUPPORTED_EXTENSIONS = new Set(['json', 'md', 'markdown', 'txt', 'html', 'htm'])
+const SUPPORTED_EXTENSIONS = new Set([WORKSPACE_ARCHIVE_EXTENSION, 'json', 'md', 'markdown', 'txt', 'html', 'htm'])
 
 const describeWorkspaceImport = (counts) => {
   const quantity = (count, singular, plural = `${singular}s`) => (
@@ -54,6 +59,14 @@ export const normalizeTags = (tags) => Array.from(
 )
 
 export const parseFile = async (file) => {
+  const fileExtension = file.name.split('.').pop().toLowerCase()
+  if (fileExtension === WORKSPACE_ARCHIVE_EXTENSION) {
+    return {
+      kind: 'workspace',
+      backup: await parseWorkspaceArchive(file),
+      originalFilename: file.name,
+    }
+  }
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     
@@ -185,7 +198,19 @@ export default function ImportModal() {
       const extension = file.name.split('.').pop().toLowerCase()
       if (!SUPPORTED_EXTENSIONS.has(extension)) {
         rejected.push({ filename: file.name, success: false, error: 'Unsupported file format' })
-      } else if (file.size > MAX_IMPORT_FILE_SIZE) {
+      } else if (extension === WORKSPACE_ARCHIVE_EXTENSION && file.size > MAX_ARCHIVE_FILE_SIZE) {
+        rejected.push({ filename: file.name, success: false, error: 'QuickNotes archive exceeds the 1.1 GB limit' })
+      } else if (
+        extension === WORKSPACE_ARCHIVE_EXTENSION &&
+        (files.length > 0 || accepted.length > 0)
+      ) {
+        rejected.push({ filename: file.name, success: false, error: 'Import one QuickNotes archive at a time' })
+      } else if (
+        extension !== WORKSPACE_ARCHIVE_EXTENSION &&
+        [...files, ...accepted].some((candidate) => candidate.name.toLowerCase().endsWith(`.${WORKSPACE_ARCHIVE_EXTENSION}`))
+      ) {
+        rejected.push({ filename: file.name, success: false, error: 'Import other files separately from a QuickNotes archive' })
+      } else if (extension !== WORKSPACE_ARCHIVE_EXTENSION && file.size > MAX_IMPORT_FILE_SIZE) {
         rejected.push({ filename: file.name, success: false, error: 'File exceeds the 10 MB limit' })
       } else if (accepted.length >= available) {
         rejected.push({
@@ -193,7 +218,7 @@ export default function ImportModal() {
           success: false,
           error: `A maximum of ${MAX_IMPORT_FILES} files can be imported at once`,
         })
-      } else if (totalSize + file.size > MAX_TOTAL_IMPORT_SIZE) {
+      } else if (extension !== WORKSPACE_ARCHIVE_EXTENSION && totalSize + file.size > MAX_TOTAL_IMPORT_SIZE) {
         rejected.push({
           filename: file.name,
           success: false,
@@ -201,7 +226,7 @@ export default function ImportModal() {
         })
       } else {
         accepted.push(file)
-        totalSize += file.size
+        if (extension !== WORKSPACE_ARCHIVE_EXTENSION) totalSize += file.size
       }
     }
 
@@ -392,7 +417,7 @@ export default function ImportModal() {
                 {t('importModal.dropFiles')}
               </p>
               <p id="qn-import-file-support" className="text-sm text-content-muted">
-                {t('importModal.supports')} · JSON backups
+                {t('importModal.supports')} · QuickNotes archives and legacy JSON backups
               </p>
             </div>
             <input
@@ -400,7 +425,7 @@ export default function ImportModal() {
               ref={fileInputRef}
               type="file"
               multiple
-              accept=".json,.md,.markdown,.txt,.html,.htm"
+              accept=".qnotes,.json,.md,.markdown,.txt,.html,.htm"
               onChange={handleFileSelect}
               className="hidden"
               tabIndex={-1}

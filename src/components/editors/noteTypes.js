@@ -7,6 +7,8 @@ import {
   Lightbulb,
   ShoppingCart,
   Calendar,
+  PenTool,
+  Move,
 } from 'lucide-react'
 import { normalizeRecurrence } from '../../lib/taskRecurrence'
 
@@ -19,6 +21,8 @@ export const NOTE_TYPES = {
   BRAINSTORM: 'brainstorm',
   SHOPPING: 'shopping',
   WEEKLY: 'weekly',
+  PAPER: 'paper',
+  CANVAS: 'canvas',
 }
 
 export const formatDateKey = (date = new Date()) => {
@@ -230,6 +234,30 @@ export const NOTE_TYPE_CONFIG = {
     features: ['Rich text', 'Tables & tasks', 'Media & links', 'Focus tools'],
     keywords: ['note', 'document', 'writing', 'research', 'study'],
   },
+  [NOTE_TYPES.PAPER]: {
+    id: NOTE_TYPES.PAPER,
+    name: 'Paper',
+    shortName: 'Paper',
+    description: 'A page-based surface for handwriting, sketching, and visual annotation.',
+    bestFor: 'Handwritten notes, diagrams, study sheets, and printable pages',
+    icon: PenTool,
+    color: '#168966',
+    category: 'Writing',
+    features: ['Vector ink', 'Paper patterns', 'Multiple pages', 'PNG & PDF export'],
+    keywords: ['paper', 'handwriting', 'ink', 'stylus', 'sketch'],
+  },
+  [NOTE_TYPES.CANVAS]: {
+    id: NOTE_TYPES.CANVAS,
+    name: 'Canvas',
+    shortName: 'Canvas',
+    description: 'An open spatial surface for mapping ideas and arranging visual material.',
+    bestFor: 'Concept maps, loose planning, visual thinking, and spatial notes',
+    icon: Move,
+    color: '#39705d',
+    category: 'Creative',
+    features: ['Infinite space', 'Ink & shapes', 'Cards & text', 'Note links'],
+    keywords: ['canvas', 'whiteboard', 'spatial', 'diagram', 'map'],
+  },
   [NOTE_TYPES.TODO_LIST]: {
     id: NOTE_TYPES.TODO_LIST,
     name: 'Task List',
@@ -354,6 +382,36 @@ export const NOTE_TYPE_STARTERS = {
       description: 'Turn a course, book, or talk into durable understanding.',
       title: 'Learning notes',
       content: '<h2>Big idea</h2><p>Explain the central concept simply.</p><h2>Key concepts</h2><ul><li>Concept and explanation</li></ul><h2>Questions</h2><ul><li>What is still unclear?</li></ul><h2>Apply it</h2><ul data-type="taskList"><li data-type="taskItem" data-checked="false"><p>Try the concept in practice</p></li></ul>',
+    },
+  ],
+  [NOTE_TYPES.PAPER]: [
+    {
+      id: 'blank',
+      name: 'Blank paper',
+      description: 'Start on a warm blank A4 page.',
+      title: 'Untitled paper',
+    },
+    {
+      id: 'ruled',
+      name: 'Ruled paper',
+      description: 'Start with lines for handwriting and study notes.',
+      title: 'Paper notes',
+      data: () => ({ spatialPreset: { pattern: 'ruled', surface: 'warm', size: 'a4' } }),
+    },
+    {
+      id: 'dot',
+      name: 'Dot grid',
+      description: 'A restrained dot grid for mixed writing and diagrams.',
+      title: 'Dot-grid notes',
+      data: () => ({ spatialPreset: { pattern: 'dot', surface: 'warm', size: 'a4' } }),
+    },
+  ],
+  [NOTE_TYPES.CANVAS]: [
+    {
+      id: 'blank',
+      name: 'Blank canvas',
+      description: 'Start with an open spatial workspace.',
+      title: 'Untitled canvas',
     },
   ],
   [NOTE_TYPES.TODO_LIST]: [
@@ -879,10 +937,12 @@ export const normalizeNoteData = (noteType, value) => {
           typeof item === 'string'
             ? { id: generateId(), task: item, owner: '', dueDate: '', completed: false }
             : {
+                ...item,
                 id: item.id || generateId(),
                 task: item.task || item.text || item.title || 'Action item',
                 owner: item.owner || item.assignee || '',
                 dueDate: item.dueDate || '',
+                priority: allowedValue(item.priority, ['high', 'medium', 'low', 'none'], 'none'),
                 completed: !!item.completed,
               }
         ),
@@ -1117,6 +1177,9 @@ export const getStarterData = (noteType, starterId = 'blank') => {
   const starter = starters.find((item) => item.id === starterId) || starters[0]
 
   if (!starter || noteType === NOTE_TYPES.STANDARD) return null
+  if (noteType === NOTE_TYPES.PAPER || noteType === NOTE_TYPES.CANVAS) {
+    return starter.data?.() || null
+  }
   return starter.data?.() || getDefaultData(noteType)
 }
 

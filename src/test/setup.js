@@ -36,7 +36,7 @@ afterEach(() => {
 
 // jsdom implements neither of these, and several components read them
 // during render.
-if (!window.matchMedia) {
+if (typeof window !== 'undefined' && !window.matchMedia) {
   window.matchMedia = (query) => ({
     matches: false,
     media: query,
@@ -49,7 +49,7 @@ if (!window.matchMedia) {
   })
 }
 
-if (!window.requestAnimationFrame) {
+if (typeof window !== 'undefined' && !window.requestAnimationFrame) {
   window.requestAnimationFrame = (cb) => setTimeout(() => cb(Date.now()), 0)
   window.cancelAnimationFrame = (id) => clearTimeout(id)
 }

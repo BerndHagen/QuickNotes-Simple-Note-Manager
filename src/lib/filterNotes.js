@@ -1,4 +1,5 @@
 import { htmlToPlainText } from './utils'
+import { getIndexedKnowledgeText } from './knowledge/service'
 
 export const STARRED_FILTER = '__starred__'
 
@@ -28,6 +29,8 @@ const collectStructuredText = (value, parts, seen) => {
 }
 
 export const getSearchableText = (note) => {
+  const indexedText = getIndexedKnowledgeText(note?.id)
+  if (indexedText) return indexedText.toLocaleLowerCase()
   const cached = plainTextCache.get(note.id)
   if (
     cached &&

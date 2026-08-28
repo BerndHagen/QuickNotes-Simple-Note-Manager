@@ -15,7 +15,10 @@ const mocks = vi.hoisted(() => {
 })
 
 vi.mock('react-hot-toast', () => ({ default: mocks.toast }))
-vi.mock('../lib/db', () => ({ saveNoteVersion: mocks.saveNoteVersion }))
+vi.mock('../lib/db', async (importOriginal) => ({
+  ...await importOriginal(),
+  saveNoteVersion: mocks.saveNoteVersion,
+}))
 vi.mock('../lib/useTranslation', () => ({
   useTranslation: () => ({
     language: 'en',

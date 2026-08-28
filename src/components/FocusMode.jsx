@@ -190,7 +190,7 @@ export default function FocusMode() {
         onBlurCapture={(event) => {
           if (!controlsRef.current?.contains(event.relatedTarget)) setControlsFocused(false)
         }}
-        className={`absolute inset-x-0 top-0 z-20 border-b border-black/10 bg-inherit px-3 py-2.5 shadow-xs transition-opacity duration-fast sm:px-5 ${
+        className={`qn-focus-header absolute inset-x-0 top-0 z-20 border-b px-3 py-2.5 shadow-xs transition-opacity duration-fast sm:px-5 ${
           showControls || controlsFocused ? 'opacity-100' : 'pointer-events-none opacity-0'
         }`}
       >

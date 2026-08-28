@@ -43,7 +43,10 @@ function deploymentAssetsPlugin(basePath) {
   return {
     name: 'quicknotes-deployment-assets',
     apply: 'build',
-    async closeBundle() {
+    // Vite 8's environment build can invoke closeBundle before Rolldown has
+    // written the client output. writeBundle is the first hook where the
+    // manifest and copied public assets are guaranteed to exist.
+    async writeBundle() {
       const fallbackPath = fileURLToPath(new URL('./dist/404.html', import.meta.url))
       const fallback = await readFile(fallbackPath, 'utf8')
       const marker = '__QUICKNOTES_BASE_PATH__'
@@ -84,6 +87,13 @@ export default defineConfig(configEnvironment => {
       outDir: 'dist',
       manifest: 'build-assets.json',
       sourcemap: false,
+    },
+    // IndexedDB integration files intentionally exercise the production
+    // QuickNotesDB name. Running those files concurrently lets independent
+    // fake-indexeddb cleanup hooks erase each other's fixtures and makes the
+    // release gate nondeterministic, so keep file execution serial.
+    test: {
+      fileParallelism: false,
     },
   }
 })

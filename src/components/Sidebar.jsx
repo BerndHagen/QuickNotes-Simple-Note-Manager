@@ -144,6 +144,7 @@ export default function Sidebar({ onNavigate }) {
     setArchiveViewOpen,
     setNoteTypesModalOpen,
     setTasksViewOpen,
+    openTodayAgenda,
     setMobileView,
     setTagManagerOpen,
     setSharedNotesViewOpen,
@@ -232,6 +233,7 @@ export default function Sidebar({ onNavigate }) {
     )
     setSelectedFolder(null)
     setSelectedTagFilter(null)
+    openTodayAgenda()
     setSelectedNote(target.id)
     setMobileView('editor')
   }
@@ -241,7 +243,7 @@ export default function Sidebar({ onNavigate }) {
       aria-label="Workspace"
       className="qn-nav-surface flex h-full w-full flex-col bg-nav text-nav-text"
     >
-      <div className="flex shrink-0 justify-end px-3 pt-3 lg:hidden">
+      <div className="qn-sidebar-close flex shrink-0 justify-end px-3 pt-3">
         <NavIconButton
           icon={X}
           label={t('common.close', 'Close navigation')}
@@ -250,7 +252,7 @@ export default function Sidebar({ onNavigate }) {
       </div>
 
       {/* Scrollable navigation */}
-      <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-3 pb-4 pt-4 max-lg:pt-2">
+      <div className="qn-sidebar-scroll min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-3 pb-4 pt-4">
         <ul className="space-y-0.5">
           <li>
             <NavItem
@@ -374,7 +376,7 @@ export default function Sidebar({ onNavigate }) {
                           icon={Pencil}
                           label={`Edit ${view.name}`}
                           onClick={go(() => setSmartViewModalOpen(true, view.id))}
-                          className="qn-nav-row-action absolute right-1.5 opacity-0 backdrop-blur-sm focus-visible:opacity-100 group-hover:opacity-100"
+                          className="qn-nav-row-action absolute right-1.5 opacity-0 focus-visible:opacity-100 group-hover:opacity-100"
                         />
                       }
                     />
@@ -423,13 +425,11 @@ export default function Sidebar({ onNavigate }) {
                       selected={selectedFolderId === folder.id}
                       onClick={go(() => setSelectedFolder(folder.id))}
                       trailing={
-                        /* The rail paints a gradient, so this control masks the
-                           label behind it with a blur rather than a flat fill. */
                         <NavIconButton
                           icon={Pencil}
                           label={`${t('common.edit', 'Edit')} ${folder.name}`}
                           onClick={go(() => setFolderDialog({ folder }))}
-                          className="qn-nav-row-action absolute right-1.5 opacity-0 backdrop-blur-sm focus-visible:opacity-100 group-hover:opacity-100"
+                          className="qn-nav-row-action absolute right-1.5 opacity-0 focus-visible:opacity-100 group-hover:opacity-100"
                         />
                       }
                     />

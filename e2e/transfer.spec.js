@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import { readFile } from 'node:fs/promises'
-import { createNote, expectNoHorizontalOverflow, signIn } from './helpers'
+import { CREDENTIALS, createNote, expectNoHorizontalOverflow, signIn } from './helpers'
 
 const formatViolations = (violations) =>
   violations
@@ -188,4 +188,42 @@ test('PDF export downloads a real file and preserves the note paper setting', as
   expect(bytes.length).toBeGreaterThan(5_000)
   expect(bytes.toString('latin1').match(/\/Type \/Page\b/g) || []).toHaveLength(1)
   expect(page.context().pages()).toHaveLength(pagesBefore)
+})
+
+test('complete .qnotes archive exports and restores through the production UI', async ({ page }) => {
+  test.skip(Boolean(CREDENTIALS.email), 'The destructive round-trip is isolated to a local test workspace')
+  await signIn(page)
+  const title = `Archive round-trip ${Date.now()}`
+  await createNote(page, title)
+  const editor = page.getByRole('textbox', { name: 'Note content' })
+  await editor.click()
+  await editor.pressSequentially('Canonical content survives the binary workspace archive.')
+  await editor.blur()
+
+  await page.getByRole('button', { name: /^settings$/i }).first().click()
+  let settings = page.getByRole('dialog', { name: 'Settings' })
+  await settings.getByRole('button', { name: 'Data', exact: true }).click()
+  const downloadPromise = page.waitForEvent('download')
+  await settings.getByRole('button', { name: 'Export data', exact: true }).click()
+  const download = await downloadPromise
+  expect(download.suggestedFilename()).toMatch(/\.qnotes$/)
+  const archivePath = await download.path()
+  expect(archivePath).toBeTruthy()
+  const archiveBytes = await readFile(archivePath)
+
+  await settings.getByRole('button', { name: 'Import data', exact: true }).click()
+  const dialog = page.getByRole('dialog', { name: 'Import notes' })
+  // Playwright stores a download under an extensionless temporary UUID.
+  // Recreate the browser-selected file with the user-visible download name so
+  // this exercises the same extension/MIME boundary as a real round trip.
+  await dialog.locator('input[type="file"]').setInputFiles({
+    name: download.suggestedFilename(),
+    mimeType: 'application/vnd.quicknotes.archive',
+    buffer: archiveBytes,
+  })
+  await dialog.getByRole('button', { name: /^import 1 file$/i }).click()
+  await expect(dialog.getByText(/import complete/i)).toBeVisible({ timeout: 30_000 })
+  await dialog.getByRole('button', { name: /^done$/i }).click()
+
+  await expect(page.getByRole('heading', { name: title, exact: true })).toHaveCount(2)
 })
