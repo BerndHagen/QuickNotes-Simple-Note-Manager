@@ -6,7 +6,7 @@ Audio recording uses `getUserMedia` and `MediaRecorder` after an explicit user a
 
 Where browser `SpeechRecognition` is available, a user can opt into a live transcript before recording. This provider is classified as **browser-managed** because the browser or operating system may send microphone audio to a service. It requires **External allowed** privacy mode and explicit consent for that recording session.
 
-Final speech results become bounded `RecognizedContent` segments linked to the audio resource with approximate capture-time start/end positions. Interim text is transient. Playback lists timestamped segments; selecting a segment seeks the audio, and Task 3 search opens the recording at the stored start time. Corrections retain timestamps and provider provenance.
+Final speech results become bounded `RecognizedContent` segments linked to the audio resource with approximate capture-time start/end positions. Interim text is transient. Playback lists timestamped segments; selecting a segment seeks the audio, and lexical search opens the recording at the stored start time. Corrections retain timestamps and provider provenance.
 
 ## Imported and previously recorded audio
 
@@ -17,13 +17,13 @@ QuickNotes has an optional, restartable external provider for attached audio fil
 - The source is canonical audio linked to the current note and is no larger than 24 MB.
 - The authenticated `transcribe-audio` Supabase Edge Function confirms its server-held OpenAI provider credential and `whisper-1` model are available.
 
-The browser sends only note/resource identity to the function. The normal Task 4 capture adapter uploads the canonical source first; the function revalidates the authenticated owner, note-resource link, Storage path, MIME type, byte size, and SHA-256 fingerprint before it reads the private object. Provider credentials never enter the browser, IndexedDB, jobs, backups, logs, or source control.
+The browser sends only note/resource identity to the function. The capture adapter uploads the canonical source first; the function revalidates the authenticated owner, note-resource link, Storage path, MIME type, byte size, and SHA-256 fingerprint before it reads the private object. Provider credentials never enter the browser, IndexedDB, jobs, backups, logs, or source control.
 
 The provider returns bounded segment timestamps through `verbose_json`. QuickNotes validates the result against the source fingerprint and atomically replaces the current machine transcript. Time-overlapping segments retain stable recognition identities, user corrections, and correction ownership; obsolete segments become superseded. The original audio is never rewritten.
 
 The persisted job contains source IDs, a fingerprint, language choice, provider identity, and operation-scoped consent—not audio bytes or credentials. Queued/running work is recovered after reload. Switching accounts suspends the prior owner's in-memory work back to its durable queue and activates only the selected owner's jobs. Cancellation aborts the browser request and prevents a result from being committed, although an upstream provider request that has already started may still finish remotely.
 
-Timestamped transcript rows use the existing Task 3 lexical search, source navigation, correction editor, canonical Todo creation, capture cloud synchronization, and backup/import paths. No separate transcript format is introduced.
+Timestamped transcript rows use the existing lexical search, source navigation, correction editor, canonical Todo creation, capture cloud synchronization, and backup/import paths. No separate transcript format is introduced.
 
 ## Deployment and limits
 

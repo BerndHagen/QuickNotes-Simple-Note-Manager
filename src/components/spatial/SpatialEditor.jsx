@@ -42,12 +42,14 @@ import { isBrowserHandwritingSupported } from '../../lib/intelligence/browserHan
 import HandwritingRecognitionModal from './HandwritingRecognitionModal'
 import InkCanvas from './InkCanvas'
 import ImageOcrModal from './ImageOcrModal'
+import PaperPageThumbnail from './PaperPageThumbnail'
 import SpatialObjectLayer from './SpatialObjectLayer'
 import SpatialToolbar from './SpatialToolbar'
 import AttachmentAnnotationModal from './AttachmentAnnotationModal'
 import useSpatialWorkspace from './useSpatialWorkspace'
 
 let spatialClipboard = null
+const EMPTY_SPATIAL_OBJECTS = Object.freeze([])
 
 const emptyChangeSet = () => ({
   putObjects: [],
@@ -82,7 +84,7 @@ const createDisplayThumbnail = (image, mimeType) => {
   return canvas.toDataURL(mimeType === 'image/jpeg' ? 'image/jpeg' : 'image/png', 0.86)
 }
 
-function PageRail({ pages, activePageId, onSelect, onAdd, onDuplicate, onDelete, onMove, editingDisabled = false }) {
+function PageRail({ pages, objectsForPage, activePageId, onSelect, onAdd, onDuplicate, onDelete, onMove, resolveNoteTitle, resolveResource, editingDisabled = false }) {
   return (
     <aside className="qn-paper-page-rail" aria-label="Paper pages">
       <div className="qn-paper-page-rail__header">
@@ -93,8 +95,16 @@ function PageRail({ pages, activePageId, onSelect, onAdd, onDuplicate, onDelete,
         {pages.map((page, index) => (
           <li key={page.id} data-active={page.id === activePageId ? 'true' : 'false'}>
             <button type="button" className="qn-paper-page-entry" onClick={() => onSelect(page.id)}>
-              <span className="qn-paper-page-thumbnail" data-surface={page.surface} data-pattern={page.pattern} aria-hidden="true" />
-              <span>{index + 1}</span>
+              <span className="qn-paper-page-preview">
+                <PaperPageThumbnail
+                  page={page}
+                  objects={objectsForPage(page.id)}
+                  resolveNoteTitle={resolveNoteTitle}
+                  resolveResource={resolveResource}
+                />
+                <span className="qn-paper-page-index" aria-hidden="true">{index + 1}</span>
+              </span>
+              <span className="qn-sr-only">Page {index + 1}</span>
             </button>
             {page.id === activePageId && (
               <div className="qn-paper-page-actions">
@@ -164,6 +174,15 @@ export default function SpatialEditor({ note, kind, noteTitle, onTitleChange, re
   const pages = useMemo(() => workspace?.pages || [], [workspace?.pages])
   const objects = useMemo(() => workspace?.objects || [], [workspace?.objects])
   const visibleObjects = useMemo(() => objects.filter((object) => !object.data?.hidden), [objects])
+  const objectsByPage = useMemo(() => {
+    const grouped = new Map()
+    for (const object of visibleObjects) {
+      const current = grouped.get(object.pageId) || []
+      current.push(object)
+      grouped.set(object.pageId, current)
+    }
+    return grouped
+  }, [visibleObjects])
   const replayTimeline = useMemo(() => buildInkReplay(objects), [objects])
   const replayInkObjects = useMemo(
     () => replay.active ? inkObjectsAtReplayTime(replayTimeline, replay.elapsed) : null,
@@ -195,7 +214,7 @@ export default function SpatialEditor({ note, kind, noteTitle, onTitleChange, re
       .map(([objectKind, count]) => `${count} ${objectKind === 'stroke' ? 'ink stroke' : objectKind}${count === 1 ? '' : 's'}`)
       .join(', ') + '. Raw handwriting does not yet have a text transcription.'
   }, [visibleObjects])
-  const pageObjects = useCallback((pageId) => visibleObjects.filter((object) => object.pageId === pageId), [visibleObjects])
+  const pageObjects = useCallback((pageId) => objectsByPage.get(pageId) || EMPTY_SPATIAL_OBJECTS, [objectsByPage])
   const linkableNotes = useMemo(
     () => notes.filter((candidate) => candidate.id !== note.id && !candidate.deleted),
     [note.id, notes]
@@ -1175,12 +1194,15 @@ export default function SpatialEditor({ note, kind, noteTitle, onTitleChange, re
         <div className="qn-paper-workspace">
           <PageRail
             pages={pages}
+            objectsForPage={pageObjects}
             activePageId={activePage?.id}
             onSelect={(id) => { setActivePageId(id); setSelectedIds(new Set()) }}
             onAdd={addPage}
             onDuplicate={duplicatePage}
             onDelete={deletePage}
             onMove={movePage}
+            resolveNoteTitle={resolveNoteTitle}
+            resolveResource={resolveResource}
             editingDisabled={editingBlocked}
           />
           <div ref={stageRef} className="qn-paper-stage" onWheel={handleWheel}>

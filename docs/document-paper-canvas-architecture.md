@@ -1,6 +1,6 @@
 # Document, Paper, and Canvas architecture
 
-Task 2 establishes three purpose-built content surfaces inside the existing QuickNotes shell. It does not replace the Task 1 application chrome or the current rich-text and structured editors.
+QuickNotes provides three purpose-built content surfaces inside one application shell. Paper and Canvas extend rather than replace the rich-text and structured editors.
 
 ## Current application model
 
@@ -36,7 +36,7 @@ Dexie schema version 3 adds owner-scoped, per-record storage:
 
 Spatial saves are atomic Dexie transactions. A completed stroke or object transaction writes only the changed document/object/page rows, then updates the note catalog timestamp. Pointer moves never write to Zustand or IndexedDB. The editor reports `Saving`, `Saved`, or `Save failed` from the actual persistence promise; `Saved` is never optimistic.
 
-The workspace snapshot deliberately excludes spatial payloads. Backup version 3 carries spatial documents, pages, objects, and resources as separate bounded arrays. Import validates shapes, sizes, nesting, types, and references before committing the catalog and spatial rows in one transaction. Removing an image placement or permanently deleting a note collects its resource only after the final cross-note reference disappears; ordinary trash preserves spatial data. Version checkpoints remain separate: ProseMirror history continues to own document undo; the spatial engine owns transaction history. The Supabase adapter synchronizes the same per-record DTOs through a dedicated bounded queue and row-level policies without turning `noteData` into a giant sync blob or introducing a CRDT; more sophisticated conflict resolution remains Task 5 work.
+The workspace snapshot deliberately excludes spatial payloads. Backup version 3 carries spatial documents, pages, objects, and resources as separate bounded arrays. Import validates shapes, sizes, nesting, types, and references before committing the catalog and spatial rows in one transaction. Removing an image placement or permanently deleting a note collects its resource only after the final cross-note reference disappears; ordinary trash preserves spatial data. Version checkpoints remain separate: ProseMirror history continues to own document undo; the spatial engine owns transaction history. The Supabase adapter synchronizes the same per-record DTOs through a dedicated bounded queue and row-level policies without turning `noteData` into a giant sync blob or introducing a CRDT. Concurrent same-owner spatial revisions are retained as durable conflicts and require an explicit graph choice; same-object realtime co-editing is not claimed.
 
 ## Shared spatial model
 
@@ -113,7 +113,7 @@ Canvas is an effectively infinite world. It persists a last viewport, but all co
 
 Toolbars use real buttons with names, pressed states, keyboard shortcuts, visible focus, and no color-only status. Save and selection changes have polite live regions. Text-like objects remain keyboard focusable. A non-visual selection summary provides object type and bounds. Motion is minimal and respects reduced-motion preferences.
 
-Desktop keeps the Task 1 three-pane shell. Compact layouts show the existing back/title bar and prioritize the surface. Tool controls collapse into a horizontally scrollable, dense toolbar; important drawing tools remain reachable at touch size. Dark mode keeps the dark-forest chrome, neutral controls, and explicit Paper surface choice instead of recoloring every page automatically.
+Desktop keeps the shared three-pane shell. Compact layouts show the existing back/title bar and prioritize the surface. Tool controls collapse into a horizontally scrollable, dense toolbar; important drawing tools remain reachable at touch size. Dark mode keeps the dark-forest chrome, neutral controls, and explicit Paper surface choice instead of recoloring every page automatically.
 
 ## Migration sequence
 

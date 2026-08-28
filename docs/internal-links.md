@@ -16,7 +16,7 @@ Document links persist `data-note-id`, optional `data-note-anchor-id`, and optio
 
 Meaningful Document headings receive a UUID `data-anchor-id` through a Tiptap extension. The extension preserves existing IDs and assigns missing IDs in one transaction, so re-rendering does not regenerate anchors. Outline navigation and copied heading links use that identity.
 
-Paper and Canvas objects already use stable Task 2 IDs. A spatial link or search result can target an object. Paper switches to the object's page and selects it; Canvas selects and centers it. Deleting an anchor or object leaves the note link safe at the note boundary and produces a missing precise target rather than guessing by display text.
+Paper and Canvas objects use stable spatial IDs. A spatial link or search result can target an object. Paper switches to the object's page and selects it; Canvas selects and centers it. Deleting an anchor or object leaves the note link safe at the note boundary and produces a missing precise target rather than guessing by display text.
 
 ## Extraction and backlinks
 
@@ -37,4 +37,3 @@ Opening a search result or link uses one navigation action for Document, Paper, 
 Renaming, moving, archiving, or restoring a note preserves its ID and relationships. Trash preserves canonical content and derived link diagnostics, but UI navigation to a trashed source or target is disabled unless the user is already working in the Trash context. Permanent deletion removes canonical content; the next reconciliation represents incoming targets as missing and removes outgoing rows. A later note with an unrelated new ID cannot silently capture the old reference.
 
 External URLs remain ordinary sanitized links and are never interpreted as internal note identities. Malformed encodings, control characters, and missing IDs are rejected without throwing during rendering.
-

@@ -2,7 +2,7 @@
 
 ## Engine selection
 
-Task 3 uses MiniSearch 7.2 behind QuickNotes' own `SearchDocument` and service interfaces. MiniSearch supports in-memory full-text indexing, field boosts, prefix/fuzzy matching, filters, and incremental replacement without defining QuickNotes' canonical storage contract ([MiniSearch project](https://github.com/lucaong/minisearch), [search options](https://lucaong.github.io/minisearch/classes/MiniSearch.MiniSearch.html#search)). FlexSearch was evaluated as an alternative, but its document/persistence APIs would not remove the need for owner-scoped canonical projections ([FlexSearch project](https://github.com/nextapps-de/flexsearch)).
+QuickNotes uses MiniSearch 7.2 behind its own `SearchDocument` and service interfaces. MiniSearch supports in-memory full-text indexing, field boosts, prefix/fuzzy matching, filters, and incremental replacement without defining QuickNotes' canonical storage contract ([MiniSearch project](https://github.com/lucaong/minisearch), [search options](https://lucaong.github.io/minisearch/classes/MiniSearch.MiniSearch.html#search)). FlexSearch was evaluated as an alternative, but its document/persistence APIs would not remove the need for owner-scoped canonical projections ([FlexSearch project](https://github.com/nextapps-de/flexsearch)).
 
 The MiniSearch token index lives in a long-lived module worker. `SearchDocument` projections persist in IndexedDB so startup and worker recovery do not need to reinterpret every canonical note if its fingerprint is unchanged. Persisted projections remain derived and rebuildable.
 

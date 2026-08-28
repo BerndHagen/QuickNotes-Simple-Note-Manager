@@ -9,7 +9,7 @@
 | v1 | notes, folders, tags, noteTags, noteVersions, syncQueue | original catalog/document persistence |
 | v2 | workspaceSnapshots; owner indexes | owner isolation and recoverable workspace snapshot |
 | v3 | spatialDocuments, spatialPages, spatialObjects, resources | Paper/Canvas canonical graphs |
-| v4 | searchDocuments, knowledgeLinks, knowledgeIndexState | rebuildable Task 3 projections |
+| v4 | searchDocuments, knowledgeLinks, knowledgeIndexState | rebuildable knowledge projections |
 | v5 | noteResources, resourceBlobs, recordingSessions, resourceChunks, recognizedContent, intelligenceJobs/settings | capture sources, recovery, recognition |
 | v6 | captureSyncState | capture hydration marker |
 | v7 | spatialAnnotations/pages/objects | canonical image/PDF overlays |
@@ -33,5 +33,5 @@ Storage bucket at owner/resource-derived paths.
 
 RLS and identity-hardening triggers are authoritative. Realtime publication is
 enabled only where adapters subscribe. Repository migrations are the reviewable
-history, but live-project inspection is required for a release audit because a
-SQL file alone does not prove deployed state.
+history, but production operators must inspect their live project because a SQL
+file alone does not prove deployed state.

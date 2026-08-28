@@ -1,7 +1,7 @@
 # Known limitations
 
-This list describes verified boundaries of the 2026-08-28 Task 5 audit. It is
-not a claim that QuickNotes is bug-free or cannot lose data.
+This list describes the verified QuickNotes 3.x release boundary. It is not a
+claim that QuickNotes is bug-free or cannot lose data.
 
 ## Release and operations
 
@@ -13,8 +13,8 @@ not a claim that QuickNotes is bug-free or cannot lose data.
 - The static GitHub Pages deployment cannot supply HTTP-only security headers
   such as CSP `frame-ancestors`. A production host should add anti-framing and
   the repository CSP at the response-header layer.
-- The Task 5 evidence predates the 3.0 release-closure commit. Release tags must
-  be created only from a clean commit that passes the normal release gate.
+- Release tags must be created only from a clean reviewed commit that passes
+  the normal release gate.
 
 ## Providers and platform capabilities
 

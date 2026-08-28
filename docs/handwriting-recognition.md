@@ -25,4 +25,4 @@ The original strokes remain unchanged. The user may:
 
 The implementation accepts at most 5,000 strokes and 250,000 points per operation. Recognition accuracy, language coverage, and offline availability depend on the browser/operating-system implementation.
 
-Ink-to-shape and ink-to-math are not implemented. Ordinary handwriting is never silently converted to shapes or equations.
+Ink-to-shape is a separate, explicit geometry command for conservative line, arrow, rectangle, and ellipse candidates. It retains the original source stroke for replay and undo. Ink-to-math is not implemented, and ordinary handwriting is never silently converted to shapes or equations.

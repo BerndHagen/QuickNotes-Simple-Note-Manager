@@ -1,6 +1,6 @@
 # Intelligence and capture architecture
 
-Task 4 extends the existing QuickNotes note, spatial, resource, and knowledge systems. It does not create an AI workspace or a second catalog. The original note, ink, image, PDF, or audio remains the source material. Recognition adds attributable, reviewable content to that source.
+The intelligence and capture layer extends the existing QuickNotes note, spatial, resource, and knowledge systems. It does not create an AI workspace or a second catalog. The original note, ink, image, PDF, or audio remains the source material. Recognition adds attributable, reviewable content to that source.
 
 ## Design constraints
 
@@ -9,7 +9,7 @@ Task 4 extends the existing QuickNotes note, spatial, resource, and knowledge sy
 - Recognition, transcription, translation, embeddings, and generative assistance use QuickNotes-owned provider interfaces. React components do not call vendor SDKs directly.
 - Machine output is untrusted, bounded, and sanitized before persistence or display.
 - Expensive work uses one bounded, cancellable job service. Manual work outranks automatic indexing.
-- Task 1 chrome, Task 2 content engines, and Task 3 lexical knowledge/search remain canonical.
+- The shared application chrome, content engines, and lexical knowledge/search remain canonical.
 
 ## Sources, resources, and binary payloads
 
@@ -26,11 +26,11 @@ Note
        -> source locator + source fingerprint
 ```
 
-Resources are shared attachment records, not editor-specific blobs. Task 4 broadens the image-only contract to `image`, `pdf`, and `audio`. Metadata contains stable identity, owner, MIME type, byte size, file name, checksums/fingerprints, dimensions/duration/page count where known, and timestamps. Binary payloads live in a separate IndexedDB store so audio and PDFs are never embedded as base64 in `note.content`, `noteData`, or spatial object JSON. Spatial image placements continue to reference the resource ID.
+Resources are shared attachment records, not editor-specific blobs. The contract supports `image`, `pdf`, and `audio`. Metadata contains stable identity, owner, MIME type, byte size, file name, checksums/fingerprints, dimensions/duration/page count where known, and timestamps. Binary payloads live in a separate IndexedDB store so audio and PDFs are never embedded as base64 in `note.content`, `noteData`, or spatial object JSON. Spatial image placements continue to reference the resource ID.
 
 Locally imported files are canonical user data. Deleting a placement does not delete a resource while any note, placement, transcript, OCR row, or task source still references it. Trash preserves resources. Permanent deletion performs reference-aware collection.
 
-Backups carry resource metadata and encoded binary payloads as separate bounded records. Import validates count, MIME allowlists, declared and actual size, identity uniqueness, and references before committing. Cloud binary synchronization stays behind the dedicated Task 4 adapter and private Supabase Storage; provider input is never read directly from arbitrary URLs. Source bytes are uploaded before metadata, downloads are checksum-validated before an atomic local commit, and metadata-only updates do not resend an unchanged payload. Files over 6 MB use authenticated resumable TUS uploads with fixed 6 MB chunks; the TUS client is loaded only for that path.
+Backups carry resource metadata and encoded binary payloads as separate bounded records. Import validates count, MIME allowlists, declared and actual size, identity uniqueness, and references before committing. Cloud binary synchronization stays behind the dedicated capture adapter and private Supabase Storage; provider input is never read directly from arbitrary URLs. Source bytes are uploaded before metadata, downloads are checksum-validated before an atomic local commit, and metadata-only updates do not resend an unchanged payload. Files over 6 MB use authenticated resumable TUS uploads with fixed 6 MB chunks; the TUS client is loaded only for that path.
 
 ## Recognized content and provenance
 
@@ -63,7 +63,7 @@ Source fingerprints use canonical source revisions rather than recognized text. 
 
 ## Source navigation
 
-Task 3 search locations are extended, not replaced. A recognized location contains `recognitionId` plus the relevant note, resource, Paper page, source object/region, PDF page, or audio time range. Search navigation opens the existing note/editor and then:
+Lexical search locations are extended, not replaced. A recognized location contains `recognitionId` plus the relevant note, resource, Paper page, source object/region, PDF page, or audio time range. Search navigation opens the existing note/editor and then:
 
 - selects and centers a spatial object or Paper region;
 - opens the referenced image/PDF at the stored page/region; or
@@ -95,7 +95,7 @@ Provider errors use typed categories (`unsupported`, `unavailable`, `permission`
 - Browser `SpeechRecognition` is classified as `browserManaged`, because browsers may send microphone audio to a server. It is never called local merely because no QuickNotes API key is used. On-device mode may be offered only after runtime capability and language-pack checks.
 - Browser handwriting uses the WICG/Chromium Handwriting Recognition API where available and passes the canonical stroke vectors. It is classified as browser-managed because the operating system/browser controls whether recognition is on-device or service-backed. Unsupported browsers omit the action rather than calling OCR or returning fabricated text. A future external provider remains possible behind an authenticated server function.
 - ONNX Runtime Web is an available boundary for future optional local models, but no large model is bundled or cached without an explicit model-management UX.
-- Supabase `pgvector` is a possible opt-in cloud semantic implementation. Lexical Task 3 search remains primary; embeddings are derived, owner-scoped, versioned, and rebuildable.
+- Supabase `pgvector` is a possible opt-in cloud semantic implementation. Lexical search remains primary; embeddings are derived, owner-scoped, versioned, and rebuildable.
 
 ## Background jobs
 
@@ -112,7 +112,7 @@ Image OCR:
 ```text
 user requests OCR -> policy/provider disclosure -> decode/downscale safely
 -> local worker recognition -> validate regions/text -> transactionally persist
--> refresh Task 3 document -> navigate matches to image/region
+-> refresh the lexical document -> navigate matches to image/region
 ```
 
 PDF processing:
@@ -141,7 +141,7 @@ Transcripts are segment-based recognized content linked to the audio resource. S
 
 ## Knowledge and task integration
 
-Current recognized rows contribute to a dedicated `recognizedText` field in the Task 3 `SearchDocument`, with lower weight than title/headings and with source locations. Stale/superseded rows are excluded by default. The knowledge source fingerprint includes recognition revisions so successful recognition or corrections incrementally rebuild only the affected note. Raw ink and binary payloads are never tokenized.
+Current recognized rows contribute to a dedicated `recognizedText` field in `SearchDocument`, with lower weight than title/headings and with source locations. Stale/superseded rows are excluded by default. The knowledge source fingerprint includes recognition revisions so successful recognition or corrections incrementally rebuild only the affected note. Raw ink and binary payloads are never tokenized.
 
 Creating a task from recognized text writes the existing canonical task representation and adds a bounded source locator (`noteId`, `recognitionId`, and object/resource/page/time fields). Reminders continue to attach to canonical note/task identities. Recognition does not create implicit backlinks merely because output resembles a note title.
 
@@ -155,13 +155,13 @@ Grounded Q&A may retrieve only notes currently accessible to the active owner. R
 
 ## Collaboration and synchronization
 
-Recognized rows are owner/note scoped and follow the note's authoritative access rules. User corrections are important user data and sync; machine-only results may be regenerated but use the same row contract. Background jobs and local privacy settings do not synchronize. Binary resources synchronize through a dedicated Task 4 storage adapter and metadata/RLS tables, not giant JSON columns or the Task 2 spatial queue.
+Recognized rows are owner/note scoped and follow the note's authoritative access rules. User corrections are important user data and sync; machine-only results may be regenerated but use the same row contract. Background jobs and local privacy settings do not synchronize. Binary resources synchronize through a dedicated capture adapter and metadata/RLS tables, not giant JSON columns or the spatial queue.
 
 The adapter has its own outbox table name and dependency order. It uploads resource bytes and metadata before note links and recognition, and deletes recognition and links before attempting final resource collection. Local reference checks and private database triggers retain a resource while a note link, spatial placement, or recognized provenance row still references it. First connection merges existing local capture data instead of treating an empty remote table as deletion; corrected recognition outranks machine-only output, then timestamps resolve ordinary last-write precedence. A v6 owner marker distinguishes that bootstrap from later authoritative pulls. Failed upload, download, checksum, RLS, or metadata operations remain queued/visible and do not manufacture a successful sync state.
 
 Capture Realtime events schedule the existing full workspace synchronization entry point. They do not mutate Dexie directly from event payloads. This preserves one validation/merge path and lets the receiving device download Storage bytes before exposing the remote metadata locally.
 
-Task 4 does not pretend to add conflict-free live ink, transcript, or spatial co-editing. Existing note sharing remains authoritative. Concurrent correction conflicts surface as ordinary record conflicts until a later explicit resolution model exists.
+QuickNotes does not claim conflict-free live ink, transcript, or spatial co-editing. Existing note sharing remains authoritative. Concurrent correction, annotation, and same-owner spatial graph conflicts persist reviewable incoming/local choices; shared spatial graphs remain owner-edited and collaborator-read-only.
 
 ## Privacy and data flow
 
@@ -175,20 +175,6 @@ Provider credentials are never placed in note data, IndexedDB job rows, logs, so
 
 ## Migration and failure behavior
 
-The IndexedDB migrations only add stores; they do not rewrite existing notes, spatial rows, resources, recognized corrections, or Task 3 projections. Version 6 adds only the owner-scoped capture first-pull marker. Unknown future schema versions are rejected. Intelligence may be disabled or its derived/job tables cleared without harming canonical notes and sources; user-corrected recognized rows require an explicit data-deletion choice.
+The IndexedDB migrations only add stores; they do not rewrite existing notes, spatial rows, resources, recognized corrections, or knowledge projections. Version 6 adds only the owner-scoped capture first-pull marker. Unknown future schema versions are rejected. Intelligence may be disabled or its derived/job tables cleared without harming canonical notes and sources; user-corrected recognized rows require an explicit data-deletion choice.
 
-If processing fails, the source remains available, the job records a safe actionable error, no empty recognition row is written, and retry starts from canonical input. Index refresh failures leave recognized content intact and expose the existing Task 3 rebuild path.
-
-## Current delivery sequence
-
-1. Persisted recognition, provider descriptors, privacy policy, bounded job queue, validation, and indexing/source navigation contracts.
-2. Generalized resource/blob repository and backup/import migration.
-3. Local image OCR and PDF native-text/OCR workflows.
-4. Audio capture, browser-managed live transcription, correction, and timestamp navigation.
-5. Browser-managed handwriting plus ink selection/review and stale-source handling.
-6. Canonical task creation with capture-source navigation.
-7. Dedicated capture resource/recognition cloud synchronization and remote lifecycle.
-8. Restartable imported-audio transcription through the authenticated external-provider boundary, with capability gating and correction-preserving segment replacement.
-9. Remaining reminder/Meeting integrations, then optional annotation, semantic, and generative features.
-
-This order deliberately completes the capture/recognition foundation before optional AI surfaces.
+If processing fails, the source remains available, the job records a safe actionable error, no empty recognition row is written, and retry starts from canonical input. Index refresh failures leave recognized content intact and expose the existing rebuild path.

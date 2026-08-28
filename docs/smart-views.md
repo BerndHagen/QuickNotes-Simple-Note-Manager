@@ -32,5 +32,4 @@ Creating a note while an `all`-matching view is active may derive safe defaults 
 | Link | Explicit relationship between stable identities |
 | Smart View | Dynamic saved criteria and sort over current notes |
 
-This separation prevents Smart Views from becoming hidden folders or links from becoming tags. The Task 3 query/filter layer can add future canonical properties without changing these roles.
-
+This separation prevents Smart Views from becoming hidden folders or links from becoming tags. The query/filter layer can add future canonical properties without changing these roles.

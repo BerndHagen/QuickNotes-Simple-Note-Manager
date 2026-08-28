@@ -20,7 +20,7 @@ PDF results link to the resource and one-based page number. Search opens the att
 
 ## Known limitations
 
-- Image/PDF annotation overlays are not implemented; existing spatial image ink remains the canonical Task 2 path where an image is placed on Paper/Canvas.
+- Image and PDF annotation overlays are non-destructive spatial graphs. They reuse the canonical ink/shape architecture while leaving the source resource unchanged.
 - OCR regions depend on provider output; PDF native text currently has page-level rather than word-level highlighting.
 - Password-protected, malformed, or unsupported PDFs fail visibly and leave the original attachment intact.
-- Cloud synchronization of new canonical PDF/audio blobs and recognized rows is not yet connected in the client.
+- Canonical PDF/audio blobs, recognized rows, corrections, and annotation graphs synchronize through their dedicated dependency-ordered adapters when a cloud workspace is configured.

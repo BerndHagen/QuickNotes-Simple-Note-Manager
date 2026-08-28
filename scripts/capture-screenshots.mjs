@@ -193,13 +193,34 @@ async function captureMeeting() {
   await context.close()
 }
 
+async function captureTaskCenter() {
+  const context = await browser.newContext({ viewport })
+  const page = await context.newPage()
+  await openLocalWorkspace(page)
+  await page.getByRole('button', { name: 'Create workspace' }).click()
+  const dialog = page.getByRole('dialog', { name: /new workspace/i })
+  await dialog.locator('section[aria-label="Workspace types"]')
+    .getByRole('button', { name: /^Task List/i })
+    .click()
+  await dialog.getByText('Daily priorities', { exact: true }).click()
+  await dialog.getByLabel('Note title').fill('Release checklist')
+  await dialog.getByRole('button', { name: /^Create tasks$/i }).click()
+  await page.getByRole('button', { name: /My Tasks/ }).click()
+  const tasks = page.getByRole('dialog', { name: 'My Tasks' })
+  await expect(tasks).toBeVisible()
+  await expect(tasks.getByRole('list', { name: 'Workspace tasks' })).toBeVisible()
+  await save(page, 'quicknotes-3-tasks.png')
+  await context.close()
+}
+
 try {
   await captureDocumentAndSearch()
   await capturePaper()
   await captureCanvas()
   await captureMeeting()
+  await captureTaskCenter()
 } finally {
   await browser.close()
 }
 
-console.log(`Updated five QuickNotes 3.0 screenshots in ${outputDir}`)
+console.log(`Updated six QuickNotes 3.0 screenshots in ${outputDir}`)

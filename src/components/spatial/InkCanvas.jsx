@@ -31,7 +31,6 @@ const InkCanvas = forwardRef(function InkCanvas({ objects, viewport }, ref) {
       const committedCanvas = configureCanvas(committed, width, height)
       const activeCanvas = configureCanvas(active, width, height)
       clearCanvas(committed, committedCanvas.context)
-      clearCanvas(active, activeCanvas.context)
       applyViewportTransform(committedCanvas.context, viewport, committedCanvas.ratio)
       applyViewportTransform(activeCanvas.context, viewport, activeCanvas.ratio)
       transformRef.current = { viewport, ratio: activeCanvas.ratio }

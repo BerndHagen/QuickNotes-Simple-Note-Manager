@@ -1,6 +1,6 @@
 # Knowledge system architecture
 
-Task 3 connects every QuickNotes surface through one local-first knowledge model without replacing the editors established in Tasks 1 and 2.
+QuickNotes connects every content surface through one local-first knowledge model without replacing its purpose-built editors.
 
 ## Canonical and derived data
 
@@ -24,7 +24,7 @@ canonical notes + folders + spatial objects/resources
 - `ResourceId` identifies a resource independently of a placement.
 - Derived link IDs are deterministic from owner, source location, target identity, and ordinal.
 
-Renaming or moving a note changes display metadata only. A link target remains `{ noteId, anchorId?, objectId? }`. Imported content continues to use the Task 2 identity-remapping boundary.
+Renaming or moving a note changes display metadata only. A link target remains `{ noteId, anchorId?, objectId? }`. Imported content continues to use the archive identity-remapping boundary.
 
 ## SearchDocument
 
@@ -50,7 +50,7 @@ An absent, old, building, failed, or count-inconsistent `knowledgeIndexState` ca
 
 Explicit links are extracted from sanitized Document anchors and spatial `noteLink` objects. A relationship row records source note/location, target note/location, label, context, and relationship type. Forward links and backlinks are two indexed views of the same row.
 
-The relationship rows are also the graph index. Task 3 does not add a graph visualization because ordinary search and navigation must not depend on one. The Inspector's forward-link and backlink lists are the accessible, nonvisual relationship representation. A future graph can consume these rows without changing link identity or canonical content.
+The relationship rows are also the graph index. QuickNotes does not require a graph visualization because ordinary search and navigation must not depend on one. The Inspector's forward-link and backlink lists are the accessible, nonvisual relationship representation. A future graph can consume these rows without changing link identity or canonical content.
 
 ## Query and organization model
 
@@ -60,7 +60,6 @@ Smart Views remain canonical owner-scoped definitions evaluated against current 
 
 ## Sync and future boundaries
 
-Supabase synchronizes canonical notes and Task 2 spatial rows. Each client rebuilds its own search and relationship projections, scoped by the active workspace owner. Sharing expands the accessible canonical note set; it does not expose one owner's local index to another owner.
+Supabase synchronizes canonical notes and spatial rows. Each client rebuilds its own search and relationship projections, scoped by the active workspace owner. Sharing expands the accessible canonical note set; it does not expose one owner's local index to another owner.
 
-Task 4 sources such as OCR text, handwriting recognition, PDF text, transcription, or image text can add bounded, attributed fields and locations to `SearchDocument`. They must reference the existing `NoteId`, `AnchorId`, `ObjectId`, or `ResourceId`; they must not reinterpret raw pixels or stroke points inside this indexer. Semantic embeddings remain outside Task 3 and are not needed for lexical search.
-
+Sources such as OCR text, handwriting recognition, PDF text, transcription, or image text can add bounded, attributed fields and locations to `SearchDocument`. They must reference the existing `NoteId`, `AnchorId`, `ObjectId`, or `ResourceId`; they must not reinterpret raw pixels or stroke points inside this indexer. Semantic embeddings remain outside the lexical index and are not needed for search.

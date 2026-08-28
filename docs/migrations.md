@@ -25,9 +25,9 @@ upgrade failure to verify rollback.
 SQL files in `supabase/migrations` are chronological and append-only. They
 create the original catalog/collaboration schema, then saved views/templates,
 spatial storage, capture/recognition, transcription quotas, annotations,
-comments/mentions, optional intelligence quotas, and Task 5 hardening.
+comments/mentions, optional intelligence quotas, and release hardening.
 
-Task 5 hardening includes obsolete policy removal, bounded JSON/text payloads,
+Release hardening includes obsolete policy removal, bounded JSON/text payloads,
 restored tag clocks, shared-spatial read-only enforcement, and revocation of
 unsafe catalog grants. Apply migrations through the deployment pipeline; do
 not edit an already-deployed migration. After applying, inspect the live

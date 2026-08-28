@@ -74,6 +74,81 @@ async function downloadSize(download) {
 }
 
 test.describe('Paper and Canvas spatial editors', () => {
+  test('renders page content previews and keeps every rail action visible', async ({ page }) => {
+    await signIn(page)
+    const title = `Paper preview E2E ${Date.now()}`
+    await createSpatialNote(page, 'Paper', title)
+
+    const thumbnail = page.locator('.qn-paper-page-thumbnail').first()
+    await expect(thumbnail).toBeVisible()
+    await expect.poll(() => thumbnail.evaluate((canvas) => canvas.width)).toBeGreaterThan(48)
+    const blankPreview = await thumbnail.evaluate((canvas) => canvas.toDataURL())
+
+    const paper = page.getByRole('application', { name: /page 1/i })
+    const box = await paper.boundingBox()
+    await page.mouse.move(box.x + 90, box.y + 100)
+    await page.mouse.down()
+    await page.mouse.move(box.x + 260, box.y + 190, { steps: 10 })
+    await page.mouse.up()
+    await expect.poll(() => spatialObjectCount(page, title)).toBe(1)
+    await expect.poll(() => thumbnail.evaluate((canvas) => canvas.toDataURL())).not.toBe(blankPreview)
+
+    for (let pageIndex = 2; pageIndex <= 9; pageIndex += 1) {
+      await page.getByRole('button', { name: 'Add page' }).first().click()
+    }
+    await expect(page.locator('.qn-paper-page-thumbnail')).toHaveCount(9)
+
+    const rail = page.getByRole('complementary', { name: 'Paper pages' })
+    const railMetrics = await rail.evaluate((element) => ({
+      clientWidth: element.clientWidth,
+      scrollWidth: element.scrollWidth,
+      clientHeight: element.clientHeight,
+      scrollHeight: element.scrollHeight,
+    }))
+    expect(railMetrics.scrollWidth).toBeLessThanOrEqual(railMetrics.clientWidth + 1)
+    expect(railMetrics.scrollHeight).toBeGreaterThan(railMetrics.clientHeight)
+
+    const railBox = await rail.boundingBox()
+    const deleteBox = await page.getByRole('button', { name: 'Delete page' }).boundingBox()
+    expect(deleteBox.x).toBeGreaterThanOrEqual(railBox.x)
+    expect(deleteBox.x + deleteBox.width).toBeLessThanOrEqual(railBox.x + railBox.width)
+  })
+
+  test('keeps the complete active stroke visible across parent rerenders', async ({ page }) => {
+    await signIn(page)
+    const title = `Active ink E2E ${Date.now()}`
+    await createSpatialNote(page, 'Paper', title)
+
+    const paper = page.getByRole('application', { name: /page 1/i })
+    const activeInk = paper.locator('.qn-spatial-ink--active')
+    const box = await paper.boundingBox()
+    const opaquePixels = () => activeInk.evaluate((canvas) => {
+      const context = canvas.getContext('2d')
+      const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data
+      let count = 0
+      for (let index = 3; index < pixels.length; index += 4) {
+        if (pixels[index] > 0) count += 1
+      }
+      return count
+    })
+
+    await page.mouse.move(box.x + 80, box.y + 90)
+    await page.mouse.down()
+    await page.mouse.move(box.x + 230, box.y + 150, { steps: 12 })
+    await expect.poll(opaquePixels).toBeGreaterThan(0)
+
+    // Saving and other parent state changes can rerender the editor while a
+    // captured pointer is still drawing. The active layer must retain the
+    // already painted portion instead of showing only later samples.
+    await page.getByLabel('Ink color').fill('#c026d3')
+    await expect.poll(opaquePixels).toBeGreaterThan(0)
+
+    await page.mouse.move(box.x + 340, box.y + 220, { steps: 8 })
+    await page.mouse.up()
+    await expect.poll(() => spatialObjectCount(page, title)).toBe(1)
+    await expect.poll(opaquePixels).toBe(0)
+  })
+
   test('draws, undoes, redoes, paginates, and reloads a Paper note', async ({ page }) => {
     const errors = collectErrors(page)
     await signIn(page)

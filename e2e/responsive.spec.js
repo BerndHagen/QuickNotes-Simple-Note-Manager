@@ -69,6 +69,10 @@ test.describe('desktop application boundary', () => {
     expect(sidebar.x).toBe(0)
     expect(sidebar.y).toBe(48)
     expect(sidebar.height).toBe(852)
+
+    const brand = await page.locator('.qn-top-chrome [aria-label="QuickNotes"]').boundingBox()
+    const navigationToggle = await page.getByRole('button', { name: 'Hide navigation' }).first().boundingBox()
+    expect(brand.x).toBeLessThan(navigationToggle.x)
   })
 
   test('persists the collection width and exposes real shell controls', async ({ page }) => {

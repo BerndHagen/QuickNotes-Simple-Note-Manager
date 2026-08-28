@@ -75,7 +75,7 @@ The application bar owns the green brand identity. On desktop, the editor note b
 
 `PaperSurface` in `src/components/workspace/WorkspaceSurface.jsx` is the reusable content wrapper used by the rich-text editor. Paper color, rules, grid, margins, and foreground remain driven by the existing paper-style model. Paper sits within `--qn-surface-workbench` and is the main place where a subtle physical edge is appropriate.
 
-`CanvasSurface` establishes a neutral, reusable visual boundary for later canvas work without adding a future-facing control or mock feature. Task 1 does not implement a canvas engine.
+Paper and Canvas use their shared spatial editor boundary and canonical workbench styling. They retain purpose-built page and infinite-world behavior while using the same application chrome, typography, controls, focus treatment, and status language as Document.
 
 ## Dialogs, search, and accessibility
 

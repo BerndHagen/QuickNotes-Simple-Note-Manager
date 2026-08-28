@@ -14,7 +14,7 @@ React surfaces call QuickNotes services, never vendor SDKs directly. Policy reso
 
 No generative assistant, grounded Q&A provider, semantic embedding provider, or math recognizer is shipped. Reserved interfaces are architectural boundaries, not advertised functionality.
 
-The audio-file provider is the first external capability implementation. The browser sends canonical source identity rather than provider credentials or an arbitrary upload. The Task 4 capture adapter durably synchronizes the source, the server revalidates the owner/source graph and checksum, and the persisted intelligence job commits only bounded, attributable transcript segments. A deployed function without a validated server secret is treated as unavailable, not as a configured feature.
+The audio-file provider boundary sends canonical source identity rather than provider credentials or an arbitrary upload. The capture adapter durably synchronizes the source, the server revalidates the owner/source graph and checksum, and the persisted intelligence job commits only bounded, attributable transcript segments. A deployed function without a validated server secret is treated as unavailable, not as a configured feature.
 
 ## Generative safety contract
 

@@ -2,7 +2,7 @@
 
 Recognition settings are owner-scoped and stored locally. The three modes are:
 
-- **Off:** no recognition provider may run. Normal notes, Paper, Canvas, resources, and Task 3 lexical search continue to work.
+- **Off:** no recognition provider may run. Normal notes, Paper, Canvas, resources, and lexical search continue to work.
 - **Local only (default):** local providers and native extraction may run. Browser-managed and external operations explain that they are unavailable.
 - **External allowed:** browser-managed or external providers may run only after the current operation presents a disclosure and the user confirms it.
 

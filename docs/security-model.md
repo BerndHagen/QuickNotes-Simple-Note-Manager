@@ -34,7 +34,7 @@ mode cannot fall back to browser-managed/external processing. External work
 requires explicit mode, fresh operation consent, authentication, bounded input,
 and a successful live capability probe.
 
-The release audit found no production dependency vulnerability with
+Current release checks report no production dependency vulnerability with
 `npm audit --omit=dev`. Supabase Auth leaked-password protection is unavailable
 on the connected Free project and is therefore not claimed by the hosted 3.0
 release. It remains optional operational hardening for a deployment using an
