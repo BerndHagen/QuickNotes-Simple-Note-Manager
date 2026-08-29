@@ -112,6 +112,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
     setVoiceInputActive,
     setShareModalOpen,
     setTemplateSaveOpen,
+    setMobileInspectorOpen,
     showNoteStatistics,
     confirmBeforeDelete,
     todayViewToken,
@@ -810,6 +811,11 @@ export default function NoteEditor({ onBack, showBack = false }) {
             }}
           >
             {t('editor.tags', 'Tags')}
+          </MenuItem>
+        )}
+        {showBack && (
+          <MenuItem icon={Info} onClick={() => { setMobileInspectorOpen(true); setMenuOpen(false) }}>
+            Note details
           </MenuItem>
         )}
         <MenuSeparator />

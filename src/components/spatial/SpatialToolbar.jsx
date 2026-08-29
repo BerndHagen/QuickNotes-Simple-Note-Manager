@@ -85,6 +85,10 @@ export default function SpatialToolbar({
   onUndo,
   onRedo,
   hasSelection,
+  canEditText,
+  onEditText,
+  canOpenNoteLink,
+  onOpenNoteLink,
   selectedSticky,
   onStickySetting,
   onDuplicate,
@@ -260,6 +264,16 @@ export default function SpatialToolbar({
         </div>
       )}
       <div className="qn-spatial-tool-group qn-spatial-tool-group--arrange" data-visible={hasSelection ? 'true' : 'false'}>
+        {canEditText && (
+          <button type="button" className="qn-spatial-text-action" onClick={onEditText} title="Edit selected text">
+            <Type className="h-3.5 w-3.5" aria-hidden="true" /> Edit text
+          </button>
+        )}
+        {canOpenNoteLink && (
+          <button type="button" className="qn-spatial-text-action" onClick={onOpenNoteLink} title="Open selected note link">
+            <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" /> Open link
+          </button>
+        )}
         {shapeCandidate && (
           <button type="button" className="qn-spatial-text-action" onClick={onConvertShape} title={`Convert selected ink to ${shapeCandidate.shape}`} disabled={editingDisabled}>
             <Shapes className="h-3.5 w-3.5" aria-hidden="true" /> Convert to {shapeCandidate.shape}

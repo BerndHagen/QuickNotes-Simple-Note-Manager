@@ -621,6 +621,22 @@
   .qn-paper-page-actions { grid-template-columns: 1fr; }
 }
 
+@media (hover: none), (pointer: coarse), (any-pointer: coarse) {
+  .qn-spatial-resize-handle {
+    right: -11px;
+    bottom: -11px;
+    width: 22px;
+    height: 22px;
+    touch-action: none;
+  }
+
+  .qn-spatial-resize-handle::before {
+    content: '';
+    position: absolute;
+    inset: -11px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .qn-paper-stage { scroll-behavior: auto; }
 }

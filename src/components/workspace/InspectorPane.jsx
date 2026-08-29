@@ -24,7 +24,7 @@ const parseOutline = (html = '') => {
   }))
 }
 
-export default function InspectorPane({ onClose }) {
+export default function InspectorPane({ onClose, embedded = false }) {
   const note = useNotesStore((state) => state.getSelectedNote())
   const folders = useNotesStore((state) => state.folders)
   const tags = useNotesStore((state) => state.tags)
@@ -62,10 +62,12 @@ export default function InspectorPane({ onClose }) {
 
   return (
     <aside id="qn-inspector" aria-label="Inspector" className="flex h-full min-h-0 flex-col bg-panel">
-      <header className="flex h-12 shrink-0 items-center gap-2 border-b border-subtle px-3">
-        <h2 className="min-w-0 flex-1 truncate text-title-sm font-semibold text-content">Inspector</h2>
-        <IconButton icon={X} size="sm" label="Hide inspector" onClick={onClose} />
-      </header>
+      {!embedded && (
+        <header className="flex h-12 shrink-0 items-center gap-2 border-b border-subtle px-3">
+          <h2 className="min-w-0 flex-1 truncate text-title-sm font-semibold text-content">Inspector</h2>
+          <IconButton icon={X} size="sm" label="Hide inspector" onClick={onClose} />
+        </header>
+      )}
 
       <div role="tablist" aria-label="Inspector sections" className="flex shrink-0 border-b border-subtle px-2">
         {TABS.map(({ id, label, icon: Icon }) => (
@@ -145,7 +147,7 @@ export default function InspectorPane({ onClose }) {
                           type="button"
                           onClick={() => copyHeadingLink(heading)}
                           aria-label={`Copy link to ${heading.text}`}
-                          className="qn-square-control h-7 w-7 shrink-0 text-content-subtle opacity-0 hover:text-content focus:opacity-100 group-hover:opacity-100"
+                          className="qn-inspector-row-action qn-square-control h-7 w-7 shrink-0 text-content-subtle opacity-0 hover:text-content focus:opacity-100 group-hover:opacity-100"
                         >
                           <Copy className="h-3.5 w-3.5" aria-hidden="true" />
                         </button>

@@ -4,6 +4,7 @@ import {
   Circle,
   Eraser,
   Highlighter,
+  Hand,
   Loader2,
   Minus,
   MousePointer2,
@@ -24,6 +25,7 @@ import useAnnotationWorkspace from './useAnnotationWorkspace'
 
 const tools = [
   ['select', MousePointer2, 'Select annotation'],
+  ['hand', Hand, 'Pan attachment'],
   ['pen', Pencil, 'Pen annotation'],
   ['highlighter', Highlighter, 'Highlight annotation'],
   ['eraser', Eraser, 'Erase annotation stroke'],
@@ -51,6 +53,7 @@ export default function SpatialAnnotationOverlay({
   displayHeight,
   readOnly = false,
   ownerId = null,
+  scrollContainerRef = null,
 }) {
   const source = useMemo(() => ({
     noteId,
@@ -74,6 +77,11 @@ export default function SpatialAnnotationOverlay({
   const originalsRef = useRef(new Map())
   const surfaceRef = useRef(null)
   const objects = useMemo(() => workspace?.objects || [], [workspace?.objects])
+  const selectedText = useMemo(() => {
+    if (selectedIds.size !== 1) return null
+    const object = objects.find((candidate) => selectedIds.has(candidate.id))
+    return object?.kind === 'text' ? object : null
+  }, [objects, selectedIds])
   const page = workspace?.page
   const zoom = page?.width ? displayWidth / page.width : 1
   const viewport = useMemo(() => ({ panX: 0, panY: 0, zoom }), [zoom])
@@ -89,9 +97,11 @@ export default function SpatialAnnotationOverlay({
   }, [editingBlocked])
 
   const beginGesture = useCallback((event) => {
-    if (!page || editingBlocked || event.pointerType === 'touch' || event.target.closest?.('textarea, .qn-spatial-resize-handle')) return
+    if (!page || (editingBlocked && tool !== 'hand') || event.target.closest?.('textarea, .qn-spatial-resize-handle')) return
+    if (gestureRef.current || (event.pointerType === 'touch' && event.isPrimary === false)) return
     const surface = event.currentTarget
     const point = pointForEvent(event, surface)
+    if (event.pointerType === 'touch') event.preventDefault()
     surface.setPointerCapture?.(event.pointerId)
     surface.focus({ preventScroll: true })
     setEditingTextId(null)
@@ -119,6 +129,18 @@ export default function SpatialAnnotationOverlay({
       beginTextEditing(object.id)
       return
     }
+    if (tool === 'hand') {
+      const scroller = scrollContainerRef?.current
+      gestureRef.current = {
+        type: 'pan',
+        pointerId: event.pointerId,
+        surface,
+        startClient: { x: event.clientX, y: event.clientY },
+        scroller,
+        startScroll: scroller ? { left: scroller.scrollLeft, top: scroller.scrollTop } : null,
+      }
+      return
+    }
     const hit = objectAtPoint(objects, point, 6 / zoom)
     if (hit) {
       const selection = event.shiftKey ? new Set(selectedIds) : new Set()
@@ -134,7 +156,7 @@ export default function SpatialAnnotationOverlay({
       gestureRef.current = { type: 'lasso', pointerId: event.pointerId, surface, start: point, current: point, append: event.shiftKey }
       setLasso({ x: point.x, y: point.y, width: 0, height: 0 })
     }
-  }, [beginTextEditing, brush, commit, editingBlocked, nextZIndex, noteId, objects, page, pointForEvent, selectedIds, tool, zoom])
+  }, [beginTextEditing, brush, commit, editingBlocked, nextZIndex, noteId, objects, page, pointForEvent, scrollContainerRef, selectedIds, tool, zoom])
 
   const moveGesture = useCallback((event) => {
     const gesture = gestureRef.current
@@ -147,6 +169,16 @@ export default function SpatialAnnotationOverlay({
         if (Math.hypot(sample[0] - previous[0], sample[1] - previous[1]) < 0.2) continue
         gesture.points.push(sample)
         inkRef.current?.drawSegment(previous, sample, gesture.brush)
+      }
+      return
+    }
+    if (gesture.type === 'pan') {
+      if (gesture.scroller && gesture.startScroll) {
+        gesture.scroller.scrollTo({
+          left: gesture.startScroll.left - (event.clientX - gesture.startClient.x),
+          top: gesture.startScroll.top - (event.clientY - gesture.startClient.y),
+          behavior: 'instant',
+        })
       }
       return
     }
@@ -266,7 +298,7 @@ export default function SpatialAnnotationOverlay({
       )}
       <div className="absolute left-2 top-2 z-30 flex max-w-[calc(100%-1rem)] items-center gap-1 overflow-x-auto rounded-control border border-strong bg-surface-raised/95 p-1 shadow-sm" role="toolbar" aria-label="Annotation tools">
         {tools.map(([id, Icon, label]) => (
-          <button key={id} type="button" aria-label={label} title={label} aria-pressed={tool === id} onClick={() => setTool(id)} className={`qn-square-control flex h-8 w-8 shrink-0 items-center justify-center rounded-control ${tool === id ? 'bg-accent-soft text-accent-text' : 'text-content-muted hover:bg-surface-hover'}`} disabled={editingBlocked}>
+          <button key={id} type="button" aria-label={label} title={label} aria-pressed={tool === id} onClick={() => setTool(id)} className={`qn-square-control flex h-8 w-8 shrink-0 items-center justify-center rounded-control ${tool === id ? 'bg-accent-soft text-accent-text' : 'text-content-muted hover:bg-surface-hover'}`} disabled={editingBlocked && id !== 'hand'}>
             <Icon className="h-4 w-4" aria-hidden="true" />
           </button>
         ))}
@@ -274,6 +306,9 @@ export default function SpatialAnnotationOverlay({
         <label className="flex h-8 w-8 shrink-0 items-center justify-center" title="Annotation color"><span className="qn-sr-only">Annotation color</span><input type="color" value={brush.color} onChange={(event) => setBrush((value) => ({ ...value, color: event.target.value }))} className="h-5 w-5" /></label>
         <button type="button" aria-label="Undo annotation" title="Undo" onClick={undo} disabled={editingBlocked || !canUndo} className="qn-square-control flex h-8 w-8 shrink-0 items-center justify-center rounded-control text-content-muted hover:bg-surface-hover disabled:opacity-35"><Undo2 className="h-4 w-4" /></button>
         <button type="button" aria-label="Redo annotation" title="Redo" onClick={redo} disabled={editingBlocked || !canRedo} className="qn-square-control flex h-8 w-8 shrink-0 items-center justify-center rounded-control text-content-muted hover:bg-surface-hover disabled:opacity-35"><Redo2 className="h-4 w-4" /></button>
+        {selectedText && (
+          <button type="button" aria-label="Edit selected annotation text" title="Edit selected text" onClick={() => beginTextEditing(selectedText.id)} className="qn-square-control flex h-8 w-8 shrink-0 items-center justify-center rounded-control text-content-muted hover:bg-surface-hover"><Type className="h-4 w-4" /></button>
+        )}
         <button type="button" aria-label="Delete selected annotations" title="Delete selection" onClick={deleteSelection} disabled={editingBlocked || !selectedIds.size} className="qn-square-control flex h-8 w-8 shrink-0 items-center justify-center rounded-control text-danger-text hover:bg-danger-soft disabled:opacity-35"><Trash2 className="h-4 w-4" /></button>
       </div>
       <div className="absolute bottom-2 right-2 z-30 rounded-control border border-subtle bg-surface-raised/95 px-2 py-1 text-ui-xs text-content-muted shadow-xs" role="status" aria-live="polite">
@@ -291,7 +326,7 @@ export default function SpatialAnnotationOverlay({
         tabIndex={0}
         aria-label={`Annotations for source page ${pageNumber}`}
         className="qn-spatial-interaction-surface absolute inset-0 outline-none"
-        style={{ width: displayWidth, height: displayHeight, touchAction: 'pan-x pan-y' }}
+        style={{ width: displayWidth, height: displayHeight, touchAction: 'none' }}
         onKeyDown={handleKeyDown}
         onPointerDown={beginGesture}
         onPointerMove={moveGesture}

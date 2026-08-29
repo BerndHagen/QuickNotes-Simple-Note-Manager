@@ -2009,6 +2009,11 @@ body {
     width: 24px;
     opacity: 1;
   }
+
+  .qn-inspector-row-action,
+  .qn-subtask-row-action {
+    opacity: 1;
+  }
 }
 
 @supports (padding: env(safe-area-inset-bottom)) {

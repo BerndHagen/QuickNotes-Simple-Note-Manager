@@ -195,6 +195,16 @@ export default function SpatialEditor({ note, kind, noteTitle, onTitleChange, re
     const object = objects.find((candidate) => selectedIds.has(candidate.id))
     return object?.kind === 'sticky' ? object : null
   }, [objects, selectedIds])
+  const selectedEditableText = useMemo(() => {
+    if (selectedIds.size !== 1) return null
+    const object = objects.find((candidate) => selectedIds.has(candidate.id))
+    return ['text', 'sticky', 'indexCard'].includes(object?.kind) ? object : null
+  }, [objects, selectedIds])
+  const selectedNoteLink = useMemo(() => {
+    if (selectedIds.size !== 1) return null
+    const object = objects.find((candidate) => selectedIds.has(candidate.id))
+    return object?.kind === 'noteLink' && object.data?.targetNoteId ? object : null
+  }, [objects, selectedIds])
   const selectedImage = useMemo(() => {
     if (selectedIds.size !== 1) return null
     const object = objects.find((candidate) => selectedIds.has(candidate.id))
@@ -392,11 +402,16 @@ export default function SpatialEditor({ note, kind, noteTitle, onTitleChange, re
     const surfaceKey = pageId || 'canvas'
     const view = viewportForSurface()
     const point = pointForEvent(event, surface, view)
-    const pointerTool = event.pointerType === 'touch' ? 'hand' : tool
-    const effectiveTool = editingBlocked ? 'hand' : pointerTool
+    const effectiveTool = editingBlocked ? 'hand' : tool
 
+    // A selected tool has the same meaning for a finger, mouse, or pen. The
+    // Hand tool remains the explicit way to pan on a phone. Previously every
+    // touch pointer was silently rewritten to Hand, which made drawing,
+    // erasing, shapes, selection, and object placement impossible on mobile.
+    if (gestureRef.current || (event.pointerType === 'touch' && event.isPrimary === false)) return
     if (event.pointerType === 'touch' && activePenPointerRef.current != null) return
     if (event.pointerType === 'pen') activePenPointerRef.current = event.pointerId
+    if (event.pointerType === 'touch') event.preventDefault()
     surface.setPointerCapture?.(event.pointerId)
     surface.focus({ preventScroll: true })
 
@@ -484,6 +499,19 @@ export default function SpatialEditor({ note, kind, noteTitle, onTitleChange, re
     })
   }, [editingBlocked])
 
+  const editSelectedText = useCallback(() => {
+    if (selectedEditableText) beginTextEditing(selectedEditableText.id)
+  }, [beginTextEditing, selectedEditableText])
+
+  const openSelectedNoteLink = useCallback(() => {
+    if (!selectedNoteLink) return
+    navigateToKnowledgeTarget({
+      noteId: selectedNoteLink.data.targetNoteId,
+      anchorId: selectedNoteLink.data.targetAnchorId || null,
+      objectId: selectedNoteLink.data.targetObjectId || null,
+    })
+  }, [navigateToKnowledgeTarget, selectedNoteLink])
+
   const handleDoubleClick = useCallback((event, pageId = null) => {
     if (isTextTarget(event.target)) return
     const point = pointForEvent(event, event.currentTarget, viewportForSurface())
@@ -547,8 +575,14 @@ export default function SpatialEditor({ note, kind, noteTitle, onTitleChange, re
         gesture.currentViewport = { ...gesture.startViewport, panX: gesture.startViewport.panX + dx, panY: gesture.startViewport.panY + dy }
         setViewport(gesture.currentViewport)
       } else if (stageRef.current && gesture.startScroll) {
-        stageRef.current.scrollLeft = gesture.startScroll.left - dx
-        stageRef.current.scrollTop = gesture.startScroll.top - dy
+        // Direct manipulation must track the pointer immediately. The Paper
+        // stage otherwise inherits smooth scrolling, which can continually
+        // restart its animation during rapid touch moves and appear not to pan.
+        stageRef.current.scrollTo({
+          left: gesture.startScroll.left - dx,
+          top: gesture.startScroll.top - dy,
+          behavior: 'instant',
+        })
       }
     }
   }, [brush, kind, nextZIndex, note.id, pageObjects, pointForEvent, viewportForSurface])
@@ -1132,6 +1166,10 @@ export default function SpatialEditor({ note, kind, noteTitle, onTitleChange, re
         onUndo={undo}
         onRedo={redo}
         hasSelection={selectedIds.size > 0}
+        canEditText={Boolean(selectedEditableText && !editingBlocked)}
+        onEditText={editSelectedText}
+        canOpenNoteLink={Boolean(selectedNoteLink)}
+        onOpenNoteLink={openSelectedNoteLink}
         selectedSticky={selectedSticky}
         onStickySetting={changeStickySetting}
         onDuplicate={duplicateSelection}
@@ -1206,7 +1244,17 @@ export default function SpatialEditor({ note, kind, noteTitle, onTitleChange, re
         {readOnly && <span>Read-only</span>}
         {spatialConflict && <span>Conflict review required</span>}
         {replay.active && <span>{replay.playing ? 'Replaying ink' : 'Ink replay paused'}</span>}
-        <span className="qn-spatial-statusbar__selection">{selectedIds.size > 0 ? `${selectedIds.size} selected` : tool === 'eraser' ? 'Whole-stroke eraser' : 'No selection'}</span>
+        <span className="qn-spatial-statusbar__selection">
+          {selectedIds.size > 0
+            ? `${selectedIds.size} selected`
+            : tool === 'eraser'
+              ? 'Whole-stroke eraser'
+              : tool === 'hand'
+                ? 'Drag to pan'
+                : tool === 'pen' || tool === 'highlighter'
+                  ? 'Drag with touch, mouse, or pen'
+                  : 'No selection'}
+        </span>
         {exporting && <span><Loader2 className="h-3 w-3 animate-spin" /> Exporting</span>}
       </div>
       <p className="qn-sr-only" role="status">{objectSummary}</p>

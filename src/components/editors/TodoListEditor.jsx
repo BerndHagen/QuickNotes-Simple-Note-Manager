@@ -700,7 +700,7 @@ function TaskItem({
                   <button
                     onClick={() => onDeleteSubtask(subtask.id)}
                     aria-label={`Delete ${subtask.text}`}
-                    className="p-1 opacity-0 group-hover/subtask:opacity-100 text-content-subtle hover:text-red-500"
+                    className="qn-subtask-row-action p-1 opacity-0 text-content-subtle hover:text-red-500 focus-visible:opacity-100 group-hover/subtask:opacity-100"
                   >
                     <X className="w-3 h-3" />
                   </button>

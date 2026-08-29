@@ -110,6 +110,7 @@ export default function AttachmentAnnotationModal({
                 displayHeight={size.displayHeight}
                 readOnly={readOnly}
                 ownerId={ownerId}
+                scrollContainerRef={containerRef}
               />
             )}
           </div>

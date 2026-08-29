@@ -15,8 +15,8 @@ import { useKnowledgeIndexBridge } from './hooks/useKnowledgeIndex'
 import { parseInternalNoteHref } from './lib/knowledge/links'
 import { subscribeToCaptureCloud } from './lib/capture/cloud'
 import { subscribeToDatabaseLifecycle, subscribeToWorkspaceMutations } from './lib/db'
-import { AlertTriangle, PanelLeft, CloudOff, RefreshCw } from 'lucide-react'
-import { IconButton, Spinner, useEscapeKey, useFocusTrap } from './components/ui'
+import { AlertTriangle, PanelLeft, CloudOff, Info, RefreshCw } from 'lucide-react'
+import { IconButton, Modal, Spinner, useEscapeKey, useFocusTrap } from './components/ui'
 import TopChrome from './components/workspace/TopChrome'
 import ResizablePane from './components/workspace/ResizablePane'
 import InspectorPane from './components/workspace/InspectorPane'
@@ -28,6 +28,7 @@ import CorruptedDataBanner from './components/CorruptedDataBanner'
 const MOBILE_HISTORY_SURFACE_KEYS = [
   'focusModeOpen',
   'editorSettingsOpen',
+  'mobileInspectorOpen',
   'htmlEditorOpen',
   'imageUploadOpen',
   'linkModalOpen',
@@ -157,6 +158,8 @@ export default function App() {
     inspectorOpen,
     setInspectorOpen,
     toggleInspector,
+    mobileInspectorOpen,
+    setMobileInspectorOpen,
     inspectorWidth,
     setInspectorWidth,
     setNoteTypesModalOpen,
@@ -321,6 +324,12 @@ export default function App() {
       document.title
     )
   }, [mobileView])
+
+  useEffect(() => {
+    if (mobileInspectorOpen && (!isCompact || viewMode === 'grid' || !selectedNoteId)) {
+      setMobileInspectorOpen(false)
+    }
+  }, [isCompact, mobileInspectorOpen, selectedNoteId, setMobileInspectorOpen, viewMode])
 
   useEffect(() => {
     let disposed = false
@@ -815,6 +824,19 @@ export default function App() {
             )}
           </div>
         </div>
+
+        <Modal
+          open={Boolean(isCompact && viewMode !== 'grid' && selectedNoteId && mobileInspectorOpen)}
+          onClose={() => setMobileInspectorOpen(false)}
+          title="Note details"
+          description="Properties, outline, and connected notes."
+          icon={Info}
+          size="lg"
+          bodyPadding="none"
+          contentClassName="h-[min(90dvh,760px)]"
+        >
+          <InspectorPane embedded onClose={() => setMobileInspectorOpen(false)} />
+        </Modal>
 
         <ReminderModal />
         <Suspense fallback={<DeferredSurfaceFallback />}>

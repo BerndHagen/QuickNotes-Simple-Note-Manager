@@ -23,6 +23,7 @@ test.describe('mobile Safari workflows', () => {
 
     const paper = page.getByRole('application', { name: /page 1/i })
     await expect(paper).toBeVisible()
+    await expect(page.getByText('Drag with touch, mouse, or pen')).toBeVisible()
     await expect(page.locator('.qn-spatial-titlebar')).toBeHidden()
     await expect(page.locator('.qn-spatial-tool-group--objects')).toBeHidden()
     await expect(page.getByLabel('Insert object')).toBeVisible()
