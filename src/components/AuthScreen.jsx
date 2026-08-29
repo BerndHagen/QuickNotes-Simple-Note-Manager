@@ -1,32 +1,17 @@
 import { useState } from 'react'
 import {
-  Archive,
   ArrowLeft,
   ArrowRight,
-  Bell,
   CheckCircle2,
   Eye,
   EyeOff,
-  Filter,
-  FolderOpen,
   HardDrive,
   LayoutGrid,
-  ListFilter,
   Lock,
   Mail,
-  MoreHorizontal,
-  Pin,
-  Plus,
   RefreshCw,
-  Search,
-  Send,
   ShieldCheck,
-  Sparkles,
-  Star,
-  Tag,
-  Trash2,
   User,
-  Users,
   WifiOff,
 } from 'lucide-react'
 import { backend, getRedirectUrl, isBackendConfigured, usernameIsAvailable } from '../lib/backend'
@@ -85,181 +70,52 @@ function BrandMark({ compact = false }) {
 }
 
 function WorkspacePreview() {
-  const navigationItems = [
-    { icon: FolderOpen, label: 'All Notes', count: '8', active: true },
-    { icon: Star, label: 'Favorites', count: '1' },
-    { icon: Users, label: 'Shared with me' },
-    { icon: Trash2, label: 'Trash' },
-    { icon: Archive, label: 'Archive' },
-    { icon: Sparkles, label: 'Workspaces' },
-  ]
-  const noteCards = [
-    {
-      title: 'Welcome to QuickNotes',
-      preview: 'This note is yours to edit or delete. It covers the parts of QuickNotes…',
-      meta: '#welcome  #getting-started',
-      active: true,
-      pinned: true,
-    },
-    { title: 'Meeting notes', preview: '2026-08-01', meta: 'Just now' },
-    { title: 'New project', preview: '25% complete · Backlog: 2, To do: 2', meta: 'Just now' },
-  ]
-
   return (
-    <div
-      className="qn-auth-preview relative mt-8 w-full overflow-hidden rounded-[20px] border border-white/25 bg-[#eef3f2] p-1.5 shadow-[0_24px_60px_rgba(2,20,17,0.38),0_2px_10px_rgba(2,20,17,0.16)]"
-      aria-hidden="true"
-    >
-      <div className="flex h-[330px] overflow-hidden rounded-[14px] border border-slate-300/80 bg-white">
-        {/* Mirrors the real rail: All Notes is the first destination. */}
-        <div className="qn-nav-surface flex w-[138px] shrink-0 flex-col px-2.5 py-2.5 text-nav-text">
-          {navigationItems.map(({ icon: Icon, label, count, active }) => (
-            <div
-              key={label}
-              className={`mb-px flex h-[21px] items-center gap-1.5 rounded-[6px] px-1.5 text-[7px] font-medium ${
- active ? 'bg-white/10 text-nav-text' : 'text-nav-muted'
- }`}
-            >
-              <Icon className="h-2.5 w-2.5" />
-              <span className="flex-1">{label}</span>
-              {count && <span className="rounded bg-white/10 px-1 text-[6px]">{count}</span>}
-            </div>
-          ))}
-          <p className="mb-1 mt-2 px-1.5 text-[6px] font-bold uppercase tracking-[0.14em] text-nav-subtle">
-            Smart views
-          </p>
-          <div className="flex h-[18px] items-center gap-1.5 px-1.5 text-[7px] text-nav-muted">
-            <ListFilter className="h-2.5 w-2.5 text-emerald-300" />
-            <span className="flex-1">Recent work</span>
-            <span className="rounded bg-white/10 px-1 text-[6px]">5</span>
-          </div>
-          <p className="mb-1 mt-2 px-1.5 text-[6px] font-bold uppercase tracking-[0.14em] text-nav-subtle">
-            Folders
-          </p>
-          {['Work', 'Personal', 'Ideas'].map((label, index) => (
-            <div key={label} className="flex h-[18px] items-center gap-1.5 px-1.5 text-[7px] text-nav-muted">
-              <FolderOpen className={`h-2.5 w-2.5 ${index === 1 ? 'text-emerald-400' : ''}`} />
-              {label}
-            </div>
-          ))}
-          <div className="mt-auto border-t border-white/10 px-1 pt-2">
-            <p className="text-[7px] font-semibold">My workspace</p>
-            <p className="mt-0.5 flex items-center gap-1 text-[6px] text-nav-subtle">
-              <HardDrive className="h-2 w-2" />
-              Saved on this device
-            </p>
-          </div>
-        </div>
+    <div className="qn-auth-surface-preview mt-8" aria-hidden="true">
+      <div className="qn-auth-surface-preview__bar">
+        <span><i /> One workspace, three working surfaces</span>
+        <span>Document · Paper · Canvas</span>
+      </div>
 
-        <div className="flex w-[184px] shrink-0 flex-col border-r border-slate-200 bg-slate-50">
-          <div className="flex h-9 items-center gap-1.5 px-2.5">
-            <p className="flex-1 text-[10px] font-bold text-slate-800">All Notes</p>
-            <span className="rounded-full bg-slate-200 px-1.5 text-[7px] font-semibold text-slate-500">8</span>
-            <Filter className="h-3 w-3 text-slate-500" />
-            <span className="flex h-5 w-5 items-center justify-center rounded-[6px] border border-[#b8d2c8] bg-[#e8f1ed] text-[#346657]">
-              <Plus className="h-3 w-3" />
-            </span>
-          </div>
-          <div className="mx-2.5 mb-2 flex h-7 items-center gap-1.5 rounded-[7px] border border-slate-300 bg-white px-2 text-[7px] text-slate-400 shadow-sm">
-            <Search className="h-3 w-3" />
-            <span className="flex-1">Search notes…</span>
-            <span className="rounded border border-slate-200 bg-slate-50 px-1 text-[5px] text-slate-500">Ctrl F</span>
-          </div>
-          <p className="mb-1 px-3 text-[6px] font-semibold text-slate-500">⚑ &nbsp;Pinned</p>
-          <div className="min-h-0 flex-1 overflow-hidden px-2.5">
-            {noteCards.map(({ title, preview, meta, active, pinned }) => (
-            <div
-              key={title}
-                className={`mb-1.5 rounded-[8px] border bg-white px-2 py-2 ${
- active ? 'border-slate-400 shadow-sm ring-1 ring-slate-300' : 'border-slate-200'
-              }`}
-            >
-                <div className="flex items-center gap-1">
-                  <p className="min-w-0 flex-1 truncate text-[8px] font-bold text-slate-800">{title}</p>
-                  {pinned && <Pin className="h-2.5 w-2.5 text-emerald-600" />}
-                  <Star className={`h-2.5 w-2.5 ${active ? 'fill-amber-500 text-amber-500' : 'text-slate-300'}`} />
-                </div>
-                <p className="mt-1 line-clamp-2 text-[6px] leading-[9px] text-slate-500">{preview}</p>
-                <p className="mt-1.5 truncate text-[5.5px] text-slate-400">
-                  {meta}
-                </p>
-              </div>
-            ))}
-          </div>
-          <div className="flex h-6 items-center border-t border-slate-200 px-2.5 text-[6px] text-slate-500">
-            <span className="flex-1">ⓘ &nbsp;8 notes</span>
-            <span className="rounded bg-slate-200 px-1.5 py-0.5">☷</span>
-            <span className="ml-1">▦</span>
-          </div>
-        </div>
+      <div className="qn-auth-surface-preview__stage">
+        <section className="qn-auth-surface qn-auth-surface--document">
+          <div className="qn-auth-surface__eyebrow">Project brief</div>
+          <div className="qn-auth-document-title">Launch notes</div>
+          <div className="qn-auth-document-rule qn-auth-document-rule--wide" />
+          <div className="qn-auth-document-rule" />
+          <div className="qn-auth-document-heading">Next actions</div>
+          <div className="qn-auth-document-check"><i /> Confirm the release scope</div>
+          <div className="qn-auth-document-check"><i /> Share the review copy</div>
+          <div className="qn-auth-document-rule qn-auth-document-rule--short" />
+        </section>
 
-        <div className="flex min-w-0 flex-1 flex-col bg-white">
-          <div className="qn-auth-preview-banner grid h-9 shrink-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center px-3 text-[6px] text-white">
-            <span className="flex min-w-0 items-center gap-1 font-semibold text-white/75">
-              <HardDrive className="h-2.5 w-2.5" />
-              Saved locally
-            </span>
-            <p className="max-w-[160px] truncate px-2 text-center text-[10px] font-bold text-white">
-              Welcome to QuickNotes
-            </p>
-            <span className="flex min-w-0 items-center justify-end gap-1 text-white/85">
-              <Star className="h-3 w-3 fill-amber-300 text-amber-300" />
-              <Pin className="h-3 w-3" />
-              <FolderOpen className="h-3 w-3" />
-              <Tag className="h-3 w-3" />
-              <Search className="h-3 w-3" />
-              <Bell className="h-3 w-3" />
-              <Send className="h-3 w-3" />
-              <MoreHorizontal className="h-3 w-3" />
-            </span>
-          </div>
+        <section className="qn-auth-surface qn-auth-surface--paper">
+          <span className="qn-auth-preview-tape" />
+          <svg viewBox="0 0 230 178" role="presentation">
+            <path d="M24 52 C52 31, 78 67, 105 45 S154 34, 194 55" />
+            <path d="M31 88 C62 75, 85 102, 116 80 S166 72, 199 96" />
+            <path d="M42 126 C67 110, 90 136, 124 116" />
+            <path className="qn-auth-paper-accent" d="M139 118 C160 105, 181 113, 198 133" />
+          </svg>
+          <div className="qn-auth-paper-caption">Ideas stay fluid</div>
+        </section>
 
-          <div className="flex h-5 shrink-0 items-end gap-3 border-y border-slate-200 bg-slate-50 px-3 text-[6px] font-medium text-slate-600">
-            <span className="border-b-2 border-emerald-600 pb-1 text-emerald-700">Home</span>
-            <span className="pb-1">Insert</span>
-            <span className="pb-1">Layout</span>
-            <span className="pb-1">Review</span>
-            <span className="pb-1">View</span>
-          </div>
-          <div className="flex h-8 shrink-0 items-center gap-2 border-b border-slate-200 bg-slate-50 px-3 text-[7px] font-semibold text-slate-500">
-            <span>System Sans</span>
-            <span>16</span>
-            <span>1.5</span>
-            <span>↶</span>
-            <span>↷</span>
-            <span className="h-4 w-px bg-slate-200" />
-            <span>♢</span>
-            <span className="rounded bg-slate-100 px-1.5 py-1">Normal text</span>
-            <b className="text-slate-700">B</b>
-            <i className="text-slate-700">I</i>
-            <u className="text-slate-700">U</u>
-            <span className="h-4 w-px bg-slate-200" />
-            <span>☰</span>
-            <span>☷</span>
-          </div>
+        <section className="qn-auth-surface qn-auth-surface--canvas">
+          <svg viewBox="0 0 250 178" role="presentation">
+            <path d="M56 50 L128 83 L194 45" />
+            <path d="M128 83 L178 132" />
+          </svg>
+          <div className="qn-auth-canvas-node qn-auth-canvas-node--one">Research</div>
+          <div className="qn-auth-canvas-node qn-auth-canvas-node--two">Direction</div>
+          <div className="qn-auth-canvas-node qn-auth-canvas-node--three">Draft</div>
+          <div className="qn-auth-canvas-sticky"><i />Keep the useful parts.</div>
+        </section>
+      </div>
 
-          <div className="min-h-0 flex-1 overflow-hidden bg-slate-100 px-8 py-2 text-slate-700">
-            <div className="min-h-[220px] border border-slate-300 bg-white px-7 py-5 shadow-sm">
-            <p className="text-[7px] leading-3 text-slate-600">
-              This note is yours to edit or delete. It covers the parts of QuickNotes that are not obvious from looking at the screen.
-            </p>
-            <p className="mt-2 text-[13px] font-bold tracking-tight text-slate-800">Finding your way around</p>
-            <p className="mt-1 text-[7px] leading-3 text-slate-600">
-              Three panes, left to right: the rail for navigation, the list of notes, and the editor.
-            </p>
-            <p className="mt-2 text-[11px] font-bold text-slate-800">Folders and tags do different jobs</p>
-            <ul className="mt-1 space-y-1 text-[7px] leading-3 text-slate-600">
-              <li>• A folder is where a note lives.</li>
-              <li>• A tag is something a note is about.</li>
-            </ul>
-            </div>
-          </div>
-
-          <div className="flex h-6 shrink-0 items-center border-t border-slate-200 px-3 text-[6px] text-slate-500">
-            <span>T&nbsp; 453 words &nbsp; #&nbsp; 2,148 chars &nbsp; ◷&nbsp; 3 min read</span>
-            <span className="ml-auto">Saving… &nbsp; ◌</span>
-          </div>
-        </div>
+      <div className="qn-auth-surface-preview__legend">
+        <span><b>Document</b><small>Structured writing</small></span>
+        <span><b>Paper</b><small>Ink and pages</small></span>
+        <span><b>Canvas</b><small>Spatial thinking</small></span>
       </div>
     </div>
   )
@@ -502,9 +358,7 @@ export default function AuthScreen() {
 
   const renderLocalWorkspace = () => (
     <div className="auth-form-animate">
-      <div className="mb-7 flex h-12 w-12 items-center justify-center rounded-[14px] border border-accent-border bg-accent-soft text-accent-text">
-        <HardDrive className="h-6 w-6" aria-hidden="true" />
-      </div>
+      <HardDrive className="mb-5 h-6 w-6 text-accent-text" aria-hidden="true" />
       <p className="mb-2 text-ui-sm font-bold uppercase tracking-[0.14em] text-accent-text">
         Local-first workspace
       </p>
@@ -522,16 +376,14 @@ export default function AuthScreen() {
         </div>
       )}
 
-      <div className="my-7 space-y-3 rounded-[14px] border border-subtle bg-surface-sunken p-4">
+      <div className="my-7 divide-y divide-[var(--qn-border-subtle)] border-y border-subtle">
         {[
           ['Private on this device', ShieldCheck],
           ['Available without a connection', WifiOff],
           ['Every editor and organization feature included', LayoutGrid],
         ].map(([label, Icon]) => (
-          <div key={label} className="flex items-center gap-3 text-ui-md font-medium text-content">
-            <span className="flex h-7 w-7 items-center justify-center rounded-[8px] bg-accent-soft text-accent-text">
-              <Icon className="h-3.5 w-3.5" aria-hidden="true" />
-            </span>
+          <div key={label} className="flex items-center gap-3 py-3 text-ui-md font-medium text-content">
+            <Icon className="h-4 w-4 shrink-0 text-accent-text" aria-hidden="true" />
             {label}
           </div>
         ))}
@@ -783,9 +635,7 @@ export default function AuthScreen() {
         <ArrowLeft className="h-4 w-4" aria-hidden="true" />
         Back to sign in
       </button>
-      <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-[14px] border border-accent-border bg-accent-soft text-accent-text">
-        <Lock className="h-6 w-6" aria-hidden="true" />
-      </div>
+      <Lock className="mb-5 h-6 w-6 text-accent-text" aria-hidden="true" />
       <h1 className="text-[30px] font-bold tracking-[-0.035em] text-content">Reset your password.</h1>
       <p className="mb-7 mt-2 text-ui-lg leading-6 text-content-muted">
         Enter your account email and we’ll send a secure reset link.
@@ -820,9 +670,7 @@ export default function AuthScreen() {
 
   const renderConfirmation = () => (
     <div className="auth-form-animate text-center">
-      <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-[18px] border border-success-border bg-success-soft text-success-text">
-        <Mail className="h-7 w-7" aria-hidden="true" />
-      </div>
+      <Mail className="mx-auto mb-5 h-7 w-7 text-success-text" aria-hidden="true" />
       <p className="mb-2 text-ui-sm font-bold uppercase tracking-[0.14em] text-success-text">
         One last step
       </p>
@@ -886,7 +734,7 @@ export default function AuthScreen() {
           </div>
         </section>
 
-        <section className="qn-auth-form-panel flex min-h-0 flex-col bg-surface backdrop-blur-sm">
+        <section className="qn-auth-form-panel flex min-h-0 flex-col bg-surface">
           <div className="flex items-center justify-between border-b border-subtle px-5 py-4 lg:hidden">
             <BrandMark compact />
             <span className="rounded-full border border-accent-border bg-accent-soft px-2.5 py-1 text-ui-xs font-semibold text-accent-text">

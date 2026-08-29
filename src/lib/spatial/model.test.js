@@ -41,4 +41,22 @@ describe('spatial serialization contract', () => {
       resources: [{ id: 'bad', kind: 'image', mimeType: 'image/png', byteSize: 12, data: 'javascript:alert(1)' }],
     })).toThrow('invalid image data')
   })
+
+  it('persists supported sticky stationery and rejects unknown presentation data', () => {
+    const document = createSpatialDocument('canvas-sticky', 'canvas')
+    const sticky = createBoundedObject({
+      noteId: document.noteId,
+      kind: 'sticky',
+      point: { x: 20, y: 30 },
+      text: 'Pinned thought',
+      zIndex: 1,
+    })
+    expect(sticky.data).toMatchObject({ style: 'sunflower' })
+
+    sticky.data.style = 'sage'
+    expect(assertSpatialPayload({ document, pages: [], objects: [sticky] })).toBe(true)
+
+    sticky.data.style = 'neon-gradient'
+    expect(() => assertSpatialPayload({ document, pages: [], objects: [sticky] })).toThrow('unsupported colour')
+  })
 })

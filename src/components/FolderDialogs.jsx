@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
-import { Check, FolderPlus, Pencil, Search } from 'lucide-react'
+import { AlertTriangle, Check, FolderPlus, Pencil, Search } from 'lucide-react'
 import { Modal, Button, Field, Input } from './ui'
 import { folderIcons, folderIconNames, folderColors, getFolderIcon } from '../lib/folderIcons'
 import { useTranslation } from '../lib/useTranslation'
@@ -288,6 +288,7 @@ export function ConfirmDialog({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const confirmRef = useRef(null)
+  const bodyDescriptionId = useId()
 
   useEffect(() => {
     if (open) {
@@ -314,10 +315,10 @@ export function ConfirmDialog({
       open={open}
       onClose={busy ? () => {} : onClose}
       title={title}
-      description={description}
-      icon={icon}
+      icon={icon || (tone === 'danger' ? AlertTriangle : undefined)}
       size="sm"
       initialFocusRef={confirmRef}
+      describedBy={bodyDescriptionId}
       footer={
         <>
           <Button variant="ghost" onClick={onClose} disabled={busy}>
@@ -334,12 +335,16 @@ export function ConfirmDialog({
         </>
       }
     >
-      {!description && <p className="text-ui-md text-content-muted">This action cannot be undone.</p>}
-      {error && (
-        <p role="alert" className="rounded-control border border-danger-border bg-danger-soft px-3 py-2.5 text-ui-md text-danger-text">
-          {error}
+      <div className="space-y-3">
+        <p id={bodyDescriptionId} className="text-ui-md leading-relaxed text-content-muted">
+          {description || 'This action cannot be undone.'}
         </p>
-      )}
+        {error && (
+          <p role="alert" className="rounded-control border border-danger-border bg-danger-soft px-3 py-2.5 text-ui-md text-danger-text">
+            {error}
+          </p>
+        )}
+      </div>
     </Modal>
   )
 }

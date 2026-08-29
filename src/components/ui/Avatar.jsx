@@ -27,7 +27,7 @@ export default function Avatar({ user, size = 'md', className = '' }) {
 
   return (
     <span
-      className={`relative flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-accent to-accent-active font-semibold text-accent-on ${
+      className={`relative flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-accent font-semibold text-accent-on ${
  SIZES[size] || SIZES.md
  } ${className}`}
     >

@@ -11,9 +11,9 @@ const VARIANTS = {
   ghost:
     'text-content-muted hover:bg-surface-hover hover:text-content active:bg-surface-active disabled:text-content-subtle',
   danger:
-    'bg-danger text-white hover:brightness-95 active:brightness-90 shadow-xs disabled:bg-[var(--qn-border-strong)] disabled:text-content-subtle disabled:shadow-none',
+    'bg-danger text-white hover:bg-[var(--qn-danger-hover)] active:bg-[var(--qn-danger-active)] shadow-xs disabled:bg-[var(--qn-border-strong)] disabled:text-content-subtle disabled:shadow-none',
   'danger-ghost':
-    'text-danger-text hover:bg-danger-soft active:bg-danger-soft disabled:text-content-subtle',
+    'text-danger-text hover:bg-danger-soft hover:text-[var(--qn-danger-hover)] active:bg-[var(--qn-danger-soft-active)] disabled:text-content-subtle',
 }
 
 const SIZES = {

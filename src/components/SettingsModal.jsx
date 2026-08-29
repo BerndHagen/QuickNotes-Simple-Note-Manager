@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Avatar, Button, DialogHeader, Field, Input, LanguageFlag, SegmentedControl, Switch, Toggle } from './ui'
+import { Avatar, Button, DialogHeader, Field, Input, LanguageFlag, SegmentedControl, Select, Switch, Toggle } from './ui'
 import {
   User,
   Mail,
@@ -570,10 +570,10 @@ export default function SettingsModal() {
                 type="button"
                 aria-current={activeTab === tab.id ? 'page' : undefined}
                 onClick={() => setActiveTab(tab.id)}
-                className={`qn-touch-target flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 text-xs transition-colors sm:w-full sm:min-w-0 sm:justify-start sm:gap-3 sm:px-3 sm:text-[13px] ${
+                className={`qn-touch-target flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-control px-3 py-2 text-xs transition-colors sm:w-full sm:min-w-0 sm:justify-start sm:gap-3 sm:px-3 sm:text-[13px] ${
  activeTab === tab.id
- ? 'bg-accent-soft text-accent-text ring-1 ring-[var(--qn-accent-border)] font-semibold'
-                    : 'text-content-muted hover:bg-surface-hover'
+ ? 'bg-accent-soft text-accent-text font-semibold'
+                    : 'text-content-muted hover:bg-surface-hover hover:text-content active:bg-surface-active'
                 }`}
               >
                 <tab.icon className={`h-4 w-4 shrink-0 ${activeTab === tab.id ? 'text-accent-text' : 'text-content-subtle'}`} />
@@ -606,10 +606,10 @@ export default function SettingsModal() {
                         type="button"
                         aria-pressed={theme === option.id}
                         onClick={() => setTheme(option.id)}
-                        className={`flex min-w-0 flex-col items-center gap-2 rounded-lg border-2 p-3 transition-colors sm:p-4 ${
+                        className={`flex min-w-0 flex-col items-center gap-2 rounded-control border p-3 transition-colors sm:p-4 ${
  theme === option.id
- ? 'border-accent bg-accent-soft text-accent-text ring-1 ring-[rgba(16,185,129,0.10)] dark:ring-[rgba(16,185,129,0.20)]'
-                            : 'border-subtle hover:border-subtle dark:hover:border-subtle'
+ ? 'border-accent bg-accent-soft text-accent-text'
+                            : 'border-subtle bg-surface-raised hover:border-strong hover:bg-surface-hover active:bg-surface-active'
                         }`}
                       >
                         <option.icon aria-hidden="true" className={`w-6 h-6 ${theme === option.id ? 'text-accent-text dark:text-accent-text' : 'text-content-muted'}`} />
@@ -630,10 +630,10 @@ export default function SettingsModal() {
                         type="button"
                         aria-pressed={language === lang.code}
                         onClick={() => setLanguage(lang.code)}
-                        className={`flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-colors ${
+                        className={`flex flex-col items-center gap-1 p-3 rounded-control border transition-colors ${
  language === lang.code
- ? 'border-accent bg-accent-soft text-accent-text ring-1 ring-[rgba(16,185,129,0.10)] dark:ring-[rgba(16,185,129,0.20)]'
-                            : 'border-subtle hover:border-subtle dark:hover:border-subtle'
+ ? 'border-accent bg-accent-soft text-accent-text'
+                            : 'border-subtle bg-surface-raised hover:border-strong hover:bg-surface-hover active:bg-surface-active'
                         }`}
                         dir={lang.dir}
                       >
@@ -664,10 +664,10 @@ export default function SettingsModal() {
                           if (option.id === 'grid') setSelectedNote(null)
                           setViewMode(option.id)
                         }}
-                        className={`flex min-w-0 flex-col items-center gap-2 rounded-lg border-2 p-4 transition-colors ${
+                        className={`flex min-w-0 flex-col items-center gap-2 rounded-control border p-4 transition-colors ${
  viewMode === option.id
- ? 'border-accent bg-accent-soft text-accent-text ring-1 ring-[rgba(16,185,129,0.10)] dark:ring-[rgba(16,185,129,0.20)]'
-                            : 'border-subtle hover:border-subtle dark:hover:border-subtle'
+ ? 'border-accent bg-accent-soft text-accent-text'
+                            : 'border-subtle bg-surface-raised hover:border-strong hover:bg-surface-hover active:bg-surface-active'
                         }`}
                       >
                         <option.icon aria-hidden="true" className={`w-6 h-6 ${viewMode === option.id ? 'text-accent-text dark:text-accent-text' : 'text-content-muted'}`} />
@@ -682,8 +682,8 @@ export default function SettingsModal() {
                   <h4 className="mb-3 text-sm font-medium text-content">
                     {t('settings.editorPreferences')}
                   </h4>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between gap-3 rounded-lg border border-subtle bg-surface-raised p-3 shadow-xs">
+                  <div className="divide-y divide-[var(--qn-border-subtle)] border-y border-subtle">
+                    <div className="flex items-center justify-between gap-3 py-3">
                       <div className="flex min-w-0 items-center gap-3">
                         <Shield className="h-4 w-4 shrink-0 text-content-muted" />
                         <div className="min-w-0">
@@ -701,7 +701,7 @@ export default function SettingsModal() {
                         onChange={setConfirmBeforeDelete}
                       />
                     </div>
-                    <div className="flex items-center justify-between gap-3 rounded-lg border border-subtle bg-surface-raised p-3 shadow-xs">
+                    <div className="flex items-center justify-between gap-3 py-3">
                       <div className="flex min-w-0 items-center gap-3">
                         <SpellCheck className="h-4 w-4 shrink-0 text-content-muted" />
                         <div className="min-w-0">
@@ -719,7 +719,7 @@ export default function SettingsModal() {
                         onChange={setSpellCheck}
                       />
                     </div>
-                    <div className="flex items-center justify-between gap-3 rounded-lg border border-subtle bg-surface-raised p-3 shadow-xs">
+                    <div className="flex items-center justify-between gap-3 py-3">
                       <div className="flex min-w-0 items-center gap-3">
                         <BarChart3 className="h-4 w-4 shrink-0 text-content-muted" />
                         <div className="min-w-0">
@@ -745,7 +745,7 @@ export default function SettingsModal() {
                   <h4 className="mb-3 text-sm font-medium text-content">
                     {t('settings.noteListDisplay', 'Note list display')}
                   </h4>
-                  <div className="space-y-4 rounded-card border border-subtle bg-surface-raised p-4 shadow-xs">
+                  <div className="space-y-4 border-y border-subtle py-4">
                     <Field
                       label={t('settings.notePreviewLines')}
                       hint={t('settings.notePreviewLinesDesc')}
@@ -812,11 +812,10 @@ export default function SettingsModal() {
                   <p className="mb-3 text-xs text-content-muted">
                     {t('settings.defaultSortOrderDesc')}
                   </p>
-                  <select
+                  <Select
                     aria-label={t('settings.defaultSortOrder')}
                     value={currentSort}
                     onChange={(e) => setCurrentSort(e.target.value)}
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-subtle bg-surface-raised text-content focus:ring-2 focus:ring-accent focus:border-accent"
                   >
                     <option value="manual">{t('sort.manual')}</option>
                     <option value="updated-desc">{t('sort.lastModified')}</option>
@@ -827,7 +826,7 @@ export default function SettingsModal() {
                     <option value="title-desc">{t('sort.titleZA')}</option>
                     <option value="size-desc">{t('sort.sizeDesc')}</option>
                     <option value="size-asc">{t('sort.sizeAsc')}</option>
-                  </select>
+                  </Select>
                 </div>
 
                 <div>
@@ -839,18 +838,18 @@ export default function SettingsModal() {
                   </p>
                   <div className="flex items-center gap-3">
                     <Clock className="w-4 h-4 text-content-muted" />
-                    <select
+                    <Select
                       aria-label={t('settings.trashRetention')}
                       value={trashRetentionDays}
                       onChange={(e) => setTrashRetentionDays(Number(e.target.value))}
-                      className="flex-1 px-3 py-2 text-sm rounded-lg border border-subtle bg-surface-raised text-content focus:ring-2 focus:ring-accent focus:border-accent"
+                      className="flex-1"
                     >
                       <option value={7}>7 {t('settings.days')}</option>
                       <option value={14}>14 {t('settings.days')}</option>
                       <option value={30}>30 {t('settings.days')}</option>
                       <option value={60}>60 {t('settings.days')}</option>
                       <option value={90}>90 {t('settings.days')}</option>
-                    </select>
+                    </Select>
                   </div>
                 </div>
               </div>
@@ -859,10 +858,8 @@ export default function SettingsModal() {
               <div className="space-y-6">
                 {user?.isLocal ? (
                   <div className="space-y-5">
-                    <div className="flex items-center gap-4 rounded-xl border border-[var(--qn-accent-border)] bg-accent-soft p-4">
-                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-subtle bg-surface-raised text-accent-text shadow-xs">
-                        <HardDrive className="h-5 w-5" aria-hidden="true" />
-                      </span>
+                    <div className="flex items-center gap-3 border-y border-subtle py-4">
+                      <HardDrive className="h-5 w-5 shrink-0 text-accent-text" aria-hidden="true" />
                       <div>
                         <p className="font-semibold text-content">
                           {user?.username || 'My workspace'}
@@ -873,7 +870,7 @@ export default function SettingsModal() {
                       </div>
                     </div>
 
-                    <div className="rounded-xl border border-subtle p-4">
+                    <div className="border-b border-subtle pb-5">
                       <h4 className="mb-1 text-sm font-semibold text-content">
                         Workspace name
                       </h4>
@@ -897,7 +894,7 @@ export default function SettingsModal() {
                       </div>
                     </div>
 
-                    <div className="rounded-xl border border-subtle p-4 ">
+                    <div className="border-b border-subtle pb-5">
                       <h4 className="text-sm font-semibold text-content">
                         Local-first mode
                       </h4>
@@ -906,27 +903,26 @@ export default function SettingsModal() {
                         browser and all editing and organization features are available offline.
                       </p>
                       {!cloudEnabled && (
-                        <p className="mt-3 rounded-lg bg-surface-sunken px-3 py-2.5 text-xs leading-5 text-content-muted dark:bg-surface-sunken dark:text-content-subtle">
+                        <p className="mt-3 border-l-2 border-accent px-3 py-1.5 text-xs leading-5 text-content-muted">
                           Multi-device sync and collaboration become available when a self-hosted
                           Supabase backend is configured.
                         </p>
                       )}
                     </div>
 
-                    <button
-                      type="button"
+                    <Button
+                      variant="ghost"
+                      icon={LogOut}
                       onClick={handleLogout}
                       disabled={isSigningOut}
                       aria-busy={isSigningOut || undefined}
-                      className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-content transition-colors hover:bg-surface-sunken dark:text-content-subtle dark:hover:bg-surface-sunken"
                     >
-                      <LogOut className="h-4 w-4" aria-hidden="true" />
                       Close workspace
-                    </button>
+                    </Button>
                   </div>
                 ) : user ? (
                   <div className="space-y-6">
-                    <div className="flex items-center gap-4 p-4 rounded-lg bg-surface-sunken">
+                    <div className="flex items-center gap-4 border-y border-subtle py-4">
                       <Avatar user={user} size="xl" />
                       <div className="min-w-0 flex-1">
                         <p className="truncate font-semibold text-content">
@@ -939,24 +935,24 @@ export default function SettingsModal() {
                         </p>
                       </div>
                     </div>
-                    <div className="p-4 border border-subtle rounded-lg ">
+                    <div className="border-b border-subtle pb-5">
                       <div className="flex items-center gap-2 mb-3">
                         <User className="w-4 h-4 text-content-muted" />
                         <h4 className="text-sm font-medium text-content">{t('settings.profilePictureUrl')}</h4>
                       </div>
                       <div className="flex gap-2">
-                        <input
+                        <Input
                           ref={avatarUrlRef}
                           aria-label={t('settings.profilePictureUrl')}
                           aria-describedby="qn-avatar-url-hint"
                           type="url"
                           defaultValue={user.user_metadata?.avatar_url || ''}
                           placeholder="https://example.com/your-image.jpg"
-                          className="flex-1 rounded-lg border border-subtle bg-surface-raised px-4 py-2 text-sm text-content"
+                          className="flex-1"
                           id="avatar-url-input"
                         />
-                        <button
-                          type="button"
+                        <Button
+                          variant="primary"
                           onClick={async () => {
                             const rawUrl = avatarUrlRef.current?.value.trim() || ''
                             const normalized = rawUrl
@@ -991,16 +987,15 @@ export default function SettingsModal() {
                             }
                           }}
                           disabled={isLoading}
-                          className="px-4 py-2 text-sm text-accent-on transition-colors rounded-lg bg-accent hover:bg-accent-hover disabled:opacity-50"
                         >
                           {isLoading ? t('settings.saving') : t('common.save')}
-                        </button>
+                        </Button>
                       </div>
                       <p id="qn-avatar-url-hint" className="mt-2 text-xs text-content-muted">
                         {t('settings.profilePictureHint')}
                       </p>
                     </div>
-                    <div className="rounded-lg border border-subtle bg-surface-raised p-4 shadow-xs">
+                    <div className="border-b border-subtle pb-5">
                       <h4 className="mb-1 text-sm font-medium text-content">
                         Username
                       </h4>
@@ -1032,21 +1027,21 @@ export default function SettingsModal() {
                         </Button>
                       </div>
                     </div>
-                    <div className="p-4 border border-subtle rounded-lg ">
+                    <div className="border-b border-subtle pb-5">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <Mail className="w-4 h-4 text-content-muted" />
                           <h4 className="text-sm font-medium text-content">{t('settings.changeEmail')}</h4>
                         </div>
-                        <button
-                          type="button"
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           aria-expanded={showChangeEmail}
                           aria-controls="qn-change-email-form"
                           onClick={() => setShowChangeEmail(!showChangeEmail)}
-                          className="px-3 py-1.5 text-sm text-accent-text dark:text-accent-text hover:bg-accent-soft dark:hover:bg-accent-soft rounded-lg transition-colors"
                         >
                           {showChangeEmail ? t('common.cancel') : t('settings.change')}
-                        </button>
+                        </Button>
                       </div>
                       {showChangeEmail && (
                         <form id="qn-change-email-form" onSubmit={handleChangeEmail} className="mt-4 space-y-3">
@@ -1069,21 +1064,21 @@ export default function SettingsModal() {
                         </form>
                       )}
                     </div>
-                    <div className="p-4 border border-subtle rounded-lg ">
+                    <div className="border-b border-subtle pb-5">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <Lock className="w-4 h-4 text-content-muted" />
                           <h4 className="text-sm font-medium text-content">{t('settings.changePassword')}</h4>
                         </div>
-                        <button
-                          type="button"
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           aria-expanded={showChangePassword}
                           aria-controls="qn-change-password-form"
                           onClick={() => setShowChangePassword(!showChangePassword)}
-                          className="px-3 py-1.5 text-sm text-accent-text dark:text-accent-text hover:bg-accent-soft dark:hover:bg-accent-soft rounded-lg transition-colors"
                         >
                           {showChangePassword ? t('common.cancel') : t('settings.change')}
-                        </button>
+                        </Button>
                       </div>
                       {showChangePassword && (
                         <form id="qn-change-password-form" onSubmit={handleChangePassword} className="mt-4 space-y-3">
@@ -1128,79 +1123,77 @@ export default function SettingsModal() {
                         </form>
                       )}
                     </div>
-                    <button
-                      type="button"
+                    <Button
+                      variant="ghost"
+                      icon={LogOut}
                       onClick={handleLogout}
                       disabled={isSigningOut}
                       aria-busy={isSigningOut || undefined}
-                      className="flex items-center gap-2 px-4 py-2 text-red-600 transition-colors rounded-lg dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30"
                     >
-                      <LogOut className="w-4 h-4" />
                       {t('settings.logOut')}
-                    </button>
+                    </Button>
 
                     {/* Delete Account */}
                     <div className="pt-4 mt-4 space-y-3 border-t border-subtle">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <AlertTriangle className="w-4 h-4 text-red-500" />
-                          <h4 className="text-sm font-medium text-red-600 dark:text-red-400">
+                          <AlertTriangle className="h-4 w-4 text-danger-text" aria-hidden="true" />
+                          <h4 className="text-sm font-medium text-danger-text">
                             {t('settings.deleteAccount')}
                           </h4>
                         </div>
-                        <button
-                          type="button"
+                        <Button
+                          variant="danger-ghost"
+                          size="sm"
                           aria-expanded={showDeleteAccount}
                           aria-controls="qn-delete-account-confirmation"
                           onClick={() => {
                             setShowDeleteAccount(!showDeleteAccount)
                             setDeleteConfirmText('')
                           }}
-                          className="px-3 py-1.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
                         >
                           {showDeleteAccount ? t('common.cancel') : t('settings.deleteAccountButton')}
-                        </button>
+                        </Button>
                       </div>
                       <p className="text-xs text-content-muted">
                         {t('settings.deleteAccountDesc')}
                       </p>
                       {showDeleteAccount && (
-                        <div id="qn-delete-account-confirmation" className="p-4 space-y-4 border-2 border-red-300 rounded-lg dark:border-red-800 bg-red-50 dark:bg-red-900/20">
+                        <div id="qn-delete-account-confirmation" className="space-y-4 border-l-2 border-danger bg-danger-soft p-4">
                           <div className="flex items-start gap-3">
-                            <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                            <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-danger-text" aria-hidden="true" />
                             <div>
-                              <p className="text-sm font-medium text-red-700 dark:text-red-300">
+                              <p className="text-sm font-medium text-danger-text">
                                 {t('settings.deleteAccountConfirmTitle')}
                               </p>
-                              <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                              <p className="mt-1 text-xs text-content-muted">
                                 {t('settings.deleteAccountConfirmMessage')}
                               </p>
                             </div>
                           </div>
                           <div>
-                            <label htmlFor="qn-delete-account-text" className="block mb-2 text-xs font-medium text-red-700 dark:text-red-300">
+                            <label htmlFor="qn-delete-account-text" className="mb-2 block text-xs font-medium text-content">
                               {t('settings.deleteAccountTypeConfirm')}
                             </label>
-                            <input
+                            <Input
                               id="qn-delete-account-text"
                               type="text"
                               value={deleteConfirmText}
                               onChange={(e) => setDeleteConfirmText(e.target.value)}
-                              className="w-full px-3 py-2 text-sm border-2 border-red-300 rounded-lg dark:border-red-700 bg-surface-raised text-content focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none"
                               placeholder="DELETE"
                               autoComplete="off"
                               spellCheck={false}
                             />
                           </div>
-                          <button
-                            type="button"
+                          <Button
+                            variant="danger"
+                            icon={Trash2}
+                            fullWidth
                             onClick={handleDeleteAccount}
                             disabled={isDeletingAccount || deleteConfirmText !== 'DELETE'}
-                            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                           >
-                            <Trash2 className="w-4 h-4" />
                             {isDeletingAccount ? t('settings.deleteAccountDeleting') : t('settings.deleteAccountButton')}
-                          </button>
+                          </Button>
                         </div>
                       )}
                     </div>
@@ -1210,44 +1203,38 @@ export default function SettingsModal() {
                     <p className="text-sm text-content-muted">
                       {t('settings.signInDesc')}
                       {!isBackendConfigured() && (
-                        <span className="flex items-center gap-2 mt-2 text-yellow-600 dark:text-yellow-400">
+                        <span className="mt-2 flex items-center gap-2 text-warning-text">
                           <AlertTriangle className="flex-shrink-0 w-4 h-4" />
                           {t('settings.backendNotConfigured')}
                         </span>
                       )}
                     </p>
 
-                    <div>
-                      <label htmlFor="qn-settings-email" className="block mb-1 text-sm font-medium text-content-muted">
-                        {t('settings.email')}
-                      </label>
+                    <Field label={t('settings.email')} htmlFor="qn-settings-email">
                       <div className="relative">
-                        <Mail className="absolute w-4 h-4 text-content-subtle -translate-y-1/2 left-3 top-1/2" />
-                        <input
+                        <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-content-subtle" aria-hidden="true" />
+                        <Input
                           id="qn-settings-email"
                           type="email"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
-                          className="w-full rounded-lg border border-subtle bg-surface-raised py-2 pl-10 pr-4 text-content"
+                          className="pl-10"
                           placeholder="your@email.com"
                           autoComplete="email"
                           required
                         />
                       </div>
-                    </div>
+                    </Field>
 
-                    <div>
-                      <label htmlFor="qn-settings-password" className="block mb-1 text-sm font-medium text-content-muted">
-                        {t('settings.password')}
-                      </label>
+                    <Field label={t('settings.password')} htmlFor="qn-settings-password">
                       <div className="relative">
-                        <Lock className="absolute w-4 h-4 text-content-subtle -translate-y-1/2 left-3 top-1/2" />
-                        <input
+                        <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-content-subtle" aria-hidden="true" />
+                        <Input
                           id="qn-settings-password"
                           type={showPassword ? 'text' : 'password'}
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
-                          className="w-full rounded-lg border border-subtle bg-surface-raised py-2 pl-10 pr-10 text-content"
+                          className="pl-10 pr-10"
                           placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
                           autoComplete="current-password"
                           required
@@ -1265,7 +1252,7 @@ export default function SettingsModal() {
                           )}
                         </button>
                       </div>
-                    </div>
+                    </Field>
 
                     <div>
                       <Button type="submit" variant="primary" loading={isLoading} fullWidth>
@@ -1300,11 +1287,11 @@ export default function SettingsModal() {
                     {t('settings.syncNow')}
                   </Button>
                 </div>
-                <div className="space-y-4">
+                <div className="divide-y divide-[var(--qn-border-subtle)] border-y border-subtle">
                   <h4 className="text-sm font-medium text-content">
                     {t('settings.syncSettings', 'Sync Settings')}
                   </h4>
-                  <div className="flex items-center justify-between rounded-lg border border-subtle bg-surface-raised p-3 shadow-xs">
+                  <div className="flex items-center justify-between gap-4 py-3">
                     <div>
                       <p className="text-sm font-medium text-content">
                         {t('settings.autoSync', 'Auto Sync')}
@@ -1319,7 +1306,7 @@ export default function SettingsModal() {
                       onChange={setAutoSync}
                     />
                   </div>
-                  <div className="flex items-center justify-between rounded-lg border border-subtle bg-surface-raised p-3 shadow-xs">
+                  <div className="flex items-center justify-between gap-4 py-3">
                     <div>
                       <p className="text-sm font-medium text-content">
                         {t('settings.syncInterval', 'Sync Interval')}
@@ -1328,12 +1315,12 @@ export default function SettingsModal() {
                         {t('settings.syncIntervalDesc', 'How often to sync automatically')}
                       </p>
                     </div>
-                    <select
+                    <Select
                       aria-label={t('settings.syncInterval', 'Sync interval')}
                       value={syncInterval}
                       onChange={(e) => setSyncInterval(Number(e.target.value))}
                       disabled={!autoSync}
-                      className="rounded-lg border border-subtle bg-surface-raised px-3 py-1.5 text-sm text-content disabled:opacity-50"
+                      className="w-auto min-w-32"
                     >
                       <option value={1}>1 {t('settings.minute', 'minute')}</option>
                       <option value={5}>5 {t('settings.minutes', 'minutes')}</option>
@@ -1341,9 +1328,9 @@ export default function SettingsModal() {
                       <option value={15}>15 {t('settings.minutes', 'minutes')}</option>
                       <option value={30}>30 {t('settings.minutes', 'minutes')}</option>
                       <option value={60}>1 {t('settings.hour', 'hour')}</option>
-                    </select>
+                    </Select>
                   </div>
-                  <div className="flex items-center justify-between rounded-lg border border-subtle bg-surface-raised p-3 shadow-xs">
+                  <div className="flex items-center justify-between gap-4 py-3">
                     <div>
                       <p className="text-sm font-medium text-content">
                         {t('settings.syncOnStartup', 'Sync on Startup')}
@@ -1358,7 +1345,7 @@ export default function SettingsModal() {
                       onChange={setSyncOnStartup}
                     />
                   </div>
-                  <div className="flex items-center justify-between rounded-lg border border-subtle bg-surface-raised p-3 shadow-xs">
+                  <div className="flex items-center justify-between gap-4 py-3">
                     <div>
                       <p className="text-sm font-medium text-content">
                         {t('settings.syncNotifications', 'Sync Notifications')}
@@ -1379,32 +1366,32 @@ export default function SettingsModal() {
                   <h4 className="text-sm font-medium text-content">
                     {t('settings.statistics')}
                   </h4>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="p-4 text-center rounded-lg bg-surface-sunken border border-subtle">
-                      <p className="text-2xl font-bold text-content">
+                  <dl className="grid grid-cols-3 divide-x divide-[var(--qn-border-subtle)] border-y border-subtle py-3">
+                    <div className="px-3 text-center first:pl-0">
+                      <dd className="text-lg font-semibold tabular-nums text-content">
                         {notes.length}
-                      </p>
-                      <p className="text-sm text-content-muted">
+                      </dd>
+                      <dt className="text-xs text-content-muted">
                         {t('settings.notesCount')}
-                      </p>
+                      </dt>
                     </div>
-                    <div className="p-4 text-center rounded-lg bg-surface-sunken border border-subtle">
-                      <p className="text-2xl font-bold text-content">
+                    <div className="px-3 text-center">
+                      <dd className="text-lg font-semibold tabular-nums text-content">
                         {folders.length}
-                      </p>
-                      <p className="text-sm text-content-muted">
+                      </dd>
+                      <dt className="text-xs text-content-muted">
                         {t('settings.foldersCount')}
-                      </p>
+                      </dt>
                     </div>
-                    <div className="p-4 text-center rounded-lg bg-surface-sunken border border-subtle">
-                      <p className="text-2xl font-bold text-content">
+                    <div className="px-3 text-center last:pr-0">
+                      <dd className="text-lg font-semibold tabular-nums text-content">
                         {tags.length}
-                      </p>
-                      <p className="text-sm text-content-muted">
+                      </dd>
+                      <dt className="text-xs text-content-muted">
                         {t('settings.tagsCount')}
-                      </p>
+                      </dt>
                     </div>
-                  </div>
+                  </dl>
                 </div>
               </div>
             )}
@@ -1418,7 +1405,7 @@ export default function SettingsModal() {
                 </div>
 
                 {intelligenceSettingsError && (
-                  <div role="alert" className="border-l-2 border-red-500 bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">
+                  <div role="alert" className="border-l-2 border-danger bg-danger-soft px-3 py-2 text-sm text-danger-text">
                     {intelligenceSettingsError}
                   </div>
                 )}
@@ -1504,16 +1491,15 @@ export default function SettingsModal() {
                           : 'Protected storage is not granted. The browser may evict local data under storage pressure.'}
                       </p>
                       {storageHealth.persisted !== true && storageHealth.canRequestPersistence && (
-                        <button
-                          type="button"
+                        <Button
+                          variant="secondary"
+                          icon={Shield}
                           disabled={requestingPersistence}
                           aria-busy={requestingPersistence || undefined}
                           onClick={() => void handleRequestStoragePersistence()}
-                          className="flex min-h-9 items-center gap-2 rounded-control border border-subtle bg-surface-sunken px-3 font-medium text-content hover:bg-surface-hover disabled:opacity-60"
                         >
-                          <Shield className="h-4 w-4" aria-hidden="true" />
                           {requestingPersistence ? 'Requesting…' : 'Protect offline data'}
-                        </button>
+                        </Button>
                       )}
                     </div>
                   )}
@@ -1527,15 +1513,14 @@ export default function SettingsModal() {
                       <Shield className="h-4 w-4 text-content-muted" aria-hidden="true" />
                       Local data integrity
                     </h4>
-                    <button
-                      type="button"
+                    <Button
+                      variant="secondary"
                       disabled={checkingIntegrity}
                       aria-busy={checkingIntegrity || undefined}
                       onClick={() => void handleIntegrityCheck()}
-                      className="min-h-9 rounded-control border border-subtle bg-surface-sunken px-3 text-sm font-medium text-content hover:bg-surface-hover disabled:opacity-60"
                     >
                       {checkingIntegrity ? 'Checking…' : 'Check again'}
-                    </button>
+                    </Button>
                   </div>
                   {!integrityReport && checkingIntegrity && <p role="status" className="text-sm text-content-muted">Inspecting attachment and spatial references…</p>}
                   {integrityReport?.issueCount === 0 && (
@@ -1567,13 +1552,13 @@ export default function SettingsModal() {
                   <p className="text-sm text-content-muted">
                     {t('settings.exportDataDesc')}
                   </p>
-                  <button
+                  <Button
+                    variant="secondary"
+                    icon={Download}
                     onClick={handleExportData}
-                    className="flex items-center gap-2 px-4 py-2 text-content transition-colors bg-surface-sunken rounded-lg dark:bg-surface-sunken hover:bg-surface-sunken dark:hover:bg-surface-active border border-subtle "
                   >
-                    <Download className="w-4 h-4 text-content-muted" />
                     {t('settings.exportDataButton')}
-                  </button>
+                  </Button>
                 </div>
 
                 <div className="pt-6 space-y-3 border-t border-subtle">
@@ -1583,29 +1568,29 @@ export default function SettingsModal() {
                   <p className="text-sm text-content-muted">
                     {t('settings.importDataDesc')}
                   </p>
-                  <button
+                  <Button
+                    variant="secondary"
+                    icon={Upload}
                     onClick={() => { setSettingsOpen(false); setImportModalOpen(true) }}
-                    className="flex items-center gap-2 px-4 py-2 text-content transition-colors bg-surface-sunken rounded-lg dark:bg-surface-sunken hover:bg-surface-sunken dark:hover:bg-surface-active border border-subtle "
                   >
-                    <Upload className="w-4 h-4 text-content-muted" />
                     {t('settings.importDataButton')}
-                  </button>
+                  </Button>
                 </div>
 
                 <div className="pt-6 space-y-3 border-t border-subtle">
-                  <h4 className="text-sm font-medium text-red-600 dark:text-red-400">
+                  <h4 className="text-sm font-medium text-danger-text">
                     {t('settings.dangerZone')}
                   </h4>
                   <p className="text-sm text-content-muted">
                     {t('settings.deleteAllDataDesc')}
                   </p>
-                  <button
+                  <Button
+                    variant="danger"
+                    icon={Trash2}
                     onClick={() => setConfirmClearData(true)}
-                    className="flex items-center gap-2 px-4 py-2 text-red-600 transition-colors bg-red-100 rounded-lg dark:bg-red-900/30 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 border border-red-300 dark:border-red-800"
                   >
-                    <Trash2 className="w-4 h-4" />
                     {t('settings.deleteAllData')}
-                  </button>
+                  </Button>
                 </div>
               </div>
             )}
@@ -1641,25 +1626,23 @@ export default function SettingsModal() {
             )}
             {activeTab === 'about' && (
               <div className="space-y-6">
-                <div className="flex flex-col items-center gap-3 py-4">
-                  <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-accent-soft">
-                    <FileText className="w-8 h-8 text-accent-text dark:text-accent-text" />
-                  </div>
-                  <div className="text-center">
+                <div className="border-b border-subtle pb-5">
+                  <FileText className="mb-3 h-6 w-6 text-accent-text" aria-hidden="true" />
+                  <div>
                     <h3 className="text-lg font-semibold text-content">QuickNotes</h3>
                     <p className="text-sm text-content-muted">{t('settings.version')} {APP_VERSION}</p>
                   </div>
-                  <p className="text-center text-sm text-content-muted max-w-sm">
+                  <p className="mt-2 max-w-lg text-sm text-content-muted">
                     {t('settings.aboutDescription')}
                   </p>
                 </div>
 
-                <div className="space-y-2">
+                <div className="divide-y divide-[var(--qn-border-subtle)] border-y border-subtle">
                   <a
                     href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-3 p-3 rounded-lg bg-surface-sunken hover:bg-surface-hover transition-colors cursor-pointer"
+                    className="flex items-center gap-3 px-1 py-3 transition-colors hover:bg-surface-hover active:bg-surface-active"
                   >
                     <Github className="w-5 h-5 text-content-muted" />
                     <div className="flex-1">
@@ -1671,7 +1654,7 @@ export default function SettingsModal() {
 
                   <button
                     onClick={() => { setSettingsOpen(false); useUIStore.getState().setPrivacyModalOpen(true) }}
-                    className="flex items-center gap-3 p-3 rounded-lg bg-surface-sunken hover:bg-surface-hover transition-colors cursor-pointer w-full text-left"
+                    className="flex w-full items-center gap-3 px-1 py-3 text-left transition-colors hover:bg-surface-hover active:bg-surface-active"
                   >
                     <Shield className="w-5 h-5 text-content-muted" />
                     <div className="flex-1">
@@ -1683,7 +1666,7 @@ export default function SettingsModal() {
 
                   <button
                     onClick={() => { setSettingsOpen(false); useUIStore.getState().setTermsModalOpen(true) }}
-                    className="flex items-center gap-3 p-3 rounded-lg bg-surface-sunken hover:bg-surface-hover transition-colors cursor-pointer w-full text-left"
+                    className="flex w-full items-center gap-3 px-1 py-3 text-left transition-colors hover:bg-surface-hover active:bg-surface-active"
                   >
                     <FileText className="w-5 h-5 text-content-muted" />
                     <div className="flex-1">

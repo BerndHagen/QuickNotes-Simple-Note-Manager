@@ -96,7 +96,7 @@ function TagPopover({ open, onClose, anchorRef, tags, selectedTags, onAddTag, on
       role="dialog"
       aria-label={t('quickNote.addTags')}
       style={{ ...style, width: 280 }}
-      className="z-popover overflow-y-auto overscroll-contain rounded-card border border-subtle bg-surface-raised p-3 shadow-lg animate-menu-in"
+      className="z-popover overflow-y-auto overscroll-contain rounded-card border border-strong bg-surface-raised p-3 shadow-md animate-menu-in"
     >
       <div className="mb-3 flex items-center gap-2">
         <Input

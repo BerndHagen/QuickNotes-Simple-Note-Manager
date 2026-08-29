@@ -321,6 +321,25 @@ describe('creation and destructive workflows', () => {
     expect(createNote.mock.calls[0][0].title.length).toBeGreaterThan(0)
   })
 
+  it('keeps destructive guidance in the confirmation body rather than the title bar', () => {
+    const description = 'Every note in Trash will be permanently deleted from this workspace.'
+    render(
+      <ConfirmDialog
+        open
+        onClose={() => {}}
+        onConfirm={() => {}}
+        title="Empty Trash"
+        description={description}
+        confirmLabel="Empty Trash"
+      />
+    )
+
+    const dialog = screen.getByRole('dialog', { name: 'Empty Trash' })
+    expect(within(dialog.querySelector('[data-dialog-body]')).getByText(description)).toBeInTheDocument()
+    expect(within(dialog.querySelector('[data-dialog-banner]')).queryByText(description)).not.toBeInTheDocument()
+    expect(dialog).toHaveAttribute('aria-describedby', screen.getByText(description).id)
+  })
+
   it('keeps a confirmation open and surfaces a rejected action', async () => {
     const user = userEvent.setup()
     render(

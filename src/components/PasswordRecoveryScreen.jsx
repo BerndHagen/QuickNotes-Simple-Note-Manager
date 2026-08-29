@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
-import { buttonClasses } from './ui'
-import { CheckCircle2, Eye, EyeOff, FileText, Lock, RefreshCw } from 'lucide-react'
+import { Button, Input, NotepadGlyph } from './ui'
+import { CheckCircle2, Eye, EyeOff, Lock } from 'lucide-react'
 import { backend } from '../lib/backend'
 import { getAuthErrorMessage, MIN_PASSWORD_LENGTH, validateNewPassword } from '../lib/authValidation'
 
@@ -51,11 +51,11 @@ export default function PasswordRecoveryScreen({ onComplete, onCancel }) {
   }
 
   return (
-    <main className="flex min-h-[100dvh] items-center justify-center bg-app px-4 py-10">
-      <div className="w-full max-w-[460px] rounded-[20px] border border-subtle bg-surface-raised p-7 shadow-xl sm:p-9">
+    <main className="qn-auth-page flex min-h-[100dvh] items-center justify-center px-4 py-10">
+      <div className="relative w-full max-w-[460px] rounded-dialog border border-strong bg-surface-raised p-7 shadow-dialog sm:p-9">
         <div className="mb-7 flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-[12px] bg-accent text-accent-on shadow-md">
-            <FileText className="h-5 w-5" aria-hidden="true" />
+          <span className="flex h-10 w-10 items-center justify-center rounded-control bg-accent text-accent-on">
+            <NotepadGlyph className="h-5 w-5" aria-hidden="true" />
           </span>
           <div>
             <p className="text-title-md font-bold text-content">QuickNotes</p>
@@ -63,9 +63,7 @@ export default function PasswordRecoveryScreen({ onComplete, onCancel }) {
           </div>
         </div>
 
-        <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-[14px] border border-accent-border bg-accent-soft text-accent-text">
-          <Lock className="h-6 w-6" aria-hidden="true" />
-        </div>
+        <Lock className="mb-5 h-6 w-6 text-accent-text" aria-hidden="true" />
         <h1 className="text-[28px] font-bold tracking-[-0.035em] text-content">
           Choose a new password.
         </h1>
@@ -79,7 +77,7 @@ export default function PasswordRecoveryScreen({ onComplete, onCancel }) {
               New password
             </label>
             <div className="relative">
-              <input
+              <Input
                 id="qn-recovery-password"
                 ref={passwordRef}
                 type={showPassword ? 'text' : 'password'}
@@ -92,7 +90,7 @@ export default function PasswordRecoveryScreen({ onComplete, onCancel }) {
                 autoComplete="new-password"
                 aria-invalid={errorField === 'password'}
                 aria-describedby={`qn-recovery-password-hint${errorField === 'password' ? ' qn-recovery-error' : ''}`}
-                className="h-11 w-full rounded-[10px] border border-strong bg-surface-raised px-3 pr-11 text-ui-lg text-content outline-none focus:border-accent focus:ring-2 focus:ring-[var(--qn-accent-soft)]"
+                className="h-11 pr-11 text-ui-lg"
               />
               <button
                 type="button"
@@ -112,7 +110,7 @@ export default function PasswordRecoveryScreen({ onComplete, onCancel }) {
             <label htmlFor="qn-recovery-confirmation" className="mb-1.5 block text-ui-sm font-semibold text-content-muted">
               Confirm new password
             </label>
-            <input
+            <Input
               id="qn-recovery-confirmation"
               ref={confirmationRef}
               type="password"
@@ -125,7 +123,7 @@ export default function PasswordRecoveryScreen({ onComplete, onCancel }) {
               autoComplete="new-password"
               aria-invalid={errorField === 'confirmation'}
               aria-describedby={errorField === 'confirmation' ? 'qn-recovery-error' : undefined}
-              className="h-11 w-full rounded-[10px] border border-strong bg-surface-raised px-3 text-ui-lg text-content outline-none focus:border-accent focus:ring-2 focus:ring-[var(--qn-accent-soft)]"
+              className="h-11 text-ui-lg"
             />
           </div>
 
@@ -135,26 +133,23 @@ export default function PasswordRecoveryScreen({ onComplete, onCancel }) {
             </p>
           )}
 
-          <button
+          <Button
             type="submit"
-            disabled={isSubmitting}
-            className={buttonClasses({ variant: 'primary' }) + ' w-full'}
+            variant="primary"
+            icon={CheckCircle2}
+            loading={isSubmitting}
+            fullWidth
           >
-            {isSubmitting ? (
-              <RefreshCw className="h-4 w-4 animate-spin" aria-hidden="true" />
-            ) : (
-              <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
-            )}
             Update password
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="ghost"
             onClick={() => onCancel?.()}
             disabled={isSubmitting}
-            className="h-10 w-full rounded-[10px] text-ui-md font-semibold text-content-muted hover:bg-surface-hover hover:text-content disabled:opacity-60"
+            fullWidth
           >
             Cancel and sign out
-          </button>
+          </Button>
         </form>
       </div>
     </main>

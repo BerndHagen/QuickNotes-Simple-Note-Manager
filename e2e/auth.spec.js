@@ -21,6 +21,9 @@ test.describe('authentication entry', () => {
 
       const dialog = page.getByRole('dialog', { name: surface.title })
       await expect(dialog).toBeVisible()
+      await dialog.evaluate(async (element) => {
+        await Promise.all(element.getAnimations({ subtree: true }).map((animation) => animation.finished))
+      })
       const { violations } = await new AxeBuilder({ page })
         .include('[role="dialog"]')
         .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
@@ -54,7 +57,7 @@ test.describe('authentication entry', () => {
     await expect(page.getByRole('alert').first()).toContainText('Username is required')
   })
 
-  test('loads the branded background and shows the current editor hierarchy', async ({ page, request }) => {
+  test('loads the branded background and presents the three current work surfaces', async ({ page, request }) => {
     await page.setViewportSize({ width: 1920, height: 1080 })
     const authPage = page.locator('.qn-auth-page')
     const background = await authPage.evaluate((element) => getComputedStyle(element).backgroundImage)
@@ -74,9 +77,12 @@ test.describe('authentication entry', () => {
     expect(dimensions.width).toBeGreaterThanOrEqual(1_200)
     expect(dimensions.height).toBeGreaterThanOrEqual(1_200)
 
-    const preview = page.locator('.qn-auth-preview')
-    await expect(preview.locator('.qn-auth-preview-banner')).toHaveCount(1)
-    await expect(preview.getByText('Smart views', { exact: true })).toBeVisible()
-    await expect(preview.getByText('Recent work', { exact: true })).toBeVisible()
+    const preview = page.locator('.qn-auth-surface-preview')
+    await expect(preview).toBeVisible()
+    await expect(preview.locator('.qn-auth-surface')).toHaveCount(3)
+    await expect(preview.getByText('Document', { exact: true })).toBeVisible()
+    await expect(preview.getByText('Paper', { exact: true })).toBeVisible()
+    await expect(preview.getByText('Canvas', { exact: true })).toBeVisible()
+    await expect(page.locator('.qn-auth-preview')).toHaveCount(0)
   })
 })

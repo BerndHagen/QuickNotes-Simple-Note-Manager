@@ -141,7 +141,7 @@ export default function ResizableImage({ node, updateAttributes, deleteNode, sel
           </>
         )}
         {(showControls || selected) && (
-          <div className="image-menu absolute left-0 top-full z-10 mt-2 flex max-w-[calc(100vw-2rem)] items-center gap-1 overflow-x-auto overscroll-x-contain rounded-lg border border-subtle bg-surface-raised p-1.5 opacity-100 shadow-xl transition-opacity sm:-top-12 sm:left-1/2 sm:mt-0 sm:max-w-none sm:-translate-x-1/2 sm:overflow-visible sm:opacity-0 sm:group-hover:opacity-100">
+          <div className="image-menu absolute left-0 top-full z-10 mt-2 flex max-w-[calc(100vw-2rem)] items-center gap-1 overflow-x-auto overscroll-x-contain rounded-card border border-strong bg-surface-raised p-1.5 opacity-100 shadow-md transition-opacity sm:-top-12 sm:left-1/2 sm:mt-0 sm:max-w-none sm:-translate-x-1/2 sm:overflow-visible sm:opacity-0 sm:group-hover:opacity-100">
             <div className="flex items-center gap-0.5 px-1 border-r border-subtle">
               {presetSizes.map((size) => (
                 <button

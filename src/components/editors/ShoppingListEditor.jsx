@@ -166,13 +166,13 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
             onChange={(e) => setNewItemName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && addItem()}
             placeholder="Add item..."
-            className="flex-1 min-w-[200px] px-4 py-2 rounded-lg bg-white dark:bg-surface-sunken border border-subtle outline-none text-content focus:ring-2 focus:ring-emerald-500"
+            className="min-w-[200px] flex-1 rounded-lg border border-subtle bg-surface-raised px-4 py-2 text-content outline-none"
           />
           <select
             aria-label="Category for new item"
             value={newItemCategory}
             onChange={(e) => setNewItemCategory(e.target.value)}
-            className="px-3 py-2 rounded-lg bg-white dark:bg-surface-sunken border border-subtle outline-none text-content"
+            className="rounded-lg border border-subtle bg-surface-raised px-3 py-2 text-content outline-none"
           >
             {shoppingData.categories.map((cat) => (
               <option key={cat.id} value={cat.id}>{cat.icon} {cat.name}</option>
@@ -187,13 +187,13 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
               min="0.1"
               step="0.1"
               placeholder="Qty"
-              className="w-16 px-2 py-2 rounded-l-lg bg-white dark:bg-surface-sunken border border-subtle outline-none text-content text-center"
+              className="w-16 rounded-l-lg border border-subtle bg-surface-raised px-2 py-2 text-center text-content outline-none"
             />
             <select
               aria-label="Unit for new item"
               value={newItemUnit}
               onChange={(e) => setNewItemUnit(e.target.value)}
-              className="w-20 px-2 py-2 rounded-r-lg bg-white dark:bg-surface-sunken border-y border-r border-subtle outline-none text-content"
+              className="w-20 rounded-r-lg border-y border-r border-subtle bg-surface-raised px-2 py-2 text-content outline-none"
             >
               {UNITS.map((unit) => (
                 <option key={unit} value={unit}>{unit}</option>
@@ -213,7 +213,7 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
                 placeholder="Price"
                 min="0"
                 step="0.01"
-                className="w-20 px-2 py-2 rounded-r-lg bg-white dark:bg-surface-sunken border border-subtle outline-none text-content"
+                className="w-20 rounded-r-lg border border-subtle bg-surface-raised px-2 py-2 text-content outline-none"
               />
             </div>
           )}
@@ -253,7 +253,7 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
           </div>
         </div>
         {showSettings && (
-          <div className="mt-3 p-4 rounded-lg bg-white dark:bg-surface-sunken border border-subtle ">
+          <div className="mt-3 rounded-card border border-subtle bg-surface-raised p-4">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <div>
                 <label className="text-sm text-content-muted mb-1 block">Currency</label>

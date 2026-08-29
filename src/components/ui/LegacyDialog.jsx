@@ -40,7 +40,7 @@ export default function LegacyDialog({
       ].join(' ')}
     >
       <div
-        className="fixed inset-0 bg-[var(--qn-overlay)] backdrop-blur-[2px] animate-fade-in"
+        className="fixed inset-0 bg-[var(--qn-overlay)] animate-fade-in"
         onClick={closeOnBackdrop ? onClose : undefined}
         aria-hidden="true"
       />

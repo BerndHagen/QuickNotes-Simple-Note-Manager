@@ -5,8 +5,14 @@ import { useNotesStore, useUIStore } from '../store'
 import FocusMode from './FocusMode'
 
 vi.mock('./RichTextEditor', () => ({
-  default: ({ content, readOnly }) => (
-    <div role="textbox" aria-label="Focus editor" aria-readonly={readOnly}>
+  default: ({ content, readOnly, focusPresentation, paperType }) => (
+    <div
+      role="textbox"
+      aria-label="Focus editor"
+      aria-readonly={readOnly}
+      data-focus-presentation={focusPresentation || undefined}
+      data-paper-type={paperType}
+    >
       {content}
     </div>
   ),
@@ -27,6 +33,10 @@ describe('FocusMode', () => {
 
     expect(screen.getByRole('dialog')).toHaveAccessibleName('Project brief')
     expect(screen.getByText('3 words')).toBeInTheDocument()
+    expect(screen.getByRole('textbox', { name: 'Focus editor' })).toHaveAttribute(
+      'data-focus-presentation',
+      'true'
+    )
 
     await user.click(screen.getByRole('button', { name: 'Exit focus mode' }))
     expect(useUIStore.getState().focusModeOpen).toBe(false)

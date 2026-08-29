@@ -201,7 +201,7 @@ export function Menu({
       role="menu"
       aria-label={label}
       style={{ ...style, ...(width ? { width } : {}) }}
-      className={`qn-menu z-dropdown overflow-y-auto overscroll-contain rounded-card border border-subtle bg-surface-raised p-1 shadow-lg animate-menu-in ${className}`}
+      className={`qn-menu z-dropdown overflow-y-auto overscroll-contain rounded-card border border-strong bg-surface-raised p-1 shadow-md animate-menu-in ${className}`}
     >
       {children}
     </div>,
@@ -231,10 +231,10 @@ export function MenuItem({
         'qn-touch-target flex w-full items-center gap-2.5 rounded-control px-2.5 py-2 text-left text-ui-md transition-colors duration-fast',
         'disabled:cursor-not-allowed disabled:opacity-50',
         tone === 'danger'
-          ? 'text-danger-text hover:bg-danger-soft'
+          ? 'text-danger-text hover:bg-danger-soft hover:text-[var(--qn-danger-hover)] active:bg-[var(--qn-danger-soft-active)]'
           : selected
-            ? 'bg-accent-soft text-accent-text'
-            : 'text-content hover:bg-surface-hover',
+            ? 'bg-accent-soft text-accent-text active:bg-[var(--qn-accent-soft-hover)]'
+            : 'text-content hover:bg-surface-hover active:bg-surface-active',
       ].join(' ')}
       {...props}
     >

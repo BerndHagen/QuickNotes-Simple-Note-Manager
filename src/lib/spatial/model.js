@@ -24,6 +24,14 @@ export const PAPER_SIZES = Object.freeze({
 
 export const PAPER_PATTERNS = ['blank', 'ruled', 'dot', 'square', 'graph']
 export const PAPER_SURFACES = ['white', 'warm', 'cream', 'dark']
+export const STICKY_STYLES = Object.freeze({
+  sunflower: { name: 'Sunflower', fill: '#f4e5a3', border: '#c9b561', text: '#29271f' },
+  cream: { name: 'Cream', fill: '#f4ead2', border: '#c9baa0', text: '#2f2a22' },
+  rose: { name: 'Rose', fill: '#edc9c5', border: '#bd938f', text: '#342524' },
+  sage: { name: 'Sage', fill: '#cfe0cf', border: '#9ab19c', text: '#243027' },
+  blue: { name: 'Blue', fill: '#cbdce6', border: '#96acb8', text: '#223039' },
+  lavender: { name: 'Lavender', fill: '#d9d0e5', border: '#a89bb9', text: '#2d2834' },
+})
 export const SPATIAL_TOOLS = [
   'select', 'pen', 'highlighter', 'eraser', 'hand',
   'line', 'arrow', 'rectangle', 'ellipse',
@@ -146,16 +154,20 @@ export function createBoundedObject({ noteId, pageId, ownerId, kind, point, zInd
   }
   const safeKind = Object.hasOwn(sizes, kind) ? kind : 'text'
   const bounds = { x: coordinate(point.x), y: coordinate(point.y), ...sizes[safeKind] }
+  const data = {
+    text: String(text).slice(0, SPATIAL_LIMITS.MAX_TEXT_LENGTH),
+    targetNoteId: targetNoteId || null,
+    targetAnchorId: targetAnchorId || null,
+    targetObjectId: targetObjectId || null,
+    resourceId: null,
+  }
+  if (safeKind === 'sticky') {
+    data.style = 'sunflower'
+  }
   return {
     ...baseObject(noteId, pageId, safeKind, zIndex, ownerId),
     bounds,
-    data: {
-      text: String(text).slice(0, SPATIAL_LIMITS.MAX_TEXT_LENGTH),
-      targetNoteId: targetNoteId || null,
-      targetAnchorId: targetAnchorId || null,
-      targetObjectId: targetObjectId || null,
-      resourceId: null,
-    },
+    data,
   }
 }
 
@@ -264,6 +276,9 @@ export function assertSpatialObject(object, document, pageIds = new Set()) {
     )) throw new Error('A converted shape contains invalid source identities.')
   } else if (['text', 'sticky', 'indexCard'].includes(object.kind)) {
     if (typeof data.text !== 'string' || data.text.length > SPATIAL_LIMITS.MAX_TEXT_LENGTH) throw new Error('A text object is invalid or too long.')
+    if (object.kind === 'sticky') {
+      if (data.style != null && !Object.hasOwn(STICKY_STYLES, data.style)) throw new Error('A sticky note contains an unsupported colour.')
+    }
   } else if (object.kind === 'noteLink') {
     for (const identity of ['targetNoteId', 'targetAnchorId', 'targetObjectId']) {
       if (data[identity] != null && (typeof data[identity] !== 'string' || data[identity].length > 128)) {

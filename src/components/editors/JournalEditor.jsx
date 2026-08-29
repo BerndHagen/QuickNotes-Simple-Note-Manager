@@ -360,7 +360,7 @@ export default function JournalEditor({ data, onChange, note, noteTitle, onTitle
                   onChange={(e) => setNewGoal(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && addGoal()}
                   placeholder="Add a goal for today..."
-                  className="flex-1 px-4 py-2 rounded-xl bg-surface-sunken border border-subtle outline-none text-content"
+                  className="flex-1 rounded-control border border-subtle bg-surface-sunken px-4 py-2 text-content outline-none"
                 />
                 <button
                   onClick={addGoal}
@@ -411,7 +411,7 @@ export default function JournalEditor({ data, onChange, note, noteTitle, onTitle
                   onChange={(e) => setNewHighlight(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && addHighlight()}
                   placeholder="Add a highlight moment..."
-                  className="flex-1 px-4 py-2 rounded-xl bg-surface-sunken border border-subtle outline-none text-content"
+                  className="flex-1 rounded-control border border-subtle bg-surface-sunken px-4 py-2 text-content outline-none"
                 />
                 <button
                   onClick={addHighlight}
@@ -432,7 +432,7 @@ export default function JournalEditor({ data, onChange, note, noteTitle, onTitle
                 value={journalData.challenges}
                 onChange={(e) => update('challenges', e.target.value)}
                 placeholder="What challenges did you face today?"
-                className="w-full px-4 py-3 rounded-xl bg-surface-sunken border border-subtle outline-none text-content resize-none"
+                className="w-full resize-none rounded-control border border-subtle bg-surface-sunken px-4 py-3 text-content outline-none"
                 rows={4}
               />
             </div>
@@ -457,7 +457,7 @@ export default function JournalEditor({ data, onChange, note, noteTitle, onTitle
                       value={journalData.gratitude[index]}
                       onChange={(e) => updateGratitude(index, e.target.value)}
                       placeholder={`I'm grateful for...`}
-                      className="flex-1 px-4 py-3 rounded-xl bg-surface-sunken border border-subtle outline-none text-content"
+                      className="flex-1 rounded-control border border-subtle bg-surface-sunken px-4 py-3 text-content outline-none"
                     />
                   </div>
                 ))}
@@ -473,7 +473,7 @@ export default function JournalEditor({ data, onChange, note, noteTitle, onTitle
                 value={journalData.lessons}
                 onChange={(e) => update('lessons', e.target.value)}
                 placeholder="What did you learn today?"
-                className="w-full px-4 py-3 rounded-xl bg-surface-sunken border border-subtle outline-none text-content resize-none"
+                className="w-full resize-none rounded-control border border-subtle bg-surface-sunken px-4 py-3 text-content outline-none"
                 rows={4}
               />
             </div>
@@ -540,7 +540,7 @@ export default function JournalEditor({ data, onChange, note, noteTitle, onTitle
                   onChange={(e) => setNewTag(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && addTag()}
                   placeholder="Add a tag..."
-                  className="flex-1 px-4 py-2 rounded-xl bg-surface-sunken border border-subtle outline-none text-content"
+                  className="flex-1 rounded-control border border-subtle bg-surface-sunken px-4 py-2 text-content outline-none"
                 />
                 <button
                   onClick={addTag}
@@ -593,7 +593,7 @@ export default function JournalEditor({ data, onChange, note, noteTitle, onTitle
               value={journalData.freeWrite}
               onChange={(e) => update('freeWrite', e.target.value)}
               placeholder="Start writing..."
-              className="w-full h-[500px] px-4 py-3 rounded-xl bg-surface-sunken border-2 border-subtle focus:border-accent outline-none text-content resize-none text-lg leading-relaxed"
+              className="h-[500px] w-full resize-none rounded-control border border-strong bg-surface-sunken px-4 py-3 text-lg leading-relaxed text-content outline-none focus:border-accent"
               autoFocus
             />
             <div className="flex justify-between items-center mt-2 text-sm text-content-muted">

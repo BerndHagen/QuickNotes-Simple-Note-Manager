@@ -16,6 +16,7 @@ import { useUIStore } from '../store'
 import LegacyDialog from './ui/LegacyDialog'
 import DialogHeader from './ui/DialogHeader'
 import Button from './ui/Button'
+import { Select, Switch } from './ui/Field'
 import {
   DEFAULT_EDITOR_FONT,
   EDITOR_FONT_FAMILIES,
@@ -64,6 +65,21 @@ const tabSizeOptions = [
   { name: '4 spaces', value: 4 },
   { name: '8 spaces', value: 8 },
 ]
+
+function PreferenceToggle({ icon: Icon, label, description, checked, onChange }) {
+  return (
+    <div className="flex items-center justify-between gap-4 py-3">
+      <div className="flex min-w-0 items-start gap-3">
+        {Icon && <Icon className="mt-0.5 h-4 w-4 shrink-0 text-content-muted" aria-hidden="true" />}
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-content">{label}</p>
+          <p className="text-xs text-content-muted">{description}</p>
+        </div>
+      </div>
+      <Switch checked={checked} onChange={onChange} label={label} />
+    </div>
+  )
+}
 
 const booleanSettingKeys = [
   'showRuler',
@@ -188,48 +204,45 @@ export default function EditorSettingsModal() {
                 <label htmlFor="editor-document-width" className="mb-2 block text-sm font-medium text-content-muted">
                   Note width
                 </label>
-                <select
+                <Select
                   id="editor-document-width"
                   value={settings.documentWidth}
                   onChange={(e) => handleSettingChange('documentWidth', e.target.value)}
-                  className="w-full rounded-control border border-subtle bg-surface-sunken px-3 py-2 text-content focus:ring-2 focus:ring-emerald-500"
                 >
                   <option value="focused">Focused · 680 px</option>
                   <option value="standard">Standard · 794 px</option>
                   <option value="wide">Wide · 960 px</option>
                   <option value="full">Full width</option>
-                </select>
+                </Select>
               </div>
               <div>
                 <label htmlFor="editor-default-ribbon-tab" className="mb-2 block text-sm font-medium text-content-muted">
                   Tab shown when editor opens
                 </label>
-                <select
+                <Select
                   id="editor-default-ribbon-tab"
                   value={settings.defaultRibbonTab}
                   onChange={(e) => handleSettingChange('defaultRibbonTab', e.target.value)}
-                  className="w-full rounded-control border border-subtle bg-surface-sunken px-3 py-2 text-content focus:ring-2 focus:ring-emerald-500"
                 >
                   <option value="home">Home</option>
                   <option value="insert">Insert</option>
                   <option value="layout">Layout</option>
                   <option value="review">Review</option>
                   <option value="view">View</option>
-                </select>
+                </Select>
               </div>
               <div>
                 <label htmlFor="editor-ribbon-density" className="mb-2 block text-sm font-medium text-content-muted">
                   Ribbon spacing
                 </label>
-                <select
+                <Select
                   id="editor-ribbon-density"
                   value={settings.ribbonDensity}
                   onChange={(e) => handleSettingChange('ribbonDensity', e.target.value)}
-                  className="w-full rounded-control border border-subtle bg-surface-sunken px-3 py-2 text-content focus:ring-2 focus:ring-emerald-500"
                 >
                   <option value="comfortable">Comfortable</option>
                   <option value="compact">Compact</option>
-                </select>
+                </Select>
               </div>
             </div>
           </div>
@@ -242,11 +255,10 @@ export default function EditorSettingsModal() {
               <label htmlFor="editor-default-font" className="block mb-2 text-sm font-medium text-content-muted">
                 Default Font Family
               </label>
-              <select
+              <Select
                 id="editor-default-font"
                 value={settings.defaultFontFamily}
                 onChange={(e) => handleSettingChange('defaultFontFamily', e.target.value)}
-                className="w-full px-3 py-2 text-content bg-surface-sunken border border-subtle rounded-lg dark:bg-surface-sunken dark:text-white focus:ring-2 focus:ring-emerald-500"
               >
                 {EDITOR_FONT_GROUPS.map((group) => (
                   <optgroup key={group.name} label={group.name}>
@@ -257,37 +269,35 @@ export default function EditorSettingsModal() {
                     ))}
                   </optgroup>
                 ))}
-              </select>
+              </Select>
             </div>
             <div>
               <label htmlFor="editor-default-font-size" className="block mb-2 text-sm font-medium text-content-muted">
                 Default Font Size
               </label>
-              <select
+              <Select
                 id="editor-default-font-size"
                 value={settings.defaultFontSize}
                 onChange={(e) => handleSettingChange('defaultFontSize', e.target.value)}
-                className="w-full px-3 py-2 text-content bg-surface-sunken border border-subtle rounded-lg dark:bg-surface-sunken dark:text-white focus:ring-2 focus:ring-emerald-500"
               >
                 {fontSizeOptions.map(size => (
                   <option key={size.value} value={size.value}>{size.name}</option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div>
               <label htmlFor="editor-default-line-height" className="block mb-2 text-sm font-medium text-content-muted">
                 Line Height
               </label>
-              <select
+              <Select
                 id="editor-default-line-height"
                 value={settings.defaultLineHeight}
                 onChange={(e) => handleSettingChange('defaultLineHeight', e.target.value)}
-                className="w-full px-3 py-2 text-content bg-surface-sunken border border-subtle rounded-lg dark:bg-surface-sunken dark:text-white focus:ring-2 focus:ring-emerald-500"
               >
                 {lineHeightOptions.map(lh => (
                   <option key={lh.value} value={lh.value}>{lh.name}</option>
                 ))}
-              </select>
+              </Select>
             </div>
           </div>
           <div className="space-y-4">
@@ -299,38 +309,38 @@ export default function EditorSettingsModal() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label htmlFor="editor-checkbox-shape" className="mb-2 block text-sm font-medium text-content-muted">Shape</label>
-                <select id="editor-checkbox-shape" value={settings.defaultCheckboxStyle} onChange={(e) => handleSettingChange('defaultCheckboxStyle', e.target.value)} className="w-full rounded-control border border-subtle bg-surface-sunken px-3 py-2 text-content focus:ring-2 focus:ring-emerald-500">
+                <Select id="editor-checkbox-shape" value={settings.defaultCheckboxStyle} onChange={(e) => handleSettingChange('defaultCheckboxStyle', e.target.value)}>
                   <option value="square">Square</option>
                   <option value="rounded">Rounded</option>
                   <option value="circle">Circle</option>
-                </select>
+              </Select>
               </div>
               <div>
                 <label htmlFor="editor-checkbox-colour" className="mb-2 block text-sm font-medium text-content-muted">Tick colour</label>
-                <select id="editor-checkbox-colour" value={settings.defaultCheckboxColor} onChange={(e) => handleSettingChange('defaultCheckboxColor', e.target.value)} className="w-full rounded-control border border-subtle bg-surface-sunken px-3 py-2 text-content focus:ring-2 focus:ring-emerald-500">
+                <Select id="editor-checkbox-colour" value={settings.defaultCheckboxColor} onChange={(e) => handleSettingChange('defaultCheckboxColor', e.target.value)}>
                   <option value="accent">QuickNotes green</option>
                   <option value="blue">Blue</option>
                   <option value="purple">Purple</option>
                   <option value="amber">Amber</option>
                   <option value="rose">Rose</option>
                   <option value="slate">Slate</option>
-                </select>
+                </Select>
               </div>
               <div>
                 <label htmlFor="editor-checkbox-size" className="mb-2 block text-sm font-medium text-content-muted">Size</label>
-                <select id="editor-checkbox-size" value={settings.defaultCheckboxSize} onChange={(e) => handleSettingChange('defaultCheckboxSize', e.target.value)} className="w-full rounded-control border border-subtle bg-surface-sunken px-3 py-2 text-content focus:ring-2 focus:ring-emerald-500">
+                <Select id="editor-checkbox-size" value={settings.defaultCheckboxSize} onChange={(e) => handleSettingChange('defaultCheckboxSize', e.target.value)}>
                   <option value="compact">Compact</option>
                   <option value="standard">Standard</option>
                   <option value="large">Large</option>
-                </select>
+                </Select>
               </div>
               <div>
                 <label htmlFor="editor-checked-treatment" className="mb-2 block text-sm font-medium text-content-muted">Completed text</label>
-                <select id="editor-checked-treatment" value={settings.defaultCheckedStyle} onChange={(e) => handleSettingChange('defaultCheckedStyle', e.target.value)} className="w-full rounded-control border border-subtle bg-surface-sunken px-3 py-2 text-content focus:ring-2 focus:ring-emerald-500">
+                <Select id="editor-checked-treatment" value={settings.defaultCheckedStyle} onChange={(e) => handleSettingChange('defaultCheckedStyle', e.target.value)}>
                   <option value="strike">Strike through</option>
                   <option value="fade">Fade</option>
                   <option value="keep">Keep unchanged</option>
-                </select>
+                </Select>
               </div>
             </div>
           </div>
@@ -339,51 +349,29 @@ export default function EditorSettingsModal() {
               <Eye className="w-4 h-4" />
               Display
             </h3>
-            <label className="flex items-center justify-between p-3 transition-colors border border-subtle rounded-lg cursor-pointer hover:bg-surface-sunken dark:hover:bg-surface-sunken">
-              <div className="flex items-center gap-3">
-                <Ruler className="w-5 h-5 text-content-muted" />
-                <div>
-                  <p className="font-medium text-content">Show Ruler</p>
-                  <p className="text-xs text-content-muted">Display ruler at the top of the editor</p>
-                </div>
-              </div>
-              <input
-                type="checkbox"
+            <div className="divide-y divide-[var(--qn-border-subtle)] border-y border-subtle">
+              <PreferenceToggle
+                icon={Ruler}
+                label="Show ruler"
+                description="Display the horizontal ruler above the document."
                 checked={settings.showRuler}
-                onChange={(e) => handleSettingChange('showRuler', e.target.checked)}
-                className="w-5 h-5 rounded text-emerald-600 focus:ring-emerald-500"
+                onChange={(checked) => handleSettingChange('showRuler', checked)}
               />
-            </label>
-            <label className="flex items-center justify-between p-3 transition-colors border border-subtle rounded-lg cursor-pointer hover:bg-surface-sunken dark:hover:bg-surface-sunken">
-              <div className="flex items-center gap-3">
-                <AlignLeft className="w-5 h-5 text-content-muted" />
-                <div>
-                  <p className="font-medium text-content">Word Wrap</p>
-                  <p className="text-xs text-content-muted">Wrap long lines to fit the editor width</p>
-                </div>
-              </div>
-              <input
-                type="checkbox"
+              <PreferenceToggle
+                icon={AlignLeft}
+                label="Word wrap"
+                description="Wrap long lines to fit the editor width."
                 checked={settings.wordWrap}
-                onChange={(e) => handleSettingChange('wordWrap', e.target.checked)}
-                className="w-5 h-5 rounded text-emerald-600 focus:ring-emerald-500"
+                onChange={(checked) => handleSettingChange('wordWrap', checked)}
               />
-            </label>
-            <label className="flex items-center justify-between p-3 transition-colors border border-subtle rounded-lg cursor-pointer hover:bg-surface-sunken dark:hover:bg-surface-sunken">
-              <div className="flex items-center gap-3">
-                <EyeOff className="w-5 h-5 text-content-muted" />
-                <div>
-                  <p className="font-medium text-content">Show Invisible Characters</p>
-                  <p className="text-xs text-content-muted">Display spaces, tabs, and line breaks</p>
-                </div>
-              </div>
-              <input
-                type="checkbox"
+              <PreferenceToggle
+                icon={EyeOff}
+                label="Show invisible characters"
+                description="Display spaces, tabs, and line breaks."
                 checked={settings.showInvisibles}
-                onChange={(e) => handleSettingChange('showInvisibles', e.target.checked)}
-                className="w-5 h-5 rounded text-emerald-600 focus:ring-emerald-500"
+                onChange={(checked) => handleSettingChange('showInvisibles', checked)}
               />
-            </label>
+            </div>
           </div>
           <div className="space-y-4">
             <h3 className="flex items-center gap-2 text-sm font-semibold text-content-muted uppercase tracking-wider">
@@ -394,29 +382,24 @@ export default function EditorSettingsModal() {
               <label htmlFor="editor-tab-size" className="block mb-2 text-sm font-medium text-content-muted">
                 Tab Size
               </label>
-              <select
+              <Select
                 id="editor-tab-size"
                 value={settings.tabSize}
                 onChange={(e) => handleSettingChange('tabSize', parseInt(e.target.value))}
-                className="w-full px-3 py-2 text-content bg-surface-sunken border border-subtle rounded-lg dark:bg-surface-sunken dark:text-white focus:ring-2 focus:ring-emerald-500"
               >
                 {tabSizeOptions.map(tab => (
                   <option key={tab.value} value={tab.value}>{tab.name}</option>
                 ))}
-              </select>
+              </Select>
             </div>
-            <label className="flex cursor-pointer items-center justify-between rounded-control border border-subtle p-3 transition-colors hover:bg-surface-sunken">
-              <div>
-                <p className="font-medium text-content">Browser auto-correction</p>
-                <p className="text-xs text-content-muted">Allow supported browsers to correct typing mistakes</p>
-              </div>
-              <input
-                type="checkbox"
+            <div className="border-y border-subtle">
+              <PreferenceToggle
+                label="Browser auto-correction"
+                description="Allow supported browsers to correct typing mistakes."
                 checked={settings.autoCorrect}
-                onChange={(e) => handleSettingChange('autoCorrect', e.target.checked)}
-                className="h-5 w-5 rounded text-emerald-600 focus:ring-emerald-500"
+                onChange={(checked) => handleSettingChange('autoCorrect', checked)}
               />
-            </label>
+            </div>
           </div>
         </div>
         <div data-dialog-footer className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-strong px-5 py-4 sm:px-6">

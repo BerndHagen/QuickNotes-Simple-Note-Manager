@@ -160,10 +160,10 @@ export default function VoiceInput({ onTranscript, isActive, onToggle }) {
       <div
         role="alert"
         aria-label="Voice input unavailable"
-        className="fixed bottom-4 left-4 right-4 z-50 rounded-xl border border-red-200 bg-red-50 p-4 shadow-xl sm:bottom-8 sm:left-auto sm:right-8 dark:border-red-800 dark:bg-red-900/30"
+        className="fixed bottom-4 left-4 right-4 z-50 rounded-card border border-danger-border bg-danger-soft p-4 shadow-md sm:bottom-8 sm:left-auto sm:right-8 sm:w-[360px]"
       >
-        <div className="flex items-center gap-3 text-red-600 dark:text-red-400">
-          <AlertCircle className="h-6 w-6 shrink-0" aria-hidden="true" />
+        <div className="flex items-center gap-3 text-danger-text">
+          <AlertCircle className="h-5 w-5 shrink-0" aria-hidden="true" />
           <div className="min-w-0 flex-1">
             <p className="font-medium">Voice input unavailable</p>
             <p className="text-sm">This browser does not support voice recognition, or microphone access is blocked.</p>
@@ -172,7 +172,7 @@ export default function VoiceInput({ onTranscript, isActive, onToggle }) {
             type="button"
             onClick={() => onToggleRef.current?.(false)}
             aria-label="Close voice input"
-            className="qn-square-control ml-2 rounded p-1 hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:hover:bg-red-800/50"
+            className="qn-square-control ml-2 rounded-control p-1 hover:bg-[var(--qn-danger-soft-active)]"
           >
             <span aria-hidden="true">×</span>
           </button>
@@ -227,12 +227,12 @@ export default function VoiceInput({ onTranscript, isActive, onToggle }) {
     <section
       role="dialog"
       aria-label="Voice input"
-      className="fixed bottom-4 left-4 right-4 z-50 overflow-hidden rounded-xl border border-subtle bg-surface-raised shadow-2xl sm:bottom-8 sm:left-auto sm:right-8 sm:w-[320px]"
+      className="fixed bottom-4 left-4 right-4 z-50 overflow-hidden rounded-dialog border border-strong bg-surface-raised shadow-dialog sm:bottom-8 sm:left-auto sm:right-8 sm:w-[320px]"
     >
       <div className="qn-dialog-header flex items-center justify-between border-b border-subtle bg-surface-raised px-4 py-3 text-content">
         <div className="flex items-center gap-2" role="status" aria-live="polite">
           <span
-            className={`h-3 w-3 rounded-full ${isListening ? 'animate-pulse bg-red-500' : 'bg-gray-400'}`}
+            className={`h-2.5 w-2.5 rounded-full ${isListening ? 'animate-pulse bg-danger' : 'bg-[var(--qn-border-strong)]'}`}
             aria-hidden="true"
           />
           <span className="text-sm font-medium text-content">
@@ -255,13 +255,13 @@ export default function VoiceInput({ onTranscript, isActive, onToggle }) {
             onClick={() => (isListening ? pauseRecognition() : startRecognition())}
             aria-label={isListening ? 'Pause voice input' : 'Resume voice input'}
             aria-pressed={isListening}
-            className={`flex h-16 w-16 items-center justify-center rounded-full transition-[background-color,color,box-shadow,transform] duration-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 ${
+            className={`flex h-14 w-14 items-center justify-center rounded-full transition-colors duration-base ${
               isListening
-                ? 'scale-110 bg-red-500 text-white shadow-lg shadow-red-500/30'
+                ? 'bg-danger text-white hover:bg-[var(--qn-danger-hover)] active:bg-[var(--qn-danger-active)]'
                 : 'bg-surface-sunken text-content-muted hover:bg-surface-hover'
             }`}
           >
-            <Mic className="h-8 w-8" aria-hidden="true" />
+            <Mic className="h-6 w-6" aria-hidden="true" />
           </button>
           {interimTranscript && (
             <p aria-live="polite" className="max-w-[250px] text-center text-sm italic text-content-muted">

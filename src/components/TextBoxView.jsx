@@ -79,7 +79,7 @@ function Panel({ open, anchorRef, onClose, label, children, className = '' }) {
       aria-label={label}
       contentEditable={false}
       style={style}
-      className={`z-[99999] max-h-[min(28rem,calc(100dvh-1rem))] overflow-y-auto rounded-card border border-subtle bg-surface-raised p-3 shadow-lg ${className}`}
+      className={`z-[99999] max-h-[min(28rem,calc(100dvh-1rem))] overflow-y-auto rounded-card border border-strong bg-surface-raised p-3 shadow-md ${className}`}
     >
       {children}
     </div>,
@@ -307,7 +307,7 @@ export default function TextBoxView({ node, updateAttributes, deleteNode, select
           aria-label="Text box formatting"
           contentEditable={false}
           style={toolbarStyle}
-          className="fixed z-[99998] flex max-w-[calc(100vw-1rem)] items-center gap-0.5 overflow-x-auto rounded-card border border-subtle bg-surface-raised p-1 shadow-lg"
+          className="fixed z-[99998] flex max-w-[calc(100vw-1rem)] items-center gap-0.5 overflow-x-auto rounded-card border border-strong bg-surface-raised p-1 shadow-md"
         >
           <ControlButton buttonRef={layoutRef} icon={WrapText} label="Text box layout" active={panel === 'layout'} onClick={() => setPanel((value) => value === 'layout' ? null : 'layout')}>
             Position <ChevronDown className="h-3 w-3" />

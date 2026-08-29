@@ -790,7 +790,7 @@ function SlashCommandMenu({ editor, editorSettings, menu, onClose }) {
   if (!menu) return null
 
   return createPortal(
-    <div role="listbox" aria-label="Insert block" className="qn-slash-menu fixed z-[99999] w-[min(20rem,calc(100vw-1rem))] overflow-hidden rounded-dialog border border-subtle bg-surface-raised p-1.5 shadow-xl" style={{ left: Math.max(8, menu.left), top: Math.max(8, menu.top) }}>
+    <div role="listbox" aria-label="Insert block" className="qn-slash-menu fixed z-[99999] w-[min(20rem,calc(100vw-1rem))] overflow-hidden rounded-card border border-strong bg-surface-raised p-1.5 shadow-md" style={{ left: Math.max(8, menu.left), top: Math.max(8, menu.top) }}>
       <div className="flex items-center justify-between px-2.5 py-1.5">
         <span className="text-ui-xs font-semibold uppercase tracking-wide text-content-subtle">Insert block</span>
         <span className="text-ui-xs text-content-subtle">↑↓ · Enter</span>
@@ -947,6 +947,7 @@ export default function RichTextEditor({
   ribbonActions,
   ribbonDetails,
   ribbonOverflowAction,
+  focusPresentation = false,
 }) {
   const [currentPaper, setCurrentPaper] = useState(paperType)
   const [typingEpoch, setTypingEpoch] = useState(0)
@@ -1455,8 +1456,11 @@ export default function RichTextEditor({
   }
 
   return (
-    <div className="relative flex h-full min-h-0 flex-col">
-      {!readOnly && (
+    <div
+      className="relative flex h-full min-h-0 flex-col"
+      data-editor-presentation={focusPresentation ? 'focus' : 'workspace'}
+    >
+      {!readOnly && !focusPresentation && (
         <div className="shrink-0">
           <EditorToolbar
             editor={editor}
@@ -1494,7 +1498,7 @@ export default function RichTextEditor({
           
           return !selection.empty
         }}
-        className="bg-surface-raised shadow-xl rounded-lg border border-subtle flex items-center p-1 gap-0.5"
+        className="flex items-center gap-0.5 rounded-card border border-strong bg-surface-raised p-1 shadow-md"
       >
         <BubbleButton label="Bold" onClick={() => editor.chain().focus().toggleBold().run()} isActive={editor.isActive('bold')}>
           <Bold className="w-4 h-4" />
@@ -1523,7 +1527,7 @@ export default function RichTextEditor({
 
       {!readOnly && <SlashCommandMenu editor={editor} editorSettings={editorSettings} menu={slashMenu} onClose={() => setSlashMenu(null)} />}
 
-      {editorSettings.showRuler && !isCompactViewport && (
+      {!focusPresentation && editorSettings.showRuler && !isCompactViewport && (
         <DocumentRuler editor={editor} containerRef={editorContainerRef} />
       )}
 
@@ -1537,7 +1541,7 @@ export default function RichTextEditor({
           }}
           className="qn-editor-workbench relative flex-1 overflow-y-auto"
         >
-          {editorSettings.showRuler && !isCompactViewport && (
+          {!focusPresentation && editorSettings.showRuler && !isCompactViewport && (
             <VerticalDocumentRuler editor={editor} containerRef={editorContainerRef} />
           )}
           <PaperSurface
@@ -1567,14 +1571,14 @@ export default function RichTextEditor({
         />
       )}
 
-      {!readOnly && !mobileToolbarOpen && (
+      {!readOnly && !focusPresentation && !mobileToolbarOpen && (
         <button
           type="button"
           aria-label="Show formatting tools"
           aria-controls="qn-editor-toolbar"
           aria-expanded="false"
           onClick={() => setMobileToolbarOpen(true)}
-          className="qn-square-control absolute bottom-3 right-3 z-popover hidden items-center justify-center rounded-full border border-strong bg-surface-raised text-content shadow-lg transition-colors hover:bg-surface-hover max-md:flex"
+          className="qn-square-control absolute bottom-3 right-3 z-popover hidden items-center justify-center rounded-full border border-strong bg-surface-raised text-content shadow-md transition-colors hover:bg-surface-hover max-md:flex"
         >
           <CaseSensitive className="h-5 w-5" aria-hidden="true" />
         </button>
@@ -1703,7 +1707,7 @@ function PortalTooltip({ children, title, shortcut, anchorRef }) {
         <div
           ref={tooltipRef}
           role="tooltip"
-          className="qn-editor-tooltip fixed z-[99999] whitespace-nowrap rounded-lg border border-strong bg-[var(--qn-text)] px-2.5 py-1.5 text-xs text-content-inverted shadow-lg pointer-events-none"
+          className="qn-editor-tooltip pointer-events-none fixed z-[99999] whitespace-nowrap rounded-control border border-strong bg-[var(--qn-text)] px-2.5 py-1.5 text-xs text-content-inverted shadow-sm"
           style={{ 
             top: position.top, 
             left: position.left,
@@ -1782,7 +1786,7 @@ function PortalDropdown({ isOpen, anchorRef, children, onClose, align = 'left', 
       ref={dropdownRef}
       role="dialog"
       aria-label={label}
-      className="fixed z-[99999] overflow-x-hidden overflow-y-auto overscroll-contain rounded-2xl border border-subtle bg-surface-raised p-1 shadow-xl shadow-black/5 backdrop-blur-xl dark:shadow-black/20"
+      className="fixed z-[99999] overflow-x-hidden overflow-y-auto overscroll-contain rounded-card border border-strong bg-surface-raised p-1 shadow-md"
       style={style}
       onMouseDown={(e) => e.stopPropagation()}
     >

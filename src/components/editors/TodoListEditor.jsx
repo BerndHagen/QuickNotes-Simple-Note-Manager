@@ -249,7 +249,7 @@ export default function TodoListEditor({ data, onChange, noteTitle, onTitleChang
             onClick={() => setShowFilterMenu(!showFilterMenu)}
             aria-label="Filter tasks"
             aria-expanded={showFilterMenu}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white dark:bg-surface-sunken border border-subtle hover:bg-surface-sunken dark:hover:bg-surface-active transition-colors"
+            className="flex items-center gap-2 rounded-lg border border-subtle bg-surface-raised px-3 py-2 transition-colors hover:bg-surface-hover active:bg-surface-active"
           >
             <Filter className="w-4 h-4 text-content-muted" />
             <span className="text-sm text-content-muted">
@@ -285,7 +285,7 @@ export default function TodoListEditor({ data, onChange, noteTitle, onTitleChang
             onClick={() => setShowSortMenu(!showSortMenu)}
             aria-label="Sort tasks"
             aria-expanded={showSortMenu}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white dark:bg-surface-sunken border border-subtle hover:bg-surface-sunken dark:hover:bg-surface-active transition-colors"
+            className="flex items-center gap-2 rounded-lg border border-subtle bg-surface-raised px-3 py-2 transition-colors hover:bg-surface-hover active:bg-surface-active"
           >
             <SortAsc className="w-4 h-4 text-content-muted" />
             <span className="text-sm text-content-muted">

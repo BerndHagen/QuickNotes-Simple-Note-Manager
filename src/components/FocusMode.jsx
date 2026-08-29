@@ -17,10 +17,10 @@ const AMBIENT_SOUNDS = [
 // Focus themes are independent of the workspace theme and therefore carry
 // an explicit background/text pair.
 const FOCUS_THEMES = [
-  { id: 'minimal', name: 'Minimal', bg: 'bg-surface-raised', text: 'text-content' },
-  { id: 'sepia', name: 'Sepia', bg: 'bg-amber-50', text: 'text-amber-950' },
-  { id: 'night', name: 'Night', bg: 'bg-gray-950', text: 'text-gray-100' },
-  { id: 'green', name: 'Nature', bg: 'bg-emerald-50', text: 'text-emerald-950' },
+  { id: 'minimal', name: 'Minimal', paper: 'plain' },
+  { id: 'sepia', name: 'Sepia', paper: 'sepia' },
+  { id: 'night', name: 'Night', paper: 'dark' },
+  { id: 'green', name: 'Nature', paper: 'plain' },
 ]
 
 const countWords = (html = '') => {
@@ -179,7 +179,8 @@ export default function FocusMode() {
       onPointerMove={revealControls}
       onPointerDown={revealControls}
       onKeyDownCapture={revealControls}
-      className={`fixed inset-0 z-dialog overflow-hidden outline-none ${currentTheme.bg} ${currentTheme.text}`}
+      className="qn-focus-mode fixed inset-0 z-dialog overflow-hidden outline-none"
+      data-focus-theme={currentTheme.id}
     >
       <header
         ref={controlsRef}
@@ -190,12 +191,12 @@ export default function FocusMode() {
         onBlurCapture={(event) => {
           if (!controlsRef.current?.contains(event.relatedTarget)) setControlsFocused(false)
         }}
-        className={`qn-focus-header absolute inset-x-0 top-0 z-20 border-b px-3 py-2.5 shadow-xs transition-opacity duration-fast sm:px-5 ${
+        className={`qn-focus-header absolute inset-x-0 top-0 z-20 border-b px-3 py-2 transition-opacity duration-fast sm:px-5 ${
           showControls || controlsFocused ? 'opacity-100' : 'pointer-events-none opacity-0'
         }`}
       >
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-2 sm:gap-3">
-          <div className="flex shrink-0 items-center gap-3 text-current opacity-70">
+        <div className="qn-focus-toolbar mx-auto grid max-w-[92rem] items-center gap-2">
+          <div className="qn-focus-metrics flex shrink-0 items-center gap-3">
             <span className="flex items-center gap-1.5 font-mono text-ui-md" aria-label={`Session time ${formatTime(sessionTime)}`}>
               <Clock className="h-4 w-4" aria-hidden="true" />
               {formatTime(sessionTime)}
@@ -206,13 +207,17 @@ export default function FocusMode() {
             </span>
           </div>
 
-          <div className="ml-auto flex min-w-0 items-center gap-2">
+          <h1 id={titleId} className="qn-focus-title min-w-0 truncate px-3 text-center text-title-sm font-semibold">
+            {note.title || 'Untitled note'}
+          </h1>
+
+          <div className="qn-focus-controls ml-auto flex min-w-0 items-center gap-2">
             <label className="sr-only" htmlFor="qn-focus-theme">Paper theme</label>
             <select
               id="qn-focus-theme"
               value={theme}
               onChange={(event) => setTheme(event.target.value)}
-              className="h-9 min-w-0 max-w-28 rounded-control border border-black/15 bg-black/5 px-2 text-ui-md font-medium text-current outline-none focus-visible:ring-2 focus-visible:ring-current"
+              className="qn-focus-select h-control-md min-w-0 max-w-28 rounded-control px-2 text-ui-md font-medium"
             >
               {FOCUS_THEMES.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}
             </select>
@@ -222,7 +227,7 @@ export default function FocusMode() {
               id="qn-focus-sound"
               value={ambientSound}
               onChange={(event) => void playSound(event.target.value)}
-              className="h-9 min-w-0 max-w-28 rounded-control border border-black/15 bg-black/5 px-2 text-ui-md font-medium text-current outline-none focus-visible:ring-2 focus-visible:ring-current"
+              className="qn-focus-select h-control-md min-w-0 max-w-28 rounded-control px-2 text-ui-md font-medium"
             >
               {AMBIENT_SOUNDS.map((sound) => <option key={sound.id} value={sound.id}>{sound.name}</option>)}
             </select>
@@ -232,7 +237,7 @@ export default function FocusMode() {
                 type="button"
                 onClick={() => void toggleSound()}
                 aria-label={isPlaying ? 'Pause ambient sound' : 'Play ambient sound'}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-control text-current hover:bg-black/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+                className="qn-focus-command flex h-control-md w-control-md shrink-0 items-center justify-center rounded-control"
               >
                 {isPlaying ? <Volume2 className="h-4 w-4" aria-hidden="true" /> : <VolumeX className="h-4 w-4" aria-hidden="true" />}
               </button>
@@ -242,7 +247,7 @@ export default function FocusMode() {
               type="button"
               onClick={close}
               aria-label="Exit focus mode"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-control text-current hover:bg-black/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+              className="qn-focus-command flex h-control-md w-control-md shrink-0 items-center justify-center rounded-control"
             >
               <X className="h-5 w-5" aria-hidden="true" />
             </button>
@@ -251,23 +256,21 @@ export default function FocusMode() {
         {audioError && <p role="alert" className="mx-auto mt-2 max-w-6xl text-ui-sm font-medium text-danger-text">{audioError}</p>}
       </header>
 
-      <div data-dialog-body className="absolute inset-0 overflow-y-auto px-3 pb-6 pt-20 sm:px-6 sm:pb-8 sm:pt-24">
-        <div className="mx-auto flex min-h-full w-full max-w-3xl flex-col">
-          <h1 id={titleId} className="mb-5 text-center text-2xl font-bold opacity-85 sm:mb-6 sm:text-3xl">
-            {note.title || 'Untitled note'}
-          </h1>
+      <div data-dialog-body className="qn-focus-body absolute inset-0 overflow-y-auto px-3 pb-6 pt-[68px] sm:px-6 sm:pb-8">
+        <div className="mx-auto flex min-h-full w-full max-w-4xl flex-col">
           {readOnly && (
             <p className="mb-3 text-center text-ui-md font-medium opacity-70">
               Read-only shared note
             </p>
           )}
-          <div className="focus-mode-editor min-h-[50vh] flex-1 overflow-y-auto">
+          <div className="focus-mode-editor min-h-[50vh] flex-1">
             <RichTextEditor
               content={note.content}
               onChange={handleContentChange}
               placeholder="Start writing…"
-              paperType="plain"
+              paperType={currentTheme.paper}
               readOnly={readOnly}
+              focusPresentation
             />
           </div>
         </div>

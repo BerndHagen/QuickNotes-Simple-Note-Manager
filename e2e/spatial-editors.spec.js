@@ -149,7 +149,7 @@ test.describe('Paper and Canvas spatial editors', () => {
     await expect.poll(opaquePixels).toBe(0)
   })
 
-  test('draws, undoes, redoes, paginates, and reloads a Paper note', async ({ page }) => {
+  test('draws, undoes, redoes, paginates, and reloads a Paper note', async ({ page }, testInfo) => {
     const errors = collectErrors(page)
     await signIn(page)
     const title = `Paper E2E ${Date.now()}`
@@ -157,10 +157,15 @@ test.describe('Paper and Canvas spatial editors', () => {
 
     const inkColor = page.getByLabel('Ink color')
     const inkSwatch = page.locator('.qn-spatial-color')
-    await expect(inkSwatch).toHaveCSS('border-radius', '50%')
+    await expect(inkSwatch).toHaveCSS('width', '32px')
     await expect(inkColor).toHaveCSS('opacity', '0')
+    await expect.poll(() => inkSwatch.evaluate((element) => getComputedStyle(element, '::before').width)).toBe('18px')
     await inkColor.fill('#c026d3')
-    await expect(inkSwatch).toHaveCSS('background-color', 'rgb(192, 38, 211)')
+    await expect.poll(() => inkSwatch.evaluate((element) => getComputedStyle(element, '::before').backgroundColor)).toBe('rgb(192, 38, 211)')
+
+    const paperSurface = page.getByLabel('Paper surface')
+    await paperSurface.focus()
+    await expect.poll(() => paperSurface.evaluate((element) => getComputedStyle(element).outlineOffset)).toBe('-2px')
 
     const paper = page.getByRole('application', { name: /page 1/i })
     const box = await paper.boundingBox()
@@ -242,6 +247,14 @@ test.describe('Paper and Canvas spatial editors', () => {
     await expect.poll(() => spatialObjectCount(page, title)).toBe(1)
 
     await page.locator('.qn-paper-page-entry').first().click()
+    await page.screenshot({ path: testInfo.outputPath('paper-toolbar-light.png'), fullPage: true })
+
+    await page.getByRole('button', { name: /^settings$/i }).first().click()
+    const settings = page.getByRole('dialog', { name: 'Settings' })
+    await settings.getByRole('button', { name: 'Dark', exact: true }).click()
+    await settings.getByRole('button', { name: /close settings/i }).click()
+    await page.screenshot({ path: testInfo.outputPath('paper-toolbar-dark.png'), fullPage: true })
+
     const pngPromise = page.waitForEvent('download')
     await page.getByRole('button', { name: 'PNG' }).click()
     const png = await pngPromise
@@ -256,7 +269,7 @@ test.describe('Paper and Canvas spatial editors', () => {
     expect(errors).toEqual([])
   })
 
-  test('creates real Canvas objects and remains usable at compact width', async ({ page }) => {
+  test('creates real Canvas objects and remains usable at compact width', async ({ page }, testInfo) => {
     const errors = collectErrors(page)
     await page.setViewportSize({ width: 768, height: 800 })
     await signIn(page)
@@ -282,6 +295,12 @@ test.describe('Paper and Canvas spatial editors', () => {
     await page.mouse.click(box.x + 90, box.y + 190)
     await expect(page.getByLabel('Sticky note text')).toHaveValue('New sticky note')
     await expect.poll(() => spatialObjectCount(page, title)).toBe(3)
+
+    await page.getByLabel('Sticky note colour').selectOption('sage')
+    const stickyElement = page.locator('.qn-spatial-object--sticky')
+    await expect(stickyElement).toHaveAttribute('data-sticky-style', 'sage')
+    await expect.poll(async () => (await spatialState(page, title)).objects.find((object) => object.kind === 'sticky').data).toMatchObject({ style: 'sage' })
+    await page.screenshot({ path: testInfo.outputPath('canvas-sticky-compact.png'), fullPage: true })
 
     const stickyBefore = (await spatialState(page, title)).objects.find((object) => object.kind === 'sticky').bounds
     const resizeHandle = page.getByRole('button', { name: 'Resize selected object' })

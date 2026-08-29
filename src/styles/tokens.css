@@ -118,8 +118,11 @@
 
   /* --- Status ----------------------------------------------- */
   --qn-danger: #dc2626;
+  --qn-danger-hover: #b91c1c;
+  --qn-danger-active: #991b1b;
   --qn-danger-text: #b91c1c;
   --qn-danger-soft: #fef2f2;
+  --qn-danger-soft-active: #fee2e2;
   --qn-danger-border: #fecaca;
 
   --qn-warning: #d97706;
@@ -265,8 +268,11 @@
   --qn-banner-hover: rgba(255, 255, 255, 0.08);
 
   --qn-danger: #ef4444;
+  --qn-danger-hover: #f87171;
+  --qn-danger-active: #fca5a5;
   --qn-danger-text: #fca5a5;
   --qn-danger-soft: rgba(239, 68, 68, 0.12);
+  --qn-danger-soft-active: rgba(239, 68, 68, 0.2);
   --qn-danger-border: rgba(239, 68, 68, 0.28);
 
   --qn-warning: #f59e0b;
@@ -298,10 +304,18 @@
    Global primitives built directly on the tokens
    ============================================================ */
 
-/* Consistent keyboard focus treatment across pointer and touch devices. */
-:where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
+/* Links have room for an outer ring; controls keep the ring inside their own box. */
+:where(a):focus-visible {
   outline: var(--qn-focus-ring-width) solid var(--qn-focus-ring);
   outline-offset: var(--qn-focus-ring-offset);
+  border-radius: var(--qn-radius-sm);
+}
+
+:where(button, input, textarea, select, summary, [tabindex]):focus-visible {
+  --tw-ring-offset-shadow: 0 0 #0000 !important;
+  --tw-ring-shadow: 0 0 #0000 !important;
+  outline: var(--qn-focus-ring-width) solid var(--qn-control-focus-ring, var(--qn-focus-ring)) !important;
+  outline-offset: calc(-1 * var(--qn-focus-ring-width)) !important;
   border-radius: var(--qn-radius-sm);
 }
 

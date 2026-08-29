@@ -5,6 +5,8 @@ import toast from 'react-hot-toast'
 import LegacyDialog from './ui/LegacyDialog'
 import DialogHeader from './ui/DialogHeader'
 import Button from './ui/Button'
+import EmptyState from './ui/EmptyState'
+import Spinner from './ui/Spinner'
 import { ConfirmDialog } from './FolderDialogs'
 import { getIndexedKnowledgeDocument } from '../lib/knowledge/service'
 
@@ -233,27 +235,21 @@ export default function DuplicateDetectionModal() {
         />
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6">
           {isAnalyzing ? (
-            <div className="flex flex-col items-center justify-center py-12" role="status">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mb-4" aria-hidden="true" />
+            <div className="flex flex-col items-center justify-center py-12">
+              <Spinner size="lg" label="Analyzing notes" className="mb-4" />
               <p className="text-content-muted">Analyzing notes…</p>
             </div>
           ) : duplicates.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-4">
-                <FileText className="w-8 h-8 text-green-500" />
-              </div>
-              <h3 className="text-lg font-medium text-content mb-2">
-                No Duplicates Found
-              </h3>
-              <p className="text-content-muted max-w-md">
-                All your notes are unique. No similar notes were detected.
-              </p>
-            </div>
+            <EmptyState
+              icon={FileText}
+              title="No duplicates found"
+              description="All your notes are unique. No similar notes were detected."
+            />
           ) : (
             <div className="space-y-6">
-              <div className="flex items-center gap-2 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
-                <AlertTriangle className="w-5 h-5 text-orange-500 shrink-0" />
-                <p className="text-sm text-orange-700 dark:text-orange-300">
+              <div className="flex items-center gap-2 rounded-card border border-warning-border bg-warning-soft p-3">
+                <AlertTriangle className="h-5 w-5 shrink-0 text-warning-text" aria-hidden="true" />
+                <p className="text-sm text-warning-text">
                   {duplicates.length} group{duplicates.length !== 1 ? 's' : ''} with possible duplicates found
                 </p>
               </div>
@@ -277,7 +273,7 @@ export default function DuplicateDetectionModal() {
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs rounded">
+                          <span className="rounded-control bg-info-soft px-2 py-0.5 text-xs text-info-text">
                             Reference note
                           </span>
                           <span className="text-xs text-content-muted">
@@ -309,7 +305,7 @@ export default function DuplicateDetectionModal() {
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1 flex-wrap">
-                            <span className="px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 text-xs rounded">
+                            <span className="rounded-control bg-warning-soft px-2 py-0.5 text-xs text-warning-text">
                               {Math.round(dup.similarity * 100)}% similar
                             </span>
                             <span className="text-xs text-content-muted">
@@ -339,9 +335,9 @@ export default function DuplicateDetectionModal() {
                             type="button"
                             onClick={() => handleDeleteDuplicate(dup.note.id)}
                             aria-label={`Move ${dup.note.title || 'untitled note'} to trash`}
-                            className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                            className="rounded-lg p-2 text-danger-text transition-colors hover:bg-danger-soft active:bg-[var(--qn-danger-soft-active)]"
                           >
-                            <Trash2 className="w-4 h-4 text-red-500" aria-hidden="true" />
+                            <Trash2 className="h-4 w-4" aria-hidden="true" />
                           </button>
                         </div>
                       </div>

@@ -396,7 +396,7 @@ ${meetingData.notes}
                   aria-label="Meeting date"
                   value={meetingData.date}
                   onChange={(e) => update('date', e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-surface-sunken border-2 border-subtle focus:border-accent outline-none text-content"
+                  className="w-full rounded-control border border-strong bg-surface-sunken px-4 py-3 text-content outline-none focus:border-accent"
                 />
               </div>
               <div>
@@ -409,7 +409,7 @@ ${meetingData.notes}
                   value={meetingData.location}
                   onChange={(e) => update('location', e.target.value)}
                   placeholder="Room / Zoom link..."
-                  className="w-full px-4 py-3 rounded-xl bg-surface-sunken border-2 border-subtle focus:border-accent outline-none text-content"
+                  className="w-full rounded-control border border-strong bg-surface-sunken px-4 py-3 text-content outline-none focus:border-accent"
                 />
               </div>
             </div>
@@ -424,7 +424,7 @@ ${meetingData.notes}
                   aria-label="Meeting start time"
                   value={meetingData.startTime}
                   onChange={(e) => update('startTime', e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-surface-sunken border-2 border-subtle focus:border-accent outline-none text-content"
+                  className="w-full rounded-control border border-strong bg-surface-sunken px-4 py-3 text-content outline-none focus:border-accent"
                 />
               </div>
               <div>
@@ -436,7 +436,7 @@ ${meetingData.notes}
                   aria-label="Meeting end time"
                   value={meetingData.endTime}
                   onChange={(e) => update('endTime', e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-surface-sunken border-2 border-subtle focus:border-accent outline-none text-content"
+                  className="w-full rounded-control border border-strong bg-surface-sunken px-4 py-3 text-content outline-none focus:border-accent"
                 />
               </div>
             </div>
@@ -452,7 +452,7 @@ ${meetingData.notes}
                 onChange={(e) => setNewAttendee(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && addAttendee()}
                 placeholder="Add attendee..."
-                className="flex-1 px-4 py-3 rounded-xl bg-surface-sunken border-2 border-subtle focus:border-accent outline-none text-content"
+                className="flex-1 rounded-control border border-strong bg-surface-sunken px-4 py-3 text-content outline-none focus:border-accent"
               />
               <button
                 onClick={addAttendee}
@@ -524,7 +524,7 @@ ${meetingData.notes}
         )}
         {activeSection === 'agenda' && (
           <div className="qn-workspace-panel mx-auto max-w-2xl p-5">
-            <div className="mb-4 p-4 rounded-xl bg-surface-sunken border border-subtle">
+            <div className="mb-4 rounded-card border border-subtle bg-surface-sunken p-4">
               <div className="grid grid-cols-1 gap-3 mb-3 sm:grid-cols-3">
                 <div className="sm:col-span-2">
                   <input
@@ -533,7 +533,7 @@ ${meetingData.notes}
                     value={newAgendaItem.topic}
                     onChange={(e) => setNewAgendaItem({ ...newAgendaItem, topic: e.target.value })}
                     placeholder="Agenda topic..."
-                    className="w-full px-3 py-2 rounded-lg bg-white dark:bg-surface-sunken border border-subtle outline-none text-sm"
+                    className="w-full rounded-lg border border-subtle bg-surface-raised px-3 py-2 text-sm outline-none"
                   />
                 </div>
                 <div>
@@ -541,7 +541,7 @@ ${meetingData.notes}
                     aria-label="Planned agenda duration"
                     value={newAgendaItem.duration}
                     onChange={(e) => setNewAgendaItem({ ...newAgendaItem, duration: parseInt(e.target.value) })}
-                    className="w-full px-3 py-2 rounded-lg bg-white dark:bg-surface-sunken border border-subtle outline-none text-sm"
+                    className="w-full rounded-lg border border-subtle bg-surface-raised px-3 py-2 text-sm outline-none"
                   >
                     <option value={5}>5 min</option>
                     <option value={10}>10 min</option>
@@ -560,7 +560,7 @@ ${meetingData.notes}
                   value={newAgendaItem.presenter}
                   onChange={(e) => setNewAgendaItem({ ...newAgendaItem, presenter: e.target.value })}
                   placeholder="Presenter (optional)..."
-                  className="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-surface-sunken border border-subtle outline-none text-sm"
+                  className="flex-1 rounded-lg border border-subtle bg-surface-raised px-3 py-2 text-sm outline-none"
                 />
                 <button
                   onClick={addAgendaItem}
@@ -671,7 +671,7 @@ ${meetingData.notes}
               value={meetingData.notes}
               onChange={(e) => update('notes', e.target.value)}
               placeholder="Take meeting notes here..."
-              className="w-full h-[400px] px-4 py-3 rounded-xl bg-surface-sunken border-2 border-subtle focus:border-accent outline-none text-content resize-none"
+              className="h-[400px] w-full resize-none rounded-control border border-strong bg-surface-sunken px-4 py-3 text-content outline-none focus:border-accent"
             />
           </div>
         )}
@@ -680,7 +680,7 @@ ${meetingData.notes}
         )}
         {activeSection === 'actions' && (
           <div className="qn-workspace-panel mx-auto max-w-2xl p-5">
-            <div className="mb-4 p-4 rounded-xl bg-surface-sunken border border-subtle">
+            <div className="mb-4 rounded-card border border-subtle bg-surface-sunken p-4">
               <div className="grid grid-cols-1 gap-3 mb-3 sm:grid-cols-3">
                 <div className="sm:col-span-2">
                   <input
@@ -689,7 +689,7 @@ ${meetingData.notes}
                     value={newActionItem.task}
                     onChange={(e) => setNewActionItem({ ...newActionItem, task: e.target.value })}
                     placeholder="Action item..."
-                    className="w-full px-3 py-2 rounded-lg bg-white dark:bg-surface-sunken border border-subtle outline-none text-sm"
+                    className="w-full rounded-lg border border-subtle bg-surface-raised px-3 py-2 text-sm outline-none"
                   />
                 </div>
                 <div>
@@ -698,7 +698,7 @@ ${meetingData.notes}
                     aria-label="Action item due date"
                     value={newActionItem.dueDate}
                     onChange={(e) => setNewActionItem({ ...newActionItem, dueDate: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-white dark:bg-surface-sunken border border-subtle outline-none text-sm"
+                    className="w-full rounded-lg border border-subtle bg-surface-raised px-3 py-2 text-sm outline-none"
                   />
                 </div>
               </div>
@@ -707,7 +707,7 @@ ${meetingData.notes}
                   aria-label="Action item owner"
                   value={newActionItem.owner}
                   onChange={(e) => setNewActionItem({ ...newActionItem, owner: e.target.value })}
-                  className="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-surface-sunken border border-subtle outline-none text-sm"
+                  className="flex-1 rounded-lg border border-subtle bg-surface-raised px-3 py-2 text-sm outline-none"
                 >
                   <option value="">Assign to...</option>
                   {meetingData.attendees.map(a => (
@@ -821,7 +821,7 @@ ${meetingData.notes}
                 onChange={(e) => setNewDecision(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && addDecision()}
                 placeholder="Record a decision made..."
-                className="flex-1 px-4 py-3 rounded-xl bg-surface-sunken border-2 border-subtle focus:border-accent outline-none text-content"
+                className="flex-1 rounded-control border border-strong bg-surface-sunken px-4 py-3 text-content outline-none focus:border-accent"
               />
               <button
                 onClick={addDecision}

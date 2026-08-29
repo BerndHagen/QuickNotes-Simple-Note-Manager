@@ -434,7 +434,7 @@ export default function NotesList({ sidebarToggle, onOpenNote }) {
   const listBody = groups.map((group) => (
     <li key={group.id}>
       {group.label && (
-        <h3 className="sticky top-0 z-sticky flex items-center gap-1.5 bg-panel px-4 pb-1 pt-3 text-ui-sm font-semibold text-content-muted backdrop-blur">
+        <h3 className="sticky top-0 z-sticky flex items-center gap-1.5 bg-panel px-4 pb-1 pt-3 text-ui-sm font-semibold text-content-muted">
           {group.id === 'pinned' && <Pin className="h-3 w-3 shrink-0" aria-hidden="true" />}
           {group.label}
         </h3>

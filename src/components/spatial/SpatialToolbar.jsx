@@ -29,7 +29,12 @@ import {
   ZoomIn,
   ZoomOut,
 } from 'lucide-react'
-import { PAPER_PATTERNS, PAPER_SIZES, PAPER_SURFACES } from '../../lib/spatial/model'
+import {
+  PAPER_PATTERNS,
+  PAPER_SIZES,
+  PAPER_SURFACES,
+  STICKY_STYLES,
+} from '../../lib/spatial/model'
 
 const primaryTools = [
   ['select', MousePointer2, 'Select (V)'],
@@ -80,6 +85,8 @@ export default function SpatialToolbar({
   onUndo,
   onRedo,
   hasSelection,
+  selectedSticky,
+  onStickySetting,
   onDuplicate,
   onBringToFront,
   onSendToBack,
@@ -141,7 +148,11 @@ export default function SpatialToolbar({
         </select>
       </label>
       <div className="qn-spatial-tool-separator" />
-      <label className="qn-spatial-color" title="Ink color" style={{ backgroundColor: brush.color }}>
+      <label
+        className="qn-spatial-color"
+        title="Ink color"
+        style={{ '--qn-ink-color': brush.color }}
+      >
         <span className="qn-sr-only">Ink color</span>
         <input
           type="color"
@@ -191,6 +202,22 @@ export default function SpatialToolbar({
             <span className="qn-sr-only">Paper surface</span>
             <select value={activePage.surface} onChange={(event) => onPageSetting('surface', event.target.value)} title="Paper surface" disabled={editingDisabled}>
               {PAPER_SURFACES.map((value) => <option key={value} value={value}>{value[0].toUpperCase() + value.slice(1)}</option>)}
+            </select>
+          </label>
+        </div>
+      )}
+
+      {selectedSticky && (
+        <div className="qn-spatial-sticky-settings" aria-label="Sticky note design">
+          <label>
+            <span className="qn-sr-only">Sticky note colour</span>
+            <select
+              value={selectedSticky.data?.style || 'sunflower'}
+              onChange={(event) => onStickySetting('style', event.target.value)}
+              title="Sticky note colour"
+              disabled={editingDisabled}
+            >
+              {Object.entries(STICKY_STYLES).map(([id, value]) => <option key={id} value={id}>{value.name}</option>)}
             </select>
           </label>
         </div>

@@ -527,7 +527,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle, onTitle
                 onChange={(e) => setNewGoal(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && addGoal()}
                 placeholder="Add a weekly goal..."
-                className="flex-1 px-4 py-3 rounded-xl bg-surface-sunken border border-subtle outline-none text-content"
+                className="flex-1 rounded-control border border-subtle bg-surface-sunken px-4 py-3 text-content outline-none"
               />
               <button
                 onClick={addGoal}
@@ -644,7 +644,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle, onTitle
                   value={plannerData.review.accomplishments}
                   onChange={(e) => updateReview('accomplishments', e.target.value)}
                   placeholder="List your wins and achievements..."
-                  className="w-full px-4 py-3 rounded-xl bg-surface-sunken border border-subtle outline-none text-content resize-none"
+                  className="w-full resize-none rounded-control border border-subtle bg-surface-sunken px-4 py-3 text-content outline-none"
                   rows={4}
                 />
               </div>
@@ -658,7 +658,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle, onTitle
                   value={plannerData.review.challenges}
                   onChange={(e) => updateReview('challenges', e.target.value)}
                   placeholder="What obstacles or difficulties came up?"
-                  className="w-full px-4 py-3 rounded-xl bg-surface-sunken border border-subtle outline-none text-content resize-none"
+                  className="w-full resize-none rounded-control border border-subtle bg-surface-sunken px-4 py-3 text-content outline-none"
                   rows={4}
                 />
               </div>
@@ -672,7 +672,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle, onTitle
                   value={plannerData.review.lessons}
                   onChange={(e) => updateReview('lessons', e.target.value)}
                   placeholder="Key insights and lessons from this week..."
-                  className="w-full px-4 py-3 rounded-xl bg-surface-sunken border border-subtle outline-none text-content resize-none"
+                  className="w-full resize-none rounded-control border border-subtle bg-surface-sunken px-4 py-3 text-content outline-none"
                   rows={4}
                 />
               </div>
@@ -686,7 +686,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle, onTitle
                   value={plannerData.review.nextWeekFocus}
                   onChange={(e) => updateReview('nextWeekFocus', e.target.value)}
                   placeholder="What's the priority for next week?"
-                  className="w-full px-4 py-3 rounded-xl bg-surface-sunken border border-subtle outline-none text-content resize-none"
+                  className="w-full resize-none rounded-control border border-subtle bg-surface-sunken px-4 py-3 text-content outline-none"
                   rows={4}
                 />
               </div>

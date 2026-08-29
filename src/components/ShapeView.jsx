@@ -107,7 +107,7 @@ function FloatingPanel({ open, anchorRef, onClose, label, className = '', childr
       ref={panelRef}
       role="dialog"
       aria-label={label}
-      className={`fixed z-[99999] max-h-[min(28rem,calc(100dvh-1rem))] overflow-y-auto rounded-card border border-subtle bg-surface-raised p-2 shadow-lg ${className}`}
+      className={`fixed z-[99999] max-h-[min(28rem,calc(100dvh-1rem))] overflow-y-auto rounded-card border border-strong bg-surface-raised p-2 shadow-md ${className}`}
       style={style}
       contentEditable={false}
     >
@@ -440,7 +440,7 @@ export default function ShapeView({ node, updateAttributes, deleteNode, selected
               ref={toolbarRef}
               role="toolbar"
               aria-label="Shape formatting"
-              className="qn-shape-toolbar fixed z-[99998] flex max-w-[calc(100vw-1rem)] items-center gap-0.5 overflow-x-auto rounded-card border border-subtle bg-surface-raised p-1 shadow-lg"
+              className="qn-shape-toolbar fixed z-[99998] flex max-w-[calc(100vw-1rem)] items-center gap-0.5 overflow-x-auto rounded-card border border-strong bg-surface-raised p-1 shadow-md"
               style={toolbarPosition}
               contentEditable={false}
             >

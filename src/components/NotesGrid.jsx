@@ -290,7 +290,7 @@ export default function NotesGrid({ sidebarToggle }) {
   if (showingEditor && selectedNoteId) {
     return (
       <div className="flex flex-col w-full h-full">
-        <div className="flex items-center gap-2 border-b border-subtle bg-surface-raised/95 px-3 py-3 backdrop-blur-sm sm:gap-3 sm:px-4">
+        <div className="flex items-center gap-2 border-b border-subtle bg-surface-raised px-3 py-3 sm:gap-3 sm:px-4">
           {!sidebarOpen && sidebarToggle}
           <Button
             size="sm"

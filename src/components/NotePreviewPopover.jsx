@@ -172,7 +172,7 @@ export default function NotePreviewPopover({ noteId, children, position = 'right
           ref={popoverRef}
           id={previewId}
           role="tooltip"
-          className="fixed z-50 w-[min(20rem,calc(100vw-1.25rem))] bg-surface-raised border border-subtle rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+          className="fixed z-50 w-[min(20rem,calc(100vw-1.25rem))] overflow-hidden rounded-card border border-strong bg-surface-raised shadow-md animate-menu-in"
           style={{ left: coords.x, top: coords.y }}
           onMouseEnter={() => {
             if (timeoutRef.current) {

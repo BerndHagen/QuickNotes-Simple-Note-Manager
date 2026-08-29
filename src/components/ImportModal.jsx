@@ -367,13 +367,14 @@ export default function ImportModal() {
                 </div>
               </div>
             ))}
-            <button
-              type="button"
+            <Button
+              variant="primary"
+              fullWidth
               onClick={handleClose}
-              className="w-full mt-4 py-3 qn-banner-surface hover:from-emerald-700 hover:to-teal-700 text-white rounded-lg font-medium transition-colors"
+              className="mt-4"
             >
               {t('importModal.done')}
-            </button>
+            </Button>
           </div>
         ) : (
           <>
@@ -404,7 +405,7 @@ export default function ImportModal() {
               onDrop={handleDrop}
               onClick={openFilePicker}
               onKeyDown={handleDropzoneKeyDown}
-              className={`cursor-pointer rounded-xl border-2 border-dashed p-6 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 sm:p-8 ${
+              className={`cursor-pointer rounded-card border-2 border-dashed p-6 text-center transition-colors sm:p-8 ${
  dragActive
  ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
                   : 'border-subtle  hover:border-emerald-400 hover:bg-surface-hover'

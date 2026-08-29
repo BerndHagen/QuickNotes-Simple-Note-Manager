@@ -38,6 +38,7 @@ export default function Modal({
   bodyClassName = '',
   bodyPadding = 'default',
   labelledBy,
+  describedBy,
 }) {
   const panelRef = useRef(null)
   const titleId = useId()
@@ -52,7 +53,7 @@ export default function Modal({
   return createPortal(
     <div className="qn-modal-viewport fixed inset-0 z-dialog flex items-end justify-center sm:items-center sm:p-4">
       <div
-        className="absolute inset-0 bg-[var(--qn-overlay)] backdrop-blur-[2px] animate-fade-in"
+        className="absolute inset-0 bg-[var(--qn-overlay)] animate-fade-in"
         onClick={closeOnBackdrop ? onClose : undefined}
         aria-hidden="true"
       />
@@ -61,7 +62,7 @@ export default function Modal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={labelledBy || (title ? titleId : undefined)}
-        aria-describedby={description ? descriptionId : undefined}
+        aria-describedby={describedBy || (description ? descriptionId : undefined)}
         data-window-shell
         tabIndex={-1}
         className={[

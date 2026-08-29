@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { buttonClasses } from './ui'
+import { EmptyState, buttonClasses } from './ui'
 import { Tag, Trash2, Edit2, Check, Plus, Hash } from 'lucide-react'
 import { useNotesStore, useUIStore } from '../store'
 import { useTranslation } from '../lib/useTranslation'
@@ -195,14 +195,14 @@ export default function TagManagerModal() {
             <button
               type="button"
               onClick={() => setShowNewTag(true)}
-              className="w-full mb-4 p-3 border-2 border-dashed border-subtle rounded-xl hover:border-emerald-500 dark:hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors flex items-center justify-center gap-2 text-content-muted hover:text-emerald-600 dark:hover:text-emerald-400"
+              className={buttonClasses({ variant: 'secondary', fullWidth: true }) + ' mb-4'}
             >
               <Plus className="w-5 h-5" />
               <span>{t('tags.addNew', 'Add New Tag')}</span>
             </button>
           )}
           {showNewTag && (
-            <div className="mb-4 p-4 bg-surface-sunken rounded-xl border border-subtle">
+            <div className="mb-4 border-y border-subtle py-4">
               <div className="flex items-center gap-3 mb-3">
                 <div className="relative flex-1">
                   <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-content-subtle" />
@@ -213,7 +213,7 @@ export default function TagManagerModal() {
                     onChange={(e) => setNewTagName(e.target.value)}
                     placeholder={t('tags.tagName', 'Tag name')}
                     aria-label={t('tags.tagName', 'Tag name')}
-                    className="w-full pl-9 pr-3 py-2 bg-surface-raised border border-subtle rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
+                    className="w-full rounded-lg border border-subtle bg-surface-raised py-2 pl-9 pr-3 text-sm"
                     autoFocus
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') handleCreateTag()
@@ -250,7 +250,7 @@ export default function TagManagerModal() {
                     setShowNewTag(false)
                     setNewTagName('')
                   }}
-                  className="px-4 py-2 bg-surface-sunken hover:bg-surface-sunken dark:hover:bg-surface-active text-content-muted rounded-lg font-medium transition-colors border border-subtle "
+                  className={buttonClasses({ variant: 'secondary' })}
                 >
                   {t('common.cancel', 'Cancel')}
                 </button>
@@ -258,17 +258,18 @@ export default function TagManagerModal() {
             </div>
           )}
           {managedTags.length === 0 ? (
-            <div className="text-center py-12 text-content-muted">
-              <Tag className="w-12 h-12 mx-auto mb-3 opacity-30" />
-              <p>{t('tags.noTags', 'No tags yet')}</p>
-              <p className="text-sm mt-1">{t('tags.createFirst', 'Create your first tag to organize notes')}</p>
-            </div>
+            <EmptyState
+              icon={Tag}
+              title={t('tags.noTags', 'No tags yet')}
+              description={t('tags.createFirst', 'Create your first tag to organize notes')}
+              size="sm"
+            />
           ) : (
-            <div className="space-y-2">
+            <div className="divide-y divide-[var(--qn-border-subtle)] border-y border-subtle">
               {managedTags.map((tag) => (
                 <div
                   key={tag.id}
-                  className="p-3 bg-surface-sunken rounded-xl border border-subtle hover:border-subtle dark:hover:border-subtle transition-colors"
+                  className="py-3"
                 >
                   {editingTagId === tag.id ? (
                     <div>
@@ -281,7 +282,7 @@ export default function TagManagerModal() {
                             value={editingName}
                             aria-label={`Tag name for ${tag.name || 'tag'}`}
                             onChange={(e) => setEditingName(e.target.value)}
-                            className="w-full pl-9 pr-3 py-2 bg-surface-raised border border-subtle rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
+                            className="w-full rounded-lg border border-subtle bg-surface-raised py-2 pl-9 pr-3 text-sm"
                             autoFocus
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') handleSaveEdit()
@@ -315,7 +316,7 @@ export default function TagManagerModal() {
                         <button
                           type="button"
                           onClick={handleCancelEdit}
-                          className="px-4 py-2 bg-surface-sunken hover:bg-surface-sunken dark:hover:bg-surface-active text-content-muted rounded-lg font-medium transition-colors border border-subtle "
+                          className={buttonClasses({ variant: 'secondary' })}
                         >
                           {t('common.cancel', 'Cancel')}
                         </button>
@@ -330,14 +331,14 @@ export default function TagManagerModal() {
                         <button
                           type="button"
                           onClick={() => handleDeleteTag(tag.id)}
-                          className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
+                          className={buttonClasses({ variant: 'danger', fullWidth: true })}
                         >
                           {t('common.delete', 'Delete')}
                         </button>
                         <button
                           type="button"
                           onClick={() => setDeleteConfirmId(null)}
-                          className="px-4 py-2 bg-surface-sunken hover:bg-surface-sunken dark:hover:bg-surface-active text-content-muted rounded-lg font-medium transition-colors border border-subtle "
+                          className={buttonClasses({ variant: 'secondary' })}
                         >
                           {t('common.cancel', 'Cancel')}
                         </button>
@@ -373,7 +374,7 @@ export default function TagManagerModal() {
                           type="button"
                           onClick={() => setDeleteConfirmId(tag.id)}
                           aria-label={`${t('common.delete', 'Delete')} ${tag.name || 'tag'}`}
-                          className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors text-content-muted hover:text-red-600"
+                          className="rounded-lg p-2 text-content-muted transition-colors hover:bg-danger-soft hover:text-danger-text active:bg-[var(--qn-danger-soft-active)]"
                           title={t('common.delete', 'Delete')}
                         >
                           <Trash2 className="w-4 h-4" aria-hidden="true" />

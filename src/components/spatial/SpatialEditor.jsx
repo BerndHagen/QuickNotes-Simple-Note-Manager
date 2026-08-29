@@ -190,6 +190,11 @@ export default function SpatialEditor({ note, kind, noteTitle, onTitleChange, re
   )
   const activePage = pages.find((page) => page.id === activePageId) || pages[0] || null
   const resources = useMemo(() => workspace?.resources || [], [workspace?.resources])
+  const selectedSticky = useMemo(() => {
+    if (selectedIds.size !== 1) return null
+    const object = objects.find((candidate) => selectedIds.has(candidate.id))
+    return object?.kind === 'sticky' ? object : null
+  }, [objects, selectedIds])
   const selectedImage = useMemo(() => {
     if (selectedIds.size !== 1) return null
     const object = objects.find((candidate) => selectedIds.has(candidate.id))
@@ -767,6 +772,20 @@ export default function SpatialEditor({ note, kind, noteTitle, onTitleChange, re
     })
   }, [commit, editingBlocked, objects, selectedIds])
 
+  const changeStickySetting = useCallback((key, value) => {
+    if (editingBlocked || !selectedSticky || selectedSticky.data?.[key] === value) return
+    const original = structuredClone(selectedSticky)
+    const updated = {
+      ...selectedSticky,
+      data: { ...selectedSticky.data, [key]: value },
+      updatedAt: new Date().toISOString(),
+    }
+    commit({ putObjects: [updated] }, {
+      label: 'Change sticky note colour',
+      inverse: { ...emptyChangeSet(), putObjects: [original] },
+    })
+  }, [commit, editingBlocked, selectedSticky])
+
   const handleKeyDown = useCallback((event) => {
     if (isTextTarget(event.target)) return
     if (replay.active) {
@@ -1113,6 +1132,8 @@ export default function SpatialEditor({ note, kind, noteTitle, onTitleChange, re
         onUndo={undo}
         onRedo={redo}
         hasSelection={selectedIds.size > 0}
+        selectedSticky={selectedSticky}
+        onStickySetting={changeStickySetting}
         onDuplicate={duplicateSelection}
         onBringToFront={() => changeZOrder(1)}
         onSendToBack={() => changeZOrder(-1)}

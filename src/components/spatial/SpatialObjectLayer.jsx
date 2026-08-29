@@ -83,8 +83,14 @@ function TextObject({ object, editing, previewOffset, resolveNoteTitle, onDraft,
     )
   }
 
+  const stickyStyle = object.kind === 'sticky' ? object.data?.style || 'sunflower' : undefined
   return (
-    <div data-spatial-object-id={object.id} className={`qn-spatial-object qn-spatial-object--${object.kind}`} style={style}>
+    <div
+      data-spatial-object-id={object.id}
+      data-sticky-style={stickyStyle}
+      className={`qn-spatial-object qn-spatial-object--${object.kind}`}
+      style={style}
+    >
       <textarea
         value={object.data?.text || ''}
         onChange={(event) => onDraft(object, event.target.value)}

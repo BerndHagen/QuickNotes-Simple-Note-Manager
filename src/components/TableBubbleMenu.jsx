@@ -74,7 +74,7 @@ function PortalTooltip({ children, title, anchorRef }) {
         <div
           ref={tooltipRef}
           role="tooltip"
-          className="qn-editor-tooltip fixed z-[99999] whitespace-nowrap rounded-lg border border-strong bg-[var(--qn-text)] px-2.5 py-1.5 text-xs text-content-inverted shadow-lg pointer-events-none"
+          className="qn-editor-tooltip pointer-events-none fixed z-[99999] whitespace-nowrap rounded-control border border-strong bg-[var(--qn-text)] px-2.5 py-1.5 text-xs text-content-inverted shadow-sm"
           style={{ 
             top: position.top, 
             left: position.left,
@@ -201,7 +201,7 @@ function ColorPickerDropdown({ isOpen, onClose, onSelect, currentColor, title, a
       ref={dropdownRef}
       role="dialog"
       aria-label={title}
-      className="fixed z-[99999] w-[min(18rem,calc(100vw-1.25rem))] rounded-xl border border-subtle bg-surface-raised p-3 shadow-2xl"
+      className="fixed z-[99999] w-[min(18rem,calc(100vw-1.25rem))] rounded-card border border-strong bg-surface-raised p-3 shadow-md"
       style={{ top: position.top, left: position.left }}
       onMouseDown={(e) => e.stopPropagation()}
     >
@@ -325,7 +325,7 @@ function DropdownMenu({ isOpen, anchorRef, children }) {
     <div 
       ref={menuRef}
       role="menu"
-      className="fixed bg-surface-raised rounded-xl shadow-2xl border border-subtle py-1 min-w-[160px] z-[99999]"
+      className="fixed z-[99999] min-w-[160px] rounded-card border border-strong bg-surface-raised py-1 shadow-md"
       style={{ top: position.top, left: position.left }}
       onMouseDown={(e) => e.stopPropagation()}
     >
@@ -439,7 +439,7 @@ export default function TableBubbleMenu({ editor }) {
       shouldShow={({ editor }) => {
         return editor.isActive('table')
       }}
-      className="flex max-w-[calc(100vw-1rem)] items-center gap-0.5 overflow-x-auto rounded-xl border border-subtle bg-surface-raised p-1.5 shadow-xl"
+      className="flex max-w-[calc(100vw-1rem)] items-center gap-0.5 overflow-x-auto rounded-card border border-strong bg-surface-raised p-1.5 shadow-md"
     >
       <div
         ref={menuRef}

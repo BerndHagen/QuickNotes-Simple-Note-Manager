@@ -23,11 +23,7 @@ export default function DialogHeader({
       className={`qn-dialog-header flex shrink-0 items-center gap-3 border-b border-strong bg-[var(--qn-surface-window-header)] px-5 py-4 text-content sm:px-6 ${className}`}
     >
       {Icon && (
-        <span
-          data-dialog-icon
-          className="grid h-9 w-9 shrink-0 place-items-center rounded-control border border-[var(--qn-accent-border)] bg-[var(--qn-surface-brand-tint-strong)] text-accent-text shadow-xs"
-          aria-hidden="true"
-        >
+        <span data-dialog-icon className="grid h-6 w-6 shrink-0 place-items-center text-accent-text" aria-hidden="true">
           <Icon className="h-[18px] w-[18px]" />
         </span>
       )}

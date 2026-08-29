@@ -612,7 +612,7 @@ function TaskEditModal({ task, team, columns, onSave, onClose }) {
               aria-label="Title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-subtle bg-white dark:bg-surface-sunken text-content outline-none focus:border-accent"
+              className="w-full rounded-lg border border-subtle bg-surface-raised px-3 py-2 text-content outline-none focus:border-accent"
             />
           </div>
 
@@ -623,7 +623,7 @@ function TaskEditModal({ task, team, columns, onSave, onClose }) {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              className="w-full px-3 py-2 rounded-lg border border-subtle bg-white dark:bg-surface-sunken text-content outline-none focus:border-accent resize-none"
+              className="w-full resize-none rounded-lg border border-subtle bg-surface-raised px-3 py-2 text-content outline-none focus:border-accent"
             />
           </div>
 
@@ -634,7 +634,7 @@ function TaskEditModal({ task, team, columns, onSave, onClose }) {
                 aria-label="Priority"
                 value={priority}
                 onChange={(e) => setPriority(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-subtle bg-white dark:bg-surface-sunken text-content outline-none focus:border-accent"
+                className="w-full rounded-lg border border-subtle bg-surface-raised px-3 py-2 text-content outline-none focus:border-accent"
               >
                 {Object.entries(PRIORITIES).map(([key, value]) => (
                   <option key={key} value={key}>{value.icon} {value.label}</option>
@@ -649,7 +649,7 @@ function TaskEditModal({ task, team, columns, onSave, onClose }) {
                 aria-label="Due date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-subtle bg-white dark:bg-surface-sunken text-content outline-none focus:border-accent"
+                className="w-full rounded-lg border border-subtle bg-surface-raised px-3 py-2 text-content outline-none focus:border-accent"
               />
             </div>
           </div>
@@ -661,7 +661,7 @@ function TaskEditModal({ task, team, columns, onSave, onClose }) {
                 aria-label="Status"
                 value={columnId}
                 onChange={(e) => setColumnId(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-subtle bg-white dark:bg-surface-sunken text-content outline-none focus:border-accent"
+                className="w-full rounded-lg border border-subtle bg-surface-raised px-3 py-2 text-content outline-none focus:border-accent"
               >
                 {columns.map((column) => (
                   <option key={column.id} value={column.id}>{column.name}</option>
@@ -674,7 +674,7 @@ function TaskEditModal({ task, team, columns, onSave, onClose }) {
                 aria-label="Assignee"
                 value={assignee}
                 onChange={(e) => setAssignee(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-subtle bg-white dark:bg-surface-sunken text-content outline-none focus:border-accent"
+                className="w-full rounded-lg border border-subtle bg-surface-raised px-3 py-2 text-content outline-none focus:border-accent"
               >
                 <option value="">Unassigned</option>
                 {team.map((member) => (

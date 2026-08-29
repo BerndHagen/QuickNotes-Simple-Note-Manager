@@ -1,5 +1,6 @@
 import { boundsIntersect, compareSpatialZOrder, normalizeBounds } from './geometry'
 import { getSpatialBrushDefinition, spatialBrushWidth } from './brushes'
+import { STICKY_STYLES } from './model'
 
 const MAX_CANVAS_DIMENSION = 8192
 
@@ -169,10 +170,21 @@ export function drawBoundedObject(context, object, resolveNoteTitle = () => 'Lin
     context.restore()
     return
   } else if (object.kind === 'sticky') {
-    context.fillStyle = '#f5e8a7'
-    context.strokeStyle = '#c8b76d'
+    const stickyStyle = STICKY_STYLES[object.data?.style] || STICKY_STYLES.sunflower
+    context.fillStyle = stickyStyle.fill
+    context.strokeStyle = stickyStyle.border
     context.fillRect(bounds.x, bounds.y, bounds.width, bounds.height)
     context.strokeRect(bounds.x, bounds.y, bounds.width, bounds.height)
+    context.beginPath()
+    context.moveTo(bounds.x + bounds.width - 18, bounds.y + bounds.height)
+    context.lineTo(bounds.x + bounds.width, bounds.y + bounds.height - 18)
+    context.lineTo(bounds.x + bounds.width, bounds.y + bounds.height)
+    context.closePath()
+    context.fillStyle = stickyStyle.border
+    context.globalAlpha = 0.24
+    context.fill()
+    context.globalAlpha = 1
+    context.fillStyle = stickyStyle.text
   } else if (object.kind === 'indexCard') {
     context.fillStyle = '#fffdfa'
     context.strokeStyle = '#bdb8ad'
@@ -191,7 +203,7 @@ export function drawBoundedObject(context, object, resolveNoteTitle = () => 'Lin
     context.fillRect(bounds.x, bounds.y, bounds.width, bounds.height)
     context.strokeRect(bounds.x, bounds.y, bounds.width, bounds.height)
   }
-  context.fillStyle = '#1e2924'
+  if (object.kind !== 'sticky') context.fillStyle = '#1e2924'
   context.font = object.kind === 'text' ? '16px system-ui' : '14px system-ui'
   context.textBaseline = 'top'
   const value = object.kind === 'noteLink'

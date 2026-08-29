@@ -165,7 +165,7 @@ export default function NoteLinkPopover({ editor, isOpen, onClose, position, cur
       role="dialog"
       aria-modal="false"
       aria-labelledby={titleId}
-      className="fixed z-50 w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-lg border border-subtle bg-surface-raised shadow-xl"
+      className="fixed z-50 w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-card border border-strong bg-surface-raised shadow-md"
       style={(() => {
         const popoverWidth = Math.min(320, Math.max(window.innerWidth - 24, 0))
         const popoverHeight = 400
