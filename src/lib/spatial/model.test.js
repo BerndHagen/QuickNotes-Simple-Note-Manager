@@ -8,6 +8,7 @@ import {
   createSpatialDocument,
   createStrokeObject,
 } from './model'
+import { SPATIAL_BRUSH_IDS } from './brushes'
 
 describe('spatial serialization contract', () => {
   it('round-trips every editable object kind without changing geometry or styling', () => {
@@ -58,5 +59,27 @@ describe('spatial serialization contract', () => {
 
     sticky.data.style = 'neon-gradient'
     expect(() => assertSpatialPayload({ document, pages: [], objects: [sticky] })).toThrow('unsupported colour')
+  })
+
+  it('preserves every supported writing instrument and safely falls back for unknown input', () => {
+    for (const brush of SPATIAL_BRUSH_IDS) {
+      const stroke = createStrokeObject({
+        noteId: 'instrument-note',
+        points: [[1, 1, 0.3, 0, 0, 1], [10, 8, 0.8, 12, 4, 12]],
+        brush,
+        color: '#123456',
+        width: 3,
+        zIndex: 1,
+      })
+      expect(stroke.data.brush).toBe(brush)
+    }
+    expect(createStrokeObject({
+      noteId: 'instrument-note',
+      points: [[1, 1, 0.5, 0, 0, 1]],
+      brush: 'future-provider-brush',
+      color: '#123456',
+      width: 3,
+      zIndex: 1,
+    }).data.brush).toBe('pen')
   })
 })

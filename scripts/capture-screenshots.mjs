@@ -71,6 +71,20 @@ async function createSpatial(page, type, title) {
   return workspace
 }
 
+async function createStructured(page, { type, starter, title, root }) {
+  await page.getByRole('button', { name: 'Create workspace' }).click()
+  const dialog = page.getByRole('dialog', { name: /new workspace/i })
+  await dialog.locator('section[aria-label="Workspace types"]')
+    .getByRole('button', { name: new RegExp(`^${type}`, 'i') })
+    .click()
+  await dialog.getByText(starter, { exact: true }).click()
+  await dialog.getByLabel('Note title').fill(title)
+  await dialog.getByRole('button', { name: /^Create / }).click()
+  const workspace = page.locator(root)
+  await workspace.waitFor({ state: 'visible' })
+  return workspace
+}
+
 async function drawStroke(page, points) {
   await page.mouse.move(points[0].x, points[0].y)
   await page.mouse.down()
@@ -103,13 +117,13 @@ async function capturePaper() {
   await page.getByLabel('Paper pattern').selectOption('dot')
   const box = await paper.boundingBox()
 
-  await page.getByRole('button', { name: 'Highlighter (H)' }).click()
+  await page.getByLabel('Writing instrument').selectOption('highlighter')
   await drawStroke(page, [
     { x: box.x + 115, y: box.y + 170 },
     { x: box.x + 280, y: box.y + 170 },
     { x: box.x + 455, y: box.y + 170 },
   ])
-  await page.getByRole('button', { name: 'Pen (P)' }).click()
+  await page.getByLabel('Writing instrument').selectOption('pen')
   await drawStroke(page, [
     { x: box.x + 115, y: box.y + 120 },
     { x: box.x + 155, y: box.y + 95 },
@@ -161,7 +175,7 @@ async function captureCanvas() {
   const card = page.getByLabel('Index card text')
   await card.fill('Document\nPaper\nCanvas\nSearch')
   await card.press('Control+Enter')
-  await page.getByRole('button', { name: 'Pen (P)' }).click()
+  await page.getByLabel('Writing instrument').selectOption('pen')
   await drawStroke(page, [
     { x: box.x + 470, y: box.y + 410 },
     { x: box.x + 525, y: box.y + 385 },
@@ -213,14 +227,90 @@ async function captureTaskCenter() {
   await context.close()
 }
 
+async function captureProject() {
+  const context = await browser.newContext({ viewport })
+  const page = await context.newPage()
+  await openLocalWorkspace(page)
+  const project = await createStructured(page, {
+    type: 'Project Board',
+    starter: 'Product launch',
+    title: 'Product launch',
+    root: '.qn-type-project',
+  })
+  await expect(project.getByText('Define launch goal and audience', { exact: true })).toBeVisible()
+  await save(page, 'quicknotes-3-project.png')
+  await context.close()
+}
+
+async function captureJournal() {
+  const context = await browser.newContext({ viewport })
+  const page = await context.newPage()
+  await openLocalWorkspace(page)
+  const journal = await createStructured(page, {
+    type: 'Daily Journal',
+    starter: 'Evening review',
+    title: 'Evening reflection',
+    root: '.qn-type-journal',
+  })
+  await journal.getByRole('button', { name: /^Evening/i }).click()
+  await journal.getByLabel('Gratitude item 1').fill('A clear plan for the release')
+  await journal.getByLabel('Gratitude item 2').fill('Thoughtful feedback from the team')
+  await journal.getByLabel('Gratitude item 3').fill('Time to finish the important details')
+  await save(page, 'quicknotes-3-journal.png')
+  await context.close()
+}
+
+async function captureIdeas() {
+  const context = await browser.newContext({ viewport })
+  const page = await context.newPage()
+  await openLocalWorkspace(page)
+  const ideas = await createStructured(page, {
+    type: 'Idea Board',
+    starter: 'Product discovery',
+    title: 'Product discovery',
+    root: '.qn-type-brainstorm',
+  })
+  for (const idea of [
+    'Interview frequent travellers',
+    'Reduce steps in mobile capture',
+    'Test the smallest useful workflow',
+    'Measure time from thought to note',
+  ]) {
+    await ideas.getByLabel('New idea').fill(idea)
+    await ideas.getByRole('button', { name: 'Add Idea' }).click()
+  }
+  await expect(ideas.locator('.qn-idea-card')).toHaveCount(4)
+  await save(page, 'quicknotes-3-ideas.png')
+  await context.close()
+}
+
+async function captureShopping() {
+  const context = await browser.newContext({ viewport })
+  const page = await context.newPage()
+  await openLocalWorkspace(page)
+  const shopping = await createStructured(page, {
+    type: 'Shopping List',
+    starter: 'Weekly groceries',
+    title: 'Weekly groceries',
+    root: '.qn-type-shopping',
+  })
+  await expect(shopping.getByText('Fresh fruit', { exact: true })).toBeVisible()
+  await save(page, 'quicknotes-3-shopping.png')
+  await context.close()
+}
+
 try {
   await captureDocumentAndSearch()
   await capturePaper()
   await captureCanvas()
   await captureMeeting()
   await captureTaskCenter()
+  await captureProject()
+  await captureJournal()
+  await captureIdeas()
+  await captureShopping()
 } finally {
   await browser.close()
 }
 
-console.log(`Updated six QuickNotes 3.0 screenshots in ${outputDir}`)
+console.log(`Updated ten QuickNotes 3.0 screenshots in ${outputDir}`)

@@ -8,7 +8,6 @@ import {
   FileText,
   Image as ImageIcon,
   Hand,
-  Highlighter,
   Link2,
   Minus,
   MousePointer2,
@@ -35,11 +34,10 @@ import {
   PAPER_SURFACES,
   STICKY_STYLES,
 } from '../../lib/spatial/model'
+import { SPATIAL_BRUSH_DEFINITIONS, SPATIAL_BRUSH_IDS, isSpatialBrush } from '../../lib/spatial/brushes'
 
 const primaryTools = [
   ['select', MousePointer2, 'Select (V)'],
-  ['pen', Pencil, 'Pen (P)'],
-  ['highlighter', Highlighter, 'Highlighter (H)'],
   ['eraser', Eraser, 'Stroke eraser (E)'],
   ['hand', Hand, 'Pan (Space)'],
 ]
@@ -122,7 +120,23 @@ export default function SpatialToolbar({
   return (
     <div className="qn-spatial-toolbar" role="toolbar" aria-label={`${kind === 'paper' ? 'Paper' : 'Canvas'} tools`}>
       <div className="qn-spatial-tool-group">
-        {primaryTools.map(([id, icon, label]) => (
+        <ToolButton tool="select" activeTool={tool} onToolChange={onToolChange} icon={MousePointer2} label="Select (V)" disabled={editingDisabled} />
+        <label className="qn-spatial-instrument" data-active={isSpatialBrush(tool) ? 'true' : 'false'}>
+          <Pencil className="h-4 w-4" aria-hidden="true" />
+          <span className="qn-sr-only">Writing instrument</span>
+          <select
+            aria-label="Writing instrument"
+            value={isSpatialBrush(tool) ? tool : ''}
+            disabled={editingDisabled}
+            onChange={(event) => event.target.value && onToolChange(event.target.value)}
+          >
+            <option value="" disabled>Instrument</option>
+            {SPATIAL_BRUSH_IDS.map((id) => (
+              <option key={id} value={id}>{SPATIAL_BRUSH_DEFINITIONS[id].label}</option>
+            ))}
+          </select>
+        </label>
+        {primaryTools.slice(1).map(([id, icon, label]) => (
           <ToolButton key={id} tool={id} activeTool={tool} onToolChange={onToolChange} icon={icon} label={label} disabled={editingDisabled} />
         ))}
       </div>

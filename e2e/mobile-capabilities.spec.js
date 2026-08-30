@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { collectErrors, dragTouch, expectNoHorizontalOverflow, signIn } from './helpers'
+import { collectErrors, dragTouch, expectNoHorizontalOverflow, pinchTouch, signIn } from './helpers'
 
 const createSpatialWorkspace = async (page, kind, title) => {
   await page.getByRole('button', { name: 'Create workspace' }).click()
@@ -54,6 +54,17 @@ test.describe('mobile capability parity', () => {
     const title = `Touch Paper ${Date.now()}`
     await createSpatialWorkspace(page, 'Paper', title)
 
+    const pageDrawer = page.getByRole('complementary', { name: 'Paper pages' })
+    await expect(pageDrawer).toHaveCount(0)
+    await page.getByRole('button', { name: 'Show pages' }).click()
+    await expect(pageDrawer).toBeVisible()
+    await pageDrawer.getByRole('button', { name: 'Hide pages' }).click()
+    await expect(pageDrawer).toHaveCount(0)
+
+    const instruments = page.getByLabel('Writing instrument')
+    await expect(instruments.locator('option:not([disabled])')).toHaveCount(9)
+    await instruments.selectOption('brushPen')
+
     const surface = page.getByRole('application', { name: /page 1/i })
     const box = await surface.boundingBox()
     const activeInk = surface.locator('.qn-spatial-ink--active')
@@ -74,6 +85,7 @@ test.describe('mobile capability parity', () => {
       }
     )
     await expect.poll(async () => (await spatialObjects(page, title)).filter((item) => item.kind === 'stroke').length).toBe(1)
+    await expect.poll(async () => (await spatialObjects(page, title)).find((item) => item.kind === 'stroke')?.data?.brush).toBe('brushPen')
 
     await page.getByLabel('Insert object').selectOption('sticky')
     await dragTouch(page,
@@ -100,15 +112,26 @@ test.describe('mobile capability parity', () => {
 
     await page.getByRole('button', { name: 'Select (V)' }).click()
     const stickyBefore = (await spatialObjects(page, title)).find((item) => item.kind === 'sticky')
+    const paperScale = box.width / 794
     const start = {
-      x: box.x + stickyBefore.bounds.x + 40,
-      y: box.y + stickyBefore.bounds.y + 40,
+      x: box.x + (stickyBefore.bounds.x + 40) * paperScale,
+      y: box.y + (stickyBefore.bounds.y + 40) * paperScale,
     }
     await dragTouch(page, start, { x: start.x + 34, y: start.y + 26 }, { steps: 8 })
     await expect.poll(async () => (await spatialObjects(page, title)).find((item) => item.kind === 'sticky')?.bounds?.x).toBeGreaterThan(stickyBefore.bounds.x + 20)
     await page.screenshot({ path: testInfo.outputPath('mobile-paper-touch.png') })
 
     const stage = page.locator('.qn-paper-stage')
+    const zoomBeforePinch = Number.parseInt((await page.getByLabel('Current zoom').textContent()), 10)
+    const pinchBox = await surface.boundingBox()
+    await pinchTouch(
+      page,
+      { x: pinchBox.x + pinchBox.width * 0.42, y: pinchBox.y + 180 },
+      { x: pinchBox.x + pinchBox.width * 0.58, y: pinchBox.y + 180 },
+      { x: pinchBox.x + pinchBox.width * 0.24, y: pinchBox.y + 180 },
+      { x: pinchBox.x + pinchBox.width * 0.76, y: pinchBox.y + 180 },
+    )
+    await expect.poll(async () => Number.parseInt((await page.getByLabel('Current zoom').textContent()), 10)).toBeGreaterThan(zoomBeforePinch)
     const panTool = page.getByRole('button', { name: 'Pan (Space)' })
     await panTool.click()
     await expect(panTool).toHaveAttribute('aria-pressed', 'true')

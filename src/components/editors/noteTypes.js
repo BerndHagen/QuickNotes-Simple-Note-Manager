@@ -183,7 +183,7 @@ const baseData = {
     goals: [],
     freeWrite: '',
     tags: [],
-    preferredSection: 'morning',
+    preferredSection: 'write',
   }),
   [NOTE_TYPES.BRAINSTORM]: () => ({
     topic: '',

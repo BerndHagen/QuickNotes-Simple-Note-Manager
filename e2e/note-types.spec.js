@@ -24,7 +24,7 @@ const focusedTypes = [
     className: '.qn-type-project',
     title: 'Professional product launch',
     expectation: /3 tasks/i,
-    sections: ['Milestones', 'Team', 'Kanban Board'],
+    sections: ['Milestones', 'Team', 'Board'],
   },
   {
     type: 'Meeting Workspace',
@@ -40,7 +40,7 @@ const focusedTypes = [
     className: '.qn-type-journal',
     title: 'Professional evening review',
     expectation: /3 things i'm grateful for/i,
-    sections: ['Morning', 'During the Day', 'Reflect', 'Free Write', 'Evening'],
+    sections: ['Check-in & goals', 'During the Day', 'Reflect', 'Write', 'Evening'],
   },
   {
     type: 'Idea Board',
@@ -55,7 +55,7 @@ const focusedTypes = [
     starter: 'Weekly groceries',
     className: '.qn-type-shopping',
     title: 'Professional grocery plan',
-    expectation: /0 of 5 items checked/i,
+    expectation: /5 remaining.*0 purchased/i,
     sections: [],
   },
   {
@@ -63,7 +63,7 @@ const focusedTypes = [
     starter: 'Focused work week',
     className: '.qn-type-weekly',
     title: 'Professional work week',
-    expectation: /goals met/i,
+    expectation: /0\/3/,
     sections: ['Goals', 'Weekly Review', 'Week View'],
   },
 ]
@@ -155,7 +155,7 @@ test.describe('focused note types', () => {
         }
       }
       if (definition.type === 'Shopping List') {
-        await editor.getByRole('button', { name: 'Settings' }).click()
+        await editor.getByRole('button', { name: 'List settings' }).click()
       }
 
       if (['Task List', 'Idea Board', 'Shopping List'].includes(definition.type)) {

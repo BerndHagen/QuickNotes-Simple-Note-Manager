@@ -98,35 +98,44 @@ test.describe('3.0.1 desktop regressions', () => {
 
     const gutter = editor.locator('.qn-page-gap__gutter')
     await expect(gutter).toBeVisible()
-    const painting = await gutter.evaluate((element) => {
-      const editorStyle = getComputedStyle(element.closest('.ProseMirror'))
-      const gutterStyle = getComputedStyle(element)
-      const upperEdge = getComputedStyle(element, '::before')
-      const lowerEdge = getComputedStyle(element, '::after')
+    const pageEdges = page.locator('.qn-document-page-edge')
+    await expect(pageEdges).toHaveCount(2)
+    const painting = await pageEdges.evaluateAll((edges, gutterElement) => {
+      const editorStyle = getComputedStyle(gutterElement.closest('.ProseMirror'))
+      const gutterStyle = getComputedStyle(gutterElement)
+      const edgeStyles = edges.map((edge) => {
+        const style = getComputedStyle(edge)
+        const bounds = edge.getBoundingClientRect()
+        return {
+          borderBottom: style.borderBottomWidth,
+          borderLeft: style.borderLeftWidth,
+          borderRight: style.borderRightWidth,
+          borderTop: style.borderTopWidth,
+          borderColor: style.borderColor,
+          boxShadow: style.boxShadow,
+          bottom: bounds.bottom,
+          top: bounds.top,
+        }
+      })
       return {
         editorOutline: editorStyle.outlineStyle,
-        editorBorder: editorStyle.borderColor,
-        gutterShadow: gutterStyle.boxShadow,
-        upperLeft: upperEdge.left,
-        upperRight: upperEdge.right,
-        upperShadow: upperEdge.boxShadow,
-        lowerLeft: lowerEdge.left,
-        lowerRight: lowerEdge.right,
-        lowerShadow: lowerEdge.boxShadow,
-        upperColor: upperEdge.backgroundColor,
-        lowerColor: lowerEdge.backgroundColor,
+        edges: edgeStyles,
+        gutterBackground: gutterStyle.backgroundColor,
+        gutterBounds: gutterElement.getBoundingClientRect().toJSON(),
       }
-    })
+    }, await gutter.elementHandle())
 
     expect(painting.editorOutline).toBe('none')
-    expect(painting.gutterShadow).not.toBe('none')
-    expect(painting.upperLeft).toBe('0px')
-    expect(painting.upperRight).toBe('0px')
-    expect(painting.lowerLeft).toBe('0px')
-    expect(painting.lowerRight).toBe('0px')
-    expect(painting.upperShadow).not.toBe('none')
-    expect(painting.lowerShadow).not.toBe('none')
-    expect(painting.upperColor).toBe(painting.editorBorder)
-    expect(painting.lowerColor).toBe(painting.editorBorder)
+    for (const edge of painting.edges) {
+      expect(edge.borderTop).toBe('2px')
+      expect(edge.borderRight).toBe('2px')
+      expect(edge.borderBottom).toBe('2px')
+      expect(edge.borderLeft).toBe('2px')
+      expect(edge.boxShadow).not.toBe('none')
+      expect(edge.borderColor).not.toBe('rgba(0, 0, 0, 0)')
+    }
+    expect(painting.edges[0].bottom).toBeLessThan(painting.gutterBounds.bottom)
+    expect(painting.edges[1].top).toBeGreaterThan(painting.gutterBounds.top)
+    expect(painting.gutterBackground).not.toBe('rgba(0, 0, 0, 0)')
   })
 })

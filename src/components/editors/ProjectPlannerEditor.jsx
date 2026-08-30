@@ -17,7 +17,6 @@ import { formatDateKey, generateId, parseDateKey } from './noteTypes'
 import { useLatestValue } from './useLatestValue'
 import { useEditorDataSync } from './useEditorDataSync'
 import FocusedNoteTitle from './FocusedNoteTitle'
-import WorkspaceMetrics from './WorkspaceMetrics'
 import { EmptyState, Modal } from '../ui'
 const COLUMN_COLORS = {
   backlog: { indicator: 'bg-content-subtle' },
@@ -215,22 +214,16 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitl
               readOnly={readOnly}
             />
             <p className="ml-12 mt-1 text-ui-md text-content-muted">
-              {stats.totalTasks} tasks {"\u2022"} {stats.progress}% complete
+              {stats.totalTasks === 0
+                ? 'Start in the backlog or define a milestone'
+                : `${stats.totalTasks} tasks \u2022 ${stats.progress}% complete`}
             </p>
           </div>
         </div>
-        <WorkspaceMetrics
-          items={[
-            { label: 'Total', value: stats.totalTasks },
-            { label: 'In progress', value: stats.inProgressTasks },
-            { label: 'Done', value: stats.doneTasks },
-            { label: 'Overdue', value: stats.overdueTasks, tone: stats.overdueTasks ? 'danger' : 'neutral' },
-          ]}
-        />
       </header>
       <div className="qn-type-tabs flex-shrink-0 flex gap-1 p-2 border-b border-subtle bg-surface-raised">
         {[
-          { id: 'board', label: 'Kanban Board', icon: BarChart3 },
+          { id: 'board', label: 'Board', icon: BarChart3 },
           { id: 'milestones', label: 'Milestones', icon: Milestone },
           { id: 'team', label: 'Team', icon: Users },
         ].map(view => (

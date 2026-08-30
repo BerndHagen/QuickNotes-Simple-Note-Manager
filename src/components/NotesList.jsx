@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ArrowDown,
   ArrowUp,
+  Check,
   Copy,
   Info,
   FileText,
@@ -107,11 +108,14 @@ function NoteContextMenu({ point, notes: targets, onClose, folders, tags, manual
             <MenuItem
               key={tag.id}
               selected={applied}
+              role="menuitemcheckbox"
+              aria-checked={applied}
               onClick={() =>
                 targets.forEach((n) =>
                   applied ? removeTagFromNote(n.id, tag.name) : addTagToNote(n.id, tag.name)
                 )
               }
+              trailing={applied ? <Check className="h-4 w-4 shrink-0" aria-hidden="true" /> : null}
             >
               <span className="flex items-center gap-2">
                 <span
@@ -621,7 +625,7 @@ export default function NotesList({ sidebarToggle, onOpenNote }) {
       {contextMenu && (
         <NoteContextMenu
           point={contextMenu.point}
-          notes={contextMenu.notes}
+          notes={contextMenu.notes.map((target) => notes.find((note) => note.id === target.id) || target)}
           folders={folders}
           tags={tags}
           manualOrder={

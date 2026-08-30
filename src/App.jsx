@@ -16,7 +16,7 @@ import { parseInternalNoteHref } from './lib/knowledge/links'
 import { subscribeToCaptureCloud } from './lib/capture/cloud'
 import { subscribeToDatabaseLifecycle, subscribeToWorkspaceMutations } from './lib/db'
 import { AlertTriangle, PanelLeft, CloudOff, Info, RefreshCw } from 'lucide-react'
-import { IconButton, Modal, Spinner, useEscapeKey, useFocusTrap } from './components/ui'
+import { BrandLogo, IconButton, Modal, Spinner, useEscapeKey, useFocusTrap } from './components/ui'
 import TopChrome from './components/workspace/TopChrome'
 import ResizablePane from './components/workspace/ResizablePane'
 import InspectorPane from './components/workspace/InspectorPane'
@@ -98,6 +98,7 @@ function AppLoading() {
   return (
     <div className="flex min-h-[100dvh] items-center justify-center bg-app">
       <div className="flex flex-col items-center gap-4">
+        <BrandLogo className="h-12 w-12" />
         <Spinner size="lg" label="Loading your workspace" />
         <div className="text-center">
           <p className="text-ui-lg font-semibold text-content">QuickNotes</p>

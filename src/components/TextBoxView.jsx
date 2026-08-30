@@ -14,6 +14,7 @@ import {
   WrapText,
 } from 'lucide-react'
 import { useAnchoredPosition } from './ui'
+import { constrainRectangleToPage, getDocumentObjectGeometry } from '../lib/documentPageBounds'
 
 const MIN_WIDTH = 120
 const MIN_HEIGHT = 60
@@ -140,14 +141,16 @@ export default function TextBoxView({ node, updateAttributes, deleteNode, select
     if (event.target.closest('.qn-text-box__content, button, input, select')) return
     event.preventDefault()
     event.stopPropagation()
-    const editorRect = wrapperRef.current?.closest('.ProseMirror')?.getBoundingClientRect()
+    const pageGeometry = getDocumentObjectGeometry(wrapperRef.current, { x, y, width, height: height || 140 })
     const nextGesture = {
       type: 'move',
       startX: event.clientX,
       startY: event.clientY,
       origin: { x, y, width, height: height || 140 },
       live: { x, y, width, height: height || 140 },
-      editorWidth: editorRect?.width || MAX_DIMENSION,
+      page: pageGeometry.page,
+      scaleX: pageGeometry.scaleX,
+      scaleY: pageGeometry.scaleY,
     }
     gestureRef.current = nextGesture
     setGesture(nextGesture)
@@ -157,7 +160,7 @@ export default function TextBoxView({ node, updateAttributes, deleteNode, select
     if (!editable) return
     event.preventDefault()
     event.stopPropagation()
-    const editorRect = wrapperRef.current?.closest('.ProseMirror')?.getBoundingClientRect()
+    const pageGeometry = getDocumentObjectGeometry(wrapperRef.current, { x, y, width, height: height || 140 })
     const nextGesture = {
       type: 'resize',
       direction,
@@ -165,7 +168,9 @@ export default function TextBoxView({ node, updateAttributes, deleteNode, select
       startY: event.clientY,
       origin: { x, y, width, height: height || 140 },
       live: { x, y, width, height: height || 140 },
-      editorWidth: editorRect?.width || MAX_DIMENSION,
+      page: pageGeometry.page,
+      scaleX: pageGeometry.scaleX,
+      scaleY: pageGeometry.scaleY,
     }
     gestureRef.current = nextGesture
     setGesture(nextGesture)
@@ -178,17 +183,18 @@ export default function TextBoxView({ node, updateAttributes, deleteNode, select
     const move = (event) => {
       const current = gestureRef.current
       if (!current) return
-      const dx = event.clientX - current.startX
-      const dy = event.clientY - current.startY
+      const dx = (event.clientX - current.startX) / current.scaleX
+      const dy = (event.clientY - current.startY) / current.scaleY
       const origin = current.origin
       if (current.type === 'move') {
+        const live = constrainRectangleToPage(
+          { ...origin, x: origin.x + dx, y: origin.y + dy },
+          current.page,
+          { minimumWidth: MIN_WIDTH, minimumHeight: MIN_HEIGHT }
+        )
         const next = {
           ...current,
-          live: {
-            ...origin,
-            x: clamp(origin.x + dx, 0, Math.max(0, current.editorWidth - origin.width)),
-            y: Math.max(0, origin.y + dy),
-          },
+          live,
         }
         gestureRef.current = next
         setGesture(next)
@@ -199,23 +205,17 @@ export default function TextBoxView({ node, updateAttributes, deleteNode, select
       const east = current.direction.includes('e')
       const north = current.direction.includes('n')
       const south = current.direction.includes('s')
-      const maximumWidth = isAbsolute
-        ? east
-          ? Math.max(MIN_WIDTH, current.editorWidth - origin.x - 8)
-          : west
-            ? Math.max(MIN_WIDTH, origin.x + origin.width - 8)
-            : MAX_DIMENSION
-        : MAX_DIMENSION
-      const nextWidth = clamp(origin.width + (east ? dx : west ? -dx : 0), MIN_WIDTH, maximumWidth)
+      const nextWidth = clamp(origin.width + (east ? dx : west ? -dx : 0), MIN_WIDTH, MAX_DIMENSION)
       const nextHeight = clamp(origin.height + (south ? dy : north ? -dy : 0), MIN_HEIGHT, MAX_DIMENSION)
+      const live = constrainRectangleToPage({
+        x: west ? origin.x + origin.width - nextWidth : origin.x,
+        y: north ? origin.y + origin.height - nextHeight : origin.y,
+        width: nextWidth,
+        height: nextHeight,
+      }, isAbsolute ? current.page : null, { minimumWidth: MIN_WIDTH, minimumHeight: MIN_HEIGHT })
       const next = {
         ...current,
-        live: {
-          x: west ? origin.x + origin.width - nextWidth : origin.x,
-          y: north ? Math.max(0, origin.y + origin.height - nextHeight) : origin.y,
-          width: nextWidth,
-          height: nextHeight,
-        },
+        live,
       }
       gestureRef.current = next
       setGesture(next)
@@ -268,20 +268,17 @@ export default function TextBoxView({ node, updateAttributes, deleteNode, select
 
   const updateExactGeometry = (attribute, rawValue) => {
     const value = Number(rawValue) || 0
-    const editorWidth = wrapperRef.current?.closest('.ProseMirror')?.getBoundingClientRect().width || MAX_DIMENSION
-    if (attribute === 'x') {
-      updateAttributes({ x: clamp(value, 0, Math.max(0, editorWidth - width - 8)) })
-      return
+    const rectangle = {
+      x: attribute === 'x' ? value : x,
+      y: attribute === 'y' ? value : y,
+      width: attribute === 'width' ? value : width,
+      height: attribute === 'height' ? value : height || 140,
     }
-    if (attribute === 'y') {
-      updateAttributes({ y: Math.max(0, value) })
-      return
-    }
-    if (attribute === 'width') {
-      updateAttributes({ width: clamp(value, MIN_WIDTH, Math.max(MIN_WIDTH, editorWidth - x - 8)) })
-      return
-    }
-    updateAttributes({ height: clamp(value, MIN_HEIGHT, MAX_DIMENSION) })
+    const { page } = getDocumentObjectGeometry(wrapperRef.current, rectangle)
+    updateAttributes(constrainRectangleToPage(rectangle, page, {
+      minimumWidth: MIN_WIDTH,
+      minimumHeight: MIN_HEIGHT,
+    }))
   }
 
   return (
@@ -344,11 +341,24 @@ export default function TextBoxView({ node, updateAttributes, deleteNode, select
               if (value === 'absolute' && !isAbsolute) {
                 const objectRect = wrapperRef.current?.getBoundingClientRect()
                 const editorRect = wrapperRef.current?.closest('.ProseMirror')?.getBoundingClientRect()
-                updateAttributes({
-                  wrap: value,
-                  x: Math.max(0, (objectRect?.left || 0) - (editorRect?.left || 0)),
-                  y: Math.max(0, (objectRect?.top || 0) - (editorRect?.top || 0)),
+                const measurements = getDocumentObjectGeometry(wrapperRef.current, {
+                  x: 0,
+                  y: 0,
+                  width,
+                  height: height || 140,
                 })
+                const candidate = {
+                  x: Math.max(0, ((objectRect?.left || 0) - (editorRect?.left || 0)) / measurements.scaleX),
+                  y: Math.max(0, ((objectRect?.top || 0) - (editorRect?.top || 0)) / measurements.scaleY),
+                  width,
+                  height: height || 140,
+                }
+                const page = getDocumentObjectGeometry(wrapperRef.current, candidate).page
+                const rectangle = constrainRectangleToPage(candidate, page, {
+                  minimumWidth: MIN_WIDTH,
+                  minimumHeight: MIN_HEIGHT,
+                })
+                updateAttributes({ wrap: value, ...rectangle })
               } else {
                 updateAttributes({ wrap: value })
               }
@@ -442,8 +452,19 @@ export default function TextBoxView({ node, updateAttributes, deleteNode, select
           title="Drag the border to move; arrow keys nudge"
           onPointerDown={(event) => {
             event.preventDefault()
-            const editorRect = wrapperRef.current?.closest('.ProseMirror')?.getBoundingClientRect()
-            const nextGesture = { type: 'move', startX: event.clientX, startY: event.clientY, origin: { x, y, width, height: height || 140 }, live: { x, y, width, height: height || 140 }, editorWidth: editorRect?.width || MAX_DIMENSION }
+            event.stopPropagation()
+            const rectangle = { x, y, width, height: height || 140 }
+            const pageGeometry = getDocumentObjectGeometry(wrapperRef.current, rectangle)
+            const nextGesture = {
+              type: 'move',
+              startX: event.clientX,
+              startY: event.clientY,
+              origin: rectangle,
+              live: rectangle,
+              page: pageGeometry.page,
+              scaleX: pageGeometry.scaleX,
+              scaleY: pageGeometry.scaleY,
+            }
             gestureRef.current = nextGesture
             setGesture(nextGesture)
           }}
@@ -451,15 +472,13 @@ export default function TextBoxView({ node, updateAttributes, deleteNode, select
             if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return
             event.preventDefault()
             const amount = event.shiftKey ? 10 : 1
-            const editorWidth = wrapperRef.current?.closest('.ProseMirror')?.getBoundingClientRect().width || MAX_DIMENSION
-            updateAttributes({
-              x: clamp(
-                x + (event.key === 'ArrowLeft' ? -amount : event.key === 'ArrowRight' ? amount : 0),
-                0,
-                Math.max(0, editorWidth - width - 8)
-              ),
-              y: Math.max(0, y + (event.key === 'ArrowUp' ? -amount : event.key === 'ArrowDown' ? amount : 0)),
-            })
+            const rectangle = { x, y, width, height: height || 140 }
+            const { page } = getDocumentObjectGeometry(wrapperRef.current, rectangle)
+            updateAttributes(constrainRectangleToPage({
+              ...rectangle,
+              x: x + (event.key === 'ArrowLeft' ? -amount : event.key === 'ArrowRight' ? amount : 0),
+              y: y + (event.key === 'ArrowUp' ? -amount : event.key === 'ArrowDown' ? amount : 0),
+            }, page, { minimumWidth: MIN_WIDTH, minimumHeight: MIN_HEIGHT }))
           }}
           className="absolute -left-9 top-1/2 z-30 flex h-7 w-7 -translate-y-1/2 cursor-move items-center justify-center rounded-full border-2 border-accent bg-surface-raised text-accent-text shadow-sm"
         >

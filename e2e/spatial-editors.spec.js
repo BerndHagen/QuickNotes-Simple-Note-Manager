@@ -176,7 +176,7 @@ test.describe('Paper and Canvas spatial editors', () => {
     await expect(page.getByLabel('Paper editor').getByText('Saved on this device')).toBeVisible()
     await expect.poll(() => spatialObjectCount(page, title)).toBe(1)
 
-    await page.getByRole('button', { name: 'Highlighter (H)' }).click()
+    await page.getByLabel('Writing instrument').selectOption('highlighter')
     await page.mouse.move(box.x + 100, box.y + 250)
     await page.mouse.down()
     await page.mouse.move(box.x + 220, box.y + 250, { steps: 10 })

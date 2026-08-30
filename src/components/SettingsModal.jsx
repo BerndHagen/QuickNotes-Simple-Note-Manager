@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Avatar, Button, DialogHeader, Field, Input, LanguageFlag, SegmentedControl, Select, Switch, Toggle } from './ui'
+import { Avatar, BrandLogo, Button, DialogHeader, Field, Input, LanguageFlag, SegmentedControl, Select, Switch, Toggle } from './ui'
 import {
   User,
   Mail,
@@ -1627,10 +1627,12 @@ export default function SettingsModal() {
             {activeTab === 'about' && (
               <div className="space-y-6">
                 <div className="border-b border-subtle pb-5">
-                  <FileText className="mb-3 h-6 w-6 text-accent-text" aria-hidden="true" />
-                  <div>
-                    <h3 className="text-lg font-semibold text-content">QuickNotes</h3>
-                    <p className="text-sm text-content-muted">{t('settings.version')} {APP_VERSION}</p>
+                  <div className="flex items-center gap-3">
+                    <BrandLogo className="h-10 w-10" />
+                    <div>
+                      <h3 className="text-lg font-semibold text-content">QuickNotes</h3>
+                      <p className="text-sm text-content-muted">{t('settings.version')} {APP_VERSION}</p>
+                    </div>
                   </div>
                   <p className="mt-2 max-w-lg text-sm text-content-muted">
                     {t('settings.aboutDescription')}

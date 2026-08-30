@@ -376,7 +376,10 @@ export default function NoteEditor({ onBack, showBack = false }) {
     zoomIn: zoomWorkspaceIn,
     zoomOut: zoomWorkspaceOut,
     resetZoom: resetWorkspaceZoom,
-  } = useWorkspaceZoom(workspaceRootRef, { enabled: Boolean(note) && !ownsSpatialZoom })
+  } = useWorkspaceZoom(workspaceRootRef, {
+    enabled: Boolean(note) && !ownsSpatialZoom,
+    scope: isSpecialized ? 'structured' : 'document',
+  })
 
   if (!note) {
     return (
@@ -393,7 +396,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
   }
 
   return (
-    <div ref={workspaceRootRef} className="editor-paper flex h-full w-full min-w-0 flex-col bg-surface">
+    <div ref={workspaceRootRef} className="qn-workspace-zoom-root editor-paper flex h-full w-full min-w-0 flex-col bg-surface">
       <FindReplaceBar editor={editorRef} isOpen={findReplaceOpen} onClose={() => setFindReplaceOpen(false)} />
 
       {isReadOnly && (

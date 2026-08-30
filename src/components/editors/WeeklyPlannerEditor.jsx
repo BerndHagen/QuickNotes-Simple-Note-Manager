@@ -216,7 +216,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle, onTitle
               onChange={onTitleChange}
               readOnly={readOnly}
             />
-            <div className="flex items-center gap-3 mt-2">
+            <div className="ml-12 mt-1 flex items-center gap-2">
               <button
                 onClick={() => navigateWeek(-1)}
                 aria-label="Previous week"
@@ -243,13 +243,15 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle, onTitle
             </div>
           </div>
         </div>
-        <WorkspaceMetrics
-          items={[
-            { label: 'Tasks done', value: `${stats.completedTasks}/${stats.totalTasks}` },
-            { label: 'Goals met', value: `${stats.completedGoals}/${stats.totalGoals}` },
-            { label: 'Complete', value: `${completionPercent}%`, tone: completionPercent === 100 ? 'success' : 'neutral' },
-          ]}
-        />
+        {(stats.totalTasks > 0 || stats.totalGoals > 0) && (
+          <WorkspaceMetrics
+            items={[
+              ...(stats.totalTasks ? [{ label: 'Tasks', value: `${stats.completedTasks}/${stats.totalTasks}` }] : []),
+              ...(stats.totalGoals ? [{ label: 'Goals', value: `${stats.completedGoals}/${stats.totalGoals}` }] : []),
+              { label: 'Progress', value: `${completionPercent}%`, tone: completionPercent === 100 ? 'success' : 'neutral' },
+            ]}
+          />
+        )}
       </header>
       <div className="qn-type-tabs flex-shrink-0 flex gap-1 p-2 border-b border-subtle bg-surface-sunken">
         {views.map((view) => (
@@ -273,8 +275,8 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle, onTitle
       </div>
       <div className="qn-workspace-canvas flex-1 overflow-y-auto">
         {activeView === 'week' && (
-          <div className="flex h-full">
-            <div className="w-20 flex-shrink-0 border-r border-subtle bg-surface-sunken">
+          <div className="qn-weekly-week-layout flex h-full">
+            <div className="qn-weekly-day-rail w-20 flex-shrink-0 overflow-auto border-r border-subtle bg-surface-sunken">
               {DAYS.map((day, index) => {
                 const dayKey = day.toLowerCase()
                 const dayData = plannerData.days[dayKey]
@@ -323,7 +325,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle, onTitle
                 )
               })}
             </div>
-            <div className="flex-1 p-4 overflow-y-auto">
+            <div className="qn-weekly-day-content min-w-0 flex-1 overflow-y-auto p-4">
               <div className="qn-workspace-panel mx-auto max-w-2xl p-5">
                 <div className="qn-weekly-day-heading flex items-start justify-between gap-4 mb-6">
                   <div>

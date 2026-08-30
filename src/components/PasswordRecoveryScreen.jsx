@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { Button, Input, NotepadGlyph } from './ui'
+import { BrandLogo, Button, Input } from './ui'
 import { CheckCircle2, Eye, EyeOff, Lock } from 'lucide-react'
 import { backend } from '../lib/backend'
 import { getAuthErrorMessage, MIN_PASSWORD_LENGTH, validateNewPassword } from '../lib/authValidation'
@@ -54,9 +54,7 @@ export default function PasswordRecoveryScreen({ onComplete, onCancel }) {
     <main className="qn-auth-page flex min-h-[100dvh] items-center justify-center px-4 py-10">
       <div className="relative w-full max-w-[460px] rounded-dialog border border-strong bg-surface-raised p-7 shadow-dialog sm:p-9">
         <div className="mb-7 flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-control bg-accent text-accent-on">
-            <NotepadGlyph className="h-5 w-5" aria-hidden="true" />
-          </span>
+          <BrandLogo className="h-10 w-10" />
           <div>
             <p className="text-title-md font-bold text-content">QuickNotes</p>
             <p className="text-ui-sm text-content-muted">Secure account recovery</p>

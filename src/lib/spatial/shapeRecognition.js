@@ -87,7 +87,8 @@ const recognizeEllipse = (points, bounds) => {
  * declines ambiguous marks rather than converting handwriting aggressively.
  */
 export function recognizeInkShape(object) {
-  const points = object?.kind === 'stroke' && object.data?.brush === 'pen'
+  const shapeBrushes = new Set(['pen', 'fineLiner', 'mechanicalPencil'])
+  const points = object?.kind === 'stroke' && shapeBrushes.has(object.data?.brush)
     ? object.data.points?.filter((point) => Array.isArray(point) && Number.isFinite(point[0]) && Number.isFinite(point[1]))
     : null
   if (!points || points.length < 4 || points.length > 20_000) return null

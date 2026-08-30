@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import ShapeGeometry, { SHAPE_GROUPS } from './ShapeGeometry'
 import { useAnchoredPosition } from './ui'
+import { constrainRectangleToPage, getDocumentObjectGeometry } from '../lib/documentPageBounds'
 
 const FILLS = [
   { value: 'accent', label: 'Green' },
@@ -195,12 +196,21 @@ export default function ShapeView({ node, updateAttributes, deleteNode, selected
     event.currentTarget.setPointerCapture?.(event.pointerId)
     const shapeRect = wrapperRef.current?.getBoundingClientRect()
     const editorRect = wrapperRef.current?.closest('.ProseMirror')?.getBoundingClientRect()
+    const pageGeometry = getDocumentObjectGeometry(wrapperRef.current, { x, y, width, height })
+    const scaleX = pageGeometry.scaleX
+    const scaleY = pageGeometry.scaleY
     const originX = wrap === 'absolute' || wrap === 'free'
       ? x || 0
-      : shapeRect && editorRect ? shapeRect.left - editorRect.left : 0
+      : shapeRect && editorRect ? (shapeRect.left - editorRect.left) / scaleX : 0
     const originY = wrap === 'absolute' || wrap === 'free'
       ? y || 0
-      : shapeRect && editorRect ? shapeRect.top - editorRect.top : 0
+      : shapeRect && editorRect ? (shapeRect.top - editorRect.top) / scaleY : 0
+    const page = pageGeometry.page || getDocumentObjectGeometry(wrapperRef.current, {
+      x: originX,
+      y: originY,
+      width,
+      height,
+    }).page
     const nextMove = {
       startX: event.clientX,
       startY: event.clientY,
@@ -208,21 +218,20 @@ export default function ShapeView({ node, updateAttributes, deleteNode, selected
       originY,
       currentX: originX,
       currentY: originY,
-      minDeltaX: shapeRect && editorRect ? editorRect.left + 8 - shapeRect.left : -MAX_DIMENSION,
-      maxDeltaX: shapeRect && editorRect ? editorRect.right - 8 - shapeRect.right : MAX_DIMENSION,
-      minDeltaY: shapeRect && editorRect ? editorRect.top + 8 - shapeRect.top : -MAX_DIMENSION,
-      maxDeltaY: MAX_DIMENSION,
+      page,
+      scaleX,
+      scaleY,
     }
     moveRef.current = nextMove
     setMove(nextMove)
-  }, [editable, wrap, x, y])
+  }, [editable, height, width, wrap, x, y])
 
   const startResize = useCallback((event, direction = 'se') => {
     if (!editable) return
     event.preventDefault()
     event.stopPropagation()
     event.currentTarget.setPointerCapture?.(event.pointerId)
-    const editorRect = wrapperRef.current?.closest('.ProseMirror')?.getBoundingClientRect()
+    const pageGeometry = getDocumentObjectGeometry(wrapperRef.current, { x: x || 0, y: y || 0, width, height })
     const nextResize = {
       startX: event.clientX,
       startY: event.clientY,
@@ -235,7 +244,9 @@ export default function ShapeView({ node, updateAttributes, deleteNode, selected
       direction,
       currentWidth: width,
       currentHeight: height,
-      editorWidth: editorRect?.width || MAX_DIMENSION,
+      page: pageGeometry.page,
+      scaleX: pageGeometry.scaleX,
+      scaleY: pageGeometry.scaleY,
     }
     resizeRef.current = nextResize
     setResize(nextResize)
@@ -262,50 +273,63 @@ export default function ShapeView({ node, updateAttributes, deleteNode, selected
     const onMove = (event) => {
       if (moveRef.current) {
         const value = moveRef.current
-        const deltaX = clamp(event.clientX - value.startX, value.minDeltaX, value.maxDeltaX)
+        const rectangle = constrainRectangleToPage({
+          x: value.originX + (event.clientX - value.startX) / value.scaleX,
+          y: value.originY + (event.clientY - value.startY) / value.scaleY,
+          width,
+          height,
+        }, value.page, { minimumWidth: MIN_WIDTH, minimumHeight: MIN_HEIGHT })
         const next = {
           ...value,
-          currentX: value.originX + deltaX,
-          currentY: value.originY + clamp(event.clientY - value.startY, value.minDeltaY, value.maxDeltaY),
+          currentX: rectangle.x,
+          currentY: rectangle.y,
         }
         moveRef.current = next
         setMove(next)
       }
       if (resizeRef.current) {
           const value = resizeRef.current
-          const dx = event.clientX - value.startX
-          const dy = event.clientY - value.startY
+          const dx = (event.clientX - value.startX) / value.scaleX
+          const dy = (event.clientY - value.startY) / value.scaleY
           const west = value.direction.includes('w')
           const east = value.direction.includes('e')
           const north = value.direction.includes('n')
           const south = value.direction.includes('s')
-          const maximumWidth = wrap === 'absolute' || wrap === 'free'
-            ? east
-              ? Math.max(MIN_WIDTH, value.editorWidth - value.originX - 8)
-              : west
-                ? Math.max(MIN_WIDTH, value.originX + value.originWidth - 8)
-                : MAX_DIMENSION
-            : MAX_DIMENSION
           const nextWidth = Math.min(
-            maximumWidth,
+            MAX_DIMENSION,
             clampDimension(value.originWidth + (east ? dx : west ? -dx : 0), MIN_WIDTH)
           )
           const nextHeight = clampDimension(value.originHeight + (south ? dy : north ? -dy : 0), MIN_HEIGHT)
-          const geometry = {
+          let geometry = {
             ...value,
             currentWidth: nextWidth,
             currentHeight: nextHeight,
             currentX: west ? value.originX + value.originWidth - nextWidth : value.originX,
-            currentY: north ? Math.max(0, value.originY + value.originHeight - nextHeight) : value.originY,
+            currentY: north ? value.originY + value.originHeight - nextHeight : value.originY,
           }
           const ratio = value.originWidth / value.originHeight
-          const next = !event.shiftKey || (!east && !west) || (!north && !south)
+          geometry = !event.shiftKey || (!east && !west) || (!north && !south)
             ? geometry
             : Math.abs(nextWidth - value.originWidth) >= Math.abs(nextHeight - value.originHeight)
             ? { ...geometry, currentWidth: nextWidth, currentHeight: clampDimension(nextWidth / ratio, MIN_HEIGHT) }
             : { ...geometry, currentWidth: clampDimension(nextHeight * ratio, MIN_WIDTH), currentHeight: nextHeight }
-          resizeRef.current = next
-          setResize(next)
+          if (wrap === 'absolute' || wrap === 'free') {
+            const constrained = constrainRectangleToPage({
+              x: geometry.currentX,
+              y: geometry.currentY,
+              width: geometry.currentWidth,
+              height: geometry.currentHeight,
+            }, value.page, { minimumWidth: MIN_WIDTH, minimumHeight: MIN_HEIGHT })
+            geometry = {
+              ...geometry,
+              currentX: constrained.x,
+              currentY: constrained.y,
+              currentWidth: constrained.width,
+              currentHeight: constrained.height,
+            }
+          }
+          resizeRef.current = geometry
+          setResize(geometry)
       }
       if (rotateRef.current) {
           const value = rotateRef.current
@@ -349,7 +373,7 @@ export default function ShapeView({ node, updateAttributes, deleteNode, selected
       window.removeEventListener('pointerup', onUp)
       window.removeEventListener('pointercancel', onUp)
     }
-  }, [hasActiveGesture, updateAttributes, wrap])
+  }, [hasActiveGesture, height, updateAttributes, width, wrap])
 
   // Leave room for the rotation stem and handle instead of covering them with
   // the contextual toolbar.
@@ -384,14 +408,29 @@ export default function ShapeView({ node, updateAttributes, deleteNode, selected
       : {}),
   }
 
+  const boundedAbsoluteGeometry = (rectangle) => {
+    const geometry = getDocumentObjectGeometry(wrapperRef.current, { x: x || 0, y: y || 0, width, height })
+    return constrainRectangleToPage(rectangle, geometry.page, {
+      minimumWidth: MIN_WIDTH,
+      minimumHeight: MIN_HEIGHT,
+    })
+  }
+
   const selectLayout = (nextWrap) => {
     if (nextWrap === 'absolute' && wrap !== 'absolute' && wrap !== 'free') {
       const objectRect = wrapperRef.current?.getBoundingClientRect()
       const editorRect = wrapperRef.current?.closest('.ProseMirror')?.getBoundingClientRect()
+      const measurements = getDocumentObjectGeometry(wrapperRef.current, { x: 0, y: 0, width, height })
+      const candidate = {
+        x: Math.max(0, ((objectRect?.left || 0) - (editorRect?.left || 0)) / measurements.scaleX),
+        y: Math.max(0, ((objectRect?.top || 0) - (editorRect?.top || 0)) / measurements.scaleY),
+        width,
+        height,
+      }
+      const page = getDocumentObjectGeometry(wrapperRef.current, candidate).page
       updateAttributes({
         wrap: nextWrap,
-        x: Math.max(0, (objectRect?.left || 0) - (editorRect?.left || 0)),
-        y: Math.max(0, (objectRect?.top || 0) - (editorRect?.top || 0)),
+        ...constrainRectangleToPage(candidate, page, { minimumWidth: MIN_WIDTH, minimumHeight: MIN_HEIGHT }),
       })
     } else {
       updateAttributes({ wrap: nextWrap, ...(nextWrap === 'absolute' ? {} : { x: 0, y: 0 }) })
@@ -553,13 +592,19 @@ export default function ShapeView({ node, updateAttributes, deleteNode, selected
             <div className="grid grid-cols-2 gap-2">
               <label className="text-ui-sm font-medium text-content-muted">Width
                 <input type="number" min={MIN_WIDTH} max={MAX_DIMENSION} value={Math.round(width)} onChange={(event) => {
-                  const editorWidth = wrapperRef.current?.closest('.ProseMirror')?.getBoundingClientRect().width || MAX_DIMENSION
-                  const maximum = wrap === 'absolute' || wrap === 'free' ? Math.max(MIN_WIDTH, editorWidth - (x || 0) - 8) : MAX_DIMENSION
-                  updateAttributes({ width: Math.min(maximum, clampDimension(Number(event.target.value) || MIN_WIDTH, MIN_WIDTH)) })
+                  const nextWidth = clampDimension(Number(event.target.value) || MIN_WIDTH, MIN_WIDTH)
+                  updateAttributes(wrap === 'absolute' || wrap === 'free'
+                    ? boundedAbsoluteGeometry({ x: x || 0, y: y || 0, width: nextWidth, height })
+                    : { width: nextWidth })
                 }} aria-label="Shape width" className="mt-1 h-9 w-full rounded-control border border-subtle bg-surface-raised px-2 text-content outline-none focus:border-accent" />
               </label>
               <label className="text-ui-sm font-medium text-content-muted">Height
-                <input type="number" min={MIN_HEIGHT} max={MAX_DIMENSION} value={Math.round(height)} onChange={(event) => updateAttributes({ height: clampDimension(Number(event.target.value) || MIN_HEIGHT, MIN_HEIGHT) })} aria-label="Shape height" className="mt-1 h-9 w-full rounded-control border border-subtle bg-surface-raised px-2 text-content outline-none focus:border-accent" />
+                <input type="number" min={MIN_HEIGHT} max={MAX_DIMENSION} value={Math.round(height)} onChange={(event) => {
+                  const nextHeight = clampDimension(Number(event.target.value) || MIN_HEIGHT, MIN_HEIGHT)
+                  updateAttributes(wrap === 'absolute' || wrap === 'free'
+                    ? boundedAbsoluteGeometry({ x: x || 0, y: y || 0, width, height: nextHeight })
+                    : { height: nextHeight })
+                }} aria-label="Shape height" className="mt-1 h-9 w-full rounded-control border border-subtle bg-surface-raised px-2 text-content outline-none focus:border-accent" />
               </label>
             </div>
             <div className="my-3 h-px bg-[var(--qn-border-subtle)]" />
@@ -592,15 +637,14 @@ export default function ShapeView({ node, updateAttributes, deleteNode, selected
               if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return
               event.preventDefault()
               const amount = event.shiftKey ? 10 : 1
-              const editorWidth = wrapperRef.current?.closest('.ProseMirror')?.getBoundingClientRect().width || MAX_DIMENSION
               updateAttributes({
                 wrap: 'absolute',
-                x: clamp(
-                  (x || 0) + (event.key === 'ArrowLeft' ? -amount : event.key === 'ArrowRight' ? amount : 0),
-                  0,
-                  Math.max(0, editorWidth - width - 8)
-                ),
-                y: Math.max(0, (y || 0) + (event.key === 'ArrowUp' ? -amount : event.key === 'ArrowDown' ? amount : 0)),
+                ...boundedAbsoluteGeometry({
+                  x: (x || 0) + (event.key === 'ArrowLeft' ? -amount : event.key === 'ArrowRight' ? amount : 0),
+                  y: (y || 0) + (event.key === 'ArrowUp' ? -amount : event.key === 'ArrowDown' ? amount : 0),
+                  width,
+                  height,
+                }),
               })
             }}
             className="absolute -left-9 top-1/2 z-30 flex h-7 w-7 -translate-y-1/2 cursor-move items-center justify-center rounded-full border-2 border-accent bg-surface-raised text-accent-text shadow-sm"

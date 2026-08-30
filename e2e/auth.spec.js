@@ -59,6 +59,9 @@ test.describe('authentication entry', () => {
 
   test('loads the branded background and presents the three current work surfaces', async ({ page, request }) => {
     await page.setViewportSize({ width: 1920, height: 1080 })
+    const editorLogo = page.locator('img[src*="quicknotes-editor-logo"]').first()
+    await expect(editorLogo).toBeVisible()
+    await expect(editorLogo).toHaveAttribute('alt', '')
     const authPage = page.locator('.qn-auth-page')
     const background = await authPage.evaluate((element) => getComputedStyle(element).backgroundImage)
     expect(background).toContain('quicknotes-auth-background.png')

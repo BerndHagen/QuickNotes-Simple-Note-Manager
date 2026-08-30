@@ -1,6 +1,6 @@
 import { generateId } from '../utils'
 import { boundsFromPoints, clamp, normalizeBounds } from './geometry'
-import { SPATIAL_BRUSH_IDS } from './brushes'
+import { getSpatialBrushDefinition, SPATIAL_BRUSH_IDS } from './brushes'
 
 export const SPATIAL_SCHEMA_VERSION = 1
 
@@ -33,7 +33,7 @@ export const STICKY_STYLES = Object.freeze({
   lavender: { name: 'Lavender', fill: '#d9d0e5', border: '#a89bb9', text: '#2d2834' },
 })
 export const SPATIAL_TOOLS = [
-  'select', 'pen', 'highlighter', 'eraser', 'hand',
+  'select', ...SPATIAL_BRUSH_IDS, 'eraser', 'hand',
   'line', 'arrow', 'rectangle', 'ellipse',
   'text', 'sticky', 'indexCard', 'noteLink', 'image',
 ]
@@ -111,15 +111,17 @@ export function createStrokeObject({ noteId, pageId, ownerId, points, brush, col
     Math.max(0, finite(point[5])),
   ])
   const safeWidth = clamp(finite(width, 2.5), 0.5, 64)
+  const safeBrush = SPATIAL_BRUSH_IDS.includes(brush) ? brush : 'pen'
+  const definition = getSpatialBrushDefinition(safeBrush)
   return {
     ...baseObject(noteId, pageId, 'stroke', zIndex, ownerId),
     bounds: boundsFromPoints(safePoints, safeWidth / 2 + 2),
     data: {
       points: safePoints,
-      brush: brush === 'highlighter' ? 'highlighter' : 'pen',
+      brush: safeBrush,
       color: String(color || '#18352a').slice(0, 32),
       width: safeWidth,
-      opacity: clamp(finite(opacity, brush === 'highlighter' ? 0.28 : 1), 0.05, 1),
+      opacity: clamp(finite(opacity, definition.opacity), 0.05, 1),
     },
   }
 }

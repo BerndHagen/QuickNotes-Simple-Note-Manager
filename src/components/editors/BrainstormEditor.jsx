@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import {
   Button,
-  EmptyState,
   IconButton,
   Input,
   SegmentedControl,
@@ -22,7 +21,6 @@ import {
   Grid,
   List,
   Tag,
-  Sparkles,
   Shuffle,
   Copy,
   ChevronDown,
@@ -31,7 +29,6 @@ import { generateId } from './noteTypes'
 import { useLatestValue } from './useLatestValue'
 import { useEditorDataSync } from './useEditorDataSync'
 import FocusedNoteTitle from './FocusedNoteTitle'
-import WorkspaceMetrics from './WorkspaceMetrics'
 import Modal from '../ui/Modal'
 const DEFAULT_CATEGORIES = [
   { id: 'uncategorized', name: 'Uncategorized', color: '#6b7280' },
@@ -47,7 +44,7 @@ function IdeaCategorySelect({ idea, categories, onChange, className = '' }) {
 
   return (
     <label
-      className={`qn-idea-card-category inline-flex h-7 max-w-[12rem] items-center gap-1.5 rounded-full border border-subtle bg-surface-sunken px-2 text-ui-xs font-medium text-content-muted ${className}`}
+      className={`qn-idea-card-category inline-flex h-7 max-w-[12rem] items-center gap-1.5 rounded-control border border-subtle bg-surface-sunken px-2 text-ui-xs font-medium text-content-muted ${className}`}
       style={{
         backgroundColor: `color-mix(in srgb, ${category?.color || '#6b7280'} 10%, var(--qn-surface-sunken))`,
       }}
@@ -198,9 +195,6 @@ export default function BrainstormEditor({ data, onChange, noteTitle, onTitleCha
   }
 
   const filteredIdeas = getFilteredIdeas()
-  const totalVotes = brainstormData.ideas.reduce((sum, i) => sum + i.votes, 0)
-  const starredCount = brainstormData.ideas.filter(i => i.starred).length
-
   return (
     <div className="qn-type-editor qn-type-brainstorm flex h-full flex-col">
       <header className="qn-type-hero qn-workspace-header flex-shrink-0 border-b border-subtle">
@@ -220,44 +214,37 @@ export default function BrainstormEditor({ data, onChange, noteTitle, onTitleCha
               value={brainstormData.topic}
               onChange={(e) => update('topic', e.target.value)}
               placeholder="What are you brainstorming about?"
-              className="ml-12 mt-2 max-w-lg bg-surface-raised"
+              className="qn-brainstorm-topic mt-2 max-w-lg bg-surface-raised"
             />
           </div>
         </div>
-        <WorkspaceMetrics
-          items={[
-            { label: 'Ideas', value: brainstormData.ideas.length },
-            { label: 'Votes', value: totalVotes },
-            { label: 'Starred', value: starredCount, tone: starredCount ? 'warning' : 'neutral' },
-          ]}
-        />
-        <div className="mt-3 flex gap-2">
-          <div className="flex-1 relative">
-            <Sparkles className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-content-subtle" />
+      </header>
+      <form
+        className="qn-idea-capture flex flex-shrink-0 gap-2 border-b border-subtle bg-surface-raised p-3"
+        onSubmit={(event) => { event.preventDefault(); addIdea() }}
+      >
+          <div className="min-w-0 flex-1">
             <Input
               type="text"
               aria-label="New idea"
               value={newIdea}
               onChange={(e) => setNewIdea(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && addIdea()}
-              placeholder="Type your idea and press Enter..."
-              className="h-control-lg bg-surface-raised pl-10 pr-4 text-ui-lg"
+              placeholder="Capture an idea…"
+              className="h-control-md bg-surface-raised px-3 text-ui-md"
               autoFocus
             />
           </div>
-          <Button onClick={addIdea} variant="primary" size="lg" icon={Plus}>
+          <Button type="submit" variant="primary" icon={Plus}>
             Add Idea
           </Button>
           <IconButton
             icon={Shuffle}
-            size="lg"
             variant="secondary"
             onClick={pickRandomIdea}
             disabled={filteredIdeas.length === 0}
             label="Pick a random idea"
           />
-        </div>
-      </header>
+      </form>
       <div className="qn-type-tabs qn-workspace-filterbar flex-shrink-0 flex flex-wrap items-center justify-between gap-3 p-3 border-b border-subtle">
         <div className="qn-idea-category-chips flex min-w-0 flex-1 items-center gap-2 overflow-x-auto">
           <Tag className="w-4 h-4 text-content-muted" />
@@ -335,11 +322,9 @@ export default function BrainstormEditor({ data, onChange, noteTitle, onTitleCha
       </div>
       <div className="qn-workspace-canvas flex-1 overflow-y-auto p-4">
         {filteredIdeas.length === 0 ? (
-          <EmptyState
-            icon={Lightbulb}
-            title="No ideas yet"
-            description="Capture the first thought above. You can categorize, expand, vote on, and refine it afterward."
-          />
+          <div className="qn-quiet-empty text-sm text-content-muted">
+            No ideas yet. Capture the first thought above; organize and develop it afterward.
+          </div>
         ) : brainstormData.viewMode === 'grid' ? (
           /* Grid View */
           <div className="qn-idea-grid">

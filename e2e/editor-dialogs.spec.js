@@ -333,6 +333,23 @@ test.describe('editor productivity objects', () => {
     const [editorBox, gapBox] = await Promise.all([editor.boundingBox(), firstGap.boundingBox()])
     const expectedPageHeight = editorBox.width * (297 / 210)
     expect(gapBox.y - editorBox.y).toBeLessThan(expectedPageHeight + 2)
+
+    const boundary = await firstGap.evaluate((gap) => {
+      const gutter = gap.querySelector('.qn-page-gap__gutter')
+      const gutterBox = gutter.getBoundingClientRect()
+      const style = getComputedStyle(gutter)
+      const editorStyle = getComputedStyle(gap.closest('.ProseMirror'))
+      return {
+        background: style.backgroundColor,
+        zIndex: style.zIndex,
+        editorOverflowX: editorStyle.overflowX,
+        height: gutterBox.height,
+      }
+    })
+    expect(boundary.height).toBe(24)
+    expect(boundary.background).not.toBe('rgba(0, 0, 0, 0)')
+    expect(boundary.zIndex).toBe('2')
+    expect(boundary.editorOverflowX).toBe('clip')
   })
 
   test('changes ruled paper without shifting or narrowing the page', async ({ page }) => {
@@ -510,6 +527,77 @@ test.describe('editor productivity objects', () => {
     expect(toolbarBox.y).toBeGreaterThanOrEqual(8)
     expect(toolbarBox.x + toolbarBox.width).toBeLessThanOrEqual(page.viewportSize().width - 8)
     expect(toolbarBox.y + toolbarBox.height).toBeLessThanOrEqual(page.viewportSize().height - 8)
+  })
+
+  test('rejects object drawing in page gaps and constrains new objects to one sheet', async ({ page }) => {
+    const editor = page.locator('.ProseMirror')
+    const initialPageCount = await page.locator('.qn-document-page-edge').count()
+    if (initialPageCount < 2) {
+      await editor.click()
+      await page.keyboard.press('Control+End')
+      await page.keyboard.press('Control+Enter')
+      await page.keyboard.insertText('Second bounded page')
+    }
+    await expect.poll(() => page.locator('.qn-document-page-edge').count()).toBeGreaterThanOrEqual(2)
+
+    await page.locator('.qn-page-gap__gutter').first().scrollIntoViewIfNeeded()
+    await page.getByRole('tab', { name: 'Insert' }).click()
+    await page.getByRole('button', { name: 'More shapes' }).click()
+    await page.getByRole('dialog', { name: 'Insert a shape' })
+      .getByRole('button', { name: 'Insert rectangle' })
+      .first()
+      .click()
+
+    const drawingLayer = page.getByRole('application', { name: 'Draw shape on the page' })
+    const initialShapes = await page.locator('.qn-shape').count()
+    const gap = await page.locator('.qn-page-gap__gutter').first().boundingBox()
+    await page.mouse.click(gap.x + gap.width / 2, gap.y + gap.height / 2)
+    await expect(drawingLayer).toBeVisible()
+    await expect(page.locator('.qn-shape')).toHaveCount(initialShapes)
+
+    const firstPage = page.locator('.qn-document-page-edge').first()
+    const pageBox = await firstPage.boundingBox()
+    const start = { x: pageBox.x + pageBox.width - 50, y: pageBox.y + pageBox.height - 42 }
+    await page.mouse.move(start.x, start.y)
+    await page.mouse.down()
+    await page.mouse.move(start.x + 280, start.y + 180, { steps: 6 })
+    await page.mouse.up()
+    await expect(drawingLayer).toBeHidden()
+
+    const shape = page.locator('.qn-shape').last()
+    await expect(shape).toBeVisible()
+    const [boundedPage, boundedShape] = await Promise.all([firstPage.boundingBox(), shape.boundingBox()])
+    expect(boundedShape.x).toBeGreaterThanOrEqual(boundedPage.x - 1)
+    expect(boundedShape.y).toBeGreaterThanOrEqual(boundedPage.y - 1)
+    expect(boundedShape.x + boundedShape.width).toBeLessThanOrEqual(boundedPage.x + boundedPage.width + 1)
+    expect(boundedShape.y + boundedShape.height).toBeLessThanOrEqual(boundedPage.y + boundedPage.height + 1)
+
+    await shape.locator('.qn-shape__surface').click()
+    const moveHandle = shape.getByRole('button', { name: 'Drag to move shape' })
+    const moveBox = await moveHandle.boundingBox()
+    await page.mouse.move(moveBox.x + moveBox.width / 2, moveBox.y + moveBox.height / 2)
+    await page.mouse.down()
+    await page.mouse.move(moveBox.x + moveBox.width / 2 + 48, moveBox.y + moveBox.height / 2 + 48, { steps: 6 })
+    await page.mouse.up()
+
+    const afterMove = await shape.boundingBox()
+    expect(afterMove.x).toBeGreaterThanOrEqual(boundedPage.x - 1)
+    expect(afterMove.y).toBeGreaterThanOrEqual(boundedPage.y - 1)
+    expect(afterMove.x + afterMove.width).toBeLessThanOrEqual(boundedPage.x + boundedPage.width + 1)
+    expect(afterMove.y + afterMove.height).toBeLessThanOrEqual(boundedPage.y + boundedPage.height + 1)
+
+    const resizeHandle = shape.getByRole('button', { name: 'Resize shape se' })
+    const resizeBox = await resizeHandle.boundingBox()
+    await page.mouse.move(resizeBox.x + resizeBox.width / 2, resizeBox.y + resizeBox.height / 2)
+    await page.mouse.down()
+    await page.mouse.move(resizeBox.x + resizeBox.width / 2 + 48, resizeBox.y + resizeBox.height / 2 + 48, { steps: 6 })
+    await page.mouse.up()
+
+    const afterResize = await shape.boundingBox()
+    expect(afterResize.x).toBeGreaterThanOrEqual(boundedPage.x - 1)
+    expect(afterResize.y).toBeGreaterThanOrEqual(boundedPage.y - 1)
+    expect(afterResize.x + afterResize.width).toBeLessThanOrEqual(boundedPage.x + boundedPage.width + 1)
+    expect(afterResize.y + afterResize.height).toBeLessThanOrEqual(boundedPage.y + boundedPage.height + 1)
   })
 
   test('moves a shape freely and exposes Word-style wrapping choices', async ({ page }) => {

@@ -279,7 +279,7 @@ test.describe('enterprise UI maturity regressions', () => {
       className: '.qn-type-brainstorm',
     })
 
-    const ideaInput = editor.getByPlaceholder(/type your idea/i)
+    const ideaInput = editor.getByPlaceholder(/capture an idea/i)
     await ideaInput.fill('Prioritize customer interview findings')
     await ideaInput.press('Enter')
     const card = editor.locator('.qn-idea-card').filter({ hasText: 'Prioritize customer interview findings' })

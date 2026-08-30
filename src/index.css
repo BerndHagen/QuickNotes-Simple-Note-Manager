@@ -1757,16 +1757,20 @@ html {
 .focus-mode-editor { display: flex; min-width: 0; }
 .focus-mode-editor > [data-editor-presentation='focus'] { min-height: 100%; flex: 1; }
 .focus-mode-editor .qn-editor-workbench {
+  --qn-page-gutter-color: #e8ece9;
   overflow: visible;
   padding: 24px clamp(4px, 3vw, 30px) 72px;
   background: transparent;
 }
+.qn-focus-mode[data-focus-theme='sepia'] .qn-editor-workbench { --qn-page-gutter-color: #e4ded1; }
+.qn-focus-mode[data-focus-theme='night'] .qn-editor-workbench { --qn-page-gutter-color: #0a0f14; }
+.qn-focus-mode[data-focus-theme='green'] .qn-editor-workbench { --qn-page-gutter-color: #dfe7e1; }
 .focus-mode-editor .qn-editor-page { max-width: 760px !important; }
 .focus-mode-editor .qn-editor-page .ProseMirror {
   min-height: calc(100dvh - 132px);
 }
 .qn-focus-mode[data-focus-theme='green'] .qn-document-page-sheet { background-color: #f3f6f1; }
-.qn-focus-mode[data-focus-theme='night'] .qn-document-page-sheet { border-color: rgb(255 255 255 / 10%); }
+.qn-focus-mode[data-focus-theme='night'] .qn-document-page-edge { border-color: rgb(255 255 255 / 10%); }
 .qn-focus-mode[data-focus-theme='night'] .qn-editor-page .ProseMirror {
   color: #e8ebef;
 }
@@ -2821,39 +2825,15 @@ body {
 
 .qn-type-hero {
   position: relative;
-  padding: 14px 18px !important;
+  padding: 10px 16px 9px !important;
   border-color: var(--qn-border-subtle) !important;
-  background:
-    radial-gradient(
-      ellipse 38% 150% at 104% 50%,
-      transparent 54%,
-      color-mix(in srgb, var(--qn-brand-300) 10%, transparent) 54.5%,
-      transparent 55.2%
-    ),
-    radial-gradient(
-      ellipse 44% 175% at 104% 50%,
-      color-mix(in srgb, var(--qn-surface-brand-tint-strong) 64%, transparent),
-      transparent 74%
-    ),
-    var(--qn-surface-raised) !important;
+  background: var(--qn-surface-raised) !important;
   color: var(--qn-text);
   box-shadow: none;
 }
 
 .dark .qn-type-hero {
-  background:
-    radial-gradient(
-      ellipse 38% 150% at 104% 50%,
-      transparent 54%,
-      rgba(148, 163, 184, 0.08) 54.5%,
-      transparent 55.2%
-    ),
-    radial-gradient(
-      ellipse 44% 175% at 104% 50%,
-      color-mix(in srgb, var(--qn-surface-brand-tint-strong) 64%, transparent),
-      transparent 74%
-    ),
-    var(--qn-surface-raised) !important;
+  background: var(--qn-surface-raised) !important;
 }
 
 .qn-type-hero::after {
@@ -2873,9 +2853,17 @@ body {
 }
 
 .qn-type-hero .qn-focused-type-icon {
-  border-color: var(--qn-accent-border);
-  background: var(--qn-accent-soft);
   color: var(--qn-accent-text);
+}
+
+.qn-type-hero .qn-focused-type-label {
+  font-size: 10px;
+  line-height: 12px;
+  letter-spacing: 0.1em;
+}
+
+.qn-type-hero .ml-12 {
+  margin-left: 2rem !important;
 }
 
 .qn-type-hero :where(input, textarea, select):not(.qn-focused-title) {
@@ -2906,21 +2894,30 @@ body {
 .qn-workspace-metrics {
   display: inline-flex;
   align-items: center;
-  margin-top: 12px;
-  margin-left: 48px;
-  padding: 3px;
-  border: 1px solid var(--qn-border-subtle);
-  border-radius: var(--qn-radius-md);
-  background: var(--qn-surface-base);
+  margin-top: 5px;
+  margin-left: 2rem;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.qn-workspace-metrics:focus-visible {
+  outline: 2px solid var(--qn-focus-ring);
+  outline-offset: 2px;
 }
 
 .qn-workspace-metric {
   display: flex;
-  min-width: 88px;
+  min-width: 0;
   align-items: baseline;
-  gap: 6px;
-  padding: 3px 10px;
+  gap: 5px;
+  padding: 0 10px;
   border-right: 1px solid var(--qn-border-subtle);
+}
+
+.qn-workspace-metric:first-child {
+  padding-left: 0;
 }
 
 .qn-workspace-metric:last-child {
@@ -2930,16 +2927,16 @@ body {
 .qn-workspace-metric-value {
   order: 1;
   margin: 0;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 600;
-  line-height: 20px;
+  line-height: 18px;
   font-variant-numeric: tabular-nums;
 }
 
 .qn-workspace-metric-label {
   order: 2;
   font-size: 11px;
-  line-height: 16px;
+  line-height: 18px;
   color: var(--qn-text-muted);
   white-space: nowrap;
 }
@@ -2952,13 +2949,13 @@ body {
   position: relative;
   z-index: 4;
   border-color: var(--qn-border-subtle) !important;
-  background: var(--qn-surface-panel) !important;
+  background: var(--qn-surface-raised) !important;
   box-shadow: inset 0 -1px 0 var(--qn-border-subtle);
   backdrop-filter: none;
 }
 
 .qn-type-tabs button {
-  min-height: 2.25rem;
+  min-height: 2rem;
 }
 
 .qn-type-tabs > button[aria-pressed] {
@@ -3113,12 +3110,19 @@ body {
   display: none;
 }
 
+.qn-brainstorm-topic {
+  width: calc(100% - 3rem);
+  margin-left: 3rem;
+}
+
 .qn-workspace-canvas {
   background: var(--qn-surface-sunken);
 }
 
 .qn-domain-card {
   position: relative;
+  border-radius: var(--qn-radius-control) !important;
+  box-shadow: none !important;
   transition:
     border-color var(--qn-duration-fast) var(--qn-ease),
     box-shadow var(--qn-duration-fast) var(--qn-ease),
@@ -3126,21 +3130,14 @@ body {
 }
 
 .qn-workspace-panel {
-  border: 1px solid var(--qn-border-subtle);
-  border-radius: var(--qn-radius-card);
+  border: 0;
+  border-radius: 2px;
   background: var(--qn-surface-raised);
-  box-shadow: var(--qn-shadow-xs);
+  box-shadow: none;
 }
 
 .qn-domain-card::before {
-  content: '';
-  position: absolute;
-  inset-block: 12px;
-  inset-inline-start: -1px;
-  width: 3px;
-  border-radius: 0 var(--qn-radius-full) var(--qn-radius-full) 0;
-  background: var(--qn-item-accent, var(--qn-accent));
-  opacity: 0.72;
+  display: none;
 }
 
 .qn-idea-card {
@@ -3152,7 +3149,7 @@ body {
 .qn-idea-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
-  gap: 1rem;
+  gap: 10px;
 }
 
 .qn-idea-card:focus-within {
@@ -3166,23 +3163,28 @@ body {
 }
 
 .qn-task-list {
-  padding: 12px !important;
+  padding: 0 !important;
   background: var(--qn-surface-base);
 }
 
 .qn-task-row {
-  margin-bottom: 8px;
+  margin-bottom: 0;
   overflow: visible;
-  border: 1px solid var(--qn-border-subtle) !important;
-  border-radius: var(--qn-radius-card);
+  border-width: 0 0 1px !important;
+  border-radius: 0;
   background: var(--qn-surface-raised);
-  box-shadow: var(--qn-shadow-xs);
+  box-shadow: none;
 }
 
 .qn-task-row:hover,
 .qn-task-row:focus-within {
-  border-color: var(--qn-border-strong) !important;
-  box-shadow: var(--qn-shadow-sm);
+  border-color: var(--qn-border-subtle) !important;
+  background: var(--qn-surface-hover);
+  box-shadow: inset 3px 0 0 var(--qn-accent);
+}
+
+.qn-task-mobile-details {
+  display: none;
 }
 
 @container (max-width: 56.25rem) {
@@ -3203,13 +3205,26 @@ body {
 
 @container (max-width: 32rem) {
   .qn-idea-category-select {
-    flex-basis: 100%;
-    max-width: none;
+    width: 10.5rem;
+    flex: 0 0 10.5rem;
+    max-width: 10.5rem;
   }
 
+  .qn-type-brainstorm .qn-workspace-filterbar {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 8px;
+    overscroll-behavior-inline: contain;
+  }
+
+  .qn-idea-manage-categories { flex: 0 0 auto; }
+
   .qn-idea-filter-tools {
-    width: 100%;
-    justify-content: space-between;
+    width: auto;
+    flex: 0 0 auto;
+    justify-content: flex-start;
   }
 
   .qn-task-main {
@@ -3234,23 +3249,24 @@ body {
 }
 
 .qn-project-column {
-  box-shadow: var(--qn-shadow-xs);
+  border-radius: 2px !important;
+  box-shadow: none;
 }
 
 .qn-project-column-header {
-  background: var(--qn-surface-brand-tint) !important;
+  background: var(--qn-surface-sunken) !important;
 }
 
 .qn-project-column[data-column='todo'] .qn-project-column-header {
-  background: color-mix(in srgb, var(--qn-info-soft) 64%, var(--qn-surface-raised)) !important;
+  background: var(--qn-surface-sunken) !important;
 }
 
 .qn-project-column[data-column='inProgress'] .qn-project-column-header {
-  background: color-mix(in srgb, var(--qn-warning-soft) 64%, var(--qn-surface-raised)) !important;
+  background: var(--qn-surface-sunken) !important;
 }
 
 .qn-project-column[data-column='done'] .qn-project-column-header {
-  background: color-mix(in srgb, var(--qn-success-soft) 64%, var(--qn-surface-raised)) !important;
+  background: var(--qn-surface-sunken) !important;
 }
 
 .qn-project-column-body {
@@ -3258,7 +3274,8 @@ body {
 }
 
 .qn-project-task-card {
-  box-shadow: var(--qn-shadow-xs);
+  border-radius: var(--qn-radius-control) !important;
+  box-shadow: none;
   transition:
     border-color var(--qn-duration-fast) var(--qn-ease),
     box-shadow var(--qn-duration-fast) var(--qn-ease),
@@ -3268,8 +3285,88 @@ body {
 .qn-project-task-card:hover,
 .qn-project-task-card:focus-within {
   border-color: var(--qn-border-strong);
-  box-shadow: var(--qn-shadow-sm);
-  transform: translateY(-1px);
+  box-shadow: inset 3px 0 0 var(--qn-accent);
+  transform: none;
+}
+
+.qn-quiet-empty {
+  width: min(100%, 60rem);
+  margin-inline: auto;
+  border-bottom: 1px solid var(--qn-border-subtle);
+  background: var(--qn-surface-raised);
+}
+
+.qn-journal-choice {
+  display: inline-flex;
+  width: 36px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--qn-border-subtle);
+  border-radius: var(--qn-radius-control);
+  background: var(--qn-surface-raised);
+  color: var(--qn-text-muted);
+  font-size: 16px;
+  transition: border-color var(--qn-duration-fast) var(--qn-ease), background-color var(--qn-duration-fast) var(--qn-ease);
+}
+
+.qn-journal-choice:hover {
+  border-color: var(--qn-border-strong);
+  background: var(--qn-surface-hover);
+}
+
+.qn-journal-choice--number {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.qn-journal-choice--active {
+  border-color: var(--qn-accent);
+  background: var(--qn-accent-soft);
+  color: var(--qn-accent-text);
+  box-shadow: inset 0 0 0 1px var(--qn-accent);
+}
+
+.qn-journal-writing-area {
+  font-family: var(--qn-font-writing, Georgia, 'Times New Roman', serif);
+}
+
+.qn-shopping-group-heading {
+  min-height: 38px;
+}
+
+.qn-shopping-item {
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--qn-border-subtle);
+}
+
+.qn-shopping-item:last-child {
+  border-bottom: 0;
+}
+
+.qn-shopping-item--editing {
+  background: var(--qn-surface-hover);
+}
+
+.qn-shopping-item-details {
+  margin-left: 2.75rem;
+}
+
+.qn-shopping-total {
+  min-height: 40px;
+}
+
+.qn-type-editor .qn-workspace-panel {
+  width: min(100%, 60rem);
+  max-width: 60rem !important;
+}
+
+.qn-type-journal .qn-workspace-panel {
+  max-width: 52rem !important;
+}
+
+.qn-type-editor .qn-workspace-canvas > .qn-workspace-panel {
+  margin-block: 0;
 }
 
 /* Backward-compatible hook for any cached picker markup. New picker headers
@@ -3287,7 +3384,7 @@ body {
 
 @media (max-width: 640px) {
   .qn-type-hero {
-    padding: 12px !important;
+    padding: 9px 10px 8px !important;
   }
 
   .qn-type-hero > .flex:first-child {
@@ -3297,20 +3394,23 @@ body {
   }
 
   .qn-workspace-metrics {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 6px 12px;
-    margin-top: 10px;
-    margin-left: 0;
-    width: 100%;
+    display: flex;
+    gap: 0;
+    margin-top: 5px;
+    margin-left: 2rem;
+    width: calc(100% - 2rem);
+    max-width: calc(100% - 2rem);
+    overflow-x: auto;
+    padding: 0;
+    overscroll-behavior-inline: contain;
   }
 
   .qn-workspace-metric {
-    min-width: 0;
+    min-width: max-content;
+    flex: 1 0 auto;
     margin-right: 0;
-    padding-right: 0;
-    border-right: 0;
-    padding: 4px 6px;
+    border-right: 1px solid var(--qn-border-subtle);
+    padding: 0 7px;
   }
 
   .qn-type-hero .text-3xl {
@@ -3322,6 +3422,68 @@ body {
     overflow-x: auto;
     overscroll-behavior-inline: contain;
   }
+
+  .qn-shopping-capture { padding: 8px !important; }
+  .qn-shopping-primary-entry { gap: 6px; }
+  .qn-shopping-details-label { display: none; }
+  .qn-shopping-entry-options {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+  }
+  .qn-shopping-entry-options > * { flex: 0 0 auto; }
+  .qn-shopping-commands { overflow-x: auto; white-space: nowrap; }
+  .qn-shopping-commands button { min-height: 32px; }
+  .qn-shopping-item { padding-inline: 10px !important; }
+  .qn-shopping-item-details {
+    margin-left: 0;
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    padding-bottom: 3px;
+    overscroll-behavior-inline: contain;
+  }
+  .qn-shopping-item-details > * { flex: 0 0 auto; }
+  .qn-shopping-total { justify-content: flex-start; overflow-x: auto; white-space: nowrap; }
+
+  .qn-journal-metadata-grid { grid-template-columns: 1fr; gap: 12px; }
+  .qn-journal-choice { width: 40px; height: 38px; }
+  .qn-journal-writing-area { min-height: 24rem !important; }
+  .qn-idea-card { min-height: 7.5rem !important; padding: 12px !important; }
+  .qn-type-editor .qn-domain-card button {
+    min-width: 32px;
+    min-height: 32px;
+  }
+
+  .qn-task-quick-star,
+  .qn-task-quick-priority,
+  .qn-task-quick-date {
+    display: none !important;
+  }
+  .qn-task-mobile-details { display: grid; }
+  .qn-task-main { padding-block: 9px !important; }
+
+  .qn-weekly-week-layout { flex-direction: column; }
+  .qn-weekly-day-rail {
+    display: flex;
+    width: 100% !important;
+    flex: 0 0 auto;
+    overflow-x: auto;
+    border-right: 0 !important;
+    border-bottom: 1px solid var(--qn-border-subtle);
+    overscroll-behavior-inline: contain;
+  }
+  .qn-weekly-day-rail > button {
+    min-width: 54px;
+    flex: 1 0 54px;
+    padding: 6px !important;
+    border-right: 1px solid var(--qn-border-subtle) !important;
+  }
+  .qn-weekly-day-content { padding: 8px !important; }
+
+  .qn-type-editor .qn-workspace-canvas { padding: 8px; }
+  .qn-type-editor .qn-workspace-canvas > .qn-weekly-week-layout,
+  .qn-type-shopping .qn-workspace-canvas { padding: 0; }
+  .qn-type-editor .qn-workspace-panel { padding: 14px !important; }
 }
 
 /* ============================================================
@@ -3478,6 +3640,11 @@ body {
   .qn-ribbon-note-bar :where(button, input):focus-visible {
     outline-color: var(--qn-focus-ring);
   }
+
+  .qn-brainstorm-topic {
+    width: 100%;
+    margin-left: 0;
+  }
 }
 
 @media (max-width: 767px) {
@@ -3548,11 +3715,16 @@ body {
 
 .qn-editor-workbench {
   padding: 24px clamp(18px, 3vw, 44px) 44px;
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--qn-surface-panel) 54%, transparent), transparent 150px),
-    var(--qn-surface-workbench);
+  --qn-page-gutter-color: var(--qn-surface-workbench);
+  background: var(--qn-page-gutter-color);
   scrollbar-color: var(--qn-border-strong) transparent;
 }
+
+/* Browser pinch zoom is disabled only inside an editable workspace. Two-touch
+   gestures are converted to the workspace's own zoom so the surrounding app
+   chrome and browser zoom remain stable while one-finger scrolling still
+   behaves normally. */
+.qn-workspace-zoom-root { touch-action: pan-x pan-y; }
 
 .qn-editor-page {
   box-sizing: border-box;
@@ -3578,26 +3750,42 @@ body {
 .qn-document-page-sheets {
   position: absolute;
   inset: 0;
-  z-index: 0;
+  /* Keep this wrapper out of a stacking context. The fill remains behind the
+     z-index:1 editor while each child edge can rise above its z-index:2 gap
+     mask. A z-index on this wrapper would trap both children underneath the
+     complete ProseMirror layer. */
+  z-index: auto;
   pointer-events: none;
 }
 
 .qn-document-page-sheet {
   position: absolute;
+  z-index: 0;
+  right: 0;
+  left: 0;
+  box-sizing: border-box;
+  display: block;
+  background-color: var(--qn-surface-raised);
+  background-position: 0 0;
+}
+
+/* The edge is deliberately separate from the paper fill. ProseMirror's page
+   gap masks content at z-index 2; this foreground edge then restores the full
+   border and shadow at z-index 3 instead of letting the mask cut them off. */
+.qn-document-page-edge {
+  position: absolute;
+  z-index: 3;
   right: 0;
   left: 0;
   box-sizing: border-box;
   display: block;
   border: 1px solid var(--qn-border-subtle);
-  background-color: var(--qn-surface-raised);
-  background-position: 0 0;
-  /* A tight, symmetric shadow belongs to this sheet only. It remains visible
-     on all four sides without filling the clean centre of the page gutter. */
+  background: transparent;
   box-shadow: 0 0 6px rgb(15 23 42 / 16%), 0 1px 2px rgb(15 23 42 / 8%);
   transition: border-color var(--qn-duration-fast) var(--qn-ease), box-shadow var(--qn-duration-fast) var(--qn-ease);
 }
 
-.qn-editor-page:focus-within .qn-document-page-sheet {
+.qn-editor-page:focus-within .qn-document-page-edge {
   border-width: 2px;
   border-color: var(--qn-accent);
 }
@@ -3610,6 +3798,7 @@ body {
   padding: var(--qn-page-pad-y) var(--qn-page-pad-x);
   position: relative;
   z-index: 1;
+  overflow-x: clip;
   border: 0;
   background: transparent;
   box-shadow: none;
@@ -3663,14 +3852,17 @@ body {
 
 .qn-page-gap__gutter {
   position: relative;
+  z-index: 2;
   width: 100%;
   margin-left: 0;
-  /* Never mask the independent bottom/top shadows of adjacent sheets. The
-     transparent centre reveals only the workbench behind the document. */
-  background: transparent;
+  /* ProseMirror is one continuous editable DOM tree. This opaque spacer is
+     the page-boundary clip mask for text, selections, highlights and inline
+     objects. Page edges live above it, so their four-sided border and shadow
+     remain intact. */
+  background: var(--qn-page-gutter-color, var(--qn-surface-workbench));
 }
 
-.dark .qn-document-page-sheet {
+.dark .qn-document-page-edge {
   box-shadow: 0 0 6px rgb(0 0 0 / 58%), 0 1px 2px rgb(0 0 0 / 34%);
 }
 

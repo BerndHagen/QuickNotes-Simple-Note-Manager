@@ -581,4 +581,20 @@ If you'd like a preview of QuickNotes before using it, the screenshots below sho
     <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/quicknotes-3-search.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/quicknotes-3-search.png" alt="QuickNotes Global Search" width="450"></a></td>
     <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/quicknotes-3-tasks.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/quicknotes-3-tasks.png" alt="QuickNotes Task Center" width="450"></a></td>
   </tr>
+  <tr>
+    <th>QuickNotes - Project Board</th>
+    <th>QuickNotes - Daily Journal</th>
+  </tr>
+  <tr>
+    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/quicknotes-3-project.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/quicknotes-3-project.png" alt="QuickNotes Project Board" width="450"></a></td>
+    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/quicknotes-3-journal.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/quicknotes-3-journal.png" alt="QuickNotes Daily Journal" width="450"></a></td>
+  </tr>
+  <tr>
+    <th>QuickNotes - Idea Board</th>
+    <th>QuickNotes - Shopping List</th>
+  </tr>
+  <tr>
+    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/quicknotes-3-ideas.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/quicknotes-3-ideas.png" alt="QuickNotes Idea Board" width="450"></a></td>
+    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/quicknotes-3-shopping.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/quicknotes-3-shopping.png" alt="QuickNotes Shopping List" width="450"></a></td>
+  </tr>
 </table>

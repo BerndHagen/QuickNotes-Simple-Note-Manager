@@ -7,6 +7,24 @@ const openSettings = async (page) => {
   return page.getByRole('dialog', { name: 'Settings' })
 }
 
+const persistedPaperPattern = (page, title) => page.evaluate(async (noteTitle) => {
+  const request = indexedDB.open('QuickNotesDB')
+  const database = await new Promise((resolve, reject) => {
+    request.onsuccess = () => resolve(request.result)
+    request.onerror = () => reject(request.error)
+  })
+  const readAll = (storeName) => new Promise((resolve, reject) => {
+    const transaction = database.transaction(storeName, 'readonly')
+    const query = transaction.objectStore(storeName).getAll()
+    query.onsuccess = () => resolve(query.result)
+    query.onerror = () => reject(query.error)
+  })
+  const note = (await readAll('notes')).find((candidate) => candidate.title === noteTitle)
+  const pattern = (await readAll('spatialPages')).find((candidate) => candidate.noteId === note?.id)?.pattern
+  database.close()
+  return pattern || null
+}, title)
+
 test.describe('mobile Safari workflows', () => {
   test('keeps Paper focused, touch-sized, pannable, and durable on a phone', async ({ page }) => {
     const errors = collectErrors(page)
@@ -43,6 +61,9 @@ test.describe('mobile Safari workflows', () => {
 
     const stage = page.locator('.qn-paper-stage')
     await page.getByRole('button', { name: 'Pan (Space)' }).tap()
+    // Paper now opens fit-to-width on phones. Zoom in before asserting that
+    // the Hand tool can traverse an intentionally oversized sheet.
+    await page.getByRole('button', { name: 'Zoom in' }).tap()
     const scrollMetrics = await stage.evaluate((element) => ({ clientWidth: element.clientWidth, scrollWidth: element.scrollWidth }))
     expect(scrollMetrics.scrollWidth).toBeGreaterThan(scrollMetrics.clientWidth)
     await stage.evaluate((element) => { element.scrollLeft = 80 })
@@ -50,6 +71,7 @@ test.describe('mobile Safari workflows', () => {
 
     await page.getByLabel('Paper pattern').selectOption('ruled')
     await expect(page.getByRole('application', { name: /ruled warm paper/i })).toBeVisible()
+    await expect.poll(() => persistedPaperPattern(page, 'Mobile paper')).toBe('ruled')
     await expect(page.getByLabel('Paper editor').getByText('Saved on this device')).toBeVisible()
     await page.reload({ waitUntil: 'domcontentloaded' })
     await expect(page.getByRole('application', { name: /ruled warm paper/i })).toBeVisible({ timeout: 30_000 })

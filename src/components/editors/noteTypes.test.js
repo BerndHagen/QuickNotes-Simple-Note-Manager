@@ -131,7 +131,7 @@ describe('professional note type contracts', () => {
       weather: null,
       goals: [],
       tags: [],
-      preferredSection: 'morning',
+      preferredSection: 'write',
     })
     expect(journal.gratitude).toHaveLength(3)
 

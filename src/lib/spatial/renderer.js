@@ -32,6 +32,80 @@ export function applyViewportTransform(context, viewport, ratio = 1) {
   )
 }
 
+const clamp01 = (value) => Math.min(1, Math.max(0, value))
+
+const segmentNoise = (previous, point, index) => {
+  const seed = previous[0] * 12.9898 + previous[1] * 78.233 + point[0] * 37.719 + point[1] * 11.131 + index * 3.17
+  const value = Math.sin(seed) * 43758.5453
+  return value - Math.floor(value)
+}
+
+const segmentDynamics = (brushId, baseWidth, previous, point, index, total) => {
+  const definition = getSpatialBrushDefinition(brushId)
+  const pressure = ((previous[2] ?? 0.5) + (point[2] ?? 0.5)) / 2
+  const elapsed = Math.max(1, (point[5] || 0) - (previous[5] || 0))
+  const velocity = Math.hypot(point[0] - previous[0], point[1] - previous[1]) / elapsed
+  const speedFactor = 1 - clamp01(velocity / 1.25) * (definition.velocityResponse || 0)
+  const tilt = Math.max(
+    Math.abs(previous[3] || 0), Math.abs(previous[4] || 0),
+    Math.abs(point[3] || 0), Math.abs(point[4] || 0)
+  ) / 90
+  const tiltFactor = 1 + tilt * (definition.tiltResponse || 0)
+  const progress = total > 1 ? index / (total - 1) : 1
+  const startTaper = definition.taperStart
+    ? Math.min(1, Math.max(0.18, progress / definition.taperStart))
+    : 1
+  const endTaper = definition.taperEnd
+    ? Math.min(1, Math.max(0.18, (1 - progress) / definition.taperEnd))
+    : 1
+  const noise = segmentNoise(previous, point, index)
+  return {
+    definition,
+    noise,
+    width: Math.max(0.3, spatialBrushWidth(brushId, baseWidth, pressure) * speedFactor * tiltFactor * startTaper * endTaper),
+    alpha: Math.max(0.08, 1 - (definition.texture || 0) * (0.22 + noise * 0.58)),
+  }
+}
+
+const paintSegment = (context, previous, point, control, dynamics, opacity) => {
+  const { definition, noise, width, alpha } = dynamics
+  const trace = (offsetX = 0, offsetY = 0) => {
+    context.beginPath()
+    context.moveTo(previous[0] + offsetX, previous[1] + offsetY)
+    if (control) {
+      context.quadraticCurveTo(point[0] + offsetX, point[1] + offsetY, control.x + offsetX, control.y + offsetY)
+    } else {
+      context.lineTo(point[0] + offsetX, point[1] + offsetY)
+    }
+    context.stroke()
+  }
+
+  if (definition.softEdge) {
+    context.globalAlpha = opacity * alpha * 0.2
+    context.lineWidth = width * (1 + definition.softEdge)
+    trace()
+  }
+
+  context.globalAlpha = opacity * alpha
+  context.lineWidth = width
+  trace()
+
+  if (definition.inkCore) {
+    context.globalAlpha = opacity * definition.inkCore
+    context.lineWidth = Math.max(0.3, width * 0.42)
+    trace()
+  }
+
+  if (definition.grain) {
+    const angle = noise * Math.PI * 2
+    const offset = Math.max(0.2, width * 0.2)
+    context.globalAlpha = opacity * definition.grain * (0.1 + noise * 0.12)
+    context.lineWidth = Math.max(0.25, width * 0.28)
+    trace(Math.cos(angle) * offset, Math.sin(angle) * offset)
+    trace(-Math.sin(angle) * offset * 0.65, Math.cos(angle) * offset * 0.65)
+  }
+}
+
 export function drawStroke(context, object) {
   if (object.data?.hidden && !object.data?.replayVisible) return
   const points = object.data?.points || []
@@ -42,9 +116,11 @@ export function drawStroke(context, object) {
   context.save()
   context.strokeStyle = object.data?.color || '#18352a'
   context.fillStyle = context.strokeStyle
-  context.globalAlpha = object.data?.opacity ?? 1
+  const opacity = object.data?.opacity ?? definition.opacity
+  context.globalAlpha = opacity
   context.lineCap = definition.lineCap
   context.lineJoin = definition.lineJoin
+  context.globalCompositeOperation = definition.composite || 'source-over'
 
   if (points.length === 1) {
     const width = spatialBrushWidth(brushId, baseWidth, points[0][2])
@@ -65,11 +141,14 @@ export function drawStroke(context, object) {
     const next = points[Math.min(points.length - 1, index + 1)]
     const midX = (point[0] + next[0]) / 2
     const midY = (point[1] + next[1]) / 2
-    context.lineWidth = spatialBrushWidth(brushId, baseWidth, (previous[2] + point[2]) / 2)
-    context.beginPath()
-    context.moveTo(previous[0], previous[1])
-    context.quadraticCurveTo(point[0], point[1], midX, midY)
-    context.stroke()
+    paintSegment(
+      context,
+      previous,
+      point,
+      { x: midX, y: midY },
+      segmentDynamics(brushId, baseWidth, previous, point, index, points.length),
+      opacity
+    )
   }
   context.restore()
 }
@@ -78,14 +157,17 @@ export function drawStrokeSegment(context, previous, point, brush) {
   const definition = getSpatialBrushDefinition(brush.brush)
   context.save()
   context.strokeStyle = brush.color
-  context.globalAlpha = brush.opacity
-  context.lineWidth = spatialBrushWidth(brush.brush, brush.width, (previous[2] + point[2]) / 2)
   context.lineCap = definition.lineCap
   context.lineJoin = definition.lineJoin
-  context.beginPath()
-  context.moveTo(previous[0], previous[1])
-  context.lineTo(point[0], point[1])
-  context.stroke()
+  context.globalCompositeOperation = definition.composite || 'source-over'
+  paintSegment(
+    context,
+    previous,
+    point,
+    null,
+    segmentDynamics(brush.brush, brush.width, previous, point, brush.pointIndex || 1, brush.pointCount || 2),
+    brush.opacity ?? definition.opacity
+  )
   context.restore()
 }
 

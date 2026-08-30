@@ -71,6 +71,7 @@ test.describe('desktop application boundary', () => {
     expect(sidebar.height).toBe(852)
 
     const brand = await page.locator('.qn-top-chrome [aria-label="QuickNotes"]').boundingBox()
+    await expect(page.locator('.qn-top-chrome img[src*="quicknotes-editor-logo"]')).toBeVisible()
     const navigationToggle = await page.getByRole('button', { name: 'Hide navigation' }).first().boundingBox()
     expect(brand.x).toBeLessThan(navigationToggle.x)
   })

@@ -125,6 +125,33 @@ test.describe('desktop note reordering', () => {
   })
 })
 
+test.describe('tag assignment feedback', () => {
+  test.use({ viewport: { width: 1280, height: 800 } })
+
+  test('updates the checkmark and selected background immediately when a tag is removed and restored', async ({ page }) => {
+    await signIn(page)
+    await page.locator('.note-card', { hasText: 'Welcome to QuickNotes' }).hover()
+    const welcomeActions = page.getByRole('button', { name: /More actions for Welcome to QuickNotes/i })
+    await welcomeActions.click()
+    await page.getByRole('menuitem', { name: /Assign tags/i }).click()
+
+    const assignMenu = page.getByRole('menu', { name: 'Assign tags' })
+    const welcomeTag = assignMenu.getByRole('menuitemcheckbox', { name: '#welcome' })
+    await expect(welcomeTag).toHaveAttribute('aria-checked', 'true')
+    await expect(welcomeTag.locator('svg')).toHaveCount(1)
+    await expect(welcomeTag).toHaveClass(/bg-accent-soft/)
+
+    await welcomeTag.click()
+    await expect(welcomeTag).toHaveAttribute('aria-checked', 'false')
+    await expect(welcomeTag.locator('svg')).toHaveCount(0)
+    await expect(welcomeTag).not.toHaveClass(/bg-accent-soft/)
+
+    await welcomeTag.click()
+    await expect(welcomeTag).toHaveAttribute('aria-checked', 'true')
+    await expect(welcomeTag.locator('svg')).toHaveCount(1)
+  })
+})
+
 test.describe('mobile note reordering', () => {
   test.use({ viewport: { width: 390, height: 664 }, hasTouch: true, isMobile: true })
 

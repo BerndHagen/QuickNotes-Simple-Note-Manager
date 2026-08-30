@@ -17,10 +17,12 @@ test.describe('document page geometry and workspace zoom', () => {
     await page.keyboard.insertText('Third page content')
 
     const sheets = page.locator('.qn-document-page-sheet')
+    const edges = page.locator('.qn-document-page-edge')
     await expect(sheets).toHaveCount(3)
+    await expect(edges).toHaveCount(3)
     await expect(page.locator('.qn-page-gap__gutter')).toHaveCount(2)
 
-    const geometry = await sheets.evaluateAll((elements) => elements.map((element) => {
+    const geometry = await edges.evaluateAll((elements) => elements.map((element) => {
       const rect = element.getBoundingClientRect()
       const style = getComputedStyle(element)
       return {
@@ -60,20 +62,26 @@ test.describe('document page geometry and workspace zoom', () => {
       before: getComputedStyle(element, '::before').content,
       after: getComputedStyle(element, '::after').content,
     }))
-    expect(cleanGap).toEqual({
-      backgroundColor: 'rgba(0, 0, 0, 0)',
-      height: 24,
-      before: 'none',
-      after: 'none',
-    })
+    expect(cleanGap.height).toBe(24)
+    expect(cleanGap.backgroundColor).not.toBe('rgba(0, 0, 0, 0)')
+    expect(cleanGap.before).toBe('none')
+    expect(cleanGap.after).toBe('none')
 
     const editorChrome = await editor.evaluate((element) => {
       const style = getComputedStyle(element)
       const gutter = element.querySelector('.qn-page-gap__gutter')
+      const sheetLayer = element.closest('.qn-editor-page')?.querySelector('.qn-document-page-sheets')
+      const sheet = sheetLayer?.querySelector('.qn-document-page-sheet')
+      const edge = sheetLayer?.querySelector('.qn-document-page-edge')
       return {
         borderTop: style.borderTopWidth,
         borderBottom: style.borderBottomWidth,
         shadow: style.boxShadow,
+        overflowX: style.overflowX,
+        gutterZIndex: gutter ? getComputedStyle(gutter).zIndex : null,
+        sheetLayerZIndex: sheetLayer ? getComputedStyle(sheetLayer).zIndex : null,
+        sheetZIndex: sheet ? getComputedStyle(sheet).zIndex : null,
+        edgeZIndex: edge ? getComputedStyle(edge).zIndex : null,
         gutterBefore: gutter ? getComputedStyle(gutter, '::before').content : null,
         gutterAfter: gutter ? getComputedStyle(gutter, '::after').content : null,
       }
@@ -82,6 +90,11 @@ test.describe('document page geometry and workspace zoom', () => {
       borderTop: '0px',
       borderBottom: '0px',
       shadow: 'none',
+      overflowX: 'clip',
+      gutterZIndex: '2',
+      sheetLayerZIndex: 'auto',
+      sheetZIndex: '0',
+      edgeZIndex: '3',
       gutterBefore: 'none',
       gutterAfter: 'none',
     })
@@ -94,7 +107,7 @@ test.describe('document page geometry and workspace zoom', () => {
     await page.mouse.wheel(0, -120)
     await page.keyboard.up('Control')
     await expect(resetZoom).toHaveAccessibleName('Reset zoom. Current zoom 110%')
-    await expect.poll(() => sheets.first().evaluate((element) => element.getBoundingClientRect().width))
+    await expect.poll(() => edges.first().evaluate((element) => element.getBoundingClientRect().width))
       .toBeGreaterThan(geometry[0].width * 1.09)
     expect(await page.evaluate(() => window.devicePixelRatio)).toBe(deviceScaleBefore)
     await expect(sheets).toHaveCount(3)
@@ -124,6 +137,7 @@ test.describe('document page geometry and workspace zoom', () => {
     const focusMode = page.locator('.qn-focus-mode')
     await expect(focusMode).toBeVisible()
     await expect(focusMode.locator('.qn-document-page-sheet')).toHaveCount(2)
+    await expect(focusMode.locator('.qn-document-page-edge')).toHaveCount(2)
 
     const resetZoom = focusMode.getByRole('button', { name: /Reset zoom\. Current zoom/ })
     await expect(resetZoom).toHaveAccessibleName('Reset zoom. Current zoom 100%')
@@ -133,7 +147,7 @@ test.describe('document page geometry and workspace zoom', () => {
     await page.keyboard.up('Control')
     await expect(resetZoom).toHaveAccessibleName('Reset zoom. Current zoom 110%')
 
-    const sheetGeometry = await focusMode.locator('.qn-document-page-sheet').evaluateAll((elements) =>
+    const sheetGeometry = await focusMode.locator('.qn-document-page-edge').evaluateAll((elements) =>
       elements.map((element) => {
         const rect = element.getBoundingClientRect()
         return { top: rect.top, bottom: rect.bottom }
@@ -179,9 +193,11 @@ test.describe('document page geometry and workspace zoom', () => {
     await page.reload()
     await expect(page.locator('#qn-main')).toBeVisible()
     const sheets = page.locator('.qn-document-page-sheet')
+    const edges = page.locator('.qn-document-page-edge')
     await expect(sheets).toHaveCount(2)
+    await expect(edges).toHaveCount(2)
     await page.locator('.ProseMirror').click()
-    const darkEdges = await sheets.evaluateAll((elements) => elements.map((element) => {
+    const darkEdges = await edges.evaluateAll((elements) => elements.map((element) => {
       const style = getComputedStyle(element)
       return {
         widths: [style.borderTopWidth, style.borderRightWidth, style.borderBottomWidth, style.borderLeftWidth],

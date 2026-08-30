@@ -135,6 +135,50 @@ export async function dragTouch(page, start, end, { steps = 10, id = 1, beforeRe
   }
 }
 
+/** Sends a genuine two-contact pinch stream through Chromium's input stack. */
+export async function pinchTouch(page, firstStart, secondStart, firstEnd, secondEnd, { steps = 10 } = {}) {
+  const session = await page.context().newCDPSession(page)
+  await session.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 })
+  const point = (position, id) => ({
+    x: position.x,
+    y: position.y,
+    radiusX: 5,
+    radiusY: 5,
+    force: 0.5,
+    id,
+  })
+  try {
+    await session.send('Input.dispatchTouchEvent', {
+      type: 'touchStart',
+      touchPoints: [point(firstStart, 1)],
+    })
+    await session.send('Input.dispatchTouchEvent', {
+      type: 'touchStart',
+      touchPoints: [point(firstStart, 1), point(secondStart, 2)],
+    })
+    for (let index = 1; index <= steps; index += 1) {
+      const progress = index / steps
+      const interpolate = (start, end) => ({
+        x: start.x + (end.x - start.x) * progress,
+        y: start.y + (end.y - start.y) * progress,
+      })
+      await session.send('Input.dispatchTouchEvent', {
+        type: 'touchMove',
+        touchPoints: [
+          point(interpolate(firstStart, firstEnd), 1),
+          point(interpolate(secondStart, secondEnd), 2),
+        ],
+      })
+    }
+  } finally {
+    try {
+      await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
+    } finally {
+      await session.detach()
+    }
+  }
+}
+
 /** Creates a note through the UI and returns its title. */
 export async function createNote(page, title) {
   await page.getByRole('button', { name: /new note/i }).first().click()

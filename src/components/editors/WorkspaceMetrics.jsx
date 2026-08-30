@@ -15,7 +15,7 @@ export default function WorkspaceMetrics({ items }) {
   }
 
   return (
-    <dl className="qn-workspace-metrics" aria-label="Workspace summary">
+    <dl className="qn-workspace-metrics" aria-label="Workspace summary" tabIndex={0}>
       {items.map(({ label, value, tone = 'neutral' }) => (
         <div key={label} className="qn-workspace-metric">
           <dt className="qn-workspace-metric-label">{label}</dt>

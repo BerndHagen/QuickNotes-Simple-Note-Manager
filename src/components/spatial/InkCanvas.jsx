@@ -17,6 +17,7 @@ const InkCanvas = forwardRef(function InkCanvas({ objects, viewport }, ref) {
   const committedRef = useRef(null)
   const activeRef = useRef(null)
   const transformRef = useRef({ viewport, ratio: 1 })
+  const activeStrokeRef = useRef(null)
 
   useEffect(() => {
     const committed = committedRef.current
@@ -31,6 +32,7 @@ const InkCanvas = forwardRef(function InkCanvas({ objects, viewport }, ref) {
       const committedCanvas = configureCanvas(committed, width, height)
       const activeCanvas = configureCanvas(active, width, height)
       clearCanvas(committed, committedCanvas.context)
+      clearCanvas(active, activeCanvas.context)
       applyViewportTransform(committedCanvas.context, viewport, committedCanvas.ratio)
       applyViewportTransform(activeCanvas.context, viewport, activeCanvas.ratio)
       transformRef.current = { viewport, ratio: activeCanvas.ratio }
@@ -42,6 +44,16 @@ const InkCanvas = forwardRef(function InkCanvas({ objects, viewport }, ref) {
         height: height / zoom,
       }
       drawInkObjects(committedCanvas.context, objects, visibleBounds)
+      const activeStroke = activeStrokeRef.current
+      if (activeStroke?.points.length > 1) {
+        activeStroke.points.slice(1).forEach((point, index) => {
+          drawStrokeSegment(activeCanvas.context, activeStroke.points[index], point, {
+            ...activeStroke.brush,
+            pointIndex: index + 1,
+            pointCount: activeStroke.points.length,
+          })
+        })
+      }
     }
 
     render()
@@ -56,6 +68,7 @@ const InkCanvas = forwardRef(function InkCanvas({ objects, viewport }, ref) {
 
   useImperativeHandle(ref, () => ({
     clearActive() {
+      activeStrokeRef.current = null
       const canvas = activeRef.current
       if (!canvas) return
       const context = canvas.getContext('2d')
@@ -65,6 +78,14 @@ const InkCanvas = forwardRef(function InkCanvas({ objects, viewport }, ref) {
     drawSegment(previous, point, brush) {
       const canvas = activeRef.current
       if (!canvas) return
+      const activeStroke = activeStrokeRef.current
+      const last = activeStroke?.points.at(-1)
+      if (!activeStroke || !last || last[0] !== previous[0] || last[1] !== previous[1]) {
+        activeStrokeRef.current = { points: [previous, point], brush }
+      } else {
+        activeStroke.points.push(point)
+        activeStroke.brush = brush
+      }
       drawStrokeSegment(canvas.getContext('2d'), previous, point, brush)
     },
   }), [])

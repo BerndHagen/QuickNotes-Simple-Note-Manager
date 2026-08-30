@@ -6,6 +6,8 @@ import {
   Copy,
   FilePlus2,
   Loader2,
+  PanelLeftClose,
+  PanelLeftOpen,
   Plus,
   RefreshCw,
   Trash2,
@@ -17,6 +19,8 @@ import { MAX_NOTE_TITLE_LENGTH } from '../../lib/dataValidation'
 import {
   boundsIntersect,
   clamp,
+  constrainSpatialObjectToBounds,
+  constrainSpatialTranslation,
   moveSpatialObject,
   normalizeBounds,
   objectAtPoint,
@@ -35,7 +39,7 @@ import {
   SPATIAL_LIMITS,
 } from '../../lib/spatial/model'
 import { exportSpatialPdf, exportSpatialPng } from '../../lib/spatial/export'
-import { createSpatialBrushSettings } from '../../lib/spatial/brushes'
+import { createSpatialBrushSettings, getSpatialBrushDefinition, isSpatialBrush } from '../../lib/spatial/brushes'
 import { buildInkReplay, inkObjectsAtReplayTime } from '../../lib/spatial/replay'
 import { recognizeInkShape } from '../../lib/spatial/shapeRecognition'
 import { isBrowserHandwritingSupported } from '../../lib/intelligence/browserHandwriting'
@@ -71,6 +75,18 @@ const pointerSamples = (event) => {
   return [event]
 }
 
+const touchDistance = (points) => {
+  const [first, second] = [...points.values()]
+  return first && second ? Math.hypot(second.x - first.x, second.y - first.y) : 0
+}
+
+const touchCenter = (points) => {
+  const [first, second] = [...points.values()]
+  return first && second
+    ? { x: (first.x + second.x) / 2, y: (first.y + second.y) / 2 }
+    : null
+}
+
 const isTextTarget = (target) => target.closest?.('input, textarea, select, [contenteditable="true"]')
 
 const createDisplayThumbnail = (image, mimeType) => {
@@ -84,12 +100,15 @@ const createDisplayThumbnail = (image, mimeType) => {
   return canvas.toDataURL(mimeType === 'image/jpeg' ? 'image/jpeg' : 'image/png', 0.86)
 }
 
-function PageRail({ pages, objectsForPage, activePageId, onSelect, onAdd, onDuplicate, onDelete, onMove, resolveNoteTitle, resolveResource, editingDisabled = false }) {
+function PageRail({ pages, objectsForPage, activePageId, onSelect, onAdd, onDuplicate, onDelete, onMove, onClose, resolveNoteTitle, resolveResource, editingDisabled = false }) {
   return (
     <aside className="qn-paper-page-rail" aria-label="Paper pages">
       <div className="qn-paper-page-rail__header">
         <span>Pages</span>
-        <button type="button" onClick={onAdd} aria-label="Add page" title="Add page" disabled={editingDisabled}><Plus className="h-3.5 w-3.5" /></button>
+        <span className="qn-paper-page-rail__commands">
+          <button type="button" onClick={onAdd} aria-label="Add page" title="Add page" disabled={editingDisabled}><Plus className="h-3.5 w-3.5" /></button>
+          <button type="button" onClick={onClose} aria-label="Hide pages" title="Hide pages"><PanelLeftClose className="h-3.5 w-3.5" /></button>
+        </span>
       </div>
       <ol>
         {pages.map((page, index) => (
@@ -157,12 +176,18 @@ export default function SpatialEditor({ note, kind, noteTitle, onTitleChange, re
   const [imageAnnotationOpen, setImageAnnotationOpen] = useState(false)
   const [handwritingRecognitionOpen, setHandwritingRecognitionOpen] = useState(false)
   const [surfaceSize, setSurfaceSize] = useState({ width: 0, height: 0 })
+  const [pageRailOpen, setPageRailOpen] = useState(() => (
+    typeof window === 'undefined' || !window.matchMedia('(max-width: 800px)').matches
+  ))
   const imageInputRef = useRef(null)
   const stageRef = useRef(null)
   const gestureRef = useRef(null)
+  const touchPointersRef = useRef(new Map())
+  const pinchRef = useRef(null)
   const inkRefs = useRef(new Map())
   const activePenPointerRef = useRef(null)
   const initializedNoteRef = useRef(null)
+  const mobileFitNoteRef = useRef(null)
   const viewportSaveTimerRef = useRef(null)
   const textOriginalRef = useRef(new Map())
   const textSaveTimersRef = useRef(new Map())
@@ -252,6 +277,13 @@ export default function SpatialEditor({ note, kind, noteTitle, onTitleChange, re
   }, [kind, note.id, workspace])
 
   useEffect(() => {
+    const media = window.matchMedia('(max-width: 800px)')
+    const handleChange = (event) => setPageRailOpen(!event.matches)
+    media.addEventListener?.('change', handleChange)
+    return () => media.removeEventListener?.('change', handleChange)
+  }, [])
+
+  useEffect(() => {
     if (!workspace || !navigationTarget || navigationTarget.noteId !== note.id) return undefined
     const targetObject = navigationTarget.objectId
       ? workspace.objects.find((object) => object.id === navigationTarget.objectId)
@@ -326,14 +358,14 @@ export default function SpatialEditor({ note, kind, noteTitle, onTitleChange, re
   }, [activePage])
 
   useEffect(() => {
-    if (kind !== 'canvas' || !stageRef.current) return undefined
+    if (!stageRef.current) return undefined
     const stage = stageRef.current
     const updateSize = () => setSurfaceSize({ width: stage.clientWidth, height: stage.clientHeight })
     updateSize()
     const observer = new ResizeObserver(updateSize)
     observer.observe(stage)
     return () => observer.disconnect()
-  }, [kind, workspace?.document?.noteId])
+  }, [kind, pageRailOpen, workspace?.document?.noteId])
 
   const stopInkReplay = useCallback(() => {
     setReplay({ active: false, playing: false, elapsed: 0 })
@@ -367,6 +399,23 @@ export default function SpatialEditor({ note, kind, noteTitle, onTitleChange, re
     }, 250)
   }, [commit])
 
+  useEffect(() => {
+    if (
+      kind !== 'paper' ||
+      !activePage ||
+      surfaceSize.width <= 0 ||
+      mobileFitNoteRef.current === note.id ||
+      !window.matchMedia('(max-width: 800px)').matches
+    ) return
+    mobileFitNoteRef.current = note.id
+    const persisted = normalizeViewport(workspace?.document?.viewport, kind)
+    if (Math.abs(persisted.zoom - 0.8) > 0.001) return
+    const fitZoom = clamp((surfaceSize.width - 24) / activePage.width, SPATIAL_LIMITS.MIN_ZOOM, 0.8)
+    const next = { ...persisted, zoom: fitZoom }
+    setViewport(next)
+    scheduleViewportSave(next)
+  }, [activePage, kind, note.id, scheduleViewportSave, surfaceSize.width, workspace?.document?.viewport])
+
   useEffect(() => () => {
     flushTextDraftsRef.current()
     window.clearTimeout(viewportSaveTimerRef.current)
@@ -377,16 +426,29 @@ export default function SpatialEditor({ note, kind, noteTitle, onTitleChange, re
     kind === 'canvas' ? viewport : { panX: 0, panY: 0, zoom: viewport.zoom }
   ), [kind, viewport])
 
-  const pointForEvent = useCallback((event, surface, view = viewportForSurface()) => (
-    screenToWorld(event.clientX, event.clientY, surface.getBoundingClientRect(), view)
-  ), [viewportForSurface])
+  const pointForEvent = useCallback((event, surface, view = viewportForSurface()) => {
+    const point = screenToWorld(event.clientX, event.clientY, surface.getBoundingClientRect(), view)
+    const pageWidth = Number(surface.dataset.pageWidth)
+    const pageHeight = Number(surface.dataset.pageHeight)
+    if (kind !== 'paper' || !pageWidth || !pageHeight) return point
+    return {
+      x: clamp(point.x, 0, pageWidth),
+      y: clamp(point.y, 0, pageHeight),
+    }
+  }, [kind, viewportForSurface])
+
+  const constrainToPage = useCallback((object, pageId = object?.pageId) => {
+    if (kind !== 'paper') return object
+    const page = pages.find((candidate) => candidate.id === pageId)
+    return page ? constrainSpatialObjectToBounds(object, page.width, page.height) : object
+  }, [kind, pages])
 
   const nextZIndex = useCallback(() => (
     objects.reduce((maximum, object) => Math.max(maximum, object.zIndex || 0), 0) + 1
   ), [objects])
 
   const brushForTool = useCallback((activeTool = tool) => (
-    createSpatialBrushSettings(activeTool === 'highlighter' ? 'highlighter' : 'pen', brush)
+    createSpatialBrushSettings(isSpatialBrush(activeTool) ? activeTool : 'pen', brush)
   ), [brush, tool])
 
   const clearActiveInk = (surfaceKey) => inkRefs.current.get(surfaceKey)?.clearActive()
@@ -404,6 +466,42 @@ export default function SpatialEditor({ note, kind, noteTitle, onTitleChange, re
     const point = pointForEvent(event, surface, view)
     const effectiveTool = editingBlocked ? 'hand' : tool
 
+    if (event.pointerType === 'touch') {
+      touchPointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
+      if (touchPointersRef.current.size === 2) {
+        event.preventDefault()
+        surface.setPointerCapture?.(event.pointerId)
+        const interrupted = gestureRef.current
+        if (interrupted?.type === 'stroke') clearActiveInk(interrupted.surfaceKey)
+        gestureRef.current = null
+        setDragPreview(null)
+        setLasso(null)
+        setShapePreview(null)
+
+        const distance = touchDistance(touchPointersRef.current)
+        const center = touchCenter(touchPointersRef.current)
+        const stageRect = stageRef.current?.getBoundingClientRect()
+        if (distance >= 8 && center && stageRect) {
+          const initialViewport = viewport
+          pinchRef.current = {
+            pointerIds: new Set(touchPointersRef.current.keys()),
+            initialDistance: distance,
+            initialViewport,
+            surface,
+            worldAnchor: kind === 'canvas'
+              ? {
+                  x: (center.x - stageRect.left - initialViewport.panX) / initialViewport.zoom,
+                  y: (center.y - stageRect.top - initialViewport.panY) / initialViewport.zoom,
+                }
+              : pointForEvent({ clientX: center.x, clientY: center.y }, surface, view),
+            currentViewport: initialViewport,
+            frame: 0,
+          }
+        }
+        return
+      }
+    }
+
     // A selected tool has the same meaning for a finger, mouse, or pen. The
     // Hand tool remains the explicit way to pan on a phone. Previously every
     // touch pointer was silently rewritten to Hand, which made drawing,
@@ -415,7 +513,7 @@ export default function SpatialEditor({ note, kind, noteTitle, onTitleChange, re
     surface.setPointerCapture?.(event.pointerId)
     surface.focus({ preventScroll: true })
 
-    if (effectiveTool === 'pen' || effectiveTool === 'highlighter') {
+    if (isSpatialBrush(effectiveTool)) {
       const sample = [point.x, point.y, normalizePressure(event), event.tiltX || 0, event.tiltY || 0, event.timeStamp || 0]
       clearActiveInk(surfaceKey)
       gestureRef.current = { type: 'stroke', pointerId: event.pointerId, pageId, surfaceKey, points: [sample], brush: brushForTool(effectiveTool), surface }
@@ -439,7 +537,7 @@ export default function SpatialEditor({ note, kind, noteTitle, onTitleChange, re
         surface.releasePointerCapture?.(event.pointerId)
         return
       }
-      const object = createBoundedObject({
+      const object = constrainToPage(createBoundedObject({
         noteId: note.id,
         pageId,
         kind: effectiveTool,
@@ -447,7 +545,7 @@ export default function SpatialEditor({ note, kind, noteTitle, onTitleChange, re
         zIndex: nextZIndex(),
         text: effectiveTool === 'sticky' ? 'New sticky note' : effectiveTool === 'indexCard' ? 'Index card' : effectiveTool === 'text' ? 'Text' : '',
         targetNoteId: effectiveTool === 'noteLink' ? noteLinkTarget : null,
-      })
+      }), pageId)
       commit({ putObjects: [object] }, { label: `Add ${effectiveTool}` })
       setSelectedIds(new Set([object.id]))
       setTool('select')
@@ -485,7 +583,7 @@ export default function SpatialEditor({ note, kind, noteTitle, onTitleChange, re
       gestureRef.current = { type: 'lasso', pointerId: event.pointerId, pageId, start: point, current: point, append: event.shiftKey, surface }
       setLasso({ x: point.x, y: point.y, width: 0, height: 0 })
     }
-  }, [brushForTool, commit, editingBlocked, nextZIndex, note.id, noteLinkTarget, objects, pageObjects, pointForEvent, replay.active, selectedIds, stopInkReplay, tool, viewport, viewportForSurface])
+  }, [brushForTool, commit, constrainToPage, editingBlocked, kind, nextZIndex, note.id, noteLinkTarget, objects, pageObjects, pointForEvent, replay.active, selectedIds, stopInkReplay, tool, viewport, viewportForSurface])
 
   const beginTextEditing = useCallback((objectId) => {
     if (editingBlocked) return
@@ -526,6 +624,49 @@ export default function SpatialEditor({ note, kind, noteTitle, onTitleChange, re
   }, [beginTextEditing, navigateToKnowledgeTarget, pageObjects, pointForEvent, viewportForSurface])
 
   const moveGesture = useCallback((event) => {
+    if (event.pointerType === 'touch' && touchPointersRef.current.has(event.pointerId)) {
+      touchPointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
+      const pinch = pinchRef.current
+      if (pinch && pinch.pointerIds.has(event.pointerId) && touchPointersRef.current.size >= 2) {
+        const distance = touchDistance(touchPointersRef.current)
+        const center = touchCenter(touchPointersRef.current)
+        const stage = stageRef.current
+        if (distance >= 8 && center && stage) {
+          event.preventDefault()
+          event.stopPropagation()
+          const zoom = clamp(
+            pinch.initialViewport.zoom * (distance / pinch.initialDistance),
+            SPATIAL_LIMITS.MIN_ZOOM,
+            SPATIAL_LIMITS.MAX_ZOOM
+          )
+          const stageRect = stage.getBoundingClientRect()
+          const next = kind === 'canvas'
+            ? {
+                ...pinch.initialViewport,
+                zoom,
+                panX: center.x - stageRect.left - pinch.worldAnchor.x * zoom,
+                panY: center.y - stageRect.top - pinch.worldAnchor.y * zoom,
+              }
+            : { ...pinch.initialViewport, zoom }
+          pinch.currentViewport = next
+          setViewport(next)
+
+          if (kind === 'paper') {
+            window.cancelAnimationFrame(pinch.frame)
+            pinch.frame = window.requestAnimationFrame(() => {
+              const surfaceRect = pinch.surface.getBoundingClientRect()
+              stage.scrollBy({
+                left: surfaceRect.left + pinch.worldAnchor.x * next.zoom - center.x,
+                top: surfaceRect.top + pinch.worldAnchor.y * next.zoom - center.y,
+                behavior: 'instant',
+              })
+            })
+          }
+        }
+        return
+      }
+    }
+
     const gesture = gestureRef.current
     if (!gesture || gesture.pointerId !== event.pointerId) return
     const surface = gesture.surface
@@ -539,7 +680,11 @@ export default function SpatialEditor({ note, kind, noteTitle, onTitleChange, re
         const previous = gesture.points.at(-1)
         if (Math.hypot(sample[0] - previous[0], sample[1] - previous[1]) < 0.2) continue
         gesture.points.push(sample)
-        ink?.drawSegment(previous, sample, gesture.brush)
+        ink?.drawSegment(previous, sample, {
+          ...gesture.brush,
+          pointIndex: gesture.points.length - 1,
+          pointCount: gesture.points.length,
+        })
       }
       return
     }
@@ -588,6 +733,19 @@ export default function SpatialEditor({ note, kind, noteTitle, onTitleChange, re
   }, [brush, kind, nextZIndex, note.id, pageObjects, pointForEvent, viewportForSurface])
 
   const finishGesture = useCallback((event, cancelled = false) => {
+    if (event.pointerType === 'touch') {
+      touchPointersRef.current.delete(event.pointerId)
+      const pinch = pinchRef.current
+      if (pinch?.pointerIds.has(event.pointerId)) {
+        event.currentTarget.releasePointerCapture?.(event.pointerId)
+        if (touchPointersRef.current.size < 2) {
+          window.cancelAnimationFrame(pinch.frame)
+          pinchRef.current = null
+          scheduleViewportSave(pinch.currentViewport)
+        }
+        return
+      }
+    }
     const gesture = gestureRef.current
     if (!gesture || gesture.pointerId !== event.pointerId) return
     gestureRef.current = null
@@ -604,7 +762,7 @@ export default function SpatialEditor({ note, kind, noteTitle, onTitleChange, re
           ...gesture.brush,
           zIndex: nextZIndex(),
         })
-        commit({ putObjects: [object] }, { label: gesture.brush.brush === 'highlighter' ? 'Highlight' : 'Draw stroke' })
+        commit({ putObjects: [object] }, { label: `Draw with ${getSpatialBrushDefinition(gesture.brush.brush).label}` })
       }
     } else if (gesture.type === 'erase' && !cancelled && gesture.erased.size > 0) {
       commit({ deleteObjectIds: [...gesture.erased] }, { label: 'Erase strokes' })
@@ -631,7 +789,11 @@ export default function SpatialEditor({ note, kind, noteTitle, onTitleChange, re
         : null
       setDragPreview(null)
       if (!cancelled && preview && (preview.dx !== 0 || preview.dy !== 0)) {
-        const moved = gesture.originals.map((object) => moveSpatialObject(object, preview.dx, preview.dy))
+        const page = kind === 'paper' ? pages.find((candidate) => candidate.id === gesture.pageId) : null
+        const delta = page
+          ? constrainSpatialTranslation(gesture.originals, preview.dx, preview.dy, page.width, page.height)
+          : preview
+        const moved = gesture.originals.map((object) => moveSpatialObject(object, delta.dx, delta.dy))
         commit({ putObjects: moved }, {
           label: 'Move selection',
           inverse: { ...emptyChangeSet(), putObjects: gesture.originals },
@@ -660,7 +822,12 @@ export default function SpatialEditor({ note, kind, noteTitle, onTitleChange, re
         : null
       setDragPreview(null)
       if (!cancelled && preview?.resizeWidth && preview?.resizeHeight) {
-        const resized = resizeSpatialObject(gesture.original, preview.resizeWidth, preview.resizeHeight)
+        const page = kind === 'paper' ? pages.find((candidate) => candidate.id === gesture.pageId) : null
+        const resized = resizeSpatialObject(
+          gesture.original,
+          page ? Math.min(preview.resizeWidth, page.width - gesture.original.bounds.x) : preview.resizeWidth,
+          page ? Math.min(preview.resizeHeight, page.height - gesture.original.bounds.y) : preview.resizeHeight
+        )
         commit({ putObjects: [resized] }, {
           label: 'Resize object',
           inverse: { ...emptyChangeSet(), putObjects: [gesture.original] },
@@ -669,7 +836,7 @@ export default function SpatialEditor({ note, kind, noteTitle, onTitleChange, re
     } else if (gesture.type === 'pan' && kind === 'canvas' && !cancelled) {
       scheduleViewportSave(gesture.currentViewport || gesture.startViewport)
     }
-  }, [brush, commit, kind, nextZIndex, note.id, pageObjects, scheduleViewportSave])
+  }, [brush, commit, kind, nextZIndex, note.id, pageObjects, pages, scheduleViewportSave])
 
   const resizePointerDown = useCallback((event, object) => {
     event.preventDefault()
@@ -734,7 +901,7 @@ export default function SpatialEditor({ note, kind, noteTitle, onTitleChange, re
       if (moved.kind === 'stroke' && moved.data?.hidden) {
         moved.data = { ...moved.data, hidden: false, convertedToShapeId: null }
       }
-      return {
+      const copy = {
         ...moved,
         id: generateId(),
         noteId: note.id,
@@ -743,10 +910,11 @@ export default function SpatialEditor({ note, kind, noteTitle, onTitleChange, re
         createdAt: now,
         updatedAt: now,
       }
+      return constrainToPage(copy, copy.pageId)
     })
     commit({ putObjects: pasted }, { label: 'Paste selection' })
     setSelectedIds(new Set(pasted.map((object) => object.id)))
-  }, [activePage?.id, commit, editingBlocked, kind, nextZIndex, note.id])
+  }, [activePage?.id, commit, constrainToPage, editingBlocked, kind, nextZIndex, note.id])
 
   const convertSelectedInkToShape = useCallback(() => {
     if (editingBlocked || !shapeCandidate || selectedInk.length !== 1) return
@@ -786,12 +954,16 @@ export default function SpatialEditor({ note, kind, noteTitle, onTitleChange, re
   const nudgeSelection = useCallback((dx, dy) => {
     if (editingBlocked || selectedIds.size === 0) return
     const originals = objects.filter((object) => selectedIds.has(object.id)).map((object) => structuredClone(object))
-    const moved = originals.map((object) => moveSpatialObject(object, dx, dy))
+    const page = kind === 'paper' && originals.length > 0
+      ? pages.find((candidate) => candidate.id === originals[0].pageId)
+      : null
+    const delta = page ? constrainSpatialTranslation(originals, dx, dy, page.width, page.height) : { dx, dy }
+    const moved = originals.map((object) => moveSpatialObject(object, delta.dx, delta.dy))
     commit({ putObjects: moved }, {
       label: 'Nudge selection',
       inverse: { ...emptyChangeSet(), putObjects: originals },
     })
-  }, [commit, editingBlocked, objects, selectedIds])
+  }, [commit, editingBlocked, kind, objects, pages, selectedIds])
 
   const changeZOrder = useCallback((direction) => {
     if (editingBlocked || selectedIds.size === 0) return
@@ -1030,7 +1202,7 @@ export default function SpatialEditor({ note, kind, noteTitle, onTitleChange, re
         pixelWidth: dimensions.width,
         pixelHeight: dimensions.height,
       })
-      const object = createImageObject({
+      const object = constrainToPage(createImageObject({
         noteId: note.id,
         pageId: kind === 'paper' ? activePage?.id || null : null,
         point,
@@ -1038,14 +1210,14 @@ export default function SpatialEditor({ note, kind, noteTitle, onTitleChange, re
         resourceId: resource.id,
         width,
         height,
-      })
+      }), activePage?.id)
       commit({ putResources: [resource], putObjects: [object] }, { label: 'Place image' })
       setSelectedIds(new Set([object.id]))
       setTool('select')
     } catch (error) {
       toast.error(error?.message || 'Could not place this image')
     }
-  }, [activePage?.id, activePage?.width, commit, editingBlocked, kind, nextZIndex, note.id, viewport])
+  }, [activePage?.id, activePage?.width, commit, constrainToPage, editingBlocked, kind, nextZIndex, note.id, viewport])
 
   const performExport = useCallback(async (format) => {
     if (!workspace || (kind === 'paper' && !activePage)) return
@@ -1075,7 +1247,7 @@ export default function SpatialEditor({ note, kind, noteTitle, onTitleChange, re
     const fallbackBounds = selectedInk[0].bounds
     const region = sourceRegion || fallbackBounds
     const pageId = selectedInk[0].pageId || null
-    const object = createBoundedObject({
+    const object = constrainToPage(createBoundedObject({
       noteId: note.id,
       pageId,
       kind: 'text',
@@ -1085,11 +1257,11 @@ export default function SpatialEditor({ note, kind, noteTitle, onTitleChange, re
       },
       zIndex: nextZIndex(),
       text: text.trim(),
-    })
+    }), pageId)
     commit({ putObjects: [object] }, { label: 'Add recognized handwriting as text' })
     setSelectedIds(new Set([object.id]))
     setTool('select')
-  }, [commit, editingBlocked, nextZIndex, note.id, selectedInk])
+  }, [commit, constrainToPage, editingBlocked, nextZIndex, note.id, selectedInk])
 
   if (loading) {
     return <div className="qn-spatial-state" role="status"><Loader2 className="h-5 w-5 animate-spin" /> Loading {kind}…</div>
@@ -1251,7 +1423,7 @@ export default function SpatialEditor({ note, kind, noteTitle, onTitleChange, re
               ? 'Whole-stroke eraser'
               : tool === 'hand'
                 ? 'Drag to pan'
-                : tool === 'pen' || tool === 'highlighter'
+                : isSpatialBrush(tool)
                   ? 'Drag with touch, mouse, or pen'
                   : 'No selection'}
         </span>
@@ -1260,20 +1432,38 @@ export default function SpatialEditor({ note, kind, noteTitle, onTitleChange, re
       <p className="qn-sr-only" role="status">{objectSummary}</p>
 
       {kind === 'paper' ? (
-        <div className="qn-paper-workspace">
-          <PageRail
-            pages={pages}
-            objectsForPage={pageObjects}
-            activePageId={activePage?.id}
-            onSelect={(id) => { setActivePageId(id); setSelectedIds(new Set()) }}
-            onAdd={addPage}
-            onDuplicate={duplicatePage}
-            onDelete={deletePage}
-            onMove={movePage}
-            resolveNoteTitle={resolveNoteTitle}
-            resolveResource={resolveResource}
-            editingDisabled={editingBlocked}
-          />
+        <div className="qn-paper-workspace" data-page-rail={pageRailOpen ? 'open' : 'closed'}>
+          {pageRailOpen ? (
+            <PageRail
+              pages={pages}
+              objectsForPage={pageObjects}
+              activePageId={activePage?.id}
+              onSelect={(id) => {
+                setActivePageId(id)
+                setSelectedIds(new Set())
+                if (window.matchMedia('(max-width: 800px)').matches) setPageRailOpen(false)
+              }}
+              onAdd={addPage}
+              onDuplicate={duplicatePage}
+              onDelete={deletePage}
+              onMove={movePage}
+              onClose={() => setPageRailOpen(false)}
+              resolveNoteTitle={resolveNoteTitle}
+              resolveResource={resolveResource}
+              editingDisabled={editingBlocked}
+            />
+          ) : (
+            <button
+              type="button"
+              className="qn-paper-page-rail-toggle"
+              onClick={() => setPageRailOpen(true)}
+              aria-label="Show pages"
+              title="Show pages"
+            >
+              <PanelLeftOpen className="h-4 w-4" aria-hidden="true" />
+              <span>Pages</span>
+            </button>
+          )}
           <div ref={stageRef} className="qn-paper-stage" onWheel={handleWheel}>
             {pages.map((page) => {
               // The Paper page element itself is scaled. Its canvases retain
@@ -1294,6 +1484,8 @@ export default function SpatialEditor({ note, kind, noteTitle, onTitleChange, re
                   <div
                     className="qn-spatial-interaction-surface qn-paper-page"
                     data-page-id={page.id}
+                    data-page-width={page.width}
+                    data-page-height={page.height}
                     data-pattern={page.pattern}
                     data-surface={page.surface}
                     style={{ width: page.width, height: page.height, transform: `scale(${viewport.zoom})` }}

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { EmptyState, Menu, MenuItem, MenuSeparator, buttonClasses } from '../ui'
+import { Menu, MenuItem, MenuSeparator, buttonClasses } from '../ui'
 import {
   Plus,
   Trash2,
@@ -27,7 +27,6 @@ import { normalizeRecurrence, RECURRENCE_LABELS, toggleTaskWithRecurrence } from
 import { useLatestValue } from './useLatestValue'
 import { useEditorDataSync } from './useEditorDataSync'
 import FocusedNoteTitle from './FocusedNoteTitle'
-import WorkspaceMetrics from './WorkspaceMetrics'
 import { ConfirmDialog } from '../FolderDialogs'
 const PRIORITIES = {
   high: { label: 'High', color: '#ef4444', bgColor: '#fef2f2', icon: '\u{1F534}' },
@@ -230,19 +229,42 @@ export default function TodoListEditor({ data, onChange, noteTitle, onTitleChang
               readOnly={readOnly}
             />
             <p className="ml-12 mt-1 text-ui-md text-content-muted">
-              {stats.active} tasks remaining {"\u2022"} {stats.completed} completed
+              {stats.total === 0
+                ? 'Ready for the first task'
+                : `${stats.active} tasks remaining \u2022 ${stats.completed} completed${stats.overdue ? ` \u2022 ${stats.overdue} overdue` : ''}`}
             </p>
           </div>
         </div>
-        <WorkspaceMetrics
-          items={[
-            { label: 'Total', value: stats.total },
-            { label: 'Active', value: stats.active },
-            { label: 'Done', value: stats.completed },
-            { label: 'Overdue', value: stats.overdue, tone: stats.overdue ? 'danger' : 'neutral' },
-          ]}
-        />
       </header>
+      <form
+        className="qn-task-capture flex-shrink-0 border-b border-subtle bg-surface-raised p-3"
+        onSubmit={(event) => { event.preventDefault(); addTask() }}
+      >
+        <div className="flex gap-2">
+          <input
+            ref={inputRef}
+            type="text"
+            aria-label="New task"
+              value={newTaskText}
+              onChange={(e) => setNewTaskText(e.target.value)}
+              onKeyDown={(event) => {
+                if (event.key !== 'Enter') return
+                event.preventDefault()
+                addTask()
+              }}
+              placeholder="Add a task…"
+            className="min-w-0 flex-1 rounded-control border border-strong bg-surface-raised px-3 py-2 text-content outline-none transition-[border-color,box-shadow] placeholder:text-content-subtle focus:border-accent focus:ring-2 focus:ring-[var(--qn-accent-soft)]"
+          />
+          <button
+            type="submit"
+            disabled={!newTaskText.trim()}
+            className={buttonClasses({ variant: 'primary' })}
+          >
+            <Plus className="w-5 h-5" />
+            Add
+          </button>
+        </div>
+      </form>
       <div className="qn-type-tabs flex-shrink-0 p-3 border-b border-subtle flex items-center gap-2 bg-surface-sunken">
         <div className="relative" ref={filterRef}>
           <button
@@ -326,35 +348,11 @@ export default function TodoListEditor({ data, onChange, noteTitle, onTitleChang
           Clear Done
         </button>
       </div>
-      <div className="flex-shrink-0 p-4 border-b border-subtle">
-        <div className="flex gap-2">
-          <input
-            ref={inputRef}
-            type="text"
-            aria-label="New task"
-            value={newTaskText}
-            onChange={(e) => setNewTaskText(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && addTask()}
-            placeholder="Add a new task..."
-            className="flex-1 rounded-control border border-strong bg-surface-raised px-3 py-2.5 text-content outline-none transition-[border-color,box-shadow] placeholder:text-content-subtle focus:border-accent focus:ring-2 focus:ring-[var(--qn-accent-soft)]"
-          />
-          <button
-            onClick={addTask}
-            disabled={!newTaskText.trim()}
-            className={buttonClasses({ variant: 'primary' })}
-          >
-            <Plus className="w-5 h-5" />
-            Add
-          </button>
-        </div>
-      </div>
       <div className="qn-task-list flex-1 overflow-y-auto px-4">
         {filteredTasks.length === 0 ? (
-          <EmptyState
-            icon={CheckCircle2}
-            title={filter === 'all' ? 'No tasks yet' : `No ${FILTERS.find(f => f.id === filter)?.label.toLowerCase()}`}
-            description={filter === 'all' ? 'Add your first task above.' : 'Try a different filter.'}
-          />
+          <div className="qn-quiet-empty px-4 py-5 text-sm text-content-muted">
+            {filter === 'all' ? 'No tasks yet. Type the first task above and press Enter.' : `No ${FILTERS.find(f => f.id === filter)?.label.toLowerCase()}. Try another filter.`}
+          </div>
         ) : (
           filteredTasks.map((task) => (
             <TaskItem
@@ -506,13 +504,13 @@ function TaskItem({
             onClick={() => onUpdate({ starred: !task.starred })}
             aria-label={task.starred ? `Remove star from ${task.text}` : `Star ${task.text}`}
             aria-pressed={task.starred}
-            className={`p-1 rounded transition-colors ${
+            className={`qn-task-quick-star p-1 rounded transition-colors ${
  task.starred ? 'text-warning' : 'text-content-subtle hover:text-warning'
  }`}
           >
             <Star className={`w-5 h-5 ${task.starred ? 'fill-current' : ''}`} />
           </button>
-          <div className="relative" ref={priorityRef}>
+          <div className="qn-task-quick-priority relative" ref={priorityRef}>
           <button
             onClick={() => setShowPriorityMenu(!showPriorityMenu)}
             aria-label={`Set priority for ${task.text}. Current priority: ${priority.label}`}
@@ -546,7 +544,7 @@ function TaskItem({
               ))}
           </Menu>
           </div>
-          <div className="relative group/date">
+          <div className="qn-task-quick-date relative group/date">
           <input
             type="date"
             value={task.dueDate || ''}
@@ -623,6 +621,38 @@ function TaskItem({
       </div>
       {isExpanded && (
         <div className="px-4 pb-4 pt-2 border-t border-subtle">
+          <div className="qn-task-mobile-details mb-3 grid grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)] items-end gap-2 border-b border-subtle pb-3">
+            <button
+              type="button"
+              onClick={() => onUpdate({ starred: !task.starred })}
+              aria-label={task.starred ? `Remove star from ${task.text}` : `Star ${task.text}`}
+              aria-pressed={task.starred}
+              className={`qn-square-control flex h-control-md w-control-md items-center justify-center rounded-control border border-subtle ${task.starred ? 'text-warning' : 'text-content-muted'}`}
+            >
+              <Star className={`h-4 w-4 ${task.starred ? 'fill-current' : ''}`} />
+            </button>
+            <label className="min-w-0 text-ui-xs font-medium text-content-muted">
+              Priority
+              <select
+                value={task.priority}
+                onChange={(event) => onUpdate({ priority: event.target.value })}
+                aria-label={`Priority for ${task.text}`}
+                className="mt-1 h-control-md w-full rounded-control border border-subtle bg-surface-raised px-2 text-content"
+              >
+                {Object.entries(PRIORITIES).map(([key, value]) => <option key={key} value={key}>{value.label}</option>)}
+              </select>
+            </label>
+            <label className="min-w-0 text-ui-xs font-medium text-content-muted">
+              Due date
+              <input
+                type="date"
+                value={task.dueDate || ''}
+                onChange={(event) => onUpdate({ dueDate: event.target.value || null })}
+                aria-label={`Detailed due date for ${task.text}`}
+                className="mt-1 h-control-md w-full rounded-control border border-subtle bg-surface-raised px-2 text-content"
+              />
+            </label>
+          </div>
           <div className="mb-4 grid gap-3 rounded-card border border-subtle bg-surface-raised p-3 sm:grid-cols-[minmax(0,1fr)_9rem]">
             <label className="flex min-w-0 flex-col gap-1.5 text-sm font-medium text-content-muted">
               <span className="flex items-center gap-1.5">

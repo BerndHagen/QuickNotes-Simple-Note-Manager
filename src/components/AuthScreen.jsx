@@ -22,7 +22,7 @@ import {
 } from '../lib/authValidation'
 import { createLocalUser, endLocalSession, startLocalSession } from '../lib/localSession'
 import { normalizeUsername, validateUsername } from '../lib/usernames'
-import { buttonClasses, NotepadGlyph } from './ui'
+import { BrandLogo, buttonClasses } from './ui'
 import { useNotesStore, useUIStore } from '../store'
 
 const FEATURE_POINTS = [
@@ -46,13 +46,7 @@ const FEATURE_POINTS = [
 function BrandMark({ compact = false }) {
   return (
     <div className="flex items-center gap-3">
-      <span
-        className={`flex shrink-0 items-center justify-center rounded-[12px] border border-white/15 bg-[linear-gradient(140deg,#0e5341,#05352a)] text-white shadow-lg shadow-emerald-950/20 ${
- compact ? 'h-10 w-10' : 'h-11 w-11'
- }`}
-      >
-        <NotepadGlyph className={compact ? 'h-[22px] w-[22px]' : 'h-6 w-6'} />
-      </span>
+      <BrandLogo className={compact ? 'h-10 w-10' : 'h-11 w-11'} />
       <span>
         <span
           className={`block font-bold tracking-[-0.02em] ${

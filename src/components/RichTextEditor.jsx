@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useCallback, useMemo, useState, useRef } from 'react'
+import { Fragment, createContext, useContext, useEffect, useCallback, useMemo, useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useEditor, EditorContent, BubbleMenu } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
@@ -768,18 +768,26 @@ function DocumentPageSheets({ editor, containerRef, paperStyle }) {
 
   return (
     <div className="qn-document-page-sheets" aria-hidden="true">
-      {Array.from({ length: geometry.pageCount }, (_, pageIndex) => (
-        <span
-          key={pageIndex}
-          className="qn-document-page-sheet"
-          data-page-number={pageIndex + 1}
-          style={{
-            ...paperStyle,
-            top: `${pageIndex * (geometry.pageHeight + PAGE_GAP)}px`,
-            height: `${geometry.pageHeight}px`,
-          }}
-        />
-      ))}
+      {Array.from({ length: geometry.pageCount }, (_, pageIndex) => {
+        const pagePosition = {
+          top: `${pageIndex * (geometry.pageHeight + PAGE_GAP)}px`,
+          height: `${geometry.pageHeight}px`,
+        }
+        return (
+          <Fragment key={pageIndex}>
+            <span
+              className="qn-document-page-sheet"
+              data-page-number={pageIndex + 1}
+              style={{ ...paperStyle, ...pagePosition }}
+            />
+            <span
+              className="qn-document-page-edge"
+              data-page-number={pageIndex + 1}
+              style={pagePosition}
+            />
+          </Fragment>
+        )
+      })}
     </div>
   )
 }
@@ -910,6 +918,21 @@ function ObjectDrawingLayer({ editor, tool, containerRef, onFinish, workspaceZoo
 
   if (!tool || !bounds) return null
 
+  const pageAtPoint = (clientX, clientY) => {
+    const pageRects = [...(containerRef.current?.querySelectorAll('.qn-document-page-edge') || [])]
+      .map((element) => element.getBoundingClientRect())
+      .filter((rect) => rect.width > 0 && rect.height > 0)
+    if (pageRects.length === 0) return bounds
+    return pageRects.find((rect) => (
+      clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom
+    )) || null
+  }
+
+  const pointInsidePage = (clientX, clientY, pageRect) => ({
+    x: Math.min(pageRect.right - 2, Math.max(pageRect.left + 2, clientX)),
+    y: Math.min(pageRect.bottom - 2, Math.max(pageRect.top + 2, clientY)),
+  })
+
   const preview = gesture
     ? {
         left: Math.min(gesture.startClientX, gesture.currentClientX),
@@ -923,23 +946,39 @@ function ObjectDrawingLayer({ editor, tool, containerRef, onFinish, workspaceZoo
     if (!gesture) return
     const editorRect = editor.view.dom.getBoundingClientRect()
     const scale = Math.max(0.1, workspaceZoom)
-    const rawWidth = Math.abs(event.clientX - gesture.startClientX) / scale
-    const rawHeight = Math.abs(event.clientY - gesture.startClientY) / scale
+    const end = pointInsidePage(event.clientX, event.clientY, gesture.pageRect)
+    const rawWidth = Math.abs(end.x - gesture.startClientX) / scale
+    const rawHeight = Math.abs(end.y - gesture.startClientY) / scale
     const minimumWidth = tool.kind === 'textBox' ? 160 : 96
     const preferredWidth = tool.kind === 'textBox' ? 320 : 240
+    const minimumHeight = tool.kind === 'textBox' ? 80 : 56
+    const preferredHeight = tool.kind === 'textBox' ? 140 : 112
     const horizontalInset = 8
+    const verticalInset = 8
+    const pageWidth = gesture.pageRect.width / scale
+    const pageHeight = gesture.pageRect.height / scale
     const width = Math.min(
       Math.max(minimumWidth, rawWidth || preferredWidth),
-      Math.max(minimumWidth, (editorRect.width / scale) - horizontalInset * 2)
+      Math.max(minimumWidth, pageWidth - horizontalInset * 2)
     )
-    const height = Math.max(tool.kind === 'textBox' ? 80 : 56, rawHeight || (tool.kind === 'textBox' ? 140 : 112))
-    const left = Math.min(gesture.startClientX, rawWidth ? event.clientX : gesture.startClientX)
-    const top = Math.min(gesture.startClientY, rawHeight ? event.clientY : gesture.startClientY)
-    const x = Math.round(Math.min(
-      Math.max(horizontalInset, (left - editorRect.left) / scale),
-      Math.max(horizontalInset, (editorRect.width / scale) - width - horizontalInset)
-    ))
-    const y = Math.max(0, Math.round((top - editorRect.top) / scale))
+    const height = Math.min(
+      Math.max(minimumHeight, rawHeight || preferredHeight),
+      Math.max(minimumHeight, pageHeight - verticalInset * 2)
+    )
+    const left = Math.min(gesture.startClientX, rawWidth ? end.x : gesture.startClientX)
+    const top = Math.min(gesture.startClientY, rawHeight ? end.y : gesture.startClientY)
+    const pageOriginX = (gesture.pageRect.left - editorRect.left) / scale
+    const pageOriginY = (gesture.pageRect.top - editorRect.top) / scale
+    const localX = Math.min(
+      Math.max(horizontalInset, (left - gesture.pageRect.left) / scale),
+      Math.max(horizontalInset, pageWidth - width - horizontalInset)
+    )
+    const localY = Math.min(
+      Math.max(verticalInset, (top - gesture.pageRect.top) / scale),
+      Math.max(verticalInset, pageHeight - height - verticalInset)
+    )
+    const x = Math.round(pageOriginX + localX)
+    const y = Math.round(pageOriginY + localY)
     const node = tool.kind === 'textBox'
       ? {
           type: 'textBox',
@@ -965,17 +1004,22 @@ function ObjectDrawingLayer({ editor, tool, containerRef, onFinish, workspaceZoo
       className="fixed z-[99990] cursor-crosshair touch-none overflow-hidden"
       style={{ left: bounds.left, top: bounds.top, width: bounds.width, height: bounds.height }}
       onPointerDown={(event) => {
+        const pageRect = pageAtPoint(event.clientX, event.clientY)
+        if (!pageRect) return
+        const start = pointInsidePage(event.clientX, event.clientY, pageRect)
         event.currentTarget.setPointerCapture?.(event.pointerId)
         setGesture({
-          startClientX: event.clientX,
-          startClientY: event.clientY,
-          currentClientX: event.clientX,
-          currentClientY: event.clientY,
+          startClientX: start.x,
+          startClientY: start.y,
+          currentClientX: start.x,
+          currentClientY: start.y,
+          pageRect,
         })
       }}
       onPointerMove={(event) => {
         if (!gesture) return
-        setGesture((current) => current ? { ...current, currentClientX: event.clientX, currentClientY: event.clientY } : null)
+        const point = pointInsidePage(event.clientX, event.clientY, gesture.pageRect)
+        setGesture((current) => current ? { ...current, currentClientX: point.x, currentClientY: point.y } : null)
       }}
       onPointerUp={finishDrawing}
       onPointerCancel={() => {

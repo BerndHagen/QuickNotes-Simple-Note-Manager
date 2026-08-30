@@ -27,7 +27,6 @@ import { formatDateKey, generateId, parseDateKey } from './noteTypes'
 import { useLatestValue } from './useLatestValue'
 import { useEditorDataSync } from './useEditorDataSync'
 import FocusedNoteTitle from './FocusedNoteTitle'
-import WorkspaceMetrics from './WorkspaceMetrics'
 import { db, getActiveWorkspaceOwner } from '../../lib/db'
 import { listNoteResources } from '../../lib/resources/repository'
 
@@ -109,7 +108,7 @@ export default function MeetingNotesEditor({ data, onChange, note, noteTitle, on
     decisions: data?.decisions || [],
   })
   
-  const [activeSection, setActiveSection] = useState('details')
+  const [activeSection, setActiveSection] = useState(data?.agenda?.length ? 'agenda' : 'details')
   const [timerRunning, setTimerRunning] = useState(false)
   const [timerSeconds, setTimerSeconds] = useState(0)
   const [currentAgendaItem, setCurrentAgendaItem] = useState(null)
@@ -119,6 +118,7 @@ export default function MeetingNotesEditor({ data, onChange, note, noteTitle, on
   const [newDecision, setNewDecision] = useState('')
   
   const timerRef = useRef(null)
+  const activeNoteRef = useRef(note?.id)
   const onChangeRef = useLatestValue(onChange)
   const skipChangeRef = useEditorDataSync(data, meetingData, setMeetingData)
   const isInitialMount = useRef(true)
@@ -127,6 +127,14 @@ export default function MeetingNotesEditor({ data, onChange, note, noteTitle, on
     if (skipChangeRef.current) { skipChangeRef.current = false; return }
     onChangeRef.current?.(meetingData)
   }, [meetingData, onChangeRef, skipChangeRef])
+  useEffect(() => {
+    if (activeNoteRef.current === note?.id) return
+    activeNoteRef.current = note?.id
+    setActiveSection(data?.agenda?.length ? 'agenda' : 'details')
+    setTimerRunning(false)
+    setTimerSeconds(0)
+    setCurrentAgendaItem(null)
+  }, [data?.agenda?.length, note?.id])
   useEffect(() => {
     if (timerRunning) {
       timerRef.current = setInterval(() => {
@@ -339,14 +347,6 @@ ${meetingData.notes}
             </div>
           </div>
         </div>
-        <WorkspaceMetrics
-          items={[
-            { label: 'Present', value: `${stats.present}/${stats.attendees}` },
-            { label: 'Agenda done', value: `${stats.completedAgenda}/${stats.agendaItems}` },
-            { label: 'Actions', value: stats.actionItems },
-            { label: 'Decisions', value: stats.decisions },
-          ]}
-        />
       </header>
       <div className="qn-type-tabs qn-meeting-tabs flex-shrink-0 flex items-center gap-2 p-2 border-b border-subtle bg-surface-sunken">
         <div className="qn-tab-scroller flex min-w-0 flex-1 gap-1 overflow-x-auto">

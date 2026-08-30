@@ -65,7 +65,7 @@ export default function FocusMode() {
     zoomIn: zoomWorkspaceIn,
     zoomOut: zoomWorkspaceOut,
     resetZoom: resetWorkspaceZoom,
-  } = useWorkspaceZoom(panelRef, { enabled: active })
+  } = useWorkspaceZoom(panelRef, { enabled: active, scope: 'document' })
   useFocusTrap(panelRef, active)
   useScrollLock(active)
   useEscapeKey(active, close)
@@ -187,7 +187,7 @@ export default function FocusMode() {
       onPointerMove={revealControls}
       onPointerDown={revealControls}
       onKeyDownCapture={revealControls}
-      className="qn-focus-mode fixed inset-0 z-dialog overflow-hidden outline-none"
+      className="qn-workspace-zoom-root qn-focus-mode fixed inset-0 z-dialog overflow-hidden outline-none"
       data-focus-theme={currentTheme.id}
     >
       <header

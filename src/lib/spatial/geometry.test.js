@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   boundsFromPoints,
+  constrainSpatialObjectToBounds,
+  constrainSpatialTranslation,
   hitTestObject,
   moveSpatialObject,
   screenToWorld,
@@ -27,5 +29,20 @@ describe('spatial geometry', () => {
       [35, 26, 0.5],
     ])
   })
-})
 
+  it('keeps Paper objects and grouped movement inside page-local bounds', () => {
+    const object = {
+      kind: 'shape',
+      bounds: { x: 170, y: -12, width: 50, height: 40 },
+      data: { geometry: { x: 170, y: -12, width: 50, height: 40 } },
+    }
+    const constrained = constrainSpatialObjectToBounds(object, 200, 120)
+    expect(constrained.bounds).toEqual({ x: 150, y: 0, width: 50, height: 40 })
+    expect(constrained.data.geometry).toEqual({ x: 150, y: 0, width: 50, height: 40 })
+
+    expect(constrainSpatialTranslation([
+      { bounds: { x: 20, y: 30, width: 40, height: 20 } },
+      { bounds: { x: 80, y: 70, width: 30, height: 25 } },
+    ], 150, -100, 200, 120)).toEqual({ dx: 90, dy: -30 })
+  })
+})

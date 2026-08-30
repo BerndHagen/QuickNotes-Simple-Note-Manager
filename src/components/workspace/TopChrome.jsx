@@ -1,7 +1,7 @@
 import { ArrowLeft, ArrowRight, Files, PanelRight, Plus, Search } from 'lucide-react'
 import { useNotesStore, useUIStore } from '../../store'
 import { SyncStatusPill } from '../SyncStatus'
-import { Button, IconButton, NotepadGlyph } from '../ui'
+import { BrandLogo, Button, IconButton } from '../ui'
 
 export default function TopChrome({
   navigationToggle,
@@ -27,9 +27,7 @@ export default function TopChrome({
     >
       <div className="flex min-w-0 items-center gap-2 px-2.5 lg:w-sidebar lg:px-3">
         <div className="flex min-w-0 items-center gap-2" aria-label="QuickNotes">
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center text-white" aria-hidden="true">
-            <NotepadGlyph className="h-5 w-5" />
-          </span>
+          <BrandLogo className="h-7 w-7" />
           <span className="hidden truncate text-ui-lg font-semibold tracking-[-0.01em] lg:block">
             QuickNotes
           </span>

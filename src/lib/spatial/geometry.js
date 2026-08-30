@@ -139,6 +139,36 @@ export function moveSpatialObject(object, dx, dy) {
   return next
 }
 
+export function constrainSpatialTranslation(objects, dx, dy, width, height) {
+  if (!Array.isArray(objects) || objects.length === 0) return { dx, dy }
+  const bounds = objects.map((object) => normalizeBounds(object.bounds))
+  const left = Math.min(...bounds.map((value) => value.x))
+  const top = Math.min(...bounds.map((value) => value.y))
+  const right = Math.max(...bounds.map((value) => value.x + value.width))
+  const bottom = Math.max(...bounds.map((value) => value.y + value.height))
+
+  const boundedDelta = (requested, minimum, maximum, limit) => {
+    // Legacy/imported objects can be larger than a page. Do not distort or
+    // unexpectedly relocate that canonical data; the page renderer clips it.
+    if (maximum - minimum > limit) return requested
+    return clamp(requested, -minimum, limit - maximum)
+  }
+
+  return {
+    dx: boundedDelta(dx, left, right, Math.max(0, Number(width) || 0)),
+    dy: boundedDelta(dy, top, bottom, Math.max(0, Number(height) || 0)),
+  }
+}
+
+export function constrainSpatialObjectToBounds(object, width, height) {
+  const bounds = normalizeBounds(object.bounds)
+  const pageWidth = Math.max(0, Number(width) || 0)
+  const pageHeight = Math.max(0, Number(height) || 0)
+  const targetX = bounds.width <= pageWidth ? clamp(bounds.x, 0, pageWidth - bounds.width) : bounds.x
+  const targetY = bounds.height <= pageHeight ? clamp(bounds.y, 0, pageHeight - bounds.height) : bounds.y
+  return moveSpatialObject(object, targetX - bounds.x, targetY - bounds.y)
+}
+
 export function resizeSpatialObject(object, width, height) {
   const next = structuredClone(object)
   const safeWidth = Math.max(24, width)
