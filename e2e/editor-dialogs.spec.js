@@ -312,7 +312,7 @@ test.describe('editor productivity objects', () => {
     await expect.poll(async () => Number(await editor.getAttribute('data-page-count'))).toBeGreaterThanOrEqual(2)
   })
 
-  test('flows a long checklist across pages without stretching the first sheet', async ({ page }) => {
+  test('flows a long checklist across pages without stretching the first sheet', async ({ page }, testInfo) => {
     const editor = page.getByRole('textbox', { name: 'Note content' })
     await editor.click()
     await page.keyboard.press('Control+A')
@@ -350,6 +350,21 @@ test.describe('editor productivity objects', () => {
     expect(boundary.background).not.toBe('rgba(0, 0, 0, 0)')
     expect(boundary.zIndex).toBe('2')
     expect(boundary.editorOverflowX).toBe('clip')
+
+    const intersections = await editor.locator('li[data-type="taskItem"]').evaluateAll((elements) => {
+      const gutters = [...document.querySelectorAll('.qn-page-gap__gutter')]
+        .map((element) => element.getBoundingClientRect())
+      return elements.flatMap((element, index) => {
+        const item = element.getBoundingClientRect()
+        return gutters
+          .filter((gutter) => item.top < gutter.bottom && item.bottom > gutter.top)
+          .map((gutter) => ({ index, itemTop: item.top, itemBottom: item.bottom, gutterTop: gutter.top, gutterBottom: gutter.bottom }))
+      })
+    })
+    expect(intersections, 'Checklist rows must never cross a physical page gutter').toEqual([])
+    await page.keyboard.press('Escape')
+    await firstGap.locator('.qn-page-gap__gutter').scrollIntoViewIfNeeded()
+    await page.screenshot({ path: testInfo.outputPath('long-checklist-pages.png') })
   })
 
   test('changes ruled paper without shifting or narrowing the page', async ({ page }) => {

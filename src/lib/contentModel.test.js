@@ -19,6 +19,9 @@ describe('canonical note content descriptors', () => {
     expect(migrateNoteContentMetadata({ id: 'tasks', noteType: 'todo' })).toMatchObject({
       contentKind: CONTENT_KINDS.STRUCTURED,
     })
+    expect(migrateNoteContentMetadata({ id: 'ideas', noteType: 'brainstorm', contentKind: 'structured' })).toMatchObject({
+      contentKind: CONTENT_KINDS.CANVAS,
+    })
   })
 
   it('keeps spatial payloads out of cloud note_data metadata', () => {
@@ -32,4 +35,3 @@ describe('canonical note content descriptors', () => {
     })
   })
 })
-

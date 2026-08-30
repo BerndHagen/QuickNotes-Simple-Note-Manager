@@ -31,8 +31,7 @@ describe('focused editor state synchronization', () => {
     rerender(
       <TodoListEditor data={data} onChange={latestCallback} noteTitle="Tasks" onTitleChange={() => {}} />
     )
-    fireEvent.click(screen.getByRole('button', { name: 'Filter tasks' }))
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Active' }))
+    fireEvent.click(screen.getByRole('tab', { name: /^Active/ }))
 
     await waitFor(() => expect(latestCallback).toHaveBeenCalledWith(
       expect.objectContaining({ filter: 'active' })

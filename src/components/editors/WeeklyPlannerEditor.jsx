@@ -22,15 +22,14 @@ import {
 import { formatDateKey, generateId, parseDateKey } from './noteTypes'
 import { useLatestValue } from './useLatestValue'
 import { useEditorDataSync } from './useEditorDataSync'
-import FocusedNoteTitle from './FocusedNoteTitle'
-import WorkspaceMetrics from './WorkspaceMetrics'
+import StructuredWorkspaceShell, { WorkspaceTabs } from './StructuredWorkspaceShell'
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 const SHORT_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 const TIME_BLOCKS = [
-  { id: 'morning', label: 'Morning', icon: Sun, color: '#f59e0b' },
-  { id: 'afternoon', label: 'Afternoon', icon: Sunset, color: '#f97316' },
-  { id: 'evening', label: 'Evening', icon: Moon, color: '#6366f1' },
+  { id: 'morning', label: 'Morning', icon: Sun },
+  { id: 'afternoon', label: 'Afternoon', icon: Sunset },
+  { id: 'evening', label: 'Evening', icon: Moon },
 ]
 
 export default function WeeklyPlannerEditor({ data, onChange, noteTitle, onTitleChange, readOnly }) {
@@ -204,79 +203,66 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle, onTitle
   ]
 
   return (
-    <div className="qn-type-editor qn-type-weekly flex h-full flex-col">
-      <header className="qn-type-hero qn-workspace-header flex-shrink-0 border-b border-subtle">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <FocusedNoteTitle
-              icon={Calendar}
-              typeLabel="Planning workspace"
-              title={noteTitle}
-              fallback="Weekly plan"
-              onChange={onTitleChange}
-              readOnly={readOnly}
-            />
-            <div className="ml-12 mt-1 flex items-center gap-2">
-              <button
-                onClick={() => navigateWeek(-1)}
-                aria-label="Previous week"
-                className="p-1 rounded-lg bg-surface-sunken dark:bg-surface-sunken hover:bg-surface-active dark:hover:bg-surface-active text-content-muted"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              <span className="font-medium text-content">{weekLabel}</span>
-              <button
-                onClick={() => navigateWeek(1)}
-                aria-label="Next week"
-                className="p-1 rounded-lg bg-surface-sunken dark:bg-surface-sunken hover:bg-surface-active dark:hover:bg-surface-active text-content-muted"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
-              {plannerData.weekStart !== getWeekStart() && (
-                <button
-                  onClick={goToCurrentWeek}
-                  className="px-3 py-1 rounded-lg bg-surface-sunken dark:bg-surface-sunken hover:bg-surface-active dark:hover:bg-surface-active text-content-muted text-sm"
-                >
-                  Today
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-        {(stats.totalTasks > 0 || stats.totalGoals > 0) && (
-          <WorkspaceMetrics
-            items={[
-              ...(stats.totalTasks ? [{ label: 'Tasks', value: `${stats.completedTasks}/${stats.totalTasks}` }] : []),
-              ...(stats.totalGoals ? [{ label: 'Goals', value: `${stats.completedGoals}/${stats.totalGoals}` }] : []),
-              { label: 'Progress', value: `${completionPercent}%`, tone: completionPercent === 100 ? 'success' : 'neutral' },
-            ]}
-          />
-        )}
-      </header>
-      <div className="qn-type-tabs flex-shrink-0 flex gap-1 p-2 border-b border-subtle bg-surface-sunken">
-        {views.map((view) => (
-          <button
-            key={view.id}
-            onClick={() => {
-              setActiveView(view.id)
-              update('preferredView', view.id)
-            }}
-            aria-pressed={activeView === view.id}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
- activeView === view.id
- ? 'bg-accent-soft text-accent-text'
-                : 'text-content-muted hover:bg-surface-hover'
-            }`}
-          >
-            <view.icon className="w-4 h-4" />
-            {view.label}
-          </button>
-        ))}
-      </div>
-      <div className="qn-workspace-canvas flex-1 overflow-y-auto">
+    <StructuredWorkspaceShell
+      className="qn-type-editor qn-type-weekly"
+      icon={Calendar}
+      typeLabel="Planning workspace"
+      title={noteTitle}
+      fallback="Weekly plan"
+      onTitleChange={onTitleChange}
+      readOnly={readOnly}
+      summary={(
+        <>
+          <button type="button" className="qn-weekly-date-button" onClick={() => navigateWeek(-1)} aria-label="Previous week"><ChevronLeft className="h-4 w-4" aria-hidden="true" /></button>
+          <span className="qn-weekly-date">{weekLabel}</span>
+          <button type="button" className="qn-weekly-date-button" onClick={() => navigateWeek(1)} aria-label="Next week"><ChevronRight className="h-4 w-4" aria-hidden="true" /></button>
+          {plannerData.weekStart !== getWeekStart() && <button type="button" className="qn-weekly-today" onClick={goToCurrentWeek}>Current week</button>}
+          <span>{stats.completedTasks}/{stats.totalTasks} tasks</span>
+          <span>{completionPercent}% complete</span>
+        </>
+      )}
+      commands={(
+        <WorkspaceTabs
+          tabs={views.map((view) => ({
+            ...view,
+            count: view.id === 'goals' ? stats.totalGoals : undefined,
+          }))}
+          activeTab={activeView}
+          onChange={(view) => { setActiveView(view); update('preferredView', view) }}
+        />
+      )}
+    >
         {activeView === 'week' && (
-          <div className="qn-weekly-week-layout flex h-full">
-            <div className="qn-weekly-day-rail w-20 flex-shrink-0 overflow-auto border-r border-subtle bg-surface-sunken">
+          <div className="qn-weekly-week-layout">
+            <div className="qn-weekly-mobile-day-nav" aria-label="Day navigation">
+              <button
+                type="button"
+                aria-label="Previous day"
+                disabled={DAYS.indexOf(selectedDay.charAt(0).toUpperCase() + selectedDay.slice(1)) === 0}
+                onClick={() => {
+                  const index = DAYS.findIndex((day) => day.toLowerCase() === selectedDay)
+                  if (index > 0) setSelectedDay(DAYS[index - 1].toLowerCase())
+                }}
+              >
+                <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+              </button>
+              <div>
+                <strong>{selectedDay.charAt(0).toUpperCase() + selectedDay.slice(1)}</strong>
+                <span>{getDateForDay(DAYS.findIndex((day) => day.toLowerCase() === selectedDay)).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+              </div>
+              <button
+                type="button"
+                aria-label="Next day"
+                disabled={DAYS.findIndex((day) => day.toLowerCase() === selectedDay) === DAYS.length - 1}
+                onClick={() => {
+                  const index = DAYS.findIndex((day) => day.toLowerCase() === selectedDay)
+                  if (index < DAYS.length - 1) setSelectedDay(DAYS[index + 1].toLowerCase())
+                }}
+              >
+                <ChevronRight className="h-4 w-4" aria-hidden="true" />
+              </button>
+            </div>
+            <div className="qn-weekly-day-rail">
               {DAYS.map((day, index) => {
                 const dayKey = day.toLowerCase()
                 const dayData = plannerData.days[dayKey]
@@ -325,7 +311,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle, onTitle
                 )
               })}
             </div>
-            <div className="qn-weekly-day-content min-w-0 flex-1 overflow-y-auto p-4">
+            <div className="qn-weekly-day-content">
               <div className="qn-workspace-panel mx-auto max-w-2xl p-5">
                 <div className="qn-weekly-day-heading flex items-start justify-between gap-4 mb-6">
                   <div>
@@ -422,7 +408,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle, onTitle
                     return (
                       <div key={block.id} className="mb-4">
                         <div className="flex items-center gap-2 mb-2">
-                          <BlockIcon className="w-4 h-4" style={{ color: block.color }} />
+                          <BlockIcon className="w-4 h-4 text-content-muted" />
                           <span className="text-sm font-medium text-content-muted">
                             {block.label}
                           </span>
@@ -626,14 +612,10 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle, onTitle
               </h2>
               <p className="text-content-muted">Reflect on your week and plan for the next</p>
             </div>
-            <div className="mb-8">
-              <WorkspaceMetrics
-                items={[
-                  { label: 'Tasks completed', value: stats.completedTasks, tone: stats.completedTasks ? 'success' : 'neutral' },
-                  { label: 'Goals achieved', value: stats.completedGoals, tone: stats.completedGoals ? 'success' : 'neutral' },
-                  { label: 'Days rated', value: Object.values(plannerData.days).filter((day) => day.rating).length },
-                ]}
-              />
+            <div className="qn-weekly-review-summary">
+              <span><strong>{stats.completedTasks}</strong> tasks completed</span>
+              <span><strong>{stats.completedGoals}</strong> goals achieved</span>
+              <span><strong>{Object.values(plannerData.days).filter((day) => day.rating).length}</strong> days reviewed</span>
             </div>
 
             <div className="space-y-6">
@@ -695,7 +677,6 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle, onTitle
             </div>
           </div>
         )}
-      </div>
-    </div>
+    </StructuredWorkspaceShell>
   )
 }

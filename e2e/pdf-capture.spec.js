@@ -83,7 +83,7 @@ test.describe('Task 4 PDF capture', () => {
     await dialog.getByRole('button', { name: 'Close', exact: true }).last().click()
 
     await page.setViewportSize({ width: 1440, height: 900 })
-    await page.getByRole('button', { name: 'Search all notes' }).click()
+    await page.getByRole('searchbox', { name: 'Search all notes' }).click()
     const search = page.getByRole('dialog', { name: /global search/i })
     await search.getByRole('combobox').fill('contract 7391')
     const result = search.getByRole('option', { name: new RegExp(title, 'i') })

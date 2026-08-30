@@ -6,7 +6,13 @@ import {
   Moon,
   Cloud,
   CloudRain,
+  CloudLightning,
+  Snowflake,
   Smile,
+  Laugh,
+  Meh,
+  Frown,
+  Annoyed,
   Heart,
   Star,
   Plus,
@@ -21,29 +27,28 @@ import {
 import { formatDateKey, generateId, parseDateKey } from './noteTypes'
 import { useLatestValue } from './useLatestValue'
 import { useEditorDataSync } from './useEditorDataSync'
-import FocusedNoteTitle from './FocusedNoteTitle'
-import WorkspaceMetrics from './WorkspaceMetrics'
+import StructuredWorkspaceShell, { WorkspaceTabs } from './StructuredWorkspaceShell'
 import TodayAgenda from '../workspace/TodayAgenda'
 const MOODS = [
-  { id: 1, emoji: '\u{1F622}', label: 'Terrible', color: '#ef4444' },
-  { id: 2, emoji: '\u{1F614}', label: 'Bad', color: '#f97316' },
-  { id: 3, emoji: '\u{1F610}', label: 'Okay', color: '#eab308' },
-  { id: 4, emoji: '\u{1F642}', label: 'Good', color: '#84cc16' },
-  { id: 5, emoji: '\u{1F604}', label: 'Great', color: '#22c55e' },
+  { id: 1, icon: Annoyed, label: 'Terrible' },
+  { id: 2, icon: Frown, label: 'Bad' },
+  { id: 3, icon: Meh, label: 'Okay' },
+  { id: 4, icon: Smile, label: 'Good' },
+  { id: 5, icon: Laugh, label: 'Great' },
 ]
 const ENERGY_LEVELS = [
-  { id: 1, label: 'Exhausted', icon: '\u{1F50B}', color: '#ef4444' },
-  { id: 2, label: 'Low', icon: '\u{1F50B}', color: '#f97316' },
-  { id: 3, label: 'Normal', icon: '\u{1F50B}', color: '#eab308' },
-  { id: 4, label: 'Good', icon: '\u{1F50B}', color: '#84cc16' },
-  { id: 5, label: 'Energized', icon: '\u26A1', color: '#22c55e' },
+  { id: 1, label: 'Exhausted' },
+  { id: 2, label: 'Low' },
+  { id: 3, label: 'Normal' },
+  { id: 4, label: 'Good' },
+  { id: 5, label: 'Energized' },
 ]
 const WEATHER = [
-  { id: 'sunny', emoji: '\u2600\uFE0F', label: 'Sunny' },
-  { id: 'cloudy', emoji: '\u2601\uFE0F', label: 'Cloudy' },
-  { id: 'rainy', emoji: '\u{1F327}\uFE0F', label: 'Rainy' },
-  { id: 'stormy', emoji: '\u26C8\uFE0F', label: 'Stormy' },
-  { id: 'snowy', emoji: '\u2744\uFE0F', label: 'Snowy' },
+  { id: 'sunny', icon: Sun, label: 'Sunny' },
+  { id: 'cloudy', icon: Cloud, label: 'Cloudy' },
+  { id: 'rainy', icon: CloudRain, label: 'Rainy' },
+  { id: 'stormy', icon: CloudLightning, label: 'Stormy' },
+  { id: 'snowy', icon: Snowflake, label: 'Snowy' },
 ]
 
 export default function JournalEditor({ data, onChange, note, noteTitle, onTitleChange, readOnly, todayViewToken }) {
@@ -171,68 +176,30 @@ export default function JournalEditor({ data, onChange, note, noteTitle, onTitle
   ]
 
   return (
-    <div className="qn-type-editor qn-type-journal flex h-full flex-col">
-      <header className="qn-type-hero qn-workspace-header flex-shrink-0 border-b border-subtle">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <FocusedNoteTitle
-              icon={BookOpen}
-              typeLabel="Journal workspace"
-              title={noteTitle}
-              fallback="Daily journal"
-              onChange={onTitleChange}
-              readOnly={readOnly}
-            />
-            <div className="ml-12 mt-1 flex items-center gap-2">
-              <button
-                onClick={() => changeDate(-1)}
-                aria-label="Previous journal day"
-                className="qn-square-control flex h-8 w-8 items-center justify-center rounded-control border border-subtle bg-surface-raised text-content-muted hover:bg-surface-hover"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              <span className="text-ui-md font-medium text-content">{dateDisplay}</span>
-              <button
-                onClick={() => changeDate(1)}
-                disabled={isToday}
-                aria-label="Next journal day"
-                className="qn-square-control flex h-8 w-8 items-center justify-center rounded-control border border-subtle bg-surface-raised text-content-muted hover:bg-surface-hover disabled:opacity-50"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-          
-        </div>
-        {(journalData.mood || journalData.energy || journalData.weather || completionPercent > 0) && (
-          <WorkspaceMetrics
-            items={[
-              ...(journalData.mood ? [{ label: 'Mood', value: MOODS.find(m => m.id === journalData.mood)?.label }] : []),
-              ...(journalData.energy ? [{ label: 'Energy', value: `${journalData.energy}/5` }] : []),
-              ...(journalData.weather ? [{ label: 'Weather', value: WEATHER.find(w => w.id === journalData.weather)?.label }] : []),
-              ...(journalData.freeWrite.trim() ? [{ label: 'Writing', value: `${journalData.freeWrite.split(/\s+/).filter(Boolean).length} words` }] : []),
-            ]}
-          />
-        )}
-      </header>
-      <div className="qn-type-tabs flex-shrink-0 flex gap-1 p-2 border-b border-subtle bg-surface-sunken overflow-x-auto">
-        {sections.map(section => (
-          <button
-            key={section.id}
-            onClick={() => selectSection(section.id)}
-            aria-pressed={activeSection === section.id}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
- activeSection === section.id
- ? 'bg-accent-soft text-accent-text'
-                : 'text-content-muted hover:bg-surface-hover'
-            }`}
-          >
-            <section.icon className="w-4 h-4" />
-            {section.label}
+    <StructuredWorkspaceShell
+      className="qn-type-editor qn-type-journal"
+      icon={BookOpen}
+      typeLabel="Journal workspace"
+      title={noteTitle}
+      fallback="Daily journal"
+      onTitleChange={onTitleChange}
+      readOnly={readOnly}
+      summary={(
+        <>
+          <button type="button" className="qn-journal-date-button" onClick={() => changeDate(-1)} aria-label="Previous journal day">
+            <ChevronLeft className="h-4 w-4" aria-hidden="true" />
           </button>
-        ))}
-      </div>
-      <div className="qn-workspace-canvas flex-1 overflow-y-auto p-4">
+          <span className="qn-journal-date">{dateDisplay}</span>
+          <button type="button" className="qn-journal-date-button" onClick={() => changeDate(1)} disabled={isToday} aria-label="Next journal day">
+            <ChevronRight className="h-4 w-4" aria-hidden="true" />
+          </button>
+          {journalData.mood && <span>{MOODS.find((mood) => mood.id === journalData.mood)?.label} mood</span>}
+          {journalData.energy && <span>Energy {journalData.energy}/5</span>}
+          <span>{completionPercent}% check-in</span>
+        </>
+      )}
+      commands={<WorkspaceTabs tabs={sections} activeTab={activeSection} onChange={selectSection} />}
+    >
         {activeSection === 'today' && isToday && <TodayAgenda currentNoteId={note?.id} />}
         {activeSection === 'morning' && (
           <div className="qn-workspace-panel qn-journal-checkin mx-auto max-w-3xl space-y-5 p-5">
@@ -254,7 +221,7 @@ export default function JournalEditor({ data, onChange, note, noteTitle, onTitle
                         aria-pressed={journalData.mood === mood.id}
                         className={`qn-journal-choice ${journalData.mood === mood.id ? 'qn-journal-choice--active' : ''}`}
                       >
-                        <span aria-hidden="true">{mood.emoji}</span>
+                        <mood.icon className="h-4 w-4" aria-hidden="true" />
                       </button>
                     ))}
                   </div>
@@ -285,7 +252,7 @@ export default function JournalEditor({ data, onChange, note, noteTitle, onTitle
                         title={weather.label}
                         aria-pressed={journalData.weather === weather.id}
                         className={`qn-journal-choice ${journalData.weather === weather.id ? 'qn-journal-choice--active' : ''}`}
-                      ><span aria-hidden="true">{weather.emoji}</span></button>
+                      ><weather.icon className="h-4 w-4" aria-hidden="true" /></button>
                     ))}
                   </div>
                 </fieldset>
@@ -581,7 +548,6 @@ export default function JournalEditor({ data, onChange, note, noteTitle, onTitle
             </div>
           </div>
         )}
-      </div>
-    </div>
+    </StructuredWorkspaceShell>
   )
 }

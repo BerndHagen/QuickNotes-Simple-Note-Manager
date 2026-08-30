@@ -13,20 +13,24 @@ const STRUCTURED_NOTE_TYPES = new Set([
   'project',
   'meeting',
   'journal',
-  'brainstorm',
   'shopping',
   'weekly',
 ])
 
 export function contentKindForNoteType(noteType) {
   if (noteType === 'paper') return CONTENT_KINDS.PAPER
-  if (noteType === 'canvas') return CONTENT_KINDS.CANVAS
+  if (noteType === 'canvas' || noteType === 'brainstorm') return CONTENT_KINDS.CANVAS
   if (STRUCTURED_NOTE_TYPES.has(noteType)) return CONTENT_KINDS.STRUCTURED
   return CONTENT_KINDS.DOCUMENT
 }
 
 export function normalizeContentDescriptor(note = {}) {
-  const contentKind = VALID_CONTENT_KINDS.has(note.contentKind)
+  // Brainstorm was historically stored as a structured list. The flagship
+  // workspace is now a Canvas specialization with the former list retained
+  // as a sidecar idea register, so old records migrate deterministically.
+  const contentKind = note.noteType === 'brainstorm'
+    ? CONTENT_KINDS.CANVAS
+    : VALID_CONTENT_KINDS.has(note.contentKind)
     ? note.contentKind
     : contentKindForNoteType(note.noteType)
   const contentSchemaVersion = Number.isInteger(note.contentSchemaVersion) && note.contentSchemaVersion > 0
@@ -76,4 +80,3 @@ export function extractContentDescriptorFromNoteData(noteType, rawNoteData) {
     noteData: Object.keys(noteData).length > 0 ? noteData : null,
   }
 }
-

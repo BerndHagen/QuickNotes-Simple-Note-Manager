@@ -83,7 +83,7 @@ test.describe('daily workspace workflows on mobile', () => {
 
   test('task center remains inside the viewport with a usable task list', async ({ page }) => {
     await signIn(page)
-    await page.getByRole('button', { name: /show navigation/i }).click()
+    await page.locator('.qn-top-chrome').getByRole('button', { name: /show navigation/i }).click()
     await page.getByRole('button', { name: /My Tasks/ }).click()
     const dialog = page.getByRole('dialog', { name: 'My Tasks' })
     await expect(dialog).toBeVisible()

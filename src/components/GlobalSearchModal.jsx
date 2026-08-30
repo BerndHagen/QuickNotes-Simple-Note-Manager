@@ -74,7 +74,13 @@ const iconForResult = (result) => result.contentKind === 'paper'
 
 export default function GlobalSearchModal() {
   const { t } = useTranslation()
-  const { globalSearchOpen, setGlobalSearchOpen, setMobileView } = useUIStore()
+  const {
+    globalSearchOpen,
+    globalSearchQuery,
+    setGlobalSearchOpen,
+    setGlobalSearchQuery,
+    setMobileView,
+  } = useUIStore()
   const {
     notes,
     sharedNotes = [],
@@ -192,8 +198,9 @@ export default function GlobalSearchModal() {
     if (semanticJob && ['queued', 'running'].includes(semanticJob.status)) void cancelIntelligenceJob(semanticJob.id)
     performSearch.cancel()
     requestTokenRef.current += 1
+    setGlobalSearchQuery('')
     setGlobalSearchOpen(false)
-  }, [performSearch, semanticJob, setGlobalSearchOpen])
+  }, [performSearch, semanticJob, setGlobalSearchOpen, setGlobalSearchQuery])
 
   const selectResult = useCallback((index) => {
     const result = flattenedResults[index]
@@ -217,7 +224,8 @@ export default function GlobalSearchModal() {
       performSearch.cancel()
       return
     }
-    setQuery('')
+    const initialQuery = globalSearchQuery || ''
+    setQuery(initialQuery)
     setResults(EMPTY_RESULTS)
     setSelectedIndex(0)
     setTypeFilter('all')
@@ -225,7 +233,7 @@ export default function GlobalSearchModal() {
     setSemanticJobId(null)
     setSemanticError('')
     setConsentAction(null)
-    requestSearch('', 'all')
+    requestSearch(initialQuery, 'all')
     // Opening initializes the query once. A worker/status transition must not
     // clear text that the user has already entered; the ready-state effect
     // below refreshes that current query instead.
@@ -262,6 +270,7 @@ export default function GlobalSearchModal() {
 
   const handleQueryChange = (event) => {
     setQuery(event.target.value)
+    setGlobalSearchQuery(event.target.value)
     setResults(EMPTY_RESULTS)
     setSelectedIndex(0)
     requestSearch(event.target.value, typeFilter)

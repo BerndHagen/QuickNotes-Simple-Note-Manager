@@ -144,7 +144,7 @@ export const createSearchDocument = ({
   const documentBody = descriptor.contentKind === 'document'
     ? htmlToKnowledgeText(note.content)
     : ''
-  const structuredBody = descriptor.contentKind === 'structured'
+  const structuredBody = descriptor.contentKind === 'structured' || note.noteType === 'brainstorm'
     ? collectStructuredText(note.noteData, { maximumCharacters: MAX_SEARCHABLE_TEXT_LENGTH })
     : ''
   const spatial = ['paper', 'canvas'].includes(descriptor.contentKind)

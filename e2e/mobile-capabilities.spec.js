@@ -143,6 +143,33 @@ test.describe('mobile capability parity', () => {
       { steps: 8 }
     )
     await expect.poll(() => stage.evaluate((element) => element.scrollLeft)).toBeGreaterThan(scrollBefore + 50)
+
+    // Return to a useful overview, add a page through the real phone drawer,
+    // close the drawer, and continue writing on the newly active page.
+    for (let attempts = 0; attempts < 20; attempts += 1) {
+      const current = Number.parseInt((await page.getByLabel('Current zoom').textContent()), 10)
+      if (current <= zoomBeforePinch) break
+      await page.getByRole('button', { name: 'Zoom out' }).click()
+    }
+    await expect.poll(async () => Number.parseInt((await page.getByLabel('Current zoom').textContent()), 10))
+      .toBeLessThanOrEqual(zoomBeforePinch)
+    await page.getByRole('button', { name: 'Show pages' }).click()
+    await pageDrawer.getByRole('button', { name: 'Add page' }).click()
+    await expect(pageDrawer.getByText('Page 2', { exact: true })).toBeVisible()
+    await pageDrawer.getByRole('button', { name: 'Hide pages' }).click()
+    const secondPage = page.getByRole('application', { name: /page 2/i })
+    await secondPage.scrollIntoViewIfNeeded()
+    const secondBox = await secondPage.boundingBox()
+    await page.getByLabel('Writing instrument').selectOption('pen')
+    await dragTouch(page,
+      { x: secondBox.x + 55, y: secondBox.y + 90 },
+      { x: secondBox.x + 150, y: secondBox.y + 135 },
+      { steps: 10 }
+    )
+    await expect.poll(async () => (await spatialObjects(page, title)).filter((item) => item.kind === 'stroke').length).toBe(2)
+    await page.getByRole('button', { name: 'Show pages' }).click()
+    await pageDrawer.getByRole('button', { name: /Page 1/i }).click()
+    await expect(page.getByRole('application', { name: /page 1/i })).toBeVisible()
     await expectNoHorizontalOverflow(page)
     expect(errors).toEqual([])
   })
@@ -190,10 +217,22 @@ test.describe('mobile capability parity', () => {
     const annotation = page.getByRole('dialog', { name: /annotate mobile-annotation\.png/i })
     const annotationSurface = annotation.getByRole('application', { name: /annotations for source page 1/i })
     const annotationBox = await annotationSurface.boundingBox()
+    const annotationActiveInk = annotationSurface.locator('.qn-spatial-ink--active')
+    const annotationActivePixels = () => annotationActiveInk.evaluate((canvas) => {
+      const pixels = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data
+      let opaque = 0
+      for (let index = 3; index < pixels.length; index += 4) {
+        if (pixels[index] > 0) opaque += 1
+      }
+      return opaque
+    })
     await dragTouch(page,
       { x: annotationBox.x + 45, y: annotationBox.y + 100 },
       { x: annotationBox.x + 190, y: annotationBox.y + 170 },
-      { steps: 12 }
+      {
+        steps: 12,
+        beforeRelease: async () => expect.poll(annotationActivePixels).toBeGreaterThan(0),
+      }
     )
     await expect(annotation.getByRole('status')).toContainText('1 annotation')
     await expect.poll(() => annotationObjectCount(page)).toBe(1)

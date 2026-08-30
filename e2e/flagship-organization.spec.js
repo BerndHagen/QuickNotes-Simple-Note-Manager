@@ -68,7 +68,7 @@ test.describe('flagship organization on mobile', () => {
 
   test('keeps the Smart View builder inside the phone viewport', async ({ page }) => {
     await signIn(page)
-    await page.getByRole('button', { name: /show navigation/i }).click()
+    await page.locator('.qn-top-chrome').getByRole('button', { name: /show navigation/i }).click()
     await page.getByRole('button', { name: 'New smart view' }).click()
     const dialog = page.getByRole('dialog', { name: 'New smart view' })
     await expect(dialog).toBeVisible()

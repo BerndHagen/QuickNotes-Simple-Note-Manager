@@ -13,11 +13,13 @@ async function createCanvasNote(page, title) {
 }
 
 async function openSearch(page) {
-  await page.getByRole('button', { name: 'Search all notes' }).click()
+  await page.getByRole('searchbox', { name: 'Search all notes' }).click()
   const dialog = page.getByRole('dialog', { name: /global search/i })
   await expect(dialog).toBeVisible()
   return dialog
 }
+
+const documentSaveStatus = (page) => page.locator('.qn-note-statistics').getByText(/saved/i)
 
 test.describe('connected knowledge system', () => {
   test('finds Unicode Document text and typed Canvas objects in one offline search', async ({ page }, testInfo) => {
@@ -29,7 +31,7 @@ test.describe('connected knowledge system', () => {
     await createNote(page, documentTitle)
     const editor = page.locator('.ProseMirror').first()
     await editor.fill('Zürich façade planning includes the ferrovia milestone.')
-    await expect(page.getByText(/saved/i).first()).toBeVisible({ timeout: 15_000 })
+    await expect(documentSaveStatus(page)).toBeVisible({ timeout: 15_000 })
 
     let search = await openSearch(page)
     await search.getByRole('combobox').fill('zurich facade')
@@ -98,7 +100,7 @@ test.describe('connected knowledge system', () => {
     await targetEditor.click()
     await targetEditor.press('Control+Alt+1')
     await targetEditor.pressSequentially(headingText)
-    await expect(page.getByText(/saved/i).first()).toBeVisible({ timeout: 15_000 })
+    await expect(documentSaveStatus(page)).toBeVisible({ timeout: 15_000 })
     const heading = targetEditor.locator('h1', { hasText: headingText })
     await expect(heading).toHaveAttribute('data-anchor-id', /.+/)
     const anchorId = await heading.getAttribute('data-anchor-id')
@@ -118,7 +120,7 @@ test.describe('connected knowledge system', () => {
 
     const internalLink = page.locator('.ProseMirror a.note-link', { hasText: headingText })
     await expect(internalLink).toHaveAttribute('data-note-anchor-id', anchorId)
-    await expect(page.getByText(/saved/i).first()).toBeVisible({ timeout: 15_000 })
+    await expect(documentSaveStatus(page)).toBeVisible({ timeout: 15_000 })
 
     await page.getByRole('button', { name: 'Show inspector' }).click()
     const inspector = page.getByLabel('Inspector')

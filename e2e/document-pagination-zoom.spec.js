@@ -178,6 +178,36 @@ test.describe('document page geometry and workspace zoom', () => {
     expect(await fieldset.evaluate((element) => getComputedStyle(element).zoom)).toBe('1.1')
   })
 
+  test('owns desktop zoom across the complete Paper workspace', async ({ page }) => {
+    await page.getByRole('button', { name: 'Create workspace' }).click()
+    const picker = page.getByRole('dialog', { name: /new workspace/i })
+    await picker
+      .locator('section[aria-label="Workspace types"]')
+      .getByRole('button', { name: /^Paper/i })
+      .click()
+    await picker.getByLabel('Note title').fill('Paper zoom boundary')
+    await picker.getByRole('button', { name: /^Create paper$/i }).click()
+    await page.locator('.note-card', { hasText: 'Paper zoom boundary' }).click()
+
+    const zoom = page.getByLabel('Current zoom')
+    const deviceScaleBefore = await page.evaluate(() => window.devicePixelRatio)
+    await expect(zoom).toHaveText(/80%/)
+
+    await page.getByRole('complementary', { name: 'Paper pages' })
+      .getByRole('button', { name: 'Add page', exact: true })
+      .hover()
+    await page.keyboard.down('Control')
+    await page.mouse.wheel(0, -120)
+    await page.keyboard.up('Control')
+    await expect(zoom).toHaveText(/90%/)
+    expect(await page.evaluate(() => window.devicePixelRatio)).toBe(deviceScaleBefore)
+
+    await page.keyboard.press('Control+0')
+    await expect(zoom).toHaveText(/100%/)
+    await page.keyboard.press('Control+-')
+    await expect(zoom).toHaveText(/90%/)
+  })
+
   test('preserves independent page edges in dark mode and usable zoom controls on phones', async ({ page }, testInfo) => {
     const editor = page.locator('.ProseMirror')
     await editor.click()

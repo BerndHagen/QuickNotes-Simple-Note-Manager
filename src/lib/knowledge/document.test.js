@@ -74,6 +74,25 @@ describe('canonical SearchDocument projection', () => {
     ]))
   })
 
+  it('indexes both the Canvas and retained idea register for Brainstorm', () => {
+    const document = createSearchDocument({
+      ownerId: 'owner-a',
+      note: baseNote({
+        noteType: 'brainstorm',
+        contentKind: 'canvas',
+        noteData: { topic: 'Reduce setup time', ideas: [{ id: 'idea-1', text: 'Guided import' }] },
+      }),
+      spatialObjects: [
+        { id: 'sticky-1', kind: 'sticky', data: { text: 'Map the first-run path' } },
+      ],
+    })
+
+    expect(document.bodyText).toContain('Reduce setup time')
+    expect(document.bodyText).toContain('Guided import')
+    expect(document.bodyText).not.toContain('idea-1')
+    expect(document.objectText).toContain('Map the first-run path')
+  })
+
   it('indexes attributed recognition separately from canonical content', () => {
     const document = createSearchDocument({
       ownerId: 'owner-a',

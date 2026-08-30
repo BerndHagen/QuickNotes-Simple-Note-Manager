@@ -140,7 +140,17 @@ function PageRail({ pages, objectsForPage, activePageId, onSelect, onAdd, onDupl
   )
 }
 
-export default function SpatialEditor({ note, kind, noteTitle, onTitleChange, readOnly = false, navigationTarget = null, onNavigationComplete }) {
+export default function SpatialEditor({
+  note,
+  kind,
+  noteTitle,
+  onTitleChange,
+  readOnly = false,
+  navigationTarget = null,
+  onNavigationComplete,
+  experienceLabel = kind === 'paper' ? 'Paper' : 'Canvas',
+  hideTitlebar = false,
+}) {
   const {
     workspace,
     loading,
@@ -180,6 +190,7 @@ export default function SpatialEditor({ note, kind, noteTitle, onTitleChange, re
     typeof window === 'undefined' || !window.matchMedia('(max-width: 800px)').matches
   ))
   const imageInputRef = useRef(null)
+  const editorRootRef = useRef(null)
   const stageRef = useRef(null)
   const gestureRef = useRef(null)
   const touchPointersRef = useRef(new Map())
@@ -1068,6 +1079,49 @@ export default function SpatialEditor({ note, kind, noteTitle, onTitleChange, re
     }
   }, [changeZoom, kind, scheduleViewportSave])
 
+  useEffect(() => {
+    const zoomFromWheel = (event) => {
+      if (!event.ctrlKey && !event.metaKey) return
+      event.preventDefault()
+      event.stopPropagation()
+      const stage = stageRef.current
+      const rect = stage?.getBoundingClientRect()
+      const anchor = kind === 'canvas' && rect
+        ? { x: event.clientX - rect.left, y: event.clientY - rect.top }
+        : null
+      changeZoom(event.deltaY > 0 ? -0.1 : 0.1, anchor)
+    }
+
+    const zoomFromKeyboard = (event) => {
+      if (!event.ctrlKey && !event.metaKey) return
+      if (!['+', '=', '-', '_', '0'].includes(event.key)) return
+      event.preventDefault()
+      event.stopPropagation()
+      if (event.key === '0') {
+        setViewport((current) => {
+          const next = kind === 'canvas'
+            ? { ...current, panX: 0, panY: 0, zoom: 1 }
+            : { ...current, zoom: 1 }
+          scheduleViewportSave(next)
+          return next
+        })
+      } else {
+        changeZoom(event.key === '+' || event.key === '=' ? 0.1 : -0.1)
+      }
+    }
+
+    // The active spatial editor owns browser zoom shortcuts for the complete
+    // QuickNotes window. Toolbars, the Paper page rail and the application
+    // chrome are outside the drawing surface, but Ctrl+wheel / Ctrl+0 must
+    // still change the active note rather than Chrome's page scale.
+    window.addEventListener('wheel', zoomFromWheel, { passive: false, capture: true })
+    window.addEventListener('keydown', zoomFromKeyboard, { capture: true })
+    return () => {
+      window.removeEventListener('wheel', zoomFromWheel, { capture: true })
+      window.removeEventListener('keydown', zoomFromKeyboard, { capture: true })
+    }
+  }, [changeZoom, kind, scheduleViewportSave])
+
   const textFocus = useCallback((object) => {
     if (!textOriginalRef.current.has(object.id)) textOriginalRef.current.set(object.id, structuredClone(object))
   }, [])
@@ -1294,9 +1348,9 @@ export default function SpatialEditor({ note, kind, noteTitle, onTitleChange, re
   }
 
   return (
-    <section className="qn-spatial-editor" aria-label={`${kind === 'paper' ? 'Paper' : 'Canvas'} editor`}>
-      <header className="qn-spatial-titlebar">
-        <label htmlFor={`qn-spatial-title-${note.id}`}>{kind === 'paper' ? 'Paper' : 'Canvas'}</label>
+    <section ref={editorRootRef} className="qn-spatial-editor" aria-label={`${experienceLabel} editor`}>
+      {!hideTitlebar && <header className="qn-spatial-titlebar">
+        <label htmlFor={`qn-spatial-title-${note.id}`}>{experienceLabel}</label>
         <input
           id={`qn-spatial-title-${note.id}`}
           type="text"
@@ -1304,9 +1358,9 @@ export default function SpatialEditor({ note, kind, noteTitle, onTitleChange, re
           value={noteTitle ?? note.title ?? ''}
           onChange={onTitleChange}
           readOnly={editingBlocked}
-          placeholder={kind === 'paper' ? 'Untitled paper' : 'Untitled canvas'}
+          placeholder={`Untitled ${experienceLabel.toLowerCase()}`}
         />
-      </header>
+      </header>}
       {spatialConflict && (
         <div role="alert" className="flex flex-wrap items-center gap-2 border-b border-warning-border bg-warning-soft px-3 py-2 text-ui-sm text-warning-text">
           <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />

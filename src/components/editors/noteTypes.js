@@ -151,6 +151,16 @@ const baseData = {
     sortBy: 'priority',
   }),
   [NOTE_TYPES.PROJECT]: () => ({
+    project: {
+      brief: '',
+      status: 'active',
+      priority: 'medium',
+      startDate: '',
+      targetDate: '',
+      goals: '',
+      decisions: '',
+      risks: '',
+    },
     columns: [
       { id: 'backlog', name: 'Backlog', tasks: [] },
       { id: 'todo', name: 'To do', tasks: [] },
@@ -196,7 +206,7 @@ const baseData = {
       { id: 'research', name: 'Research', color: '#8b5cf6' },
       { id: 'marketing', name: 'Marketing', color: '#f59e0b' },
     ],
-    viewMode: 'grid',
+    viewMode: 'canvas',
     sortBy: 'newest',
     selectedCategory: 'all',
   }),
@@ -310,13 +320,13 @@ export const NOTE_TYPE_CONFIG = {
     id: NOTE_TYPES.BRAINSTORM,
     name: 'Idea Board',
     shortName: 'Ideas',
-    description: 'Capture ideas quickly, then group, evaluate, and develop them.',
-    bestFor: 'Problem solving, product discovery, campaigns, and workshops',
+    description: 'Think spatially on an open canvas, then review promising ideas in a register.',
+    bestFor: 'Concept maps, problem solving, product discovery, and workshops',
     icon: Lightbulb,
     color: '#c58a12',
     category: 'Creative',
-    features: ['Rapid capture', 'Categories', 'Voting & starring', 'Idea notes'],
-    keywords: ['brainstorm', 'ideas', 'creative', 'vote', 'discovery'],
+    features: ['Spatial canvas', 'Ink & shapes', 'Idea register', 'Voting & starring'],
+    keywords: ['brainstorm', 'ideas', 'creative', 'canvas', 'discovery'],
   },
   [NOTE_TYPES.SHOPPING]: {
     id: NOTE_TYPES.SHOPPING,
@@ -481,6 +491,13 @@ export const NOTE_TYPE_STARTERS = {
       title: 'Product launch',
       data: () => {
         const data = baseData[NOTE_TYPES.PROJECT]()
+        data.project = {
+          ...data.project,
+          brief: 'Coordinate product readiness, launch communication, and the public release around one shared delivery plan.',
+          priority: 'high',
+          goals: 'Deliver a stable launch-ready build\nPublish clear release communication\nConfirm support and follow-up ownership',
+          risks: 'Late regressions in the release candidate\nUnclear ownership for launch-day communication',
+        }
         data.columns[0].tasks = [
           projectTask('Define launch goal and audience', { priority: 'high' }),
           projectTask('Draft launch story and release notes'),
@@ -502,6 +519,12 @@ export const NOTE_TYPE_STARTERS = {
       title: 'Sprint board',
       data: () => {
         const data = baseData[NOTE_TYPES.PROJECT]()
+        data.project = {
+          ...data.project,
+          brief: 'Deliver a focused, reviewable increment with explicit acceptance criteria and regression coverage.',
+          goals: 'Agree on the sprint outcome\nComplete the highest-value increment\nFinish with a reviewable build',
+          risks: 'Dependencies discovered after implementation starts',
+        }
         data.columns[0].tasks = [
           projectTask('Clarify acceptance criteria', { priority: 'high' }),
           projectTask('Identify dependencies and risks', { priority: 'medium' }),
@@ -523,6 +546,12 @@ export const NOTE_TYPE_STARTERS = {
       title: 'Client delivery',
       data: () => {
         const data = baseData[NOTE_TYPES.PROJECT]()
+        data.project = {
+          ...data.project,
+          brief: 'Coordinate discovery, review, delivery, and handover with a clear record of client decisions.',
+          goals: 'Confirm scope and constraints\nProvide a reviewable delivery\nComplete handover documentation',
+          risks: 'Delayed client feedback\nRequirements changing after approval',
+        }
         data.columns[0].tasks = [
           projectTask('Confirm requirements and constraints', { priority: 'high' }),
           projectTask('Document open questions', { priority: 'medium' }),
@@ -850,15 +879,30 @@ export const normalizeNoteData = (noteType, value) => {
             }),
           }
         }),
-        filter: allowedValue(data.filter, ['all', 'active', 'completed', 'today', 'overdue', 'starred'], 'all'),
+        filter: allowedValue(data.filter, ['all', 'active', 'completed', 'today', 'upcoming', 'overdue', 'starred'], 'all'),
         sortBy: allowedValue(data.sortBy, ['priority', 'dueDate', 'created', 'alphabetical'], 'priority'),
       }
 
     case NOTE_TYPES.PROJECT: {
       const sourceColumns = asList(data.columns).filter((column) => typeof column === 'object')
+      const sourceProject = data.project && typeof data.project === 'object' && !Array.isArray(data.project)
+        ? data.project
+        : {}
       return {
         ...defaults,
         ...data,
+        project: {
+          ...defaults.project,
+          ...sourceProject,
+          brief: String(sourceProject.brief || data.description || '').slice(0, 20_000),
+          status: allowedValue(sourceProject.status, ['planned', 'active', 'paused', 'complete'], 'active'),
+          priority: allowedValue(sourceProject.priority, ['low', 'medium', 'high'], 'medium'),
+          startDate: sourceProject.startDate || '',
+          targetDate: sourceProject.targetDate || '',
+          goals: String(sourceProject.goals || '').slice(0, 10_000),
+          decisions: String(sourceProject.decisions || '').slice(0, 10_000),
+          risks: String(sourceProject.risks || '').slice(0, 10_000),
+        },
         columns: (sourceColumns.length ? sourceColumns : defaults.columns).map((column) => ({
           ...column,
           tasks: asList(column.tasks).map((item) => {
@@ -1042,7 +1086,7 @@ export const normalizeNoteData = (noteType, value) => {
         ),
         categories: safeCategories,
         topic: typeof data.topic === 'string' ? data.topic : '',
-        viewMode: allowedValue(data.viewMode, ['grid', 'list'], 'grid'),
+        viewMode: data.viewMode === 'register' ? 'register' : 'canvas',
         sortBy: allowedValue(data.sortBy, ['newest', 'oldest', 'votes', 'starred'], 'newest'),
         selectedCategory: data.selectedCategory === 'all' || categoryIds.has(data.selectedCategory)
           ? data.selectedCategory

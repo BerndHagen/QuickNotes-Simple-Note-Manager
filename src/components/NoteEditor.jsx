@@ -526,7 +526,16 @@ export default function NoteEditor({ onBack, showBack = false }) {
                         } ${workspaceReadOnly ? 'cursor-default' : 'cursor-text'}`}
                       />
                     </div>
-                    <div className="h-9 w-9 justify-self-end" aria-hidden="true" />
+                    <div className="min-w-0 justify-self-end">
+                      <IconButton
+                        ref={menuButtonRef}
+                        icon={MoreVertical}
+                        label={t('editor.moreActions', 'More actions')}
+                        aria-haspopup="menu"
+                        aria-expanded={menuOpen}
+                        onClick={() => setMenuOpen((value) => !value)}
+                      />
+                    </div>
                   </div>
                 )}
                 <fieldset

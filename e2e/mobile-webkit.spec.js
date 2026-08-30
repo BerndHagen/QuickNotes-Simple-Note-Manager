@@ -335,7 +335,7 @@ test.describe('mobile Safari workflows', () => {
     expect(toolbarBox.height).toBeLessThanOrEqual(60)
 
     await page.goBack()
-    await expect(page.getByRole('searchbox')).toBeVisible()
+    await expect(page.getByRole('searchbox', { name: 'Search notes...', exact: true })).toBeVisible()
     await page.goForward()
     await expect(editor).toContainText('Draft survives WebKit navigation')
   })
@@ -348,7 +348,7 @@ test.describe('mobile Safari workflows', () => {
     await expect(navigation).toBeVisible()
     await page.goBack()
     await expect(navigation).toHaveCount(0)
-    await expect(page.getByRole('searchbox')).toBeVisible()
+    await expect(page.getByRole('searchbox', { name: 'Search notes...', exact: true })).toBeVisible()
 
     await page.getByRole('button', { name: /show navigation/i }).first().tap()
     await page.getByRole('button', { name: /^settings$/i }).first().tap()
@@ -356,7 +356,7 @@ test.describe('mobile Safari workflows', () => {
     await expect(settings).toBeVisible()
     await page.goBack()
     await expect(settings).toHaveCount(0)
-    await expect(page.getByRole('searchbox')).toBeVisible()
+    await expect(page.getByRole('searchbox', { name: 'Search notes...', exact: true })).toBeVisible()
   })
 
   test('declares modern viewport and safe-area behavior for standalone use', async ({ page }) => {

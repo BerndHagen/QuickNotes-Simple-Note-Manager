@@ -269,6 +269,72 @@ describe('workspace backups', () => {
     )).rejects.toThrow('missing')
   })
 
+  it('round-trips a Brainstorm canvas together with its structured idea register', async () => {
+    const source = createWorkspaceBackup({
+      notes: [{
+        id: 'brainstorm',
+        title: 'Launch ideas',
+        noteType: 'brainstorm',
+        contentKind: 'canvas',
+        contentSchemaVersion: 1,
+        noteData: {
+          topic: 'Launch',
+          viewMode: 'register',
+          ideas: [{ id: 'idea-1', text: 'Interview customers', category: 'research', votes: 2 }],
+          categories: [{ id: 'research', name: 'Research' }],
+        },
+      }],
+      folders: [],
+      tags: [],
+      spatialDocuments: [{
+        noteId: 'brainstorm',
+        kind: 'canvas',
+        schemaVersion: 1,
+        revision: 3,
+        settings: {},
+        viewport: { panX: 12, panY: 18, zoom: 0.9 },
+      }],
+      spatialPages: [],
+      spatialObjects: [{
+        id: 'sticky-1',
+        noteId: 'brainstorm',
+        pageId: null,
+        schemaVersion: 1,
+        kind: 'sticky',
+        zIndex: 1,
+        bounds: { x: 40, y: 60, width: 220, height: 160 },
+        data: { text: 'Interview customers' },
+      }],
+    })
+
+    const result = await prepareWorkspaceImport(
+      source,
+      { notes: [], folders: [], tags: [] },
+      { createId: makeIds(), now: '2026-08-30T12:00:00.000Z' }
+    )
+
+    const brainstorm = result.notes[0]
+    expect(brainstorm).toMatchObject({
+      noteType: 'brainstorm',
+      contentKind: 'canvas',
+      noteData: expect.objectContaining({
+        topic: 'Launch',
+        ideas: [expect.objectContaining({ text: 'Interview customers', votes: 2 })],
+      }),
+    })
+    expect(result.spatialDocuments).toEqual([
+      expect.objectContaining({ noteId: brainstorm.id, kind: 'canvas', revision: 0 }),
+    ])
+    expect(result.spatialObjects).toEqual([
+      expect.objectContaining({
+        noteId: brainstorm.id,
+        pageId: null,
+        kind: 'sticky',
+        data: expect.objectContaining({ text: 'Interview customers' }),
+      }),
+    ])
+  })
+
   it('remaps durable attachment payloads and corrected recognition together', async () => {
     const checksum = 'sha256:315d429b7714cedb6ad04ac31240145257692630457f3c88253c5beceac76027'
     const result = await prepareWorkspaceImport({

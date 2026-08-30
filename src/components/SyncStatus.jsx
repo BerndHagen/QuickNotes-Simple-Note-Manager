@@ -54,7 +54,7 @@ const CONFIG = {
  * Doubles as the manual "sync now" trigger. The label is not
  * colour-only: the icon changes shape per state as well.
  */
-export function SyncStatusPill({ className = '' }) {
+export function SyncStatusPill({ className = '', compact = false }) {
   const { t } = useTranslation()
   const { state, pendingCount, lastSyncTime, lastSyncError, persistenceError } = useSyncStatus()
   const syncWithBackend = useNotesStore((s) => s.syncWithBackend)
@@ -79,6 +79,7 @@ export function SyncStatusPill({ className = '' }) {
   return (
     <button
       type="button"
+      aria-label={canSync ? `${label}. Sync now` : label}
       onClick={canSync ? () => syncWithBackend({ notify: true }) : undefined}
       disabled={!canSync}
       title={title}
@@ -87,7 +88,7 @@ export function SyncStatusPill({ className = '' }) {
  } ${config.tone} ${className}`}
     >
       <Icon className={`h-3.5 w-3.5 shrink-0 ${config.spin ? 'animate-spin' : ''}`} aria-hidden="true" />
-      <span className="truncate">
+      <span className={compact ? 'qn-sr-only' : 'truncate'}>
         {label}
         {state === 'pending' && pendingCount > 0 ? ` (${pendingCount})` : ''}
       </span>

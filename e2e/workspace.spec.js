@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test'
 import { CREDENTIALS, signIn, collectErrors, createNote, expectNoHorizontalOverflow } from './helpers'
 
 test.describe('workspace', () => {
+  const visibleSaveStatus = (page) => page.locator('.qn-note-statistics').getByText(/saved locally/i)
   test('signs in and shows the three-pane workspace', async ({ page }) => {
     const errors = collectErrors(page)
     await signIn(page)
@@ -15,14 +16,14 @@ test.describe('workspace', () => {
 
   test('keeps a local workspace open across reloads', async ({ page }) => {
     await signIn(page)
-    await expect(page.getByText(/saved locally/i).first()).toBeVisible()
+    await expect(visibleSaveStatus(page)).toBeVisible()
 
     await page.reload({ waitUntil: 'domcontentloaded' })
 
     await expect(page.getByRole('navigation', { name: 'Workspace' })).toBeVisible({
       timeout: 30_000,
     })
-    await expect(page.getByText(/saved locally/i).first()).toBeVisible()
+    await expect(visibleSaveStatus(page)).toBeVisible()
   })
 
   test('closing and reopening a local workspace preserves its notes', async ({ page }) => {
@@ -92,7 +93,7 @@ test.describe('workspace', () => {
     await body.pressSequentially('Persisted body text')
 
     // Give the debounced auto-save a chance to flush.
-    await expect(page.getByText(/saved/i).first()).toBeVisible({ timeout: 15_000 })
+    await expect(page.locator('.qn-note-statistics').getByText(/saved/i)).toBeVisible({ timeout: 15_000 })
 
     await page.reload({ waitUntil: 'domcontentloaded' })
     await expect(page.getByRole('navigation', { name: 'Workspace' })).toBeVisible({ timeout: 30_000 })
@@ -160,7 +161,7 @@ test.describe('workspace', () => {
     await createNote(page, unique)
     await createNote(page, `Aardvark${Date.now()}`)
 
-    const search = page.getByRole('searchbox')
+    const search = page.getByRole('searchbox', { name: 'Search notes...', exact: true })
     await search.fill(unique)
     await expect(page.getByRole('button', { name: new RegExp(unique, 'i') }).first()).toBeVisible()
     await expect(page.getByRole('button', { name: /^Aardvark/i })).toHaveCount(0)
@@ -171,7 +172,7 @@ test.describe('workspace', () => {
 
   test('shows an empty state when a search matches nothing', async ({ page }) => {
     await signIn(page)
-    await page.getByRole('searchbox').fill('zzz-no-such-note-zzz')
+    await page.getByRole('searchbox', { name: 'Search notes...', exact: true }).fill('zzz-no-such-note-zzz')
     await expect(page.getByText(/no notes found/i)).toBeVisible()
     await expect(page.getByRole('button', { name: /clear search/i }).first()).toBeVisible()
   })

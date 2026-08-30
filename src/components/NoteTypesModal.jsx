@@ -6,7 +6,7 @@ import {
   Search,
   Star,
   Trash2,
-  Sparkles,
+  Kanban,
 } from 'lucide-react'
 import { useUIStore, useNotesStore } from '../store'
 import {
@@ -150,7 +150,7 @@ export default function NoteTypesModal({ onCreated }) {
       onClose={close}
       title="New workspace"
       description="Choose a purpose-built workspace, then decide how you want to begin."
-      icon={Sparkles}
+      icon={Kanban}
       size="3xl"
       initialFocusRef={searchRef}
       bodyPadding="none"
@@ -418,7 +418,7 @@ export default function NoteTypesModal({ onCreated }) {
 
               <div className="rounded-card border border-subtle bg-surface-raised p-4 shadow-xs">
                 <div className="flex items-center gap-2 text-ui-md font-semibold text-content">
-                  <Sparkles className="h-4 w-4 text-accent-text" aria-hidden="true" />
+                  <Kanban className="h-4 w-4 text-accent-text" aria-hidden="true" />
                   Built as a real workspace
                 </div>
                 <p className="mt-1.5 text-ui-sm leading-relaxed text-content-muted">

@@ -580,8 +580,8 @@ export default function App() {
   const closeSidebarAfterNavigation = useCallback(() => {
     if (!sidebarIsOverlay) return
     setSidebarOpen(false)
-    ;(isCompact ? mobileSidebarToggleRef : sidebarToggleRef).current?.focus()
-  }, [isCompact, sidebarIsOverlay, setSidebarOpen])
+    requestAnimationFrame(() => sidebarToggleRef.current?.focus())
+  }, [sidebarIsOverlay, setSidebarOpen])
 
   const closeSidebarOverlay = useCallback(() => {
     if (sidebarIsOverlay) setSidebarOpen(false)
@@ -707,7 +707,7 @@ export default function App() {
 
   return (
     <ThemeProvider>
-      <div className="qn-workspace-frame flex h-[100dvh] flex-col overflow-hidden bg-app text-content">
+      <div className={`qn-workspace-frame flex h-[100dvh] flex-col overflow-hidden bg-app text-content ${isCompact && showEditor ? 'qn-compact-editor-active' : ''}`}>
         <a href="#qn-main" className="qn-skip-link">
           Skip to content
         </a>

@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
-import { collectErrors, createNote, expectNoHorizontalOverflow, pinchTouch, signIn } from './helpers'
+import { collectErrors, createNote, dragTouch, expectNoHorizontalOverflow, pinchTouch, signIn } from './helpers'
 
 const workspaces = [
   { type: 'Task List', starter: 'Daily priorities', root: '.qn-type-todo' },
@@ -61,7 +61,7 @@ const auditWorkspace = async (page, definition, suffix = '') => {
   const root = page.locator(definition.root)
   await expectNoHorizontalOverflow(page)
   await expectContainedOrScrollable(root, `${definition.type}${suffix}`)
-  const writingArea = root.locator('.qn-workspace-canvas, .qn-task-list').first()
+  const writingArea = root.locator('.qn-structured-content').first()
   await expect(writingArea).toBeVisible()
   const [rootBox, writingBox] = await Promise.all([root.boundingBox(), writingArea.boundingBox()])
   expect(writingBox.height, `${definition.type}${suffix} leaves too little phone height for work`)
@@ -91,42 +91,68 @@ test.describe('phone workspace workflow regression', () => {
 
       if (definition.type === 'Task List') {
         await root.getByLabel('New task').fill('Mobile task')
-        await root.getByRole('button', { name: 'Add', exact: true }).click()
+        await root.getByRole('button', { name: 'Add task', exact: true }).click()
         await expect(root.getByText('Mobile task', { exact: true })).toBeVisible()
       } else if (definition.type === 'Project Board') {
-        await root.getByRole('button', { name: /^Edit / }).first().click()
+        await root.getByRole('tab', { name: /^Board/i }).click()
+        await root.getByRole('button', { name: /actions for define launch goal and audience/i }).click()
+        await page.getByRole('menuitem', { name: 'To do', exact: true }).click()
+        await expect(root.getByLabel(/to do, 2 tasks/i)).toContainText('Define launch goal and audience')
+        await root.getByRole('button', { name: /actions for define launch goal and audience/i }).click()
+        await page.getByRole('menuitem', { name: 'Edit details' }).click()
         const dialog = page.getByRole('dialog', { name: 'Edit task' })
         await expect(dialog.getByLabel('Status')).toBeVisible()
         await expectContainedOrScrollable(dialog, 'Project task dialog')
         await dialog.getByRole('button', { name: 'Cancel' }).click()
       } else if (definition.type === 'Meeting Workspace') {
-        for (const section of ['Attendees', 'Agenda', 'Notes', 'Action Items', 'Decisions', 'Details']) {
-          await root.getByRole('button', { name: new RegExp(`^${section}`, 'i') }).click()
+        for (const section of ['Attendees', 'Agenda', 'Notes', 'Capture', 'Action Items', 'Decisions', 'Details']) {
+          await root.getByRole('tab', { name: new RegExp(`^${section}`, 'i') }).click()
           await auditWorkspace(page, definition, ` / ${section}`)
         }
       } else if (definition.type === 'Daily Journal') {
         for (const section of ['Check-in & goals', 'During the Day', 'Reflect', 'Write', 'Evening']) {
-          await root.getByRole('button', { name: new RegExp(`^${section}`, 'i') }).click()
+          await root.getByRole('tab', { name: new RegExp(`^${section}`, 'i') }).click()
           await auditWorkspace(page, definition, ` / ${section}`)
         }
       } else if (definition.type === 'Idea Board') {
+        const canvas = root.getByRole('application', { name: /infinite canvas/i })
+        const canvasBox = await canvas.boundingBox()
+        await dragTouch(page,
+          { x: canvasBox.x + 45, y: canvasBox.y + 80 },
+          { x: canvasBox.x + 155, y: canvasBox.y + 135 },
+          { steps: 10 }
+        )
+        await expect(root.getByText('Saved on this device')).toBeVisible()
+        await root.getByRole('tab', { name: /^Idea register/i }).click()
         await root.getByLabel('New idea').fill('Mobile idea')
-        await root.getByRole('button', { name: 'Add Idea' }).click()
+        await root.getByRole('button', { name: 'Add idea' }).click()
         await expect(root.getByText('Mobile idea', { exact: true })).toBeVisible()
+        await root.getByRole('tab', { name: /^Canvas/i }).click()
       } else if (definition.type === 'Shopping List') {
-        await root.getByLabel('New shopping item').fill('Mobile item')
-        await root.getByRole('button', { name: 'Add', exact: true }).click()
+        await root.getByLabel('Item name').fill('Mobile item')
+        await root.getByRole('button', { name: 'Add item', exact: true }).click()
+        await expect(root.getByText('Mobile item', { exact: true })).toBeVisible()
+        await root.getByRole('button', { name: 'Edit Mobile item' }).click()
+        await root.getByLabel(/Estimated price/).last().fill('2.50')
         await expect(root.getByText('Mobile item', { exact: true })).toBeVisible()
       } else if (definition.type === 'Weekly Planner') {
         for (const section of ['Goals', 'Weekly Review', 'Week View']) {
-          await root.getByRole('button', { name: new RegExp(`^${section}`, 'i') }).click()
+          await root.getByRole('tab', { name: new RegExp(`^${section}`, 'i') }).click()
           await auditWorkspace(page, definition, ` / ${section}`)
         }
       }
 
       await auditWorkspace(page, definition, ' after interaction')
+      await page.setViewportSize({ width: 667, height: 375 })
+      await auditWorkspace(page, definition, ' / landscape')
+      await page.setViewportSize({ width: 320, height: 420 })
+      await auditWorkspace(page, definition, ' / keyboard-height viewport')
       await page.getByRole('button', { name: /back to notes/i }).click()
-      await expect(page.getByRole('searchbox')).toBeVisible()
+      await expect(page.getByRole('searchbox', { name: 'Search notes...', exact: true })).toBeVisible()
+      await page.locator('.note-card', { hasText: `Phone workflow ${index + 1}` }).click()
+      await expect(root).toBeVisible()
+      await page.getByRole('button', { name: /back to notes/i }).click()
+      await page.setViewportSize({ width: 320, height: 568 })
     }
 
     expect(errors).toEqual([])

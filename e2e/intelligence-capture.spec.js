@@ -72,7 +72,7 @@ test.describe('Task 4 local image recognition', () => {
     await tasks.getByRole('button', { name: 'Open original capture for Review invoice 4287' }).click()
     await expect(page.getByRole('button', { name: 'Resize selected object' })).toBeVisible()
 
-    await page.getByRole('button', { name: 'Search all notes' }).click()
+    await page.getByRole('searchbox', { name: 'Search all notes' }).click()
     const search = page.getByRole('dialog', { name: /global search/i })
     await search.getByRole('combobox').fill('invoice 4287 verified')
     const result = search.getByRole('option', { name: new RegExp(title, 'i') })

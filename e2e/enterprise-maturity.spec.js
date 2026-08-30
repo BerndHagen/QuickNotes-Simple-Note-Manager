@@ -222,9 +222,11 @@ test.describe('enterprise UI maturity regressions', () => {
       className: '.qn-type-project',
     })
 
+    await editor.getByRole('tab', { name: /^Board/i }).click()
+
     const addButtons = editor.getByRole('button', { name: /^Add task to / })
     await expect(addButtons).toHaveCount(4)
-    const ratios = await addButtons.evaluateAll((buttons) => {
+    const contrast = await addButtons.evaluateAll((buttons) => {
       const rgb = (value) => value.match(/[\d.]+/g).slice(0, 3).map(Number)
       const luminance = (value) => {
         const channels = rgb(value).map((channel) => {
@@ -239,10 +241,14 @@ test.describe('enterprise UI maturity regressions', () => {
         const style = getComputedStyle(button)
         const foreground = luminance(style.color)
         const background = luminance(style.backgroundColor)
-        return (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05)
+        return {
+          ratio: (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05),
+          foreground: style.color,
+          background: style.backgroundColor,
+        }
       })
     })
-    expect(ratios.every((ratio) => ratio >= 4.5)).toBe(true)
+    expect(contrast.every(({ ratio }) => ratio >= 4.5), JSON.stringify(contrast)).toBe(true)
   })
 
   test('keeps mobile task copy readable and places secondary actions on their own row', async ({ page }) => {
@@ -279,12 +285,13 @@ test.describe('enterprise UI maturity regressions', () => {
       className: '.qn-type-brainstorm',
     })
 
-    const ideaInput = editor.getByPlaceholder(/capture an idea/i)
+    await editor.getByRole('tab', { name: /^Idea register/i }).click()
+    const ideaInput = editor.getByLabel('New idea')
     await ideaInput.fill('Prioritize customer interview findings')
-    await ideaInput.press('Enter')
-    const card = editor.locator('.qn-idea-card').filter({ hasText: 'Prioritize customer interview findings' })
+    await editor.getByRole('button', { name: 'Add idea' }).click()
+    const card = editor.locator('.qn-idea-row').filter({ hasText: 'Prioritize customer interview findings' })
     await expect(card).toBeVisible()
-    await expect(page.getByRole('button', { name: /^Tags(?: \(\d+\))?$/ })).toBeVisible()
+    await card.locator('.qn-idea-title').click()
 
     const category = card.getByRole('combobox', {
       name: 'Category for Prioritize customer interview findings',
@@ -309,7 +316,7 @@ test.describe('enterprise UI maturity regressions', () => {
     expect(errors).toEqual([])
   })
 
-  test('keeps the meeting tab rail and its persistent summary action operational', async ({ page }) => {
+  test('keeps the meeting tab rail and its contextual summary action operational', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 })
     await signIn(page)
     const editor = await createFocusedWorkspace(page, {
@@ -319,11 +326,11 @@ test.describe('enterprise UI maturity regressions', () => {
       className: '.qn-type-meeting',
     })
 
-    const copySummary = editor.getByRole('button', { name: 'Copy meeting summary' })
+    const copySummary = editor.getByRole('button', { name: 'Copy summary', exact: true })
     await expect(copySummary).toBeInViewport()
-    await editor.getByRole('button', { name: /^Action Items/i }).click()
+    await editor.getByRole('tab', { name: /^Action Items/i }).click()
     await expect(editor.getByLabel('New action item')).toBeVisible()
-    await expect(editor.getByRole('button', { name: /^Action Items/i })).toHaveAttribute('aria-pressed', 'true')
+    await expect(editor.getByRole('tab', { name: /^Action Items/i })).toHaveAttribute('aria-selected', 'true')
   })
 
   test('offers direct keyboard-friendly movement for Kanban tasks', async ({ page }) => {
@@ -336,9 +343,12 @@ test.describe('enterprise UI maturity regressions', () => {
       className: '.qn-type-project',
     })
 
-    const moveButton = editor.getByRole('button', {
-      name: /move define launch goal and audience to to do/i,
-    })
+    await editor.getByRole('tab', { name: /^Board/i }).click()
+
+    const actions = editor.getByRole('button', { name: /actions for define launch goal and audience/i })
+    await actions.focus()
+    await page.keyboard.press('Enter')
+    const moveButton = page.getByRole('menuitem', { name: 'To do', exact: true })
     await moveButton.focus()
     await page.keyboard.press('Enter')
     await expect(editor.locator('[aria-live="polite"]')).toHaveText(/moved to to do/i)

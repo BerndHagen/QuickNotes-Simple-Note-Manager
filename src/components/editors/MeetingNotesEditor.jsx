@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { EmptyState, buttonClasses } from '../ui'
+import { Button, EmptyState, buttonClasses } from '../ui'
 import {
   Bell,
   Users,
@@ -26,7 +26,7 @@ import toast from 'react-hot-toast'
 import { formatDateKey, generateId, parseDateKey } from './noteTypes'
 import { useLatestValue } from './useLatestValue'
 import { useEditorDataSync } from './useEditorDataSync'
-import FocusedNoteTitle from './FocusedNoteTitle'
+import StructuredWorkspaceShell, { WorkspaceTabs } from './StructuredWorkspaceShell'
 import { db, getActiveWorkspaceOwner } from '../../lib/db'
 import { listNoteResources } from '../../lib/resources/repository'
 
@@ -304,86 +304,39 @@ ${meetingData.notes}
   ]
 
   return (
-    <div className="qn-type-editor qn-type-meeting flex flex-col h-full bg-surface-raised">
-      <header className="qn-type-hero qn-workspace-header flex-shrink-0 border-b border-subtle">
-        <div className="flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <FocusedNoteTitle
-              icon={Users}
-              typeLabel="Meeting workspace"
-              title={noteTitle}
-              fallback="Meeting notes"
-              onChange={onTitleChange}
-              readOnly={readOnly}
-            />
-            <p className="ml-12 mt-1 text-ui-md text-content-muted">
-              {meetingData.date} {"\u2022"} {stats.attendees} attendees {"\u2022"} {stats.agendaItems} agenda items
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="text-center">
-              <div className="font-mono text-title-lg font-semibold tabular-nums text-content">
-                {formatTime(timerSeconds)}
-              </div>
-              <div className="text-xs text-content-muted">
-                {currentAgendaItem ? 'Active Timer' : 'Meeting Timer'}
-              </div>
-            </div>
-            <div className="flex gap-1">
-              <button
-                onClick={() => timerRunning ? setTimerRunning(false) : setTimerRunning(true)}
-                aria-label={timerRunning ? 'Pause meeting timer' : 'Start meeting timer'}
-                className="qn-square-control flex h-9 w-9 items-center justify-center rounded-control text-content-muted transition-colors hover:bg-surface-hover hover:text-content"
-              >
-                {timerRunning ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-              </button>
-              <button
-                onClick={() => { setTimerSeconds(0); setTimerRunning(false); setCurrentAgendaItem(null) }}
-                aria-label="Reset meeting timer"
-                className="qn-square-control flex h-9 w-9 items-center justify-center rounded-control text-content-muted transition-colors hover:bg-surface-hover hover:text-content"
-              >
-                <RotateCcw className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-      <div className="qn-type-tabs qn-meeting-tabs flex-shrink-0 flex items-center gap-2 p-2 border-b border-subtle bg-surface-sunken">
-        <div className="qn-tab-scroller flex min-w-0 flex-1 gap-1 overflow-x-auto">
-          {sections.map(section => (
-            <button
-              key={section.id}
-              onClick={() => setActiveSection(section.id)}
-              aria-pressed={activeSection === section.id}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
- activeSection === section.id
- ? 'bg-accent-soft text-accent-text'
-                : 'text-content-muted hover:bg-surface-hover'
-            }`}
-            >
-              <section.icon className="w-4 h-4" />
-              {section.label}
-              {section.badge !== undefined && (
-                <span className="px-1.5 py-0.5 rounded-full bg-surface-sunken dark:bg-surface-sunken text-xs">
-                  {section.badge}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-        
-        <button
-          onClick={copyMeetingSummary}
-          type="button"
-          aria-label="Copy meeting summary"
-          title="Copy meeting summary"
-          className={`${buttonClasses({ variant: 'primary' })} flex-shrink-0`}
-        >
-          <Copy className="w-4 h-4" />
-          <span className="qn-copy-label">Copy summary</span>
-        </button>
-      </div>
-      <div className="qn-workspace-canvas flex-1 overflow-y-auto p-4">
+    <StructuredWorkspaceShell
+      className="qn-type-editor qn-type-meeting"
+      icon={Users}
+      typeLabel="Meeting workspace"
+      title={noteTitle}
+      fallback="Meeting notes"
+      onTitleChange={onTitleChange}
+      readOnly={readOnly}
+      summary={(
+        <>
+          <span>{meetingData.date}</span>
+          <span>{stats.attendees} attendees</span>
+          <span>{stats.actionItems - stats.completedActions} open actions</span>
+          <span className="qn-meeting-timer">{formatTime(timerSeconds)}</span>
+          <button type="button" className="qn-meeting-timer-button" onClick={() => setTimerRunning((running) => !running)} aria-label={timerRunning ? 'Pause meeting timer' : 'Start meeting timer'}>
+            {timerRunning ? <Pause className="h-4 w-4" aria-hidden="true" /> : <Play className="h-4 w-4" aria-hidden="true" />}
+          </button>
+          <button type="button" className="qn-meeting-timer-button" onClick={() => { setTimerSeconds(0); setTimerRunning(false); setCurrentAgendaItem(null) }} aria-label="Reset meeting timer">
+            <RotateCcw className="h-4 w-4" aria-hidden="true" />
+          </button>
+        </>
+      )}
+      commands={(
+        <>
+          <WorkspaceTabs
+            tabs={sections.map((section) => ({ ...section, count: section.badge }))}
+            activeTab={activeSection}
+            onChange={setActiveSection}
+          />
+          <Button size="sm" variant="secondary" icon={Copy} onClick={copyMeetingSummary}>Copy summary</Button>
+        </>
+      )}
+    >
         {activeSection === 'details' && (
           <div className="qn-workspace-panel mx-auto max-w-2xl space-y-4 p-5">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -878,7 +831,6 @@ ${meetingData.notes}
             </div>
           </div>
         )}
-      </div>
-    </div>
+    </StructuredWorkspaceShell>
   )
 }

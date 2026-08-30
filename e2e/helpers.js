@@ -106,7 +106,13 @@ export async function expectNoHorizontalOverflow(page) {
  * generic `touchscreen` API only exposes taps, so drag-capable touch workflows
  * use the browser protocol to exercise the same PointerEvent path as a phone.
  */
-export async function dragTouch(page, start, end, { steps = 10, id = 1, beforeRelease } = {}) {
+export async function dragTouch(page, start, end, {
+  steps = 10,
+  id = 1,
+  holdMs = 0,
+  stepDelayMs = 0,
+  beforeRelease,
+} = {}) {
   const session = await page.context().newCDPSession(page)
   await session.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 })
   const point = (x, y) => ({ x, y, radiusX: 5, radiusY: 5, force: 0.5, id })
@@ -115,6 +121,7 @@ export async function dragTouch(page, start, end, { steps = 10, id = 1, beforeRe
       type: 'touchStart',
       touchPoints: [point(start.x, start.y)],
     })
+    if (holdMs > 0) await new Promise((resolve) => setTimeout(resolve, holdMs))
     for (let index = 1; index <= steps; index += 1) {
       const progress = index / steps
       await session.send('Input.dispatchTouchEvent', {
@@ -124,6 +131,7 @@ export async function dragTouch(page, start, end, { steps = 10, id = 1, beforeRe
           start.y + (end.y - start.y) * progress
         )],
       })
+      if (stepDelayMs > 0) await new Promise((resolve) => setTimeout(resolve, stepDelayMs))
     }
     if (beforeRelease) await beforeRelease()
   } finally {

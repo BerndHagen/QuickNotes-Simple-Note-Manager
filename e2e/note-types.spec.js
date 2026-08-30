@@ -15,7 +15,7 @@ const focusedTypes = [
     starter: 'Daily priorities',
     className: '.qn-type-todo',
     title: 'Professional daily priorities',
-    expectation: /3 tasks remaining/i,
+    expectation: /3 remaining/i,
     sections: [],
   },
   {
@@ -24,38 +24,38 @@ const focusedTypes = [
     className: '.qn-type-project',
     title: 'Professional product launch',
     expectation: /3 tasks/i,
-    sections: ['Milestones', 'Team', 'Board'],
+    sections: ['Milestones', 'People', 'Board'],
   },
   {
     type: 'Meeting Workspace',
     starter: 'Team sync',
     className: '.qn-type-meeting',
     title: 'Professional team sync',
-    expectation: /3 agenda items/i,
-    sections: ['Attendees', 'Agenda', 'Notes', 'Action Items', 'Decisions', 'Details'],
+    expectation: /0 attendees/i,
+    sections: ['Attendees', 'Agenda', 'Notes', 'Capture', 'Action Items', 'Decisions', 'Details'],
   },
   {
     type: 'Daily Journal',
     starter: 'Evening review',
     className: '.qn-type-journal',
     title: 'Professional evening review',
-    expectation: /3 things i'm grateful for/i,
-    sections: ['Check-in & goals', 'During the Day', 'Reflect', 'Write', 'Evening'],
+    expectation: /check-in/i,
+    sections: ['Check-in & goals', 'During the Day', 'Evening', 'Reflect', 'Write'],
   },
   {
     type: 'Idea Board',
     starter: 'Problem solving',
     className: '.qn-type-brainstorm',
     title: 'Professional problem solving',
-    expectation: /no ideas yet/i,
-    sections: [],
+    expectation: /^Canvas$/i,
+    sections: ['Idea register', 'Canvas'],
   },
   {
     type: 'Shopping List',
     starter: 'Weekly groceries',
     className: '.qn-type-shopping',
     title: 'Professional grocery plan',
-    expectation: /5 remaining.*0 purchased/i,
+    expectation: /5 needed.*0 purchased/i,
     sections: [],
   },
   {
@@ -63,7 +63,7 @@ const focusedTypes = [
     starter: 'Focused work week',
     className: '.qn-type-weekly',
     title: 'Professional work week',
-    expectation: /0\/3/,
+    expectation: /0\/0 tasks/i,
     sections: ['Goals', 'Weekly Review', 'Week View'],
   },
 ]
@@ -109,7 +109,7 @@ test.describe('focused note types', () => {
 
       const editor = page.locator(definition.className)
       await expect(editor).toBeVisible()
-      await expect(editor.locator('.qn-type-hero input').first()).toHaveValue(definition.title)
+      await expect(editor.locator('.qn-focused-title')).toHaveValue(definition.title)
       await expect(editor.getByText(definition.expectation).first()).toBeVisible()
 
       const { violations } = await new AxeBuilder({ page })
@@ -118,9 +118,9 @@ test.describe('focused note types', () => {
         .analyze()
       expect(formatViolations(violations), `${definition.type} accessibility`).toBe('')
 
-      const toolRail = editor.locator('.qn-type-tabs')
+      const toolRail = editor.locator('.qn-structured-tabs')
       for (const section of definition.sections) {
-        await toolRail.getByRole('button', { name: new RegExp(`^${section}`, 'i') }).click()
+        await toolRail.getByRole('tab', { name: new RegExp(`^${section}`, 'i') }).click()
         const sectionAudit = await new AxeBuilder({ page })
           .include(definition.className)
           .withTags(['wcag2a', 'wcag2aa'])
@@ -135,7 +135,8 @@ test.describe('focused note types', () => {
         await editor.getByRole('button', { name: /expand details for/i }).first().click()
       }
       if (definition.type === 'Project Board') {
-        await editor.getByRole('button', { name: /^Edit /i }).first().click()
+        await editor.getByRole('button', { name: /^Actions for /i }).first().click()
+        await page.getByRole('menuitem', { name: 'Edit details' }).click()
         const taskDialog = page.getByRole('dialog', { name: 'Edit task' })
         await expect(taskDialog.getByLabel('Status')).toBeVisible()
         const modalAudit = await new AxeBuilder({ page })
@@ -146,7 +147,7 @@ test.describe('focused note types', () => {
         await taskDialog.getByRole('button', { name: 'Cancel' }).click()
       }
       if (definition.type === 'Idea Board') {
-        await editor.getByRole('radio', { name: 'List' }).click()
+        await editor.getByRole('tab', { name: /^Idea register/i }).click()
         const categorySelect = editor.getByLabel('Filter ideas by category')
         if (await categorySelect.isVisible()) {
           await categorySelect.selectOption('cause')
@@ -155,7 +156,7 @@ test.describe('focused note types', () => {
         }
       }
       if (definition.type === 'Shopping List') {
-        await editor.getByRole('button', { name: 'List settings' }).click()
+        await editor.getByRole('button', { name: 'Settings', exact: true }).click()
       }
 
       if (['Task List', 'Idea Board', 'Shopping List'].includes(definition.type)) {
@@ -210,7 +211,7 @@ test.describe('focused note types', () => {
       }
 
       await page.getByRole('button', { name: /back to notes/i }).click()
-      await expect(page.getByRole('searchbox')).toBeVisible()
+      await expect(page.getByRole('searchbox', { name: 'Search notes...', exact: true })).toBeVisible()
     }
 
     expect(errors).toEqual([])

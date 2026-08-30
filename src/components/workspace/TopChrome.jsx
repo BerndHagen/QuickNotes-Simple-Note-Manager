@@ -14,6 +14,8 @@ export default function TopChrome({
   inactive = false,
 }) {
   const setGlobalSearchOpen = useUIStore((state) => state.setGlobalSearchOpen)
+  const globalSearchQuery = useUIStore((state) => state.globalSearchQuery)
+  const setGlobalSearchQuery = useUIStore((state) => state.setGlobalSearchQuery)
   const setQuickNoteOpen = useUIStore((state) => state.setQuickNoteOpen)
   const knowledgeNavigation = useNotesStore((state) => state.knowledgeNavigation)
   const navigateBack = useNotesStore((state) => state.navigateKnowledgeBack)
@@ -23,16 +25,16 @@ export default function TopChrome({
     <header
       inert={inactive ? '' : undefined}
       aria-hidden={inactive ? 'true' : undefined}
-      className="qn-top-chrome hidden h-[var(--qn-top-chrome-height)] shrink-0 items-center border-b border-banner-border bg-banner text-banner-text md:flex"
+      className="qn-top-chrome flex h-[var(--qn-top-chrome-height)] shrink-0 items-center border-b border-banner-border bg-banner text-banner-text"
     >
-      <div className="flex min-w-0 items-center gap-2 px-2.5 lg:w-sidebar lg:px-3">
-        <div className="flex min-w-0 items-center gap-2" aria-label="QuickNotes">
-          <BrandLogo className="h-7 w-7" />
-          <span className="hidden truncate text-ui-lg font-semibold tracking-[-0.01em] lg:block">
+      <div className="qn-top-brand-zone flex min-w-0 items-center gap-1 px-1.5 sm:gap-2 sm:px-2.5 lg:w-sidebar lg:px-3">
+        <div className="hidden min-w-0 items-center gap-2 md:flex" aria-label="QuickNotes">
+          <BrandLogo className="h-6 w-6" />
+          <span className="qn-brand-wordmark truncate text-ui-md font-semibold tracking-[-0.01em]">
             QuickNotes
           </span>
         </div>
-        <div className="hidden items-center md:flex" aria-label="Note navigation history">
+        <div className="ml-auto hidden items-center md:flex" aria-label="Note navigation history">
           <IconButton
             icon={ArrowLeft}
             tone="onBanner"
@@ -50,29 +52,44 @@ export default function TopChrome({
             onClick={navigateForward}
           />
         </div>
+        <div className="md:hidden">{navigationToggle}</div>
       </div>
 
-      <div className="flex min-w-0 flex-1 items-center justify-center px-3">
-        <button
-          type="button"
-          onClick={() => setGlobalSearchOpen(true)}
-          aria-label="Search all notes"
-          className="qn-top-search flex h-8 w-full max-w-[32rem] items-center gap-2 border border-banner-border bg-white/[0.07] px-3 text-left text-ui-md text-banner-muted transition-colors duration-fast hover:bg-banner-hover hover:text-banner-text"
-        >
+      <div className="flex min-w-0 flex-1 items-center justify-center px-1 sm:px-3">
+        <label className="qn-top-search flex h-9 w-full max-w-[32rem] min-w-0 items-center gap-2 border border-banner-border bg-white/[0.07] px-2.5 text-left text-ui-md text-banner-muted transition-colors duration-fast focus-within:bg-banner-hover focus-within:text-banner-text hover:bg-banner-hover hover:text-banner-text sm:flex-1 sm:px-3">
           <Search className="h-4 w-4 shrink-0" aria-hidden="true" />
-          <span className="min-w-0 flex-1 truncate">Search notes and workspaces</span>
+          <input
+            type="search"
+            value={globalSearchQuery}
+            onClick={() => setGlobalSearchOpen(true)}
+            onChange={(event) => {
+              setGlobalSearchQuery(event.target.value)
+              setGlobalSearchOpen(true)
+            }}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === 'ArrowDown') {
+                event.preventDefault()
+                setGlobalSearchOpen(true)
+              }
+            }}
+            aria-label="Search all notes"
+            aria-haspopup="dialog"
+            placeholder="Search notes"
+            className="qn-top-search-input min-w-0 flex-1 bg-transparent text-banner-text outline-none placeholder:text-banner-muted"
+          />
           <kbd className="hidden border border-white/15 bg-black/10 px-1.5 py-0.5 font-sans text-ui-xs text-banner-muted xl:inline">
             Ctrl K
           </kbd>
-        </button>
+        </label>
       </div>
 
-      <div className="flex shrink-0 items-center gap-0.5 px-2.5 lg:gap-1 lg:px-3">
+      <div className="flex shrink-0 items-center gap-0.5 px-1.5 sm:px-2.5 lg:gap-1 lg:px-3">
+        <SyncStatusPill compact className="qn-top-sync flex text-banner-muted xl:hidden" />
         <SyncStatusPill className="qn-top-sync hidden max-w-36 text-banner-muted xl:flex" />
         <div
           role="group"
           aria-label="Workspace panes"
-          className="flex items-center gap-0.5 lg:gap-1"
+          className="hidden items-center gap-0.5 md:flex lg:gap-1"
         >
           {navigationToggle}
           {showCollectionControl && (
@@ -104,10 +121,11 @@ export default function TopChrome({
           size="sm"
           icon={Plus}
           onClick={() => setQuickNoteOpen(true)}
-          className="qn-top-new ml-1 border border-white/20 bg-white text-[var(--qn-banner)] shadow-none hover:bg-white/90"
+          aria-label="Create quick note"
+          className="qn-top-new ml-0 hidden min-w-9 border border-white/20 bg-white px-2 text-[var(--qn-banner)] shadow-none hover:bg-white/90 md:inline-flex md:min-w-16 xl:ml-1"
         >
           <span className="hidden xl:inline">Quick note</span>
-          <span className="xl:hidden">New</span>
+          <span className="hidden sm:inline xl:hidden">New</span>
         </Button>
       </div>
     </header>

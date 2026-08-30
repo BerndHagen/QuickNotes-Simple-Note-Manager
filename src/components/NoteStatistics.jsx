@@ -27,6 +27,8 @@ export default function NoteStatistics({
     ? 'Paper note'
     : note.noteType === 'canvas'
       ? 'Spatial canvas'
+      : note.noteType === 'brainstorm'
+        ? 'Brainstorm canvas'
       : 'Structured workspace'
 
   /* Metrics scroll horizontally inside their own track on narrow screens; the

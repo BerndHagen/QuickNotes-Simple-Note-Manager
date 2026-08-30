@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Menu, MenuItem, MenuSeparator, buttonClasses } from '../ui'
+import { Button, Menu, MenuItem, MenuSeparator } from '../ui'
 import {
   Plus,
   Trash2,
@@ -10,7 +10,6 @@ import {
   CheckCircle2,
   Circle,
   Clock,
-  Filter,
   SortAsc,
   MoreHorizontal,
   Edit3,
@@ -26,21 +25,22 @@ import { formatDateKey, generateId, parseDateKey } from './noteTypes'
 import { normalizeRecurrence, RECURRENCE_LABELS, toggleTaskWithRecurrence } from '../../lib/taskRecurrence'
 import { useLatestValue } from './useLatestValue'
 import { useEditorDataSync } from './useEditorDataSync'
-import FocusedNoteTitle from './FocusedNoteTitle'
+import StructuredWorkspaceShell, { WorkspaceSection, WorkspaceTabs } from './StructuredWorkspaceShell'
 import { ConfirmDialog } from '../FolderDialogs'
 const PRIORITIES = {
-  high: { label: 'High', color: '#ef4444', bgColor: '#fef2f2', icon: '\u{1F534}' },
-  medium: { label: 'Medium', color: '#f59e0b', bgColor: '#fffbeb', icon: '\u{1F7E1}' },
-  low: { label: 'Low', color: '#22c55e', bgColor: '#f0fdf4', icon: '\u{1F7E2}' },
-  none: { label: 'None', color: '#6b7280', bgColor: '#f9fafb', icon: '\u26AA' },
+  high: { label: 'High', className: 'text-danger-text' },
+  medium: { label: 'Medium', className: 'text-content' },
+  low: { label: 'Low', className: 'text-content-muted' },
+  none: { label: 'None', className: 'text-content-subtle' },
 }
 const FILTERS = [
-  { id: 'all', label: 'All Tasks', icon: ListTodo },
+  { id: 'all', label: 'All', icon: ListTodo },
+  { id: 'today', label: 'Today', icon: Clock },
+  { id: 'upcoming', label: 'Upcoming', icon: Calendar },
+  { id: 'overdue', label: 'Overdue', icon: AlertCircle },
   { id: 'active', label: 'Active', icon: Circle },
   { id: 'completed', label: 'Completed', icon: CheckCircle2 },
-  { id: 'today', label: 'Due Today', icon: Clock },
-  { id: 'overdue', label: 'Overdue', icon: AlertCircle },
-  { id: 'starred', label: 'Starred', icon: Star },
+  { id: 'starred', label: 'Favourites', icon: Star },
 ]
 const SORT_OPTIONS = [
   { id: 'priority', label: 'Priority' },
@@ -63,11 +63,9 @@ export default function TodoListEditor({ data, onChange, noteTitle, onTitleChang
   const [newTaskText, setNewTaskText] = useState('')
   const [editingTaskId, setEditingTaskId] = useState(null)
   const [expandedTaskId, setExpandedTaskId] = useState(null)
-  const [showFilterMenu, setShowFilterMenu] = useState(false)
   const [showSortMenu, setShowSortMenu] = useState(false)
   const [clearCompletedOpen, setClearCompletedOpen] = useState(false)
   const inputRef = useRef(null)
-  const filterRef = useRef(null)
   const sortRef = useRef(null)
   const onChangeRef = useLatestValue(onChange)
   const currentEditorData = { tasks, filter, sortBy }
@@ -176,6 +174,9 @@ export default function TodoListEditor({ data, onChange, noteTitle, onTitleChang
       case 'today':
         filtered = filtered.filter(t => t.dueDate === today)
         break
+      case 'upcoming':
+        filtered = filtered.filter(t => t.dueDate && t.dueDate > today && !t.completed)
+        break
       case 'overdue':
         filtered = filtered.filter(t => t.dueDate && t.dueDate < today && !t.completed)
         break
@@ -213,34 +214,44 @@ export default function TodoListEditor({ data, onChange, noteTitle, onTitleChang
     progress: tasks.length > 0 ? Math.round((tasks.filter(t => t.completed).length / tasks.length) * 100) : 0,
   }
   const filteredTasks = getFilteredTasks()
+  const filterTabs = FILTERS.map((item) => ({
+    ...item,
+    count: item.id === 'all'
+      ? stats.total
+      : item.id === 'active'
+        ? stats.active
+        : item.id === 'completed'
+          ? stats.completed
+          : item.id === 'overdue'
+            ? stats.overdue
+            : item.id === 'today'
+              ? tasks.filter((task) => !task.completed && task.dueDate === formatDateKey()).length
+              : item.id === 'upcoming'
+                ? tasks.filter((task) => !task.completed && task.dueDate && task.dueDate > formatDateKey()).length
+                : tasks.filter((task) => task.starred).length,
+  }))
 
   return (
     <>
-      <div className="qn-type-editor qn-type-todo flex flex-col h-full bg-surface-raised">
-      <header className="qn-type-hero qn-workspace-header flex-shrink-0 border-b border-subtle">
-        <div className="flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <FocusedNoteTitle
-              icon={CheckCircle2}
-              typeLabel="Task workspace"
-              title={noteTitle}
-              fallback="Task list"
-              onChange={onTitleChange}
-              readOnly={readOnly}
-            />
-            <p className="ml-12 mt-1 text-ui-md text-content-muted">
-              {stats.total === 0
-                ? 'Ready for the first task'
-                : `${stats.active} tasks remaining \u2022 ${stats.completed} completed${stats.overdue ? ` \u2022 ${stats.overdue} overdue` : ''}`}
-            </p>
-          </div>
-        </div>
-      </header>
-      <form
-        className="qn-task-capture flex-shrink-0 border-b border-subtle bg-surface-raised p-3"
-        onSubmit={(event) => { event.preventDefault(); addTask() }}
+      <StructuredWorkspaceShell
+        className="qn-type-editor qn-type-todo"
+        icon={CheckCircle2}
+        typeLabel="Task workspace"
+        title={noteTitle}
+        fallback="Task list"
+        onTitleChange={onTitleChange}
+        readOnly={readOnly}
+        summary={(
+          <>
+            <span>{stats.active} remaining</span>
+            <span>{stats.completed} completed</span>
+            {stats.overdue > 0 && <span>{stats.overdue} overdue</span>}
+          </>
+        )}
+        commands={<WorkspaceTabs tabs={filterTabs} activeTab={filter} onChange={setFilter} />}
       >
-        <div className="flex gap-2">
+      <WorkspaceSection title="Add a task" description="Capture it now; schedule and details can follow.">
+        <form className="qn-task-capture" onSubmit={(event) => { event.preventDefault(); addTask() }}>
           <input
             ref={inputRef}
             type="text"
@@ -252,62 +263,22 @@ export default function TodoListEditor({ data, onChange, noteTitle, onTitleChang
                 event.preventDefault()
                 addTask()
               }}
-              placeholder="Add a task…"
-            className="min-w-0 flex-1 rounded-control border border-strong bg-surface-raised px-3 py-2 text-content outline-none transition-[border-color,box-shadow] placeholder:text-content-subtle focus:border-accent focus:ring-2 focus:ring-[var(--qn-accent-soft)]"
+              placeholder="Task name"
           />
-          <button
-            type="submit"
-            disabled={!newTaskText.trim()}
-            className={buttonClasses({ variant: 'primary' })}
-          >
-            <Plus className="w-5 h-5" />
-            Add
-          </button>
-        </div>
-      </form>
-      <div className="qn-type-tabs flex-shrink-0 p-3 border-b border-subtle flex items-center gap-2 bg-surface-sunken">
-        <div className="relative" ref={filterRef}>
-          <button
-            onClick={() => setShowFilterMenu(!showFilterMenu)}
-            aria-label="Filter tasks"
-            aria-expanded={showFilterMenu}
-            className="flex items-center gap-2 rounded-lg border border-subtle bg-surface-raised px-3 py-2 transition-colors hover:bg-surface-hover active:bg-surface-active"
-          >
-            <Filter className="w-4 h-4 text-content-muted" />
-            <span className="text-sm text-content-muted">
-              {FILTERS.find(f => f.id === filter)?.label}
-            </span>
-            <ChevronDown className="w-4 h-4 text-content-subtle" />
-          </button>
-          
-          <Menu
-            open={showFilterMenu}
-            onClose={() => setShowFilterMenu(false)}
-            anchorRef={filterRef}
-            label="Filter tasks"
-            width={208}
-          >
-              {FILTERS.map((f) => {
-                const Icon = f.icon
-                return (
-                  <MenuItem
-                    key={f.id}
-                    icon={Icon}
-                    onClick={() => { setFilter(f.id); setShowFilterMenu(false) }}
-                    selected={filter === f.id}
-                  >
-                    {f.label}
-                  </MenuItem>
-                )
-              })}
-          </Menu>
-        </div>
+          <Button type="submit" variant="primary" icon={Plus} disabled={!newTaskText.trim()}>Add task</Button>
+        </form>
+      </WorkspaceSection>
+      <WorkspaceSection
+        title={`${FILTERS.find((item) => item.id === filter)?.label} tasks`}
+        description={`${filteredTasks.length} ${filteredTasks.length === 1 ? 'task' : 'tasks'} shown`}
+        actions={(
+          <div className="qn-task-toolbar">
         <div className="relative" ref={sortRef}>
           <button
             onClick={() => setShowSortMenu(!showSortMenu)}
             aria-label="Sort tasks"
             aria-expanded={showSortMenu}
-            className="flex items-center gap-2 rounded-lg border border-subtle bg-surface-raised px-3 py-2 transition-colors hover:bg-surface-hover active:bg-surface-active"
+            className="qn-task-toolbar-button"
           >
             <SortAsc className="w-4 h-4 text-content-muted" />
             <span className="text-sm text-content-muted">
@@ -335,23 +306,26 @@ export default function TodoListEditor({ data, onChange, noteTitle, onTitleChang
           </Menu>
         </div>
 
-        <div className="flex-1" />
-        <button
+        <Button
+          size="sm"
+          variant="danger-ghost"
+          icon={CheckCheck}
           onClick={() => {
             const completedTasks = tasks.filter(t => t.completed)
             if (completedTasks.length > 0) setClearCompletedOpen(true)
           }}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-content-muted hover:bg-surface-sunken dark:hover:bg-surface-sunken transition-colors text-sm"
           disabled={!tasks.some(t => t.completed)}
         >
-          <CheckCheck className="w-4 h-4" />
-          Clear Done
-        </button>
-      </div>
-      <div className="qn-task-list flex-1 overflow-y-auto px-4">
+          Clear completed
+        </Button>
+          </div>
+        )}
+      >
+      <div className="qn-task-list">
         {filteredTasks.length === 0 ? (
-          <div className="qn-quiet-empty px-4 py-5 text-sm text-content-muted">
-            {filter === 'all' ? 'No tasks yet. Type the first task above and press Enter.' : `No ${FILTERS.find(f => f.id === filter)?.label.toLowerCase()}. Try another filter.`}
+          <div className="qn-structured-empty">
+            <strong>{filter === 'all' ? 'No tasks yet' : `No ${FILTERS.find(f => f.id === filter)?.label.toLowerCase()}`}</strong>
+            {filter === 'all' ? 'Add a task above to begin.' : 'Choose another filter to see more tasks.'}
           </div>
         ) : (
           filteredTasks.map((task) => (
@@ -375,7 +349,8 @@ export default function TodoListEditor({ data, onChange, noteTitle, onTitleChang
           ))
         )}
       </div>
-      </div>
+      </WorkspaceSection>
+      </StructuredWorkspaceShell>
       <ConfirmDialog
         open={clearCompletedOpen}
         onClose={() => setClearCompletedOpen(false)}
@@ -475,22 +450,18 @@ function TaskItem({
           )}
           <div className="flex items-center gap-2 mt-1 flex-wrap">
             {task.dueDate && (
-              <span className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 ${
- isOverdue 
- ? 'bg-red-100 dark:bg-red-900/30 text-red-600' 
-                  : 'bg-surface-sunken text-content-muted'
-              }`}>
+              <span className={`qn-task-metadata ${isOverdue ? 'text-danger-text' : ''}`}>
                 <Calendar className="w-3 h-3" />
                 {parseDateKey(task.dueDate).toLocaleDateString('en-US')}
               </span>
             )}
             {task.subtasks.length > 0 && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-accent-soft text-accent-text">
+              <span className="qn-task-metadata">
                 {task.subtasks.filter(st => st.completed).length}/{task.subtasks.length} subtasks
               </span>
             )}
             {recurrence && (
-              <span className="flex items-center gap-1 rounded-full bg-info-soft px-2 py-0.5 text-xs text-info-text">
+              <span className="qn-task-metadata">
                 <Repeat2 className="h-3 w-3" aria-hidden="true" />
                 {recurrence.interval > 1
                   ? `Every ${recurrence.interval} ${RECURRENCE_UNITS[recurrence.frequency]}`
@@ -515,8 +486,7 @@ function TaskItem({
             onClick={() => setShowPriorityMenu(!showPriorityMenu)}
             aria-label={`Set priority for ${task.text}. Current priority: ${priority.label}`}
             aria-expanded={showPriorityMenu}
-            className="p-1.5 rounded-lg transition-colors"
-            style={{ backgroundColor: priority.bgColor, color: priority.color }}
+            className={`qn-square-control rounded-control p-1.5 transition-colors hover:bg-surface-hover ${priority.className}`}
             title={`Priority: ${priority.label}`}
           >
             <Flag className="w-4 h-4" />
@@ -537,7 +507,7 @@ function TaskItem({
                   selected={task.priority === key}
                 >
                   <span className="flex items-center gap-2">
-                    <span aria-hidden="true">{value.icon}</span>
+                    <Flag className="h-3.5 w-3.5" aria-hidden="true" />
                     <span>{value.label}</span>
                   </span>
                 </MenuItem>

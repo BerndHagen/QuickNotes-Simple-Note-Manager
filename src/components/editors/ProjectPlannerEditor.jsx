@@ -9,26 +9,58 @@ import {
   CheckCircle2,
   Milestone,
   BarChart3,
-  ArrowLeft,
-  ArrowRight,
   GripVertical,
+  MoreHorizontal,
+  MoveUp,
+  MoveDown,
+  ChevronsUp,
+  ChevronsDown,
+  Flag,
+  FileText,
+  ShieldAlert,
+  Scale,
 } from 'lucide-react'
+import {
+  closestCenter,
+  DndContext,
+  DragOverlay,
+  KeyboardSensor,
+  MouseSensor,
+  TouchSensor,
+  useDroppable,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { formatDateKey, generateId, parseDateKey } from './noteTypes'
 import { useLatestValue } from './useLatestValue'
 import { useEditorDataSync } from './useEditorDataSync'
-import FocusedNoteTitle from './FocusedNoteTitle'
-import { EmptyState, Modal } from '../ui'
-const COLUMN_COLORS = {
-  backlog: { indicator: 'bg-content-subtle' },
-  todo: { indicator: 'bg-info' },
-  inProgress: { indicator: 'bg-warning' },
-  done: { indicator: 'bg-success' },
-}
+import StructuredWorkspaceShell, {
+  WorkspaceSection,
+  WorkspaceTabs,
+} from './StructuredWorkspaceShell'
+import {
+  Button,
+  EmptyState,
+  IconButton,
+  Menu,
+  MenuItem,
+  MenuLabel,
+  MenuSeparator,
+  Modal,
+} from '../ui'
 
 const PRIORITIES = {
-  high: { label: 'High', color: '#b91c1c', icon: '\u{1F534}' },
-  medium: { label: 'Medium', color: '#a16207', icon: '\u{1F7E1}' },
-  low: { label: 'Low', color: '#15803d', icon: '\u{1F7E2}' },
+  high: { label: 'High', className: 'text-danger-text' },
+  medium: { label: 'Medium', className: 'text-content-muted' },
+  low: { label: 'Low', className: 'text-content-subtle' },
 }
 
 export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitleChange, readOnly }) {
@@ -40,8 +72,18 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitl
   ])
   const [milestones, setMilestones] = useState(data?.milestones || [])
   const [team, setTeam] = useState(data?.team || [])
-  const [activeView, setActiveView] = useState('board')
-  const [draggedTask, setDraggedTask] = useState(null)
+  const [project, setProject] = useState({
+    brief: data?.project?.brief || data?.description || '',
+    status: data?.project?.status || 'active',
+    priority: data?.project?.priority || 'medium',
+    startDate: data?.project?.startDate || '',
+    targetDate: data?.project?.targetDate || '',
+    goals: data?.project?.goals || '',
+    decisions: data?.project?.decisions || '',
+    risks: data?.project?.risks || '',
+  })
+  const [activeView, setActiveView] = useState('overview')
+  const [activeTaskId, setActiveTaskId] = useState(null)
   const [dragOverColumn, setDragOverColumn] = useState(null)
   const [showAddTask, setShowAddTask] = useState(null)
   const [newTaskText, setNewTaskText] = useState('')
@@ -50,18 +92,33 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitl
   const [showTeamForm, setShowTeamForm] = useState(false)
   const [boardAnnouncement, setBoardAnnouncement] = useState('')
   const onChangeRef = useLatestValue(onChange)
-  const currentEditorData = { columns, milestones, team }
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 160, tolerance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  )
+  const currentEditorData = { columns, milestones, team, project }
   const skipChangeRef = useEditorDataSync(data, currentEditorData, (incoming) => {
     setColumns(incoming?.columns || [])
     setMilestones(incoming?.milestones || [])
     setTeam(incoming?.team || [])
+    setProject({
+      brief: incoming?.project?.brief || incoming?.description || '',
+      status: incoming?.project?.status || 'active',
+      priority: incoming?.project?.priority || 'medium',
+      startDate: incoming?.project?.startDate || '',
+      targetDate: incoming?.project?.targetDate || '',
+      goals: incoming?.project?.goals || '',
+      decisions: incoming?.project?.decisions || '',
+      risks: incoming?.project?.risks || '',
+    })
   })
   const isInitialMount = useRef(true)
   useEffect(() => {
     if (isInitialMount.current) { isInitialMount.current = false; return }
     if (skipChangeRef.current) { skipChangeRef.current = false; return }
-    onChangeRef.current?.({ columns, milestones, team })
-  }, [columns, milestones, onChangeRef, skipChangeRef, team])
+    onChangeRef.current?.({ columns, milestones, team, project })
+  }, [columns, milestones, onChangeRef, project, skipChangeRef, team])
   const stats = {
     totalTasks: columns.reduce((sum, col) => sum + col.tasks.length, 0),
     doneTasks: columns.find(c => c.id === 'done')?.tasks.length || 0,
@@ -98,15 +155,24 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitl
     const taskRecord = Object.fromEntries(
       Object.entries(taskToEdit).filter(([key]) => key !== 'columnId')
     )
-    setColumns(columns.map(col => {
-      const tasksWithoutEditedTask = col.tasks.filter(task => task.id !== taskToEdit.id)
-      if (col.id !== targetColumnId) return { ...col, tasks: tasksWithoutEditedTask }
+    setColumns((currentColumns) => {
+      const sourceColumn = currentColumns.find((column) =>
+        column.tasks.some((task) => task.id === taskToEdit.id)
+      )
+      const sourceIndex = sourceColumn?.tasks.findIndex((task) => task.id === taskToEdit.id) ?? -1
+      const updatedTask = { ...taskRecord, ...taskUpdates }
 
-      return {
-        ...col,
-        tasks: [...tasksWithoutEditedTask, { ...taskRecord, ...taskUpdates }],
-      }
-    }))
+      return currentColumns.map((column) => {
+        const withoutTask = column.tasks.filter((task) => task.id !== taskToEdit.id)
+        if (column.id !== targetColumnId) return { ...column, tasks: withoutTask }
+        if (column.id === sourceColumn?.id && sourceIndex >= 0) {
+          const nextTasks = [...withoutTask]
+          nextTasks.splice(Math.min(sourceIndex, nextTasks.length), 0, updatedTask)
+          return { ...column, tasks: nextTasks }
+        }
+        return { ...column, tasks: [...withoutTask, updatedTask] }
+      })
+    })
   }
   const deleteTask = (columnId, taskId) => {
     setColumns(columns.map(col => {
@@ -116,58 +182,111 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitl
       return col
     }))
   }
-  const handleDragStart = (e, task, sourceColumnId) => {
-    setDraggedTask({ task, sourceColumnId })
-    e.dataTransfer.effectAllowed = 'move'
+  const locateTask = (currentColumns, taskId) => {
+    const column = currentColumns.find((candidate) =>
+      candidate.tasks.some((task) => task.id === taskId)
+    )
+    if (!column) return null
+    return {
+      column,
+      index: column.tasks.findIndex((task) => task.id === taskId),
+      task: column.tasks.find((task) => task.id === taskId),
+    }
   }
 
-  const handleDragOver = (e, columnId) => {
-    e.preventDefault()
-    setDragOverColumn(columnId)
-  }
+  const moveTask = (taskId, targetColumnId, targetIndex, announcement) => {
+    setColumns((currentColumns) => {
+      const source = locateTask(currentColumns, taskId)
+      const targetColumn = currentColumns.find((column) => column.id === targetColumnId)
+      if (!source || !targetColumn) return currentColumns
 
-  const handleDragLeave = () => {
-    setDragOverColumn(null)
-  }
-
-  const handleDrop = (e, targetColumnId) => {
-    e.preventDefault()
-    setDragOverColumn(null)
-    
-    if (!draggedTask) return
-
-    const { task, sourceColumnId } = draggedTask
-
-    if (sourceColumnId === targetColumnId) return
-    const newColumns = columns.map(col => {
-      if (col.id === sourceColumnId) {
-        return { ...col, tasks: col.tasks.filter(t => t.id !== task.id) }
+      if (source.column.id === targetColumnId) {
+        const boundedIndex = Math.max(0, Math.min(targetIndex, source.column.tasks.length - 1))
+        if (boundedIndex === source.index) return currentColumns
+        return currentColumns.map((column) =>
+          column.id === targetColumnId
+            ? { ...column, tasks: arrayMove(column.tasks, source.index, boundedIndex) }
+            : column
+        )
       }
-      if (col.id === targetColumnId) {
-        return { ...col, tasks: [...col.tasks, task] }
-      }
-      return col
+
+      const boundedIndex = Math.max(0, Math.min(targetIndex, targetColumn.tasks.length))
+      return currentColumns.map((column) => {
+        if (column.id === source.column.id) {
+          return { ...column, tasks: column.tasks.filter((task) => task.id !== taskId) }
+        }
+        if (column.id === targetColumnId) {
+          const nextTasks = [...column.tasks]
+          nextTasks.splice(boundedIndex, 0, source.task)
+          return { ...column, tasks: nextTasks }
+        }
+        return column
+      })
     })
+    if (announcement) setBoardAnnouncement(announcement)
+  }
 
-    setColumns(newColumns)
-    const targetColumn = columns.find((column) => column.id === targetColumnId)
-    setBoardAnnouncement(`${task.title} moved to ${targetColumn?.name || 'the next column'}`)
-    setDraggedTask(null)
+  const moveTaskWithinColumn = (task, columnId, destination) => {
+    const column = columns.find((candidate) => candidate.id === columnId)
+    const currentIndex = column?.tasks.findIndex((item) => item.id === task.id) ?? -1
+    if (currentIndex < 0) return
+    const targetIndex = destination === 'top'
+      ? 0
+      : destination === 'bottom'
+        ? column.tasks.length - 1
+        : currentIndex + destination
+    if (targetIndex < 0 || targetIndex >= column.tasks.length || targetIndex === currentIndex) return
+    moveTask(
+      task.id,
+      columnId,
+      targetIndex,
+      `${task.title} moved to position ${targetIndex + 1} in ${column.name}`
+    )
   }
 
   const moveTaskToColumn = (task, sourceColumnId, targetColumnId) => {
     if (!targetColumnId || sourceColumnId === targetColumnId) return
-    setColumns((currentColumns) => currentColumns.map((column) => {
-      if (column.id === sourceColumnId) {
-        return { ...column, tasks: column.tasks.filter((item) => item.id !== task.id) }
-      }
-      if (column.id === targetColumnId) {
-        return { ...column, tasks: [...column.tasks, task] }
-      }
-      return column
-    }))
     const targetColumn = columns.find((column) => column.id === targetColumnId)
-    setBoardAnnouncement(`${task.title} moved to ${targetColumn?.name || 'another column'}`)
+    moveTask(
+      task.id,
+      targetColumnId,
+      targetColumn?.tasks.length || 0,
+      `${task.title} moved to ${targetColumn?.name || 'another status'}`
+    )
+  }
+
+  const handleDragStart = ({ active }) => {
+    setActiveTaskId(active.id)
+    setDragOverColumn(active.data.current?.columnId || null)
+  }
+
+  const handleDragOver = ({ over }) => {
+    if (!over) {
+      setDragOverColumn(null)
+      return
+    }
+    setDragOverColumn(over.data.current?.columnId || null)
+  }
+
+  const handleDragEnd = ({ active, over }) => {
+    setActiveTaskId(null)
+    setDragOverColumn(null)
+    if (!over || active.id === over.id) return
+
+    const source = locateTask(columns, active.id)
+    const targetColumnId = over.data.current?.columnId
+    const targetColumn = columns.find((column) => column.id === targetColumnId)
+    if (!source || !targetColumn) return
+    const targetIndex = over.data.current?.type === 'task'
+      ? targetColumn.tasks.findIndex((task) => task.id === over.id)
+      : targetColumn.tasks.length
+    const position = Math.max(0, targetIndex) + 1
+    moveTask(
+      active.id,
+      targetColumnId,
+      targetIndex,
+      `${source.task.title} moved to position ${position} in ${targetColumn.name}`
+    )
   }
   const addMilestone = (name, dueDate) => {
     const newMilestone = {
@@ -200,164 +319,169 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitl
     setTeam(team.filter(m => m.id !== id))
   }
 
-  return (
-    <div className="qn-type-editor qn-type-project flex flex-col h-full bg-surface-sunken">
-      <header className="qn-type-hero qn-workspace-header flex-shrink-0 border-b border-subtle">
-        <div className="flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <FocusedNoteTitle
-              icon={Target}
-              typeLabel="Project workspace"
-              title={noteTitle}
-              fallback="Project board"
-              onChange={onTitleChange}
-              readOnly={readOnly}
-            />
-            <p className="ml-12 mt-1 text-ui-md text-content-muted">
-              {stats.totalTasks === 0
-                ? 'Start in the backlog or define a milestone'
-                : `${stats.totalTasks} tasks \u2022 ${stats.progress}% complete`}
-            </p>
-          </div>
-        </div>
-      </header>
-      <div className="qn-type-tabs flex-shrink-0 flex gap-1 p-2 border-b border-subtle bg-surface-raised">
-        {[
-          { id: 'board', label: 'Board', icon: BarChart3 },
-          { id: 'milestones', label: 'Milestones', icon: Milestone },
-          { id: 'team', label: 'Team', icon: Users },
-        ].map(view => (
-          <button
-            key={view.id}
-            onClick={() => setActiveView(view.id)}
-            aria-pressed={activeView === view.id}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
- activeView === view.id
- ? 'bg-accent-soft text-accent-text'
-                : 'text-content-muted hover:bg-surface-hover'
-            }`}
-          >
-            <view.icon className="w-4 h-4" />
-            {view.label}
-          </button>
-        ))}
-      </div>
-      <div className="qn-workspace-canvas flex-1 overflow-hidden">
-        {activeView === 'board' && (
-          <div className="h-full overflow-x-auto p-4">
-            <p className="qn-sr-only" aria-live="polite">{boardAnnouncement}</p>
-            <div className="flex gap-4 h-full min-w-max">
-              {columns.map((column, columnIndex) => {
-                const colors = COLUMN_COLORS[column.id] || COLUMN_COLORS.backlog
-                return (
-                  <section
-                    key={column.id}
-                    data-column={column.id}
-                    onDragOver={(e) => handleDragOver(e, column.id)}
-                    onDragLeave={handleDragLeave}
-                    onDrop={(e) => handleDrop(e, column.id)}
-                    className={`qn-project-column w-72 flex flex-col overflow-hidden rounded-card border border-subtle bg-surface-raised ${
- dragOverColumn === column.id ? 'ring-2 ring-accent ring-offset-2 ring-offset-[var(--qn-surface-sunken)]' : ''
- }`}
-                    aria-label={`${column.name}, ${column.tasks.length} tasks`}
-                  >
-                    <div className="qn-project-column-header flex items-center justify-between border-b border-subtle bg-surface-sunken px-3 py-2.5">
-                      <div className="flex items-center gap-2">
-                        <span className={`h-2 w-2 rounded-full ${colors.indicator}`} aria-hidden="true" />
-                        <span className="text-ui-lg font-semibold text-content">{column.name}</span>
-                        <span className="min-w-5 text-center text-ui-xs tabular-nums text-content-subtle">
-                          {column.tasks.length}
-                        </span>
-                      </div>
-                      <button
-                        onClick={() => setShowAddTask(column.id)}
-                        aria-label={`Add task to ${column.name}`}
-                        className="qn-square-control flex h-8 w-8 items-center justify-center rounded-control border border-accent bg-accent text-accent-on shadow-xs transition-colors hover:bg-accent-hover"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </button>
-                    </div>
-                    <div className="qn-project-column-body flex-1 overflow-y-auto space-y-2 bg-surface-raised p-2">
-                      {showAddTask === column.id && (
-                        <div className="p-3 rounded-lg border-2 border-dashed border-accent-border bg-accent-soft">
-                          <input
-                            type="text"
-                            value={newTaskText}
-                            onChange={(e) => setNewTaskText(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') addTask(column.id)
-                              if (e.key === 'Escape') { setShowAddTask(null); setNewTaskText('') }
-                            }}
-                            placeholder="Task title..."
-                            aria-label={`New task title for ${column.name}`}
-                            className="w-full px-3 py-2 rounded-lg bg-surface-raised border border-subtle text-sm outline-none focus:border-accent"
-                            autoFocus
-                          />
-                          <div className="flex gap-2 mt-2">
-                            <button
-                              onClick={() => addTask(column.id)}
-                              className="flex-1 px-3 py-1.5 rounded-lg bg-accent hover:bg-accent-hover text-accent-on text-sm"
-                            >
-                              Add Task
-                            </button>
-                            <button
-                              onClick={() => { setShowAddTask(null); setNewTaskText('') }}
-                              className="px-3 py-1.5 rounded-lg bg-surface-sunken dark:bg-surface-sunken text-content-muted text-sm"
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                      {column.tasks.map((task) => (
-                        <TaskCard
-                          key={task.id}
-                          task={task}
-                          team={team}
-                          onDragStart={(e) => handleDragStart(e, task, column.id)}
-                          onDragEnd={() => {
-                            setDraggedTask(null)
-                            setDragOverColumn(null)
-                          }}
-                          onDelete={() => deleteTask(column.id, task.id)}
-                          onEdit={() => setEditingTask({ ...task, columnId: column.id })}
-                          previousColumnName={columns[columnIndex - 1]?.name}
-                          nextColumnName={columns[columnIndex + 1]?.name}
-                          onMovePrevious={columns[columnIndex - 1]
-                            ? () => moveTaskToColumn(task, column.id, columns[columnIndex - 1].id)
-                            : undefined}
-                          onMoveNext={columns[columnIndex + 1]
-                            ? () => moveTaskToColumn(task, column.id, columns[columnIndex + 1].id)
-                            : undefined}
-                        />
-                      ))}
+  const activeTask = activeTaskId ? locateTask(columns, activeTaskId)?.task : null
 
-                      {column.tasks.length === 0 && showAddTask !== column.id && (
-                        <div className="text-center py-8 text-content-subtle text-sm">
-                          No tasks
-                        </div>
-                      )}
-                    </div>
-                  </section>
-                )
-              })}
+  return (
+    <StructuredWorkspaceShell
+      className="qn-type-editor qn-type-project"
+      icon={Target}
+      typeLabel="Project workspace"
+      title={noteTitle}
+      fallback="Project board"
+      onTitleChange={onTitleChange}
+      readOnly={readOnly}
+      summary={(
+        <>
+          <span>{stats.totalTasks} {stats.totalTasks === 1 ? 'task' : 'tasks'}</span>
+          <span>{stats.progress}% complete</span>
+          <span>{project.status.charAt(0).toUpperCase() + project.status.slice(1)}</span>
+          {stats.inProgressTasks > 0 && <span>{stats.inProgressTasks} in progress</span>}
+          {stats.overdueTasks > 0 && <span>{stats.overdueTasks} overdue</span>}
+        </>
+      )}
+      commands={(
+        <WorkspaceTabs
+          activeTab={activeView}
+          onChange={setActiveView}
+          tabs={[
+            { id: 'overview', label: 'Overview', icon: FileText },
+            { id: 'board', label: 'Board', icon: BarChart3, count: stats.totalTasks },
+            { id: 'milestones', label: 'Milestones', icon: Milestone, count: milestones.length },
+            { id: 'team', label: 'People', icon: Users, count: team.length },
+          ]}
+        />
+      )}
+    >
+        {activeView === 'overview' && (
+          <div className="qn-project-overview">
+            <section className="qn-project-brief" aria-labelledby="qn-project-brief-title">
+              <div className="qn-project-overview-heading">
+                <div>
+                  <h2 id="qn-project-brief-title">Project brief</h2>
+                  <p>Keep the outcome and operating context clear.</p>
+                </div>
+                <div className="qn-project-properties" aria-label="Project properties">
+                  <label>
+                    <span>Status</span>
+                    <select value={project.status} onChange={(event) => setProject((current) => ({ ...current, status: event.target.value }))}>
+                      <option value="planned">Planned</option>
+                      <option value="active">Active</option>
+                      <option value="paused">Paused</option>
+                      <option value="complete">Complete</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span>Priority</span>
+                    <select value={project.priority} onChange={(event) => setProject((current) => ({ ...current, priority: event.target.value }))}>
+                      <option value="low">Low</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span>Start</span>
+                    <input type="date" value={project.startDate} onChange={(event) => setProject((current) => ({ ...current, startDate: event.target.value }))} />
+                  </label>
+                  <label>
+                    <span>Target</span>
+                    <input type="date" value={project.targetDate} onChange={(event) => setProject((current) => ({ ...current, targetDate: event.target.value }))} />
+                  </label>
+                </div>
+              </div>
+              <textarea
+                value={project.brief}
+                onChange={(event) => setProject((current) => ({ ...current, brief: event.target.value }))}
+                aria-label="Project brief"
+                placeholder="Describe the desired outcome, scope, and constraints."
+                rows={7}
+              />
+            </section>
+
+            <div className="qn-project-overview-grid">
+              <ProjectNarrativeField
+                icon={Target}
+                title="Goals"
+                description="One outcome per line"
+                value={project.goals}
+                onChange={(value) => setProject((current) => ({ ...current, goals: value }))}
+              />
+              <ProjectNarrativeField
+                icon={ShieldAlert}
+                title="Risks and blockers"
+                description="What could prevent delivery?"
+                value={project.risks}
+                onChange={(value) => setProject((current) => ({ ...current, risks: value }))}
+              />
+              <ProjectNarrativeField
+                icon={Scale}
+                title="Decisions"
+                description="Record choices that affect the project"
+                value={project.decisions}
+                onChange={(value) => setProject((current) => ({ ...current, decisions: value }))}
+              />
+              <section className="qn-project-next" aria-labelledby="qn-project-next-title">
+                <h3 id="qn-project-next-title">Delivery at a glance</h3>
+                <dl>
+                  <div><dt>Open tasks</dt><dd>{stats.totalTasks - stats.doneTasks}</dd></div>
+                  <div><dt>In progress</dt><dd>{stats.inProgressTasks}</dd></div>
+                  <div><dt>Overdue</dt><dd>{stats.overdueTasks}</dd></div>
+                  <div><dt>Milestones</dt><dd>{milestones.filter((item) => !item.completed).length} open</dd></div>
+                </dl>
+              </section>
             </div>
           </div>
         )}
 
+        {activeView === 'board' && (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={handleDragStart}
+            onDragOver={handleDragOver}
+            onDragEnd={handleDragEnd}
+            onDragCancel={() => {
+              setActiveTaskId(null)
+              setDragOverColumn(null)
+            }}
+          >
+            <p className="qn-sr-only" aria-live="polite">{boardAnnouncement}</p>
+            <div className="qn-project-board">
+              {columns.map((column) => (
+                <ProjectColumn
+                  key={column.id}
+                  column={column}
+                  columns={columns}
+                  team={team}
+                  isDragTarget={dragOverColumn === column.id}
+                  showAddTask={showAddTask === column.id}
+                  newTaskText={newTaskText}
+                  onShowAddTask={() => setShowAddTask(column.id)}
+                  onNewTaskTextChange={setNewTaskText}
+                  onAddTask={() => addTask(column.id)}
+                  onCancelAdd={() => { setShowAddTask(null); setNewTaskText('') }}
+                  onDeleteTask={(taskId) => deleteTask(column.id, taskId)}
+                  onEditTask={(task) => setEditingTask({ ...task, columnId: column.id })}
+                  onMoveWithin={(task, destination) => moveTaskWithinColumn(task, column.id, destination)}
+                  onMoveTo={(task, targetColumnId) => moveTaskToColumn(task, column.id, targetColumnId)}
+                />
+              ))}
+            </div>
+            <DragOverlay>
+              {activeTask ? <ProjectTaskPreview task={activeTask} /> : null}
+            </DragOverlay>
+          </DndContext>
+        )}
+
         {activeView === 'milestones' && (
-          <div className="p-4 overflow-y-auto">
-            <div className="qn-workspace-panel mx-auto max-w-2xl p-5">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-content">Milestones</h2>
-                <button
-                  onClick={() => setShowMilestoneForm(true)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-accent hover:bg-accent-hover text-accent-on text-sm"
-                >
-                  <Plus className="w-4 h-4" />
-                  Add Milestone
-                </button>
-              </div>
+          <WorkspaceSection
+            title="Milestones"
+            description="Track the outcomes that define project progress."
+            actions={!showMilestoneForm && (
+              <Button size="sm" variant="primary" icon={Plus} onClick={() => setShowMilestoneForm(true)}>
+                Add milestone
+              </Button>
+            )}
+          >
 
               {showMilestoneForm && (
                 <MilestoneForm
@@ -366,7 +490,7 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitl
                 />
               )}
 
-              <div className="space-y-3">
+              <div>
                 {milestones.length === 0 ? (
                   <EmptyState
                     icon={Milestone}
@@ -385,23 +509,19 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitl
                   ))
                 )}
               </div>
-            </div>
-          </div>
+          </WorkspaceSection>
         )}
 
         {activeView === 'team' && (
-          <div className="p-4 overflow-y-auto">
-            <div className="qn-workspace-panel mx-auto max-w-2xl p-5">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-content">Team Members</h2>
-                <button
-                  onClick={() => setShowTeamForm(true)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-accent hover:bg-accent-hover text-accent-on text-sm"
-                >
-                  <Plus className="w-4 h-4" />
-                  Add Member
-                </button>
-              </div>
+          <WorkspaceSection
+            title="People"
+            description="Keep task ownership clear without turning the board into a directory."
+            actions={!showTeamForm && (
+              <Button size="sm" variant="primary" icon={Plus} onClick={() => setShowTeamForm(true)}>
+                Add person
+              </Button>
+            )}
+          >
 
               {showTeamForm && (
                 <TeamMemberForm
@@ -410,7 +530,7 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitl
                 />
               )}
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="qn-project-people">
                 {team.length === 0 ? (
                   <EmptyState
                     icon={Users}
@@ -432,10 +552,8 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitl
                   ))
                 )}
               </div>
-            </div>
-          </div>
+          </WorkspaceSection>
         )}
-      </div>
       {editingTask && (
         <TaskEditModal
           task={editingTask}
@@ -448,113 +566,197 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitl
           onClose={() => setEditingTask(null)}
         />
       )}
-    </div>
+    </StructuredWorkspaceShell>
   )
 }
-function TaskCard({
-  task,
+
+function ProjectNarrativeField({ icon: Icon, title, description, value, onChange }) {
+  return (
+    <label className="qn-project-narrative">
+      <span className="qn-project-narrative-title"><Icon className="h-4 w-4" aria-hidden="true" />{title}</span>
+      <small>{description}</small>
+      <textarea value={value} onChange={(event) => onChange(event.target.value)} rows={5} placeholder="Add details" />
+    </label>
+  )
+}
+
+function ProjectColumn({
+  column,
+  columns,
   team,
-  onDragStart,
-  onDragEnd,
-  onDelete,
-  onEdit,
-  previousColumnName,
-  nextColumnName,
-  onMovePrevious,
-  onMoveNext,
+  isDragTarget,
+  showAddTask,
+  newTaskText,
+  onShowAddTask,
+  onNewTaskTextChange,
+  onAddTask,
+  onCancelAdd,
+  onDeleteTask,
+  onEditTask,
+  onMoveWithin,
+  onMoveTo,
 }) {
+  const { setNodeRef } = useDroppable({
+    id: `column:${column.id}`,
+    data: { type: 'column', columnId: column.id },
+  })
+
+  return (
+    <section
+      ref={setNodeRef}
+      className={`qn-project-column ${isDragTarget ? 'qn-project-column--target' : ''}`}
+      data-column={column.id}
+      aria-label={`${column.name}, ${column.tasks.length} ${column.tasks.length === 1 ? 'task' : 'tasks'}`}
+    >
+      <header className="qn-project-column-heading">
+        <div>
+          <h2>{column.name}</h2>
+          <span>{column.tasks.length}</span>
+        </div>
+        <IconButton icon={Plus} size="sm" label={`Add task to ${column.name}`} onClick={onShowAddTask} />
+      </header>
+
+      {showAddTask && (
+        <form
+          className="qn-project-quick-add"
+          onSubmit={(event) => { event.preventDefault(); onAddTask() }}
+        >
+          <label className="qn-sr-only" htmlFor={`new-project-task-${column.id}`}>Task title</label>
+          <input
+            id={`new-project-task-${column.id}`}
+            type="text"
+            value={newTaskText}
+            onChange={(event) => onNewTaskTextChange(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') onCancelAdd()
+            }}
+            placeholder="Task title"
+            autoFocus
+          />
+          <div>
+            <Button type="submit" size="sm" variant="primary" disabled={!newTaskText.trim()}>Add task</Button>
+            <Button size="sm" variant="ghost" onClick={onCancelAdd}>Cancel</Button>
+          </div>
+        </form>
+      )}
+
+      <SortableContext items={column.tasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
+        <div className="qn-project-column-list">
+          {column.tasks.map((task, index) => (
+            <TaskCard
+              key={task.id}
+              task={task}
+              columnId={column.id}
+              columns={columns}
+              team={team}
+              index={index}
+              itemCount={column.tasks.length}
+              onDelete={() => onDeleteTask(task.id)}
+              onEdit={() => onEditTask(task)}
+              onMoveWithin={(destination) => onMoveWithin(task, destination)}
+              onMoveTo={(targetColumnId) => onMoveTo(task, targetColumnId)}
+            />
+          ))}
+          {column.tasks.length === 0 && !showAddTask && (
+            <div className="qn-project-column-empty">No tasks in this status</div>
+          )}
+        </div>
+      </SortableContext>
+    </section>
+  )
+}
+
+function TaskCard({ task, columnId, columns, team, index, itemCount, onDelete, onEdit, onMoveWithin, onMoveTo }) {
+  const menuButtonRef = useRef(null)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: task.id,
+    data: { type: 'task', columnId },
+  })
   const priority = PRIORITIES[task.priority]
   const assignee = team.find(m => m.id === task.assignee)
   const isOverdue = task.dueDate && task.dueDate < formatDateKey()
 
   return (
     <article
-      className="qn-project-task-card group p-3 rounded-card bg-surface-raised border border-subtle"
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={`qn-project-task-card ${isDragging ? 'qn-project-task-card--dragging' : ''}`}
     >
-      <div className="flex items-start justify-between gap-2 mb-2">
+      <div className="qn-project-task-main">
         <button
           type="button"
-          draggable
-          onDragStart={onDragStart}
-          onDragEnd={onDragEnd}
-          aria-label={`Drag ${task.title}`}
-          title="Drag task"
-          className="qn-drag-handle -ml-1 flex h-7 w-6 flex-shrink-0 cursor-grab items-center justify-center rounded-control text-content-subtle hover:bg-surface-sunken hover:text-content active:cursor-grabbing"
+          className="qn-project-drag-handle"
+          aria-label={`Move ${task.title}. Use drag or the task menu.`}
+          {...attributes}
+          {...listeners}
         >
           <GripVertical className="h-4 w-4" aria-hidden="true" />
         </button>
-        <h3 className="font-medium text-content text-sm flex-1">
-          {task.title}
-        </h3>
-        <div className="flex items-center opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
-          {onMovePrevious && (
-            <button
-              type="button"
-              onClick={onMovePrevious}
-              aria-label={`Move ${task.title} to ${previousColumnName}`}
-              className="qn-square-control flex h-7 w-7 items-center justify-center rounded-control text-content-muted hover:bg-surface-sunken hover:text-content"
-            >
-              <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
-            </button>
-          )}
-          {onMoveNext && (
-            <button
-              type="button"
-              onClick={onMoveNext}
-              aria-label={`Move ${task.title} to ${nextColumnName}`}
-              className="qn-square-control flex h-7 w-7 items-center justify-center rounded-control text-content-muted hover:bg-surface-sunken hover:text-content"
-            >
-              <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-            </button>
-          )}
-          <button
-            onClick={onEdit}
-            aria-label={`Edit ${task.title}`}
-            className="p-1.5 rounded text-content-muted hover:bg-surface-sunken hover:text-accent-text dark:hover:bg-surface-sunken"
-          >
-            <Edit3 className="w-3.5 h-3.5" aria-hidden="true" />
-          </button>
-          <button
-            onClick={onDelete}
-            aria-label={`Delete ${task.title}`}
-            className="p-1.5 rounded text-content-muted hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30"
-          >
-            <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
-          </button>
+        <div className="min-w-0 flex-1">
+          <h3>{task.title}</h3>
+          {task.description && <p>{task.description}</p>}
         </div>
+        <IconButton
+          ref={menuButtonRef}
+          icon={MoreHorizontal}
+          size="sm"
+          label={`Actions for ${task.title}`}
+          active={menuOpen}
+          aria-haspopup="menu"
+          aria-expanded={menuOpen}
+          onClick={() => setMenuOpen((open) => !open)}
+        />
       </div>
-
-      {task.description && (
-        <p className="text-xs text-content-muted mb-2 line-clamp-2">
-          {task.description}
-        </p>
-      )}
-
-      <div className="flex items-center gap-2 flex-wrap">
+      <div className="qn-project-task-meta">
         {task.priority && task.priority !== 'medium' && (
-          <span className="text-xs px-1.5 py-0.5 rounded" style={{ backgroundColor: priority?.color + '20', color: priority?.color }}>
-            {priority?.icon} {priority?.label}
+          <span className={priority?.className}>
+            <Flag className="h-3.5 w-3.5" aria-hidden="true" />
+            {priority?.label}
           </span>
         )}
-        
         {task.dueDate && (
-          <span className={`text-xs px-1.5 py-0.5 rounded flex items-center gap-1 ${
- isOverdue ? 'bg-red-100 text-red-600' : 'bg-surface-sunken text-content-muted'
- }`}>
-            <Calendar className="w-3 h-3" />
+          <span className={isOverdue ? 'text-danger-text' : ''}>
+            <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
             {parseDateKey(task.dueDate).toLocaleDateString('en-US')}
           </span>
         )}
-
         {assignee && (
-          <div className="flex items-center gap-1 text-xs text-content-muted">
-            <div className="w-5 h-5 rounded-full bg-accent-soft text-accent-text flex items-center justify-center text-xs font-medium">
-              {assignee.avatar}
-            </div>
-          </div>
+          <span title={assignee.name}>{assignee.name}</span>
         )}
       </div>
+      <Menu
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        anchorRef={menuButtonRef}
+        placement="bottom-end"
+        label={`Actions for ${task.title}`}
+        width={230}
+      >
+        <MenuLabel>Position</MenuLabel>
+        <MenuItem icon={ChevronsUp} disabled={index === 0} onClick={() => { onMoveWithin('top'); setMenuOpen(false) }}>Move to top</MenuItem>
+        <MenuItem icon={MoveUp} disabled={index === 0} onClick={() => { onMoveWithin(-1); setMenuOpen(false) }}>Move up</MenuItem>
+        <MenuItem icon={MoveDown} disabled={index === itemCount - 1} onClick={() => { onMoveWithin(1); setMenuOpen(false) }}>Move down</MenuItem>
+        <MenuItem icon={ChevronsDown} disabled={index === itemCount - 1} onClick={() => { onMoveWithin('bottom'); setMenuOpen(false) }}>Move to bottom</MenuItem>
+        <MenuSeparator />
+        <MenuLabel>Move to status</MenuLabel>
+        {columns.filter((column) => column.id !== columnId).map((column) => (
+          <MenuItem key={column.id} onClick={() => { onMoveTo(column.id); setMenuOpen(false) }}>{column.name}</MenuItem>
+        ))}
+        <MenuSeparator />
+        <MenuItem icon={Edit3} onClick={() => { onEdit(); setMenuOpen(false) }}>Edit details</MenuItem>
+        <MenuItem icon={Trash2} tone="danger" onClick={() => { onDelete(); setMenuOpen(false) }}>Delete task</MenuItem>
+      </Menu>
     </article>
+  )
+}
+
+function ProjectTaskPreview({ task }) {
+  return (
+    <div className="qn-project-task-preview">
+      <GripVertical className="h-4 w-4" aria-hidden="true" />
+      <span>{task.title}</span>
+    </div>
   )
 }
 function TaskEditModal({ task, team, columns, onSave, onClose }) {

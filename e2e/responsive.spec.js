@@ -117,14 +117,14 @@ test.describe('compact navigation', () => {
     await signIn(page)
 
     // The note list is the landing pane; the editor is off-screen.
-    await expect(page.getByRole('searchbox')).toBeVisible()
+    await expect(page.getByRole('searchbox', { name: 'Search notes...', exact: true })).toBeVisible()
 
     await page.getByRole('button', { name: /new note/i }).first().click()
     // Creating a note switches to the editor pane, which offers a way back.
     const back = page.getByRole('button', { name: /back to notes/i })
     await expect(back).toBeVisible()
     await back.click()
-    await expect(page.getByRole('searchbox')).toBeVisible()
+    await expect(page.getByRole('searchbox', { name: 'Search notes...', exact: true })).toBeVisible()
   })
 
   test('sidebar opens as an overlay drawer and closes after navigating', async ({ page }) => {
@@ -136,7 +136,7 @@ test.describe('compact navigation', () => {
 
     await nav.getByRole('button', { name: /^favorites/i }).click()
     // Navigating dismisses the drawer so the list is usable again.
-    await expect(page.getByRole('searchbox')).toBeVisible()
+    await expect(page.getByRole('searchbox', { name: 'Search notes...', exact: true })).toBeVisible()
   })
 
   test('exposes note actions without requiring hover or long press', async ({ page }) => {
@@ -403,7 +403,7 @@ test.describe('mobile editor usability', () => {
     await editor.pressSequentially('Draft kept across mobile navigation')
 
     await page.goBack()
-    await expect(page.getByRole('searchbox')).toBeVisible()
+    await expect(page.getByRole('searchbox', { name: 'Search notes...', exact: true })).toBeVisible()
     await page.goForward()
     await expect(editor).toContainText('Draft kept across mobile navigation')
   })
@@ -419,6 +419,8 @@ test.describe('phone landscape editor', () => {
     const toolbar = page.locator('.editor-toolbar')
     const editorViewport = page.locator('.ProseMirror').locator('xpath=../..')
     await expect(toolbar).toBeHidden()
+    await expect(page.locator('.qn-top-chrome')).toBeHidden()
+    await expect(page.getByRole('button', { name: /back to notes/i })).toBeVisible()
     const collapsedEditorBox = await editorViewport.boundingBox()
     expect(collapsedEditorBox.height).toBeGreaterThanOrEqual(220)
 
@@ -453,7 +455,7 @@ test.describe('large desktop', () => {
     await expect(selector.getByRole('button', { name: 'Grid view' })).toHaveAttribute('aria-pressed', 'true')
 
     await selector.getByRole('button', { name: 'List view' }).click()
-    await expect(page.getByRole('searchbox')).toBeVisible()
+    await expect(page.getByRole('searchbox', { name: 'Search notes...', exact: true })).toBeVisible()
     await expect(page.getByRole('button', { name: 'List view' })).toHaveAttribute('aria-pressed', 'true')
   })
 })

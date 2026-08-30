@@ -84,7 +84,7 @@ test('Meeting capture turns reviewed transcript text into source-linked actions,
   await createMeeting(page, title)
 
   const editor = page.locator('.qn-type-meeting')
-  await editor.getByRole('button', { name: /^Capture/i }).click()
+  await editor.getByRole('tab', { name: /^Capture/i }).click()
   await expect(editor.getByText('Meeting capture', { exact: true })).toBeVisible()
   await editor.getByRole('button', { name: 'Record or attach' }).click()
   let resources = page.getByRole('dialog', { name: 'Attachments and recordings' })
@@ -101,7 +101,7 @@ test('Meeting capture turns reviewed transcript text into source-linked actions,
   const meetingRow = page.getByRole('button', { name: new RegExp(title) }).first()
   if (await meetingRow.isVisible().catch(() => false)) await meetingRow.click()
   await expect(page.locator('.qn-type-meeting')).toBeVisible()
-  await page.locator('.qn-type-meeting').getByRole('button', { name: /^Capture/i }).click()
+  await page.locator('.qn-type-meeting').getByRole('tab', { name: /^Capture/i }).click()
   await page.locator('.qn-type-meeting').getByRole('button', { name: 'Open recordings' }).click()
   resources = page.getByRole('dialog', { name: 'Attachments and recordings' })
   await expect(resources.getByLabel('Selected transcript segment')).toHaveValue('Send the reviewed summary to Alex.')
@@ -113,7 +113,7 @@ test('Meeting capture turns reviewed transcript text into source-linked actions,
   await resources.getByRole('button', { name: 'Add decision' }).click()
   await resources.getByRole('button', { name: 'Close', exact: true }).click()
 
-  await editor.getByRole('button', { name: /^Action Items/i }).click()
+  await editor.getByRole('tab', { name: /^Action Items/i }).click()
   await expect(editor.getByText('Send the reviewed summary to Alex.', { exact: true })).toBeVisible()
   await editor.getByRole('button', { name: 'Set reminder for Send the reviewed summary to Alex.' }).click()
   const reminders = page.getByRole('dialog', { name: 'Reminders' })
@@ -123,7 +123,7 @@ test('Meeting capture turns reviewed transcript text into source-linked actions,
   await expect(reminders.getByText('Send the reviewed summary to Alex.', { exact: true }).first()).toBeVisible()
   await page.keyboard.press('Escape')
 
-  await editor.getByRole('button', { name: /^Decisions/i }).click()
+  await editor.getByRole('tab', { name: /^Decisions/i }).click()
   await expect(editor.getByText('Send the reviewed summary to Alex.', { exact: true })).toBeVisible()
   await expect(editor.getByRole('button', { name: /open transcript source for decision/i })).toBeVisible()
   await expect(page.getByText('Meeting action item added with its capture source', { exact: true })).toBeHidden({ timeout: 7_000 })
@@ -134,7 +134,7 @@ test('Meeting capture turns reviewed transcript text into source-linked actions,
   expect(violationsText(violations)).toBe('')
   await page.setViewportSize({ width: 390, height: 844 })
   await page.getByRole('button', { name: new RegExp(title) }).first().click()
-  await editor.getByRole('button', { name: /^Capture/i }).click()
+  await editor.getByRole('tab', { name: /^Capture/i }).click()
   await expectNoHorizontalOverflow(page)
   await page.screenshot({ path: testInfo.outputPath('meeting-workflow-compact.png'), fullPage: true })
 
@@ -143,7 +143,7 @@ test('Meeting capture turns reviewed transcript text into source-linked actions,
   await expect(page.locator('html')).toHaveClass(/dark/)
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.getByRole('button', { name: new RegExp(title) }).first().click()
-  await page.locator('.qn-type-meeting').getByRole('button', { name: /^Capture/i }).click()
+  await page.locator('.qn-type-meeting').getByRole('tab', { name: /^Capture/i }).click()
   await page.screenshot({ path: testInfo.outputPath('meeting-workflow-dark.png'), fullPage: true })
 
   expect(errors).toEqual([])

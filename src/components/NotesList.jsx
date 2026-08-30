@@ -16,7 +16,7 @@ import {
   Search,
   Star,
   StarOff,
-  Sparkles,
+  Kanban,
   Tag,
   Trash2,
   X,
@@ -479,7 +479,7 @@ export default function NotesList({ sidebarToggle, onOpenNote }) {
             }}
           />
           <IconButton
-            icon={Sparkles}
+            icon={Kanban}
             label="Create workspace"
             onClick={() => setNoteTypesModalOpen(true)}
           />

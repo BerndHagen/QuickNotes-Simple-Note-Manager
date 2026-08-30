@@ -138,7 +138,7 @@ describe('professional note type contracts', () => {
     const brainstorm = getDefaultData(NOTE_TYPES.BRAINSTORM)
     expect(brainstorm).toMatchObject({
       ideas: [],
-      viewMode: 'grid',
+      viewMode: 'canvas',
       sortBy: 'newest',
       selectedCategory: 'all',
     })

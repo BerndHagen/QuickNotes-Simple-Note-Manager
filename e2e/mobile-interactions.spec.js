@@ -43,10 +43,88 @@ test.describe('mobile control geometry', () => {
     }
   })
 
+  test('uses navigation, a real search field, and sync as the mobile application bar', async ({ page }) => {
+    await signIn(page)
+    const chrome = page.locator('.qn-top-chrome')
+    const navigation = chrome.getByRole('button', { name: /show navigation/i })
+    const search = chrome.getByRole('searchbox', { name: 'Search all notes' })
+    const sync = chrome.locator('.qn-top-sync:visible')
+
+    await expect(chrome.getByLabel('QuickNotes')).toBeHidden()
+    await expect(chrome.getByRole('button', { name: 'Create quick note' })).toBeHidden()
+    await expect(navigation).toBeVisible()
+    await expect(search).toBeVisible()
+    await expect(search).toHaveAttribute('type', 'search')
+    await expect(sync).toBeVisible()
+
+    const [navigationBox, searchBox, syncBox] = await Promise.all([
+      navigation.boundingBox(),
+      search.boundingBox(),
+      sync.boundingBox(),
+    ])
+    expect(searchBox.width).toBeGreaterThan(200)
+    expect(navigationBox.x + navigationBox.width).toBeLessThan(searchBox.x)
+    expect(searchBox.x + searchBox.width).toBeLessThan(syncBox.x + syncBox.width)
+
+    await search.click()
+    await expect(page.getByRole('dialog', { name: /global search/i })).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(page.getByRole('dialog', { name: /global search/i })).toHaveCount(0)
+
+    await page.setViewportSize({ width: 667, height: 375 })
+    await expect(chrome.getByLabel('QuickNotes')).toBeHidden()
+    await expect(chrome.getByRole('button', { name: 'Create quick note' })).toBeHidden()
+    await expect(search).toBeVisible()
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true)
+  })
+
 })
 
 test.describe('mobile content-first editing', () => {
   test.use({ viewport: { width: 390, height: 664 }, hasTouch: true, isMobile: true })
+
+  test('keeps global navigation and structured-note actions reachable while content scrolls', async ({ page }) => {
+    await signIn(page)
+
+    await page.getByRole('button', { name: 'Create workspace' }).click()
+    const dialog = page.getByRole('dialog', { name: /new workspace/i })
+    await dialog.locator('section[aria-label="Workspace types"]')
+      .getByRole('button', { name: /^Task List/i })
+      .click()
+    await dialog.getByText('Daily priorities', { exact: true }).click()
+    await dialog.getByLabel('Note title').fill('Mobile shell audit')
+    await dialog.getByRole('button', { name: /^Create / }).click()
+    await page.locator('.note-card', { hasText: 'Mobile shell audit' }).click()
+
+    const workspace = page.locator('.qn-structured-workspace')
+    const noteBar = page.locator('.qn-focused-mobile-chrome > .qn-ribbon-note-bar')
+    await expect(workspace).toBeVisible()
+    await expect(noteBar).toBeVisible()
+    await expect(page.locator('.qn-top-chrome')).toBeVisible()
+
+    const navigationToggle = page.locator('.qn-top-chrome')
+      .getByRole('button', { name: /show navigation/i })
+    await expect(navigationToggle).toBeVisible()
+    await navigationToggle.tap()
+    await expect(page.getByRole('dialog', { name: 'Navigation' })).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(page.getByRole('dialog', { name: 'Navigation' })).toBeHidden()
+
+    await noteBar.getByRole('button', { name: /more actions/i }).tap()
+    await expect(page.getByRole('menuitem', { name: /attachments/i })).toBeVisible()
+    await expect(page.getByRole('menuitem', { name: /reminder/i })).toBeVisible()
+    await page.keyboard.press('Escape')
+
+    const titleBeforeScroll = await noteBar.boundingBox()
+    for (let index = 0; index < 14; index += 1) {
+      await workspace.getByLabel('New task').fill(`Travel task ${index + 1}`)
+      await workspace.getByRole('button', { name: 'Add task' }).click()
+    }
+    await workspace.evaluate((element) => element.scrollTo({ top: element.scrollHeight }))
+    await expect.poll(() => workspace.evaluate((element) => element.scrollTop)).toBeGreaterThan(0)
+    const titleAfterScroll = await noteBar.boundingBox()
+    expect(Math.abs(titleAfterScroll.y - titleBeforeScroll.y)).toBeLessThanOrEqual(1)
+  })
 
   test('gives the note canvas most of the viewport while tools stay available', async ({ page }) => {
     await signIn(page)
@@ -119,7 +197,7 @@ test.describe('desktop note reordering', () => {
     await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, { steps: 8 })
     await page.mouse.up()
 
-    await expect(page.getByRole('searchbox')).toBeVisible()
+    await expect(page.getByRole('searchbox', { name: 'Search notes...', exact: true })).toBeVisible()
     const titles = await page.locator('.note-card h3').allTextContents()
     expect(titles.indexOf(sourceTitle)).toBeGreaterThan(titles.indexOf(targetTitle))
   })
@@ -161,7 +239,7 @@ test.describe('mobile note reordering', () => {
       await page.getByLabel('Note title').fill(title)
       await page.getByLabel('Note title').blur()
       await page.goBack()
-      await expect(page.getByRole('searchbox')).toBeVisible()
+      await expect(page.getByRole('searchbox', { name: 'Search notes...', exact: true })).toBeVisible()
     }
     await page.getByRole('button', { name: /sort by/i }).click()
     await page.getByRole('menuitem', { name: /manual.*drag.*drop/i }).click()
