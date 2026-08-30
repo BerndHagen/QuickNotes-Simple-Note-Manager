@@ -60,11 +60,10 @@ const decorationsFor = (doc, breaks) => DecorationSet.create(
 const measureBlockHeight = (view, position) => {
   const dom = view.nodeDOM(position)
   if (!(dom instanceof HTMLElement)) return 0
-  const rect = dom.getBoundingClientRect()
   const style = getComputedStyle(dom)
   const decorationHeight = [...dom.querySelectorAll('.qn-page-gap')]
-    .reduce((total, gap) => total + gap.getBoundingClientRect().height, 0)
-  return Math.max(0, rect.height - decorationHeight + (parseFloat(style.marginTop) || 0) + (parseFloat(style.marginBottom) || 0))
+    .reduce((total, gap) => total + gap.offsetHeight, 0)
+  return Math.max(0, dom.offsetHeight - decorationHeight + (parseFloat(style.marginTop) || 0) + (parseFloat(style.marginBottom) || 0))
 }
 
 const listItemMeasurements = (view, node, position) => {
@@ -126,7 +125,10 @@ const PaginationExtension = Extension.create({
             }
             const style = getComputedStyle(view.dom)
             const editorRect = view.dom.getBoundingClientRect()
-            const pageWidth = editorRect.width
+            // CSS workspace zoom scales the rendered editor, but pagination
+            // must continue to use its stable, unscaled document geometry.
+            const pageWidth = view.dom.clientWidth
+            const visualScale = pageWidth > 0 ? editorRect.width / pageWidth : 1
             const paddingLeft = parseFloat(style.paddingLeft) || 0
             const paddingRight = parseFloat(style.paddingRight) || 0
             const paddingTop = parseFloat(style.paddingTop) || 0
@@ -176,7 +178,7 @@ const PaginationExtension = Extension.create({
                 used += listOverhead / 2
                 const listDom = view.nodeDOM(position)
                 const offsetLeft = listDom instanceof HTMLElement
-                  ? listDom.getBoundingClientRect().left - editorRect.left
+                  ? (listDom.getBoundingClientRect().left - editorRect.left) / visualScale
                   : paddingLeft
 
                 items.forEach((item) => {

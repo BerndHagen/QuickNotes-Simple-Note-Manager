@@ -61,6 +61,7 @@ import toast from 'react-hot-toast'
 import ResourceManagerModal from './resources/ResourceManagerModal'
 import { taskSourceToKnowledgeTarget } from '../lib/taskSources'
 import NoteCommentsModal from './collaboration/NoteCommentsModal'
+import { useWorkspaceZoom } from '../hooks/useWorkspaceZoom'
 
 import {
   hasSpecializedEditor,
@@ -148,6 +149,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
   const versionTrackerRef = useRef(null)
   const versionBaselineRef = useRef(null)
   const lastExternalVersionTokenRef = useRef(0)
+  const workspaceRootRef = useRef(null)
 
   const { theme } = useThemeStore()
   const isDarkMode =
@@ -368,6 +370,13 @@ export default function NoteEditor({ onBack, showBack = false }) {
   const isSpecialized = hasSpecializedEditor(note?.noteType)
   const cloudEnabled = isBackendConfigured()
   const commentsEnabled = cloudEnabled && Boolean(user?.id) && !user?.isLocal
+  const ownsSpatialZoom = ['paper', 'canvas'].includes(note?.contentKind || note?.noteType)
+  const {
+    zoom: workspaceZoom,
+    zoomIn: zoomWorkspaceIn,
+    zoomOut: zoomWorkspaceOut,
+    resetZoom: resetWorkspaceZoom,
+  } = useWorkspaceZoom(workspaceRootRef, { enabled: Boolean(note) && !ownsSpatialZoom })
 
   if (!note) {
     return (
@@ -384,7 +393,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
   }
 
   return (
-    <div className="editor-paper flex h-full w-full min-w-0 flex-col bg-surface">
+    <div ref={workspaceRootRef} className="editor-paper flex h-full w-full min-w-0 flex-col bg-surface">
       <FindReplaceBar editor={editorRef} isOpen={findReplaceOpen} onClose={() => setFindReplaceOpen(false)} />
 
       {isReadOnly && (
@@ -521,6 +530,13 @@ export default function NoteEditor({ onBack, showBack = false }) {
                   disabled={workspaceReadOnly}
                   aria-label={workspaceReadOnly ? 'Read-only note workspace' : undefined}
                   className="min-h-0 min-w-0 flex-1 border-0 p-0"
+                  data-workspace-zoom={ownsSpatialZoom ? undefined : workspaceZoom}
+                  style={ownsSpatialZoom ? undefined : {
+                    zoom: workspaceZoom,
+                    width: `${100 / workspaceZoom}%`,
+                    height: `${100 / workspaceZoom}%`,
+                    flex: 'none',
+                  }}
                 >
                   <SpecializedEditor
                     key={note.id}
@@ -751,12 +767,22 @@ export default function NoteEditor({ onBack, showBack = false }) {
                 onClick={() => setMenuOpen((value) => !value)}
               />
             )}
+            workspaceZoom={workspaceZoom}
           />
         )}
       </div>
 
       {/* Status bar */}
-      {showNoteStatistics && <NoteStatistics note={note} />}
+      {(showNoteStatistics || !ownsSpatialZoom) && (
+        <NoteStatistics
+          note={note}
+          showMetrics={showNoteStatistics}
+          zoom={ownsSpatialZoom ? undefined : workspaceZoom}
+          onZoomIn={zoomWorkspaceIn}
+          onZoomOut={zoomWorkspaceOut}
+          onResetZoom={resetWorkspaceZoom}
+        />
+      )}
 
       {/* Overlays */}
       <Menu

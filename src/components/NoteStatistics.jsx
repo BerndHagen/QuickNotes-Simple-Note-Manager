@@ -6,14 +6,22 @@ import { useTranslation } from '../lib/useTranslation'
 import { formatSyncTime } from '../lib/utils'
 import { isBackendConfigured } from '../lib/backend'
 import { getDocumentStatistics } from '../lib/documentStatistics'
+import WorkspaceZoomControls from './workspace/WorkspaceZoomControls'
 
-export default function NoteStatistics({ note }) {
+export default function NoteStatistics({
+  note,
+  showMetrics = true,
+  zoom,
+  onZoomIn,
+  onZoomOut,
+  onResetZoom,
+}) {
   const setShareModalOpen = useUIStore((s) => s.setShareModalOpen)
   const { t } = useTranslation()
 
   const stats = useMemo(() => getDocumentStatistics(note), [note])
 
-  if (!stats) return null
+  if (!stats && !Number.isFinite(zoom)) return null
   const isSpecialized = note.noteType && note.noteType !== 'standard'
   const workspaceLabel = note.noteType === 'paper'
     ? 'Paper note'
@@ -26,7 +34,9 @@ export default function NoteStatistics({ note }) {
      takes focus so it can also be scrolled with the arrow keys. */
   return (
     <footer className="qn-note-statistics qn-safe-bottom flex shrink-0 items-center gap-3 border-t border-subtle bg-surface px-3 py-2 sm:px-5">
-      {isSpecialized ? (
+      {!showMetrics ? (
+        <span className="min-w-0 flex-1" aria-hidden="true" />
+      ) : isSpecialized ? (
         <span className="min-w-0 flex-1 text-ui-sm text-content-subtle">
           {workspaceLabel}
         </span>
@@ -65,6 +75,14 @@ export default function NoteStatistics({ note }) {
           {t('editor.lastEdited', 'Last edited')}: {formatSyncTime(stats.updatedAt)}
         </span>
         <SaveStatus note={note} />
+        {Number.isFinite(zoom) && (
+          <WorkspaceZoomControls
+            zoom={zoom}
+            onZoomIn={onZoomIn}
+            onZoomOut={onZoomOut}
+            onReset={onResetZoom}
+          />
+        )}
         {isBackendConfigured() && (
           <button
             type="button"

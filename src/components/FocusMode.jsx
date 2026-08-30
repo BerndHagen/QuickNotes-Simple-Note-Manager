@@ -5,6 +5,8 @@ import toast from 'react-hot-toast'
 import { useUIStore, useNotesStore } from '../store'
 import RichTextEditor from './RichTextEditor'
 import { useEscapeKey, useFocusTrap, useScrollLock } from './ui'
+import { useWorkspaceZoom } from '../hooks/useWorkspaceZoom'
+import WorkspaceZoomControls from './workspace/WorkspaceZoomControls'
 
 const AMBIENT_SOUNDS = [
   { id: 'none', name: 'No sound' },
@@ -58,6 +60,12 @@ export default function FocusMode() {
 
   const close = useCallback(() => setFocusModeOpen(false), [setFocusModeOpen])
   const active = Boolean(focusModeOpen && note)
+  const {
+    zoom: workspaceZoom,
+    zoomIn: zoomWorkspaceIn,
+    zoomOut: zoomWorkspaceOut,
+    resetZoom: resetWorkspaceZoom,
+  } = useWorkspaceZoom(panelRef, { enabled: active })
   useFocusTrap(panelRef, active)
   useScrollLock(active)
   useEscapeKey(active, close)
@@ -212,6 +220,13 @@ export default function FocusMode() {
           </h1>
 
           <div className="qn-focus-controls ml-auto flex min-w-0 items-center gap-2">
+            <WorkspaceZoomControls
+              zoom={workspaceZoom}
+              onZoomIn={zoomWorkspaceIn}
+              onZoomOut={zoomWorkspaceOut}
+              onReset={resetWorkspaceZoom}
+              className="qn-focus-zoom"
+            />
             <label className="sr-only" htmlFor="qn-focus-theme">Paper theme</label>
             <select
               id="qn-focus-theme"
@@ -271,6 +286,7 @@ export default function FocusMode() {
               paperType={currentTheme.paper}
               readOnly={readOnly}
               focusPresentation
+              workspaceZoom={workspaceZoom}
             />
           </div>
         </div>

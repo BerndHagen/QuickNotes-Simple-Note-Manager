@@ -416,6 +416,7 @@ function DocumentRuler({ editor, containerRef }) {
     contentWidth: 642,
     paddingLeft: 76,
     paddingRight: 76,
+    scale: 1,
   })
   const [tabType, setTabType] = useState('left')
   const [layout, setLayout] = useState({ leftIndent: 0, rightIndent: 0, firstLineIndent: 0, tabStops: [] })
@@ -454,23 +455,28 @@ function DocumentRuler({ editor, containerRef }) {
       const rulerRect = ruler.getBoundingClientRect()
       const pageRect = pageElement.getBoundingClientRect()
       const styles = getComputedStyle(editorElement)
-      const paddingLeft = parseFloat(styles.paddingLeft) || 0
-      const paddingRight = parseFloat(styles.paddingRight) || 0
+      const scale = pageElement.clientWidth > 0 ? pageRect.width / pageElement.clientWidth : 1
+      const paddingLeft = (parseFloat(styles.paddingLeft) || 0) * scale
+      const paddingRight = (parseFloat(styles.paddingRight) || 0) * scale
       setGeometry({
         pageLeft: pageRect.left - rulerRect.left,
         pageWidth: pageRect.width,
-        contentWidth: Math.max(120, editorElement.clientWidth - paddingLeft - paddingRight),
+        contentWidth: Math.max(120, (editorElement.clientWidth * scale) - paddingLeft - paddingRight),
         paddingLeft,
         paddingRight,
+        scale,
       })
     }
     sync()
     const observer = new ResizeObserver(sync)
     observer.observe(editorElement)
     observer.observe(pageElement)
+    const workbench = pageElement.parentElement
+    workbench?.addEventListener('scroll', sync)
     window.addEventListener('resize', sync)
     return () => {
       observer.disconnect()
+      workbench?.removeEventListener('scroll', sync)
       window.removeEventListener('resize', sync)
     }
   }, [containerRef, editor])
@@ -488,12 +494,12 @@ function DocumentRuler({ editor, containerRef }) {
       const snapped = event.shiftKey ? raw : Math.round(raw / 4) * 4
       const minimumTextWidth = 40
       const minimum = current.type === 'right'
-        ? currentLayout.leftIndent + minimumTextWidth
+        ? (currentLayout.leftIndent + minimumTextWidth) * currentGeometry.scale
         : 0
       const maximum = current.type === 'left'
-        ? currentGeometry.contentWidth - currentLayout.rightIndent - minimumTextWidth
+        ? currentGeometry.contentWidth - ((currentLayout.rightIndent + minimumTextWidth) * currentGeometry.scale)
         : current.type === 'first' || current.type === 'tab'
-          ? currentGeometry.contentWidth - currentLayout.rightIndent
+          ? currentGeometry.contentWidth - (currentLayout.rightIndent * currentGeometry.scale)
           : currentGeometry.contentWidth
       const removalDistance = current.pointerType === 'touch' ? 48 : 28
       const next = {
@@ -510,14 +516,14 @@ function DocumentRuler({ editor, containerRef }) {
       const currentGeometry = geometryRef.current
       const currentLayout = layoutRef.current
       const cancelled = event.type === 'pointercancel'
-      if (!cancelled && current.type === 'left') editor.commands.setParagraphLayout({ leftIndent: current.current })
-      if (!cancelled && current.type === 'right') editor.commands.setParagraphLayout({ rightIndent: currentGeometry.contentWidth - current.current })
-      if (!cancelled && current.type === 'first') editor.commands.setParagraphLayout({ firstLineIndent: current.current - currentLayout.leftIndent })
+      if (!cancelled && current.type === 'left') editor.commands.setParagraphLayout({ leftIndent: current.current / currentGeometry.scale })
+      if (!cancelled && current.type === 'right') editor.commands.setParagraphLayout({ rightIndent: (currentGeometry.contentWidth - current.current) / currentGeometry.scale })
+      if (!cancelled && current.type === 'first') editor.commands.setParagraphLayout({ firstLineIndent: (current.current / currentGeometry.scale) - currentLayout.leftIndent })
       if (current.type === 'tab') {
         if (!cancelled) {
           const next = current.outside
             ? currentLayout.tabStops.filter((_, index) => index !== current.index)
-            : currentLayout.tabStops.map((stop, index) => index === current.index ? { ...stop, position: current.current } : stop)
+            : currentLayout.tabStops.map((stop, index) => index === current.index ? { ...stop, position: current.current / currentGeometry.scale } : stop)
           editor.commands.setParagraphLayout({ tabStops: next })
         }
       }
@@ -549,8 +555,11 @@ function DocumentRuler({ editor, containerRef }) {
     setDrag(next)
   }
   const cycleTabType = (currentType) => TAB_STOP_TYPES[(TAB_STOP_TYPES.indexOf(currentType) + 1) % TAB_STOP_TYPES.length]
-  const markerPosition = (type, fallback) => drag?.type === type ? drag.current : fallback
-  const tickCount = Math.ceil(geometry.contentWidth / 40)
+  const markerPosition = (type, fallback) => drag?.type === type ? drag.current : fallback * geometry.scale
+  const rightMarkerPosition = drag?.type === 'right'
+    ? drag.current
+    : geometry.contentWidth - (layout.rightIndent * geometry.scale)
+  const tickCount = Math.ceil(geometry.contentWidth / (40 * geometry.scale))
 
   return (
     <div ref={rulerRef} className="qn-document-ruler relative h-6 shrink-0 border-b border-subtle" aria-label="Paragraph ruler">
@@ -579,21 +588,21 @@ function DocumentRuler({ editor, containerRef }) {
           onPointerDown={(event) => {
             if (event.target !== event.currentTarget) return
             const rect = event.currentTarget.getBoundingClientRect()
-            const stop = Math.round(event.clientX - rect.left)
+            const stop = Math.round((event.clientX - rect.left) / geometry.scale)
             editor.commands.setParagraphLayout({ tabStops: [...layout.tabStops, { position: stop, type: tabType }] })
             editor.view.focus()
           }}
         >
           {Array.from({ length: tickCount + 1 }, (_, index) => (
-            <span key={index} className="qn-ruler-tick" style={{ left: `${index * 40}px` }}>
+            <span key={index} className="qn-ruler-tick" style={{ left: `${index * 40 * geometry.scale}px` }}>
               {index > 0 && <span>{index}</span>}
             </span>
           ))}
-          <button type="button" aria-label={`First-line indent ${Math.round(layout.firstLineIndent)} pixels`} className="qn-ruler-marker qn-ruler-marker--first" style={{ left: `${markerPosition('first', layout.leftIndent + layout.firstLineIndent)}px` }} onPointerDown={(event) => startDrag(event, { type: 'first', current: layout.leftIndent + layout.firstLineIndent })} />
-          <button type="button" aria-label={`Left paragraph indent ${Math.round(layout.leftIndent)} pixels`} className="qn-ruler-marker qn-ruler-marker--left" style={{ left: `${markerPosition('left', layout.leftIndent)}px` }} onPointerDown={(event) => startDrag(event, { type: 'left', current: layout.leftIndent })} />
-          <button type="button" aria-label={`Right paragraph indent ${Math.round(layout.rightIndent)} pixels`} className="qn-ruler-marker qn-ruler-marker--right" style={{ left: `${markerPosition('right', geometry.contentWidth - layout.rightIndent)}px` }} onPointerDown={(event) => startDrag(event, { type: 'right', current: geometry.contentWidth - layout.rightIndent })} />
+          <button type="button" aria-label={`First-line indent ${Math.round(layout.firstLineIndent)} pixels`} className="qn-ruler-marker qn-ruler-marker--first" style={{ left: `${markerPosition('first', layout.leftIndent + layout.firstLineIndent)}px` }} onPointerDown={(event) => startDrag(event, { type: 'first', current: (layout.leftIndent + layout.firstLineIndent) * geometry.scale })} />
+          <button type="button" aria-label={`Left paragraph indent ${Math.round(layout.leftIndent)} pixels`} className="qn-ruler-marker qn-ruler-marker--left" style={{ left: `${markerPosition('left', layout.leftIndent)}px` }} onPointerDown={(event) => startDrag(event, { type: 'left', current: layout.leftIndent * geometry.scale })} />
+          <button type="button" aria-label={`Right paragraph indent ${Math.round(layout.rightIndent)} pixels`} className="qn-ruler-marker qn-ruler-marker--right" style={{ left: `${rightMarkerPosition}px` }} onPointerDown={(event) => startDrag(event, { type: 'right', current: rightMarkerPosition })} />
           {layout.tabStops.map((stop, index) => {
-            const position = drag?.type === 'tab' && drag.index === index ? drag.current : stop.position
+            const position = drag?.type === 'tab' && drag.index === index ? drag.current : stop.position * geometry.scale
             return (
               <button
                 key={`${stop.position}-${stop.type}-${index}`}
@@ -613,7 +622,7 @@ function DocumentRuler({ editor, containerRef }) {
                   event.preventDefault()
                   editor.commands.setParagraphLayout({ tabStops: layout.tabStops.filter((_, itemIndex) => itemIndex !== index) })
                 }}
-                onPointerDown={(event) => startDrag(event, { type: 'tab', index, current: stop.position, outside: false })}
+                onPointerDown={(event) => startDrag(event, { type: 'tab', index, current: stop.position * geometry.scale, outside: false })}
               />
             )
           })}
@@ -631,6 +640,8 @@ function VerticalDocumentRuler({ editor, containerRef }) {
     pageCount: 1,
     paddingTop: 68,
     paddingBottom: 68,
+    pageGap: PAGE_GAP,
+    scale: 1,
   })
 
   useEffect(() => {
@@ -639,24 +650,28 @@ function VerticalDocumentRuler({ editor, containerRef }) {
     if (!pageElement || !editorElement || typeof ResizeObserver === 'undefined') return undefined
 
     const sync = () => {
-      const pageWidth = pageElement.getBoundingClientRect().width
+      const pageRect = pageElement.getBoundingClientRect()
+      const workbench = pageElement.parentElement
+      const workbenchRect = workbench?.getBoundingClientRect()
+      const pageWidth = pageRect.width
+      const scale = pageElement.clientWidth > 0 ? pageWidth / pageElement.clientWidth : 1
       const styles = getComputedStyle(editorElement)
-      const pageTop = pageElement.offsetTop
+      const pageTop = workbenchRect
+        ? pageRect.top - workbenchRect.top + workbench.scrollTop
+        : pageElement.offsetTop * scale
       const pageHeight = pageWidth * A4_RATIO
       const declaredPageCount = Number.parseInt(editorElement.dataset.pageCount || '1', 10) || 1
       const decoratedPageCount = editorElement.querySelectorAll('.qn-page-gap').length + 1
-      const measuredPageCount = Math.max(
-        1,
-        Math.round((editorElement.scrollHeight + PAGE_GAP) / (pageHeight + PAGE_GAP))
-      )
-      const pageCount = Math.max(declaredPageCount, decoratedPageCount, measuredPageCount)
+      const pageCount = Math.max(declaredPageCount, decoratedPageCount)
       setGeometry({
-        height: pageTop + (pageCount * pageHeight) + ((pageCount - 1) * PAGE_GAP),
+        height: pageTop + (pageCount * pageHeight) + ((pageCount - 1) * PAGE_GAP * scale),
         pageTop,
         pageHeight,
         pageCount,
-        paddingTop: parseFloat(styles.paddingTop) || 0,
-        paddingBottom: parseFloat(styles.paddingBottom) || 0,
+        paddingTop: (parseFloat(styles.paddingTop) || 0) * scale,
+        paddingBottom: (parseFloat(styles.paddingBottom) || 0) * scale,
+        pageGap: PAGE_GAP * scale,
+        scale,
       })
     }
 
@@ -680,7 +695,7 @@ function VerticalDocumentRuler({ editor, containerRef }) {
   }, [containerRef, editor])
 
   const contentHeight = Math.max(120, geometry.pageHeight - geometry.paddingTop - geometry.paddingBottom)
-  const tickCount = Math.ceil(contentHeight / 40)
+  const tickCount = Math.ceil(contentHeight / (40 * geometry.scale))
 
   return (
     <div
@@ -694,7 +709,7 @@ function VerticalDocumentRuler({ editor, containerRef }) {
           key={pageIndex}
           className="qn-vertical-ruler__page absolute inset-x-0 overflow-hidden"
           style={{
-            top: `${geometry.pageTop + pageIndex * (geometry.pageHeight + PAGE_GAP)}px`,
+            top: `${geometry.pageTop + pageIndex * (geometry.pageHeight + geometry.pageGap)}px`,
             height: `${geometry.pageHeight}px`,
           }}
         >
@@ -704,13 +719,66 @@ function VerticalDocumentRuler({ editor, containerRef }) {
             style={{ top: `${geometry.paddingTop}px`, height: `${contentHeight}px` }}
           >
             {Array.from({ length: tickCount + 1 }, (_, index) => (
-              <span key={index} className="qn-vertical-ruler__tick" style={{ top: `${index * 40}px` }}>
+              <span key={index} className="qn-vertical-ruler__tick" style={{ top: `${index * 40 * geometry.scale}px` }}>
                 {index > 0 && <span>{index}</span>}
               </span>
             ))}
           </div>
           <span className="qn-vertical-ruler__margin qn-vertical-ruler__margin--bottom" style={{ height: `${geometry.paddingBottom}px` }} />
         </div>
+      ))}
+    </div>
+  )
+}
+
+function DocumentPageSheets({ editor, containerRef, paperStyle }) {
+  const [geometry, setGeometry] = useState({ pageCount: 1, pageHeight: 1123 })
+
+  useEffect(() => {
+    const pageElement = containerRef.current
+    const editorElement = editor?.view?.dom || pageElement?.querySelector('.ProseMirror')
+    if (!pageElement || !editorElement) return undefined
+
+    const sync = () => {
+      const pageWidth = pageElement.clientWidth
+      const pageCount = Math.max(1, Number.parseInt(editorElement.dataset.pageCount || '1', 10) || 1)
+      setGeometry((current) => {
+        const pageHeight = pageWidth * A4_RATIO
+        return current.pageCount === pageCount && Math.abs(current.pageHeight - pageHeight) < 0.5
+          ? current
+          : { pageCount, pageHeight }
+      })
+    }
+
+    sync()
+    const resizeObserver = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(sync)
+    resizeObserver?.observe(pageElement)
+    const pageCountObserver = new MutationObserver(sync)
+    pageCountObserver.observe(editorElement, {
+      attributes: true,
+      attributeFilter: ['data-page-count'],
+    })
+    window.addEventListener('resize', sync)
+    return () => {
+      resizeObserver?.disconnect()
+      pageCountObserver.disconnect()
+      window.removeEventListener('resize', sync)
+    }
+  }, [containerRef, editor])
+
+  return (
+    <div className="qn-document-page-sheets" aria-hidden="true">
+      {Array.from({ length: geometry.pageCount }, (_, pageIndex) => (
+        <span
+          key={pageIndex}
+          className="qn-document-page-sheet"
+          data-page-number={pageIndex + 1}
+          style={{
+            ...paperStyle,
+            top: `${pageIndex * (geometry.pageHeight + PAGE_GAP)}px`,
+            height: `${geometry.pageHeight}px`,
+          }}
+        />
       ))}
     </div>
   )
@@ -811,7 +879,7 @@ function SlashCommandMenu({ editor, editorSettings, menu, onClose }) {
   )
 }
 
-function ObjectDrawingLayer({ editor, tool, containerRef, onFinish }) {
+function ObjectDrawingLayer({ editor, tool, containerRef, onFinish, workspaceZoom = 1 }) {
   const [gesture, setGesture] = useState(null)
   const [bounds, setBounds] = useState(null)
 
@@ -854,23 +922,24 @@ function ObjectDrawingLayer({ editor, tool, containerRef, onFinish }) {
   const finishDrawing = (event) => {
     if (!gesture) return
     const editorRect = editor.view.dom.getBoundingClientRect()
-    const rawWidth = Math.abs(event.clientX - gesture.startClientX)
-    const rawHeight = Math.abs(event.clientY - gesture.startClientY)
+    const scale = Math.max(0.1, workspaceZoom)
+    const rawWidth = Math.abs(event.clientX - gesture.startClientX) / scale
+    const rawHeight = Math.abs(event.clientY - gesture.startClientY) / scale
     const minimumWidth = tool.kind === 'textBox' ? 160 : 96
     const preferredWidth = tool.kind === 'textBox' ? 320 : 240
     const horizontalInset = 8
     const width = Math.min(
       Math.max(minimumWidth, rawWidth || preferredWidth),
-      Math.max(minimumWidth, editorRect.width - horizontalInset * 2)
+      Math.max(minimumWidth, (editorRect.width / scale) - horizontalInset * 2)
     )
     const height = Math.max(tool.kind === 'textBox' ? 80 : 56, rawHeight || (tool.kind === 'textBox' ? 140 : 112))
     const left = Math.min(gesture.startClientX, rawWidth ? event.clientX : gesture.startClientX)
     const top = Math.min(gesture.startClientY, rawHeight ? event.clientY : gesture.startClientY)
     const x = Math.round(Math.min(
-      Math.max(horizontalInset, left - editorRect.left),
-      Math.max(horizontalInset, editorRect.width - width - horizontalInset)
+      Math.max(horizontalInset, (left - editorRect.left) / scale),
+      Math.max(horizontalInset, (editorRect.width / scale) - width - horizontalInset)
     ))
-    const y = Math.max(0, Math.round(top - editorRect.top))
+    const y = Math.max(0, Math.round((top - editorRect.top) / scale))
     const node = tool.kind === 'textBox'
       ? {
           type: 'textBox',
@@ -948,6 +1017,7 @@ export default function RichTextEditor({
   ribbonDetails,
   ribbonOverflowAction,
   focusPresentation = false,
+  workspaceZoom = 1,
 }) {
   const [currentPaper, setCurrentPaper] = useState(paperType)
   const [typingEpoch, setTypingEpoch] = useState(0)
@@ -957,6 +1027,8 @@ export default function RichTextEditor({
   const [activeRibbonTab, setActiveRibbonTab] = useState('home')
   const [drawTool, setDrawTool] = useState(null)
   const editorContainerRef = useRef(null)
+  const workbenchRef = useRef(null)
+  const [pageLayoutWidth, setPageLayoutWidth] = useState(0)
   const isInternalUpdate = useRef(false)
   const lastKnownContent = useRef(content)
   const lastContentHash = useRef('')
@@ -1175,8 +1247,9 @@ export default function RichTextEditor({
           const coords = view.coordsAtPos(view.state.selection.from)
           const editorRect = view.dom.getBoundingClientRect()
           const editorStyle = getComputedStyle(view.dom)
-          const contentLeft = editorRect.left + (parseFloat(editorStyle.paddingLeft) || 0)
-          const currentX = Math.max(0, coords.left - contentLeft)
+          const scale = view.dom.clientWidth > 0 ? editorRect.width / view.dom.clientWidth : 1
+          const contentLeft = editorRect.left + ((parseFloat(editorStyle.paddingLeft) || 0) * scale)
+          const currentX = Math.max(0, (coords.left - contentLeft) / scale)
           const attributes = editor.getAttributes(editor.isActive('heading') ? 'heading' : 'paragraph')
           const customStops = Array.isArray(attributes.tabStops)
             ? attributes.tabStops.map((stop) => typeof stop === 'number' ? { position: stop, type: 'left' } : stop)
@@ -1394,6 +1467,40 @@ export default function RichTextEditor({
     setCurrentPaper(paperType)
   }, [paperType])
 
+  useEffect(() => {
+    const workbench = workbenchRef.current
+    if (!workbench) return undefined
+
+    const documentMaxWidth = focusPresentation
+      ? 760
+      : {
+          focused: 680,
+          standard: 794,
+          wide: 960,
+          full: Number.POSITIVE_INFINITY,
+        }[editorSettings.documentWidth] || 794
+    const syncWidth = () => {
+      const style = getComputedStyle(workbench)
+      const availableWidth = Math.max(
+        240,
+        workbench.clientWidth
+          - (parseFloat(style.paddingLeft) || 0)
+          - (parseFloat(style.paddingRight) || 0)
+      )
+      const nextWidth = Math.floor(Math.min(availableWidth, documentMaxWidth))
+      setPageLayoutWidth((current) => current === nextWidth ? current : nextWidth)
+    }
+
+    syncWidth()
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(syncWidth)
+    observer?.observe(workbench)
+    window.addEventListener('resize', syncWidth)
+    return () => {
+      observer?.disconnect()
+      window.removeEventListener('resize', syncWidth)
+    }
+  }, [editor, editorSettings.documentWidth, focusPresentation])
+
   const handlePaperChange = (type) => {
     setCurrentPaper(type)
     onPaperTypeChange?.(type)
@@ -1533,6 +1640,7 @@ export default function RichTextEditor({
 
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <div
+          ref={workbenchRef}
           data-editor-canvas
           onContextMenu={(event) => {
             event.preventDefault()
@@ -1555,8 +1663,17 @@ export default function RichTextEditor({
               editor.chain().focus().insertPageBreak().run()
             }}
             className={`qn-editor-page relative ${paperStyle.className || ''}`}
-            style={paperStyle.style}
+            style={{
+              ...paperStyle.style,
+              width: pageLayoutWidth ? `${pageLayoutWidth}px` : '100%',
+              zoom: workspaceZoom,
+            }}
           >
+            <DocumentPageSheets
+              editor={editor}
+              containerRef={editorContainerRef}
+              paperStyle={paperStyle.style}
+            />
             <EditorContent editor={editor} />
           </PaperSurface>
         </div>
@@ -1568,6 +1685,7 @@ export default function RichTextEditor({
           tool={drawTool}
           containerRef={editorContainerRef}
           onFinish={finishObjectDrawing}
+          workspaceZoom={workspaceZoom}
         />
       )}
 

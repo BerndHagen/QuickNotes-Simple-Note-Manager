@@ -1402,12 +1402,21 @@ html {
 .dark .paper-grid,
 .dark .paper-grid-small,
 .dark .paper-dotted,
-.dark .paper-dotted-dense {
+.dark .paper-dotted-dense,
+.dark .paper-plain .qn-document-page-sheet,
+.dark .paper-lined .qn-document-page-sheet,
+.dark .paper-lined-margin .qn-document-page-sheet,
+.dark .paper-college .qn-document-page-sheet,
+.dark .paper-grid .qn-document-page-sheet,
+.dark .paper-grid-small .qn-document-page-sheet,
+.dark .paper-dotted .qn-document-page-sheet,
+.dark .paper-dotted-dense .qn-document-page-sheet {
   background-color: var(--qn-surface-raised) !important;
   --pattern-color: rgba(255, 255, 255, 0.08);
 }
 
-.dark .paper-lined {
+.dark .paper-lined,
+.dark .paper-lined .qn-document-page-sheet {
   background-image: repeating-linear-gradient(
     transparent, 
     transparent 31px, 
@@ -1416,7 +1425,8 @@ html {
   ) !important;
 }
 
-.dark .paper-lined-margin {
+.dark .paper-lined-margin,
+.dark .paper-lined-margin .qn-document-page-sheet {
   background-image:
     linear-gradient(90deg, transparent 60px, #b91c1c 60px, #b91c1c 62px, transparent 62px),
     repeating-linear-gradient(
@@ -1427,7 +1437,8 @@ html {
     ) !important;
 }
 
-.dark .paper-college {
+.dark .paper-college,
+.dark .paper-college .qn-document-page-sheet {
   background-image:
     linear-gradient(90deg, transparent 40px, #2563eb 40px, #2563eb 42px, transparent 42px),
     repeating-linear-gradient(
@@ -1439,18 +1450,23 @@ html {
 }
 
 .dark .paper-grid,
-.dark .paper-grid-small {
+.dark .paper-grid-small,
+.dark .paper-grid .qn-document-page-sheet,
+.dark .paper-grid-small .qn-document-page-sheet {
   background-image: 
     linear-gradient(var(--pattern-color) 1px, transparent 1px), 
     linear-gradient(90deg, var(--pattern-color) 1px, transparent 1px) !important;
 }
 
 .dark .paper-dotted,
-.dark .paper-dotted-dense {
+.dark .paper-dotted-dense,
+.dark .paper-dotted .qn-document-page-sheet,
+.dark .paper-dotted-dense .qn-document-page-sheet {
   background-image: radial-gradient(circle, var(--pattern-color) 1px, transparent 1px) !important;
 }
 
-.dark .paper-sepia {
+.dark .paper-sepia,
+.dark .paper-sepia .qn-document-page-sheet {
   background-color: #2b251b !important;
   background-image: repeating-linear-gradient(
     transparent,
@@ -1701,6 +1717,42 @@ html {
 .qn-focus-command:hover { background: var(--qn-banner-hover); color: var(--qn-banner-text); }
 .qn-focus-command:active { background: rgb(255 255 255 / 18%); }
 
+.qn-workspace-zoom-controls {
+  min-height: 28px;
+  border: 1px solid var(--qn-border-subtle);
+  border-radius: var(--qn-radius-control);
+  background: var(--qn-surface-raised);
+  color: var(--qn-text-muted);
+}
+
+.qn-workspace-zoom-button,
+.qn-workspace-zoom-value {
+  display: inline-flex;
+  height: 26px;
+  align-items: center;
+  justify-content: center;
+  border-radius: calc(var(--qn-radius-control) - 1px);
+  transition: background-color var(--qn-duration-fast), color var(--qn-duration-fast);
+}
+
+.qn-workspace-zoom-button { width: 28px; }
+.qn-workspace-zoom-value { min-width: 44px; padding-inline: 5px; font-size: 0.75rem; font-weight: 600; }
+.qn-workspace-zoom-button:hover:not(:disabled),
+.qn-workspace-zoom-value:hover { background: var(--qn-surface-hover); color: var(--qn-text); }
+.qn-workspace-zoom-button:disabled { cursor: default; opacity: 0.35; }
+
+.qn-focus-zoom {
+  border-color: rgb(255 255 255 / 26%);
+  background: rgb(0 0 0 / 12%);
+  color: var(--qn-banner-text-muted);
+}
+
+.qn-focus-zoom .qn-workspace-zoom-button:hover:not(:disabled),
+.qn-focus-zoom .qn-workspace-zoom-value:hover {
+  background: var(--qn-banner-hover);
+  color: var(--qn-banner-text);
+}
+
 .qn-focus-body { scrollbar-color: var(--qn-border-strong) transparent; }
 .focus-mode-editor { display: flex; min-width: 0; }
 .focus-mode-editor > [data-editor-presentation='focus'] { min-height: 100%; flex: 1; }
@@ -1712,13 +1764,10 @@ html {
 .focus-mode-editor .qn-editor-page { max-width: 760px !important; }
 .focus-mode-editor .qn-editor-page .ProseMirror {
   min-height: calc(100dvh - 132px);
-  border-color: rgb(55 70 62 / 18%);
-  box-shadow: 0 2px 8px rgb(34 48 41 / 10%);
 }
-.qn-focus-mode[data-focus-theme='green'] .qn-editor-page,
-.qn-focus-mode[data-focus-theme='green'] .qn-editor-page .ProseMirror { background-color: #f3f6f1; }
+.qn-focus-mode[data-focus-theme='green'] .qn-document-page-sheet { background-color: #f3f6f1; }
+.qn-focus-mode[data-focus-theme='night'] .qn-document-page-sheet { border-color: rgb(255 255 255 / 10%); }
 .qn-focus-mode[data-focus-theme='night'] .qn-editor-page .ProseMirror {
-  border-color: rgb(255 255 255 / 10%);
   color: #e8ebef;
 }
 .qn-focus-mode[data-focus-theme='night'] .qn-editor-page .ProseMirror :where(h1, h2, h3, h4, strong) { color: #f5f7f8; }
@@ -3526,26 +3575,44 @@ body {
   box-shadow: none;
 }
 
+.qn-document-page-sheets {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.qn-document-page-sheet {
+  position: absolute;
+  right: 0;
+  left: 0;
+  box-sizing: border-box;
+  display: block;
+  border: 1px solid var(--qn-border-subtle);
+  background-color: var(--qn-surface-raised);
+  background-position: 0 0;
+  /* A tight, symmetric shadow belongs to this sheet only. It remains visible
+     on all four sides without filling the clean centre of the page gutter. */
+  box-shadow: 0 0 6px rgb(15 23 42 / 16%), 0 1px 2px rgb(15 23 42 / 8%);
+  transition: border-color var(--qn-duration-fast) var(--qn-ease), box-shadow var(--qn-duration-fast) var(--qn-ease);
+}
+
+.qn-editor-page:focus-within .qn-document-page-sheet {
+  border-width: 2px;
+  border-color: var(--qn-accent);
+}
+
 .qn-editor-page .ProseMirror {
   --qn-page-pad-x: clamp(28px, 6vw, 76px);
   --qn-page-pad-y: clamp(42px, 5vw, 68px);
   box-sizing: border-box;
   min-height: max(var(--qn-paginated-min-height, 1123px), var(--qn-object-min-height, 300px));
   padding: var(--qn-page-pad-y) var(--qn-page-pad-x);
-  border: 1px solid var(--qn-border-subtle);
-  background-color: inherit;
-  background-image: inherit;
-  background-position: inherit;
-  background-size: inherit;
-  box-shadow: var(--qn-shadow-page-edge);
-}
-
-/* ProseMirror is one editable DOM surface even when pagination visually splits
-   it into several sheets. Replace the generic outline with real page edges so
-   focus never appears to stop at, or run through, a simulated page gutter. */
-.qn-editor-page .ProseMirror:focus {
-  border-color: var(--qn-accent);
-  border-radius: 0;
+  position: relative;
+  z-index: 1;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .qn-editor-page .ProseMirror:focus-visible {
@@ -3596,38 +3663,15 @@ body {
 
 .qn-page-gap__gutter {
   position: relative;
-  z-index: 2;
   width: 100%;
   margin-left: 0;
-  background: var(--qn-surface-workbench);
-  /* Cover the continuous outer shadow through the gutter. Each neighbouring
-     page edge is then painted independently by the pseudo-elements below. */
-  box-shadow: 0 0 0 10px var(--qn-surface-workbench);
+  /* Never mask the independent bottom/top shadows of adjacent sheets. The
+     transparent centre reveals only the workbench behind the document. */
+  background: transparent;
 }
 
-.qn-page-gap__gutter::before,
-.qn-page-gap__gutter::after {
-  position: absolute;
-  right: 0;
-  left: 0;
-  height: 1px;
-  background: var(--qn-border-subtle);
-  box-shadow: var(--qn-shadow-page-edge);
-  content: '';
-}
-
-.qn-page-gap__gutter::before {
-  top: 0;
-}
-
-.qn-page-gap__gutter::after {
-  bottom: 0;
-}
-
-.qn-editor-page .ProseMirror:focus .qn-page-gap__gutter::before,
-.qn-editor-page .ProseMirror:focus .qn-page-gap__gutter::after {
-  height: 1px;
-  background: var(--qn-accent);
+.dark .qn-document-page-sheet {
+  box-shadow: 0 0 6px rgb(0 0 0 / 58%), 0 1px 2px rgb(0 0 0 / 34%);
 }
 
 /* Semantic callouts provide structured emphasis without relying on floating
@@ -3801,6 +3845,16 @@ body {
 .qn-check-colour--rose { background: #e11d48; }
 .qn-check-colour--slate { background: #475569; }
 
+@media (min-width: 768px) {
+  /* Desktop pagination is painted by independent sheet elements. The editor
+     itself is deliberately transparent so no border, paper pattern, or shadow
+     can bridge the physical gutter between adjacent pages. */
+  .qn-editor-page {
+    background-color: transparent !important;
+    background-image: none !important;
+  }
+}
+
 @media (max-width: 767px) {
   .editor-toolbar {
     height: 52px;
@@ -3826,6 +3880,14 @@ body {
     height: 100%;
     min-height: 0;
     padding: 20px 18px 80px;
+    background-color: inherit;
+    background-image: inherit;
+    background-position: inherit;
+    background-size: inherit;
+  }
+
+  .qn-document-page-sheets {
+    display: none;
   }
 
   .qn-editor-page.paper-lined-margin .ProseMirror,
