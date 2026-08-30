@@ -2341,7 +2341,7 @@ function EditorToolbar({
         className="editor-ribbon border-b border-subtle"
         data-density={editorSettings.ribbonDensity}
       >
-      <div className="qn-ribbon-note-bar grid min-h-11 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center px-2 sm:px-3">
+      <div className="qn-ribbon-note-bar grid min-h-11 items-center gap-x-2 px-2 sm:gap-x-3 sm:px-3">
         <div className="qn-ribbon-leading-action min-w-0 justify-self-start">
           {ribbonLeadingAction}
         </div>

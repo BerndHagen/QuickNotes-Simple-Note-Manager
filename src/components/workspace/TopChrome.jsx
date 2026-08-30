@@ -34,7 +34,6 @@ export default function TopChrome({
             QuickNotes
           </span>
         </div>
-        {navigationToggle}
         <div className="hidden items-center md:flex" aria-label="Note navigation history">
           <IconButton
             icon={ArrowLeft}
@@ -72,28 +71,37 @@ export default function TopChrome({
 
       <div className="flex shrink-0 items-center gap-0.5 px-2.5 lg:gap-1 lg:px-3">
         <SyncStatusPill className="qn-top-sync hidden max-w-36 text-banner-muted xl:flex" />
-        {showCollectionControl && (
-          <IconButton
-            icon={Files}
-            tone="onBanner"
-            active={collectionOpen}
-            label={collectionOpen ? 'Hide note list' : 'Show note list'}
-            aria-controls="qn-collection-pane"
-            aria-expanded={collectionOpen}
-            onClick={onToggleCollection}
-          />
-        )}
-        {showInspectorControl && (
-          <IconButton
-            icon={PanelRight}
-            tone="onBanner"
-            active={inspectorOpen}
-            label={inspectorOpen ? 'Hide inspector' : 'Show inspector'}
-            aria-controls="qn-inspector"
-            aria-expanded={inspectorOpen}
-            onClick={onToggleInspector}
-          />
-        )}
+        <div
+          role="group"
+          aria-label="Workspace panes"
+          className="flex items-center gap-0.5 lg:gap-1"
+        >
+          {navigationToggle}
+          {showCollectionControl && (
+            <IconButton
+              icon={Files}
+              tone="onBanner"
+              active={collectionOpen}
+              label={collectionOpen ? 'Hide note list' : 'Show note list'}
+              aria-pressed={collectionOpen}
+              aria-controls="qn-collection-pane"
+              aria-expanded={collectionOpen}
+              onClick={onToggleCollection}
+            />
+          )}
+          {showInspectorControl && (
+            <IconButton
+              icon={PanelRight}
+              tone="onBanner"
+              active={inspectorOpen}
+              label={inspectorOpen ? 'Hide inspector' : 'Show inspector'}
+              aria-pressed={inspectorOpen}
+              aria-controls="qn-inspector"
+              aria-expanded={inspectorOpen}
+              onClick={onToggleInspector}
+            />
+          )}
+        </div>
         <Button
           size="sm"
           icon={Plus}

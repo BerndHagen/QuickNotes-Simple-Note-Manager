@@ -671,7 +671,9 @@ export default function App() {
       ref={sidebarToggleRef}
       icon={PanelLeft}
       tone="onBanner"
+      active={sidebarOpen}
       label={sidebarOpen ? 'Hide navigation' : 'Show navigation'}
+      aria-pressed={sidebarOpen}
       aria-expanded={sidebarOpen}
       aria-controls="qn-sidebar"
       data-dialog-return-focus
@@ -683,7 +685,9 @@ export default function App() {
     <IconButton
       ref={mobileSidebarToggleRef}
       icon={PanelLeft}
+      active={sidebarOpen}
       label={sidebarOpen ? 'Hide navigation' : 'Show navigation'}
+      aria-pressed={sidebarOpen}
       aria-expanded={sidebarOpen}
       aria-controls="qn-sidebar"
       data-dialog-return-focus

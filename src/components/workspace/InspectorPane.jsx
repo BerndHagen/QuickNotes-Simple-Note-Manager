@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import { Copy, FileText, Link2, ListTree, X } from 'lucide-react'
 import { useNotesStore } from '../../store'
-import { formatSyncTime, htmlToPlainText } from '../../lib/utils'
+import { formatSyncTime } from '../../lib/utils'
+import { getDocumentStatistics } from '../../lib/documentStatistics'
 import { NOTE_TYPE_CONFIG, NOTE_TYPES } from '../editors/noteTypes'
 import { useBacklinks, useForwardLinks } from '../NoteLinkPopover'
 import { IconButton, TagChip } from '../ui'
@@ -34,8 +35,7 @@ export default function InspectorPane({ onClose, embedded = false }) {
   const forwardLinks = useForwardLinks(note?.id)
 
   const outline = useMemo(() => parseOutline(note?.content), [note?.content])
-  const plainText = useMemo(() => htmlToPlainText(note?.content || ''), [note?.content])
-  const words = plainText.trim() ? plainText.trim().split(/\s+/u).length : 0
+  const statistics = useMemo(() => getDocumentStatistics(note), [note])
   const folder = note?.folderId ? folders.find((item) => item.id === note.folderId) : null
   const noteType = note?.noteType || NOTE_TYPES.STANDARD
   const typeLabel = NOTE_TYPE_CONFIG[noteType]?.name || 'Document'
@@ -107,8 +107,8 @@ export default function InspectorPane({ onClose, embedded = false }) {
               <section>
                 <h3 className="qn-inspector-heading">Document</h3>
                 <dl className="qn-inspector-list">
-                  <div><dt>Words</dt><dd>{words.toLocaleString('en-US')}</dd></div>
-                  <div><dt>Characters</dt><dd>{plainText.length.toLocaleString('en-US')}</dd></div>
+                  <div><dt>Words</dt><dd>{(statistics?.words || 0).toLocaleString('en-US')}</dd></div>
+                  <div><dt>Characters</dt><dd>{(statistics?.characters || 0).toLocaleString('en-US')}</dd></div>
                   <div><dt>Headings</dt><dd>{outline.length}</dd></div>
                 </dl>
               </section>

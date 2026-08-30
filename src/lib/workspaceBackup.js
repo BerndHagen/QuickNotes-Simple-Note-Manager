@@ -26,7 +26,7 @@ export const WORKSPACE_BACKUP_FORMAT = 'quicknotes-workspace-backup'
 export const WORKSPACE_BACKUP_VERSION = 6
 export const WORKSPACE_ARCHIVE_MIME_TYPE = 'application/vnd.quicknotes.archive'
 export const WORKSPACE_ARCHIVE_EXTENSION = 'qnotes'
-export const QUICKNOTES_APPLICATION_VERSION = '3.0.0'
+export const QUICKNOTES_APPLICATION_VERSION = '3.0.1'
 
 const ARCHIVE_MAGIC = 'QNARCH01'
 const ARCHIVE_PREFIX_BYTES = 12

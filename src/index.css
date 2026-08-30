@@ -3290,6 +3290,7 @@ body {
 .qn-ribbon-note-bar {
   align-items: center;
   color: #ffffff;
+  grid-template-columns: auto minmax(0, 1fr) auto;
 }
 
 .qn-ribbon-note-bar {
@@ -3306,7 +3307,7 @@ body {
 }
 
 .qn-ribbon-title {
-  width: clamp(10rem, 32vw, 34rem);
+  width: clamp(10rem, 36cqw, 34rem);
 }
 
 .qn-ribbon-title input {
@@ -3539,6 +3540,18 @@ body {
   box-shadow: var(--qn-shadow-page-edge);
 }
 
+/* ProseMirror is one editable DOM surface even when pagination visually splits
+   it into several sheets. Replace the generic outline with real page edges so
+   focus never appears to stop at, or run through, a simulated page gutter. */
+.qn-editor-page .ProseMirror:focus {
+  border-color: var(--qn-accent);
+  border-radius: 0;
+}
+
+.qn-editor-page .ProseMirror:focus-visible {
+  outline: none !important;
+}
+
 /* Ruled-paper margin guides belong to the sheet background, while their text
    inset belongs to the content box. Keeping those responsibilities separate
    prevents a paper switch from changing the measured page width. */
@@ -3587,14 +3600,16 @@ body {
   width: 100%;
   margin-left: 0;
   background: var(--qn-surface-workbench);
-  box-shadow: none;
+  /* Cover the continuous outer shadow through the gutter. Each neighbouring
+     page edge is then painted independently by the pseudo-elements below. */
+  box-shadow: 0 0 0 10px var(--qn-surface-workbench);
 }
 
 .qn-page-gap__gutter::before,
 .qn-page-gap__gutter::after {
   position: absolute;
-  right: 15px;
-  left: 15px;
+  right: 0;
+  left: 0;
   height: 1px;
   background: var(--qn-border-subtle);
   box-shadow: var(--qn-shadow-page-edge);
@@ -3607,6 +3622,12 @@ body {
 
 .qn-page-gap__gutter::after {
   bottom: 0;
+}
+
+.qn-editor-page .ProseMirror:focus .qn-page-gap__gutter::before,
+.qn-editor-page .ProseMirror:focus .qn-page-gap__gutter::after {
+  height: 1px;
+  background: var(--qn-accent);
 }
 
 /* Semantic callouts provide structured emphasis without relying on floating
@@ -3897,7 +3918,7 @@ body {
 
 @container (max-width: 900px) {
   .qn-ribbon-title {
-    width: min(52vw, 22rem);
+    width: min(100%, 22rem);
   }
 
   .qn-ribbon-tab {
@@ -3908,6 +3929,15 @@ body {
     display: none !important;
   }
 
+}
+
+@media (min-width: 768px) {
+  /* With room for the full action set, equal side columns keep the title on
+     the physical centre line. Phone workspaces instead centre it in the
+     genuinely available space between controls, preventing collisions. */
+  .qn-ribbon-note-bar {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  }
 }
 
 @container (max-width: 620px) {

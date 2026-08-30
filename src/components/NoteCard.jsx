@@ -81,22 +81,29 @@ const NoteCard = forwardRef(function NoteCard(
         >
           <div className="flex min-w-0 items-center gap-1.5 pr-14">
             <h3
-              className={`min-w-0 truncate font-semibold text-content ${
+              className={`min-w-0 flex-1 truncate font-semibold text-content ${
                 compactMode ? 'text-ui-md' : 'text-title-xs'
               }`}
             >
               {note.title || 'Untitled note'}
             </h3>
-            {note.pinned && (
-              <span className="flex shrink-0 items-center text-accent" title="Pinned">
-                <Pin className="h-3 w-3 fill-current" aria-hidden="true" />
-                <span className="qn-sr-only">Pinned</span>
-              </span>
-            )}
-            {note.starred && (
-              <span className="flex shrink-0 items-center text-warning" title="Favourite">
-                <Star className="h-3 w-3 fill-current" aria-hidden="true" />
-                <span className="qn-sr-only">Favourite</span>
+            {(note.pinned || note.starred) && (
+              <span
+                className="ml-auto flex shrink-0 items-center gap-1.5 pl-2"
+                aria-label="Note status"
+              >
+                {note.pinned && (
+                  <span className="flex items-center text-accent" title="Pinned">
+                    <Pin className="h-3 w-3 fill-current" aria-hidden="true" />
+                    <span className="qn-sr-only">Pinned</span>
+                  </span>
+                )}
+                {note.starred && (
+                  <span className="flex items-center text-warning" title="Favourite">
+                    <Star className="h-3 w-3 fill-current" aria-hidden="true" />
+                    <span className="qn-sr-only">Favourite</span>
+                  </span>
+                )}
               </span>
             )}
           </div>

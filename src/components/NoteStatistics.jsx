@@ -5,68 +5,13 @@ import { useUIStore } from '../store'
 import { useTranslation } from '../lib/useTranslation'
 import { formatSyncTime } from '../lib/utils'
 import { isBackendConfigured } from '../lib/backend'
-
-const calculateReadingTime = (wordCount) => {
-  const minutes = Math.ceil(wordCount / 200)
-  if (minutes < 1) return 'Less than 1 min'
-  if (minutes === 1) return '1 min read'
-  return `${minutes} min read`
-}
+import { getDocumentStatistics } from '../lib/documentStatistics'
 
 export default function NoteStatistics({ note }) {
   const setShareModalOpen = useUIStore((s) => s.setShareModalOpen)
   const { t } = useTranslation()
 
-  const stats = useMemo(() => {
-    if (!note) return null
-
-    const plainText = note.content 
-      ? note.content.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ')
-      : ''
-    
-    const characters = plainText.replace(/\s/g, '').length
-    
-    const charactersWithSpaces = plainText.length
-    
-    const words = plainText.trim().split(/\s+/).filter(Boolean).length
-    
-    const sentences = plainText.split(/[.!?]+/).filter(s => s.trim().length > 0).length
-    
-    const paragraphs = note.content 
-      ? (note.content.match(/<p[^>]*>/gi) || []).length || 1
-      : 0
-    
-    const lines = plainText.split(/\n/).filter(l => l.trim().length > 0).length || 1
-    
-    const readingTime = calculateReadingTime(words)
-    
-    const speakingMinutes = Math.ceil(words / 150)
-    const speakingTime = speakingMinutes < 1 ? 'Less than 1 min' : `${speakingMinutes} min`
-    
-    const tagCount = note.tags?.length || 0
-    
-    const linkCount = (note.content?.match(/<a[^>]*href/gi) || []).length
-    
-    const checklistTotal = (note.content?.match(/data-type="taskItem"/gi) || []).length
-    const checklistDone = (note.content?.match(/data-checked="true"/gi) || []).length
-    
-    return {
-      characters,
-      charactersWithSpaces,
-      words,
-      sentences,
-      paragraphs,
-      lines,
-      readingTime,
-      speakingTime,
-      tagCount,
-      linkCount,
-      checklistTotal,
-      checklistDone,
-      createdAt: note.createdAt,
-      updatedAt: note.updatedAt,
-    }
-  }, [note])
+  const stats = useMemo(() => getDocumentStatistics(note), [note])
 
   if (!stats) return null
   const isSpecialized = note.noteType && note.noteType !== 'standard'
@@ -136,63 +81,7 @@ export default function NoteStatistics({ note }) {
 }
 
 export function NoteStatisticsDetailed({ note }) {
-  const stats = useMemo(() => {
-    if (!note) return null
-
-    const plainText = note.content 
-      ? note.content.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ')
-      : ''
-    
-    const characters = plainText.replace(/\s/g, '').length
-    const charactersWithSpaces = plainText.length
-    const words = plainText.trim().split(/\s+/).filter(Boolean).length
-    const sentences = plainText.split(/[.!?]+/).filter(s => s.trim().length > 0).length
-    const paragraphs = note.content 
-      ? (note.content.match(/<p[^>]*>/gi) || []).length || 1
-      : 0
-    const lines = plainText.split(/\n/).filter(l => l.trim().length > 0).length || 1
-    const readingTime = calculateReadingTime(words)
-    const speakingMinutes = Math.ceil(words / 150)
-    const speakingTime = speakingMinutes < 1 ? 'Less than 1 min' : `${speakingMinutes} min`
-    const tagCount = note.tags?.length || 0
-    const linkCount = (note.content?.match(/<a[^>]*href/gi) || []).length
-    const checklistTotal = (note.content?.match(/data-type="taskItem"/gi) || []).length
-    const checklistDone = (note.content?.match(/data-checked="true"/gi) || []).length
-    const headingCount = (note.content?.match(/<h[1-6][^>]*>/gi) || []).length
-    const codeBlockCount = (note.content?.match(/<pre[^>]*>/gi) || []).length
-    const imageCount = (note.content?.match(/<img[^>]*>/gi) || []).length
-    
-    const allWords = plainText.trim().split(/\s+/).filter(Boolean)
-    const avgWordLength = allWords.length > 0 
-      ? (allWords.reduce((sum, w) => sum + w.length, 0) / allWords.length).toFixed(1)
-      : 0
-    
-    const avgSentenceLength = sentences > 0 
-      ? Math.round(words / sentences)
-      : 0
-
-    return {
-      characters,
-      charactersWithSpaces,
-      words,
-      sentences,
-      paragraphs,
-      lines,
-      readingTime,
-      speakingTime,
-      tagCount,
-      linkCount,
-      checklistTotal,
-      checklistDone,
-      headingCount,
-      codeBlockCount,
-      imageCount,
-      avgWordLength,
-      avgSentenceLength,
-      createdAt: note.createdAt,
-      updatedAt: note.updatedAt,
-    }
-  }, [note])
+  const stats = useMemo(() => getDocumentStatistics(note), [note])
 
   if (!stats) return null
 
@@ -202,7 +91,7 @@ export function NoteStatisticsDetailed({ note }) {
       items: [
         { label: 'Words', value: stats.words.toLocaleString('en-US') },
         { label: 'Characters', value: stats.characters.toLocaleString('en-US') },
-        { label: 'Characters (with spaces)', value: stats.charactersWithSpaces.toLocaleString('en-US') },
+        { label: 'Characters (without spaces)', value: stats.charactersWithoutSpaces.toLocaleString('en-US') },
         { label: 'Sentences', value: stats.sentences.toLocaleString('en-US') },
         { label: 'Paragraphs', value: stats.paragraphs.toLocaleString('en-US') },
         { label: 'Lines', value: stats.lines.toLocaleString('en-US') },
