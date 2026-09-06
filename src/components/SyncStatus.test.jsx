@@ -1,7 +1,7 @@
 import { act, cleanup, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useNotesStore } from '../store'
-import { SaveStatus } from './SyncStatus'
+import { SaveStatus, SyncStatusPill } from './SyncStatus'
 
 vi.mock('../lib/backend', () => ({ isBackendConfigured: () => true }))
 
@@ -35,6 +35,13 @@ describe('SaveStatus', () => {
     render(<SaveStatus note={note} />)
     expect(screen.getByText(/Saved locally.*Waiting to sync/i)).toBeInTheDocument()
     expect(screen.queryByText(/Saving/i)).not.toBeInTheDocument()
+  })
+
+  it('exposes pending synchronization as an explicit warning state', () => {
+    render(<SyncStatusPill />)
+    const status = screen.getByRole('button', { name: /Unsynced changes.*Sync now/i })
+    expect(status).toHaveAttribute('data-sync-state', 'pending')
+    expect(status).toHaveClass('text-warning-text')
   })
 
   it('distinguishes synchronization, offline, failure, and synchronized states', () => {

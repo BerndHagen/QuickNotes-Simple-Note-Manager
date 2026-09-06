@@ -2,7 +2,6 @@ import { useId } from 'react'
 import { MAX_NOTE_TITLE_LENGTH } from '../../lib/dataValidation'
 
 export default function FocusedNoteTitle({
-  icon: Icon,
   typeLabel,
   title,
   fallback,
@@ -12,10 +11,7 @@ export default function FocusedNoteTitle({
   const id = useId()
 
   return (
-    <div className="qn-focused-note-title flex min-w-0 items-center gap-2">
-      <span className="qn-focused-type-icon flex h-6 w-6 shrink-0 items-center justify-center text-accent-text">
-        <Icon className="h-[18px] w-[18px]" strokeWidth={1.8} aria-hidden="true" />
-      </span>
+    <div className="qn-focused-note-title min-w-0">
       <div className="min-w-0 flex-1">
         <label
           htmlFor={id}

@@ -69,7 +69,10 @@ describe('RichTextEditor external updates', () => {
 
     act(() => {
       tiptap.setHtml('<p>Local typing</p>')
-      tiptap.config.onUpdate({ editor: tiptap.editor })
+      tiptap.config.onUpdate({
+        editor: tiptap.editor,
+        transaction: { docChanged: true, getMeta: () => undefined },
+      })
     })
 
     rerender(<RichTextEditor {...props} content="<p>Remote update</p>" />)
@@ -78,5 +81,28 @@ describe('RichTextEditor external updates', () => {
     act(() => vi.advanceTimersByTime(2000))
 
     expect(tiptap.editor.commands.setContent).toHaveBeenCalledWith('<p>Remote update</p>', false)
+  })
+
+  it('does not persist presentation-only editor updates', () => {
+    const props = {
+      noteId: 'note-1',
+      content: '<p>Initial</p>',
+      onChange: vi.fn(),
+      onDraftChange: vi.fn(),
+      readOnly: true,
+    }
+    render(<RichTextEditor {...props} />)
+
+    act(() => {
+      tiptap.setHtml('<p>Normalized presentation</p>')
+      tiptap.config.onUpdate({
+        editor: tiptap.editor,
+        transaction: { docChanged: false, getMeta: () => undefined },
+      })
+      vi.runAllTimers()
+    })
+
+    expect(props.onDraftChange).not.toHaveBeenCalled()
+    expect(props.onChange).not.toHaveBeenCalled()
   })
 })

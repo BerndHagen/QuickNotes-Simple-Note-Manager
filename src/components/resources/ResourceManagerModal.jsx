@@ -39,7 +39,7 @@ import { correctRecognition } from '../../lib/intelligence/repository'
 import { getIntelligenceSettings } from '../../lib/intelligence/repository'
 import { openPdfPreview, renderPdfPreviewPage } from '../../lib/intelligence/pdfText'
 import { TESSERACT_OCR_LANGUAGES } from '../../lib/intelligence/tesseractOcr'
-import { Button, Field, Input, Modal, Select, Textarea } from '../ui'
+import { Button, Checkbox, Field, Input, Modal, Select, Textarea } from '../ui'
 import AudioRecorder from './AudioRecorder'
 import RecognitionTaskModal from '../RecognitionTaskModal'
 import AttachmentAnnotationModal from '../spatial/AttachmentAnnotationModal'
@@ -679,7 +679,7 @@ export default function ResourceManagerModal({ open, onClose, note, readOnly = f
                       </div>
                     )}
                     <label className="flex items-start gap-2 text-ui-sm text-content-muted">
-                      <input type="checkbox" className="mt-0.5 accent-[var(--qn-accent)]" checked={includeOcr} onChange={(event) => setIncludeOcr(event.target.checked)} disabled={isWorking} />
+                      <Checkbox className="mt-0.5" checked={includeOcr} onChange={(event) => setIncludeOcr(event.target.checked)} disabled={isWorking} />
                       <span>OCR scanned pages locally</span>
                     </label>
                     {includeOcr && (
@@ -810,7 +810,7 @@ export default function ResourceManagerModal({ open, onClose, note, readOnly = f
                             )}
                           </Field>
                           <label className="flex items-start gap-2 text-ui-sm text-content-muted">
-                            <input type="checkbox" className="mt-0.5 accent-[var(--qn-accent)]" checked={transcriptionConsent} onChange={(event) => setTranscriptionConsent(event.target.checked)} />
+                            <Checkbox className="mt-0.5" checked={transcriptionConsent} onChange={(event) => setTranscriptionConsent(event.target.checked)} />
                             <span>Send this audio for external transcription now</span>
                           </label>
                         </div>

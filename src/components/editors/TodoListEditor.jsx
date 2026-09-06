@@ -235,7 +235,6 @@ export default function TodoListEditor({ data, onChange, noteTitle, onTitleChang
     <>
       <StructuredWorkspaceShell
         className="qn-type-editor qn-type-todo"
-        icon={CheckCircle2}
         typeLabel="Task workspace"
         title={noteTitle}
         fallback="Task list"

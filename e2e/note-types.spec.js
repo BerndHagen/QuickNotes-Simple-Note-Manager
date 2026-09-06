@@ -84,6 +84,9 @@ test.describe('focused note types', () => {
     const dialog = await openPicker(page)
 
     await expect(dialog.getByLabel('Search workspace types')).toBeVisible()
+    await dialog.locator('section[aria-label="Workspace types"]')
+      .getByRole('button', { name: /^Document/i })
+      .click()
     await expect(dialog.getByText('Choose a starting point')).toBeVisible()
     await expect(dialog.getByRole('button', { name: /^Create document/ })).toBeVisible()
     await expectNoHorizontalOverflow(page)
@@ -211,7 +214,7 @@ test.describe('focused note types', () => {
       }
 
       await page.getByRole('button', { name: /back to notes/i }).click()
-      await expect(page.getByRole('searchbox', { name: 'Search notes...', exact: true })).toBeVisible()
+      await expect(page.getByRole('searchbox', { name: 'Filter this list…', exact: true })).toBeVisible()
     }
 
     expect(errors).toEqual([])

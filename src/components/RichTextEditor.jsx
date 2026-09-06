@@ -769,8 +769,9 @@ function DocumentPageSheets({ editor, containerRef, paperStyle }) {
   return (
     <div className="qn-document-page-sheets" aria-hidden="true">
       {Array.from({ length: geometry.pageCount }, (_, pageIndex) => {
+        const pageTop = pageIndex * (geometry.pageHeight + PAGE_GAP)
         const pagePosition = {
-          top: `${pageIndex * (geometry.pageHeight + PAGE_GAP)}px`,
+          top: `${pageTop}px`,
           height: `${geometry.pageHeight}px`,
         }
         return (
@@ -785,6 +786,16 @@ function DocumentPageSheets({ editor, containerRef, paperStyle }) {
               data-page-number={pageIndex + 1}
               style={pagePosition}
             />
+            {pageIndex < geometry.pageCount - 1 && (
+              <span
+                className="qn-document-page-gutter"
+                data-after-page={pageIndex + 1}
+                style={{
+                  top: `${pageTop + geometry.pageHeight}px`,
+                  height: `${PAGE_GAP}px`,
+                }}
+              />
+            )}
           </Fragment>
         )
       })}
@@ -1232,7 +1243,16 @@ export default function RichTextEditor({
       InvisibleCharactersExtension,
     ],
     content: content || '',
-    onUpdate: ({ editor }) => {
+    onUpdate: ({ editor, transaction }) => {
+      // Focus, pagination measurement, decorations, and other presentation
+      // transactions can emit Tiptap's update event without changing the
+      // document. Treating those as edits silently rewrote legacy HTML and
+      // moved a merely opened note into Today.
+      if (!transaction?.docChanged || transaction.getMeta('quicknotesSystemMigration')) {
+        lastKnownContent.current = editor.getHTML()
+        syncSlashMenu(editor)
+        return
+      }
       markUserTyping()
       isInternalUpdate.current = true
       lastKnownContent.current = editor.getHTML()
@@ -1315,7 +1335,6 @@ export default function RichTextEditor({
 
   useEffect(() => {
     if (editor) {
-      editor.commands.ensureHeadingAnchors?.()
       onEditorReady?.(editor)
     }
   }, [editor, onEditorReady])

@@ -306,7 +306,6 @@ ${meetingData.notes}
   return (
     <StructuredWorkspaceShell
       className="qn-type-editor qn-type-meeting"
-      icon={Users}
       typeLabel="Meeting workspace"
       title={noteTitle}
       fallback="Meeting notes"

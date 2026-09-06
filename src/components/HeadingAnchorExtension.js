@@ -43,7 +43,11 @@ const HeadingAnchorExtension = Extension.create({
       ensureHeadingAnchors: () => ({ state, dispatch }) => {
         const transaction = ensureHeadingAnchors(state)
         if (!transaction) return true
-        dispatch?.(transaction)
+        dispatch?.(
+          transaction
+            .setMeta('quicknotesSystemMigration', true)
+            .setMeta('addToHistory', false)
+        )
         return true
       },
     }
@@ -61,4 +65,3 @@ const HeadingAnchorExtension = Extension.create({
 })
 
 export default HeadingAnchorExtension
-

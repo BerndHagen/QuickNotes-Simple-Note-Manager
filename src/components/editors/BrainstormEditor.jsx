@@ -4,7 +4,6 @@ import {
   ChevronRight,
   Copy,
   Edit3,
-  Lightbulb,
   List,
   Move,
   Plus,
@@ -153,7 +152,6 @@ export default function BrainstormEditor({ data, onChange, note, noteTitle, onTi
   return (
     <StructuredWorkspaceShell
       className={`qn-type-editor qn-type-brainstorm ${canvasActive ? 'qn-type-brainstorm--canvas' : ''}`}
-      icon={Lightbulb}
       typeLabel="Idea workspace"
       title={noteTitle}
       fallback="Idea board"

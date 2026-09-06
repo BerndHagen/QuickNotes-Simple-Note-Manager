@@ -96,12 +96,12 @@ test.describe('3.0.1 desktop regressions', () => {
     await page.keyboard.press('Control+Enter')
     await page.keyboard.insertText('Page two')
 
-    const gutter = editor.locator('.qn-page-gap__gutter')
+    const gutter = page.locator('.qn-document-page-gutter')
     await expect(gutter).toBeVisible()
     const pageEdges = page.locator('.qn-document-page-edge')
     await expect(pageEdges).toHaveCount(2)
     const painting = await pageEdges.evaluateAll((edges, gutterElement) => {
-      const editorStyle = getComputedStyle(gutterElement.closest('.ProseMirror'))
+      const editorStyle = getComputedStyle(document.querySelector('.ProseMirror'))
       const gutterStyle = getComputedStyle(gutterElement)
       const edgeStyles = edges.map((edge) => {
         const style = getComputedStyle(edge)

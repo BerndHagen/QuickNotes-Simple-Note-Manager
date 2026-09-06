@@ -35,13 +35,17 @@ const expectContainedOrScrollable = async (root, label) => {
       }
       return false
     }
+    const isPannableWorldContent = (element) => Boolean(
+      element.matches('.qn-spatial-object-world') &&
+      element.closest('.qn-spatial-interaction-surface')
+    )
     return [...container.querySelectorAll('*')].flatMap((element) => {
       const style = getComputedStyle(element)
       const box = element.getBoundingClientRect()
       if (
         style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) === 0 ||
         box.width < 1 || box.height < 1 || box.bottom < containerBox.top || box.top > containerBox.bottom ||
-        style.position === 'fixed' || isScrollableAncestor(element)
+        style.position === 'fixed' || isScrollableAncestor(element) || isPannableWorldContent(element)
       ) return []
       if (box.left >= containerBox.left - 1 && box.right <= containerBox.right + 1) return []
       return [{
@@ -80,7 +84,7 @@ test.describe('phone workspace workflow regression', () => {
   test.use({ viewport: { width: 320, height: 568 }, hasTouch: true, isMobile: true })
   test.setTimeout(180_000)
 
-  test('keeps every non-spatial workspace operable, contained, and scrollable', async ({ page }) => {
+  test('keeps every non-spatial workspace operable, contained, and scrollable', async ({ page, browserName }) => {
     const errors = collectErrors(page)
     await signIn(page)
 
@@ -115,14 +119,20 @@ test.describe('phone workspace workflow regression', () => {
           await auditWorkspace(page, definition, ` / ${section}`)
         }
       } else if (definition.type === 'Idea Board') {
-        const canvas = root.getByRole('application', { name: /infinite canvas/i })
-        const canvasBox = await canvas.boundingBox()
-        await dragTouch(page,
-          { x: canvasBox.x + 45, y: canvasBox.y + 80 },
-          { x: canvasBox.x + 155, y: canvasBox.y + 135 },
-          { steps: 10 }
-        )
-        await expect(root.getByText('Saved on this device')).toBeVisible()
+        // Chromium exposes the low-level multi-touch protocol needed by the
+        // helper. WebKit still exercises the rendered canvas and the complete
+        // register workflow; direct iOS gesture coverage lives in the manual
+        // phone matrix because Playwright does not synthesize WebKit touch IDs.
+        if (browserName === 'chromium') {
+          const canvas = root.getByRole('application', { name: /infinite canvas/i })
+          const canvasBox = await canvas.boundingBox()
+          await dragTouch(page,
+            { x: canvasBox.x + 45, y: canvasBox.y + 80 },
+            { x: canvasBox.x + 155, y: canvasBox.y + 135 },
+            { steps: 10 }
+          )
+          await expect(root.getByText('Saved on this device')).toBeVisible()
+        }
         await root.getByRole('tab', { name: /^Idea register/i }).click()
         await root.getByLabel('New idea').fill('Mobile idea')
         await root.getByRole('button', { name: 'Add idea' }).click()
@@ -148,7 +158,7 @@ test.describe('phone workspace workflow regression', () => {
       await page.setViewportSize({ width: 320, height: 420 })
       await auditWorkspace(page, definition, ' / keyboard-height viewport')
       await page.getByRole('button', { name: /back to notes/i }).click()
-      await expect(page.getByRole('searchbox', { name: 'Search notes...', exact: true })).toBeVisible()
+      await expect(page.getByRole('searchbox', { name: 'Filter this list…', exact: true })).toBeVisible()
       await page.locator('.note-card', { hasText: `Phone workflow ${index + 1}` }).click()
       await expect(root).toBeVisible()
       await page.getByRole('button', { name: /back to notes/i }).click()
@@ -158,7 +168,8 @@ test.describe('phone workspace workflow regression', () => {
     expect(errors).toEqual([])
   })
 
-  test('uses two fingers to zoom the active note without magnifying browser chrome', async ({ page }) => {
+  test('uses two fingers to zoom the active note without magnifying browser chrome', async ({ page, browserName }) => {
+    test.skip(browserName !== 'chromium', 'Playwright WebKit does not expose multi-touch gesture injection')
     await signIn(page)
     await createNote(page, `Phone pinch ${Date.now()}`)
     const editor = page.getByRole('textbox', { name: 'Note content' })
@@ -178,6 +189,31 @@ test.describe('phone workspace workflow regression', () => {
     await expect.poll(async () => Number((await zoom.getAttribute('aria-label')).match(/(\d+)%/)?.[1]))
       .toBeGreaterThan(100)
     expect(await page.evaluate(() => window.devicePixelRatio)).toBe(deviceScale)
+    await expectNoHorizontalOverflow(page)
+  })
+
+  test('uses a phone-sized workspace picker without a desktop-width canvas', async ({ page }) => {
+    await page.setViewportSize({ width: 402, height: 874 })
+    await signIn(page)
+    await page.getByRole('button', { name: 'Create workspace' }).click()
+
+    const dialog = page.getByRole('dialog', { name: /new workspace/i })
+    const picker = dialog.locator('.qn-workspace-picker')
+    await expect(picker).toHaveAttribute('data-mobile-step', 'choose')
+    await expect(dialog.locator('section[aria-label="Workspace types"]')).toBeVisible()
+    await expect(dialog.locator('.qn-workspace-picker-configure')).not.toBeVisible()
+    await expectContainedOrScrollable(dialog, 'Workspace picker type step')
+
+    await dialog.locator('section[aria-label="Workspace types"]')
+      .getByRole('button', { name: /^Project Board/i })
+      .click()
+    await expect(picker).toHaveAttribute('data-mobile-step', 'configure')
+    await expect(dialog.getByRole('button', { name: 'Workspace types' })).toBeVisible()
+    await expect(dialog.getByLabel('Note title')).toBeVisible()
+    await expectContainedOrScrollable(dialog, 'Workspace picker configuration step')
+
+    await dialog.getByRole('button', { name: 'Workspace types' }).click()
+    await expect(picker).toHaveAttribute('data-mobile-step', 'choose')
     await expectNoHorizontalOverflow(page)
   })
 })

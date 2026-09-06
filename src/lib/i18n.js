@@ -93,6 +93,7 @@ export const translations = {
       noNotesFound: 'No notes found',
       createFirst: 'Create your first note',
       searchPlaceholder: 'Search notes...',
+      filterPlaceholder: 'Filter this list…',
       lastModified: 'Last modified',
       created: 'Created',
       words: 'words',

@@ -10,6 +10,8 @@
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
     text-rendering: optimizeLegibility;
   }
 
@@ -2875,18 +2877,10 @@ body {
   color: var(--qn-text-muted) !important;
 }
 
-.qn-type-hero .qn-focused-type-icon {
-  color: var(--qn-accent-text);
-}
-
 .qn-type-hero .qn-focused-type-label {
   font-size: 10px;
   line-height: 12px;
   letter-spacing: 0.1em;
-}
-
-.qn-type-hero .ml-12 {
-  margin-left: 2rem !important;
 }
 
 .qn-type-hero :where(input, textarea, select):not(.qn-focused-title) {
@@ -3058,6 +3052,97 @@ body {
 
 .qn-top-sync:not(:disabled) {
   color: var(--qn-banner-text) !important;
+}
+
+.qn-top-sync[data-sync-state='pending'] {
+  background: rgba(245, 158, 11, 0.15) !important;
+  color: #fbbf24 !important;
+}
+
+.qn-top-sync[data-sync-state='pending']:hover {
+  background: rgba(245, 158, 11, 0.24) !important;
+  color: #fde68a !important;
+}
+
+.qn-top-search-root {
+  position: relative;
+}
+
+.qn-top-search-results {
+  position: absolute;
+  z-index: var(--qn-z-popover);
+  top: calc(100% + 5px);
+  left: 0;
+  width: 100%;
+  max-height: min(68dvh, 30rem);
+  overflow-y: auto;
+  border: 1px solid var(--qn-border-strong);
+  border-radius: var(--qn-radius-control);
+  background: var(--qn-surface-raised);
+  color: var(--qn-text);
+  box-shadow: var(--qn-shadow-md);
+}
+
+.qn-top-search-result {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 9px 11px;
+  border-bottom: 1px solid var(--qn-border-subtle);
+  color: var(--qn-text-muted);
+  text-align: left;
+}
+
+.qn-top-search-result[aria-selected='true'] {
+  background: var(--qn-accent-soft);
+  color: var(--qn-accent-text);
+}
+
+.qn-top-search-result strong,
+.qn-top-search-result small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qn-top-search-result strong {
+  color: var(--qn-text);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.qn-top-search-result small {
+  margin-top: 1px;
+  color: var(--qn-text-muted);
+  font-size: 11px;
+}
+
+.qn-top-search-empty {
+  padding: 16px;
+  color: var(--qn-text-muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+.qn-top-search-advanced {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 11px;
+  background: var(--qn-surface-sunken);
+  color: var(--qn-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.qn-top-search-advanced:hover {
+  color: var(--qn-text);
 }
 
 .qn-top-new {
@@ -3447,6 +3532,8 @@ body {
    ============================================================ */
 .qn-structured-workspace {
   container-type: inline-size;
+  width: 100%;
+  max-width: 100%;
   height: 100%;
   min-height: 0;
   overflow-x: hidden;
@@ -3457,14 +3544,32 @@ body {
   scrollbar-gutter: stable;
 }
 
+.qn-structured-workspace :where(input, select, textarea) {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.qn-structured-workspace .qn-workspace-panel,
+.qn-structured-workspace .qn-quiet-empty {
+  width: 100%;
+  max-width: none !important;
+  margin-inline: 0;
+}
+
+.qn-structured-workspace :where(input:not([type='checkbox']):not([type='radio']):not([type='range']):not(.qn-focused-title), select) {
+  padding-inline: 10px;
+}
+
+.qn-structured-workspace textarea {
+  padding-inline: 12px;
+  line-height: 1.5;
+}
+
 .qn-structured-header {
   padding: 12px 18px 10px;
   border-bottom: 1px solid var(--qn-border-subtle);
   background: var(--qn-surface-raised);
-}
-
-.qn-structured-header .qn-focused-note-title {
-  max-width: 56rem;
 }
 
 .qn-structured-summary {
@@ -3474,7 +3579,7 @@ body {
   align-items: center;
   gap: 6px 16px;
   margin-top: 6px;
-  margin-left: 2rem;
+  margin-left: 0;
   color: var(--qn-text-muted);
   font-size: 12px;
   line-height: 18px;
@@ -3555,8 +3660,8 @@ body {
 }
 
 .qn-structured-section {
-  width: min(100%, 64rem);
-  margin-inline: auto;
+  width: 100%;
+  margin-inline: 0;
   border: 1px solid var(--qn-border-subtle);
   border-radius: 2px;
   background: var(--qn-surface-raised);
@@ -3628,7 +3733,7 @@ body {
   }
 
   .qn-structured-summary {
-    margin-left: 2rem;
+    margin-left: 0;
     gap: 4px 13px;
   }
 
@@ -3911,8 +4016,8 @@ body {
 .qn-weekly-week-layout {
   display: grid;
   grid-template-columns: 74px minmax(0, 1fr);
-  width: min(100%, 64rem);
-  margin-inline: auto;
+  width: 100%;
+  margin-inline: 0;
   overflow: hidden;
   border: 1px solid var(--qn-border-subtle);
   border-radius: 2px;
@@ -3944,9 +4049,9 @@ body {
 }
 
 .qn-type-weekly > .qn-structured-content > .qn-workspace-panel {
-  width: min(100%, 58rem);
-  max-width: 58rem !important;
-  margin-inline: auto;
+  width: 100%;
+  max-width: none !important;
+  margin-inline: 0;
   padding: 16px !important;
   border: 1px solid var(--qn-border-subtle);
   border-radius: 2px;
@@ -4043,9 +4148,9 @@ body {
 }
 
 .qn-type-meeting > .qn-structured-content > .qn-workspace-panel {
-  width: min(100%, 64rem);
-  max-width: 64rem !important;
-  margin-inline: auto;
+  width: 100%;
+  max-width: none !important;
+  margin-inline: 0;
   padding: 16px !important;
   border: 1px solid var(--qn-border-subtle);
   border-radius: 2px;
@@ -4094,9 +4199,9 @@ body {
 
 .qn-type-journal > .qn-structured-content > .qn-workspace-panel,
 .qn-type-journal > .qn-structured-content > .qn-today-agenda {
-  width: min(100%, 58rem);
-  max-width: 58rem !important;
-  margin-inline: auto;
+  width: 100%;
+  max-width: none !important;
+  margin-inline: 0;
   padding: 16px !important;
   border: 1px solid var(--qn-border-subtle);
   border-radius: 2px;
@@ -4274,7 +4379,11 @@ body {
   grid-template-columns: 28px minmax(0, 1fr) 28px;
   align-items: start;
   gap: 5px;
-  padding: 8px 7px 5px 4px;
+  padding: 8px 7px 8px 4px;
+}
+
+.qn-project-task-card[data-has-metadata='true'] .qn-project-task-main {
+  padding-bottom: 5px;
 }
 
 .qn-project-task-main h3 {
@@ -4553,20 +4662,13 @@ body {
 }
 
 .qn-shopping-check > span {
-  display: inline-flex;
   width: 19px;
   height: 19px;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--qn-border-strong);
-  border-radius: 3px;
-  background: var(--qn-surface-raised);
-  color: var(--qn-accent-on);
+  flex-basis: 19px;
 }
 
 .qn-shopping-check[aria-checked='true'] > span {
-  border-color: var(--qn-accent);
-  background: var(--qn-accent);
+  color: var(--qn-text-on-brand);
 }
 
 .qn-shopping-item-label {
@@ -4728,8 +4830,8 @@ body {
 }
 
 .qn-project-overview {
-  width: min(100%, 68rem);
-  margin-inline: auto;
+  width: 100%;
+  margin-inline: 0;
 }
 
 .qn-project-brief,
@@ -4859,13 +4961,13 @@ body {
   .qn-project-overview-grid { grid-template-columns: minmax(0, 1fr); }
 }
 
-@container (max-width: 23rem) {
+@container (max-width: 30rem) {
   .qn-project-properties { grid-template-columns: minmax(0, 1fr); }
 }
 
 .qn-type-todo .qn-structured-content {
-  width: min(100%, 68rem);
-  margin-inline: auto;
+  width: 100%;
+  margin-inline: 0;
 }
 
 .qn-type-todo .qn-structured-section {
@@ -4975,6 +5077,67 @@ body {
 }
 
 @media (max-width: 640px) {
+  /* iOS Safari applies intrinsic widths to native date/select controls before
+     container-query layout settles. These viewport fallbacks keep the actual
+     phone layout single-column even when those intrinsic widths are large. */
+  .qn-project-properties {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .qn-project-properties label,
+  .qn-project-properties :is(input, select) {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .qn-project-board {
+    grid-template-columns: minmax(0, 1fr);
+    min-width: 0;
+    overflow-x: visible;
+  }
+
+  .qn-shopping-add-primary {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .qn-shopping-add-primary > button:last-child {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+
+  .qn-shopping-add-details,
+  .qn-shopping-settings,
+  .qn-shopping-item-editor {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .qn-workspace-picker[data-mobile-step='choose'] .qn-workspace-picker-configure,
+  .qn-workspace-picker[data-mobile-step='configure'] .qn-workspace-picker-choose {
+    display: none;
+  }
+
+  .qn-workspace-picker-types {
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+  }
+
+  .qn-workspace-picker-type {
+    width: 100%;
+  }
+
+  .qn-workspace-picker-back {
+    display: inline-flex;
+  }
+
+  .qn-workspace-picker-create {
+    display: none !important;
+  }
+
   .qn-type-hero {
     padding: 9px 10px 8px !important;
   }
@@ -5076,6 +5239,12 @@ body {
   .qn-type-editor .qn-workspace-canvas > .qn-weekly-week-layout,
   .qn-type-shopping .qn-workspace-canvas { padding: 0; }
   .qn-type-editor .qn-workspace-panel { padding: 14px !important; }
+}
+
+@media (min-width: 641px) {
+  .qn-workspace-picker-back {
+    display: none;
+  }
 }
 
 /* ============================================================
@@ -5382,6 +5551,15 @@ body {
   transition: border-color var(--qn-duration-fast) var(--qn-ease), box-shadow var(--qn-duration-fast) var(--qn-ease);
 }
 
+.qn-document-page-gutter {
+  position: absolute;
+  z-index: 2;
+  right: 0;
+  left: 0;
+  display: block;
+  background: var(--qn-page-gutter-color, var(--qn-surface-workbench));
+}
+
 .qn-editor-page:focus-within .qn-document-page-edge {
   border-width: 2px;
   border-color: var(--qn-accent);
@@ -5449,14 +5627,13 @@ body {
 
 .qn-page-gap__gutter {
   position: relative;
-  z-index: 2;
+  z-index: auto;
   width: 100%;
   margin-left: 0;
-  /* ProseMirror is one continuous editable DOM tree. This opaque spacer is
-     the page-boundary clip mask for text, selections, highlights and inline
-     objects. Page edges live above it, so their four-sided border and shadow
-     remain intact. */
-  background: var(--qn-page-gutter-color, var(--qn-surface-workbench));
+  /* This span owns document flow only. The page-sheet layer paints the exact
+     visual gap from the same geometry that paints page edges, so checklist
+     measurement and sub-pixel rounding can never shorten a visible sheet. */
+  background: transparent;
 }
 
 .dark .qn-document-page-edge {

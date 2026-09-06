@@ -52,7 +52,7 @@ async function createDocument(page) {
     'Decision log',
     'Keep provider-backed features unavailable until a real capability is configured.',
   ].join('\n'))
-  await expect(page.getByText(/saved/i).first()).toBeVisible({ timeout: 15_000 })
+  await expect(page.getByRole('button', { name: /saved locally|synced/i }).first()).toBeVisible({ timeout: 15_000 })
   return editor
 }
 
@@ -101,7 +101,7 @@ async function captureDocumentAndSearch() {
   await createDocument(page)
   await save(page, 'quicknotes-3-document.png')
 
-  await page.getByRole('button', { name: 'Search all notes' }).click()
+  await page.keyboard.press('Control+k')
   const search = page.getByRole('dialog', { name: /global search/i })
   await search.getByRole('combobox').fill('release planning')
   await expect(search.getByRole('option', { name: /Release planning/i })).toBeVisible({ timeout: 15_000 })
@@ -201,7 +201,7 @@ async function captureMeeting() {
   await dialog.getByRole('button', { name: /^Create meeting/i }).click()
   const meeting = page.locator('.qn-type-meeting')
   await meeting.waitFor({ state: 'visible' })
-  await meeting.getByRole('button', { name: /^Capture/i }).click()
+  await meeting.getByRole('tab', { name: /^Capture/i }).click()
   await expect(meeting.getByText('Meeting capture', { exact: true })).toBeVisible()
   await save(page, 'quicknotes-3-meeting.png')
   await context.close()
@@ -237,6 +237,7 @@ async function captureProject() {
     title: 'Product launch',
     root: '.qn-type-project',
   })
+  await project.getByRole('tab', { name: /^Board/i }).click()
   await expect(project.getByText('Define launch goal and audience', { exact: true })).toBeVisible()
   await save(page, 'quicknotes-3-project.png')
   await context.close()
@@ -252,7 +253,7 @@ async function captureJournal() {
     title: 'Evening reflection',
     root: '.qn-type-journal',
   })
-  await journal.getByRole('button', { name: /^Evening/i }).click()
+  await journal.getByRole('tab', { name: /^Evening/i }).click()
   await journal.getByLabel('Gratitude item 1').fill('A clear plan for the release')
   await journal.getByLabel('Gratitude item 2').fill('Thoughtful feedback from the team')
   await journal.getByLabel('Gratitude item 3').fill('Time to finish the important details')
@@ -270,6 +271,7 @@ async function captureIdeas() {
     title: 'Product discovery',
     root: '.qn-type-brainstorm',
   })
+  await ideas.getByRole('tab', { name: /^Idea register/i }).click()
   for (const idea of [
     'Interview frequent travellers',
     'Reduce steps in mobile capture',
@@ -279,7 +281,7 @@ async function captureIdeas() {
     await ideas.getByLabel('New idea').fill(idea)
     await ideas.getByRole('button', { name: 'Add Idea' }).click()
   }
-  await expect(ideas.locator('.qn-idea-card')).toHaveCount(4)
+  await expect(ideas.locator('.qn-idea-row')).toHaveCount(4)
   await save(page, 'quicknotes-3-ideas.png')
   await context.close()
 }

@@ -28,7 +28,7 @@ export default defineConfig({
     },
     {
       name: 'mobile-webkit',
-      testMatch: /mobile-webkit\.spec\.js/,
+      testMatch: /(?:mobile-webkit|mobile-workspace-regression)\.spec\.js/,
       use: { ...devices['iPhone 13'] },
     },
   ],

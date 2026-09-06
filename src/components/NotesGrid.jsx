@@ -341,22 +341,21 @@ export default function NotesGrid({ sidebarToggle }) {
                 }
               }}
             />
-            <Button
+            <IconButton
               size="sm"
               variant="primary"
               icon={Plus}
+              label="New note"
               onClick={handleCreateNote}
-            >
-              <span className="hidden sm:inline">New note</span>
-              <span className="sr-only sm:hidden">New note</span>
-            </Button>
+            />
           </div>
         </div>
         <div className="relative max-w-md">
           <Search className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-content-subtle" aria-hidden="true" />
           <Input
-            placeholder={t('notes.searchPlaceholder')}
-            aria-label={t('notes.searchPlaceholder')}
+            type="search"
+            placeholder={t('notes.filterPlaceholder', 'Filter this list…')}
+            aria-label={t('notes.filterPlaceholder', 'Filter this list…')}
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
             className="bg-surface-sunken pl-9"

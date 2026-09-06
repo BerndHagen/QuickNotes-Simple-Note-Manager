@@ -58,7 +58,7 @@ test.describe('enterprise UI maturity regressions', () => {
     await page.setViewportSize({ width: 1440, height: 900 })
     await signIn(page)
 
-    const search = page.getByRole('searchbox', { name: /search notes/i })
+    const search = page.getByRole('searchbox', { name: /filter this list/i })
     const card = page.locator('.note-card').first()
     const [searchRadius, cardRadius] = await Promise.all([
       search.evaluate((element) => getComputedStyle(element).borderRadius),

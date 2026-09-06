@@ -161,7 +161,7 @@ test.describe('workspace', () => {
     await createNote(page, unique)
     await createNote(page, `Aardvark${Date.now()}`)
 
-    const search = page.getByRole('searchbox', { name: 'Search notes...', exact: true })
+    const search = page.getByRole('searchbox', { name: 'Filter this list…', exact: true })
     await search.fill(unique)
     await expect(page.getByRole('button', { name: new RegExp(unique, 'i') }).first()).toBeVisible()
     await expect(page.getByRole('button', { name: /^Aardvark/i })).toHaveCount(0)
@@ -172,7 +172,7 @@ test.describe('workspace', () => {
 
   test('shows an empty state when a search matches nothing', async ({ page }) => {
     await signIn(page)
-    await page.getByRole('searchbox', { name: 'Search notes...', exact: true }).fill('zzz-no-such-note-zzz')
+    await page.getByRole('searchbox', { name: 'Filter this list…', exact: true }).fill('zzz-no-such-note-zzz')
     await expect(page.getByText(/no notes found/i)).toBeVisible()
     await expect(page.getByRole('button', { name: /clear search/i }).first()).toBeVisible()
   })

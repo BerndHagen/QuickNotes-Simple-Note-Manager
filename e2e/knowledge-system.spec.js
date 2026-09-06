@@ -13,7 +13,7 @@ async function createCanvasNote(page, title) {
 }
 
 async function openSearch(page) {
-  await page.getByRole('searchbox', { name: 'Search all notes' }).click()
+  await page.keyboard.press('Control+k')
   const dialog = page.getByRole('dialog', { name: /global search/i })
   await expect(dialog).toBeVisible()
   return dialog

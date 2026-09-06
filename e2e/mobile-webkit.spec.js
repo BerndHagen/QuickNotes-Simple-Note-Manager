@@ -41,6 +41,17 @@ test.describe('mobile Safari workflows', () => {
 
     const paper = page.getByRole('application', { name: /page 1/i })
     await expect(paper).toBeVisible()
+    const stage = page.locator('.qn-paper-stage')
+    await expect.poll(async () => {
+      const [stageBox, frameBox] = await Promise.all([
+        stage.boundingBox(),
+        page.locator('.qn-paper-page-frame').first().boundingBox(),
+      ])
+      return frameBox.width <= stageBox.width - 23
+        && frameBox.x >= stageBox.x + 11
+        && frameBox.x + frameBox.width <= stageBox.x + stageBox.width - 11
+    }).toBe(true)
+    await expect(page.getByLabel('Current zoom')).not.toHaveText('80%')
     await expect(page.getByText('Drag with touch, mouse, or pen')).toBeVisible()
     await expect(page.locator('.qn-spatial-titlebar')).toBeHidden()
     await expect(page.locator('.qn-spatial-tool-group--objects')).toBeHidden()
@@ -59,7 +70,6 @@ test.describe('mobile Safari workflows', () => {
     await page.mouse.up()
     await expect(page.getByText('Saved on this device')).toBeVisible()
 
-    const stage = page.locator('.qn-paper-stage')
     await page.getByRole('button', { name: 'Pan (Space)' }).tap()
     // Paper now opens fit-to-width on phones. Zoom in before asserting that
     // the Hand tool can traverse an intentionally oversized sheet.
@@ -89,6 +99,37 @@ test.describe('mobile Safari workflows', () => {
     await expect(page.getByRole('tooltip')).toHaveCount(0)
   })
 
+  test('does not inherit a desktop Canvas viewport on a phone', async ({ page }) => {
+    await page.setViewportSize({ width: 1180, height: 780 })
+    await signIn(page)
+    await page.getByRole('button', { name: 'Create workspace' }).click()
+    const dialog = page.getByRole('dialog', { name: /new workspace/i })
+    await dialog.locator('section[aria-label="Workspace types"]')
+      .getByRole('button', { name: /^Canvas/i })
+      .click()
+    await dialog.getByLabel('Note title').fill('Responsive mobile canvas')
+    await dialog.getByRole('button', { name: /^Create / }).click()
+    await page.locator('.note-card', { hasText: 'Responsive mobile canvas' }).click()
+
+    await page.getByRole('button', { name: 'Zoom in' }).click()
+    await page.getByRole('button', { name: 'Zoom in' }).click()
+    await page.getByRole('button', { name: 'Zoom in' }).click()
+    await expect(page.getByLabel('Current zoom')).toHaveText('130%')
+    await page.waitForTimeout(600)
+    await page.setViewportSize({ width: 390, height: 664 })
+    await expect(page.getByRole('searchbox', { name: 'Filter this list…', exact: true })).toBeVisible()
+    await page.locator('.note-card', { hasText: 'Responsive mobile canvas' }).tap()
+    const canvas = page.getByRole('application', { name: /infinite canvas/i })
+    await expect(canvas).toBeVisible()
+    await expect(page.getByLabel('Current zoom')).toHaveText('100%')
+
+    await page.getByLabel('Insert object').selectOption('sticky')
+    await canvas.tap({ position: { x: 190, y: 180 } })
+    await expect(page.locator('[data-spatial-object-id]')).toHaveCount(1)
+    await expect(page.getByText('Saved on this device')).toBeVisible()
+    await expectNoHorizontalOverflow(page)
+  })
+
   test('keeps shared controls square and uses readable Apple shortcut names', async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 568 })
     await signIn(page)
@@ -109,6 +150,13 @@ test.describe('mobile Safari workflows', () => {
       }
     })
     expect(new Set(Object.values(newNoteSizing))).toEqual(new Set(['44px']))
+
+    await page.getByRole('button', { name: 'Grid view' }).tap()
+    const gridNewNoteButton = page.getByRole('button', { name: /^new note$/i })
+    const gridNewNoteBox = await gridNewNoteButton.boundingBox()
+    expect(gridNewNoteBox.width).toBe(44)
+    expect(gridNewNoteBox.height).toBe(44)
+    await page.getByRole('button', { name: 'List view' }).tap()
 
     const settings = await openSettings(page)
     const tabs = settings.getByRole('navigation', { name: 'Settings sections' }).getByRole('button')
@@ -335,7 +383,7 @@ test.describe('mobile Safari workflows', () => {
     expect(toolbarBox.height).toBeLessThanOrEqual(60)
 
     await page.goBack()
-    await expect(page.getByRole('searchbox', { name: 'Search notes...', exact: true })).toBeVisible()
+    await expect(page.getByRole('searchbox', { name: 'Filter this list…', exact: true })).toBeVisible()
     await page.goForward()
     await expect(editor).toContainText('Draft survives WebKit navigation')
   })
@@ -348,7 +396,7 @@ test.describe('mobile Safari workflows', () => {
     await expect(navigation).toBeVisible()
     await page.goBack()
     await expect(navigation).toHaveCount(0)
-    await expect(page.getByRole('searchbox', { name: 'Search notes...', exact: true })).toBeVisible()
+    await expect(page.getByRole('searchbox', { name: 'Filter this list…', exact: true })).toBeVisible()
 
     await page.getByRole('button', { name: /show navigation/i }).first().tap()
     await page.getByRole('button', { name: /^settings$/i }).first().tap()
@@ -356,7 +404,7 @@ test.describe('mobile Safari workflows', () => {
     await expect(settings).toBeVisible()
     await page.goBack()
     await expect(settings).toHaveCount(0)
-    await expect(page.getByRole('searchbox', { name: 'Search notes...', exact: true })).toBeVisible()
+    await expect(page.getByRole('searchbox', { name: 'Filter this list…', exact: true })).toBeVisible()
   })
 
   test('declares modern viewport and safe-area behavior for standalone use', async ({ page }) => {

@@ -178,7 +178,6 @@ export default function JournalEditor({ data, onChange, note, noteTitle, onTitle
   return (
     <StructuredWorkspaceShell
       className="qn-type-editor qn-type-journal"
-      icon={BookOpen}
       typeLabel="Journal workspace"
       title={noteTitle}
       fallback="Daily journal"
@@ -539,7 +538,7 @@ export default function JournalEditor({ data, onChange, note, noteTitle, onTitle
               value={journalData.freeWrite}
               onChange={(e) => update('freeWrite', e.target.value)}
               placeholder="Start writing..."
-              className="qn-journal-writing-area min-h-[32rem] w-full resize-none border-0 border-t border-subtle bg-surface-raised px-1 py-4 text-lg leading-relaxed text-content outline-none focus:border-accent"
+              className="qn-journal-writing-area min-h-[32rem] w-full resize-none border-0 border-t border-subtle bg-surface-raised px-4 py-4 text-lg leading-relaxed text-content outline-none focus:border-accent"
               autoFocus
             />
             <div className="flex justify-between items-center mt-2 text-sm text-content-muted">

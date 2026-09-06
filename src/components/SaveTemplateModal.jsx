@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { LayoutTemplate } from 'lucide-react'
 import { useNotesStore, useUIStore } from '../store'
-import { Button, Input, Modal } from './ui'
+import { Button, Checkbox, Input, Modal } from './ui'
 import toast from 'react-hot-toast'
 
 export default function SaveTemplateModal() {
@@ -78,14 +78,14 @@ export default function SaveTemplateModal() {
           </span>
         </label>
         <label className="flex items-start gap-3 rounded-card border border-subtle bg-surface-sunken p-3">
-          <input type="checkbox" checked={includeTags} onChange={(event) => setIncludeTags(event.target.checked)} className="mt-0.5 h-4 w-4 accent-[var(--qn-accent)]" />
+          <Checkbox checked={includeTags} onChange={(event) => setIncludeTags(event.target.checked)} className="mt-0.5" />
           <span>
             <span className="block text-ui-md font-medium text-content">Include tags</span>
             <span className="block text-ui-sm text-content-muted">New notes inherit this note’s tags.</span>
           </span>
         </label>
         <label className="flex items-start gap-3 rounded-card border border-subtle bg-surface-sunken p-3">
-          <input type="checkbox" checked={favorite} onChange={(event) => setFavorite(event.target.checked)} className="mt-0.5 h-4 w-4 accent-[var(--qn-accent)]" />
+          <Checkbox checked={favorite} onChange={(event) => setFavorite(event.target.checked)} className="mt-0.5" />
           <span>
             <span className="block text-ui-md font-medium text-content">Pin in My templates</span>
             <span className="block text-ui-sm text-content-muted">Favourite templates appear first on every device.</span>

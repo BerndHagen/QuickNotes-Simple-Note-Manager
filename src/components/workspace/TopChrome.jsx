@@ -1,7 +1,8 @@
-import { ArrowLeft, ArrowRight, Files, PanelRight, Plus, Search } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Files, PanelRight, Plus } from 'lucide-react'
 import { useNotesStore, useUIStore } from '../../store'
 import { SyncStatusPill } from '../SyncStatus'
 import { BrandLogo, Button, IconButton } from '../ui'
+import TopSearch from './TopSearch'
 
 export default function TopChrome({
   navigationToggle,
@@ -13,9 +14,6 @@ export default function TopChrome({
   showInspectorControl = false,
   inactive = false,
 }) {
-  const setGlobalSearchOpen = useUIStore((state) => state.setGlobalSearchOpen)
-  const globalSearchQuery = useUIStore((state) => state.globalSearchQuery)
-  const setGlobalSearchQuery = useUIStore((state) => state.setGlobalSearchQuery)
   const setQuickNoteOpen = useUIStore((state) => state.setQuickNoteOpen)
   const knowledgeNavigation = useNotesStore((state) => state.knowledgeNavigation)
   const navigateBack = useNotesStore((state) => state.navigateKnowledgeBack)
@@ -55,32 +53,8 @@ export default function TopChrome({
         <div className="md:hidden">{navigationToggle}</div>
       </div>
 
-      <div className="flex min-w-0 flex-1 items-center justify-center px-1 sm:px-3">
-        <label className="qn-top-search flex h-9 w-full max-w-[32rem] min-w-0 items-center gap-2 border border-banner-border bg-white/[0.07] px-2.5 text-left text-ui-md text-banner-muted transition-colors duration-fast focus-within:bg-banner-hover focus-within:text-banner-text hover:bg-banner-hover hover:text-banner-text sm:flex-1 sm:px-3">
-          <Search className="h-4 w-4 shrink-0" aria-hidden="true" />
-          <input
-            type="search"
-            value={globalSearchQuery}
-            onClick={() => setGlobalSearchOpen(true)}
-            onChange={(event) => {
-              setGlobalSearchQuery(event.target.value)
-              setGlobalSearchOpen(true)
-            }}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' || event.key === 'ArrowDown') {
-                event.preventDefault()
-                setGlobalSearchOpen(true)
-              }
-            }}
-            aria-label="Search all notes"
-            aria-haspopup="dialog"
-            placeholder="Search notes"
-            className="qn-top-search-input min-w-0 flex-1 bg-transparent text-banner-text outline-none placeholder:text-banner-muted"
-          />
-          <kbd className="hidden border border-white/15 bg-black/10 px-1.5 py-0.5 font-sans text-ui-xs text-banner-muted xl:inline">
-            Ctrl K
-          </kbd>
-        </label>
+      <div className="relative flex min-w-0 flex-1 items-center justify-center px-1 sm:px-3">
+        <TopSearch />
       </div>
 
       <div className="flex shrink-0 items-center gap-0.5 px-1.5 sm:px-2.5 lg:gap-1 lg:px-3">

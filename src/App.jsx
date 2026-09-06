@@ -16,7 +16,7 @@ import { parseInternalNoteHref } from './lib/knowledge/links'
 import { subscribeToCaptureCloud } from './lib/capture/cloud'
 import { subscribeToDatabaseLifecycle, subscribeToWorkspaceMutations } from './lib/db'
 import { AlertTriangle, PanelLeft, CloudOff, Info, RefreshCw } from 'lucide-react'
-import { BrandLogo, IconButton, Modal, Spinner, useEscapeKey, useFocusTrap } from './components/ui'
+import { IconButton, Modal, Spinner, useEscapeKey, useFocusTrap } from './components/ui'
 import TopChrome from './components/workspace/TopChrome'
 import ResizablePane from './components/workspace/ResizablePane'
 import InspectorPane from './components/workspace/InspectorPane'
@@ -97,12 +97,11 @@ const EditorSettingsModal = lazy(() => import('./components/EditorSettingsModal'
 function AppLoading() {
   return (
     <div className="flex min-h-[100dvh] items-center justify-center bg-app">
-      <div className="flex flex-col items-center gap-4">
-        <BrandLogo className="h-12 w-12" />
+      <div className="flex items-center gap-3 rounded-control border border-subtle bg-surface-raised px-4 py-3 shadow-sm">
         <Spinner size="lg" label="Loading your workspace" />
-        <div className="text-center">
-          <p className="text-ui-lg font-semibold text-content">QuickNotes</p>
-          <p className="mt-1 text-ui-md text-content-muted">Loading your workspace…</p>
+        <div>
+          <p className="text-ui-md font-semibold text-content">Opening QuickNotes</p>
+          <p className="text-ui-sm text-content-muted">Preparing your workspace…</p>
         </div>
       </div>
     </div>

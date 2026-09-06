@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/quicknotes-logo.png" alt="QuickNotes Logo" width="128" />
+  <img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/quicknotes-editor-logo.png" alt="QuickNotes Logo" width="128" />
 </p>
 
 <h1 align="center">QuickNotes - Simple Note Manager</h1>

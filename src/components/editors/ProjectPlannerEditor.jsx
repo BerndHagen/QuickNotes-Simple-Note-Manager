@@ -324,7 +324,6 @@ export default function ProjectPlannerEditor({ data, onChange, noteTitle, onTitl
   return (
     <StructuredWorkspaceShell
       className="qn-type-editor qn-type-project"
-      icon={Target}
       typeLabel="Project workspace"
       title={noteTitle}
       fallback="Project board"
@@ -676,12 +675,18 @@ function TaskCard({ task, columnId, columns, team, index, itemCount, onDelete, o
   const priority = PRIORITIES[task.priority]
   const assignee = team.find(m => m.id === task.assignee)
   const isOverdue = task.dueDate && task.dueDate < formatDateKey()
+  const hasMetadata = Boolean(
+    (task.priority && task.priority !== 'medium')
+    || task.dueDate
+    || assignee
+  )
 
   return (
     <article
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={`qn-project-task-card ${isDragging ? 'qn-project-task-card--dragging' : ''}`}
+      data-has-metadata={hasMetadata ? 'true' : 'false'}
     >
       <div className="qn-project-task-main">
         <button
@@ -708,23 +713,25 @@ function TaskCard({ task, columnId, columns, team, index, itemCount, onDelete, o
           onClick={() => setMenuOpen((open) => !open)}
         />
       </div>
-      <div className="qn-project-task-meta">
-        {task.priority && task.priority !== 'medium' && (
-          <span className={priority?.className}>
-            <Flag className="h-3.5 w-3.5" aria-hidden="true" />
-            {priority?.label}
-          </span>
-        )}
-        {task.dueDate && (
-          <span className={isOverdue ? 'text-danger-text' : ''}>
-            <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
-            {parseDateKey(task.dueDate).toLocaleDateString('en-US')}
-          </span>
-        )}
-        {assignee && (
-          <span title={assignee.name}>{assignee.name}</span>
-        )}
-      </div>
+      {hasMetadata && (
+        <div className="qn-project-task-meta">
+          {task.priority && task.priority !== 'medium' && (
+            <span className={priority?.className}>
+              <Flag className="h-3.5 w-3.5" aria-hidden="true" />
+              {priority?.label}
+            </span>
+          )}
+          {task.dueDate && (
+            <span className={isOverdue ? 'text-danger-text' : ''}>
+              <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
+              {parseDateKey(task.dueDate).toLocaleDateString('en-US')}
+            </span>
+          )}
+          {assignee && (
+            <span title={assignee.name}>{assignee.name}</span>
+          )}
+        </div>
+      )}
       <Menu
         open={menuOpen}
         onClose={() => setMenuOpen(false)}

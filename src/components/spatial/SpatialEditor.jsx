@@ -42,6 +42,7 @@ import { exportSpatialPdf, exportSpatialPng } from '../../lib/spatial/export'
 import { createSpatialBrushSettings, getSpatialBrushDefinition, isSpatialBrush } from '../../lib/spatial/brushes'
 import { buildInkReplay, inkObjectsAtReplayTime } from '../../lib/spatial/replay'
 import { recognizeInkShape } from '../../lib/spatial/shapeRecognition'
+import { fitCanvasViewport, fitPaperViewport } from '../../lib/spatial/responsiveViewport'
 import { isBrowserHandwritingSupported } from '../../lib/intelligence/browserHandwriting'
 import HandwritingRecognitionModal from './HandwritingRecognitionModal'
 import InkCanvas from './InkCanvas'
@@ -186,6 +187,9 @@ export default function SpatialEditor({
   const [imageAnnotationOpen, setImageAnnotationOpen] = useState(false)
   const [handwritingRecognitionOpen, setHandwritingRecognitionOpen] = useState(false)
   const [surfaceSize, setSurfaceSize] = useState({ width: 0, height: 0 })
+  const [compactLayout, setCompactLayout] = useState(() => (
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 800px)').matches
+  ))
   const [pageRailOpen, setPageRailOpen] = useState(() => (
     typeof window === 'undefined' || !window.matchMedia('(max-width: 800px)').matches
   ))
@@ -198,7 +202,7 @@ export default function SpatialEditor({
   const inkRefs = useRef(new Map())
   const activePenPointerRef = useRef(null)
   const initializedNoteRef = useRef(null)
-  const mobileFitNoteRef = useRef(null)
+  const responsiveFitRef = useRef({ key: null, automatic: false, width: 0, height: 0, pageId: null })
   const viewportSaveTimerRef = useRef(null)
   const textOriginalRef = useRef(new Map())
   const textSaveTimersRef = useRef(new Map())
@@ -281,18 +285,37 @@ export default function SpatialEditor({
   useEffect(() => {
     if (!workspace || initializedNoteRef.current === note.id) return
     initializedNoteRef.current = note.id
-    setViewport(normalizeViewport(workspace.document.viewport, kind))
+    const initialViewport = compactLayout
+      ? kind === 'paper'
+        ? fitPaperViewport(workspace.pages[0], Math.min(window.innerWidth, 800))
+        : normalizeViewport(null, kind)
+      : normalizeViewport(workspace.document.viewport, kind)
+    responsiveFitRef.current = {
+      key: compactLayout ? `${kind}:${note.id}` : null,
+      automatic: compactLayout,
+      width: 0,
+      height: 0,
+      pageId: workspace.pages[0]?.id || null,
+    }
+    setViewport(initialViewport)
     setActivePageId(workspace.pages[0]?.id || null)
     setSelectedIds(new Set())
     setEditingTextId(null)
-  }, [kind, note.id, workspace])
+  }, [compactLayout, kind, note.id, workspace])
 
   useEffect(() => {
     const media = window.matchMedia('(max-width: 800px)')
-    const handleChange = (event) => setPageRailOpen(!event.matches)
+    const handleChange = (event) => {
+      setCompactLayout(event.matches)
+      setPageRailOpen(!event.matches)
+      responsiveFitRef.current = { key: null, automatic: event.matches, width: 0, height: 0, pageId: null }
+      if (!event.matches && workspace?.document?.viewport) {
+        setViewport(normalizeViewport(workspace.document.viewport, kind))
+      }
+    }
     media.addEventListener?.('change', handleChange)
     return () => media.removeEventListener?.('change', handleChange)
-  }, [])
+  }, [kind, workspace?.document?.viewport])
 
   useEffect(() => {
     if (!workspace || !navigationTarget || navigationTarget.noteId !== note.id) return undefined
@@ -404,6 +427,10 @@ export default function SpatialEditor({
   }, [replayTimeline.duration])
 
   const scheduleViewportSave = useCallback((nextViewport) => {
+    // Zoom and pan are presentation state. A phone-sized automatic fit (or an
+    // explicit phone gesture) must not overwrite the desktop viewport synced
+    // with the canonical spatial document.
+    if (window.matchMedia('(max-width: 800px)').matches) return
     window.clearTimeout(viewportSaveTimerRef.current)
     viewportSaveTimerRef.current = window.setTimeout(() => {
       commit({ documentPatch: { viewport: nextViewport } }, { recordHistory: false })
@@ -411,21 +438,34 @@ export default function SpatialEditor({
   }, [commit])
 
   useEffect(() => {
-    if (
-      kind !== 'paper' ||
-      !activePage ||
-      surfaceSize.width <= 0 ||
-      mobileFitNoteRef.current === note.id ||
-      !window.matchMedia('(max-width: 800px)').matches
-    ) return
-    mobileFitNoteRef.current = note.id
-    const persisted = normalizeViewport(workspace?.document?.viewport, kind)
-    if (Math.abs(persisted.zoom - 0.8) > 0.001) return
-    const fitZoom = clamp((surfaceSize.width - 24) / activePage.width, SPATIAL_LIMITS.MIN_ZOOM, 0.8)
-    const next = { ...persisted, zoom: fitZoom }
+    if (!workspace || surfaceSize.width <= 0 || surfaceSize.height <= 0) return
+    if (!compactLayout) return
+
+    const key = `${kind}:${note.id}`
+    const state = responsiveFitRef.current
+    const firstFit = state.key !== key
+    const pageChanged = kind === 'paper' && state.pageId !== activePage?.id
+    const resized = Math.abs(state.width - surfaceSize.width) > 1
+      || Math.abs(state.height - surfaceSize.height) > 1
+    if (!firstFit && !state.automatic) return
+    if (!firstFit && !pageChanged && !resized) return
+
+    const next = kind === 'paper'
+      ? fitPaperViewport(activePage, surfaceSize.width)
+      : fitCanvasViewport(visibleObjects, surfaceSize.width, surfaceSize.height)
+    responsiveFitRef.current = {
+      key,
+      automatic: true,
+      width: surfaceSize.width,
+      height: surfaceSize.height,
+      pageId: activePage?.id || null,
+    }
     setViewport(next)
-    scheduleViewportSave(next)
-  }, [activePage, kind, note.id, scheduleViewportSave, surfaceSize.width, workspace?.document?.viewport])
+  }, [activePage, compactLayout, kind, note.id, surfaceSize.height, surfaceSize.width, visibleObjects, workspace])
+
+  const markResponsiveViewportInteracted = useCallback(() => {
+    responsiveFitRef.current = { ...responsiveFitRef.current, automatic: false }
+  }, [])
 
   useEffect(() => () => {
     flushTextDraftsRef.current()
@@ -493,6 +533,7 @@ export default function SpatialEditor({
         const center = touchCenter(touchPointersRef.current)
         const stageRect = stageRef.current?.getBoundingClientRect()
         if (distance >= 8 && center && stageRect) {
+          markResponsiveViewportInteracted()
           const initialViewport = viewport
           pinchRef.current = {
             pointerIds: new Set(touchPointersRef.current.keys()),
@@ -594,7 +635,7 @@ export default function SpatialEditor({
       gestureRef.current = { type: 'lasso', pointerId: event.pointerId, pageId, start: point, current: point, append: event.shiftKey, surface }
       setLasso({ x: point.x, y: point.y, width: 0, height: 0 })
     }
-  }, [brushForTool, commit, constrainToPage, editingBlocked, kind, nextZIndex, note.id, noteLinkTarget, objects, pageObjects, pointForEvent, replay.active, selectedIds, stopInkReplay, tool, viewport, viewportForSurface])
+  }, [brushForTool, commit, constrainToPage, editingBlocked, kind, markResponsiveViewportInteracted, nextZIndex, note.id, noteLinkTarget, objects, pageObjects, pointForEvent, replay.active, selectedIds, stopInkReplay, tool, viewport, viewportForSurface])
 
   const beginTextEditing = useCallback((objectId) => {
     if (editingBlocked) return
@@ -725,6 +766,7 @@ export default function SpatialEditor({
     } else if (gesture.type === 'resize') {
       setDragPreview({ resizeWidth: gesture.original.bounds.width + point.x - gesture.start.x, resizeHeight: gesture.original.bounds.height + point.y - gesture.start.y })
     } else if (gesture.type === 'pan') {
+      markResponsiveViewportInteracted()
       const dx = event.clientX - gesture.startClient.x
       const dy = event.clientY - gesture.startClient.y
       if (kind === 'canvas') {
@@ -741,7 +783,7 @@ export default function SpatialEditor({
         })
       }
     }
-  }, [brush, kind, nextZIndex, note.id, pageObjects, pointForEvent, viewportForSurface])
+  }, [brush, kind, markResponsiveViewportInteracted, nextZIndex, note.id, pageObjects, pointForEvent, viewportForSurface])
 
   const finishGesture = useCallback((event, cancelled = false) => {
     if (event.pointerType === 'touch') {
@@ -1046,6 +1088,7 @@ export default function SpatialEditor({
   }, [beginTextEditing, copySelection, deleteSelection, duplicateSelection, nudgeSelection, objects, pasteObjects, redo, replay.active, selectedIds, stopInkReplay, undo])
 
   const changeZoom = useCallback((delta, anchor = null) => {
+    markResponsiveViewportInteracted()
     setViewport((current) => {
       const zoom = clamp(current.zoom + delta, SPATIAL_LIMITS.MIN_ZOOM, SPATIAL_LIMITS.MAX_ZOOM)
       let next = { ...current, zoom }
@@ -1057,7 +1100,7 @@ export default function SpatialEditor({
       scheduleViewportSave(next)
       return next
     })
-  }, [kind, scheduleViewportSave])
+  }, [kind, markResponsiveViewportInteracted, scheduleViewportSave])
 
   const handleWheel = useCallback((event) => {
     if (kind === 'paper') {
@@ -1071,13 +1114,14 @@ export default function SpatialEditor({
       const rect = event.currentTarget.getBoundingClientRect()
       changeZoom(event.deltaY > 0 ? -0.1 : 0.1, { x: event.clientX - rect.left, y: event.clientY - rect.top })
     } else {
+      markResponsiveViewportInteracted()
       setViewport((current) => {
         const next = { ...current, panX: current.panX - event.deltaX, panY: current.panY - event.deltaY }
         scheduleViewportSave(next)
         return next
       })
     }
-  }, [changeZoom, kind, scheduleViewportSave])
+  }, [changeZoom, kind, markResponsiveViewportInteracted, scheduleViewportSave])
 
   useEffect(() => {
     const zoomFromWheel = (event) => {

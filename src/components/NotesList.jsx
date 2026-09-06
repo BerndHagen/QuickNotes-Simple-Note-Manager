@@ -16,7 +16,7 @@ import {
   Search,
   Star,
   StarOff,
-  Kanban,
+  BookOpenText,
   Tag,
   Trash2,
   X,
@@ -479,7 +479,7 @@ export default function NotesList({ sidebarToggle, onOpenNote }) {
             }}
           />
           <IconButton
-            icon={Kanban}
+            icon={BookOpenText}
             label="Create workspace"
             onClick={() => setNoteTypesModalOpen(true)}
           />
@@ -502,8 +502,8 @@ export default function NotesList({ sidebarToggle, onOpenNote }) {
             type="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={t('notes.searchPlaceholder')}
-            aria-label={t('notes.searchPlaceholder')}
+            placeholder={t('notes.filterPlaceholder', 'Filter this list…')}
+            aria-label={t('notes.filterPlaceholder', 'Filter this list…')}
             className="pl-8 pr-8"
           />
           {searchQuery ? (

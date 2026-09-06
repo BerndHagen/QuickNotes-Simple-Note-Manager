@@ -341,16 +341,18 @@ test.describe('Paper and Canvas spatial editors', () => {
     expect(withImage.resources).toHaveLength(1)
     expect(withImage.objects.find((object) => object.kind === 'image').data.resourceId).toBe(withImage.resources[0].id)
 
-    const viewportBefore = (await spatialState(page, title)).document.viewport
+    const objectWorld = page.locator('.qn-spatial-object-world')
+    const transformBefore = await objectWorld.evaluate((element) => getComputedStyle(element).transform)
     await page.getByRole('button', { name: 'Pan (Space)' }).click()
     await page.mouse.move(box.x + 220, box.y + 480)
     await page.mouse.down()
     await page.mouse.move(box.x + 260, box.y + 520, { steps: 5 })
     await page.mouse.up()
-    await expect.poll(async () => (await spatialState(page, title)).document.viewport.panX).not.toBe(viewportBefore.panX)
-    const zoomBefore = (await spatialState(page, title)).document.viewport.zoom
+    await expect.poll(() => objectWorld.evaluate((element) => getComputedStyle(element).transform)).not.toBe(transformBefore)
+    const zoomStatus = page.getByRole('status', { name: 'Current zoom' })
+    const zoomBefore = Number((await zoomStatus.textContent()).replace('%', ''))
     await page.getByRole('button', { name: 'Zoom in' }).click()
-    await expect.poll(async () => (await spatialState(page, title)).document.viewport.zoom).toBeGreaterThan(zoomBefore)
+    await expect.poll(async () => Number((await zoomStatus.textContent()).replace('%', ''))).toBeGreaterThan(zoomBefore)
 
     await expectNoHorizontalOverflow(page)
     await page.reload({ waitUntil: 'domcontentloaded' })

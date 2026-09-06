@@ -22,7 +22,7 @@ import {
 } from '../lib/authValidation'
 import { createLocalUser, endLocalSession, startLocalSession } from '../lib/localSession'
 import { normalizeUsername, validateUsername } from '../lib/usernames'
-import { BrandLogo, buttonClasses } from './ui'
+import { BrandLogo, Checkbox, buttonClasses } from './ui'
 import { useNotesStore, useUIStore } from '../store'
 
 const FEATURE_POINTS = [
@@ -573,14 +573,13 @@ export default function AuthScreen() {
           error={errors.confirmPassword}
         />
         <div className="flex items-start gap-3 rounded-control p-1 text-ui-md leading-5 text-content-muted">
-          <input
+          <Checkbox
             id="qn-auth-agree-to-terms"
-            type="checkbox"
             checked={formData.agreeToTerms}
             onChange={(event) => handleInputChange('agreeToTerms', event.target.checked)}
             aria-invalid={!!errors.agreeToTerms}
             aria-describedby={errors.agreeToTerms ? 'qn-auth-agree-to-terms-error' : undefined}
-            className="mt-0.5 h-4 w-4 rounded border-strong text-accent focus:ring-accent"
+            className="mt-0.5"
           />
           <span>
             <label htmlFor="qn-auth-agree-to-terms" className="cursor-pointer">

@@ -7,6 +7,7 @@ import toast from 'react-hot-toast'
 import LegacyDialog from './ui/LegacyDialog'
 import DialogHeader from './ui/DialogHeader'
 import Button from './ui/Button'
+import Checkbox from './ui/Checkbox'
 import { escapeHtml, sanitizeNoteHtml } from '../lib/sanitizeHtml'
 import { htmlToMarkdown, htmlToPlainText } from '../lib/noteTransfer'
 import { escapePdfFilename, exportNotesToPdf } from '../lib/pdfExport'
@@ -509,11 +510,9 @@ export default function ExportModal() {
           </div>
         )}
         <label className="flex items-center gap-3 mb-4 p-3 bg-surface-sunken rounded-lg cursor-pointer hover:bg-surface-hover transition-colors">
-          <input
-            type="checkbox"
+          <Checkbox
             checked={exportAll}
             onChange={(e) => setExportAll(e.target.checked)}
-            className="w-4 h-4 rounded border-subtle text-emerald-600 focus:ring-emerald-500"
           />
           <div>
             <p className="text-sm font-medium text-content">{t('exportModal.exportAll')}</p>

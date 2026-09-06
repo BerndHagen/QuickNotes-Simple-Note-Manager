@@ -11,7 +11,7 @@ import {
   startBrowserManagedLiveTranscription,
 } from '../../lib/intelligence/service'
 import { isBrowserSpeechRecognitionSupported } from '../../lib/intelligence/browserSpeech'
-import { Button } from '../ui'
+import { Button, Checkbox } from '../ui'
 
 const preferredMimeType = () => [
   'audio/webm;codecs=opus',
@@ -250,12 +250,11 @@ export default function AudioRecorder({ noteId, disabled = false, onSaved, onBus
         </Button>
         {speechSupported && (
           <label className="flex items-start gap-2 text-ui-xs text-content-muted">
-            <input
-              type="checkbox"
+            <Checkbox
               checked={liveTranscription}
               onChange={(event) => setLiveTranscription(event.target.checked)}
               disabled={disabled || state === 'acquiring'}
-              className="mt-0.5 accent-[var(--qn-accent)]"
+              className="mt-0.5"
             />
             <span>
               <span className="font-medium text-content">Create a live transcript</span>

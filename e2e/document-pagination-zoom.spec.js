@@ -56,7 +56,7 @@ test.describe('document page geometry and workspace zoom', () => {
       expect(sheet.shadow).not.toBe('none')
     }
 
-    const cleanGap = await page.locator('.qn-page-gap__gutter').first().evaluate((element) => ({
+    const cleanGap = await page.locator('.qn-document-page-gutter').first().evaluate((element) => ({
       backgroundColor: getComputedStyle(element).backgroundColor,
       height: element.getBoundingClientRect().height,
       before: getComputedStyle(element, '::before').content,
@@ -69,7 +69,8 @@ test.describe('document page geometry and workspace zoom', () => {
 
     const editorChrome = await editor.evaluate((element) => {
       const style = getComputedStyle(element)
-      const gutter = element.querySelector('.qn-page-gap__gutter')
+      const gutter = element.closest('.qn-editor-page')?.querySelector('.qn-document-page-gutter')
+      const flowGutter = element.querySelector('.qn-page-gap__gutter')
       const sheetLayer = element.closest('.qn-editor-page')?.querySelector('.qn-document-page-sheets')
       const sheet = sheetLayer?.querySelector('.qn-document-page-sheet')
       const edge = sheetLayer?.querySelector('.qn-document-page-edge')
@@ -84,6 +85,7 @@ test.describe('document page geometry and workspace zoom', () => {
         edgeZIndex: edge ? getComputedStyle(edge).zIndex : null,
         gutterBefore: gutter ? getComputedStyle(gutter, '::before').content : null,
         gutterAfter: gutter ? getComputedStyle(gutter, '::after').content : null,
+        flowGutterBackground: flowGutter ? getComputedStyle(flowGutter).backgroundColor : null,
       }
     })
     expect(editorChrome).toEqual({
@@ -97,6 +99,7 @@ test.describe('document page geometry and workspace zoom', () => {
       edgeZIndex: '3',
       gutterBefore: 'none',
       gutterAfter: 'none',
+      flowGutterBackground: 'rgba(0, 0, 0, 0)',
     })
 
     const resetZoom = page.getByRole('button', { name: /Reset zoom\. Current zoom/ })
@@ -154,6 +157,65 @@ test.describe('document page geometry and workspace zoom', () => {
       })
     )
     expect(sheetGeometry[1].top - sheetGeometry[0].bottom).toBeGreaterThan(25)
+  })
+
+  test('aligns automatic checklist page gaps exactly between independent sheets', async ({ page }, testInfo) => {
+    const editor = page.locator('.ProseMirror')
+    await page.getByRole('button', { name: /Create checklist with current style/i }).click()
+    await page.keyboard.press('Escape')
+    await editor.focus()
+
+    const item = 'A deliberately long checklist entry that wraps onto several visual lines and must stay inside one measured document sheet without exposing the workbench before the page edge.'
+    for (let index = 0; index < 28; index += 1) {
+      await page.keyboard.insertText(`${index + 1}. ${item}`)
+      if (index < 27) await page.keyboard.press('Enter')
+    }
+
+    const gutters = page.locator('.qn-page-gap__gutter')
+    await expect.poll(() => gutters.count()).toBeGreaterThan(0)
+    await gutters.first().scrollIntoViewIfNeeded()
+    const geometry = await page.locator('.qn-editor-page').evaluate((root) => {
+      const rect = (element) => {
+        const bounds = element.getBoundingClientRect()
+        return { top: bounds.top, bottom: bounds.bottom, height: bounds.height }
+      }
+      return {
+        edges: [...root.querySelectorAll('.qn-document-page-edge')].map(rect),
+        gutters: [...root.querySelectorAll('.qn-document-page-gutter')].map(rect),
+        flowGutters: [...root.querySelectorAll('.qn-page-gap__gutter')].map((element) => getComputedStyle(element).backgroundColor),
+      }
+    })
+
+    expect(geometry.edges.length).toBe(geometry.gutters.length + 1)
+    expect(new Set(geometry.flowGutters)).toEqual(new Set(['rgba(0, 0, 0, 0)']))
+    geometry.gutters.forEach((gutter, index) => {
+      expect(Math.abs(gutter.top - geometry.edges[index].bottom)).toBeLessThanOrEqual(1)
+      expect(Math.abs(gutter.bottom - geometry.edges[index + 1].top)).toBeLessThanOrEqual(1)
+      expect(gutter.height).toBeCloseTo(24, 0)
+    })
+
+    await editor.hover()
+    await page.keyboard.press('Control+=')
+    await page.keyboard.press('Control+=')
+    const zoomedGeometry = await page.locator('.qn-editor-page').evaluate((root) => {
+      const bounds = (element) => {
+        const rectangle = element.getBoundingClientRect()
+        return { top: rectangle.top, bottom: rectangle.bottom }
+      }
+      return {
+        edges: [...root.querySelectorAll('.qn-document-page-edge')].map(bounds),
+        gutters: [...root.querySelectorAll('.qn-document-page-gutter')].map(bounds),
+      }
+    })
+    zoomedGeometry.gutters.forEach((gutter, index) => {
+      expect(Math.abs(gutter.top - zoomedGeometry.edges[index].bottom)).toBeLessThanOrEqual(1)
+      expect(Math.abs(gutter.bottom - zoomedGeometry.edges[index + 1].top)).toBeLessThanOrEqual(1)
+    })
+
+    await page.screenshot({
+      path: testInfo.outputPath('automatic-checklist-pages.png'),
+      fullPage: false,
+    })
   })
 
   test('applies the same controls and shortcuts to structured workspaces', async ({ page }) => {

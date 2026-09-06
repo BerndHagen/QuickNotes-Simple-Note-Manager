@@ -335,13 +335,16 @@ test.describe('editor productivity objects', () => {
     expect(gapBox.y - editorBox.y).toBeLessThan(expectedPageHeight + 2)
 
     const boundary = await firstGap.evaluate((gap) => {
-      const gutter = gap.querySelector('.qn-page-gap__gutter')
-      const gutterBox = gutter.getBoundingClientRect()
-      const style = getComputedStyle(gutter)
+      const flowGutter = gap.querySelector('.qn-page-gap__gutter')
+      const visualGutter = gap.closest('.qn-editor-page')?.querySelector('.qn-document-page-gutter')
+      const gutterBox = visualGutter.getBoundingClientRect()
+      const style = getComputedStyle(visualGutter)
+      const flowStyle = getComputedStyle(flowGutter)
       const editorStyle = getComputedStyle(gap.closest('.ProseMirror'))
       return {
         background: style.backgroundColor,
         zIndex: style.zIndex,
+        flowBackground: flowStyle.backgroundColor,
         editorOverflowX: editorStyle.overflowX,
         height: gutterBox.height,
       }
@@ -349,6 +352,7 @@ test.describe('editor productivity objects', () => {
     expect(boundary.height).toBe(24)
     expect(boundary.background).not.toBe('rgba(0, 0, 0, 0)')
     expect(boundary.zIndex).toBe('2')
+    expect(boundary.flowBackground).toBe('rgba(0, 0, 0, 0)')
     expect(boundary.editorOverflowX).toBe('clip')
 
     const intersections = await editor.locator('li[data-type="taskItem"]').evaluateAll((elements) => {

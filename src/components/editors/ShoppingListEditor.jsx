@@ -2,17 +2,15 @@ import { useEffect, useRef, useState } from 'react'
 import {
   ArrowDown,
   ArrowUp,
-  Check,
   ChevronDown,
   ChevronRight,
   Edit3,
   Plus,
   Settings2,
-  ShoppingCart,
   Trash2,
   Undo2,
 } from 'lucide-react'
-import { Button, IconButton, Switch } from '../ui'
+import { Button, CheckboxMark, IconButton, Switch } from '../ui'
 import {
   generateId,
   normalizeOptionalAmount,
@@ -154,7 +152,6 @@ export default function ShoppingListEditor({ data, onChange, noteTitle, onTitleC
   return (
     <StructuredWorkspaceShell
       className="qn-type-editor qn-type-shopping"
-      icon={ShoppingCart}
       typeLabel="Shopping workspace"
       title={noteTitle}
       fallback="Shopping list"
@@ -384,7 +381,7 @@ function ShoppingItem({
           className="qn-shopping-check"
           onClick={onToggle}
         >
-          <span aria-hidden="true">{item.checked && <Check className="h-3.5 w-3.5" strokeWidth={2.5} />}</span>
+          <CheckboxMark checked={item.checked} />
         </button>
         <button type="button" className="qn-shopping-item-label" aria-expanded={expanded} onClick={onToggleDetails}>
           <strong className={item.checked ? 'line-through' : ''}>{item.name}</strong>

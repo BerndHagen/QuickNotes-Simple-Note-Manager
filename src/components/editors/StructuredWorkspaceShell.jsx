@@ -10,7 +10,6 @@ import FocusedNoteTitle from './FocusedNoteTitle'
  */
 export default function StructuredWorkspaceShell({
   className = '',
-  icon,
   typeLabel,
   title,
   fallback,
@@ -24,7 +23,6 @@ export default function StructuredWorkspaceShell({
     <div className={`qn-structured-workspace ${className}`}>
       <header className="qn-structured-header">
         <FocusedNoteTitle
-          icon={icon}
           typeLabel={typeLabel}
           title={title}
           fallback={fallback}
@@ -40,7 +38,7 @@ export default function StructuredWorkspaceShell({
         </nav>
       )}
 
-      <main className="qn-structured-content">{children}</main>
+      <div className="qn-structured-content">{children}</div>
     </div>
   )
 }

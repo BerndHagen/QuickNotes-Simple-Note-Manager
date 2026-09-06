@@ -8,7 +8,7 @@ import {
   Copy,
   FolderOpen,
   Keyboard,
-  Kanban,
+  BookOpenText,
   ListChecks,
   ListFilter,
   LogOut,
@@ -326,7 +326,7 @@ export default function Sidebar({ onNavigate }) {
           </li>
           <li>
             <NavItem
-              icon={Kanban}
+              icon={BookOpenText}
               label={t('sidebar.noteTypes', 'Workspaces')}
               onClick={go(() => setNoteTypesModalOpen(true))}
             />

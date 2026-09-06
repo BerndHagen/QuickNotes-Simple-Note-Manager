@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { EmptyState, buttonClasses } from '../ui'
 import {
-  Calendar,
   Plus,
   Trash2,
   X,
@@ -205,7 +204,6 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle, onTitle
   return (
     <StructuredWorkspaceShell
       className="qn-type-editor qn-type-weekly"
-      icon={Calendar}
       typeLabel="Planning workspace"
       title={noteTitle}
       fallback="Weekly plan"

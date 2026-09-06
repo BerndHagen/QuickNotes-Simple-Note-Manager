@@ -1,12 +1,13 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
+  ArrowLeft,
   ArrowRight,
   Check,
   LayoutTemplate,
+  BookOpenText,
   Search,
   Star,
   Trash2,
-  Kanban,
 } from 'lucide-react'
 import { useUIStore, useNotesStore } from '../store'
 import {
@@ -42,7 +43,12 @@ export default function NoteTypesModal({ onCreated }) {
   const [title, setTitle] = useState(NOTE_TYPE_STARTERS[NOTE_TYPES.STANDARD][0].title)
   const [selectedTemplateId, setSelectedTemplateId] = useState(null)
   const [confirmTemplateDelete, setConfirmTemplateDelete] = useState(false)
+  const [mobileStep, setMobileStep] = useState('choose')
   const searchRef = useRef(null)
+
+  useEffect(() => {
+    if (noteTypesModalOpen) setMobileStep('choose')
+  }, [noteTypesModalOpen])
 
   const selectedTemplate = noteTemplates.find((template) => template.id === selectedTemplateId)
   const baseConfig = NOTE_TYPE_CONFIG[selectedType]
@@ -112,6 +118,7 @@ export default function NoteTypesModal({ onCreated }) {
           ? template.name
           : applyTemplateVariables(template.titleTemplate || template.name, { title: template.name })
       )
+      setMobileStep('configure')
       return
     }
     setSelectedTemplateId(null)
@@ -119,6 +126,7 @@ export default function NoteTypesModal({ onCreated }) {
     setSelectedType(typeId)
     setSelectedStarter(starter?.id || 'blank')
     setTitle(starter?.title || NOTE_TYPE_CONFIG[typeId]?.name || 'New note')
+    setMobileStep('configure')
   }
 
   const selectStarter = (starter) => {
@@ -150,7 +158,7 @@ export default function NoteTypesModal({ onCreated }) {
       onClose={close}
       title="New workspace"
       description="Choose a purpose-built workspace, then decide how you want to begin."
-      icon={Kanban}
+      icon={BookOpenText}
       size="3xl"
       initialFocusRef={searchRef}
       bodyPadding="none"
@@ -165,16 +173,20 @@ export default function NoteTypesModal({ onCreated }) {
             variant="primary"
             iconRight={ArrowRight}
             onClick={createSelectedNote}
+            className={mobileStep === 'configure' ? '' : 'qn-workspace-picker-create'}
           >
             Create {config.shortName.toLowerCase()}
           </Button>
         </>
       }
     >
-      <div className="grid min-h-0 lg:h-full lg:grid-cols-[minmax(300px,0.88fr)_minmax(380px,1.12fr)]">
+      <div
+        className="qn-workspace-picker grid min-h-0 lg:h-full lg:grid-cols-[minmax(300px,0.88fr)_minmax(380px,1.12fr)]"
+        data-mobile-step={mobileStep}
+      >
         <section
           aria-label="Workspace types"
-          className="min-h-0 border-b border-subtle bg-surface-raised lg:flex lg:flex-col lg:border-b-0 lg:border-r"
+          className="qn-workspace-picker-choose min-h-0 border-b border-subtle bg-surface-raised lg:flex lg:flex-col lg:border-b-0 lg:border-r"
         >
           <div className="shrink-0 border-b border-subtle bg-surface-raised p-4 sm:p-5">
             <p className="mb-3 text-ui-xs font-semibold uppercase tracking-[0.14em] text-content-subtle">
@@ -224,7 +236,7 @@ export default function NoteTypesModal({ onCreated }) {
             </div>
           </div>
 
-          <div className="flex gap-2 overflow-x-auto p-3 sm:p-4 lg:min-h-0 lg:flex-1 lg:block lg:space-y-2 lg:overflow-x-hidden lg:overflow-y-auto">
+          <div className="qn-workspace-picker-types flex gap-2 overflow-x-auto p-3 sm:p-4 lg:min-h-0 lg:flex-1 lg:block lg:space-y-2 lg:overflow-x-hidden lg:overflow-y-auto">
             {filteredTypes.length === 0 ? (
               <div className="rounded-card border border-dashed border-strong bg-surface-raised px-5 py-10 text-center">
                   <p className="text-ui-lg font-medium text-content">No matching workspace</p>
@@ -245,7 +257,7 @@ export default function NoteTypesModal({ onCreated }) {
                     aria-pressed={active}
                     onClick={() => selectType(type.id)}
                     className={[
-                      'group relative flex w-[min(82vw,20rem)] shrink-0 items-start gap-3 rounded-card border p-3.5 text-left transition-[background-color,border-color,box-shadow] duration-fast lg:w-full',
+                      'qn-workspace-picker-type group relative flex w-[min(82vw,20rem)] shrink-0 items-start gap-3 rounded-card border p-3.5 text-left transition-[background-color,border-color,box-shadow] duration-fast lg:w-full',
                       active
                         ? 'border-strong bg-surface-raised shadow-sm'
                         : 'border-transparent bg-transparent hover:border-subtle hover:bg-surface-hover',
@@ -287,8 +299,16 @@ export default function NoteTypesModal({ onCreated }) {
           </div>
         </section>
 
-        <section aria-label={`${config.name} setup`} className="min-h-0 bg-surface-raised lg:overflow-y-auto">
+        <section aria-label={`${config.name} setup`} className="qn-workspace-picker-configure min-h-0 bg-surface-raised lg:overflow-y-auto">
             <div className="border-b border-subtle px-5 py-5 sm:px-7 sm:py-6">
+              <button
+                type="button"
+                className="qn-workspace-picker-back mb-3 items-center gap-1.5 text-ui-sm font-medium text-content-muted hover:text-content"
+                onClick={() => setMobileStep('choose')}
+              >
+                <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+                Workspace types
+              </button>
               <p className="mb-3 text-ui-xs font-semibold uppercase tracking-[0.14em] text-content-subtle">
                 2 · Configure the workspace
               </p>
@@ -418,7 +438,7 @@ export default function NoteTypesModal({ onCreated }) {
 
               <div className="rounded-card border border-subtle bg-surface-raised p-4 shadow-xs">
                 <div className="flex items-center gap-2 text-ui-md font-semibold text-content">
-                  <Kanban className="h-4 w-4 text-accent-text" aria-hidden="true" />
+                  <BookOpenText className="h-4 w-4 text-accent-text" aria-hidden="true" />
                   Built as a real workspace
                 </div>
                 <p className="mt-1.5 text-ui-sm leading-relaxed text-content-muted">
