@@ -312,7 +312,7 @@ export default function ImportModal() {
     const ext = filename.split('.').pop().toLowerCase()
     switch (ext) {
       case 'json':
-        return <FileCode className="w-5 h-5 text-emerald-500" />
+        return <FileCode className="h-5 w-5 text-accent-text" />
       case 'md':
       case 'markdown':
         return <FileCode className="w-5 h-5 text-blue-500" />
@@ -407,12 +407,12 @@ export default function ImportModal() {
               onKeyDown={handleDropzoneKeyDown}
               className={`cursor-pointer rounded-card border-2 border-dashed p-6 text-center transition-colors sm:p-8 ${
  dragActive
- ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
-                  : 'border-subtle  hover:border-emerald-400 hover:bg-surface-hover'
+ ? 'border-accent bg-accent-soft'
+                  : 'border-subtle hover:border-accent hover:bg-surface-hover'
               }`}
             >
               <Upload className={`w-12 h-12 mx-auto mb-3 ${
- dragActive ? 'text-emerald-600' : 'text-content-subtle'
+ dragActive ? 'text-accent-text' : 'text-content-subtle'
  }`} aria-hidden="true" />
               <p className="mb-1 font-medium text-content">
                 {t('importModal.dropFiles')}

@@ -419,7 +419,7 @@ function TaskItem({
           {task.completed ? (
             <CheckCircle2 className="w-6 h-6 text-emerald-500" />
           ) : (
-            <Circle className="w-6 h-6 text-content-subtle hover:text-emerald-500" />
+            <Circle className="h-6 w-6 text-content-subtle hover:text-accent-text" />
           )}
         </button>
         <div className="flex-1 min-w-0">
@@ -435,7 +435,7 @@ function TaskItem({
                 if (e.key === 'Escape') onCancelEdit()
               }}
               onBlur={() => onSaveEdit(editText)}
-              className="w-full px-2 py-1 rounded bg-surface-sunken border border-emerald-500 outline-none text-content"
+              className="w-full rounded border border-accent bg-surface-sunken px-2 py-1 text-content outline-none"
             />
           ) : (
             <div 
@@ -690,7 +690,7 @@ function TaskItem({
                     {subtask.completed ? (
                       <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                     ) : (
-                      <Circle className="w-4 h-4 text-content-subtle hover:text-emerald-500" />
+                      <Circle className="h-4 w-4 text-content-subtle hover:text-accent-text" />
                     )}
                   </button>
                   <span className={`flex-1 text-sm ${subtask.completed ? 'line-through text-content-subtle' : 'text-content-muted'}`}>
@@ -720,7 +720,7 @@ function TaskItem({
                   }
                 }}
                 placeholder="Add subtask..."
-                className="flex-1 px-3 py-1.5 text-sm rounded-lg bg-surface-sunken border border-subtle focus:border-emerald-500 outline-none text-content"
+                className="flex-1 rounded-control border border-subtle bg-surface-sunken px-3 py-1.5 text-sm text-content outline-none focus:border-accent"
               />
               <button
                 onClick={() => {
@@ -729,7 +729,7 @@ function TaskItem({
                     setNewSubtaskText('')
                   }
                 }}
-                className="px-3 py-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-800/30 text-sm font-medium"
+                className="rounded-control bg-accent-soft px-3 py-1.5 text-sm font-medium text-accent-text hover:bg-accent-soft-hover"
               >
                 Add
               </button>
@@ -742,7 +742,7 @@ function TaskItem({
               value={task.notes}
               onChange={(e) => onUpdate({ notes: e.target.value })}
               placeholder="Add notes..."
-              className="w-full px-3 py-2 text-sm rounded-lg bg-surface-sunken border border-subtle focus:border-emerald-500 outline-none text-content resize-none"
+              className="w-full resize-none rounded-control border border-subtle bg-surface-sunken px-3 py-2 text-sm text-content outline-none focus:border-accent"
               rows={3}
             />
           </div>

@@ -335,12 +335,12 @@ export const buildHtmlExportDocument = (noteItem, exportContent) => `<!DOCTYPE h
   <title>${escapeHtml(noteItem.title)}</title>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 40px; line-height: 1.6; }
-    h1 { border-bottom: 2px solid #10b981; padding-bottom: 12px; }
+    h1 { border-bottom: 2px solid #326f7a; padding-bottom: 12px; }
     .tags { margin-bottom: 20px; }
-    .tag { background: #ecfdf5; color: #059669; padding: 2px 8px; border-radius: 12px; font-size: 12px; margin-right: 4px; }
+    .tag { background: #eef9fa; color: #285e68; padding: 2px 8px; border-radius: 12px; font-size: 12px; margin-right: 4px; }
     pre { background: #f3f4f6; padding: 12px; border-radius: 6px; overflow-x: auto; }
     code { background: #f3f4f6; padding: 2px 6px; border-radius: 4px; }
-    blockquote { border-left: 4px solid #10b981; margin: 16px 0; padding: 8px 16px; background: #f9fafb; }
+    blockquote { border-left: 4px solid #326f7a; margin: 16px 0; padding: 8px 16px; background: #f9fafb; }
     table { width: 100%; border-collapse: collapse; margin: 12px 0; }
     th, td { border: 1px solid #e5e7eb; padding: 8px; text-align: left; }
     th { background: #f3f4f6; font-weight: 600; }
@@ -529,7 +529,7 @@ export default function ExportModal() {
               onClick={() => setSelectedFormat(format.id)}
               className={`flex w-full min-w-0 items-center gap-3 rounded-lg border-2 p-3 transition-[background-color,border-color,box-shadow] duration-fast ${
  selectedFormat === format.id
- ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
+ ? 'border-accent bg-accent-soft'
                   : 'border-subtle hover:border-subtle dark:hover:border-subtle'
               }`}
             >
@@ -544,7 +544,7 @@ export default function ExportModal() {
                 <p className="text-xs text-content">{format.description}</p>
               </div>
               {selectedFormat === format.id && (
-                <Check className="h-5 w-5 shrink-0 text-emerald-700 dark:text-emerald-300" aria-hidden="true" />
+                <Check className="h-5 w-5 shrink-0 text-accent-text" aria-hidden="true" />
               )}
             </button>
           ))}

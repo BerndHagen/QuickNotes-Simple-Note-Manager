@@ -28,6 +28,7 @@ import { useTranslation } from '../lib/useTranslation'
 import { getFolderIcon } from '../lib/folderIcons'
 import { isBackendConfigured } from '../lib/backend'
 import { createDailyNoteInput, findDailyNote } from '../lib/dailyNotes'
+import { collectTodayAgenda } from '../lib/today'
 import { collectWorkspaceTasks, getTaskSummary } from '../lib/workspaceTasks'
 import { filterNotes } from '../lib/filterNotes'
 import { filterBySmartView, getSmartViewScope } from '../lib/smartViews'
@@ -131,6 +132,7 @@ export default function Sidebar({ onNavigate }) {
     createNote,
     setSelectedNote,
     user,
+    sharedNotes,
     pendingShares,
     logout,
   } = useNotesStore()
@@ -195,6 +197,17 @@ export default function Sidebar({ onNavigate }) {
     [notes]
   )
   const dailyNote = useMemo(() => findDailyNote(notes), [notes])
+  const todayCount = useMemo(() => {
+    const agenda = collectTodayAgenda(notes)
+    return agenda.dueTasks.length + agenda.reminders.length + agenda.meetings.length
+  }, [notes])
+  const sharedCount = useMemo(() => {
+    const accepted = (Array.isArray(sharedNotes) ? sharedNotes : [])
+      .filter((share) => share?.notes?.id && !share.notes.deleted).length
+    const pending = (Array.isArray(pendingShares) ? pendingShares : [])
+      .filter((share) => share?.id && (share?.notes || share)?.id).length
+    return accepted + pending
+  }, [pendingShares, sharedNotes])
   const smartViewCounts = useMemo(() => new Map(savedViews.map((view) => {
     const scoped = filterNotes(notes, { scope: getSmartViewScope(view) })
     return [view.id, filterBySmartView(scoped, view).length]
@@ -270,6 +283,7 @@ export default function Sidebar({ onNavigate }) {
             <NavItem
               icon={CalendarDays}
               label={t('sidebar.today', 'Today')}
+              count={todayCount}
               selected={selectedNoteId === dailyNote?.id}
               onClick={go(openToday)}
             />
@@ -297,7 +311,7 @@ export default function Sidebar({ onNavigate }) {
               <NavItem
                 icon={Users}
                 label={t('sidebar.sharedNotes', 'Shared with me')}
-                count={pendingShares?.length || 0}
+                count={sharedCount}
                 onClick={go(() => setSharedNotesViewOpen(true))}
               />
             </li>

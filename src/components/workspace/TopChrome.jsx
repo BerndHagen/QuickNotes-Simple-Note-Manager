@@ -58,8 +58,7 @@ export default function TopChrome({
       </div>
 
       <div className="flex shrink-0 items-center gap-0.5 px-1.5 sm:px-2.5 lg:gap-1 lg:px-3">
-        <SyncStatusPill compact className="qn-top-sync flex text-banner-muted xl:hidden" />
-        <SyncStatusPill className="qn-top-sync hidden max-w-36 text-banner-muted xl:flex" />
+        <SyncStatusPill compact className="qn-top-sync text-banner-muted" />
         <div
           role="group"
           aria-label="Workspace panes"

@@ -108,7 +108,7 @@ function MenuButton({ onClick, isActive, disabled, children, title }) {
       disabled={disabled}
       className={`rounded p-1.5 transition-[background-color,color,opacity] duration-fast ${
  isActive
- ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300'
+ ? 'bg-accent-soft text-accent-text'
           : 'hover:bg-surface-hover text-content-muted hover:text-content dark:hover:text-white'
       } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
     >
@@ -142,7 +142,7 @@ function DropdownButton({ children, isOpen, onClick, title, popupRole = 'menu' }
       }}
       className={`flex items-center gap-1 rounded p-1.5 transition-[background-color,color] duration-fast ${
  isOpen
- ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300'
+ ? 'bg-accent-soft text-accent-text'
           : 'hover:bg-surface-hover text-content-muted hover:text-content dark:hover:text-white'
       }`}
     >
@@ -223,8 +223,8 @@ function ColorPickerDropdown({ isOpen, onClose, onSelect, currentColor, title, a
             }}
             className={`qn-format-colour flex h-6 w-6 items-center justify-center rounded border-2 transition-[border-color,box-shadow,transform] duration-fast hover:scale-110 ${
  currentColor === color 
- ? 'border-emerald-500 ring-2 ring-emerald-200 dark:ring-emerald-800' 
-                : 'border-subtle  hover:border-emerald-400'
+ ? 'border-accent ring-2 ring-[var(--qn-accent-soft)]'
+                : 'border-subtle hover:border-accent'
             }`}
             style={{ 
               backgroundColor: color || 'transparent',
@@ -273,14 +273,14 @@ function ColorPickerDropdown({ isOpen, onClose, onSelect, currentColor, title, a
               onSelect(customColor)
               onClose()
             }}
-            className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs rounded disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded bg-accent px-2 py-1 text-xs text-accent-on hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
           >
             Apply
           </button>
         </div>
         {!customColorValid && (
           <p id="table-custom-colour-error" role="alert" className="mt-1.5 text-xs text-danger-text">
-            Enter a six-digit hex colour, such as #10b981.
+            Enter a six-digit hex colour, such as #326f7a.
           </p>
         )}
       </div>

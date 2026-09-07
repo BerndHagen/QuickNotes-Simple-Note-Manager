@@ -24,10 +24,25 @@ test.describe('shared workspace interface contracts', () => {
     const root = page.locator('.qn-type-shopping')
     const content = root.locator('.qn-structured-content')
     const section = root.locator('.qn-structured-section').first()
-    const [contentBox, sectionBox] = await Promise.all([content.boundingBox(), section.boundingBox()])
+    const header = root.locator('.qn-structured-header')
+    const [rootBox, headerBox, contentBox, sectionBox] = await Promise.all([
+      root.boundingBox(),
+      header.boundingBox(),
+      content.boundingBox(),
+      section.boundingBox(),
+    ])
     expect(sectionBox.width).toBeGreaterThan(1400)
     expect(Math.abs(sectionBox.width - (contentBox.width - 32))).toBeLessThanOrEqual(2)
+    expect(Math.abs(headerBox.x + headerBox.width - (rootBox.x + rootBox.width))).toBeLessThanOrEqual(2)
+    expect(await root.evaluate((element) => getComputedStyle(element).scrollbarGutter)).toBe('auto')
     await expect(root.locator('.qn-focused-type-icon')).toHaveCount(0)
+
+    const [syncBox, navigationBox] = await Promise.all([
+      page.locator('.qn-top-sync').boundingBox(),
+      page.getByRole('button', { name: /hide navigation/i }).first().boundingBox(),
+    ])
+    expect(Math.abs(syncBox.width - navigationBox.width)).toBeLessThanOrEqual(1)
+    expect(Math.abs(syncBox.height - navigationBox.height)).toBeLessThanOrEqual(1)
 
     const itemField = root.getByLabel('Item name')
     await itemField.fill('Coffee beans')
@@ -63,6 +78,7 @@ test.describe('shared workspace interface contracts', () => {
     await expect(page.getByRole('searchbox', { name: 'Filter this list…' })).toBeVisible()
     const search = page.getByRole('combobox', { name: 'Search all notes and content' })
     await search.click()
+    expect(await search.evaluate((element) => getComputedStyle(element).outlineStyle)).toBe('none')
     await expect(page.getByRole('dialog', { name: /global search/i })).toHaveCount(0)
     await search.fill('Welcome')
     await expect(page.getByRole('listbox', { name: 'Search results' })).toBeVisible()
@@ -84,7 +100,7 @@ test.describe('shared workspace interface contracts', () => {
       const style = getComputedStyle(element)
       return [style.paddingTop, style.paddingRight, style.paddingBottom, style.paddingLeft]
     })
-    expect(padding).toEqual(['16px', '12px', '16px', '12px'])
+    expect(padding).toEqual(['16px', '16px', '16px', '16px'])
     await expectNoHorizontalOverflow(page)
     await page.screenshot({ path: 'test-results/systemic-journal-phone.png', fullPage: false })
   })

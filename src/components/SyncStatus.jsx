@@ -84,7 +84,7 @@ export function SyncStatusPill({ className = '', compact = false }) {
       disabled={!canSync}
       data-sync-state={state}
       title={title}
-      className={`flex min-w-0 items-center gap-1.5 rounded-control px-1.5 py-1 text-ui-xs font-medium transition-colors duration-fast disabled:cursor-default ${
+      className={`${compact ? 'qn-icon-button qn-icon-button--md qn-square-control justify-center p-0' : 'min-w-0 gap-1.5 rounded-control px-1.5 py-1'} flex items-center text-ui-xs font-medium transition-colors duration-fast disabled:cursor-default ${
  canSync ? 'hover:bg-surface-hover' : ''
  } ${config.tone} ${className}`}
     >

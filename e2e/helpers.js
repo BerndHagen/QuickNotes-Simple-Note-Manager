@@ -91,14 +91,44 @@ export function collectErrors(page) {
 
 /** Fails if the document scrolls sideways at the current viewport. */
 export async function expectNoHorizontalOverflow(page) {
-  const overflow = await page.evaluate(() => {
+  const inspectOverflow = () => page.evaluate(() => {
     const doc = document.documentElement
-    return { scrollWidth: doc.scrollWidth, clientWidth: doc.clientWidth }
+    const offenders = [...document.querySelectorAll('body *')]
+      .flatMap((element) => {
+        const style = getComputedStyle(element)
+        const box = element.getBoundingClientRect()
+        if (
+          style.display === 'none' || style.visibility === 'hidden' ||
+          box.width < 1 || box.height < 1 || box.right <= doc.clientWidth + 1
+        ) return []
+        return [{
+          tag: element.tagName.toLowerCase(),
+          className: typeof element.className === 'string' ? element.className.slice(0, 120) : '',
+          left: Math.round(box.left),
+          right: Math.round(box.right),
+          width: Math.round(box.width),
+        }]
+      })
+      .sort((left, right) => right.right - left.right)
+      .slice(0, 8)
+    return { scrollWidth: doc.scrollWidth, clientWidth: doc.clientWidth, offenders }
   })
-  expect(
-    overflow.scrollWidth,
-    `page scrolls horizontally (${overflow.scrollWidth}px content in ${overflow.clientWidth}px viewport)`
-  ).toBeLessThanOrEqual(overflow.clientWidth + 1)
+  let overflow = await inspectOverflow()
+  try {
+    // WebKit can report the previous media-query layout for one frame after an
+    // orientation-sized viewport transition. Assert the settled page geometry,
+    // while still failing persistent overflow with useful element diagnostics.
+    await expect.poll(async () => {
+      overflow = await inspectOverflow()
+      return overflow.scrollWidth - overflow.clientWidth
+    }).toBeLessThanOrEqual(1)
+  } catch (error) {
+    throw new Error(
+      `page scrolls horizontally (${overflow.scrollWidth}px content in ${overflow.clientWidth}px viewport); ` +
+      `right-edge elements: ${JSON.stringify(overflow.offenders)}`,
+      { cause: error }
+    )
+  }
 }
 
 /**

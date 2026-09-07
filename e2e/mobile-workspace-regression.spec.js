@@ -86,12 +86,23 @@ test.describe('phone workspace workflow regression', () => {
 
   test('keeps every non-spatial workspace operable, contained, and scrollable', async ({ page, browserName }) => {
     const errors = collectErrors(page)
+    // Reproduce the persisted 80% value visible in the reported iPhone
+    // screenshots. Responsive structured workspaces must ignore it instead of
+    // exposing the 125%-wide compensation canvas used by desktop CSS zoom.
+    await page.addInitScript(() => {
+      localStorage.setItem('quicknotes-workspace-zoom:compact:structured', '0.8')
+      localStorage.setItem('quicknotes-workspace-zoom:desktop:structured', '0.8')
+    })
     await signIn(page)
 
     for (const [index, definition] of workspaces.entries()) {
       await createWorkspace(page, definition, `Phone workflow ${index + 1}`)
       const root = page.locator(definition.root)
       await auditWorkspace(page, definition)
+      const workspaceFieldset = root.locator('xpath=ancestor::fieldset[1]')
+      await expect(workspaceFieldset).not.toHaveAttribute('data-workspace-zoom')
+      expect(await workspaceFieldset.evaluate((element) => getComputedStyle(element).zoom)).toBe('1')
+      await expect(page.getByRole('button', { name: /reset zoom\. current zoom/i })).toHaveCount(0)
 
       if (definition.type === 'Task List') {
         await root.getByLabel('New task').fill('Mobile task')
@@ -117,6 +128,13 @@ test.describe('phone workspace workflow regression', () => {
         for (const section of ['Check-in & goals', 'During the Day', 'Reflect', 'Write', 'Evening']) {
           await root.getByRole('tab', { name: new RegExp(`^${section}`, 'i') }).click()
           await auditWorkspace(page, definition, ` / ${section}`)
+          if (section === 'Write') {
+            const padding = await root.getByRole('textbox', { name: 'Free writing' }).evaluate((element) => {
+              const style = getComputedStyle(element)
+              return [style.paddingTop, style.paddingRight, style.paddingBottom, style.paddingLeft]
+            })
+            expect(padding).toEqual(['16px', '16px', '16px', '16px'])
+          }
         }
       } else if (definition.type === 'Idea Board') {
         // Chromium exposes the low-level multi-touch protocol needed by the
@@ -155,6 +173,8 @@ test.describe('phone workspace workflow regression', () => {
       await auditWorkspace(page, definition, ' after interaction')
       await page.setViewportSize({ width: 667, height: 375 })
       await auditWorkspace(page, definition, ' / landscape')
+      await page.setViewportSize({ width: 874, height: 402 })
+      await auditWorkspace(page, definition, ' / wide phone landscape')
       await page.setViewportSize({ width: 320, height: 420 })
       await auditWorkspace(page, definition, ' / keyboard-height viewport')
       await page.getByRole('button', { name: /back to notes/i }).click()
@@ -203,6 +223,7 @@ test.describe('phone workspace workflow regression', () => {
     await expect(dialog.locator('section[aria-label="Workspace types"]')).toBeVisible()
     await expect(dialog.locator('.qn-workspace-picker-configure')).not.toBeVisible()
     await expectContainedOrScrollable(dialog, 'Workspace picker type step')
+    expect(await dialog.evaluate((element) => element.scrollWidth <= element.clientWidth + 1)).toBe(true)
 
     await dialog.locator('section[aria-label="Workspace types"]')
       .getByRole('button', { name: /^Project Board/i })
@@ -211,9 +232,28 @@ test.describe('phone workspace workflow regression', () => {
     await expect(dialog.getByRole('button', { name: 'Workspace types' })).toBeVisible()
     await expect(dialog.getByLabel('Note title')).toBeVisible()
     await expectContainedOrScrollable(dialog, 'Workspace picker configuration step')
+    expect(await dialog.evaluate((element) => element.scrollWidth <= element.clientWidth + 1)).toBe(true)
 
     await dialog.getByRole('button', { name: 'Workspace types' }).click()
     await expect(picker).toHaveAttribute('data-mobile-step', 'choose')
+    await expectNoHorizontalOverflow(page)
+  })
+
+  test('keeps open Shopping details and the update action contained after rotation', async ({ page }) => {
+    await signIn(page)
+    await createWorkspace(page, workspaces.find(({ type }) => type === 'Shopping List'), `Rotated shopping ${Date.now()}`)
+    const root = page.locator('.qn-type-shopping')
+    await root.getByLabel('Item name').fill('Mobile item')
+    await root.getByRole('button', { name: 'Add item', exact: true }).click()
+    await root.getByRole('button', { name: 'Edit Mobile item' }).click()
+    await root.getByLabel(/Estimated price/).last().fill('2.50')
+
+    await page.setViewportSize({ width: 874, height: 402 })
+    await page.setViewportSize({ width: 320, height: 420 })
+    await page.evaluate(() => window.dispatchEvent(new Event('quicknotes:update-ready')))
+
+    await expect(page.locator('.qn-update-banner')).toBeVisible()
+    await expect(root.getByLabel(/Estimated price/).last()).toBeVisible()
     await expectNoHorizontalOverflow(page)
   })
 })

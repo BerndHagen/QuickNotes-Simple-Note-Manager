@@ -371,13 +371,19 @@ export default function NoteEditor({ onBack, showBack = false }) {
   const cloudEnabled = isBackendConfigured()
   const commentsEnabled = cloudEnabled && Boolean(user?.id) && !user?.isLocal
   const ownsSpatialZoom = ['paper', 'canvas'].includes(note?.contentKind || note?.noteType)
+  // Structured workspaces reflow to their available width. Applying document-
+  // style CSS `zoom` and compensating with a wider fieldset makes Safari expose
+  // that compensated width, clipping trailing controls (including when a phone
+  // rotates across the compact breakpoint). Documents retain pinch zoom, while
+  // Paper and Canvas continue to own their dedicated spatial zoom engines.
+  const appliesWorkspaceZoom = !ownsSpatialZoom && !isSpecialized
   const {
     zoom: workspaceZoom,
     zoomIn: zoomWorkspaceIn,
     zoomOut: zoomWorkspaceOut,
     resetZoom: resetWorkspaceZoom,
   } = useWorkspaceZoom(workspaceRootRef, {
-    enabled: Boolean(note) && !ownsSpatialZoom,
+    enabled: Boolean(note) && appliesWorkspaceZoom,
     scope: isSpecialized ? 'structured' : 'document',
   })
 
@@ -542,8 +548,8 @@ export default function NoteEditor({ onBack, showBack = false }) {
                   disabled={workspaceReadOnly}
                   aria-label={workspaceReadOnly ? 'Read-only note workspace' : undefined}
                   className="min-h-0 min-w-0 flex-1 border-0 p-0"
-                  data-workspace-zoom={ownsSpatialZoom ? undefined : workspaceZoom}
-                  style={ownsSpatialZoom ? undefined : {
+                  data-workspace-zoom={appliesWorkspaceZoom ? workspaceZoom : undefined}
+                  style={!appliesWorkspaceZoom ? undefined : {
                     zoom: workspaceZoom,
                     width: `${100 / workspaceZoom}%`,
                     height: `${100 / workspaceZoom}%`,
@@ -789,7 +795,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
         <NoteStatistics
           note={note}
           showMetrics={showNoteStatistics}
-          zoom={ownsSpatialZoom ? undefined : workspaceZoom}
+          zoom={appliesWorkspaceZoom ? workspaceZoom : undefined}
           onZoomIn={zoomWorkspaceIn}
           onZoomOut={zoomWorkspaceOut}
           onResetZoom={resetWorkspaceZoom}

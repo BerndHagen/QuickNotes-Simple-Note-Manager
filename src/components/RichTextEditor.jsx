@@ -1187,7 +1187,7 @@ export default function RichTextEditor({
         // click handler (which can create an unexpected browser tab).
         openOnClick: false,
         HTMLAttributes: {
-          class: 'text-emerald-600 underline cursor-pointer',
+          class: 'text-accent-text underline cursor-pointer',
           target: null,
           rel: null,
         },
@@ -2062,7 +2062,7 @@ function DropdownButton({ children, isOpen, onClick, title, disabled, className 
         disabled
           ? 'opacity-30 cursor-not-allowed text-content-subtle dark:text-content-muted'
           : isOpen
-            ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 shadow-sm'
+            ? 'bg-accent-soft text-accent-text shadow-sm'
             : 'hover:bg-surface-hover text-content-muted hover:text-content dark:hover:text-content-subtle'
       } ${className}`}
     >
@@ -2693,7 +2693,7 @@ function EditorToolbar({
                     setShowFontSizePicker(false)
                   }}
                   className={`w-full px-3 py-1.5 text-left text-[13px] hover:bg-surface-hover rounded-lg transition-colors ${
- isActive ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 font-medium' : 'text-content-muted'
+ isActive ? 'bg-accent-soft text-accent-text font-medium' : 'text-content-muted'
  }`}
                 >
                   {size.name}px
@@ -2730,7 +2730,7 @@ function EditorToolbar({
                     setShowHeadingsPicker(false)
                   }}
                   className={`w-full px-3 py-2 text-left hover:bg-surface-hover flex items-center gap-3 rounded-lg transition-colors ${
- isActive ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'text-content-muted'
+ isActive ? 'bg-accent-soft text-accent-text' : 'text-content-muted'
  }`}
                 >
                   <span className={`font-bold ${
@@ -2794,8 +2794,8 @@ function EditorToolbar({
                     }}
                     className={`qn-format-colour flex h-6 w-6 items-center justify-center rounded-control border shadow-xs transition-[border-color,box-shadow,transform] duration-fast hover:scale-105 ${
  isActive 
- ? 'border-emerald-500 ring-2 ring-emerald-200 dark:ring-emerald-800' 
-                        : 'border-subtle  hover:border-emerald-500'
+ ? 'border-accent ring-2 ring-[var(--qn-accent-soft)]'
+                        : 'border-subtle hover:border-accent'
                     }`}
                     style={{ backgroundColor: color }}
                     title={color}
@@ -2874,8 +2874,8 @@ function EditorToolbar({
                     }}
                     className={`qn-format-colour flex h-6 w-6 items-center justify-center rounded-control border shadow-xs transition-[border-color,box-shadow,transform] duration-fast hover:scale-105 ${
  isActive 
- ? 'border-emerald-500 ring-2 ring-emerald-200 dark:ring-emerald-800' 
-                        : 'border-subtle  hover:border-emerald-500'
+ ? 'border-accent ring-2 ring-[var(--qn-accent-soft)]'
+                        : 'border-subtle hover:border-accent'
                     }`}
                     style={{ backgroundColor: color }}
                     title={color}
@@ -3204,7 +3204,7 @@ function EditorToolbar({
                     setShowLetterSpacing(false)
                   }}
                   className={`w-full px-3 py-1.5 text-left text-[13px] hover:bg-surface-hover rounded-lg transition-colors ${
- isActive ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 font-medium' : 'text-content-muted'
+ isActive ? 'bg-accent-soft text-accent-text font-medium' : 'text-content-muted'
  }`}
                 >
                   {spacing.name}
@@ -3499,7 +3499,7 @@ function EditorToolbar({
                 >
                   <span className={`flex-shrink-0 w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold ${
  heading.level === 1 
- ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' 
+ ? 'bg-accent-soft text-accent-text'
                       : heading.level === 2 
                         ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
                         : 'bg-surface-sunken text-content-muted'
@@ -3537,7 +3537,7 @@ function EditorToolbar({
                   setShowPaperPicker(false)
                 }}
                 className={`qn-focus-inset w-full px-3 py-2 text-left text-[13px] hover:bg-surface-hover flex items-center gap-3 rounded-lg transition-colors ${
- currentPaper === key ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 font-medium' : 'text-content-muted'
+ currentPaper === key ? 'bg-accent-soft text-accent-text font-medium' : 'text-content-muted'
  }`}
               >
                 <div 

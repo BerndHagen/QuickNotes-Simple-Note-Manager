@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { signIn } from './helpers'
+import { expectNoHorizontalOverflow, signIn } from './helpers'
 
 const expectSquare = async (locator, label) => {
   const box = await locator.boundingBox()
@@ -65,6 +65,8 @@ test.describe('mobile control geometry', () => {
     expect(searchBox.width).toBeGreaterThan(200)
     expect(navigationBox.x + navigationBox.width).toBeLessThan(searchBox.x)
     expect(searchBox.x + searchBox.width).toBeLessThan(syncBox.x + syncBox.width)
+    expect(Math.abs(syncBox.width - navigationBox.width)).toBeLessThanOrEqual(1)
+    expect(Math.abs(syncBox.height - navigationBox.height)).toBeLessThanOrEqual(1)
 
     await search.click()
     await expect(page.getByRole('dialog', { name: /global search/i })).toHaveCount(0)
@@ -78,6 +80,30 @@ test.describe('mobile control geometry', () => {
     await expect(chrome.getByRole('button', { name: 'Create quick note' })).toBeHidden()
     await expect(search).toBeVisible()
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true)
+  })
+
+  test('keeps the application bar and update action visible in a short phone viewport', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 420 })
+    await signIn(page)
+    await page.evaluate(() => window.dispatchEvent(new Event('quicknotes:update-ready')))
+
+    const chrome = page.locator('.qn-top-chrome')
+    const banner = page.locator('.qn-update-banner')
+    const main = page.locator('#qn-main')
+    await expect(chrome).toBeVisible()
+    await expect(banner).toBeVisible()
+    await expect(banner.getByRole('button', { name: /update and reload/i })).toBeVisible()
+
+    const [chromeBox, bannerBox, mainBox] = await Promise.all([
+      chrome.boundingBox(),
+      banner.boundingBox(),
+      main.boundingBox(),
+    ])
+    expect(chromeBox.y).toBeGreaterThanOrEqual(0)
+    expect(Math.abs(bannerBox.y - (chromeBox.y + chromeBox.height))).toBeLessThanOrEqual(1)
+    expect(mainBox.y).toBeGreaterThanOrEqual(bannerBox.y + bannerBox.height - 1)
+    expect(mainBox.y + mainBox.height).toBeLessThanOrEqual(421)
+    await expectNoHorizontalOverflow(page)
   })
 
 })

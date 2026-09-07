@@ -20,13 +20,13 @@ export default function UpdateReadyBanner({ ready }) {
   }
 
   return (
-    <div role="status" className="flex min-h-10 flex-wrap items-center gap-2 border-b border-subtle bg-surface-sunken px-3 py-2 text-ui-sm text-content">
-      <span className="mr-auto">A new QuickNotes build is ready. It will not reload until you choose to update.</span>
+    <div role="status" className="qn-update-banner flex shrink-0 items-center gap-2 border-b border-subtle bg-surface-sunken px-3 py-2 text-ui-sm text-content">
+      <span className="qn-update-message mr-auto min-w-0">A new QuickNotes build is ready. It will not reload until you choose to update.</span>
       <button
         type="button"
         disabled={activating}
         aria-busy={activating || undefined}
-        className="inline-flex min-h-8 items-center gap-1.5 rounded-control bg-content px-2 font-medium text-surface hover:opacity-90 disabled:opacity-60"
+        className="inline-flex min-h-8 shrink-0 items-center gap-1.5 rounded-control bg-content px-2 font-medium text-surface hover:opacity-90 disabled:opacity-60"
         onClick={() => void activate()}
       >
         <RefreshCw className={`h-3.5 w-3.5 ${activating ? 'animate-spin' : ''}`} aria-hidden="true" />

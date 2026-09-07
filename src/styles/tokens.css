@@ -19,17 +19,17 @@
   color-scheme: light;
 
   /* --- Brand ------------------------------------------------ */
-  --qn-brand-50: #ecfdf5;
-  --qn-brand-100: #d1fae5;
-  --qn-brand-200: #a7f3d0;
-  --qn-brand-300: #6ee7b7;
-  --qn-brand-400: #34d399;
-  --qn-brand-500: #10b981;
-  --qn-brand-600: #059669;
-  --qn-brand-700: #047857;
-  --qn-brand-800: #065f46;
-  --qn-brand-900: #064e3b;
-  --qn-brand-950: #032b21;
+  --qn-brand-50: #eef9fa;
+  --qn-brand-100: #d9f0f2;
+  --qn-brand-200: #b8e0e4;
+  --qn-brand-300: #86c8cf;
+  --qn-brand-400: #55aab4;
+  --qn-brand-500: #398894;
+  --qn-brand-600: #326f7a;
+  --qn-brand-700: #285e68;
+  --qn-brand-800: #204a53;
+  --qn-brand-900: #193b43;
+  --qn-brand-950: #10282e;
 
   /* --- Surfaces --------------------------------------------- */
   /* app  : the outermost canvas                                */
@@ -37,48 +37,46 @@
   /* base : editor + dialog bodies                              */
   /* raised: cards, menus, popovers                             */
   /* sunken: inset wells, code blocks, form groups              */
-  --qn-surface-app: #eaf1ee;
-  --qn-surface-panel: #f1f5f3;
-  --qn-surface-base: #f8faf9;
+  --qn-surface-app: #e9f0f1;
+  --qn-surface-panel: #f0f4f5;
+  --qn-surface-base: #f8fafb;
   --qn-surface-raised: #ffffff;
-  --qn-surface-workbench: #e6ebe9;
-  --qn-surface-toolbar: #f3f5f4;
-  --qn-surface-window-header: #f0f5f3;
-  --qn-surface-window-footer: #f3f6f5;
-  --qn-surface-sunken: #e8efec;
-  --qn-surface-brand-tint: #eef8f3;
-  --qn-surface-brand-tint-strong: #e1f1e9;
+  --qn-surface-workbench: #e5ebed;
+  --qn-surface-toolbar: #f2f5f6;
+  --qn-surface-window-header: #eef3f4;
+  --qn-surface-window-footer: #f2f6f7;
+  --qn-surface-sunken: #e7eef0;
+  --qn-surface-brand-tint: #edf6f7;
+  --qn-surface-brand-tint-strong: #deedef;
   --qn-surface-hover: rgba(15, 23, 42, 0.07);
   --qn-surface-active: rgba(15, 23, 42, 0.11);
   --qn-overlay: rgba(15, 23, 42, 0.45);
 
   /* --- Navigation rail --------------------------------------
      The deep brand surface anchors the window in both themes and lets the
-     neutral note list and editor read as paper without spreading green into
+     neutral note list and editor read as paper without spreading the accent
      utility or content surfaces.
 
      The rail is painted with `.qn-nav-surface`; `--qn-nav-bg` is its flat
      equivalent and remains useful to menus and row-action backplates.
 
      Text tokens are set against the brightest point of that material — the
-     emerald glow behind the brand mark, which samples as rgb(15, 88, 66):
-       text         #eaf2ee  7.4:1
-       text-muted   #c0d0c8  5.2:1
-       text-subtle  #b6c8bf  4.8:1 */
-  --qn-nav-bg: #083d31;
-  --qn-nav-bg-raised: #0e5140;
+     deep teal behind the brand mark:
+       text, muted text, and controls all retain WCAG AA contrast. */
+  --qn-nav-bg: #11232a;
+  --qn-nav-bg-raised: #193943;
   --qn-nav-border: rgba(255, 255, 255, 0.12);
-  --qn-nav-text: #eaf2ee;
-  --qn-nav-text-muted: #c0d0c8;
-  --qn-nav-text-subtle: #b6c8bf;
+  --qn-nav-text: #edf3f4;
+  --qn-nav-text-muted: #c3d1d5;
+  --qn-nav-text-subtle: #afc1c6;
   --qn-nav-hover: rgba(255, 255, 255, 0.06);
   --qn-nav-active-bg: rgba(255, 255, 255, 0.09);
   --qn-nav-active-text: #ffffff;
 
   /* --- Borders ---------------------------------------------- */
-  --qn-border-subtle: #d8e1df;
-  --qn-border: #dcdfe5;
-  --qn-border-strong: #c3c8d1;
+  --qn-border-subtle: #d6e0e2;
+  --qn-border: #d9dfe4;
+  --qn-border-strong: #c1cad1;
 
   /* --- Text ------------------------------------------------- */
   /* Contrast ratios are measured against --qn-surface-panel (#f1f5f3),
@@ -94,23 +92,23 @@
   --qn-text-on-brand: #ffffff;
 
   /* --- Accent (interactive brand) --------------------------- */
-  /* A muted eucalyptus accent keeps long writing sessions calm while the
+  /* A muted blue-teal accent keeps long writing sessions calm while the
      darker action shades retain accessible contrast with white labels. */
-  --qn-accent: #3d7564;
-  --qn-accent-hover: #346657;
-  --qn-accent-active: #2b574b;
-  --qn-accent-text: #346657;
-  --qn-accent-soft: #e8f1ed;
-  --qn-accent-soft-hover: #dbe9e3;
-  --qn-accent-border: #b8d2c8;
+  --qn-accent: #326f7a;
+  --qn-accent-hover: #285e68;
+  --qn-accent-active: #204f58;
+  --qn-accent-text: #285e68;
+  --qn-accent-soft: #e5f0f2;
+  --qn-accent-soft-hover: #d8e8eb;
+  --qn-accent-border: #aecdd2;
 
-  /* Application banners use the navigation rail's flat deep green. The
+  /* Application banners use a restrained deep blue-teal. The
      decorative stationery treatment is reserved for authentication. */
-  --qn-banner: #0b4a38;
-  --qn-banner-from: #11563f;
-  --qn-banner-via: #0d4835;
-  --qn-banner-to: #093528;
-  --qn-banner-accent: #14624a;
+  --qn-banner: #152b32;
+  --qn-banner-from: #1b3d47;
+  --qn-banner-via: #17343d;
+  --qn-banner-to: #10252c;
+  --qn-banner-accent: #24515c;
   --qn-banner-text: #ffffff;
   --qn-banner-text-muted: rgba(255, 255, 255, 0.72);
   --qn-banner-border: rgba(255, 255, 255, 0.14);
@@ -198,9 +196,9 @@
   --qn-duration-slow: 320ms;
 
   /* --- Focus ------------------------------------------------ */
-  /* Muted eucalyptus keeps focus visible without the previous neon-green glare. */
-  --qn-focus-ring: #628f80;
-  --qn-focus-soft: rgba(61, 117, 100, 0.16);
+  /* Muted blue-teal keeps focus visible without glare. */
+  --qn-focus-ring: #5f929c;
+  --qn-focus-soft: rgba(50, 111, 122, 0.16);
   --qn-focus-ring-width: 2px;
   --qn-focus-ring-offset: 2px;
 
@@ -241,8 +239,8 @@
   --qn-text-inverted: #0b0f14;
   --qn-text-on-brand: #0b0f14;
 
-  --qn-nav-bg: #082e27;
-  --qn-nav-bg-raised: #0d3b31;
+  --qn-nav-bg: #0f2026;
+  --qn-nav-bg-raised: #17323a;
   --qn-nav-border: rgba(203, 213, 225, 0.14);
   --qn-nav-text: #edf1f5;
   --qn-nav-text-muted: #b7c0cb;
@@ -251,19 +249,19 @@
   --qn-nav-active-bg: rgba(255, 255, 255, 0.09);
   --qn-nav-active-text: #ffffff;
 
-  --qn-accent: #77a998;
-  --qn-accent-hover: #86b5a5;
-  --qn-accent-active: #95c0b1;
-  --qn-accent-text: #8dbbaa;
-  --qn-accent-soft: rgba(119, 169, 152, 0.14);
-  --qn-accent-soft-hover: rgba(119, 169, 152, 0.22);
-  --qn-accent-border: rgba(119, 169, 152, 0.34);
+  --qn-accent: #6fa8b3;
+  --qn-accent-hover: #82b7c0;
+  --qn-accent-active: #96c5cc;
+  --qn-accent-text: #8fc1ca;
+  --qn-accent-soft: rgba(111, 168, 179, 0.14);
+  --qn-accent-soft-hover: rgba(111, 168, 179, 0.22);
+  --qn-accent-border: rgba(111, 168, 179, 0.38);
 
-  --qn-banner: #07372c;
-  --qn-banner-from: #0d4739;
-  --qn-banner-via: #0a3b31;
-  --qn-banner-to: #072d27;
-  --qn-banner-accent: #124b3e;
+  --qn-banner: #10252c;
+  --qn-banner-from: #183b45;
+  --qn-banner-via: #14313a;
+  --qn-banner-to: #0c2026;
+  --qn-banner-accent: #1d4651;
   --qn-banner-text: #edf1f5;
   --qn-banner-text-muted: rgba(237, 241, 245, 0.66);
   --qn-banner-border: rgba(255, 255, 255, 0.08);
@@ -300,7 +298,7 @@
   --qn-shadow-dialog: 0 24px 56px rgba(0, 0, 0, 0.65);
 
   --qn-focus-ring: var(--qn-accent);
-  --qn-focus-soft: rgba(119, 169, 152, 0.18);
+  --qn-focus-soft: rgba(111, 168, 179, 0.18);
 }
 
 /* ============================================================

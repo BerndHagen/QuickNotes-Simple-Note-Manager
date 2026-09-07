@@ -26,12 +26,12 @@
   }
 
   ::selection {
-    background-color: rgba(16, 185, 129, 0.28);
+    background-color: color-mix(in srgb, var(--qn-accent) 28%, transparent);
     color: inherit;
   }
 
   .dark ::selection {
-    background-color: rgba(52, 211, 153, 0.36);
+    background-color: color-mix(in srgb, var(--qn-accent) 36%, transparent);
   }
 
   /* Native select arrows sit almost against the edge in Chromium and WebKit.
@@ -100,7 +100,7 @@ input[type="datetime-local"]:not([class*="opacity-0"]):hover {
 input[type="date"]:not([class*="opacity-0"]):focus,
 input[type="time"]:not([class*="opacity-0"]):focus,
 input[type="datetime-local"]:not([class*="opacity-0"]):focus {
-  outline: 2px solid #10b981;
+  outline: 2px solid var(--qn-focus-ring);
   outline-offset: 2px;
 }
 
@@ -412,12 +412,12 @@ html {
 .ProseMirror.highlight-current-line .is-active-line,
 .ProseMirror.highlight-current-line p:focus,
 .ProseMirror.highlight-current-line > *:has(.ProseMirror-selectednode) {
-  background-color: rgba(16, 185, 129, 0.05);
+  background-color: color-mix(in srgb, var(--qn-accent) 5%, transparent);
   border-radius: 2px;
 }
 .dark .ProseMirror.highlight-current-line .is-active-line,
 .dark .ProseMirror.highlight-current-line p:focus {
-  background-color: rgba(16, 185, 129, 0.08);
+  background-color: color-mix(in srgb, var(--qn-accent) 8%, transparent);
 }
 
 /* Editor placeholder text */
@@ -738,19 +738,19 @@ html {
 }
 
 .dark .qn-auth-page {
-  background-color: #111817;
+  background-color: #10171a;
   background-image:
-    linear-gradient(rgba(8, 15, 14, 0.78), rgba(8, 15, 14, 0.78)),
+    linear-gradient(rgba(8, 14, 16, 0.78), rgba(8, 14, 16, 0.78)),
     url('/quicknotes-auth-background.png');
 }
 
-.dark .qn-auth-page::before { background: rgba(4, 10, 9, 0.18); }
+.dark .qn-auth-page::before { background: rgba(4, 9, 11, 0.18); }
 
-.dark .qn-auth-page::after { background: radial-gradient(ellipse 64% 86% at 50% 48%, rgba(65, 94, 84, 0.2), transparent 78%); }
+.dark .qn-auth-page::after { background: radial-gradient(ellipse 64% 86% at 50% 48%, rgba(65, 86, 94, 0.2), transparent 78%); }
 
 .qn-auth-frame {
   box-shadow:
-    0 44px 110px rgba(2, 31, 24, 0.3),
+    0 44px 110px rgba(2, 25, 31, 0.3),
     0 10px 32px rgba(15, 23, 42, 0.12),
     inset 0 0 0 1px rgba(255, 255, 255, 0.65);
 }
@@ -771,17 +771,17 @@ html {
     radial-gradient(
       88% 42% at 112% -6%,
       transparent 54%,
-      rgba(5, 150, 105, 0.045) 54.4%,
+      rgba(50, 111, 122, 0.045) 54.4%,
       transparent 54.8%,
       transparent 67%,
-      rgba(5, 150, 105, 0.035) 67.4%,
+      rgba(50, 111, 122, 0.035) 67.4%,
       transparent 67.8%,
       transparent 80%,
-      rgba(5, 150, 105, 0.025) 80.4%,
+      rgba(50, 111, 122, 0.025) 80.4%,
       transparent 80.8%
     ),
-    radial-gradient(72% 46% at 100% 0%, rgba(16, 185, 129, 0.065) 0%, transparent 72%),
-    radial-gradient(58% 38% at 0% 100%, rgba(8, 61, 49, 0.035) 0%, transparent 76%);
+    radial-gradient(72% 46% at 100% 0%, rgba(57, 136, 148, 0.065) 0%, transparent 72%),
+    radial-gradient(58% 38% at 0% 100%, rgba(17, 35, 42, 0.04) 0%, transparent 76%);
 }
 
 .dark .qn-auth-form-panel {
@@ -789,17 +789,17 @@ html {
     radial-gradient(
       88% 42% at 112% -6%,
       transparent 54%,
-      rgba(52, 211, 153, 0.07) 54.4%,
+      rgba(111, 168, 179, 0.07) 54.4%,
       transparent 54.8%,
       transparent 67%,
-      rgba(52, 211, 153, 0.05) 67.4%,
+      rgba(111, 168, 179, 0.05) 67.4%,
       transparent 67.8%,
       transparent 80%,
-      rgba(52, 211, 153, 0.035) 80.4%,
+      rgba(111, 168, 179, 0.035) 80.4%,
       transparent 80.8%
     ),
-    radial-gradient(72% 46% at 100% 0%, rgba(16, 185, 129, 0.08) 0%, transparent 72%),
-    radial-gradient(58% 38% at 0% 100%, rgba(52, 211, 153, 0.035) 0%, transparent 76%);
+    radial-gradient(72% 46% at 100% 0%, rgba(111, 168, 179, 0.08) 0%, transparent 72%),
+    radial-gradient(58% 38% at 0% 100%, rgba(111, 168, 179, 0.035) 0%, transparent 76%);
 }
 
 /* The authentication hero may use the more expressive brand material. The
@@ -812,9 +812,9 @@ html {
 .qn-nav-surface {
   isolation: isolate;
   background:
-    radial-gradient(70% 70% at 16% 14%, rgba(52, 211, 153, 0.18), transparent 72%),
-    radial-gradient(58% 62% at 100% 78%, rgba(14, 116, 144, 0.11), transparent 74%),
-    linear-gradient(138deg, #0b4a38 0%, #08382f 44%, #072c2a 72%, #071f27 100%);
+    radial-gradient(70% 70% at 16% 14%, rgba(85, 170, 180, 0.18), transparent 72%),
+    radial-gradient(58% 62% at 100% 78%, rgba(50, 111, 122, 0.14), transparent 74%),
+    linear-gradient(138deg, #1b3d47 0%, #152b32 44%, #11262d 72%, #0c1d23 100%);
 }
 
 .dark .qn-auth-hero,
@@ -858,7 +858,7 @@ html {
       rgba(255, 255, 255, 0.045) 56.35%,
       transparent 56.7%
     ),
-    radial-gradient(80% 90% at 10% 100%, rgba(16, 185, 129, 0.18), transparent 68%);
+    radial-gradient(80% 90% at 10% 100%, rgba(85, 170, 180, 0.18), transparent 68%);
 }
 
 .qn-auth-hero::after,
@@ -869,7 +869,7 @@ html {
   width: 72%;
   aspect-ratio: 1;
   border-radius: 999px;
-  background: rgba(16, 185, 129, 0.08);
+  background: rgba(85, 170, 180, 0.08);
   filter: blur(70px);
 }
 
@@ -945,26 +945,26 @@ html {
   inset: 0;
   display: block;
   overflow: hidden;
-  border: 1px solid rgba(167, 243, 208, 0.14);
+  border: 1px solid rgba(184, 224, 228, 0.14);
   border-radius: 28px;
 }
 
 .qn-auth-stationery-sheet-back {
   background: rgba(14, 116, 144, 0.035);
-  box-shadow: 0 26px 70px rgba(2, 20, 17, 0.16);
+  box-shadow: 0 26px 70px rgba(2, 17, 21, 0.16);
   transform: translate(-38px, 38px) rotate(-3deg);
 }
 
 .qn-auth-stationery-sheet-front {
-  background-color: rgba(3, 43, 33, 0.18);
+  background-color: rgba(16, 40, 46, 0.18);
   background-image:
-    radial-gradient(circle at 34px 48px, rgba(167, 243, 208, 0.2) 0 2px, transparent 2.5px),
+    radial-gradient(circle at 34px 48px, rgba(184, 224, 228, 0.2) 0 2px, transparent 2.5px),
     linear-gradient(
       90deg,
       transparent 0,
       transparent 76px,
-      rgba(52, 211, 153, 0.17) 76px,
-      rgba(52, 211, 153, 0.17) 77px,
+      rgba(85, 170, 180, 0.17) 76px,
+      rgba(85, 170, 180, 0.17) 77px,
       transparent 77px
     ),
     repeating-linear-gradient(
@@ -977,7 +977,7 @@ html {
   background-position: 0 0, 0 0, 0 0;
   background-size: 100% 92px, auto, auto;
   box-shadow:
-    0 30px 80px rgba(2, 20, 17, 0.2),
+    0 30px 80px rgba(2, 17, 21, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
@@ -1319,15 +1319,15 @@ html {
   right: 0;
   top: 0;
   bottom: 0;
-  background: rgba(16, 185, 129, 0.15);
+  background: color-mix(in srgb, var(--qn-accent) 15%, transparent);
   pointer-events: none;
-  border: 2px solid rgba(16, 185, 129, 0.5);
+  border: 2px solid color-mix(in srgb, var(--qn-accent) 50%, transparent);
 }
 
 /* Hover effect on cells */
 .ProseMirror td:hover,
 .ProseMirror th:hover {
-  background-color: rgba(16, 185, 129, 0.05);
+  background-color: color-mix(in srgb, var(--qn-accent) 5%, transparent);
 }
 
 .ProseMirror td[data-background-color]:hover,
@@ -1342,7 +1342,7 @@ html {
   top: 0;
   bottom: -2px;
   width: 4px;
-  background-color: #10b981;
+  background-color: var(--qn-accent);
   pointer-events: none;
 }
 
@@ -1576,15 +1576,15 @@ html {
   font-size: smaller;
 }
 
-/* Link styles (emerald theme) */
+/* Link styles use the application accent. */
 .ProseMirror a {
-  color: #10b981;
+  color: var(--qn-accent-text);
   text-decoration: underline;
   cursor: pointer;
 }
 
 .ProseMirror a:hover {
-  color: #059669;
+  color: var(--qn-accent-hover);
 }
 
 /* Note Link Styles - Internal links to other notes */
@@ -3027,6 +3027,12 @@ body {
   outline-offset: -2px;
 }
 
+/* The search container already communicates focus through its restrained
+   background state. Avoid drawing a second white rectangle inside it. */
+.qn-top-chrome .qn-top-search-input:focus-visible {
+  outline: none !important;
+}
+
 .qn-top-search,
 .qn-top-search kbd {
   border-radius: var(--qn-radius-sm);
@@ -3038,6 +3044,14 @@ body {
 }
 
 .qn-top-sync {
+  flex: 0 0 var(--qn-icon-button-size, var(--qn-control-md));
+  width: var(--qn-icon-button-size, var(--qn-control-md));
+  height: var(--qn-icon-button-size, var(--qn-control-md));
+  min-width: var(--qn-icon-button-size, var(--qn-control-md));
+  min-height: var(--qn-icon-button-size, var(--qn-control-md));
+  max-width: var(--qn-icon-button-size, var(--qn-control-md));
+  max-height: var(--qn-icon-button-size, var(--qn-control-md));
+  padding: 0 !important;
   color: var(--qn-banner-text-muted) !important;
 }
 
@@ -3147,7 +3161,32 @@ body {
 
 .qn-top-new {
   min-width: 4rem;
-  color: #07372c !important;
+  color: var(--qn-banner) !important;
+}
+
+.qn-update-banner {
+  position: relative;
+  z-index: calc(var(--qn-z-sticky) - 1);
+  min-width: 0;
+  min-height: 44px;
+  max-width: 100%;
+}
+
+.qn-update-message {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  .qn-update-banner {
+    min-height: 48px;
+    padding: 5px 8px;
+  }
+
+  .qn-update-banner > button {
+    min-height: 38px;
+  }
 }
 
 @media (max-width: 767px) {
@@ -3541,7 +3580,7 @@ body {
   overscroll-behavior-y: contain;
   background: var(--qn-surface-base);
   color: var(--qn-text);
-  scrollbar-gutter: stable;
+  scrollbar-gutter: auto;
 }
 
 .qn-structured-workspace :where(input, select, textarea) {
@@ -4223,6 +4262,7 @@ body {
 
 .qn-type-journal .qn-journal-writing-area {
   min-height: min(34rem, 65vh) !important;
+  padding: 16px !important;
 }
 
 @container (max-width: 38rem) {
@@ -5124,6 +5164,14 @@ body {
     display: flex;
     flex-direction: column;
     overflow-x: hidden;
+  }
+
+  .qn-workspace-picker,
+  .qn-workspace-picker > section,
+  .qn-workspace-picker-configure > div {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
   }
 
   .qn-workspace-picker-type {
@@ -6028,10 +6076,10 @@ body {
 
 .qn-pdf-note__tags span {
   padding: 3px 8px;
-  border: 1px solid #a7f3d0;
+  border: 1px solid #b8e0e4;
   border-radius: 999px;
-  background: #ecfdf5;
-  color: #047857;
+  background: #eef9fa;
+  color: #285e68;
   font-size: 11px;
   font-weight: 600;
 }
@@ -6057,9 +6105,9 @@ body {
 }
 
 .qn-pdf-export :is(.paper-dark, .paper-dark-lined, .paper-blueprint) .qn-pdf-note__tags span {
-  border-color: rgba(110, 231, 183, 0.45);
-  background: rgba(16, 185, 129, 0.18);
-  color: #a7f3d0;
+  border-color: rgba(134, 200, 207, 0.45);
+  background: rgba(57, 136, 148, 0.18);
+  color: #b8e0e4;
 }
 @media (prefers-reduced-motion: reduce) {
   *,
