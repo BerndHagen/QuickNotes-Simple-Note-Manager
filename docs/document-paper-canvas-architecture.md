@@ -113,7 +113,7 @@ Canvas is an effectively infinite world. It persists a last viewport, but all co
 
 Toolbars use real buttons with names, pressed states, keyboard shortcuts, visible focus, and no color-only status. Save and selection changes have polite live regions. Text-like objects remain keyboard focusable. A non-visual selection summary provides object type and bounds. Motion is minimal and respects reduced-motion preferences.
 
-Desktop keeps the shared three-pane shell. Compact layouts show the existing back/title bar and prioritize the surface. Tool controls collapse into a horizontally scrollable, dense toolbar; important drawing tools remain reachable at touch size. Dark mode keeps the dark-forest chrome, neutral controls, and explicit Paper surface choice instead of recoloring every page automatically.
+Desktop keeps the shared three-pane shell. Compact layouts show the existing back/title bar and prioritize the surface. Tool controls collapse into a horizontally scrollable, dense toolbar; important drawing tools remain reachable at touch size. Dark mode keeps the deep blue-teal chrome, neutral controls, and explicit Paper surface choice instead of recoloring every page automatically.
 
 ## Migration sequence
 

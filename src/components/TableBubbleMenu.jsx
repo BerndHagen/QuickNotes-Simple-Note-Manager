@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { BubbleMenu } from '@tiptap/react'
+import { BubbleMenu } from '@tiptap/react/menus'
 import {
   Columns,
   Rows,

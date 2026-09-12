@@ -10,7 +10,7 @@ import {
   SMART_VIEW_FIELDS,
   SMART_VIEW_MAX_RULES,
 } from '../lib/smartViews'
-import { NOTE_TYPE_CONFIG } from './editors'
+import { NOTE_TYPE_CONFIG } from './editors/noteTypes'
 import { ConfirmDialog } from './FolderDialogs'
 import toast from 'react-hot-toast'
 
@@ -143,7 +143,7 @@ export default function SmartViewModal() {
   const { notes, folders, tags, savedViews, createSavedView, updateSavedView, deleteSavedView } = useNotesStore()
   const editing = savedViews.find((view) => view.id === smartViewEditingId)
   const [name, setName] = useState('')
-  const [color, setColor] = useState('#0f766e')
+  const [color, setColor] = useState('#2d6871')
   const [criteria, setCriteria] = useState(() => normalizeSmartViewCriteria())
   const [confirmDelete, setConfirmDelete] = useState(false)
   const nameRef = useRef(null)
@@ -151,7 +151,7 @@ export default function SmartViewModal() {
   useEffect(() => {
     if (!smartViewModalOpen) return
     setName(editing?.name || '')
-    setColor(editing?.color || '#0f766e')
+    setColor(editing?.color || '#2d6871')
     setCriteria(normalizeSmartViewCriteria(editing?.criteria))
   }, [editing, smartViewModalOpen])
 

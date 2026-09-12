@@ -945,7 +945,7 @@ function MilestoneCard({ milestone, onToggle, onDelete }) {
         aria-label={milestone.completed ? `Mark ${milestone.name} incomplete` : `Complete ${milestone.name}`}
       >
         {milestone.completed ? (
-          <CheckCircle2 className="w-6 h-6 text-green-500" />
+          <CheckCircle2 className="h-6 w-6 text-success-text" />
         ) : (
           <Milestone className={`w-6 h-6 ${isOverdue ? 'text-red-500' : 'text-accent-text'}`} />
         )}

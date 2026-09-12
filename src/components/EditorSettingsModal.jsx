@@ -22,6 +22,7 @@ import {
   EDITOR_FONT_FAMILIES,
   EDITOR_FONT_GROUPS,
 } from '../lib/editorFonts'
+import { ensureEditorFontLoaded } from '../lib/editorFontLoader'
 const STORAGE_KEY = 'editorSettings'
 let volatileEditorSettings = null
 const defaultSettings = {
@@ -168,6 +169,7 @@ export default function EditorSettingsModal() {
   }, [settings])
 
   const handleSettingChange = (key, value) => {
+    if (key === 'defaultFontFamily') void ensureEditorFontLoaded(value)
     setSettings(prev => ({ ...prev, [key]: value }))
   }
 
@@ -318,7 +320,7 @@ export default function EditorSettingsModal() {
               <div>
                 <label htmlFor="editor-checkbox-colour" className="mb-2 block text-sm font-medium text-content-muted">Tick colour</label>
                 <Select id="editor-checkbox-colour" value={settings.defaultCheckboxColor} onChange={(e) => handleSettingChange('defaultCheckboxColor', e.target.value)}>
-                  <option value="accent">QuickNotes green</option>
+                  <option value="accent">QuickNotes teal</option>
                   <option value="blue">Blue</option>
                   <option value="purple">Purple</option>
                   <option value="amber">Amber</option>

@@ -147,7 +147,7 @@ test.describe('editor productivity objects', () => {
     })
 
     expect(chrome.centerDelta).toBeLessThan(0.5)
-    expect(chrome.applicationBarBackground).toBe('rgb(11, 74, 56)')
+    expect(chrome.applicationBarBackground).toBe('rgb(22, 35, 39)')
     expect(chrome.noteBarBackground).toBe('rgb(255, 255, 255)')
     expect(chrome.noteBarBackground).not.toBe(chrome.applicationBarBackground)
     expect(chrome.tabBackground).not.toBe(chrome.noteBarBackground)

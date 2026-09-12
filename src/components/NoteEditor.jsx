@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Archive,
   AlertTriangle,
@@ -32,7 +32,6 @@ import {
   Upload,
 } from 'lucide-react'
 import { useNotesStore, useUIStore, useThemeStore } from '../store'
-import RichTextEditor from './RichTextEditor'
 import FindReplaceBar from './FindReplaceBar'
 import NoteStatistics from './NoteStatistics'
 import NoteLinkPopover, { useNoteLinkHandler, useBacklinks } from './NoteLinkPopover'
@@ -62,16 +61,25 @@ import ResourceManagerModal from './resources/ResourceManagerModal'
 import { taskSourceToKnowledgeTarget } from '../lib/taskSources'
 import NoteCommentsModal from './collaboration/NoteCommentsModal'
 import { useWorkspaceZoom } from '../hooks/useWorkspaceZoom'
+import Spinner from './ui/Spinner'
+import { BREAKPOINTS, useMediaQuery } from '../hooks/useBreakpoint'
 
-import {
-  hasSpecializedEditor,
-  getEditorForNoteType,
-  NOTE_TYPE_CONFIG,
-  normalizeNoteData,
-} from './editors'
+import { hasSpecializedEditor, getEditorForNoteType } from './editors/editorRegistry'
+import { NOTE_TYPE_CONFIG, normalizeNoteData } from './editors/noteTypes'
+
+const RichTextEditor = lazy(() => import('./RichTextEditor'))
+
+function EditorLoadingState({ label }) {
+  return (
+    <div className="flex h-full min-h-0 items-center justify-center bg-surface-base text-content-muted">
+      <Spinner label={label} />
+    </div>
+  )
+}
 
 export default function NoteEditor({ onBack, showBack = false }) {
   const { t } = useTranslation()
+  const isCompactViewport = useMediaQuery(BREAKPOINTS.compact)
   const {
     folders,
     tags,
@@ -376,7 +384,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
   // that compensated width, clipping trailing controls (including when a phone
   // rotates across the compact breakpoint). Documents retain pinch zoom, while
   // Paper and Canvas continue to own their dedicated spatial zoom engines.
-  const appliesWorkspaceZoom = !ownsSpatialZoom && !isSpecialized
+  const appliesWorkspaceZoom = !ownsSpatialZoom && (!isSpecialized || !isCompactViewport)
   const {
     zoom: workspaceZoom,
     zoomIn: zoomWorkspaceIn,
@@ -556,40 +564,43 @@ export default function NoteEditor({ onBack, showBack = false }) {
                     flex: 'none',
                   }}
                 >
-                  <SpecializedEditor
-                    key={note.id}
-                    note={note}
-                    data={normalizedNoteData}
-                    onChange={
-                      workspaceReadOnly
-                        ? () => {}
-                        : (newData) => {
-                            recordVersionChange({ noteData: newData, title })
-                            updateNoteDraft(note.id, { noteData: newData })
-                            debouncedNoteDataUpdate(note.id, newData)
-                          }
-                    }
-                    noteTitle={title}
-                    onTitleChange={handleTitleChange}
-                    readOnly={workspaceReadOnly}
-                    navigationTarget={knowledgeNavigation.pending}
-                    onNavigationComplete={consumeKnowledgeNavigation}
-                    onOpenResources={() => setResourceManagerOpen(true)}
-                    onSetReminder={(target) => setReminderModalOpen(true, note.id, target)}
-                    onOpenCaptureSource={(source) => {
-                      const target = taskSourceToKnowledgeTarget(source)
-                      if (!target || !navigateToKnowledgeTarget(target)) {
-                        toast.error('The original capture is no longer accessible')
+                  <Suspense fallback={<EditorLoadingState label="Loading workspace" />}>
+                    <SpecializedEditor
+                      key={note.id}
+                      note={note}
+                      data={normalizedNoteData}
+                      onChange={
+                        workspaceReadOnly
+                          ? () => {}
+                          : (newData) => {
+                              recordVersionChange({ noteData: newData, title })
+                              updateNoteDraft(note.id, { noteData: newData })
+                              debouncedNoteDataUpdate(note.id, newData)
+                            }
                       }
-                    }}
-                    todayViewToken={todayViewToken}
-                  />
+                      noteTitle={title}
+                      onTitleChange={handleTitleChange}
+                      readOnly={workspaceReadOnly}
+                      navigationTarget={knowledgeNavigation.pending}
+                      onNavigationComplete={consumeKnowledgeNavigation}
+                      onOpenResources={() => setResourceManagerOpen(true)}
+                      onSetReminder={(target) => setReminderModalOpen(true, note.id, target)}
+                      onOpenCaptureSource={(source) => {
+                        const target = taskSourceToKnowledgeTarget(source)
+                        if (!target || !navigateToKnowledgeTarget(target)) {
+                          toast.error('The original capture is no longer accessible')
+                        }
+                      }}
+                      todayViewToken={todayViewToken}
+                    />
+                  </Suspense>
                 </fieldset>
               </div>
             )
           })()
         ) : (
-          <RichTextEditor
+          <Suspense fallback={<EditorLoadingState label="Loading document editor" />}>
+            <RichTextEditor
             noteId={note.id}
             content={note.content}
             onChange={handleContentChange}
@@ -786,7 +797,8 @@ export default function NoteEditor({ onBack, showBack = false }) {
               />
             )}
             workspaceZoom={workspaceZoom}
-          />
+            />
+          </Suspense>
         )}
       </div>
 

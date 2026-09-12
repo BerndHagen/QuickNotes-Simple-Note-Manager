@@ -4,7 +4,7 @@ import { Modal, Button, Field, Input } from './ui'
 import { folderIcons, folderIconNames, folderColors, getFolderIcon } from '../lib/folderIcons'
 import { useTranslation } from '../lib/useTranslation'
 
-const DEFAULT_COLOR = '#10b981'
+const DEFAULT_COLOR = '#2d6871'
 const MAX_NAME_LENGTH = 60
 
 function handleRadioNavigation(event, values, index, onChange) {

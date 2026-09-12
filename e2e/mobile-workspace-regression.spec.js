@@ -128,6 +128,23 @@ test.describe('phone workspace workflow regression', () => {
         for (const section of ['Check-in & goals', 'During the Day', 'Reflect', 'Write', 'Evening']) {
           await root.getByRole('tab', { name: new RegExp(`^${section}`, 'i') }).click()
           await auditWorkspace(page, definition, ` / ${section}`)
+          if (section === 'Check-in & goals') {
+            const addGoal = root.getByRole('button', { name: 'Add journal goal' })
+            const sync = page.locator('.qn-top-sync')
+            const [addBox, syncBox, addRadius, syncRadius] = await Promise.all([
+              addGoal.boundingBox(),
+              sync.boundingBox(),
+              addGoal.evaluate((element) => getComputedStyle(element).borderRadius),
+              sync.evaluate((element) => getComputedStyle(element).borderRadius),
+            ])
+            expect(Math.abs(addBox.width - addBox.height)).toBeLessThanOrEqual(1)
+            expect(addBox.width).toBeGreaterThanOrEqual(44)
+            expect(Math.abs(addBox.width - syncBox.width)).toBeLessThanOrEqual(1)
+            expect(addRadius).toBe(syncRadius)
+            await root.getByLabel('New journal goal').fill('Mobile journal goal')
+            await addGoal.click()
+            await expect(root.getByText('Mobile journal goal', { exact: true })).toBeVisible()
+          }
           if (section === 'Write') {
             const padding = await root.getByRole('textbox', { name: 'Free writing' }).evaluate((element) => {
               const style = getComputedStyle(element)
@@ -167,6 +184,12 @@ test.describe('phone workspace workflow regression', () => {
         for (const section of ['Goals', 'Weekly Review', 'Week View']) {
           await root.getByRole('tab', { name: new RegExp(`^${section}`, 'i') }).click()
           await auditWorkspace(page, definition, ` / ${section}`)
+          if (section === 'Week View') {
+            const addEvent = root.getByRole('button', { name: /Add event to/i })
+            const addBox = await addEvent.boundingBox()
+            expect(Math.abs(addBox.width - addBox.height)).toBeLessThanOrEqual(1)
+            expect(addBox.width).toBeGreaterThanOrEqual(44)
+          }
         }
       }
 

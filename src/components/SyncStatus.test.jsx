@@ -44,6 +44,17 @@ describe('SaveStatus', () => {
     expect(status).toHaveClass('text-warning-text')
   })
 
+  it('uses the same exact square chrome control contract in compact mode', () => {
+    const syncWithBackend = vi.fn()
+    useNotesStore.setState({ syncWithBackend })
+    render(<SyncStatusPill compact className="qn-top-sync" />)
+    const status = screen.getByRole('button', { name: /Unsynced changes.*Sync now/i })
+    expect(status).toHaveClass('qn-icon-button', 'qn-square-control', 'rounded-control', 'qn-top-sync')
+    status.click()
+    expect(syncWithBackend).toHaveBeenCalledOnce()
+    expect(syncWithBackend).toHaveBeenCalledWith({ notify: true })
+  })
+
   it('distinguishes synchronization, offline, failure, and synchronized states', () => {
     const { rerender } = render(<SaveStatus note={note} />)
 

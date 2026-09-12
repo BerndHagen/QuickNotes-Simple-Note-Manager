@@ -417,7 +417,7 @@ function TaskItem({
           className="qn-square-control flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-control transition-colors hover:bg-surface-active"
         >
           {task.completed ? (
-            <CheckCircle2 className="w-6 h-6 text-emerald-500" />
+            <CheckCircle2 className="h-6 w-6 text-success-text" />
           ) : (
             <Circle className="h-6 w-6 text-content-subtle hover:text-accent-text" />
           )}
@@ -688,7 +688,7 @@ function TaskItem({
                     className="flex-shrink-0"
                   >
                     {subtask.completed ? (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                      <CheckCircle2 className="h-4 w-4 text-success-text" />
                     ) : (
                       <Circle className="h-4 w-4 text-content-subtle hover:text-accent-text" />
                     )}

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { BREAKPOINTS } from './useBreakpoint'
 
 export const WORKSPACE_ZOOM_MIN = 0.5
 export const WORKSPACE_ZOOM_MAX = 2
@@ -8,7 +9,7 @@ const STORAGE_KEY = 'quicknotes-workspace-zoom'
 const CHANGE_EVENT = 'quicknotes:workspace-zoom'
 
 const viewportClass = () => (
-  typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches ? 'compact' : 'desktop'
+  typeof window !== 'undefined' && window.matchMedia(BREAKPOINTS.compact).matches ? 'compact' : 'desktop'
 )
 
 const storageKey = (mode = viewportClass(), scope = 'workspace') => `${STORAGE_KEY}:${mode}:${scope}`
@@ -72,7 +73,7 @@ export function useWorkspaceZoom(rootRef, { enabled = true, scope = 'workspace' 
       zoomRef.current = nextValue
       setZoomState(nextValue)
     }
-    const media = window.matchMedia('(max-width: 767px)')
+    const media = window.matchMedia(BREAKPOINTS.compact)
     const syncViewportZoom = () => {
       const nextValue = readStoredZoom(scope)
       zoomRef.current = nextValue

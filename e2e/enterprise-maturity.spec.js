@@ -99,7 +99,7 @@ test.describe('enterprise UI maturity regressions', () => {
     expect(geometry.iconCopyDelta).toBeLessThanOrEqual(1)
     expect(geometry.closeCopyDelta).toBeLessThanOrEqual(1)
     expect(geometry.backgroundImage).toBe('none')
-    expect(geometry.backgroundColor).toBe('rgb(240, 245, 243)')
+    expect(geometry.backgroundColor).toBe('rgb(238, 243, 244)')
   })
 
   test('uses identical rail separators and a high-contrast creation action', async ({ page }) => {
@@ -173,14 +173,14 @@ test.describe('enterprise UI maturity regressions', () => {
     const tabsBackground = await tabs.evaluate((element) => getComputedStyle(element).backgroundColor)
 
     expect(applicationSurface.backgroundImage).toBe('none')
-    expect(applicationSurface.backgroundColor).toBe('rgb(11, 74, 56)')
+    expect(applicationSurface.backgroundColor).toBe('rgb(22, 35, 39)')
     expect(documentSurface.backgroundImage).toBe('none')
     expect(documentSurface.backgroundColor).toBe('rgb(255, 255, 255)')
     expect(documentSurface.color).not.toBe('rgb(255, 255, 255)')
     expect(tabsBackground).not.toBe(applicationSurface.backgroundColor)
   })
 
-  test('keeps the green identity in dark chrome and neutral utility surfaces', async ({ page }) => {
+  test('keeps the blue-teal identity in dark chrome and neutral utility surfaces', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 })
     await signIn(page)
 
@@ -201,15 +201,15 @@ test.describe('enterprise UI maturity regressions', () => {
     const titleBar = page.locator('.qn-ribbon-note-bar')
     const newNote = page.getByRole('button', { name: 'New note', exact: true }).first()
 
-    await expect(applicationBar).toHaveCSS('background-color', 'rgb(7, 55, 44)')
-    await expect(rail).toHaveCSS('background-color', 'rgb(8, 46, 39)')
+    await expect(applicationBar).toHaveCSS('background-color', 'rgb(22, 35, 39)')
+    await expect(rail).toHaveCSS('background-color', 'rgb(18, 28, 32)')
     await expect(rail).toHaveCSS('background-image', 'none')
     await expect(titleBar).toHaveCSS('background-color', 'rgb(22, 28, 37)')
     await expect(newNote).toHaveCSS('background-color', 'rgb(38, 49, 61)')
 
     await newNote.hover()
     await expect.poll(() => newNote.evaluate((element) => getComputedStyle(element).backgroundColor))
-      .toBe('rgb(134, 181, 165)')
+      .toBe('rgb(132, 185, 192)')
   })
 
   test('keeps project creation controls readable on every column', async ({ page }) => {

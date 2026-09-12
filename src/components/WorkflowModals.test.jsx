@@ -15,7 +15,7 @@ import { ConfirmDialog, FolderDialog } from './FolderDialogs'
 import SharedNotesView from './SharedNotesView'
 import PasswordRecoveryScreen from './PasswordRecoveryScreen'
 
-vi.mock('@tiptap/react', () => ({
+vi.mock('@tiptap/react/menus', () => ({
   BubbleMenu: ({ children }) => <div>{children}</div>,
 }))
 

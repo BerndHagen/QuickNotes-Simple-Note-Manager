@@ -10,7 +10,10 @@ import { useEffect, useState } from 'react'
  *   wide    (>=1200) — all three panes persistent
  */
 export const BREAKPOINTS = {
-  compact: '(max-width: 767px)',
+  // Phone landscape widths can exceed 767 CSS pixels (and iOS can briefly
+  // report an even wider layout viewport while browser chrome settles). A
+  // coarse touch device below 1024px still needs the one-pane phone shell.
+  compact: '(max-width: 767px), (any-pointer: coarse) and (max-width: 1023px)',
   medium: '(min-width: 768px) and (max-width: 1199px)',
   wide: '(min-width: 1200px)',
   xwide: '(min-width: 1440px)',
@@ -39,7 +42,7 @@ export function useLayoutMode() {
 
   return {
     isCompact: compact,
-    isMedium: medium,
+    isMedium: !compact && medium,
     isWide: !compact && !medium,
     isXWide: xwide,
     /** Sidebar overlays content instead of sitting in the flow. */

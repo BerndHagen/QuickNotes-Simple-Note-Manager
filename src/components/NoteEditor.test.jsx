@@ -120,10 +120,10 @@ describe('NoteEditor recovery checkpoints', () => {
     }
   })
 
-  it('saves the pre-edit state before even a one-character content change', () => {
+  it('saves the pre-edit state before even a one-character content change', async () => {
     render(<NoteEditor />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Simulate content edit' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Simulate content edit' }))
 
     expect(mocks.saveNoteVersion).toHaveBeenCalledWith(
       'note-1',
@@ -158,7 +158,7 @@ describe('NoteEditor recovery checkpoints', () => {
     mocks.saveNoteVersion.mockRejectedValueOnce(new Error('Quota exceeded'))
     render(<NoteEditor />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Simulate content edit' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Simulate content edit' }))
 
     await waitFor(() => {
       expect(mocks.toast.error).toHaveBeenCalledWith('Could not create a recovery checkpoint')
@@ -181,7 +181,7 @@ describe('NoteEditor recovery checkpoints', () => {
   it('persists paper style as note-specific appearance data', async () => {
     render(<NoteEditor />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Simulate paper change' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Simulate paper change' }))
 
     expect(mocks.notesState.updateNoteDraft).toHaveBeenCalledWith(
       'note-1',
@@ -204,7 +204,7 @@ describe('NoteEditor recovery checkpoints', () => {
     }
     render(<NoteEditor />)
 
-    const taskInput = screen.getByRole('textbox', { name: 'New task' })
+    const taskInput = await screen.findByRole('textbox', { name: 'New task' })
     fireEvent.change(taskInput, { target: { value: 'Verify the release' } })
     fireEvent.keyDown(taskInput, { key: 'Enter' })
 

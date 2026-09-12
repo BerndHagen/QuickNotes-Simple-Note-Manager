@@ -21,6 +21,12 @@ test.describe('shared workspace interface contracts', () => {
     const title = `Ultrawide shopping ${Date.now()}`
     await createWorkspace(page, 'Shopping List', 'Weekly groceries', title)
 
+    expect(await page.locator('.qn-top-chrome').evaluate((element) => getComputedStyle(element).backgroundColor))
+      .toBe('rgb(22, 35, 39)')
+    expect(await page.getByRole('navigation', { name: 'Workspace' }).evaluate(
+      (element) => getComputedStyle(element).backgroundColor
+    )).toBe('rgb(18, 28, 32)')
+
     const root = page.locator('.qn-type-shopping')
     const content = root.locator('.qn-structured-content')
     const section = root.locator('.qn-structured-section').first()
@@ -37,12 +43,18 @@ test.describe('shared workspace interface contracts', () => {
     expect(await root.evaluate((element) => getComputedStyle(element).scrollbarGutter)).toBe('auto')
     await expect(root.locator('.qn-focused-type-icon')).toHaveCount(0)
 
-    const [syncBox, navigationBox] = await Promise.all([
-      page.locator('.qn-top-sync').boundingBox(),
-      page.getByRole('button', { name: /hide navigation/i }).first().boundingBox(),
+    const sync = page.locator('.qn-top-sync')
+    const navigation = page.getByRole('button', { name: /hide navigation/i }).first()
+    const [syncBox, navigationBox, syncRadius, navigationRadius] = await Promise.all([
+      sync.boundingBox(),
+      navigation.boundingBox(),
+      sync.evaluate((element) => getComputedStyle(element).borderRadius),
+      navigation.evaluate((element) => getComputedStyle(element).borderRadius),
     ])
     expect(Math.abs(syncBox.width - navigationBox.width)).toBeLessThanOrEqual(1)
     expect(Math.abs(syncBox.height - navigationBox.height)).toBeLessThanOrEqual(1)
+    expect(Math.abs(syncBox.width - syncBox.height)).toBeLessThanOrEqual(1)
+    expect(syncRadius).toBe(navigationRadius)
 
     const itemField = root.getByLabel('Item name')
     await itemField.fill('Coffee beans')

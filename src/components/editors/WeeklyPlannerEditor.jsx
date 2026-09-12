@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { EmptyState, buttonClasses } from '../ui'
+import { EmptyState, IconButton, buttonClasses } from '../ui'
 import {
   Plus,
   Trash2,
@@ -299,7 +299,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle, onTitle
                           <div
                             key={i}
                             className={`w-1.5 h-1.5 rounded-full ${
- i < completedTasks ? 'bg-green-500' : 'bg-surface-active'
+ i < completedTasks ? 'bg-success' : 'bg-surface-active'
  }`}
                           />
                         ))}
@@ -385,13 +385,12 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle, onTitle
                       placeholder="Add event..."
                       className="flex-1 px-3 py-2 rounded-lg bg-surface-sunken border border-subtle outline-none text-content"
                     />
-                    <button
+                    <IconButton
+                      icon={Plus}
+                      variant="primary"
+                      label={`Add event to ${selectedDay}`}
                       onClick={() => addEvent(selectedDay)}
-                      aria-label={`Add event to ${selectedDay}`}
-                      className="px-3 py-2 rounded-lg bg-accent hover:bg-accent-hover text-accent-on"
-                    >
-                      <Plus className="w-5 h-5" />
-                    </button>
+                    />
                   </div>
                 </div>
                 <div className="mb-6">
@@ -429,7 +428,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle, onTitle
                                 aria-label={task.completed ? `Mark ${task.text} incomplete` : `Complete ${task.text}`}
                               >
                                 {task.completed ? (
-                                  <CheckCircle2 className="w-5 h-5 text-green-500" />
+                                  <CheckCircle2 className="h-5 w-5 text-success-text" />
                                 ) : (
                                   <Circle className="w-5 h-5 text-content-subtle" />
                                 )}
@@ -472,13 +471,12 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle, onTitle
                       placeholder="Add task..."
                       className="flex-1 px-3 py-2 rounded-lg bg-surface-sunken border border-subtle outline-none text-content"
                     />
-                    <button
+                    <IconButton
+                      icon={Plus}
+                      variant="primary"
+                      label={`Add task to ${selectedDay}`}
                       onClick={() => addTask(selectedDay)}
-                      aria-label={`Add task to ${selectedDay}`}
-                      className="px-3 py-2 rounded-lg bg-accent hover:bg-accent-hover text-accent-on"
-                    >
-                      <Plus className="w-5 h-5" />
-                    </button>
+                    />
                   </div>
                 </div>
                 <div>
@@ -549,7 +547,7 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle, onTitle
                         aria-label={goal.completed ? `Mark ${goal.text} incomplete` : `Complete ${goal.text}`}
                       >
                         {goal.completed ? (
-                          <CheckCircle2 className="w-6 h-6 text-green-500" />
+                          <CheckCircle2 className="h-6 w-6 text-success-text" />
                         ) : (
                           <Circle className="w-6 h-6 text-content-subtle" />
                         )}

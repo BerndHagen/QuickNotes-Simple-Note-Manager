@@ -19,17 +19,17 @@
   color-scheme: light;
 
   /* --- Brand ------------------------------------------------ */
-  --qn-brand-50: #eef9fa;
-  --qn-brand-100: #d9f0f2;
-  --qn-brand-200: #b8e0e4;
-  --qn-brand-300: #86c8cf;
-  --qn-brand-400: #55aab4;
-  --qn-brand-500: #398894;
-  --qn-brand-600: #326f7a;
-  --qn-brand-700: #285e68;
-  --qn-brand-800: #204a53;
-  --qn-brand-900: #193b43;
-  --qn-brand-950: #10282e;
+  --qn-brand-50: #edf7f8;
+  --qn-brand-100: #d6ecee;
+  --qn-brand-200: #addadd;
+  --qn-brand-300: #79c0c6;
+  --qn-brand-400: #4da1aa;
+  --qn-brand-500: #347f89;
+  --qn-brand-600: #2d6871;
+  --qn-brand-700: #26565e;
+  --qn-brand-800: #1e4249;
+  --qn-brand-900: #192f34;
+  --qn-brand-950: #0d2024;
 
   /* --- Surfaces --------------------------------------------- */
   /* app  : the outermost canvas                                */
@@ -37,7 +37,7 @@
   /* base : editor + dialog bodies                              */
   /* raised: cards, menus, popovers                             */
   /* sunken: inset wells, code blocks, form groups              */
-  --qn-surface-app: #e9f0f1;
+  --qn-surface-app: #e9eff0;
   --qn-surface-panel: #f0f4f5;
   --qn-surface-base: #f8fafb;
   --qn-surface-raised: #ffffff;
@@ -46,8 +46,8 @@
   --qn-surface-window-header: #eef3f4;
   --qn-surface-window-footer: #f2f6f7;
   --qn-surface-sunken: #e7eef0;
-  --qn-surface-brand-tint: #edf6f7;
-  --qn-surface-brand-tint-strong: #deedef;
+  --qn-surface-brand-tint: #edf5f6;
+  --qn-surface-brand-tint-strong: #dcebed;
   --qn-surface-hover: rgba(15, 23, 42, 0.07);
   --qn-surface-active: rgba(15, 23, 42, 0.11);
   --qn-overlay: rgba(15, 23, 42, 0.45);
@@ -63,8 +63,8 @@
      Text tokens are set against the brightest point of that material — the
      deep teal behind the brand mark:
        text, muted text, and controls all retain WCAG AA contrast. */
-  --qn-nav-bg: #11232a;
-  --qn-nav-bg-raised: #193943;
+  --qn-nav-bg: #121c20;
+  --qn-nav-bg-raised: #1c3036;
   --qn-nav-border: rgba(255, 255, 255, 0.12);
   --qn-nav-text: #edf3f4;
   --qn-nav-text-muted: #c3d1d5;
@@ -79,7 +79,7 @@
   --qn-border-strong: #c1cad1;
 
   /* --- Text ------------------------------------------------- */
-  /* Contrast ratios are measured against --qn-surface-panel (#f1f5f3),
+  /* Contrast ratios are measured against --qn-surface-panel (#f0f4f5),
      the lightest background any of these sit on:
        text         #111827  16.1:1
        text-muted   #56606d   6.0:1
@@ -94,21 +94,21 @@
   /* --- Accent (interactive brand) --------------------------- */
   /* A muted blue-teal accent keeps long writing sessions calm while the
      darker action shades retain accessible contrast with white labels. */
-  --qn-accent: #326f7a;
-  --qn-accent-hover: #285e68;
-  --qn-accent-active: #204f58;
-  --qn-accent-text: #285e68;
-  --qn-accent-soft: #e5f0f2;
-  --qn-accent-soft-hover: #d8e8eb;
-  --qn-accent-border: #aecdd2;
+  --qn-accent: #2d6871;
+  --qn-accent-hover: #26565e;
+  --qn-accent-active: #1e4a51;
+  --qn-accent-text: #255d66;
+  --qn-accent-soft: #e3eff1;
+  --qn-accent-soft-hover: #d5e6e9;
+  --qn-accent-border: #a9cbd0;
 
   /* Application banners use a restrained deep blue-teal. The
      decorative stationery treatment is reserved for authentication. */
-  --qn-banner: #152b32;
-  --qn-banner-from: #1b3d47;
-  --qn-banner-via: #17343d;
-  --qn-banner-to: #10252c;
-  --qn-banner-accent: #24515c;
+  --qn-banner: #162327;
+  --qn-banner-from: #20383e;
+  --qn-banner-via: #192c31;
+  --qn-banner-to: #101c20;
+  --qn-banner-accent: #294b52;
   --qn-banner-text: #ffffff;
   --qn-banner-text-muted: rgba(255, 255, 255, 0.72);
   --qn-banner-border: rgba(255, 255, 255, 0.14);
@@ -197,8 +197,8 @@
 
   /* --- Focus ------------------------------------------------ */
   /* Muted blue-teal keeps focus visible without glare. */
-  --qn-focus-ring: #5f929c;
-  --qn-focus-soft: rgba(50, 111, 122, 0.16);
+  --qn-focus-ring: #578c95;
+  --qn-focus-soft: rgba(45, 104, 113, 0.16);
   --qn-focus-ring-width: 2px;
   --qn-focus-ring-offset: 2px;
 
@@ -239,8 +239,8 @@
   --qn-text-inverted: #0b0f14;
   --qn-text-on-brand: #0b0f14;
 
-  --qn-nav-bg: #0f2026;
-  --qn-nav-bg-raised: #17323a;
+  --qn-nav-bg: #121c20;
+  --qn-nav-bg-raised: #1c3036;
   --qn-nav-border: rgba(203, 213, 225, 0.14);
   --qn-nav-text: #edf1f5;
   --qn-nav-text-muted: #b7c0cb;
@@ -249,19 +249,19 @@
   --qn-nav-active-bg: rgba(255, 255, 255, 0.09);
   --qn-nav-active-text: #ffffff;
 
-  --qn-accent: #6fa8b3;
-  --qn-accent-hover: #82b7c0;
-  --qn-accent-active: #96c5cc;
-  --qn-accent-text: #8fc1ca;
-  --qn-accent-soft: rgba(111, 168, 179, 0.14);
-  --qn-accent-soft-hover: rgba(111, 168, 179, 0.22);
-  --qn-accent-border: rgba(111, 168, 179, 0.38);
+  --qn-accent: #71aab2;
+  --qn-accent-hover: #84b9c0;
+  --qn-accent-active: #98c8ce;
+  --qn-accent-text: #91c2c9;
+  --qn-accent-soft: rgba(113, 170, 178, 0.14);
+  --qn-accent-soft-hover: rgba(113, 170, 178, 0.22);
+  --qn-accent-border: rgba(113, 170, 178, 0.38);
 
-  --qn-banner: #10252c;
-  --qn-banner-from: #183b45;
-  --qn-banner-via: #14313a;
-  --qn-banner-to: #0c2026;
-  --qn-banner-accent: #1d4651;
+  --qn-banner: #162327;
+  --qn-banner-from: #20383e;
+  --qn-banner-via: #192c31;
+  --qn-banner-to: #101c20;
+  --qn-banner-accent: #294b52;
   --qn-banner-text: #edf1f5;
   --qn-banner-text-muted: rgba(237, 241, 245, 0.66);
   --qn-banner-border: rgba(255, 255, 255, 0.08);
@@ -298,7 +298,7 @@
   --qn-shadow-dialog: 0 24px 56px rgba(0, 0, 0, 0.65);
 
   --qn-focus-ring: var(--qn-accent);
-  --qn-focus-soft: rgba(111, 168, 179, 0.18);
+  --qn-focus-soft: rgba(113, 170, 178, 0.18);
 }
 
 /* ============================================================

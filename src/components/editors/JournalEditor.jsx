@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { buttonClasses } from '../ui'
+import { buttonClasses, IconButton } from '../ui'
 import {
   BookOpen,
   Sun,
@@ -277,7 +277,7 @@ export default function JournalEditor({ data, onChange, note, noteTitle, onTitle
                       aria-label={goal.completed ? `Mark ${goal.text} incomplete` : `Complete ${goal.text}`}
                     >
                       {goal.completed ? (
-                        <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-success">
                           <Star className="w-4 h-4 text-white fill-white" />
                         </div>
                       ) : (
@@ -307,13 +307,12 @@ export default function JournalEditor({ data, onChange, note, noteTitle, onTitle
                   placeholder="Add a goal for today..."
                   className="flex-1 rounded-control border border-subtle bg-surface-sunken px-4 py-2 text-content outline-none"
                 />
-                <button
+                <IconButton
+                  icon={Plus}
+                  variant="primary"
+                  label="Add journal goal"
                   onClick={addGoal}
-                  aria-label="Add journal goal"
-                  className={buttonClasses({ variant: 'primary' })}
-                >
-                  <Plus className="w-5 h-5" />
-                </button>
+                />
               </div>
             </div>
           </div>
@@ -358,13 +357,12 @@ export default function JournalEditor({ data, onChange, note, noteTitle, onTitle
                   placeholder="Add a highlight moment..."
                   className="flex-1 rounded-control border border-subtle bg-surface-sunken px-4 py-2 text-content outline-none"
                 />
-                <button
+                <IconButton
+                  icon={Plus}
+                  variant="primary"
+                  label="Add highlight"
                   onClick={addHighlight}
-                  aria-label="Add highlight"
-                  className={buttonClasses({ variant: 'primary' })}
-                >
-                  <Plus className="w-5 h-5" />
-                </button>
+                />
               </div>
             </div>
             <div>

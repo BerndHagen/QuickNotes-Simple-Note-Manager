@@ -128,6 +128,7 @@ export const IconButton = forwardRef(function IconButton(
     loading = false,
     disabled = false,
     className = '',
+    children,
     tone,
     ...props
   },
@@ -169,6 +170,7 @@ export const IconButton = forwardRef(function IconButton(
       ) : (
         <Icon className={`${iconClass} ${iconClassName}`} aria-hidden="true" />
       )}
+      {children}
     </button>
   )
 })

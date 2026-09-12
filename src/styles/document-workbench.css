@@ -1,0 +1,825 @@
+/* ============================================================
+   Editor workbench
+   ------------------------------------------------------------
+   The note is a deliberate document surface inside a calm workspace. The
+   surrounding field establishes depth and keeps long lines from expanding to
+   the full application width on large monitors.
+   ============================================================ */
+.editor-ribbon {
+  container-type: inline-size;
+  background: var(--qn-surface-panel);
+}
+
+.qn-ribbon-note-bar {
+  align-items: center;
+  color: #ffffff;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.qn-ribbon-note-bar {
+  background:
+    linear-gradient(90deg, rgb(255 255 255 / 4%), transparent 46%),
+    var(--qn-banner);
+  box-shadow: 0 1px 0 rgb(0 0 0 / 18%);
+}
+
+.qn-ribbon-tabs {
+  background: var(--qn-surface-toolbar);
+  border-color: var(--qn-border-subtle);
+  color: var(--qn-text-muted);
+}
+
+.qn-ribbon-title {
+  width: clamp(10rem, 36cqw, 34rem);
+}
+
+.qn-ribbon-title input {
+  color: #ffffff;
+  caret-color: #ffffff;
+}
+
+.qn-ribbon-title input::placeholder {
+  color: rgb(255 255 255 / 68%);
+}
+
+.qn-ribbon-title input:hover,
+.qn-ribbon-title input:focus {
+  background: rgb(255 255 255 / 12%);
+}
+
+.qn-ribbon-tabs .qn-ribbon-tab {
+  color: var(--qn-text-muted);
+}
+
+.qn-ribbon-tabs .qn-ribbon-tab[aria-selected='true'] {
+  background: color-mix(in srgb, var(--qn-accent-soft) 58%, transparent);
+  color: var(--qn-accent-text);
+}
+
+.qn-ribbon-tabs .qn-ribbon-tab::after {
+  background: var(--qn-accent);
+}
+
+.qn-ribbon-note-bar :where(button, input):focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: -3px;
+}
+
+.qn-ribbon-note-bar { --qn-control-focus-ring: #ffffff; }
+
+.qn-ribbon-note-bar button {
+  color: #ffffff !important;
+}
+
+.qn-ribbon-note-bar button:hover,
+.qn-ribbon-note-bar button[aria-pressed='true'],
+.qn-ribbon-note-bar button[aria-expanded='true'] {
+  background: rgb(255 255 255 / 14%) !important;
+  color: #ffffff !important;
+}
+
+/* A favourite is a persistent state, not a generic selected command. Keep its
+   gold semantic colour even on the dark identity bar so list, grid and editor
+   never communicate the same state with three different treatments. */
+.qn-ribbon-note-bar button[data-tone='favorite'][aria-pressed='true'] {
+  background: color-mix(in srgb, var(--qn-warning) 18%, transparent) !important;
+  color: var(--qn-warning) !important;
+}
+
+.qn-ribbon-note-bar button:active {
+  background: rgb(255 255 255 / 22%) !important;
+}
+
+.qn-ribbon-tabs .qn-ribbon-tab:hover {
+  background: var(--qn-surface-hover) !important;
+  color: var(--qn-text) !important;
+}
+
+.qn-ribbon-tabs .qn-ribbon-tab[aria-selected='true'] {
+  background: color-mix(in srgb, var(--qn-accent-soft) 58%, transparent) !important;
+  color: var(--qn-accent-text) !important;
+}
+
+.qn-ribbon-tabs .qn-ribbon-tab[aria-selected='true']:hover {
+  background: var(--qn-accent-soft) !important;
+}
+
+.qn-ribbon-note-bar button:disabled {
+  color: rgb(255 255 255 / 44%) !important;
+}
+
+/* The application chrome now owns the continuous blue-teal identity bar. On
+   desktop this row becomes the document workspace header; mobile keeps the
+   compact teal note bar because the global chrome is intentionally absent. */
+@media (min-width: 768px) {
+  .qn-ribbon-note-bar {
+    border-bottom: 1px solid var(--qn-border-subtle);
+    background: var(--qn-surface-raised);
+    box-shadow: none;
+    color: var(--qn-text);
+  }
+
+  .qn-ribbon-title input {
+    color: var(--qn-text);
+    caret-color: var(--qn-text);
+  }
+
+  .qn-ribbon-title input::placeholder {
+    color: var(--qn-text-subtle);
+  }
+
+  .qn-ribbon-title input:hover,
+  .qn-ribbon-title input:focus {
+    background: var(--qn-surface-hover);
+  }
+
+  .qn-ribbon-note-bar button {
+    color: var(--qn-text-muted) !important;
+  }
+
+  .qn-ribbon-note-bar button:hover,
+  .qn-ribbon-note-bar button[aria-pressed='true'],
+  .qn-ribbon-note-bar button[aria-expanded='true'] {
+    background: var(--qn-surface-hover) !important;
+    color: var(--qn-text) !important;
+  }
+
+  .qn-ribbon-note-bar button[data-tone='favorite'][aria-pressed='true'] {
+    background: var(--qn-warning-soft) !important;
+    color: var(--qn-warning) !important;
+  }
+
+  .qn-ribbon-note-bar :where(button, input):focus-visible {
+    outline-color: var(--qn-focus-ring);
+  }
+
+  .qn-brainstorm-topic {
+    width: 100%;
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 767px) {
+  /* Focused workspaces use the same single mobile identity bar as documents.
+     Their larger in-canvas title remains a desktop affordance, avoiding the
+     former duplicate-title treatment on phones. */
+  .qn-focused-mobile-chrome .qn-focused-note-title {
+    display: none;
+  }
+
+  .qn-focused-mobile-chrome > .qn-ribbon-note-bar {
+    position: relative;
+    z-index: var(--qn-z-sticky);
+  }
+}
+
+.qn-ribbon-tabs :where(button, input):focus-visible {
+  outline: 2px solid var(--qn-focus-ring);
+  outline-offset: -3px;
+}
+
+.qn-ribbon-tabs button:disabled {
+  color: var(--qn-text-subtle) !important;
+}
+
+.qn-ribbon-mobile-action {
+  display: none;
+}
+
+.editor-toolbar {
+  gap: 0.375rem;
+  padding-block: 0.375rem;
+  background: var(--qn-surface-toolbar);
+}
+
+.qn-ribbon-group {
+  min-height: 56px;
+  align-items: center;
+  padding: 0.15rem 0.4rem 0.85rem;
+  border: 0;
+  border-right: 1px solid var(--qn-border-subtle);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.qn-ribbon-group:last-child {
+  border-right: 0;
+}
+
+.editor-ribbon[data-density='compact'] .editor-toolbar {
+  min-height: 49px;
+  padding-block: 0.25rem;
+}
+
+.editor-ribbon[data-density='compact'] .qn-ribbon-group {
+  min-height: 36px;
+  padding: 0.1rem 0.45rem;
+}
+
+.editor-ribbon[data-density='compact'] .qn-ribbon-group-label {
+  display: none;
+}
+
+.editor-ribbon[data-group-labels='hidden'] .qn-ribbon-group {
+  min-height: 40px;
+  padding-bottom: 0.2rem;
+}
+
+.editor-ribbon[data-group-labels='hidden'] .qn-ribbon-group-label {
+  display: none;
+}
+
+.qn-editor-workbench {
+  padding: 24px clamp(18px, 3vw, 44px) 44px;
+  --qn-page-gutter-color: var(--qn-surface-workbench);
+  background: var(--qn-page-gutter-color);
+  scrollbar-color: var(--qn-border-strong) transparent;
+}
+
+/* Browser pinch zoom is disabled only inside an editable workspace. Two-touch
+   gestures are converted to the workspace's own zoom so the surrounding app
+   chrome and browser zoom remain stable while one-finger scrolling still
+   behaves normally. */
+.qn-workspace-zoom-root { touch-action: pan-x pan-y; }
+
+.qn-editor-page {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: calc(100% - 1px);
+  margin: 0 auto;
+  border: 0;
+  border-radius: 0;
+  background-color: var(--qn-surface-raised);
+  box-shadow: none;
+  transition: max-width var(--qn-duration-base) var(--qn-ease), box-shadow var(--qn-duration-fast) var(--qn-ease);
+}
+
+.qn-editor-page[data-document-width='focused'] { max-width: 680px; }
+.qn-editor-page[data-document-width='standard'] { max-width: 794px; }
+.qn-editor-page[data-document-width='wide'] { max-width: 960px; }
+.qn-editor-page[data-document-width='full'] { max-width: none; }
+
+.qn-editor-page:focus-within {
+  box-shadow: none;
+}
+
+.qn-document-page-sheets {
+  position: absolute;
+  inset: 0;
+  /* Keep this wrapper out of a stacking context. The fill remains behind the
+     z-index:1 editor while each child edge can rise above its z-index:2 gap
+     mask. A z-index on this wrapper would trap both children underneath the
+     complete ProseMirror layer. */
+  z-index: auto;
+  pointer-events: none;
+}
+
+.qn-document-page-sheet {
+  position: absolute;
+  z-index: 0;
+  right: 0;
+  left: 0;
+  box-sizing: border-box;
+  display: block;
+  background-color: var(--qn-surface-raised);
+  background-position: 0 0;
+}
+
+/* The edge is deliberately separate from the paper fill. ProseMirror's page
+   gap masks content at z-index 2; this foreground edge then restores the full
+   border and shadow at z-index 3 instead of letting the mask cut them off. */
+.qn-document-page-edge {
+  position: absolute;
+  z-index: 3;
+  right: 0;
+  left: 0;
+  box-sizing: border-box;
+  display: block;
+  border: 1px solid var(--qn-border-subtle);
+  background: transparent;
+  box-shadow: 0 0 6px rgb(15 23 42 / 16%), 0 1px 2px rgb(15 23 42 / 8%);
+  transition: border-color var(--qn-duration-fast) var(--qn-ease), box-shadow var(--qn-duration-fast) var(--qn-ease);
+}
+
+.qn-document-page-gutter {
+  position: absolute;
+  z-index: 2;
+  right: 0;
+  left: 0;
+  display: block;
+  background: var(--qn-page-gutter-color, var(--qn-surface-workbench));
+}
+
+.qn-editor-page:focus-within .qn-document-page-edge {
+  border-width: 2px;
+  border-color: var(--qn-accent);
+}
+
+.qn-editor-page .ProseMirror {
+  --qn-page-pad-x: clamp(28px, 6vw, 76px);
+  --qn-page-pad-y: clamp(42px, 5vw, 68px);
+  box-sizing: border-box;
+  min-height: max(var(--qn-paginated-min-height, 1123px), var(--qn-object-min-height, 300px));
+  padding: var(--qn-page-pad-y) var(--qn-page-pad-x);
+  position: relative;
+  z-index: 1;
+  overflow-x: clip;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.qn-editor-page .ProseMirror:focus-visible {
+  outline: none !important;
+}
+
+/* Ruled-paper margin guides belong to the sheet background, while their text
+   inset belongs to the content box. Keeping those responsibilities separate
+   prevents a paper switch from changing the measured page width. */
+.qn-editor-page.paper-lined-margin .ProseMirror {
+  padding-left: max(var(--qn-page-pad-x), 70px);
+}
+
+.qn-editor-page.paper-college .ProseMirror {
+  padding-left: max(var(--qn-page-pad-x), 50px);
+}
+
+.qn-page-break-marker {
+  height: 0;
+  margin: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.qn-page-gap {
+  display: block;
+  box-sizing: border-box;
+  max-width: none;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding: 0 !important;
+  pointer-events: none;
+}
+
+.ProseMirror ul[data-type='taskList'] > .qn-page-gap {
+  display: block;
+  flex: none;
+}
+
+.qn-page-gap > span {
+  display: block;
+}
+
+.qn-page-gap__remaining,
+.qn-page-gap__top {
+  background: transparent;
+}
+
+.qn-page-gap__gutter {
+  position: relative;
+  z-index: auto;
+  width: 100%;
+  margin-left: 0;
+  /* This span owns document flow only. The page-sheet layer paints the exact
+     visual gap from the same geometry that paints page edges, so checklist
+     measurement and sub-pixel rounding can never shorten a visible sheet. */
+  background: transparent;
+}
+
+.dark .qn-document-page-edge {
+  box-shadow: 0 0 6px rgb(0 0 0 / 58%), 0 1px 2px rgb(0 0 0 / 34%);
+}
+
+/* Semantic callouts provide structured emphasis without relying on floating
+   shapes. Their tone remains readable in both colour and icon/label form. */
+.ProseMirror .qn-callout {
+  --callout-accent: var(--qn-info-text);
+  --callout-border: var(--qn-info-border);
+  --callout-bg: var(--qn-info-soft);
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.5rem minmax(0, 1fr);
+  gap: 0.75rem;
+  margin-block: 1rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--callout-border);
+  border-left-width: 3px;
+  border-radius: var(--qn-radius-card);
+  background: var(--callout-bg);
+  color: var(--qn-text);
+}
+
+.ProseMirror .qn-callout::before {
+  content: 'i';
+  display: grid;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-top: 0.15rem;
+  place-items: center;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  color: var(--callout-accent);
+  font-size: 0.72rem;
+  font-weight: 800;
+  font-style: normal;
+  line-height: 1;
+}
+
+.ProseMirror .qn-callout[data-tone='tip'] {
+  --callout-accent: var(--qn-success-text);
+  --callout-border: var(--qn-success-border);
+  --callout-bg: var(--qn-success-soft);
+}
+
+.ProseMirror .qn-callout[data-tone='tip']::before { content: '\2605'; border: 0; font-size: 1rem; }
+.ProseMirror .qn-callout[data-tone='warning'] {
+  --callout-accent: var(--qn-warning-text);
+  --callout-border: var(--qn-warning-border);
+  --callout-bg: var(--qn-warning-soft);
+}
+.ProseMirror .qn-callout[data-tone='warning']::before { content: '!'; border-radius: 3px; }
+.ProseMirror .qn-callout[data-tone='important'] {
+  --callout-accent: var(--qn-danger-text);
+  --callout-border: var(--qn-danger-border);
+  --callout-bg: var(--qn-danger-soft);
+}
+.ProseMirror .qn-callout[data-tone='important']::before { content: '!'; }
+.ProseMirror .qn-callout__content > :first-child { margin-top: 0; }
+.ProseMirror .qn-callout__content > :last-child { margin-bottom: 0; }
+
+/* Checklist appearance is stored per item. Completion treatment is equally
+   explicit: checking a box never irreversibly rewrites or deletes its text. */
+.ProseMirror ul[data-type='taskList'] li[data-checkbox-color='blue'] { --qn-check-accent: #2563eb; }
+.ProseMirror ul[data-type='taskList'] li[data-checkbox-color='purple'] { --qn-check-accent: #7c3aed; }
+.ProseMirror ul[data-type='taskList'] li[data-checkbox-color='amber'] { --qn-check-accent: #d97706; }
+.ProseMirror ul[data-type='taskList'] li[data-checkbox-color='rose'] { --qn-check-accent: #e11d48; }
+.ProseMirror ul[data-type='taskList'] li[data-checkbox-color='slate'] { --qn-check-accent: #475569; }
+.ProseMirror ul[data-type='taskList'] li[data-checkbox-color='accent'],
+.ProseMirror ul[data-type='taskList'] li:not([data-checkbox-color]) { --qn-check-accent: var(--qn-accent); }
+
+.ProseMirror ul[data-type='taskList'] li[data-checked='true'] .qn-task-checkbox-visual,
+.ProseMirror ul[data-type='taskList'] li[data-checked='true'] > label > span {
+  border-color: var(--qn-check-accent);
+  background: transparent;
+  color: var(--qn-check-accent);
+}
+
+/* Primary actions share one restrained, tactile treatment. */
+.qn-button-primary:not(:disabled) {
+  border: 1px solid color-mix(in srgb, var(--qn-accent) 78%, black);
+  background: var(--qn-accent);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.18), inset 0 1px 0 rgb(255 255 255 / 0.16);
+}
+
+.qn-button-primary:not(:disabled):hover {
+  border-color: color-mix(in srgb, var(--qn-accent-hover) 84%, black);
+  background: var(--qn-accent-hover);
+  box-shadow: 0 2px 5px rgb(15 23 42 / 0.22), inset 0 1px 0 rgb(255 255 255 / 0.18);
+}
+
+/* The dark note-list header is a neutral work surface. Its permanent creation
+   control follows that hierarchy and introduces green only on interaction. */
+.dark .qn-new-note-action:not(:disabled) {
+  border-color: var(--qn-border-strong);
+  background: #26313d;
+  color: #f8fafc;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.32), inset 0 1px 0 rgb(255 255 255 / 0.08);
+}
+
+.dark .qn-new-note-action:not(:disabled):hover,
+.dark .qn-new-note-action:not(:disabled):focus-visible {
+  border-color: var(--qn-accent-border);
+  background: var(--qn-accent-hover);
+  color: var(--qn-text-on-brand);
+}
+
+.qn-nav-surface .qn-button-primary:not(:disabled) {
+  border-color: color-mix(in srgb, var(--qn-brand-400) 72%, white);
+  background: var(--qn-brand-700);
+  color: white;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.24), inset 0 1px 0 rgb(255 255 255 / 0.18);
+}
+
+.qn-nav-surface .qn-button-primary:not(:disabled):hover {
+  border-color: var(--qn-brand-300);
+  background: var(--qn-brand-800);
+  color: white;
+  box-shadow: 0 3px 10px rgb(0 0 0 / 0.3), inset 0 1px 0 rgb(255 255 255 / 0.2);
+}
+
+.ProseMirror ul[data-type='taskList'] li[data-checkbox-size='compact'] .qn-task-checkbox-visual,
+.ProseMirror ul[data-type='taskList'] li[data-checkbox-size='compact'] > label > span {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.ProseMirror ul[data-type='taskList'] li[data-checkbox-size='large'] .qn-task-checkbox-visual,
+.ProseMirror ul[data-type='taskList'] li[data-checkbox-size='large'] > label > span {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.ProseMirror ul[data-type='taskList'] li[data-checked='true'][data-checked-style='strike'] > div {
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  color: var(--qn-text-muted);
+}
+
+.ProseMirror ul[data-type='taskList'] li[data-checked='true'][data-checked-style='fade'] > div {
+  opacity: 0.55;
+}
+
+.ProseMirror ul[data-type='taskList'] li[data-checked='true'][data-checked-style='keep'] > div {
+  color: inherit;
+  text-decoration: none;
+  opacity: 1;
+}
+
+.ProseMirror ul[data-type='taskList'] li:focus-within {
+  border-radius: var(--qn-radius-control);
+  background: color-mix(in srgb, var(--qn-accent-soft) 42%, transparent);
+}
+
+.qn-check-option[aria-pressed='true'],
+.qn-check-colour[aria-pressed='true'] {
+  border-color: var(--qn-accent);
+  box-shadow: 0 0 0 2px var(--qn-accent-soft);
+}
+
+.qn-check-colour {
+  display: grid;
+  width: 1.75rem;
+  height: 1.75rem;
+  place-items: center;
+  border: 2px solid var(--qn-surface-raised);
+  border-radius: 999px;
+  background: var(--qn-accent);
+}
+.qn-check-colour--blue { background: #2563eb; }
+.qn-check-colour--purple { background: #7c3aed; }
+.qn-check-colour--amber { background: #d97706; }
+.qn-check-colour--rose { background: #e11d48; }
+.qn-check-colour--slate { background: #475569; }
+
+@media (min-width: 768px) {
+  /* Desktop pagination is painted by independent sheet elements. The editor
+     itself is deliberately transparent so no border, paper pattern, or shadow
+     can bridge the physical gutter between adjacent pages. */
+  .qn-editor-page {
+    background-color: transparent !important;
+    background-image: none !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .editor-toolbar {
+    height: 52px;
+    min-height: 52px;
+    gap: 0.125rem;
+    padding-block: 2px;
+  }
+
+  .qn-editor-workbench {
+    padding: 0;
+    background: var(--qn-surface-raised);
+  }
+
+  .qn-editor-page {
+    height: 100%;
+    min-height: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .qn-editor-page .ProseMirror {
+    height: 100%;
+    min-height: 0;
+    padding: 20px 18px 80px;
+    background-color: inherit;
+    background-image: inherit;
+    background-position: inherit;
+    background-size: inherit;
+  }
+
+  .qn-document-page-sheets {
+    display: none;
+  }
+
+  .qn-editor-page.paper-lined-margin .ProseMirror,
+  .qn-editor-page.paper-college .ProseMirror {
+    padding-left: 24px;
+  }
+
+  .qn-editor-page.paper-lined-margin {
+    background-image: repeating-linear-gradient(
+      transparent,
+      transparent 31px,
+      #e5e7eb 31px,
+      #e5e7eb 32px
+    ) !important;
+  }
+
+  .qn-editor-page.paper-college {
+    background-image: repeating-linear-gradient(
+      transparent,
+      transparent 27px,
+      #93c5fd 27px,
+      #93c5fd 28px
+    ) !important;
+  }
+
+  .dark .qn-editor-page.paper-lined-margin {
+    background-image: repeating-linear-gradient(
+      transparent,
+      transparent 31px,
+      var(--pattern-color) 31px,
+      var(--pattern-color) 32px
+    ) !important;
+  }
+
+  .dark .qn-editor-page.paper-college {
+    background-image: repeating-linear-gradient(
+      transparent,
+      transparent 27px,
+      var(--pattern-color) 27px,
+      var(--pattern-color) 28px
+    ) !important;
+  }
+
+  /* Phones use a continuous writing surface. Desktop page boundaries remain
+     durable in the document and reappear for print/PDF, but large simulated
+     paper gutters must never consume most of a small editing viewport. */
+  .qn-editor-page .qn-page-gap {
+    display: none !important;
+  }
+
+  .qn-editor-page .qn-page-break-marker {
+    height: 18px;
+    margin-block: 12px;
+    overflow: visible;
+    border-top: 1px dashed var(--qn-border-strong);
+  }
+
+  .qn-ribbon-group {
+    box-sizing: border-box;
+    height: 48px;
+    min-height: 48px;
+    align-items: center;
+    padding: 1px 0.25rem;
+    border-radius: 0;
+  }
+
+  .qn-ribbon-group-label {
+    display: none;
+  }
+}
+
+/* A three-pane workspace can leave the editor narrower than the browser.
+   Compact group chrome at that component boundary while preserving every
+   command and the user's chosen ribbon density at roomier widths. */
+@container (max-width: 760px) {
+  .editor-toolbar {
+    gap: 0.125rem;
+    padding-inline: 0.25rem;
+  }
+
+  .qn-ribbon-group {
+    min-height: 40px;
+    padding: 0.25rem;
+  }
+
+  .qn-ribbon-group-label {
+    display: none;
+  }
+}
+
+@container (max-width: 900px) {
+  .qn-ribbon-title {
+    width: min(100%, 22rem);
+  }
+
+  .qn-ribbon-tab {
+    padding-inline: 0.625rem;
+  }
+
+  .qn-ribbon-secondary-action {
+    display: none !important;
+  }
+
+}
+
+@media (min-width: 768px) {
+  /* With room for the full action set, equal side columns keep the title on
+     the physical centre line. Phone workspaces instead centre it in the
+     genuinely available space between controls, preventing collisions. */
+  .qn-ribbon-note-bar {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  }
+}
+
+@container (max-width: 620px) {
+  .qn-ribbon-primary-action {
+    display: none !important;
+  }
+}
+
+/* PDF staging uses the same paper classes and ProseMirror presentation as the
+   live editor. It stays behind the application while html2canvas renders it,
+   then the export module removes it immediately. */
+.qn-pdf-export {
+  position: fixed;
+  z-index: -1000;
+  top: 0;
+  left: 0;
+  width: 794px;
+  pointer-events: none;
+  background: #ffffff;
+  color: #111827;
+}
+
+.qn-pdf-export .qn-pdf-note {
+  width: 794px !important;
+  max-width: none !important;
+  min-height: 1123px !important;
+  height: auto !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.qn-pdf-note__header {
+  padding: 52px 68px 0;
+}
+
+.qn-pdf-note__header h1 {
+  margin: 0;
+  color: inherit;
+  font-size: 30px;
+  font-weight: 720;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.qn-pdf-note__meta {
+  margin: 10px 0 0;
+  color: #5b6472;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.qn-pdf-note__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 14px;
+}
+
+.qn-pdf-note__tags span {
+  padding: 3px 8px;
+  border: 1px solid #b8e0e4;
+  border-radius: 999px;
+  background: #eef9fa;
+  color: #285e68;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.qn-pdf-export .qn-pdf-note__content {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 0 !important;
+  height: auto !important;
+  padding: 34px 68px 88px !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  color: inherit;
+}
+
+.qn-pdf-export .paper-lined-margin .qn-pdf-note__header,
+.qn-pdf-export .paper-lined-margin .qn-pdf-note__content {
+  padding-left: 86px !important;
+}
+
+.qn-pdf-export :is(.paper-dark, .paper-dark-lined, .paper-blueprint) .qn-pdf-note__meta {
+  color: #cbd5e1;
+}
+
+.qn-pdf-export :is(.paper-dark, .paper-dark-lined, .paper-blueprint) .qn-pdf-note__tags span {
+  border-color: rgba(134, 200, 207, 0.45);
+  background: rgba(57, 136, 148, 0.18);
+  color: #b8e0e4;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+  }
+}

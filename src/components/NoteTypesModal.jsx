@@ -17,7 +17,7 @@ import {
   CATEGORIES,
   getStarterContent,
   getStarterData,
-} from './editors'
+} from './editors/noteTypes'
 import { Button, Input, Modal } from './ui'
 import { MAX_NOTE_TITLE_LENGTH } from '../lib/dataValidation'
 import { applyTemplateVariables } from '../lib/noteTemplates'
@@ -84,7 +84,7 @@ export default function NoteTypesModal({ onCreated }) {
       features: [NOTE_TYPE_CONFIG[template.noteType]?.name || 'Document', ...(template.tags || [])],
       keywords: ['custom', 'template'],
       icon: LayoutTemplate,
-      color: NOTE_TYPE_CONFIG[template.noteType]?.color || '#0f766e',
+      color: NOTE_TYPE_CONFIG[template.noteType]?.color || '#2d6871',
       favorite: template.favorite,
     })).sort((a, b) => Number(b.favorite) - Number(a.favorite) || a.name.localeCompare(b.name))
 

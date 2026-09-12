@@ -6,12 +6,12 @@ This document records the practical UI rules for the current QuickNotes shell. T
 
 QuickNotes is a professional notebook and knowledge workspace. Its visual hierarchy is:
 
-1. Continuous dark-forest application chrome for identity and global actions.
-2. Deep-green navigation for product-level destinations.
+1. Continuous deep blue-teal application chrome for identity and global actions.
+2. A darker blue-teal navigation rail for product-level destinations.
 3. Neutral collection, inspector, ribbon, dialog, and other utility surfaces.
 4. Warm or user-selected paper inside a subdued workbench.
 
-Green identifies the application and important interaction states. It is not a decorative wash for every panel. Authentication may retain a restrained stationery texture; the working shell stays flat.
+Blue-teal identifies the application and important interaction states. It is not a decorative wash for every panel. Authentication may retain a restrained stationery texture; the working shell stays flat. The signed-in header is exactly `#162327`; the navigation rail is exactly `#121c20`. Components consume their semantic tokens rather than repeating either literal.
 
 ## Color roles and themes
 
@@ -23,7 +23,7 @@ Green identifies the application and important interaction states. It is not a d
 - `--qn-danger`, `--qn-warning`, `--qn-success`, `--qn-info`: semantic state only; do not use these to decorate categories.
 - `--qn-border*`: the main method for separating in-flow panes and work areas.
 
-Dark mode keeps the top chrome and navigation deep green. Utility surfaces become neutral charcoal, and paper styles choose their own readable foreground. Never infer readable text from the global theme when a paper style supplies explicit colors.
+Dark mode keeps the same stable blue-teal top chrome and navigation anchors. Utility surfaces become neutral charcoal, and paper styles choose their own readable foreground. Never infer readable text from the global theme when a paper style supplies explicit colors.
 
 ## Typography, spacing, and controls
 
@@ -51,7 +51,7 @@ The desktop shell is one continuous frame:
 - The collection pane is keyboard- and pointer-resizable from 280–420px. Its width and visibility persist.
 - The inspector is available from 1440px, optional, reusable, and resizable from 260–380px. It exposes real properties, outline navigation, and backlinks.
 - Separators use borders plus a narrow, visible-on-focus resize affordance. A separator must expose its value and support arrows, Home, and End.
-- Focus mode removes navigation, collection, and inspector while retaining a compact green header and real editor commands.
+- Focus mode removes navigation, collection, and inspector while retaining a compact blue-teal header and real editor commands.
 
 At 768–1199px, keep collection and workspace in flow and use the navigation drawer. Below 768px, show one primary pane at a time and retain the existing browser-history behavior. The desktop top chrome is hidden on compact layouts so it does not duplicate mobile note chrome.
 
@@ -69,7 +69,7 @@ Document, task list, project board, meeting, journal, idea board, shopping list,
 
 ## Ribbon behavior
 
-The application bar owns the green brand identity. On desktop, the editor note bar is a neutral workspace header and the existing ribbon remains a flat, horizontally reachable command surface. Commands stay grouped under Home, Insert, Layout, Review, and View; groups may become contextual or hide at narrow editor widths, but working commands must remain reachable. On mobile, formatting may collapse behind the existing toggle and the compact note header may remain green.
+The application bar owns the blue-teal brand identity. On desktop, the editor note bar is a neutral workspace header and the existing ribbon remains a flat, horizontally reachable command surface. Commands stay grouped under Home, Insert, Layout, Review, and View; groups may become contextual or hide at narrow editor widths, but working commands must remain reachable. On mobile, formatting may collapse behind the existing toggle and the compact note header may retain the same brand surface.
 
 ## Document, paper, and canvas boundaries
 

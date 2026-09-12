@@ -421,7 +421,7 @@ export default function GlobalSearchModal() {
       {semanticJob && ['queued', 'running'].includes(semanticJob.status) && (
         <div className="flex items-center gap-3 border-b border-subtle bg-surface-sunken px-4 py-2 text-ui-sm text-content-muted">
           <div className="h-1.5 min-w-24 flex-1 overflow-hidden bg-surface-hover" aria-hidden="true"><div className="h-full bg-accent" style={{ width: `${Math.max(3, (semanticJob.progress || 0) * 100)}%` }} /></div>
-          <span role="status">Building semantic indexâ€¦ {Math.round((semanticJob.progress || 0) * 100)}%</span>
+          <span role="status">Building semantic index… {Math.round((semanticJob.progress || 0) * 100)}%</span>
           <button type="button" className="inline-flex items-center gap-1 font-medium hover:text-content" onClick={() => void cancelIntelligenceJob(semanticJob.id)}><X className="h-3.5 w-3.5" aria-hidden="true" /> Cancel</button>
         </div>
       )}

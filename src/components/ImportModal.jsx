@@ -346,18 +346,18 @@ export default function ImportModal() {
                 key={index}
                 className={`p-3 rounded-lg flex items-center gap-3 ${
  result.success 
- ? 'bg-green-50 dark:bg-green-900/20' 
-                    : 'bg-red-50 dark:bg-red-900/20'
+                        ? 'bg-success-soft'
+                    : 'bg-danger-soft'
                 }`}
               >
                 {result.success ? (
-                  <Check className="w-5 h-5 text-green-600 flex-shrink-0" />
+                  <Check className="h-5 w-5 flex-shrink-0 text-success-text" />
                 ) : (
-                  <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
+                  <AlertCircle className="h-5 w-5 flex-shrink-0 text-danger-text" />
                 )}
                 <div className="flex-1 min-w-0">
                   <p className={`text-sm font-medium ${
- result.success ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'
+ result.success ? 'text-success-text' : 'text-danger-text'
  }`}>
                     {result.filename}
                   </p>

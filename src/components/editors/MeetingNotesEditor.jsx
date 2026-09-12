@@ -429,7 +429,7 @@ ${meetingData.notes}
                     key={attendee.id}
                     className={`qn-domain-card flex items-center gap-3 rounded-card border p-3 transition-colors ${
  attendee.present
- ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+ ? 'border-[var(--qn-success-border)] bg-success-soft'
                         : 'bg-surface-sunken border-subtle'
                     }`}
                   >
@@ -439,7 +439,7 @@ ${meetingData.notes}
                       className="flex-shrink-0"
                     >
                       {attendee.present ? (
-                        <CheckCircle2 className="w-6 h-6 text-green-500" />
+                        <CheckCircle2 className="h-6 w-6 text-success-text" />
                       ) : (
                         <Circle className="w-6 h-6 text-content-subtle" />
                       )}
@@ -538,7 +538,7 @@ ${meetingData.notes}
                     key={item.id}
                     className={`qn-domain-card rounded-card border p-4 transition-colors ${
  item.completed
- ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+ ? 'border-[var(--qn-success-border)] bg-success-soft'
                         : currentAgendaItem === item.id
                           ? 'bg-accent-soft border-accent-border'
                           : 'bg-surface-raised border-subtle'
@@ -551,7 +551,7 @@ ${meetingData.notes}
                         className="flex-shrink-0 mt-1"
                       >
                         {item.completed ? (
-                          <CheckCircle2 className="w-5 h-5 text-green-500" />
+                          <CheckCircle2 className="h-5 w-5 text-success-text" />
                         ) : (
                           <Circle className="w-5 h-5 text-content-subtle" />
                         )}
@@ -690,7 +690,7 @@ ${meetingData.notes}
                     key={item.id}
                     className={`qn-domain-card flex items-center gap-3 rounded-card border p-3 ${
  item.completed
- ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+ ? 'border-[var(--qn-success-border)] bg-success-soft'
                         : 'bg-surface-raised border-subtle'
                     }`}
                   >
@@ -699,7 +699,7 @@ ${meetingData.notes}
                       aria-label={item.completed ? `Mark ${item.task} incomplete` : `Complete ${item.task}`}
                     >
                       {item.completed ? (
-                        <CheckCircle2 className="w-6 h-6 text-green-500" />
+                        <CheckCircle2 className="h-6 w-6 text-success-text" />
                       ) : (
                         <Circle className="w-6 h-6 text-content-subtle" />
                       )}

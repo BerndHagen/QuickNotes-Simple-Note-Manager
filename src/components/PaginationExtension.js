@@ -1,9 +1,9 @@
 import { Extension } from '@tiptap/core'
 import { Plugin, PluginKey } from '@tiptap/pm/state'
 import { Decoration, DecorationSet } from '@tiptap/pm/view'
+import { A4_RATIO, PAGE_GAP, getDocumentPageGeometry } from './editor/pageGeometry'
+import { BREAKPOINTS } from '../hooks/useBreakpoint'
 
-const A4_RATIO = 297 / 210
-const PAGE_GAP = 24
 const paginationKey = new PluginKey('quickNotesPagination')
 
 const sameBreaks = (first, second) => (
@@ -113,7 +113,7 @@ const PaginationExtension = Extension.create({
           cancelAnimationFrame(frame)
           frame = requestAnimationFrame(() => {
             if (!view.dom.isConnected) return
-            const compact = window.matchMedia?.('(max-width: 767px)').matches
+            const compact = window.matchMedia?.(BREAKPOINTS.compact).matches
             if (compact) {
               view.dom.dataset.pageCount = '1'
               view.dom.style.removeProperty('--qn-paginated-min-height')
@@ -134,7 +134,8 @@ const PaginationExtension = Extension.create({
             const paddingTop = parseFloat(style.paddingTop) || 0
             const paddingBottom = parseFloat(style.paddingBottom) || 0
             const contentOffsetLeft = paddingLeft + (parseFloat(style.borderLeftWidth) || 0)
-            const pageHeight = pageWidth * A4_RATIO
+            const pageGeometry = getDocumentPageGeometry({ pageWidth })
+            const pageHeight = pageGeometry.pageHeight
             const contentHeight = Math.max(160, pageHeight - paddingTop - paddingBottom)
             const breaks = []
             let used = 0
@@ -202,7 +203,7 @@ const PaginationExtension = Extension.create({
             })
 
             view.dom.dataset.pageCount = String(pageCount)
-            view.dom.style.setProperty('--qn-paginated-min-height', `${Math.round(pageCount * pageHeight + (pageCount - 1) * PAGE_GAP)}px`)
+            view.dom.style.setProperty('--qn-paginated-min-height', `${Math.round(getDocumentPageGeometry({ pageWidth, pageCount }).totalHeight)}px`)
             const current = paginationKey.getState(view.state)?.breaks || []
             if (!sameBreaks(current, breaks)) {
               view.dispatch(view.state.tr.setMeta(paginationKey, breaks).setMeta('addToHistory', false))

@@ -87,6 +87,37 @@ export default defineConfig(configEnvironment => {
       outDir: 'dist',
       manifest: 'build-assets.json',
       sourcemap: false,
+      rolldownOptions: {
+        output: {
+          // The document editor is loaded on demand, but its engine used to
+          // land in one 700+ KB chunk. Keep dependency families intact: using
+          // maxSize here can cut an inheritance cycle at an unsafe evaluation
+          // boundary (a production-only `class extends undefined` failure).
+          // Vite 8 uses Rolldown's native codeSplitting API.
+          codeSplitting: {
+            groups: [
+              {
+                name: 'editor-foundation',
+                test: /node_modules[\\/](@tiptap[\\/](?:core|pm)|prosemirror)/,
+                minSize: 20_000,
+                priority: 30,
+              },
+              {
+                name: 'editor-extensions',
+                test: /node_modules[\\/]@tiptap[\\/](?:extension-|starter-kit)/,
+                minSize: 20_000,
+                priority: 20,
+              },
+              {
+                name: 'editor-highlighting',
+                test: /node_modules[\\/](?:lowlight|highlight\.js)/,
+                minSize: 20_000,
+                priority: 10,
+              },
+            ],
+          },
+        },
+      },
     },
     // IndexedDB integration files intentionally exercise the production
     // QuickNotesDB name. Running those files concurrently lets independent

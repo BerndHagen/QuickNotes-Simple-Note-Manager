@@ -1,5 +1,5 @@
 {
-  "name": "QuickNotes - Simple Note Manager",
+  "name": "QuickNotes - Notes & Knowledge Workspace",
   "short_name": "QuickNotes",
   "description": "A local-first writing, planning, and spatial note workspace with optional cloud sync.",
   "id": "./",
@@ -7,7 +7,7 @@
   "scope": "./",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#152b32",
+  "theme_color": "#162327",
   "orientation": "any",
   "icons": [
     {

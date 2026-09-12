@@ -9,6 +9,9 @@ vi.mock('@tiptap/react', () => ({
     return tiptap.editor
   },
   EditorContent: () => <div data-testid="editor-content" />,
+}))
+
+vi.mock('@tiptap/react/menus', () => ({
   BubbleMenu: ({ children }) => <>{children}</>,
   FloatingMenu: ({ children }) => <>{children}</>,
 }))
@@ -28,6 +31,7 @@ const createEditor = () => {
   return {
     editor: {
       isDestroyed: false,
+      schema: {},
       commands,
       setEditable: vi.fn(),
       getHTML: vi.fn(() => html),
@@ -80,7 +84,10 @@ describe('RichTextEditor external updates', () => {
 
     act(() => vi.advanceTimersByTime(2000))
 
-    expect(tiptap.editor.commands.setContent).toHaveBeenCalledWith('<p>Remote update</p>', false)
+    expect(tiptap.editor.commands.setContent).toHaveBeenCalledWith(
+      '<p>Remote update</p>',
+      { emitUpdate: false },
+    )
   })
 
   it('does not persist presentation-only editor updates', () => {

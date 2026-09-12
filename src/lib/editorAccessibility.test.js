@@ -1,7 +1,7 @@
 import { Editor } from '@tiptap/core'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
-import Table from '@tiptap/extension-table'
+import { Table } from '@tiptap/extension-table'
 import TableRow from '@tiptap/extension-table-row'
 import TableCell from '@tiptap/extension-table-cell'
 import TableHeader from '@tiptap/extension-table-header'
@@ -12,7 +12,7 @@ import { inspectEditorAccessibility } from './editorAccessibility'
 const ResizableImage = Image.extend({ name: 'resizableImage' }).configure({ allowBase64: true })
 
 const createDocument = (content) => new Editor({
-  extensions: [StarterKit, Link, Table, TableRow, TableCell, TableHeader, ResizableImage],
+  extensions: [StarterKit.configure({ link: false }), Link, Table, TableRow, TableCell, TableHeader, ResizableImage],
   content,
 })
 

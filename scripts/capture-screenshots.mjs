@@ -201,8 +201,8 @@ async function captureMeeting() {
   await dialog.getByRole('button', { name: /^Create meeting/i }).click()
   const meeting = page.locator('.qn-type-meeting')
   await meeting.waitFor({ state: 'visible' })
-  await meeting.getByRole('tab', { name: /^Capture/i }).click()
-  await expect(meeting.getByText('Meeting capture', { exact: true })).toBeVisible()
+  await meeting.getByRole('tab', { name: /^Agenda/i }).click()
+  await expect(meeting.getByText('Progress and wins', { exact: true })).toBeVisible()
   await save(page, 'quicknotes-3-meeting.png')
   await context.close()
 }

@@ -3,6 +3,7 @@ import { useNotesStore } from '../store'
 import { useTranslation } from '../lib/useTranslation'
 import { formatSyncTime } from '../lib/utils'
 import { isBackendConfigured } from '../lib/backend'
+import { IconButton } from './ui'
 
 /**
  * Derives a single sync status from the three signals the store exposes:
@@ -76,6 +77,23 @@ export function SyncStatusPill({ className = '', compact = false }) {
       ? `${label}: ${lastSyncError}`
       : `${label} · ${formatSyncTime(lastSyncTime)}`
 
+  if (compact) {
+    return (
+      <IconButton
+        icon={Icon}
+        label={canSync ? `${label}. Sync now` : label}
+        onClick={canSync ? () => syncWithBackend({ notify: true }) : undefined}
+        disabled={!canSync}
+        data-sync-state={state}
+        title={title}
+        iconClassName={config.spin ? 'animate-spin' : ''}
+        className={`qn-top-sync ${config.tone} ${className}`}
+      >
+        <span aria-live="polite" className="qn-sr-only">{label}</span>
+      </IconButton>
+    )
+  }
+
   return (
     <button
       type="button"
@@ -84,12 +102,12 @@ export function SyncStatusPill({ className = '', compact = false }) {
       disabled={!canSync}
       data-sync-state={state}
       title={title}
-      className={`${compact ? 'qn-icon-button qn-icon-button--md qn-square-control justify-center p-0' : 'min-w-0 gap-1.5 rounded-control px-1.5 py-1'} flex items-center text-ui-xs font-medium transition-colors duration-fast disabled:cursor-default ${
+      className={`min-w-0 gap-1.5 rounded-control px-1.5 py-1 flex items-center text-ui-xs font-medium transition-colors duration-fast disabled:cursor-default ${
  canSync ? 'hover:bg-surface-hover' : ''
  } ${config.tone} ${className}`}
     >
       <Icon className={`h-3.5 w-3.5 shrink-0 ${config.spin ? 'animate-spin' : ''}`} aria-hidden="true" />
-      <span className={compact ? 'qn-sr-only' : 'truncate'}>
+      <span className="truncate">
         {label}
         {state === 'pending' && pendingCount > 0 ? ` (${pendingCount})` : ''}
       </span>

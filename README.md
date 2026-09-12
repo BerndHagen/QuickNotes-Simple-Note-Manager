@@ -2,7 +2,7 @@
   <img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/quicknotes-editor-logo.png" alt="QuickNotes Logo" width="128" />
 </p>
 
-<h1 align="center">QuickNotes - Simple Note Manager</h1>
+<h1 align="center">QuickNotes - Notes & Knowledge Workspace</h1>
 
 <p align="center">
   <b>A modern, local-first writing, planning, ink, and knowledge workspace.</b><br>
@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/releases/latest"><img src="https://img.shields.io/github/v/release/BerndHagen/QuickNotes-Simple-Note-Manager?display_name=tag&sort=semver&style=flat-square&color=168966" alt="Latest stable release"></a>&nbsp;&nbsp;
+  <a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/releases/latest"><img src="https://img.shields.io/github/v/release/BerndHagen/QuickNotes-Simple-Note-Manager?display_name=tag&sort=semver&style=flat-square&color=2d6871" alt="Latest stable release"></a>&nbsp;&nbsp;
   <a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-GPL--3.0-blue?style=flat-square" alt="License"></a>&nbsp;&nbsp;
   <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react" alt="React Version">&nbsp;&nbsp;
   <img src="https://img.shields.io/badge/Vite-8-646CFF?style=flat-square&logo=vite" alt="Vite Version">&nbsp;&nbsp;
@@ -384,7 +384,7 @@ Dates and relative times use the active locale where supported. Stored timestamp
 
 ## Theming
 
-QuickNotes supports Light, Dark, and System modes. The shared design system keeps continuous dark-forest application chrome, deep-green navigation, neutral professional controls, and warm content surfaces instead of recoloring every workspace as an unrelated mini-application.
+QuickNotes supports Light, Dark, and System modes. The shared design system keeps deep blue-teal application chrome, a darker blue-teal navigation rail, neutral professional controls, and warm content surfaces instead of recoloring every workspace as an unrelated mini-application.
 
 ### Custom CSS (`index.css`)
 
@@ -526,6 +526,7 @@ Additional focused commands:
 ```bash
 npm run test:watch
 npm run benchmark:search
+npm run icons:update
 npm run screenshots:update
 ```
 

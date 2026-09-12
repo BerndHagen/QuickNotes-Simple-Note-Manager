@@ -216,6 +216,33 @@ test.describe('document page geometry and workspace zoom', () => {
       path: testInfo.outputPath('automatic-checklist-pages.png'),
       fullPage: false,
     })
+
+    // This is the legacy-note failure mode from the field report: the same
+    // long checklist must reconstruct identical sheet/gutter ownership after
+    // it has been persisted and opened in a fresh document session.
+    const expectedPageCount = geometry.edges.length
+    await page.waitForTimeout(700)
+    await page.reload()
+    await expect(page.locator('#qn-main')).toBeVisible()
+    await expect(page.locator('.ProseMirror')).toContainText('28. A deliberately long checklist entry')
+    await expect(page.locator('.qn-document-page-edge')).toHaveCount(expectedPageCount)
+    const reopenedGeometry = await page.locator('.qn-editor-page').evaluate((root) => {
+      const bounds = (element) => {
+        const rectangle = element.getBoundingClientRect()
+        return { top: rectangle.top, bottom: rectangle.bottom, height: rectangle.height }
+      }
+      return {
+        zoom: Number.parseFloat(getComputedStyle(root).zoom) || 1,
+        edges: [...root.querySelectorAll('.qn-document-page-edge')].map(bounds),
+        gutters: [...root.querySelectorAll('.qn-document-page-gutter')].map(bounds),
+      }
+    })
+    expect(reopenedGeometry.edges.length).toBe(reopenedGeometry.gutters.length + 1)
+    reopenedGeometry.gutters.forEach((gutter, index) => {
+      expect(Math.abs(gutter.top - reopenedGeometry.edges[index].bottom)).toBeLessThanOrEqual(1)
+      expect(Math.abs(gutter.bottom - reopenedGeometry.edges[index + 1].top)).toBeLessThanOrEqual(1)
+      expect(gutter.height).toBeCloseTo(24 * reopenedGeometry.zoom, 0)
+    })
   })
 
   test('applies the same controls and shortcuts to structured workspaces', async ({ page }) => {
