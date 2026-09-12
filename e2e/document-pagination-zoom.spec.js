@@ -245,6 +245,133 @@ test.describe('document page geometry and workspace zoom', () => {
     })
   })
 
+  test('keeps mixed headings, paragraphs, and checklist rows inside writable page bounds', async ({ page }, testInfo) => {
+    const editor = page.locator('.ProseMirror')
+    await editor.click()
+    await page.keyboard.press('Control+A')
+    await page.keyboard.press('Backspace')
+
+    for (let section = 1; section <= 16; section += 1) {
+      await page.keyboard.type('# ')
+      await page.keyboard.insertText(`Release section ${section}`)
+      await page.keyboard.press('Enter')
+      await page.keyboard.insertText('This paragraph deliberately mixes ordinary prose with headings and checklist rows so pagination must use the browser rendered flow instead of adding theoretical block margins.')
+      await page.keyboard.press('Enter')
+      await page.keyboard.type('[ ] ')
+      await page.keyboard.insertText(`Verify the primary workflow for section ${section}`)
+      await page.keyboard.press('Enter')
+      await page.keyboard.insertText(`Confirm the persisted result for section ${section}`)
+      await page.keyboard.press('Enter')
+      await page.keyboard.press('Enter')
+    }
+
+    await expect.poll(async () => Number(await editor.getAttribute('data-page-count'))).toBeGreaterThan(2)
+    const geometry = await page.locator('.qn-editor-page').evaluate((root) => {
+      const prose = root.querySelector('.ProseMirror')
+      const proseStyle = getComputedStyle(prose)
+      const proseRect = prose.getBoundingClientRect()
+      const scale = prose.offsetWidth > 0 ? proseRect.width / prose.offsetWidth : 1
+      const paddingTop = Number.parseFloat(proseStyle.paddingTop) * scale
+      const paddingBottom = Number.parseFloat(proseStyle.paddingBottom) * scale
+      const pages = [...root.querySelectorAll('.qn-document-page-edge')].map((element, index) => {
+        const rect = element.getBoundingClientRect()
+        return {
+          index,
+          top: rect.top + paddingTop,
+          bottom: rect.bottom - paddingBottom,
+        }
+      })
+      const blocks = [...prose.querySelectorAll(':scope > h1, :scope > h2, :scope > h3, :scope > p, :scope > ul[data-type="taskList"] > li[data-type="taskItem"]')]
+        .map((element, index) => {
+          const rect = element.getBoundingClientRect()
+          return {
+            index,
+            kind: element.tagName.toLowerCase(),
+            text: element.textContent.slice(0, 80),
+            top: rect.top,
+            bottom: rect.bottom,
+          }
+        })
+      const violations = blocks.filter((block) => !pages.some((sheet) => (
+        block.top >= sheet.top - 1 && block.bottom <= sheet.bottom + 1
+      )))
+      return { pages, violations }
+    })
+
+    expect(geometry.violations, `Every rendered block must stay inside one page writable area: ${JSON.stringify(geometry)}`).toEqual([])
+    await page.screenshot({ path: testInfo.outputPath('mixed-content-page-bounds.png') })
+  })
+
+  test('flows one long paragraph across pages at rendered line boundaries', async ({ page }, testInfo) => {
+    const editor = page.locator('.ProseMirror')
+    await editor.click()
+    await page.keyboard.press('Control+A')
+    await page.keyboard.press('Backspace')
+    await page.keyboard.insertText('A long paragraph must continue on the next page without entering the paper margin or gutter. '.repeat(240))
+
+    await expect.poll(async () => Number(await editor.getAttribute('data-page-count'))).toBeGreaterThan(2)
+    const paginationGeometry = await page.locator('.qn-editor-page').evaluate((root) => {
+      const prose = root.querySelector('.ProseMirror')
+      const gutters = [...root.querySelectorAll('.qn-document-page-gutter')].map((element, index) => {
+        const rect = element.getBoundingClientRect()
+        return { index, top: rect.top, bottom: rect.bottom }
+      })
+      const range = document.createRange()
+      const walker = document.createTreeWalker(prose, NodeFilter.SHOW_TEXT)
+      const lines = []
+      while (walker.nextNode()) {
+        const textNode = walker.currentNode
+        if (!textNode.textContent.trim() || textNode.parentElement?.closest('.qn-page-gap')) continue
+        range.selectNodeContents(textNode)
+        lines.push(...[...range.getClientRects()].map((rect) => ({ top: rect.top, bottom: rect.bottom })))
+      }
+      const intersections = lines.filter((line) => gutters.some((gutter) => line.top < gutter.bottom && line.bottom > gutter.top))
+      const gaps = [...prose.querySelectorAll('.qn-page-gap')].map((element, index) => {
+        const rect = element.getBoundingClientRect()
+        return {
+          index,
+          top: rect.top,
+          bottom: rect.bottom,
+          height: rect.height,
+          remaining: element.querySelector('.qn-page-gap__remaining')?.getBoundingClientRect().height,
+        }
+      })
+      return { gutters, gaps, intersections }
+    })
+    expect(paginationGeometry.intersections, `No rendered line may enter a physical page gutter: ${JSON.stringify(paginationGeometry)}`).toEqual([])
+    await page.locator('.qn-editor-workbench').evaluate((workbench) => {
+      const gutter = workbench.querySelector('.qn-document-page-gutter[data-after-page="1"]')
+      if (gutter) workbench.scrollTop = Math.max(0, gutter.offsetTop - (workbench.clientHeight / 2))
+    })
+    await page.screenshot({ path: testInfo.outputPath('long-paragraph-pages.png') })
+  })
+
+  test('flows one long checklist item across pages without clipping its text', async ({ page }) => {
+    const editor = page.locator('.ProseMirror')
+    await editor.click()
+    await page.keyboard.press('Control+A')
+    await page.keyboard.press('Backspace')
+    await page.keyboard.type('[ ] ')
+    await page.keyboard.insertText('A long checklist item must remain editable and continue cleanly on later pages. '.repeat(180))
+
+    await expect.poll(async () => Number(await editor.getAttribute('data-page-count'))).toBeGreaterThan(2)
+    const intersections = await page.locator('.qn-editor-page').evaluate((root) => {
+      const gutters = [...root.querySelectorAll('.qn-document-page-gutter')].map((element) => element.getBoundingClientRect())
+      const taskItem = root.querySelector('li[data-type="taskItem"]')
+      const range = document.createRange()
+      const walker = document.createTreeWalker(taskItem, NodeFilter.SHOW_TEXT)
+      const lines = []
+      while (walker.nextNode()) {
+        const textNode = walker.currentNode
+        if (!textNode.textContent.trim() || textNode.parentElement?.closest('.qn-page-gap')) continue
+        range.selectNodeContents(textNode)
+        lines.push(...[...range.getClientRects()].map((rect) => ({ top: rect.top, bottom: rect.bottom })))
+      }
+      return lines.filter((line) => gutters.some((gutter) => line.top < gutter.bottom && line.bottom > gutter.top))
+    })
+    expect(intersections, 'No checklist text line may enter a physical page gutter').toEqual([])
+  })
+
   test('applies the same controls and shortcuts to structured workspaces', async ({ page }) => {
     await page.getByRole('button', { name: 'Create workspace' }).click()
     const picker = page.getByRole('dialog', { name: /new workspace/i })

@@ -1673,7 +1673,7 @@ html {
 
 .qn-focus-header {
   --qn-control-focus-ring: #ffffff;
-  --qn-select-arrow: #d5e4de;
+  --qn-select-arrow: #d6e7eb;
   min-height: 52px;
   border-color: var(--qn-banner-border);
   background: var(--qn-banner);

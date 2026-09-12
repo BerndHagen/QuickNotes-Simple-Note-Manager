@@ -19,17 +19,17 @@
   color-scheme: light;
 
   /* --- Brand ------------------------------------------------ */
-  --qn-brand-50: #edf7f8;
-  --qn-brand-100: #d6ecee;
-  --qn-brand-200: #addadd;
-  --qn-brand-300: #79c0c6;
-  --qn-brand-400: #4da1aa;
-  --qn-brand-500: #347f89;
-  --qn-brand-600: #2d6871;
-  --qn-brand-700: #26565e;
-  --qn-brand-800: #1e4249;
-  --qn-brand-900: #192f34;
-  --qn-brand-950: #0d2024;
+  --qn-brand-50: #edf7f9;
+  --qn-brand-100: #d7edf2;
+  --qn-brand-200: #b4dae3;
+  --qn-brand-300: #83bfce;
+  --qn-brand-400: #529eaf;
+  --qn-brand-500: #367f91;
+  --qn-brand-600: #2a697a;
+  --qn-brand-700: #245968;
+  --qn-brand-800: #1e4753;
+  --qn-brand-900: #183640;
+  --qn-brand-950: #0c242c;
 
   /* --- Surfaces --------------------------------------------- */
   /* app  : the outermost canvas                                */
@@ -37,17 +37,17 @@
   /* base : editor + dialog bodies                              */
   /* raised: cards, menus, popovers                             */
   /* sunken: inset wells, code blocks, form groups              */
-  --qn-surface-app: #e9eff0;
-  --qn-surface-panel: #f0f4f5;
+  --qn-surface-app: #ebf0f2;
+  --qn-surface-panel: #f1f4f6;
   --qn-surface-base: #f8fafb;
   --qn-surface-raised: #ffffff;
-  --qn-surface-workbench: #e5ebed;
-  --qn-surface-toolbar: #f2f5f6;
-  --qn-surface-window-header: #eef3f4;
-  --qn-surface-window-footer: #f2f6f7;
-  --qn-surface-sunken: #e7eef0;
-  --qn-surface-brand-tint: #edf5f6;
-  --qn-surface-brand-tint-strong: #dcebed;
+  --qn-surface-workbench: #e7ecef;
+  --qn-surface-toolbar: #f2f5f7;
+  --qn-surface-window-header: #eef2f4;
+  --qn-surface-window-footer: #f3f6f7;
+  --qn-surface-sunken: #edf1f4;
+  --qn-surface-brand-tint: #edf5f7;
+  --qn-surface-brand-tint-strong: #dcecef;
   --qn-surface-hover: rgba(15, 23, 42, 0.07);
   --qn-surface-active: rgba(15, 23, 42, 0.11);
   --qn-overlay: rgba(15, 23, 42, 0.45);
@@ -74,9 +74,9 @@
   --qn-nav-active-text: #ffffff;
 
   /* --- Borders ---------------------------------------------- */
-  --qn-border-subtle: #d6e0e2;
-  --qn-border: #d9dfe4;
-  --qn-border-strong: #c1cad1;
+  --qn-border-subtle: #d5dee3;
+  --qn-border: #d3dbe1;
+  --qn-border-strong: #bdc8d0;
 
   /* --- Text ------------------------------------------------- */
   /* Contrast ratios are measured against --qn-surface-panel (#f0f4f5),
@@ -94,13 +94,13 @@
   /* --- Accent (interactive brand) --------------------------- */
   /* A muted blue-teal accent keeps long writing sessions calm while the
      darker action shades retain accessible contrast with white labels. */
-  --qn-accent: #2d6871;
-  --qn-accent-hover: #26565e;
-  --qn-accent-active: #1e4a51;
-  --qn-accent-text: #255d66;
-  --qn-accent-soft: #e3eff1;
-  --qn-accent-soft-hover: #d5e6e9;
-  --qn-accent-border: #a9cbd0;
+  --qn-accent: #2a697a;
+  --qn-accent-hover: #245968;
+  --qn-accent-active: #1e4b59;
+  --qn-accent-text: #245e6d;
+  --qn-accent-soft: #e4f0f3;
+  --qn-accent-soft-hover: #d5e8ed;
+  --qn-accent-border: #a8ccd4;
 
   /* Application banners use a restrained deep blue-teal. The
      decorative stationery treatment is reserved for authentication. */
@@ -197,8 +197,8 @@
 
   /* --- Focus ------------------------------------------------ */
   /* Muted blue-teal keeps focus visible without glare. */
-  --qn-focus-ring: #578c95;
-  --qn-focus-soft: rgba(45, 104, 113, 0.16);
+  --qn-focus-ring: #4f8895;
+  --qn-focus-soft: rgba(42, 105, 122, 0.16);
   --qn-focus-ring-width: 2px;
   --qn-focus-ring-offset: 2px;
 
@@ -249,13 +249,13 @@
   --qn-nav-active-bg: rgba(255, 255, 255, 0.09);
   --qn-nav-active-text: #ffffff;
 
-  --qn-accent: #71aab2;
-  --qn-accent-hover: #84b9c0;
-  --qn-accent-active: #98c8ce;
-  --qn-accent-text: #91c2c9;
-  --qn-accent-soft: rgba(113, 170, 178, 0.14);
-  --qn-accent-soft-hover: rgba(113, 170, 178, 0.22);
-  --qn-accent-border: rgba(113, 170, 178, 0.38);
+  --qn-accent: #77b2c0;
+  --qn-accent-hover: #89c0cc;
+  --qn-accent-active: #9bcdd7;
+  --qn-accent-text: #91c7d2;
+  --qn-accent-soft: rgba(119, 178, 192, 0.14);
+  --qn-accent-soft-hover: rgba(119, 178, 192, 0.22);
+  --qn-accent-border: rgba(119, 178, 192, 0.38);
 
   --qn-banner: #162327;
   --qn-banner-from: #20383e;

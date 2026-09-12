@@ -23,7 +23,7 @@ export default function NotepadGlyph({ className = '', ...props }) {
       <path fill="currentColor" opacity="0.55" d="M20.3 15.7 15.7 20.3v-3.2a1.4 1.4 0 0 1 1.4-1.4Z" />
       {/* Ruled lines. A muted teal rather than the page colour, so the mark
           survives being placed on tiles of different greens. */}
-      <g stroke="#8fb6a9" strokeWidth="1.3" strokeLinecap="round">
+      <g stroke="#83bfce" strokeWidth="1.3" strokeLinecap="round">
         <line x1="6.9" y1="8.6" x2="17.1" y2="8.6" />
         <line x1="6.9" y1="11.6" x2="17.1" y2="11.6" />
         <line x1="6.9" y1="14.6" x2="13.6" y2="14.6" />

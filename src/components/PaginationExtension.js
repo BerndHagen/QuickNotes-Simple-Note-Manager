@@ -21,11 +21,12 @@ const sameBreaks = (first, second) => (
       && item.manual === candidate.manual
       && item.offsetLeft === candidate.offsetLeft
       && item.insideList === candidate.insideList
+      && item.inline === candidate.inline
   })
 )
 
 const createPageGap = (details) => {
-  const gap = document.createElement(details.insideList ? 'li' : 'div')
+  const gap = document.createElement(details.inline ? 'span' : details.insideList ? 'li' : 'div')
   const remaining = document.createElement('span')
   const gutter = document.createElement('span')
   const nextPageTop = document.createElement('span')
@@ -76,6 +77,88 @@ const listItemMeasurements = (view, node, position) => {
     })
   })
   return measurements.filter((item) => item.height > 0)
+}
+
+const mergeLineRectangles = (rectangles) => rectangles
+  .sort((first, second) => first.top - second.top || first.left - second.left)
+  .reduce((lines, rectangle) => {
+    const line = lines[lines.length - 1]
+    if (line && Math.abs(line.top - rectangle.top) <= 1) {
+      line.left = Math.min(line.left, rectangle.left)
+      line.right = Math.max(line.right, rectangle.right)
+      line.bottom = Math.max(line.bottom, rectangle.bottom)
+      line.position = Math.min(line.position, rectangle.position)
+      return lines
+    }
+    lines.push({ ...rectangle })
+    return lines
+  }, [])
+
+const characterRect = (range, textNode, offset) => {
+  if (!textNode.textContent?.length) return null
+  range.setStart(textNode, Math.max(0, Math.min(textNode.length - 1, offset)))
+  range.setEnd(textNode, Math.max(1, Math.min(textNode.length, offset + 1)))
+  return [...range.getClientRects()].find((rectangle) => rectangle.height > 0) || null
+}
+
+const firstOffsetOnLine = (range, textNode, lineTop) => {
+  let low = 0
+  let high = textNode.length - 1
+  while (low < high) {
+    const middle = Math.floor((low + high) / 2)
+    const rectangle = characterRect(range, textNode, middle)
+    if (!rectangle || rectangle.top < lineTop - 1) low = middle + 1
+    else high = middle
+  }
+  return low
+}
+
+const measureTextLines = (view, node, position, height, editorRect, visualScale) => {
+  const dom = view.nodeDOM(position)
+  if (!(dom instanceof HTMLElement)) return []
+
+  const range = document.createRange()
+  const walker = document.createTreeWalker(dom, NodeFilter.SHOW_TEXT)
+  const rectangles = []
+  while (walker.nextNode()) {
+    const textNode = walker.currentNode
+    if (!textNode.textContent || textNode.parentElement?.closest('.qn-page-gap')) continue
+    range.selectNodeContents(textNode)
+    const textLines = mergeLineRectangles([...range.getClientRects()]
+      .filter((rectangle) => rectangle.width > 0 && rectangle.height > 0)
+      .map((rectangle) => ({
+        top: rectangle.top,
+        right: rectangle.right,
+        bottom: rectangle.bottom,
+        left: rectangle.left,
+        position: Number.POSITIVE_INFINITY,
+      })))
+    textLines.forEach((line) => {
+      const offset = firstOffsetOnLine(range, textNode, line.top)
+      let linePosition
+      try {
+        linePosition = view.posAtDOM(textNode, offset, -1)
+      } catch {
+        linePosition = position + 1 + offset
+      }
+      rectangles.push({ ...line, position: linePosition })
+    })
+  }
+
+  const lines = mergeLineRectangles(rectangles)
+  if (lines.length < 2) return []
+  const computedLineHeight = Number.parseFloat(getComputedStyle(dom).lineHeight)
+  const lineHeight = Number.isFinite(computedLineHeight) && computedLineHeight > 0
+    ? computedLineHeight
+    : height / lines.length
+  const minimumPosition = position + 1
+  const maximumPosition = position + node.nodeSize - 1
+  return lines.map((line) => ({
+      position: Math.max(minimumPosition, Math.min(maximumPosition, line.position)),
+      height: lineHeight,
+      offsetLeft: Math.max(0, (line.left - editorRect.left) / visualScale),
+    }))
+    .filter((line, index, measured) => index === 0 || line.position > measured[index - 1].position)
 }
 
 const PaginationExtension = Extension.create({
@@ -141,21 +224,47 @@ const PaginationExtension = Extension.create({
             let used = 0
             let pageCount = 1
 
-            const addBreak = ({ position, manual = false, offsetLeft = contentOffsetLeft, insideList = false }) => {
+            const addBreak = ({
+              position,
+              manual = false,
+              offsetLeft = contentOffsetLeft,
+              insideList = false,
+              inline = false,
+            }) => {
               breaks.push({
                 position,
-                fill: Math.max(0, Math.round(contentHeight - used)),
+                // Preserve sub-pixel layout. Rounding every automatic break
+                // accumulates enough error across a long document to place a
+                // later line above the next page's writable top edge.
+                fill: Math.max(0, contentHeight - used),
                 pageWidth,
                 paddingLeft,
                 paddingRight,
                 paddingTop,
                 paddingBottom,
-                offsetLeft: Math.max(0, Math.round(offsetLeft)),
+                offsetLeft: Math.max(0, offsetLeft),
                 insideList,
+                inline,
                 manual,
               })
               used = 0
               pageCount += 1
+            }
+
+            const paginateOversizedBlock = ({ node, position, height, insideList = false }) => {
+              if (height <= contentHeight) return false
+              const lines = measureTextLines(view, node, position, height, editorRect, visualScale)
+              if (lines.length < 2) return false
+
+              lines.forEach((line, index) => {
+                if (used > 0 && used + line.height > contentHeight) {
+                  addBreak(index === 0
+                    ? { position, offsetLeft: line.offsetLeft, insideList }
+                    : { position: line.position, offsetLeft: line.offsetLeft, inline: true })
+                }
+                used += line.height
+              })
+              return true
             }
 
             view.state.doc.forEach((node, position) => {
@@ -183,6 +292,13 @@ const PaginationExtension = Extension.create({
                   : paddingLeft
 
                 items.forEach((item) => {
+                  const itemNode = view.state.doc.nodeAt(item.position)
+                  if (itemNode && paginateOversizedBlock({
+                    node: itemNode,
+                    position: item.position,
+                    height: item.height,
+                    insideList: true,
+                  })) return
                   if (used > 0 && used + item.height > contentHeight) {
                     addBreak({
                       position: item.position,
@@ -196,6 +312,8 @@ const PaginationExtension = Extension.create({
                 return
               }
 
+              if (paginateOversizedBlock({ node, position, height })) return
+
               if (used > 0 && used + height > contentHeight) {
                 addBreak({ position })
               }
@@ -203,7 +321,7 @@ const PaginationExtension = Extension.create({
             })
 
             view.dom.dataset.pageCount = String(pageCount)
-            view.dom.style.setProperty('--qn-paginated-min-height', `${Math.round(getDocumentPageGeometry({ pageWidth, pageCount }).totalHeight)}px`)
+            view.dom.style.setProperty('--qn-paginated-min-height', `${getDocumentPageGeometry({ pageWidth, pageCount }).totalHeight}px`)
             const current = paginationKey.getState(view.state)?.breaks || []
             if (!sameBreaks(current, breaks)) {
               view.dispatch(view.state.tr.setMeta(paginationKey, breaks).setMeta('addToHistory', false))

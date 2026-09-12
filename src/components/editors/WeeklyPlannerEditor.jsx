@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { EmptyState, IconButton, buttonClasses } from '../ui'
+import { EmptyState, IconButton, Input, Select, buttonClasses } from '../ui'
 import {
   Plus,
   Trash2,
@@ -369,25 +369,27 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle, onTitle
                     ))}
                   </div>
                   <div className="flex flex-col gap-2 sm:flex-row">
-                    <input
+                    <Input
                       type="time"
+                      size="lg"
                       aria-label={`Time for new ${selectedDay} event`}
                       value={newEventTime}
                       onChange={(e) => setNewEventTime(e.target.value)}
-                      className="px-3 py-2 rounded-lg bg-surface-sunken border border-subtle outline-none text-content"
                     />
-                    <input
+                    <Input
                       type="text"
+                      size="lg"
                       aria-label={`New ${selectedDay} event`}
                       value={newEvent}
                       onChange={(e) => setNewEvent(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && addEvent(selectedDay)}
                       placeholder="Add event..."
-                      className="flex-1 px-3 py-2 rounded-lg bg-surface-sunken border border-subtle outline-none text-content"
+                      className="min-w-0 flex-1"
                     />
                     <IconButton
                       icon={Plus}
                       variant="primary"
+                      size="lg"
                       label={`Add event to ${selectedDay}`}
                       onClick={() => addEvent(selectedDay)}
                     />
@@ -452,28 +454,30 @@ export default function WeeklyPlannerEditor({ data, onChange, noteTitle, onTitle
                     )
                   })}
                   <div className="flex flex-col gap-2 mt-3 sm:flex-row">
-                    <select
+                    <Select
+                      size="lg"
                       aria-label={`Time block for new ${selectedDay} task`}
                       value={newTaskTime}
                       onChange={(e) => setNewTaskTime(e.target.value)}
-                      className="px-3 py-2 rounded-lg bg-surface-sunken border border-subtle outline-none text-content"
                     >
                       {TIME_BLOCKS.map((block) => (
                         <option key={block.id} value={block.id}>{block.label}</option>
                       ))}
-                    </select>
-                    <input
+                    </Select>
+                    <Input
                       type="text"
+                      size="lg"
                       aria-label={`New ${selectedDay} task`}
                       value={newTask}
                       onChange={(e) => setNewTask(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && addTask(selectedDay)}
                       placeholder="Add task..."
-                      className="flex-1 px-3 py-2 rounded-lg bg-surface-sunken border border-subtle outline-none text-content"
+                      className="min-w-0 flex-1"
                     />
                     <IconButton
                       icon={Plus}
                       variant="primary"
+                      size="lg"
                       label={`Add task to ${selectedDay}`}
                       onClick={() => addTask(selectedDay)}
                     />

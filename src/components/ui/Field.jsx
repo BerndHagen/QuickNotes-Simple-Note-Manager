@@ -52,7 +52,11 @@ const inputBase =
   'aria-[invalid=true]:border-danger aria-[invalid=true]:focus:ring-[var(--qn-danger-soft)]'
 
 export const Input = forwardRef(function Input({ className = '', size = 'md', ...props }, ref) {
-  const sizing = size === 'sm' ? 'h-control-sm px-2.5 text-ui-sm' : 'h-control-md px-3 text-ui-md'
+  const sizing = size === 'sm'
+    ? 'h-control-sm px-2.5 text-ui-sm'
+    : size === 'lg'
+      ? 'h-control-lg px-4 text-ui-md'
+      : 'h-control-md px-3 text-ui-md'
   return <input ref={ref} className={`${inputBase} ${sizing} ${className}`} {...props} />
 })
 
@@ -67,11 +71,16 @@ export const Textarea = forwardRef(function Textarea({ className = '', rows = 4,
   )
 })
 
-export const Select = forwardRef(function Select({ className = '', children, ...props }, ref) {
+export const Select = forwardRef(function Select({ className = '', size = 'md', children, ...props }, ref) {
+  const sizing = size === 'sm'
+    ? 'h-control-sm px-2.5 pr-8 text-ui-sm'
+    : size === 'lg'
+      ? 'h-control-lg px-4 pr-9 text-ui-md'
+      : 'h-control-md px-3 pr-8 text-ui-md'
   return (
     <select
       ref={ref}
-      className={`${inputBase} h-control-md cursor-pointer px-3 pr-8 text-ui-md ${className}`}
+      className={`${inputBase} ${sizing} cursor-pointer ${className}`}
       {...props}
     >
       {children}

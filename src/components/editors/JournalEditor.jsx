@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { buttonClasses, IconButton } from '../ui'
+import { IconButton, Input } from '../ui'
 import {
   BookOpen,
   Sun,
@@ -297,19 +297,21 @@ export default function JournalEditor({ data, onChange, note, noteTitle, onTitle
                   </div>
                 ))}
               </div>
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <input
+              <div className="flex items-center gap-2">
+                <Input
                   type="text"
+                  size="lg"
                   aria-label="New journal goal"
                   value={newGoal}
                   onChange={(e) => setNewGoal(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && addGoal()}
                   placeholder="Add a goal for today..."
-                  className="flex-1 rounded-control border border-subtle bg-surface-sunken px-4 py-2 text-content outline-none"
+                  className="min-w-0 flex-1"
                 />
                 <IconButton
                   icon={Plus}
                   variant="primary"
+                  size="lg"
                   label="Add journal goal"
                   onClick={addGoal}
                 />
@@ -347,19 +349,21 @@ export default function JournalEditor({ data, onChange, note, noteTitle, onTitle
                   </div>
                 ))}
               </div>
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <input
+              <div className="flex items-center gap-2">
+                <Input
                   type="text"
+                  size="lg"
                   aria-label="New highlight"
                   value={newHighlight}
                   onChange={(e) => setNewHighlight(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && addHighlight()}
                   placeholder="Add a highlight moment..."
-                  className="flex-1 rounded-control border border-subtle bg-surface-sunken px-4 py-2 text-content outline-none"
+                  className="min-w-0 flex-1"
                 />
                 <IconButton
                   icon={Plus}
                   variant="primary"
+                  size="lg"
                   label="Add highlight"
                   onClick={addHighlight}
                 />
@@ -475,22 +479,24 @@ export default function JournalEditor({ data, onChange, note, noteTitle, onTitle
                   </span>
                 ))}
               </div>
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <input
+              <div className="flex items-center gap-2">
+                <Input
                   type="text"
+                  size="lg"
                   aria-label="New journal tag"
                   value={newTag}
                   onChange={(e) => setNewTag(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && addTag()}
                   placeholder="Add a tag..."
-                  className="flex-1 rounded-control border border-subtle bg-surface-sunken px-4 py-2 text-content outline-none"
+                  className="min-w-0 flex-1"
                 />
-                <button
+                <IconButton
+                  icon={Plus}
+                  variant="primary"
+                  size="lg"
+                  label="Add journal tag"
                   onClick={addTag}
-                  className={buttonClasses({ variant: 'primary' })}
-                >
-                  Add
-                </button>
+                />
               </div>
             </div>
             <div>

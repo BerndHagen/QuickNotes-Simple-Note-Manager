@@ -679,7 +679,7 @@ export const useNotesStore = create(
           id: generateId(),
           name: name.slice(0, 80),
           icon: input.icon || 'ListFilter',
-          color: input.color || '#2d6871',
+          color: input.color || '#2a697a',
           criteria: normalizeSmartViewCriteria(input.criteria),
           order: get().savedViews.length,
           createdAt: now,

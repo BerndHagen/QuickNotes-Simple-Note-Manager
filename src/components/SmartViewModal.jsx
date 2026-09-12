@@ -143,7 +143,7 @@ export default function SmartViewModal() {
   const { notes, folders, tags, savedViews, createSavedView, updateSavedView, deleteSavedView } = useNotesStore()
   const editing = savedViews.find((view) => view.id === smartViewEditingId)
   const [name, setName] = useState('')
-  const [color, setColor] = useState('#2d6871')
+  const [color, setColor] = useState('#2a697a')
   const [criteria, setCriteria] = useState(() => normalizeSmartViewCriteria())
   const [confirmDelete, setConfirmDelete] = useState(false)
   const nameRef = useRef(null)
@@ -151,7 +151,7 @@ export default function SmartViewModal() {
   useEffect(() => {
     if (!smartViewModalOpen) return
     setName(editing?.name || '')
-    setColor(editing?.color || '#2d6871')
+    setColor(editing?.color || '#2a697a')
     setCriteria(normalizeSmartViewCriteria(editing?.criteria))
   }, [editing, smartViewModalOpen])
 
