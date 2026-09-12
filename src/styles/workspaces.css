@@ -1414,10 +1414,26 @@
 }
 
 .qn-type-journal .qn-journal-choice {
-  width: 38px;
+  width: 100%;
+  min-width: 0;
   height: 36px;
   border-radius: var(--qn-radius-control);
   font-size: 13px;
+}
+
+.qn-journal-metadata-grid fieldset {
+  min-width: 0;
+}
+
+.qn-journal-metadata-grid fieldset > div {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 4px;
+  min-width: 0;
+}
+
+.qn-type-journal .qn-structured-tabs {
+  max-width: 100%;
 }
 
 .qn-type-journal .qn-journal-writing-area {
@@ -2427,7 +2443,7 @@
   .qn-shopping-total { justify-content: flex-start; overflow-x: auto; white-space: nowrap; }
 
   .qn-journal-metadata-grid { grid-template-columns: 1fr; gap: 12px; }
-  .qn-journal-choice { width: 40px; height: 38px; }
+  .qn-journal-choice { height: 38px; }
   .qn-journal-writing-area { min-height: 24rem !important; }
   .qn-idea-card { min-height: 7.5rem !important; padding: 12px !important; }
   .qn-type-editor .qn-domain-card button {

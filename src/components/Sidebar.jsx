@@ -40,7 +40,7 @@ import { getDefaultData, NOTE_TYPES } from './editors/noteTypes'
  * Navigation row. A real `<button>`, so the rail is reachable by Tab and
  * operable with Enter/Space.
  */
-function NavItem({ icon: Icon, label, count, selected, onClick, iconColor, trailing }) {
+function NavItem({ icon: Icon, label, count, showCount = false, selected, onClick, iconColor, trailing }) {
   return (
     <div className="group relative flex items-center">
       <button
@@ -61,7 +61,7 @@ function NavItem({ icon: Icon, label, count, selected, onClick, iconColor, trail
         <span className={`min-w-0 flex-1 truncate text-ui-lg ${selected ? 'font-semibold' : 'font-medium'}`}>
           {label}
         </span>
-        {count > 0 && (
+        {(showCount || count > 0) && (
           <span className="shrink-0 rounded-md bg-white/10 px-1.5 py-0.5 text-ui-xs font-semibold tabular-nums text-nav-muted">
             {count > 999 ? '999+' : count}
           </span>
@@ -284,6 +284,7 @@ export default function Sidebar({ onNavigate }) {
               icon={CalendarDays}
               label={t('sidebar.today', 'Today')}
               count={todayCount}
+                showCount
               selected={selectedNoteId === dailyNote?.id}
               onClick={go(openToday)}
             />
@@ -302,6 +303,7 @@ export default function Sidebar({ onNavigate }) {
               iconColor="var(--qn-warning)"
               label={t('sidebar.favorites')}
               count={counts.favorites}
+                showCount
               selected={selectedTagFilter === '__starred__'}
               onClick={go(() => setSelectedTagFilter('__starred__'))}
             />

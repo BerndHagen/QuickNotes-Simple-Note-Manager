@@ -195,6 +195,7 @@ const PaginationExtension = Extension.create({
         const measure = () => {
           cancelAnimationFrame(frame)
           frame = requestAnimationFrame(() => {
+            frame = requestAnimationFrame(() => {
             if (!view.dom.isConnected) return
             const compact = window.matchMedia?.(BREAKPOINTS.compact).matches
             if (compact) {
@@ -326,6 +327,7 @@ const PaginationExtension = Extension.create({
             if (!sameBreaks(current, breaks)) {
               view.dispatch(view.state.tr.setMeta(paginationKey, breaks).setMeta('addToHistory', false))
             }
+            })
           })
         }
 

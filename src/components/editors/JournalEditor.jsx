@@ -26,9 +26,16 @@ import {
 } from 'lucide-react'
 import { formatDateKey, generateId, parseDateKey } from './noteTypes'
 import { useLatestValue } from './useLatestValue'
-import { useEditorDataSync } from './useEditorDataSync'
 import StructuredWorkspaceShell, { WorkspaceTabs } from './StructuredWorkspaceShell'
 import TodayAgenda from '../workspace/TodayAgenda'
+
+const serializeJournalData = (value) => {
+  try {
+    return JSON.stringify(value)
+  } catch {
+    return null
+  }
+}
 const MOODS = [
   { id: 1, icon: Annoyed, label: 'Terrible' },
   { id: 2, icon: Frown, label: 'Bad' },
@@ -72,21 +79,35 @@ export default function JournalEditor({ data, onChange, note, noteTitle, onTitle
   const [newGoal, setNewGoal] = useState('')
   const [newTag, setNewTag] = useState('')
   const onChangeRef = useLatestValue(onChange)
-  const skipChangeRef = useEditorDataSync(data, journalData, (incoming) => {
-    setJournalData(incoming)
-    setActiveSection(incoming?.preferredSection || 'write')
-  })
+  const incomingKey = serializeJournalData(data)
+  const lastEmittedKeyRef = useRef(incomingKey)
+  const skipEmissionRef = useRef(false)
+  const localSectionRef = useRef(null)
+  useEffect(() => {
+    if (incomingKey === lastEmittedKeyRef.current) return
+    if (localSectionRef.current) {
+      if (data?.preferredSection === localSectionRef.current) localSectionRef.current = null
+      return
+    }
+    lastEmittedKeyRef.current = incomingKey
+    skipEmissionRef.current = true
+    setJournalData(data)
+    setActiveSection(data?.preferredSection || 'write')
+  }, [data, incomingKey])
   const isInitialMount = useRef(true)
   useEffect(() => {
     if (isInitialMount.current) { isInitialMount.current = false; return }
-    if (skipChangeRef.current) { skipChangeRef.current = false; return }
+    if (skipEmissionRef.current) { skipEmissionRef.current = false; return }
+    const nextKey = serializeJournalData(journalData)
+    lastEmittedKeyRef.current = nextKey
     onChangeRef.current?.(journalData)
-  }, [journalData, onChangeRef, skipChangeRef])
+  }, [journalData, onChangeRef])
 
   const update = (field, value) => {
     setJournalData(prev => ({ ...prev, [field]: value }))
   }
   const selectSection = (section) => {
+    localSectionRef.current = section
     setActiveSection(section)
     update('preferredSection', section)
   }

@@ -42,6 +42,8 @@ try {
     path.join(outputDir, `icon-${size}x${size}.png`),
     Buffer.from(png, 'base64'),
   )))
+  const favicon = rendered.find(({ size }) => size === 32)
+  await writeFile(path.join(projectRoot, 'public', 'favicon.png'), Buffer.from(favicon.png, 'base64'))
 } finally {
   await browser.close()
 }
