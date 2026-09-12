@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/quicknotes-editor-logo.png" alt="QuickNotes Logo" width="128" />
+  <img src="images/quicknotes-editor-logo.png" alt="QuickNotes Logo" width="128" />
 </p>
 
 <h1 align="center">QuickNotes - Notes & Knowledge Workspace</h1>
@@ -563,39 +563,39 @@ If you'd like a preview of QuickNotes before using it, the screenshots below sho
     <th>QuickNotes - Paper Workspace</th>
   </tr>
   <tr>
-    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/quicknotes-3-document.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/quicknotes-3-document.png" alt="QuickNotes Document Workspace" width="450"></a></td>
-    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/quicknotes-3-paper.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/quicknotes-3-paper.png" alt="QuickNotes Paper Workspace" width="450"></a></td>
+    <td><a href="images/quicknotes-3-document.png"><img src="images/quicknotes-3-document.png" alt="QuickNotes Document Workspace" width="450"></a></td>
+    <td><a href="images/quicknotes-3-paper.png"><img src="images/quicknotes-3-paper.png" alt="QuickNotes Paper Workspace" width="450"></a></td>
   </tr>
   <tr>
     <th>QuickNotes - Canvas Workspace</th>
     <th>QuickNotes - Meeting Workspace</th>
   </tr>
   <tr>
-    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/quicknotes-3-canvas.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/quicknotes-3-canvas.png" alt="QuickNotes Canvas Workspace" width="450"></a></td>
-    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/quicknotes-3-meeting.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/quicknotes-3-meeting.png" alt="QuickNotes Meeting Workspace" width="450"></a></td>
+    <td><a href="images/quicknotes-3-canvas.png"><img src="images/quicknotes-3-canvas.png" alt="QuickNotes Canvas Workspace" width="450"></a></td>
+    <td><a href="images/quicknotes-3-meeting.png"><img src="images/quicknotes-3-meeting.png" alt="QuickNotes Meeting Workspace" width="450"></a></td>
   </tr>
   <tr>
     <th>QuickNotes - Global Search</th>
     <th>QuickNotes - Task Center</th>
   </tr>
   <tr>
-    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/quicknotes-3-search.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/quicknotes-3-search.png" alt="QuickNotes Global Search" width="450"></a></td>
-    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/quicknotes-3-tasks.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/quicknotes-3-tasks.png" alt="QuickNotes Task Center" width="450"></a></td>
+    <td><a href="images/quicknotes-3-search.png"><img src="images/quicknotes-3-search.png" alt="QuickNotes Global Search" width="450"></a></td>
+    <td><a href="images/quicknotes-3-tasks.png"><img src="images/quicknotes-3-tasks.png" alt="QuickNotes Task Center" width="450"></a></td>
   </tr>
   <tr>
     <th>QuickNotes - Project Board</th>
     <th>QuickNotes - Daily Journal</th>
   </tr>
   <tr>
-    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/quicknotes-3-project.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/quicknotes-3-project.png" alt="QuickNotes Project Board" width="450"></a></td>
-    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/quicknotes-3-journal.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/quicknotes-3-journal.png" alt="QuickNotes Daily Journal" width="450"></a></td>
+    <td><a href="images/quicknotes-3-project.png"><img src="images/quicknotes-3-project.png" alt="QuickNotes Project Board" width="450"></a></td>
+    <td><a href="images/quicknotes-3-journal.png"><img src="images/quicknotes-3-journal.png" alt="QuickNotes Daily Journal" width="450"></a></td>
   </tr>
   <tr>
     <th>QuickNotes - Idea Board</th>
     <th>QuickNotes - Shopping List</th>
   </tr>
   <tr>
-    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/quicknotes-3-ideas.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/quicknotes-3-ideas.png" alt="QuickNotes Idea Board" width="450"></a></td>
-    <td><a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/quicknotes-3-shopping.png" target="_blank" rel="noopener noreferrer"><img src="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/raw/main/images/quicknotes-3-shopping.png" alt="QuickNotes Shopping List" width="450"></a></td>
+    <td><a href="images/quicknotes-3-ideas.png"><img src="images/quicknotes-3-ideas.png" alt="QuickNotes Idea Board" width="450"></a></td>
+    <td><a href="images/quicknotes-3-shopping.png"><img src="images/quicknotes-3-shopping.png" alt="QuickNotes Shopping List" width="450"></a></td>
   </tr>
 </table>

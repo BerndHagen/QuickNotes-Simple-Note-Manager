@@ -138,7 +138,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
-          name: QuickNotes - Simple Note Manager - Latest Build
+          name: QuickNotes - Notes & Knowledge Workspace - Latest Build
           body_path: latest-release-notes.md
           prerelease: true
           files: quicknotes-latest.zip
@@ -208,7 +208,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
-          name: QuickNotes - Simple Note Manager ${{ steps.version.outputs.version }}
+          name: QuickNotes - Notes & Knowledge Workspace ${{ steps.version.outputs.version }}
           body_path: ${{ steps.version.outputs.notes_path }}
           files: quicknotes-${{ steps.version.outputs.tag }}.zip
           overwrite_files: true
