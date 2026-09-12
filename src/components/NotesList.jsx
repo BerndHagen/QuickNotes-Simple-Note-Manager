@@ -247,6 +247,7 @@ export default function NotesList({ sidebarToggle, onOpenNote }) {
     viewMode,
     setViewMode,
     setNoteTypesModalOpen,
+    setTodayAgendaOpen,
   } = useUIStore()
   const { t } = useTranslation()
 
@@ -324,11 +325,12 @@ export default function NotesList({ sidebarToggle, onOpenNote }) {
         }
       }
       setSelectedIds(new Set())
+      setTodayAgendaOpen(false)
       setSelectedNote(note.id)
       setLastClickedId(note.id)
       onOpenNote?.()
     },
-    [isCoarsePointer, lastClickedId, visibleNotes, setSelectedNote, onOpenNote]
+    [isCoarsePointer, lastClickedId, visibleNotes, setSelectedNote, setTodayAgendaOpen, onOpenNote]
   )
 
   /**

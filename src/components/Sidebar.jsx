@@ -27,14 +27,12 @@ import { useNotesStore, useThemeStore, useUIStore } from '../store'
 import { useTranslation } from '../lib/useTranslation'
 import { getFolderIcon } from '../lib/folderIcons'
 import { isBackendConfigured } from '../lib/backend'
-import { createDailyNoteInput, findDailyNote } from '../lib/dailyNotes'
 import { collectTodayAgenda } from '../lib/today'
 import { collectWorkspaceTasks, getTaskSummary } from '../lib/workspaceTasks'
 import { filterNotes } from '../lib/filterNotes'
 import { filterBySmartView, getSmartViewScope } from '../lib/smartViews'
 import { Avatar, Menu, MenuItem, MenuSeparator, TagChip } from './ui'
 import { FolderDialog, ConfirmDialog } from './FolderDialogs'
-import { getDefaultData, NOTE_TYPES } from './editors/noteTypes'
 
 /**
  * Navigation row. A real `<button>`, so the rail is reachable by Tab and
@@ -146,7 +144,8 @@ export default function Sidebar({ onNavigate }) {
     setArchiveViewOpen,
     setNoteTypesModalOpen,
     setTasksViewOpen,
-    openTodayAgenda,
+    todayAgendaOpen,
+    setTodayAgendaOpen,
     setMobileView,
     setTagManagerOpen,
     setSharedNotesViewOpen,
@@ -196,7 +195,6 @@ export default function Sidebar({ onNavigate }) {
     () => getTaskSummary(collectWorkspaceTasks(notes)),
     [notes]
   )
-  const dailyNote = useMemo(() => findDailyNote(notes), [notes])
   const todayCount = useMemo(() => {
     const agenda = collectTodayAgenda(notes)
     return agenda.dueTasks.length + agenda.reminders.length + agenda.meetings.length
@@ -214,6 +212,7 @@ export default function Sidebar({ onNavigate }) {
   })), [notes, savedViews])
 
   const go = (fn) => () => {
+    setTodayAgendaOpen(false)
     fn()
     onNavigate?.()
   }
@@ -233,22 +232,16 @@ export default function Sidebar({ onNavigate }) {
 
   const accountName = user?.username || user?.user_metadata?.username || 'Account'
   const accountDetail = user?.isLocal ? t('auth.localWorkspace', 'Saved on this device') : user?.email
-  const isAllNotes = !selectedFolderId && !selectedTagFilter && !selectedSmartViewId && selectedNoteId !== dailyNote?.id
+  const isAllNotes = !selectedFolderId && !selectedTagFilter && !selectedSmartViewId
   const cloudEnabled = isBackendConfigured()
 
   const openToday = () => {
-    const target = dailyNote || createNote(
-      createDailyNoteInput(
-        new Date(),
-        getDefaultData(NOTE_TYPES.JOURNAL),
-        typeof navigator === 'undefined' ? undefined : navigator.language
-      )
-    )
     setSelectedFolder(null)
     setSelectedTagFilter(null)
-    openTodayAgenda()
-    setSelectedNote(target.id)
+    setSelectedNote(null)
     setMobileView('editor')
+    setTodayAgendaOpen(true)
+    onNavigate?.()
   }
 
   return (
@@ -285,8 +278,8 @@ export default function Sidebar({ onNavigate }) {
               label={t('sidebar.today', 'Today')}
               count={todayCount}
                 showCount
-              selected={selectedNoteId === dailyNote?.id}
-              onClick={go(openToday)}
+                selected={todayAgendaOpen}
+                onClick={openToday}
             />
           </li>
           <li>

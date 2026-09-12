@@ -54,6 +54,7 @@ export const useUIStore = create(
       shortcutsModalOpen: false,
       noteTypesModalOpen: false,
       tasksViewOpen: false,
+      todayAgendaOpen: false,
       todayViewToken: 0,
       smartViewModalOpen: false,
       smartViewEditingId: null,
@@ -128,6 +129,7 @@ export const useUIStore = create(
   setShortcutsModalOpen: (open) => set({ shortcutsModalOpen: open }),
   setNoteTypesModalOpen: (open) => set({ noteTypesModalOpen: open }),
   setTasksViewOpen: (open) => set({ tasksViewOpen: open }),
+  setTodayAgendaOpen: (open) => set({ todayAgendaOpen: open }),
   openTodayAgenda: () => set((state) => ({ todayViewToken: state.todayViewToken + 1 })),
   setSmartViewModalOpen: (open, editingId = null) => set({
     smartViewModalOpen: open,

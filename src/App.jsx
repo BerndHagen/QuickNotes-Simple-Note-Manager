@@ -24,6 +24,7 @@ import CatalogConflictBanner from './components/CatalogConflictBanner'
 import PersistenceErrorBanner from './components/PersistenceErrorBanner'
 import UpdateReadyBanner from './components/UpdateReadyBanner'
 import CorruptedDataBanner from './components/CorruptedDataBanner'
+import TodayAgenda from './components/workspace/TodayAgenda'
 
 const MOBILE_HISTORY_SURFACE_KEYS = [
   'focusModeOpen',
@@ -188,6 +189,8 @@ export default function App() {
     shortcutsModalOpen,
     noteTypesModalOpen,
     tasksViewOpen,
+    todayAgendaOpen,
+    setTodayAgendaOpen,
     smartViewModalOpen,
     templateSaveOpen,
     helpModalOpen,
@@ -664,6 +667,7 @@ export default function App() {
 
   const showList = isCompact ? mobileView === 'notes' : notesListOpen
   const showEditor = !isCompact || mobileView === 'editor'
+  const showTodayAgenda = todayAgendaOpen
   const showInspector = viewMode !== 'grid' && isXWide && inspectorOpen && Boolean(selectedNoteId)
 
   const topSidebarToggle = (
@@ -804,9 +808,30 @@ export default function App() {
 
                   <main className={`qn-editor-pane min-w-0 flex-1 ${showEditor ? 'flex' : 'hidden'}`}>
                     <ErrorBoundary>
-                      <Suspense fallback={<EditorLoading />}>
-                        <NoteEditor onBack={returnToMobileNotes} showBack={isCompact} />
-                      </Suspense>
+                      {showTodayAgenda ? (
+                        <section className="flex min-h-0 w-full flex-1 flex-col overflow-y-auto bg-surface-base" aria-label="Today">
+                          {isCompact && (
+                            <button
+                              type="button"
+                              className="border-b border-subtle px-4 py-3 text-left text-ui-sm font-semibold text-content-muted hover:bg-surface-hover"
+                              onClick={() => {
+                                setTodayAgendaOpen(false)
+                                returnToMobileNotes()
+                              }}
+                            >
+                              Back to notes
+                            </button>
+                          )}
+                          <div className="w-full px-4 py-5 sm:px-6">
+                            <h1 className="mx-auto mb-4 max-w-3xl text-ui-xl font-semibold text-content">Today</h1>
+                            <TodayAgenda />
+                          </div>
+                        </section>
+                      ) : (
+                        <Suspense fallback={<EditorLoading />}>
+                          <NoteEditor onBack={returnToMobileNotes} showBack={isCompact} />
+                        </Suspense>
+                      )}
                     </ErrorBoundary>
                   </main>
                 </div>
