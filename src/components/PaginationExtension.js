@@ -36,8 +36,10 @@ const createPageGap = (details) => {
   gap.dataset.pageBreak = details.manual ? 'manual' : 'automatic'
   gap.setAttribute('aria-hidden', 'true')
   gap.style.width = `${details.pageWidth}px`
+  gap.style.height = `${details.fill + details.paddingBottom + PAGE_GAP + details.paddingTop}px`
   gap.style.marginLeft = `${-details.offsetLeft}px`
   gap.style.listStyle = 'none'
+  gap.style.overflow = 'hidden'
 
   remaining.className = 'qn-page-gap__remaining'
   remaining.style.height = `${details.fill + details.paddingBottom}px`
@@ -261,7 +263,7 @@ const PaginationExtension = Extension.create({
                 if (used > 0 && used + line.height > contentHeight) {
                   addBreak(index === 0
                     ? { position, offsetLeft: line.offsetLeft, insideList }
-                    : { position: line.position, offsetLeft: line.offsetLeft, inline: true })
+                    : { position: line.position, offsetLeft: line.offsetLeft, inline: true, insideList })
                 }
                 used += line.height
               })
