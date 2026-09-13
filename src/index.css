@@ -1870,6 +1870,13 @@ body {
   }
 }
 
+/* A focused note owns the compact viewport. Its note bar provides Back, title,
+   and contextual actions; the catalog bar returns with the note list. The
+   class follows the same coarse-pointer phone detection as the React layout. */
+.qn-compact-editor-active > .qn-top-chrome {
+  display: none;
+}
+
 @media (max-width: 767px) {
   .qn-sidebar-frame,
   .qn-sidebar-scrim {
@@ -1908,13 +1915,6 @@ body {
 }
 
 @media (max-width: 767px) and (max-height: 500px) {
-  /* A phone in landscape has room for one application bar, not two. The
-     focused note bar keeps Back, title, and contextual actions available;
-     the catalog bar returns as soon as the user goes back to the note list. */
-  .qn-compact-editor-active > .qn-top-chrome {
-    display: none;
-  }
-
   .qn-note-statistics {
     padding-top: 0 !important;
     padding-bottom: env(safe-area-inset-bottom) !important;

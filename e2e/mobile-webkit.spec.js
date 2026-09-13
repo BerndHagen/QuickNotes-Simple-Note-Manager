@@ -251,6 +251,8 @@ test.describe('mobile Safari workflows', () => {
 
     const title = page.getByLabel('Note title')
     const editor = page.locator('.ProseMirror').first()
+    await expect(page.locator('.qn-top-chrome')).toBeHidden()
+    await expect(page.locator('.qn-ribbon-note-bar:visible')).toHaveCount(1)
     await title.fill('WebKit mobile note')
     await editor.tap()
     await editor.pressSequentially('A quick note written on a phone.')
@@ -264,8 +266,8 @@ test.describe('mobile Safari workflows', () => {
     await page.keyboard.press('Escape')
 
     const toolbar = page.locator('.editor-toolbar')
-    await expect(toolbar).toBeHidden()
-    await page.getByRole('button', { name: /show formatting tools/i }).tap()
+    await expect(toolbar).toBeVisible()
+    await expect(page.getByRole('button', { name: /hide formatting tools/i })).toBeVisible()
     const toolbarMetrics = await toolbar.evaluate((element) => ({
       height: element.getBoundingClientRect().height,
       clientWidth: element.clientWidth,
@@ -377,8 +379,7 @@ test.describe('mobile Safari workflows', () => {
 
     await page.setViewportSize({ width: 664, height: 390 })
     await expect(editor).toContainText('Draft survives WebKit navigation')
-    await expect(page.locator('.editor-toolbar')).toBeHidden()
-    await page.getByRole('button', { name: /show formatting tools/i }).tap()
+    await expect(page.locator('.editor-toolbar')).toBeVisible()
     const toolbarBox = await page.locator('.editor-toolbar').boundingBox()
     expect(toolbarBox.height).toBeLessThanOrEqual(60)
 

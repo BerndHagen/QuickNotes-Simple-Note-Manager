@@ -354,7 +354,7 @@ export default function RichTextEditor({
 }) {
   const [currentPaper, setCurrentPaper] = useState(paperType)
   const [typingEpoch, setTypingEpoch] = useState(0)
-  const [mobileToolbarOpen, setMobileToolbarOpen] = useState(false)
+  const [mobileToolbarOpen, setMobileToolbarOpen] = useState(true)
   const [editorMenuPoint, setEditorMenuPoint] = useState(null)
   const [slashMenu, setSlashMenu] = useState(null)
   const [activeRibbonTab, setActiveRibbonTab] = useState('home')
@@ -425,7 +425,7 @@ export default function RichTextEditor({
   }
 
   useEffect(() => {
-    setMobileToolbarOpen(false)
+    setMobileToolbarOpen(true)
     setDrawTool(null)
     setSlashMenu(null)
     isUserTyping.current = false

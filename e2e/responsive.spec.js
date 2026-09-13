@@ -275,8 +275,8 @@ test.describe('mobile editor usability', () => {
   test.beforeEach(async ({ page }) => {
     await signIn(page)
     await page.getByRole('button', { name: /new note/i }).first().click()
-    await page.getByRole('button', { name: /show formatting tools/i }).click()
     await expect(page.locator('.editor-toolbar')).toBeVisible()
+    await expect(page.getByRole('button', { name: /hide formatting tools/i })).toBeVisible()
   })
 
   test('keeps the toolbar compact while every command remains reachable', async ({ page }) => {
@@ -418,13 +418,9 @@ test.describe('phone landscape editor', () => {
 
     const toolbar = page.locator('.editor-toolbar')
     const editorViewport = page.locator('.ProseMirror').locator('xpath=../..')
-    await expect(toolbar).toBeHidden()
+    await expect(toolbar).toBeVisible()
     await expect(page.locator('.qn-top-chrome')).toBeHidden()
     await expect(page.getByRole('button', { name: /back to notes/i })).toBeVisible()
-    const collapsedEditorBox = await editorViewport.boundingBox()
-    expect(collapsedEditorBox.height).toBeGreaterThanOrEqual(220)
-
-    await page.getByRole('button', { name: /show formatting tools/i }).click()
     const [toolbarBox, editorBox] = await Promise.all([toolbar.boundingBox(), editorViewport.boundingBox()])
     expect(toolbarBox.height).toBeLessThanOrEqual(61)
     expect(editorBox.height).toBeGreaterThanOrEqual(145)

@@ -5,6 +5,7 @@ import { A4_RATIO, PAGE_GAP, getDocumentPageGeometry } from './editor/pageGeomet
 import { BREAKPOINTS } from '../hooks/useBreakpoint'
 
 const paginationKey = new PluginKey('quickNotesPagination')
+const LIST_TYPES = new Set(['bulletList', 'orderedList', 'taskList'])
 
 const sameBreaks = (first, second) => (
   first.length === second.length
@@ -60,13 +61,19 @@ const decorationsFor = (doc, breaks) => DecorationSet.create(
   ))
 )
 
-const measureBlockHeight = (view, position) => {
+const cssNumber = (value) => Number.parseFloat(value) || 0
+
+const measureBlock = (view, position) => {
   const dom = view.nodeDOM(position)
-  if (!(dom instanceof HTMLElement)) return 0
+  if (!(dom instanceof HTMLElement)) return { height: 0, marginTop: 0, marginBottom: 0 }
   const style = getComputedStyle(dom)
   const decorationHeight = [...dom.querySelectorAll('.qn-page-gap')]
     .reduce((total, gap) => total + gap.offsetHeight, 0)
-  return Math.max(0, dom.offsetHeight - decorationHeight + (parseFloat(style.marginTop) || 0) + (parseFloat(style.marginBottom) || 0))
+  return {
+    height: Math.max(0, dom.offsetHeight - decorationHeight),
+    marginTop: cssNumber(style.marginTop),
+    marginBottom: cssNumber(style.marginBottom),
+  }
 }
 
 const listItemMeasurements = (view, node, position) => {
@@ -75,7 +82,7 @@ const listItemMeasurements = (view, node, position) => {
     const childPosition = position + 1 + offset
     measurements.push({
       position: childPosition,
-      height: measureBlockHeight(view, childPosition),
+      ...measureBlock(view, childPosition),
     })
   })
   return measurements.filter((item) => item.height > 0)
@@ -148,7 +155,7 @@ const measureTextLines = (view, node, position, height, editorRect, visualScale)
   }
 
   const lines = mergeLineRectangles(rectangles)
-  if (lines.length < 2) return []
+  if (lines.length === 0) return []
   const computedLineHeight = Number.parseFloat(getComputedStyle(dom).lineHeight)
   const lineHeight = Number.isFinite(computedLineHeight) && computedLineHeight > 0
     ? computedLineHeight
@@ -225,6 +232,7 @@ const PaginationExtension = Extension.create({
             const contentHeight = Math.max(160, pageHeight - paddingTop - paddingBottom)
             const breaks = []
             let used = 0
+            let pendingMargin = 0
             let pageCount = 1
 
             const addBreak = ({
@@ -254,37 +262,84 @@ const PaginationExtension = Extension.create({
               pageCount += 1
             }
 
-            const paginateOversizedBlock = ({ node, position, height, insideList = false }) => {
-              if (height <= contentHeight) return false
+            // CSS collapses adjacent vertical margins instead of adding both.
+            // Tracking the pending trailing margin mirrors that browser flow;
+            // summing marginTop and marginBottom for every block progressively
+            // understated the usable area and produced large blank page tails.
+            const collapseMargins = (first, second) => {
+              if (first >= 0 && second >= 0) return Math.max(first, second)
+              if (first <= 0 && second <= 0) return Math.min(first, second)
+              return first + second
+            }
+
+            const beginBlock = (marginTop) => {
+              const previousUsed = used
+              const previousMargin = pendingMargin
+              used += collapseMargins(previousMargin, marginTop)
+              pendingMargin = 0
+              return { previousUsed, previousMargin }
+            }
+
+            const finishBlock = (marginBottom) => {
+              pendingMargin = marginBottom
+            }
+
+            const paginateTextBlock = ({ node, position, height, insideList = false }) => {
+              if (used + height <= contentHeight) return false
+              // Ordinary paragraphs/headings flow like word-processor text.
+              // Structured objects remain intact when they fit on a fresh
+              // sheet, but an over-height object still needs line-level
+              // fragmentation so none of its text can enter a page margin.
+              if (!node.isTextblock && !insideList && height <= contentHeight) return false
               const lines = measureTextLines(view, node, position, height, editorRect, visualScale)
-              if (lines.length < 2) return false
+              if (lines.length === 0) return false
+
+              // Text rectangles describe the lines themselves while the DOM
+              // block can also contain padding or nested wrapper space. Keep
+              // that non-text height in the page accounting without assigning
+              // it to a line that could otherwise be moved too early.
+              const lineHeight = lines.reduce((total, line) => total + line.height, 0)
+              const blockOverhead = Math.max(0, height - lineHeight)
+              used += blockOverhead / 2
 
               lines.forEach((line, index) => {
                 if (used > 0 && used + line.height > contentHeight) {
-                  addBreak(index === 0
-                    ? { position, offsetLeft: line.offsetLeft, insideList }
-                    : { position: line.position, offsetLeft: line.offsetLeft, inline: true, insideList })
+                  if (insideList && index === 0) {
+                    // Do not strand a bullet or checkbox at the bottom of a
+                    // sheet when none of its first line fits beside it.
+                    addBreak({ position, offsetLeft: line.offsetLeft, insideList: true })
+                    used = blockOverhead / 2
+                  } else {
+                    addBreak({
+                      position: line.position,
+                      offsetLeft: line.offsetLeft,
+                      inline: true,
+                      insideList,
+                    })
+                  }
                 }
                 used += line.height
               })
+              used += blockOverhead / 2
               return true
             }
 
             view.state.doc.forEach((node, position) => {
               if (node.type.name === 'pageBreak') {
+                used += pendingMargin
+                pendingMargin = 0
                 addBreak({ position, manual: true })
                 return
               }
 
-              const height = measureBlockHeight(view, position)
+              const measurement = measureBlock(view, position)
+              const { height, marginTop, marginBottom } = measurement
+              const blockStart = beginBlock(marginTop)
 
-              // A task list is one ProseMirror block even when it contains
-              // hundreds of independently sized checklist rows. Treating the
-              // whole list as indivisible is what let a page grow forever.
-              // Paginate between its real list items so each checkbox keeps
-              // its content and selection semantics while flowing to the next
-              // sheet.
-              if (node.type.name === 'taskList' && used + height > contentHeight) {
+              // A list is one ProseMirror block even when it contains hundreds
+              // of independently sized rows. Paginate between its real items,
+              // and split a wrapped item only at measured text-line boundaries.
+              if (LIST_TYPES.has(node.type.name) && used + height > contentHeight) {
                 const items = listItemMeasurements(view, node, position)
                 const measuredItemsHeight = items.reduce((total, item) => total + item.height, 0)
                 const listOverhead = Math.max(0, height - measuredItemsHeight)
@@ -296,7 +351,7 @@ const PaginationExtension = Extension.create({
 
                 items.forEach((item) => {
                   const itemNode = view.state.doc.nodeAt(item.position)
-                  if (itemNode && paginateOversizedBlock({
+                  if (itemNode && paginateTextBlock({
                     node: itemNode,
                     position: item.position,
                     height: item.height,
@@ -312,15 +367,25 @@ const PaginationExtension = Extension.create({
                   used += item.height
                 })
                 used += listOverhead / 2
+                finishBlock(marginBottom)
                 return
               }
 
-              if (paginateOversizedBlock({ node, position, height })) return
+              if (paginateTextBlock({ node, position, height })) {
+                finishBlock(marginBottom)
+                return
+              }
 
               if (used > 0 && used + height > contentHeight) {
+                // A block widget interrupts margin collapsing. Allocate the
+                // previous block's trailing margin before the page gap and the
+                // current block's top margin on the new page to match the DOM.
+                used = blockStart.previousUsed + blockStart.previousMargin
                 addBreak({ position })
+                used = marginTop
               }
               used += height
+              finishBlock(marginBottom)
             })
 
             view.dom.dataset.pageCount = String(pageCount)

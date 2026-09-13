@@ -281,25 +281,114 @@ test.describe('document page geometry and workspace zoom', () => {
           bottom: rect.bottom - paddingBottom,
         }
       })
-      const blocks = [...prose.querySelectorAll(':scope > h1, :scope > h2, :scope > h3, :scope > p, :scope > ul[data-type="taskList"] > li[data-type="taskItem"]')]
-        .map((element, index) => {
-          const rect = element.getBoundingClientRect()
-          return {
-            index,
-            kind: element.tagName.toLowerCase(),
-            text: element.textContent.slice(0, 80),
-            top: rect.top,
-            bottom: rect.bottom,
-          }
-        })
-      const violations = blocks.filter((block) => !pages.some((sheet) => (
-        block.top >= sheet.top - 1 && block.bottom <= sheet.bottom + 1
+      const range = document.createRange()
+      const walker = document.createTreeWalker(prose, NodeFilter.SHOW_TEXT)
+      const contentRects = []
+      while (walker.nextNode()) {
+        const textNode = walker.currentNode
+        if (!textNode.textContent.trim() || textNode.parentElement?.closest('.qn-page-gap')) continue
+        range.selectNodeContents(textNode)
+        contentRects.push(...[...range.getClientRects()].map((rect) => ({
+          kind: 'text',
+          top: rect.top,
+          bottom: rect.bottom,
+        })))
+      }
+      contentRects.push(...[...prose.querySelectorAll('.qn-task-checkbox-visual')].map((element) => {
+        const rect = element.getBoundingClientRect()
+        return { kind: 'checkbox', top: rect.top, bottom: rect.bottom }
+      }))
+      const violations = contentRects.filter((content) => !pages.some((sheet) => (
+        content.top >= sheet.top - 1 && content.bottom <= sheet.bottom + 1
       )))
       return { pages, violations }
     })
 
-    expect(geometry.violations, `Every rendered block must stay inside one page writable area: ${JSON.stringify(geometry)}`).toEqual([])
+    expect(geometry.violations, `Every rendered line and checkbox must stay inside a writable page area: ${JSON.stringify(geometry)}`).toEqual([])
     await page.screenshot({ path: testInfo.outputPath('mixed-content-page-bounds.png') })
+  })
+
+  test('uses the remaining writable area before splitting a pasted paragraph', async ({ page }, testInfo) => {
+    const editor = page.locator('.ProseMirror')
+    await editor.click()
+    await page.keyboard.press('Control+A')
+    await page.keyboard.press('Backspace')
+
+    for (let index = 1; index <= 14; index += 1) {
+      await page.keyboard.insertText(`Introductory battle note ${index}.`)
+      await page.keyboard.press('Enter')
+    }
+    await page.keyboard.type('## ')
+    await page.keyboard.insertText('Battle Procedure in Banjo-Kazooie')
+    await page.keyboard.press('Enter')
+    await page.keyboard.insertText(
+      'The pasted procedure should keep flowing through every available line on the current sheet before it continues on the next sheet. '.repeat(8)
+    )
+
+    await expect.poll(async () => Number(await editor.getAttribute('data-page-count'))).toBeGreaterThan(1)
+    const geometry = await page.locator('.qn-editor-page').evaluate((root) => {
+      const prose = root.querySelector('.ProseMirror')
+      const paragraph = [...prose.querySelectorAll(':scope > p')]
+        .find((element) => element.textContent.startsWith('The pasted procedure'))
+      const proseStyle = getComputedStyle(prose)
+      const proseRect = prose.getBoundingClientRect()
+      const scale = prose.offsetWidth > 0 ? proseRect.width / prose.offsetWidth : 1
+      const paddingTop = Number.parseFloat(proseStyle.paddingTop) * scale
+      const paddingBottom = Number.parseFloat(proseStyle.paddingBottom) * scale
+      const pages = [...root.querySelectorAll('.qn-document-page-edge')].map((element, index) => {
+        const rect = element.getBoundingClientRect()
+        return {
+          index,
+          top: rect.top + paddingTop,
+          bottom: rect.bottom - paddingBottom,
+        }
+      })
+      const range = document.createRange()
+      const walker = document.createTreeWalker(paragraph, NodeFilter.SHOW_TEXT)
+      const fragments = []
+      while (walker.nextNode()) {
+        const textNode = walker.currentNode
+        if (!textNode.textContent.trim() || textNode.parentElement?.closest('.qn-page-gap')) continue
+        range.selectNodeContents(textNode)
+        fragments.push(...[...range.getClientRects()].map((rect) => ({ top: rect.top, bottom: rect.bottom })))
+      }
+      const lines = fragments
+        .sort((first, second) => first.top - second.top)
+        .reduce((merged, fragment) => {
+          const line = merged[merged.length - 1]
+          if (line && Math.abs(line.top - fragment.top) <= 1) {
+            line.bottom = Math.max(line.bottom, fragment.bottom)
+          } else {
+            merged.push({ ...fragment })
+          }
+          return merged
+        }, [])
+      const lineHeight = Number.parseFloat(getComputedStyle(paragraph).lineHeight) * scale
+      const remaining = [...prose.querySelectorAll('.qn-page-gap__remaining')]
+        .map((element) => element.getBoundingClientRect().height)
+      return {
+        lineHeight,
+        lineCount: lines.length,
+        paddingBottom,
+        remaining,
+        writableHeight: pages[0].bottom - pages[0].top,
+        linesByPage: pages.map((sheet) => lines.filter((line) => (
+          line.top >= sheet.top - 1 && line.bottom <= sheet.bottom + 1
+        )).length),
+        violations: lines.filter((line) => !pages.some((sheet) => (
+          line.top >= sheet.top - 1 && line.bottom <= sheet.bottom + 1
+        ))),
+      }
+    })
+
+    expect(geometry.lineCount * geometry.lineHeight, `The regression paragraph must be shorter than a full writable page: ${JSON.stringify(geometry)}`)
+      .toBeLessThan(geometry.writableHeight)
+    expect(geometry.linesByPage[0], `The pasted paragraph should use page one: ${JSON.stringify(geometry)}`).toBeGreaterThan(0)
+    expect(geometry.linesByPage[1], `The pasted paragraph should continue on page two: ${JSON.stringify(geometry)}`).toBeGreaterThan(0)
+    expect(geometry.violations, `Pasted lines must remain inside the ruler's writable areas: ${JSON.stringify(geometry)}`).toEqual([])
+    expect(geometry.remaining[0] - geometry.paddingBottom, `An automatic break should leave less than one line unused: ${JSON.stringify(geometry)}`)
+      .toBeLessThan(geometry.lineHeight + 1)
+    await page.screenshot({ path: testInfo.outputPath('pasted-paragraph-page-fill.png') })
   })
 
   test('flows one long paragraph across pages at rendered line boundaries', async ({ page }, testInfo) => {

@@ -106,5 +106,15 @@ test.describe('mobile UX regressions', () => {
     expect(layout.cards[0].top).toBe(layout.cards[1].top)
     expect(layout.cards[0].left).not.toBe(layout.cards[1].left)
     expect(layout.cards[0].width).toBeLessThan(160)
+
+    await page.getByRole('button', { name: /open mobile grid alpha/i }).tap()
+    await expect(page.locator('.qn-top-chrome')).toBeHidden()
+    await expect(page.locator('.qn-grid-editor-context-bar')).toHaveCount(0)
+    await expect(page.getByRole('button', { name: /back to grid/i })).toBeVisible()
+    await expect(page.locator('.editor-toolbar')).toBeVisible()
+
+    await page.getByRole('button', { name: /back to grid/i }).tap()
+    await expect(page.locator('.qn-top-chrome')).toBeVisible()
+    await expect(grid).toBeVisible()
   })
 })

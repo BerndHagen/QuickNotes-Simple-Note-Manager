@@ -667,6 +667,9 @@ export default function App() {
 
   const showList = isCompact ? mobileView === 'notes' : notesListOpen
   const showEditor = !isCompact || mobileView === 'editor'
+  const compactEditorActive = isCompact && (
+    showEditor || (viewMode === 'grid' && Boolean(selectedNoteId))
+  )
   const showTodayAgenda = todayAgendaOpen
   const showInspector = viewMode !== 'grid' && isXWide && inspectorOpen && Boolean(selectedNoteId)
 
@@ -710,7 +713,7 @@ export default function App() {
 
   return (
     <ThemeProvider>
-      <div className={`qn-workspace-frame flex h-[100dvh] flex-col overflow-hidden bg-app text-content ${isCompact && showEditor ? 'qn-compact-editor-active' : ''}`}>
+      <div className={`qn-workspace-frame flex h-[100dvh] flex-col overflow-hidden bg-app text-content ${compactEditorActive ? 'qn-compact-editor-active' : ''}`}>
         <a href="#qn-main" className="qn-skip-link">
           Skip to content
         </a>

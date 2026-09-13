@@ -111,7 +111,7 @@ test.describe('mobile control geometry', () => {
 test.describe('mobile content-first editing', () => {
   test.use({ viewport: { width: 390, height: 664 }, hasTouch: true, isMobile: true })
 
-  test('keeps global navigation and structured-note actions reachable while content scrolls', async ({ page }) => {
+  test('uses one focused note bar while structured-note content scrolls', async ({ page }) => {
     await signIn(page)
 
     await page.getByRole('button', { name: 'Create workspace' }).click()
@@ -128,15 +128,8 @@ test.describe('mobile content-first editing', () => {
     const noteBar = page.locator('.qn-focused-mobile-chrome > .qn-ribbon-note-bar')
     await expect(workspace).toBeVisible()
     await expect(noteBar).toBeVisible()
-    await expect(page.locator('.qn-top-chrome')).toBeVisible()
-
-    const navigationToggle = page.locator('.qn-top-chrome')
-      .getByRole('button', { name: /show navigation/i })
-    await expect(navigationToggle).toBeVisible()
-    await navigationToggle.tap()
-    await expect(page.getByRole('dialog', { name: 'Navigation' })).toBeVisible()
-    await page.keyboard.press('Escape')
-    await expect(page.getByRole('dialog', { name: 'Navigation' })).toBeHidden()
+    await expect(page.locator('.qn-top-chrome')).toBeHidden()
+    await expect(page.locator('.qn-ribbon-note-bar:visible')).toHaveCount(1)
 
     await noteBar.getByRole('button', { name: /more actions/i }).tap()
     await expect(page.getByRole('menuitem', { name: /attachments/i })).toBeVisible()
@@ -152,6 +145,11 @@ test.describe('mobile content-first editing', () => {
     await expect.poll(() => workspace.evaluate((element) => element.scrollTop)).toBeGreaterThan(0)
     const titleAfterScroll = await noteBar.boundingBox()
     expect(Math.abs(titleAfterScroll.y - titleBeforeScroll.y)).toBeLessThanOrEqual(1)
+
+    await noteBar.getByRole('button', { name: /back to notes/i }).tap()
+    const applicationBar = page.locator('.qn-top-chrome')
+    await expect(applicationBar).toBeVisible()
+    await expect(applicationBar.getByRole('button', { name: /show navigation/i })).toBeVisible()
   })
 
   test('gives the note canvas most of the viewport while tools stay available', async ({ page }) => {
@@ -163,10 +161,12 @@ test.describe('mobile content-first editing', () => {
     expect(
       editorBox.height / 664,
       `Only ${Math.round((editorBox.height / 664) * 100)}% of the screen is available for writing`
-    ).toBeGreaterThanOrEqual(0.72)
+    ).toBeGreaterThanOrEqual(0.70)
 
     await expect(page.locator('.qn-note-banner')).toBeHidden()
     await expect(page.locator('#qn-mobile-note-title')).toBeVisible()
+    await expect(page.locator('.editor-toolbar')).toBeVisible()
+    await expect(page.getByRole('button', { name: /hide formatting tools/i })).toBeVisible()
 
     await page.getByRole('button', { name: /more actions/i }).click()
     const actions = page.getByRole('menu', { name: /more actions/i })
@@ -190,9 +190,6 @@ test.describe('mobile content-first editing', () => {
     await expect(page.getByRole('button', { name: /no folder/i })).toBeVisible()
     await expect(page.getByRole('button', { name: /no tags/i })).toBeVisible()
 
-    const formattingToggle = page.getByRole('button', { name: /show formatting tools/i })
-    await expect(formattingToggle).toBeVisible()
-    await formattingToggle.click()
     await expect(page.locator('.editor-toolbar')).toBeVisible()
     await expect(page.locator('.editor-toolbar').getByRole('button').last()).toBeAttached()
   })

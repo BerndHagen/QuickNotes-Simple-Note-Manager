@@ -26,6 +26,7 @@ import {
   getSmartViewSort,
 } from '../lib/smartViews'
 import { useTranslation } from '../lib/useTranslation'
+import { useLayoutMode } from '../hooks/useBreakpoint'
 import SortDropdown, { sortNotes } from './SortDropdown'
 import { ConfirmDialog } from './FolderDialogs'
 import { Button, EmptyState, IconButton, Input, Menu, MenuItem, MenuLabel, MenuSeparator, Spinner } from './ui'
@@ -232,6 +233,7 @@ export default function NotesGrid({ sidebarToggle }) {
 
   const { currentSort, setCurrentSort, sidebarOpen, viewMode, setViewMode } = useUIStore()
   const { t } = useTranslation()
+  const { isCompact } = useLayoutMode()
 
   const [showingEditor, setShowingEditor] = useState(false)
   const [contextMenu, setContextMenu] = useState(null)
@@ -288,9 +290,27 @@ export default function NotesGrid({ sidebarToggle }) {
   }
 
   if (showingEditor && selectedNoteId) {
+    if (isCompact) {
+      return (
+        <Suspense
+          fallback={
+            <div className="flex min-h-0 flex-1 items-center justify-center bg-surface-raised">
+              <Spinner label="Loading the editor" />
+            </div>
+          }
+        >
+          <NoteEditor
+            onBack={handleBackToGrid}
+            showBack
+            backLabel="Back to grid"
+          />
+        </Suspense>
+      )
+    }
+
     return (
       <div className="flex flex-col w-full h-full">
-        <div className="flex items-center gap-2 border-b border-subtle bg-surface-raised px-3 py-3 sm:gap-3 sm:px-4">
+        <div className="qn-grid-editor-context-bar flex items-center gap-2 border-b border-subtle bg-surface-raised px-3 py-3 sm:gap-3 sm:px-4">
           {!sidebarOpen && sidebarToggle}
           <Button
             size="sm"

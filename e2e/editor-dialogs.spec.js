@@ -59,7 +59,6 @@ test.describe('editor dialogs on a small screen', () => {
     await signIn(page)
     await page.getByRole('heading', { name: 'Welcome to QuickNotes' }).click()
     await expect(page.getByLabel('Note title')).toBeVisible()
-    await page.getByRole('button', { name: /show formatting tools/i }).click()
     await expect(page.locator('.editor-toolbar')).toBeVisible()
   })
 

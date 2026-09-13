@@ -77,8 +77,9 @@ function EditorLoadingState({ label }) {
   )
 }
 
-export default function NoteEditor({ onBack, showBack = false }) {
+export default function NoteEditor({ onBack, showBack = false, backLabel }) {
   const { t } = useTranslation()
+  const mobileBackLabel = backLabel || t('editor.backToList', 'Back to notes')
   const isCompactViewport = useMediaQuery(BREAKPOINTS.compact)
   const {
     folders,
@@ -507,7 +508,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
                     <div className="min-w-0 justify-self-start">
                       <IconButton
                         icon={ArrowLeft}
-                        label={t('editor.backToList', 'Back to notes')}
+                        label={mobileBackLabel}
                         onClick={onBack}
                       />
                     </div>
@@ -617,7 +618,7 @@ export default function NoteEditor({ onBack, showBack = false }) {
             ribbonLeadingAction={showBack ? (
               <IconButton
                 icon={ArrowLeft}
-                label={t('editor.backToList', 'Back to notes')}
+                label={mobileBackLabel}
                 onClick={onBack}
               />
             ) : null}
