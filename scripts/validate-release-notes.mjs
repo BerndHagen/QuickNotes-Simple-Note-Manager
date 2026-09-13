@@ -18,8 +18,8 @@ const genericHeadings = new Set([
 ])
 
 const requiredLinks = [
-  'https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/issues',
-  'https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/discussions',
+  'https://github.com/BerndHagen/QuickNotes-Knowledge-Workspace/issues',
+  'https://github.com/BerndHagen/QuickNotes-Knowledge-Workspace/discussions',
 ]
 
 const failures = []

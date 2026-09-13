@@ -1641,7 +1641,7 @@ export default function SettingsModal() {
 
                 <div className="divide-y divide-[var(--qn-border-subtle)] border-y border-subtle">
                   <a
-                    href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager"
+                    href="https://github.com/BerndHagen/QuickNotes-Knowledge-Workspace"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-3 px-1 py-3 transition-colors hover:bg-surface-hover active:bg-surface-active"

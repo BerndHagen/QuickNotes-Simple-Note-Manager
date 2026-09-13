@@ -10,8 +10,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/releases/latest"><img src="https://img.shields.io/github/v/release/BerndHagen/QuickNotes-Simple-Note-Manager?display_name=tag&sort=semver&style=flat-square&color=2d6871" alt="Latest stable release"></a>&nbsp;&nbsp;
-  <a href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-GPL--3.0-blue?style=flat-square" alt="License"></a>&nbsp;&nbsp;
+  <a href="https://github.com/BerndHagen/QuickNotes-Knowledge-Workspace/releases/latest"><img src="https://img.shields.io/github/v/release/BerndHagen/QuickNotes-Knowledge-Workspace?display_name=tag&sort=semver&style=flat-square&color=2d6871" alt="Latest stable release"></a>&nbsp;&nbsp;
+  <a href="https://github.com/BerndHagen/QuickNotes-Knowledge-Workspace/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-GPL--3.0-blue?style=flat-square" alt="License"></a>&nbsp;&nbsp;
   <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react" alt="React Version">&nbsp;&nbsp;
   <img src="https://img.shields.io/badge/Vite-8-646CFF?style=flat-square&logo=vite" alt="Vite Version">&nbsp;&nbsp;
   <img src="https://img.shields.io/badge/TailwindCSS-3-06B6D4?style=flat-square&logo=tailwindcss" alt="Tailwind CSS">&nbsp;&nbsp;
@@ -23,7 +23,7 @@
 
 Documents provide a paginated rich-text workbench. Paper provides real pages, ink, shapes, annotations, and page management. Canvas provides an effectively infinite spatial surface. Purpose-built workspaces cover tasks, projects, meetings, journals, brainstorming, shopping, and weekly planning without making each workspace feel like a separate application.
 
-You can try QuickNotes [**here**](https://berndhagen.github.io/QuickNotes-Simple-Note-Manager/) — no account is required. A private local workspace keeps its data in the browser, while an account can synchronize supported data through a configured Supabase deployment.
+You can try QuickNotes [**here**](https://berndhagen.github.io/QuickNotes-Knowledge-Workspace/) — no account is required. A private local workspace keeps its data in the browser, while an account can synchronize supported data through a configured Supabase deployment.
 
 ## Key Features
 
@@ -126,8 +126,8 @@ Provider-backed generative AI, embeddings, semantic search, grounded Q&A, and im
 ### Installation
 
 ```bash
-git clone https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager.git
-cd QuickNotes-Simple-Note-Manager
+git clone https://github.com/BerndHagen/QuickNotes-Knowledge-Workspace.git
+cd QuickNotes-Knowledge-Workspace
 npm ci
 npm run dev
 ```
@@ -141,7 +141,7 @@ npm run build
 npm run preview
 ```
 
-The build output is written to `dist/`. Development uses `/`; production builds use `/QuickNotes-Simple-Note-Manager/` by default. Set `VITE_BASE_PATH` to another absolute URL path when deploying elsewhere:
+The build output is written to `dist/`. Development uses `/`; production builds use `/QuickNotes-Knowledge-Workspace/` by default. Set `VITE_BASE_PATH` to another absolute URL path when deploying elsewhere:
 
 ```dotenv
 VITE_BASE_PATH=/
@@ -150,7 +150,7 @@ VITE_BASE_PATH=/
 ## Project Structure
 
 ```text
-QuickNotes-Simple-Note-Manager/
+QuickNotes-Knowledge-Workspace/
 ├── .env.example                       # Public browser configuration template
 ├── .github/workflows/                 # Deployment and release workflows
 ├── docs/                              # Public architecture, safety, setup, and release documentation
@@ -547,7 +547,7 @@ Bug reports, focused fixes, tests, documentation improvements, and carefully sco
 
 ### Reporting Issues
 
-Use [GitHub Issues](https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/issues) and include reproduction steps, expected behavior, actual behavior, browser/OS details, and the smallest safe sample needed. Remove note content, tokens, email addresses, credentials, and private URLs from logs or screenshots before posting.
+Use [GitHub Issues](https://github.com/BerndHagen/QuickNotes-Knowledge-Workspace/issues) and include reproduction steps, expected behavior, actual behavior, browser/OS details, and the smallest safe sample needed. Remove note content, tokens, email addresses, credentials, and private URLs from logs or screenshots before posting.
 
 ## License
 

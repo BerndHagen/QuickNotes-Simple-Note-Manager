@@ -127,7 +127,7 @@ jobs:
 
           - **Preview archive**: \`quicknotes-latest.zip\` is rebuilt from the source commit shown above.
           - **Stable downloads**: use the [versioned releases](https://github.com/${REPOSITORY}/releases) for permanent, curated milestones.
-          - **Hosted application**: the same \`main\` build is published to [GitHub Pages](https://berndhagen.github.io/QuickNotes-Simple-Note-Manager/).
+          - **Hosted application**: the same \`main\` build is published to [GitHub Pages](https://berndhagen.github.io/QuickNotes-Knowledge-Workspace/).
 
           **Note:** If you encounter a problem, please open an [issue](https://github.com/${REPOSITORY}/issues). For questions and product discussion, use [GitHub Discussions](https://github.com/${REPOSITORY}/discussions).
           EOF

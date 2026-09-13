@@ -2,7 +2,7 @@ import { defineConfig, devices } from '@playwright/test'
 
 const PORT = process.env.E2E_PORT || 5210
 const EXTERNAL_BASE = process.env.E2E_BASE_URL?.trim()
-const BASE = EXTERNAL_BASE || `http://localhost:${PORT}/QuickNotes-Simple-Note-Manager/`
+const BASE = EXTERNAL_BASE || `http://localhost:${PORT}/QuickNotes-Knowledge-Workspace/`
 
 export default defineConfig({
   testDir: './e2e',

@@ -6,7 +6,7 @@ import react from '@vitejs/plugin-react'
 import { defineConfig, loadEnv } from 'vite'
 
 const projectRoot = fileURLToPath(new URL('.', import.meta.url))
-const repositoryName = 'QuickNotes-Simple-Note-Manager'
+const repositoryName = 'QuickNotes-Knowledge-Workspace'
 
 function normalizeBasePath(value) {
   const candidate = value.trim()

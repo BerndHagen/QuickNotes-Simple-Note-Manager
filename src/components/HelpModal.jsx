@@ -152,7 +152,7 @@ export default function HelpModal() {
         <div className="mt-6 border-t border-subtle pt-5">
           <div className="flex flex-wrap justify-center gap-2">
             <a
-              href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/issues"
+              href="https://github.com/BerndHagen/QuickNotes-Knowledge-Workspace/issues"
               target="_blank"
               rel="noopener noreferrer"
               className={buttonClasses({ variant: 'ghost', size: 'sm' })}
@@ -162,7 +162,7 @@ export default function HelpModal() {
               <span className="qn-sr-only"> (opens in a new tab)</span>
             </a>
             <a
-              href="https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/discussions"
+              href="https://github.com/BerndHagen/QuickNotes-Knowledge-Workspace/discussions"
               target="_blank"
               rel="noopener noreferrer"
               className={buttonClasses({ variant: 'ghost', size: 'sm' })}

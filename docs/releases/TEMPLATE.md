@@ -9,4 +9,4 @@ QuickNotes `X.Y.Z` is [one sentence describing the release theme, the main outco
 
 - **Clear user-facing outcome**: prefer concrete product language over implementation details, commit titles, or change counts.
 
-**Note:** If you encounter any bugs or issues, please don't hesitate to open an [issue](https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/issues). For any questions or to start a discussion, feel free to initiate a [discussion](https://github.com/BerndHagen/QuickNotes-Simple-Note-Manager/discussions) on the GitHub repository.
+**Note:** If you encounter any bugs or issues, please don't hesitate to open an [issue](https://github.com/BerndHagen/QuickNotes-Knowledge-Workspace/issues). For any questions or to start a discussion, feel free to initiate a [discussion](https://github.com/BerndHagen/QuickNotes-Knowledge-Workspace/discussions) on the GitHub repository.
