@@ -51,7 +51,7 @@ describe('workspace backups', () => {
     expect(backup.folders[0]).not.toHaveProperty('syncStatus')
     expect(backup.manifest).toMatchObject({
       application: 'QuickNotes',
-      applicationVersion: '3.0.1',
+      applicationVersion: '3.1.0',
       counts: expect.objectContaining({ notes: 1, folders: 1, tags: 1 }),
     })
   })

@@ -30,3 +30,11 @@ directory. For example, tag `v2.3.0` requires `docs/releases/v2.3.0.md`.
 The release workflow refuses to publish a stable tag without its curated note
 file. The rolling `latest` prerelease uses a separate build-ledger format and
 is updated automatically from `main`.
+
+## Product name in release titles
+
+The release workflow owns the current public descriptor, **QuickNotes - Notes
+& Knowledge Workspace**, through its `QUICKNOTES_RELEASE_NAME` value. New
+stable releases and the rolling preview use that title automatically. Existing
+release titles remain unchanged as historical records of the name used when
+those versions were published.
